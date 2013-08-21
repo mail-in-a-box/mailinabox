@@ -41,6 +41,8 @@ Then launch a new instance. We're creating a m1.small instance --- it's the smal
 	source ec2/start_instance.sh
 
 It will wait until the instance is available.
+
+You'll probably want to associate it with an Elastic IP. If you do, you'll need to update the INSTANCE_IP variable.
 	
 Configure the server:
 
