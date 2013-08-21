@@ -42,13 +42,14 @@ Then launch a new instance. We're creating a m1.small instance --- it's the smal
 
 It will wait until the instance is available.
 	
-Log in:
+Configure the server:
 
 	ssh -i mykey.pem ubuntu@$INSTANCE_IP
 
-Set up:
+Somehow download these files.
 
-	
+	sh scripts/index.sh
+	...
 	logout
 
 Terminate your instance with:
