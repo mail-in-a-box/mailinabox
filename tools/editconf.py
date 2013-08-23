@@ -4,12 +4,19 @@ import sys, re
 
 # sanity check
 if len(sys.argv) < 3:
-	print("usage: python3 editconf.py /etc/file.conf NAME=VAL [NAME=VAL ...]")
+	print("usage: python3 editconf.py /etc/file.conf [-s] NAME=VAL [NAME=VAL ...]")
 	sys.exit(1)
 
 # parse command line arguments
 filename = sys.argv[1]
 settings = sys.argv[2:]
+
+delimiter = "="
+delimiter_re = r"\s*=\s*"
+if settings[0] == "-s":
+	settings.pop(0)
+	delimiter = " "
+	delimiter_re = r"\s+"
 
 # create the new config file in memory
 found = set()
@@ -17,7 +24,7 @@ buf = ""
 for line in open(filename):
 	for i in range(len(settings)):
 		name, val = settings[i].split("=", 1)
-		m = re.match("\s*" + re.escape(name) + "\s*=\s*(.*?)\s*$", line)
+		m = re.match("\s*" + re.escape(name) + delimiter_re + "(.*?)\s*$", line)
 		if m:
 			# If this is already the setting, do nothing.
 			if m.group(1) == val:
@@ -33,7 +40,7 @@ for line in open(filename):
 				break
 			
 			# add the new setting
-			buf += name + "=" + val + "\n"
+			buf += name + delimiter + val + "\n"
 			
 			# note that we've applied this option
 			found.add(i)
@@ -46,7 +53,8 @@ for line in open(filename):
 # Put any settings we didn't see at the end of the file.
 for i in range(len(settings)):
 	if i not in found:
-		buf += settings[i] + "\n"
+		name, val = settings[i].split("=", 1)
+		buf += name + delimiter + val + "\n"
 
 # Write out the new file.
 with open(filename, "w") as f:

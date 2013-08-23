@@ -1,7 +1,9 @@
 import imaplib, os
 
+username = "testuser@" + os.environ.get("DOMAIN", "testdomain.com")
+
 M = imaplib.IMAP4_SSL(os.environ["INSTANCE_IP"])
-M.login("testuser@testdomain.com", "testpw")
+M.login(username, "testpw")
 M.select()
 print("Login successful.")
 typ, data = M.search(None, 'ALL')

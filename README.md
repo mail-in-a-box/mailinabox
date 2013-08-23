@@ -8,6 +8,8 @@ This draws heavily on Sovereign by Alex Payne (https://github.com/al3x/sovereign
 Deploying to EC2 from the command line
 --------------------------------------
 
+Amazon's EC2 isn't a great place to host a mail server. Do you still need to request permission to send email first? And you don't know if you'll get an IP address with a bad reputation from its previous owner. But it makes deployment easy, so it may at least be useful for testing.
+
 Sign up for Amazon Web Services.
 
 Create an Access Key at https://console.aws.amazon.com/iam/home?#security_credential. Download the key and save the information somewhere secure.
@@ -53,6 +55,8 @@ Somehow download these files.
 	sh scripts/index.sh
 	...
 	logout
+	
+You'll also want to set reverse DNS (PTR), which is something your hosting provider will probably have a control panel for.
 
 Terminate your instance with:
 

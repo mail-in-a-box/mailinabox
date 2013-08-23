@@ -109,17 +109,22 @@ EOF
 sed -i "s/#port = 143/port = 0/" /etc/dovecot/conf.d/10-master.conf
 sed -i "s/#port = 110/port = 0/" /etc/dovecot/conf.d/10-master.conf
 
-# Modify the unix socket for LMTP.
-sed -i "s/unix_listener lmtp \(.*\)/unix_listener \/var\/spool\/postfix\/private\/dovecot-lmtp \1\n    user = postfix\n    group = postfix\n/" /etc/dovecot/conf.d/10-master.conf 
-
-# Add an additional auth socket for postfix. Check if it already is
-# set to make sure this is idempotent.
-if grep -q "mailinabox-postfix-private-auth" /etc/dovecot/conf.d/10-master.conf; then
-	# already done
-	true;
-else
-	sed -i "s/\(\s*unix_listener auth-userdb\)/  unix_listener \/var\/spool\/postfix\/private\/auth \{ # mailinabox-postfix-private-auth\n    mode = 0666\n    user = postfix\n    group = postfix\n  \}\n\1/" /etc/dovecot/conf.d/10-master.conf
-fi
+# Create a Unix domain socket specific for postgres to connect via LMTP because
+# postgres is already configured to use this location, and create a TCP socket
+# for spampd to inject mail on (if it's configured later). dovecot's standard
+# lmtp unix socket is also listening.
+cat > /etc/dovecot/conf.d/99-local.conf << EOF;
+service lmtp {
+  unix_listener /var/spool/postfix/private/dovecot-lmtp {
+    user = postfix
+    group = postfix
+  }
+  inet_listener lmtp {
+    address = 127.0.0.1
+    port = 10026
+  }
+}
+EOF
 
 # Drew Crawford sets the auth-worker process to run as the mail user, but we don't care if it runs as root.
 
