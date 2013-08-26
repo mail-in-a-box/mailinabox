@@ -6,12 +6,12 @@
 # Install packages.
 
 DEBIAN_FRONTEND=noninteractive apt-get install -q -y \
-	postfix postgrey dovecot-core dovecot-imapd dovecot-lmtpd dovecot-sqlite
+	postfix postgrey dovecot-core dovecot-imapd dovecot-lmtpd dovecot-sqlite sqlite3
 
 # POSTFIX
 
 mkdir -p $STORAGE_ROOT/mail
-	
+
 # TLS configuration
 sed -i "s/#submission/submission/" /etc/postfix/master.cf # enable submission port (not in Drew Crawford's instructions)
 tools/editconf.py /etc/postfix/main.cf \
