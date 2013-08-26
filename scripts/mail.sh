@@ -30,7 +30,9 @@ tools/editconf.py /etc/postfix/main.cf \
 	smtpd_sasl_auth_enable=yes \
 	smtpd_recipient_restrictions=permit_sasl_authenticated,permit_mynetworks,reject_unauth_destination
 
-tools/editconf.py /etc/postfix/main.cf mydestination=localhost
+tools/editconf.py /etc/postfix/main.cf \
+	inet_interfaces=all \
+	mydestination=localhost
 
 # message delivery is directly to dovecot
 tools/editconf.py /etc/postfix/main.cf virtual_transport=lmtp:unix:private/dovecot-lmtp
