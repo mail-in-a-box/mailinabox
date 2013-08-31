@@ -1,3 +1,16 @@
+# Check system setup.
+if grep -q "^PasswordAuthentication yes" /etc/ssh/sshd_config \
+ || ! grep -q "^PasswordAuthentication no" /etc/ssh/sshd_config ; then
+        echo
+        echo "The SSH server on this machine permits password-based login."
+        echo "Add your SSH public key to $HOME/.ssh/authorized_keys, check"
+        echo "check that you can log in without a password, set the option"
+        echo "'PasswordAuthentication no' in /etc/ssh/sshd_config, and then"
+	echo "restart the machine."
+        exit
+fi
+
+# Gather information from the user.
 if [ -z "$PUBLIC_HOSTNAME" ]; then
 	echo
 	echo "Enter the hostname you want to assign to this machine."
@@ -18,6 +31,7 @@ fi
 if [ -z "$STORAGE_ROOT" ]; then
 	if [ ! -d /home/user-data ]; then useradd -m user-data; fi
 	STORAGE_ROOT=/home/user-data
+	mkdir -p $STORAGE_ROOT
 fi
 
 . scripts/system.sh

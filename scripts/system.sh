@@ -20,8 +20,5 @@ if [ -z "$DISABLE_FIREWALL" ]; then
 	ufw --force enable;
 fi
 
-# Mount the storage volume.
-export STORAGE_ROOT=/home/ubuntu/storage
-mkdir -p storage
 
 
