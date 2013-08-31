@@ -3,63 +3,51 @@ Mail in a Box
 
 One-click deployment of your own mail server and personal cloud (so to speak).
 
-This draws heavily on Sovereign by Alex Payne (https://github.com/al3x/sovereign) and the "NSA-proof your email in 2 hours" blog post by Drew Crawford (http://sealedabstract.com/code/nsa-proof-your-e-mail-in-2-hours/).
+This draws heavily on the "NSA-proof your email in 2 hours" blog post by Drew Crawford (http://sealedabstract.com/code/nsa-proof-your-e-mail-in-2-hours/) and Sovereign by Alex Payne (https://github.com/al3x/sovereign). I've made some tweaks to their setups.
 
-Deploying to EC2 from the command line
---------------------------------------
+Before You Begin
+----------------
 
-Amazon's EC2 isn't a great place to host a mail server. Do you still need to request permission to send email first? And you don't know if you'll get an IP address with a bad reputation from its previous owner. But it makes deployment easy, so it may at least be useful for testing.
+* Decide what **hostname** you'll use for your new Mail in a Box. You may want to buy a domain name from your favorite registrar now. For the most flexibility, assign a subdomain to your box. For instance, my domain name is `occams.info` (my email address is something`@occams.info`), so I've assigned `box.occams.info` as the hostname for my Mail in a Box.
 
-Sign up for Amazon Web Services.
+Get a Server
+------------
 
-Create an Access Key at https://console.aws.amazon.com/iam/home?#security_credential. Download the key and save the information somewhere secure.
+* Get a server. I've been a long-time customer of Rimuhosting.com which provides cheap VPS machines at several locations around the world. You could also go with Linode.com or any other cloud or VPS (virtual server) provider. (If you want to test on Amazon EC2, I've got instructions for you in ec2/README.md.) In a cloud environment like EC2 where your server's IP address is dynamic, this is a good time to assign a static IP (like a EC2 Elastic IP).
 
-Set up your environment and paste in the two parts of your access key that you just downloaded: 
+* Choose Ubuntu 13.04 amd64 as your operating system (aka a Linux distribution). You won't need much memory or disk space. 768 MB of memory (RAM) and 4G of disk space should be plenty.
 
-	sudo apt-get install ec2-api-tools
+* Once the machine is running, set up Reverse DNS. Each ISP handles that differently. You'll have to figure out from your ISP how to do that. Set the reverse DNS to the hostname you chose above (in my case `box.occams.info`).
 
-	export AWS_ACCESS_KEY=your_access_key_id
-	export AWS_SECRET_KEY=your_secret_key
-	export EC2_URL=ec2.us-east-1.amazonaws.com
-	export AWS_AZ=us-east-1a
+* Log in with SSH. Again, your ISP will probably give you some instructions on how to do that. If your personal computer has a command line, you'll be doing something like this:
+
+	ssh -i yourkey.pem user@10.20.30.40
 	
-The first time around, create a new volume (disk drive) to store your stuff.
+You should see a command prompt roughly similar to:
 
-	source ec2/new_volume.sh
+	root@box:~# (<-- blinking cursor here)
+
 	
-If you want to reuse an existing volume:
+All command-line instructions below assume you've logged into your machine with SSH already.
 
-	export VOLUME_ID=...your existing volume id...
+Configuring the Server
+----------------------
+
+After logging into your server with SSH, type the following in the console:
+
+	sudo apt-get install -y git
+	git clone https://github.com/tauberer/mailinabox
+	cd mailinabox
 	
-Here we're using the Ubuntu 13.04 amd64 instance-store-backed AMI in the us-east region. You can select another at http://cloud-images.ubuntu.com/locator/ec2/.
-
-Generate a new "keypair" (if you don't have one) that will let you SSH into your machine after you start it:
-
-	ec2addkey mykey > mykey.pem
-	chmod go-rw mykey.pem
-
-Then launch a new instance. We're creating a m1.small instance --- it's the smallest instance that can use an instance-store-backed AMI. So charges will start to apply.
-
-	source ec2/start_instance.sh
-
-It will wait until the instance is available.
-
-You'll probably want to associate it with an Elastic IP. If you do, you'll need to update the INSTANCE_IP variable.
+Now you've got the Mail in a Box source code stored on your server. The next command starts the automatic configuration of the server:
 	
-Configure the server:
-
-	ssh -i mykey.pem ubuntu@$INSTANCE_IP
-
-Somehow download these files.
-
-	sh scripts/index.sh
-	...
-	logout
+	sudo scripts/start.sh
 	
-You'll also want to set reverse DNS (PTR), which is something your hosting provider will probably have a control panel for.
+You will be asked to enter the hostname you chose and the public IP address of the server as assigned by your ISP.
 
-Terminate your instance with:
+After that you'll see a lot of output as system programs are installed and configured.
 
-	ec2-terminate-instances $INSTANCE
+At the end you'll be asked to create a mail user for the system. Enter the user's email address (which is also his IMAP/SMTP username) and then its password.
 
+It is safe to run the start script again in case something went wrong.
 
