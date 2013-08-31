@@ -54,12 +54,16 @@ for fn in $STORAGE_ROOT/dns/*.txt; do
            )
 
            NS          ns1.$zone.
+           NS          ns2.$zone.
            IN     A    $PUBLIC_IP
            MX     10   mail.$zone.
            
            300    TXT  "v=spf1 mx -all"
 
+ns1        IN     A    $PUBLIC_IP
+ns2        IN     A    $PUBLIC_IP
 mail       IN     A    $PUBLIC_IP
+www        IN     A    $PUBLIC_IP
 EOF
 
 	# If OpenDKIM is set up, append that information to the zone.
