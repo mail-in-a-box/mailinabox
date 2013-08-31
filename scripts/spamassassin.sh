@@ -33,8 +33,8 @@ plugin {
     antispam_backend = pipe
     antispam_spam_pattern_ignorecase = SPAM
     antispam_allow_append_to_spam = yes
-    antispam_pipe_program_spam_arg = /usr/bin/sa-learn-pipe.sh --spam
-    antispam_pipe_program_notspam_arg = /usr/bin/sa-learn-pipe.sh --ham
+    antispam_pipe_program_spam_args = /usr/bin/sa-learn-pipe.sh;--spam
+    antispam_pipe_program_notspam_args = /usr/bin/sa-learn-pipe.sh;--ham
     antispam_pipe_program = /bin/bash
 }
 EOF
