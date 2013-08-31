@@ -1,6 +1,6 @@
 # Spam filtering with spamassassin via spampd.
 
-apt-get -q -y install spampd dovecot-antispam
+apt-get -q -y install spampd dovecot-sieve dovecot-antispam
 
 # Hook into postfix. Replace dovecot with spampd as the mail delivery agent.
 tools/editconf.py /etc/postfix/main.cf virtual_transport=lmtp:[127.0.0.1]:10025

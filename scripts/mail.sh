@@ -111,11 +111,18 @@ EOF
 sed -i "s/#port = 143/port = 0/" /etc/dovecot/conf.d/10-master.conf
 sed -i "s/#port = 110/port = 0/" /etc/dovecot/conf.d/10-master.conf
 
-# Create a Unix domain socket specific for postgres to connect via LMTP because
-# postgres is already configured to use this location, and create a TCP socket
+# Create a Unix domain socket specific for postgres for auth and LMTP because
+# postgres is more easily configured to use these locations, and create a TCP socket
 # for spampd to inject mail on (if it's configured later). dovecot's standard
 # lmtp unix socket is also listening.
 cat > /etc/dovecot/conf.d/99-local.conf << EOF;
+service auth {
+  unix_listener /var/spool/postfix/private/auth {
+    mode = 0666
+    user = postfix
+    group = postfix
+  }
+}
 service lmtp {
   unix_listener /var/spool/postfix/private/dovecot-lmtp {
     user = postfix

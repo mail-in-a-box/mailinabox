@@ -48,3 +48,5 @@ EOF
 . scripts/dns_update.sh
 . scripts/add_mail_user.sh
 . scripts/users_update.sh
+. scripts/web.sh
+

@@ -1,11 +1,16 @@
-import imaplib, os
+#!/usr/bin/python3
+import imaplib, sys
 
-username = "testuser@" + os.environ.get("DOMAIN", "testdomain.com")
+if len(sys.argv) < 3:
+	print("Usage: tests/imap.py host username password")
+	sys.exit(1)
 
-M = imaplib.IMAP4_SSL(os.environ["INSTANCE_IP"])
-M.login(username, "testpw")
-M.select()
+host, username, pw = sys.argv[1:4]
+
+M = imaplib.IMAP4_SSL(host)
+M.login(username, pw)
 print("Login successful.")
+M.select()
 typ, data = M.search(None, 'ALL')
 for num in data[0].split():
     typ, data = M.fetch(num, '(RFC822)')

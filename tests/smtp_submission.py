@@ -1,16 +1,22 @@
-import smtplib, sys, os
+#!/usr/bin/python3
+import smtplib, sys
 
-fromaddr = "testuser@" + os.environ.get("DOMAIN", "testdomain.com")
+if len(sys.argv) < 3:
+        print("Usage: tests/smtp_submission.py host email.from pw  email.to")
+        sys.exit(1)
 
+host, fromaddr, pw, toaddr = sys.argv[1:5]
 msg = """From: %s
 To: %s
+Subject: SMTP server test
 
-This is a test message.""" % (fromaddr, sys.argv[1])
+This is a test message.""" % (fromaddr, toaddr)
 
-server = smtplib.SMTP(os.environ["INSTANCE_IP"], 587)
+server = smtplib.SMTP(host, 587)
 server.set_debuglevel(1)
 server.starttls()
-server.login(fromaddr, "testpw")
-server.sendmail(fromaddr, [sys.argv[1]], msg)
+server.login(fromaddr, pw)
+server.sendmail(fromaddr, [toaddr], msg)
 server.quit()
+
 
