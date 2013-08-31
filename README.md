@@ -33,7 +33,7 @@ All command-line instructions below assume you've logged into your machine with 
 Configuring the Server
 ----------------------
 
-After logging into your server with SSH, type the following in the console:
+After logging into your server with SSH and becoming root, type the following in the console:
 
 	sudo apt-get install -y git
 	git clone https://github.com/tauberer/mailinabox
@@ -47,7 +47,32 @@ You will be asked to enter the hostname you chose and the public IP address of t
 
 After that you'll see a lot of output as system programs are installed and configured.
 
-At the end you'll be asked to create a mail user for the system. Enter the user's email address (which is also his IMAP/SMTP username) and then its password.
+At the end you'll be asked to create a mail user for the system. Enter your email address. It doesn't have to be @... the hostname you chose earlier, but if it's not then every email address on that domain will have to be handled by your hostname.
+
+Enter the user's email address (which is also his IMAP/SMTP username) and then its password.
 
 It is safe to run the start script again in case something went wrong.
+
+Configuring DNS
+---------------
+
+Your server is set up as a nameserver to provide DNS information for the hostname you chose as well as the domain name in your email address. Go to your domain name registrar and tell it that `ns1.yourhostname` is your nameserver (DNS server). If it requires two, use `ns1.yourhostname` and `ns2.yourhostname`.
+
+For instance, in my case, I could tell my domain name registrar that `ns1.box.occams.info` and `ns2.box.occams.info` are the nameservers for `occams.info`.
+
+(In a more complex setup, you may have a different nameserver for your domain. In this case, you'll delegate DNS to your box for the box's own subdomain. In your main DNS, add a record like "box.occams.info. 3600 IN NS ns1.box.occams.info." and a second one for `ns2` (the final period may be important). This sets who is the authoritative server for the hostname. You'll then also need "ns1.box.ocacams.info IN A 10.20.30.40" providing the IP address of the authoritative server (and repeat for `ns2`). Then add an MX record on your main domain pointing to the hostname you chose for your server here so that you delegate mail for the domain to your new server using a record like "occams.info. 3600 IN MX 1 box.occams.info." (again the period at the end may be important). You'll also want to put an SPF record on your main domain like "occams.info IN TXT "v=spf1 a mx -all" ".)
+
+Configuring Your Mail Client
+----------------------------
+
+Your IMAP and SMTP server is the hostname you chose at the top. For IMAP, you must choose SSL and port 993. For SMTP, you must choose STARTTLS and port 587. Your username is your complete email address. And your password you entered during server setup earlier.
+
+So far you're using a "self-signed certificate" for SSL connections. That means you'll get warnings when you try to read and send mail about a security issue. It's safe to ignore those.
+
+Checking that it Worked
+-----------------------
+
+...
+
+
 
