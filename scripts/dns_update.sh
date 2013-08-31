@@ -1,5 +1,6 @@
 # Create nsd.conf and zone files, and updates the OpenDKIM signing tables.
 
+source /etc/mailinabox.conf
 PUBLIC_IP=`cat $STORAGE_ROOT/dns/our_ip`
 
 # Create the top of nsd.conf.
