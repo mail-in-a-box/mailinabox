@@ -20,5 +20,3 @@ if [ -z "$DISABLE_FIREWALL" ]; then
 	ufw --force enable;
 fi
 
-
-
