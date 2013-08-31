@@ -51,6 +51,7 @@ elif sys.argv[1] == "user" and sys.argv[2] in ("add", "password"):
 		# Create the user's INBOX and subscribe it.
 		conn.commit() # write it before next step
 		subprocess.check_call(["doveadm", "mailbox", "create", "-u", email, "-s", "INBOX"])
+		subprocess.check_call(["doveadm", "mailbox", "create", "-u", email, "-s", "Spam"])
 	elif sys.argv[2] == "password":
 		c.execute("UPDATE users SET password=? WHERE email=?", (pw, email))
 		if c.rowcount != 1:

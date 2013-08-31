@@ -2,6 +2,15 @@
 
 source /etc/mailinabox.conf
 PUBLIC_IP=`cat $STORAGE_ROOT/dns/our_ip`
+PRIMARY_HOSTNAME=`cat $STORAGE_ROOT/dns/primary_hostname`
+
+# Ensure a zone file exists for every domain name of a mail user.
+for mail_user in `tools/mail.py user`; do
+	domain=`echo $mail_user | sed s/.*@//`
+	if [ ! -f $STORAGE_ROOT/dns/$domain.txt ]; then
+		echo "" > $STORAGE_ROOT/dns/$domain.txt;
+	fi
+done
 
 # Create the top of nsd.conf.
 
@@ -80,7 +89,10 @@ EOF
 
 	# OpenDKIM
 	
-	echo "$zone $zone:mail:$STORAGE_ROOT/mail/dkim/mail.private" >> /etc/opendkim/KeyTable
+	# For every domain, we sign against the key listed in PRIMARY_HOSTNAME's DNS,
+	# in case the user is just delegating MX and hasn't set the DKIM info on the
+	# main DNS record.
+	echo "$zone $PRIMARY_HOSTNAME:mail:$STORAGE_ROOT/mail/dkim/mail.private" >> /etc/opendkim/KeyTable
 	echo "*@$zone $zone" >> /etc/opendkim/SigningTable
 
 done

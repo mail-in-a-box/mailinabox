@@ -38,6 +38,7 @@ fi
 
 cat > /etc/mailinabox.conf << EOF;
 STORAGE_ROOT=$STORAGE_ROOT
+PUBLIC_HOSTNAME=$PUBLIC_HOSTNAME
 EOF
 
 . scripts/system.sh
