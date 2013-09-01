@@ -6,7 +6,8 @@
 # Install packages.
 
 DEBIAN_FRONTEND=noninteractive apt-get install -q -y \
-	postfix postgrey dovecot-core dovecot-imapd dovecot-lmtpd dovecot-sqlite sqlite3
+	postfix postgrey \
+	dovecot-core dovecot-imapd dovecot-lmtpd dovecot-sqlite sqlite3
 
 # POSTFIX
 
@@ -27,8 +28,22 @@ tools/editconf.py /etc/postfix/main.cf \
 tools/editconf.py /etc/postfix/main.cf \
 	smtpd_sasl_type=dovecot \
 	smtpd_sasl_path=private/auth \
-	smtpd_sasl_auth_enable=yes \
-	smtpd_recipient_restrictions=permit_sasl_authenticated,permit_mynetworks,reject_unauth_destination
+	smtpd_sasl_auth_enable=yes
+
+# Who can send outbound mail?
+# permit_sasl_authenticated: Authenticated users (i.e. on port 587).
+# permit_mynetworks: Mail that originates locally.
+# reject_unauth_destination: No one else. (Permits mail whose destination is local and rejects other mail.)
+tools/editconf.py /etc/postfix/main.cf \
+	smtpd_relay_restrictions=permit_sasl_authenticated,permit_mynetworks,reject_unauth_destination
+
+# Who can send mail to us?
+# permit_sasl_authenticated: Authenticated users (i.e. on port 587).
+# permit_mynetworks: Mail that originates locally.
+# reject_rbl_client: Reject connections from IP addresses blacklisted in zen.spamhaus.org
+# check_policy_service: Apply greylisting using postgrey.
+tools/editconf.py /etc/postfix/main.cf \
+	smtpd_recipient_restrictions=permit_sasl_authenticated,permit_mynetworks,"reject_rbl_client zen.spamhaus.org","check_policy_service inet:127.0.0.1:10023"
 
 tools/editconf.py /etc/postfix/main.cf \
 	inet_interfaces=all \
