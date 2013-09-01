@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import sys, sqlite3, subprocess
+import sys, sqlite3, subprocess, shutil, os
 
 # Load STORAGE_ROOT setting from /etc/mailinabox.conf.
 env = { }
@@ -58,6 +58,16 @@ elif sys.argv[1] == "user" and sys.argv[2] in ("add", "password"):
 		
 		if "INBOX" not in existing_mboxes: subprocess.check_call(["doveadm", "mailbox", "create", "-u", email, "-s", "INBOX"])
 		if "Spam" not in existing_mboxes: subprocess.check_call(["doveadm", "mailbox", "create", "-u", email, "-s", "Spam"])
+		
+		# Create the user's sieve script to move spam into the Spam folder, and make it owned by mail.
+		maildirstat = os.stat(env["STORAGE_ROOT"] + "/mail/mailboxes")
+		(em_user, em_domain) = email.split("@", 1)
+		user_mail_dir = env["STORAGE_ROOT"] + ("/mail/mailboxes/%s/%s" % (em_domain, em_user))
+		if not os.path.exists(user_mail_dir):
+			os.makedirs(user_mail_dir)
+			os.chown(user_mail_dir, maildirstat.st_uid, maildirstat.st_gid)
+		shutil.copyfile("conf/dovecot_sieve.txt", user_mail_dir + "/.dovecot.sieve")
+		os.chown(user_mail_dir + "/.dovecot.sieve", maildirstat.st_uid, maildirstat.st_gid)
 		
 	elif sys.argv[2] == "password":
 		c.execute("UPDATE users SET password=? WHERE email=?", (pw, email))

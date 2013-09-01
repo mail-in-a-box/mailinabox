@@ -6,8 +6,8 @@
 # message over LMTP to dovecot for local delivery.
 
 # In order to move spam automatically into the Spam folder we use the dovecot sieve
-# plugin. Unfortunately, each mail box needs its own sieve script set to do the
-# filtering work. So users_update.sh must be run any time a new mail user is created.
+# plugin. The tools/mail.py tool creates the necessary sieve script for each mail
+# user when the mail user is created.
 
 # Install packages.
 apt-get -q -y install spampd dovecot-sieve dovecot-antispam
