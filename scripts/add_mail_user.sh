@@ -1,15 +1,13 @@
-EMAIL_ADDR=$1
-if [ -z "$EMAIL_ADDR" ]; then
-	echo
-	echo "Set up your first email account..."
-        read -e -i "user@`hostname`" -p "Email Address: " EMAIL_ADDR
-fi
+# Create a new email user.
+##########################
 
-EMAIL_PW=$2
-if [ -z "$EMAIL_PW" ]; then
-        read -e -p "Email Password: " EMAIL_PW
-fi
+echo
+echo "Set up your first email account..."
+read -e -i "user@`hostname`" -p "Email Address: " EMAIL_ADDR
+read -e -p "Email Password (blank to skip): " EMAIL_PW
 
-echo "INSERT INTO users (email, password) VALUES ('$EMAIL_ADDR', '`doveadm pw -s SHA512-CRYPT -p $EMAIL_PW`');" \
-	| sqlite3 $STORAGE_ROOT/mail/users.sqlite
+if [ ! -z "$EMAIL_PW" ]; then
+	echo "INSERT INTO users (email, password) VALUES ('$EMAIL_ADDR', '`doveadm pw -s SHA512-CRYPT -p $EMAIL_PW`');" \
+		| sqlite3 $STORAGE_ROOT/mail/users.sqlite
+fi
 

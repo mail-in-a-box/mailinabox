@@ -1,7 +1,14 @@
-# Configures a postfix SMTP server and dovecot IMAP server.
+# SMTP/IMAP: Postfix and Dovecot
+################################
+
+# The SMTP server is listening on port 25 for incoming mail (mail for us) and on
+# port 587 for outgoing mail (i.e. mail you send). Port 587 uses STARTTLS (not SSL)
+# and you'll authenticate with your full email address and mail password.
 #
-# We configure these together because postfix delivers mail
-# directly to dovecot, so they basically rely on each other.
+# The IMAP server is listening on port 993 and uses SSL. There is no IMAP server
+# listening on port 143 because it is not encrypted on that port.
+
+# We configure these together because postfix's configuration relies heavily on dovecot.
 
 # Install packages.
 
@@ -9,22 +16,24 @@ DEBIAN_FRONTEND=noninteractive apt-get install -q -y \
 	postfix postgrey \
 	dovecot-core dovecot-imapd dovecot-lmtpd dovecot-sqlite sqlite3
 
-# POSTFIX
-
 mkdir -p $STORAGE_ROOT/mail
 
-# TLS configuration
-sed -i "s/#submission/submission/" /etc/postfix/master.cf # enable submission port (not in Drew Crawford's instructions)
+# POSTFIX
+#########
+
+# Enable the 'submission' port 587 listener.
+sed -i "s/#submission/submission/" /etc/postfix/master.cf
+
+# Enable TLS and require it for all user authentication.
 tools/editconf.py /etc/postfix/main.cf \
 	smtpd_use_tls=yes\
 	smtpd_tls_auth_only=yes \
 	smtp_tls_security_level=may \
 	smtp_tls_loglevel=2 \
 	smtpd_tls_received_header=yes
-	
 	# note: smtpd_use_tls=yes appears to already be the default, but we can never be too sure
 
-# authorization via dovecot
+# Postfix will query dovecot for user authentication.
 tools/editconf.py /etc/postfix/main.cf \
 	smtpd_sasl_type=dovecot \
 	smtpd_sasl_path=private/auth \
@@ -45,39 +54,46 @@ tools/editconf.py /etc/postfix/main.cf \
 tools/editconf.py /etc/postfix/main.cf \
 	smtpd_recipient_restrictions=permit_sasl_authenticated,permit_mynetworks,"reject_rbl_client zen.spamhaus.org","check_policy_service inet:127.0.0.1:10023"
 
+# Have postfix listen on all network interfaces, and set the name of the local machine
+# to localhost for xxx@localhost mail, but I don't think this will have any effect because
+# there is no true local mail delivery.
 tools/editconf.py /etc/postfix/main.cf \
 	inet_interfaces=all \
 	mydestination=localhost
 
-# message delivery is directly to dovecot
+# Handle all local mail delivery by passing it directly to dovecot over LMTP.
 tools/editconf.py /etc/postfix/main.cf virtual_transport=lmtp:unix:private/dovecot-lmtp
 
-# domain and user table is configured in a Sqlite3 database
+# Use a Sqlite3 database to check whether a destination email address exists,
+# and to perform any email alias rewrites.
 tools/editconf.py /etc/postfix/main.cf \
 	virtual_mailbox_domains=sqlite:/etc/postfix/virtual-mailbox-domains.cf \
 	virtual_mailbox_maps=sqlite:/etc/postfix/virtual-mailbox-maps.cf \
 	virtual_alias_maps=sqlite:/etc/postfix/virtual-alias-maps.cf \
 	local_recipient_maps=\$virtual_mailbox_maps
 
+# Here's the path to the database.
 db_path=$STORAGE_ROOT/mail/users.sqlite
 
+# SQL statement to check if we handle mail for a domain.
 cat > /etc/postfix/virtual-mailbox-domains.cf << EOF;
 dbpath=$db_path
 query = SELECT 1 FROM users WHERE email LIKE '%%@%s'
 EOF
 
+# SQL statement to check if we handle mail for a user.
 cat > /etc/postfix/virtual-mailbox-maps.cf << EOF;
 dbpath=$db_path
 query = SELECT 1 FROM users WHERE email='%s'
 EOF
 
+# SQL statement to rewrite an email address if an alias is present.
 cat > /etc/postfix/virtual-alias-maps.cf << EOF;
 dbpath=$db_path
 query = SELECT destination FROM aliases WHERE source='%s'
 EOF
 
-# create an empty mail users database if it doesn't yet exist
-
+# Create an empty database if it doesn't yet exist.
 if [ ! -f $db_path ]; then
 	echo Creating new user database: $db_path;
 	echo "CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL UNIQUE, password TEXT NOT NULL, extra);" | sqlite3 $db_path;
@@ -85,25 +101,26 @@ if [ ! -f $db_path ]; then
 fi
 
 # DOVECOT
+#########
 
-# The dovecot-imapd dovecot-lmtpd packages automatically enable those protocols.
+# The dovecot-imapd dovecot-lmtpd packages automatically enable IMAP and LMTP protocols.
 
-# mail storage location
+# Set the location where we'll store user mailboxes.
 tools/editconf.py /etc/dovecot/conf.d/10-mail.conf \
 	mail_location=maildir:$STORAGE_ROOT/mail/mailboxes/%d/%n \
 	mail_privileged_group=mail \
 	first_valid_uid=0
 
-# authentication mechanisms
+# Require that passwords are sent over SSL only, and allow the usual IMAP authentication mechanisms.
 tools/editconf.py /etc/dovecot/conf.d/10-auth.conf \
 	disable_plaintext_auth=yes \
 	"auth_mechanisms=plain login"
 
-# use SQL-based authentication, not the system users
+# Query out Sqlite3 database, and not system users, for authentication.
 sed -i "s/\(\!include auth-system.conf.ext\)/#\1/"  /etc/dovecot/conf.d/10-auth.conf
 sed -i "s/#\(\!include auth-sql.conf.ext\)/\1/"  /etc/dovecot/conf.d/10-auth.conf
 
-# how to access SQL
+# Configure how to access our Sqlite3 database. Not sure what userdb is for.
 cat > /etc/dovecot/conf.d/auth-sql.conf.ext << EOF;
 passdb {
   driver = sql
@@ -114,6 +131,8 @@ userdb {
   args = uid=mail gid=mail home=$STORAGE_ROOT/mail/mailboxes/%d/%n
 }
 EOF
+
+# Configure the SQL to query for a user's password.
 cat > /etc/dovecot/dovecot-sql.conf.ext << EOF;
 driver = sqlite
 connect = $db_path
@@ -121,15 +140,19 @@ default_pass_scheme = SHA512-CRYPT
 password_query = SELECT email as user, password FROM users WHERE email='%u';
 EOF
 
-# disable in-the-clear IMAP and POP because we're paranoid (we haven't even
+# Disable in-the-clear IMAP and POP because we're paranoid (we haven't even
 # enabled POP).
 sed -i "s/#port = 143/port = 0/" /etc/dovecot/conf.d/10-master.conf
 sed -i "s/#port = 110/port = 0/" /etc/dovecot/conf.d/10-master.conf
 
-# Create a Unix domain socket specific for postgres for auth and LMTP because
-# postgres is more easily configured to use these locations, and create a TCP socket
-# for spampd to inject mail on (if it's configured later). dovecot's standard
-# lmtp unix socket is also listening.
+# Have dovecot provide authorization and LMTP (local mail delivery) services.
+#
+# We have dovecot listen on a Unix domain socket for these services
+# in a manner that made postfix configuration above easy.
+#
+# We also have dovecot listen on port 10026 (localhost only) for LMTP
+# in case we have other services that want to deliver local mail, namly
+# spampd.
 cat > /etc/dovecot/conf.d/99-local.conf << EOF;
 service auth {
   unix_listener /var/spool/postfix/private/auth {
@@ -152,7 +175,7 @@ EOF
 
 # Drew Crawford sets the auth-worker process to run as the mail user, but we don't care if it runs as root.
 
-# Enable SSL.
+# Enable SSL and specify the location of the SSL certificate and private key files.
 tools/editconf.py /etc/dovecot/conf.d/10-ssl.conf \
 	ssl=required \
 	"ssl_cert=<$STORAGE_ROOT/ssl/ssl_certificate.pem" \
@@ -160,24 +183,26 @@ tools/editconf.py /etc/dovecot/conf.d/10-ssl.conf \
 	
 # The Dovecot installation already created a self-signed public/private key pair
 # in /etc/dovecot/dovecot.pem and /etc/dovecot/private/dovecot.pem, which we'll
-# use unless certificates already exist.
+# use unless certificates already exist. We'll move them into $STORAGE_ROOT/ssl
+# unless files exist there already.
 mkdir -p $STORAGE_ROOT/ssl
 if [ ! -f $STORAGE_ROOT/ssl/ssl_certificate.pem ]; then cp /etc/dovecot/dovecot.pem $STORAGE_ROOT/ssl/ssl_certificate.pem; fi
 if [ ! -f $STORAGE_ROOT/ssl/ssl_private_key.pem ]; then cp /etc/dovecot/private/dovecot.pem $STORAGE_ROOT/ssl/ssl_private_key.pem; fi
 
+# Ensure configuration files are owned by dovecot and not world readable.
 chown -R mail:dovecot /etc/dovecot
 chmod -R o-rwx /etc/dovecot
 
+# Ensure mailbox files have a directory that exists and are owned by the mail user.
 mkdir -p $STORAGE_ROOT/mail/mailboxes
 chown -R mail.mail $STORAGE_ROOT/mail/mailboxes
 
-# restart services
+# Restart services.
 service postfix restart
 service dovecot restart
 
-# allow mail-related ports in the firewall
+# Allow mail-related ports in the firewall.
 ufw allow smtp
 ufw allow submission
 ufw allow imaps
-
 

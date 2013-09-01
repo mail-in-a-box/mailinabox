@@ -1,10 +1,19 @@
+# DNS: Creates DNS zone files
+#############################
+
 # Create nsd.conf and zone files, and updates the OpenDKIM signing tables.
 
+# We set the administrative email address for every domain to domain_contact@[domain.com].
+# You should probably create an alias to your email address.
+
+# This script is safe to run on its own.
+
+# Load $STORAGE_ROOT, $PUBLIC_IP, and $PRIMARY_HOSTNAME.
 source /etc/mailinabox.conf
 PUBLIC_IP=`cat $STORAGE_ROOT/dns/our_ip`
 PRIMARY_HOSTNAME=`cat $STORAGE_ROOT/dns/primary_hostname`
 
-# Ensure a zone file exists for every domain name of a mail user.
+# Ensure a zone file exists for every domain name in use by a mail user.
 for mail_user in `tools/mail.py user`; do
 	domain=`echo $mail_user | sed s/.*@//`
 	if [ ! -f $STORAGE_ROOT/dns/$domain.txt ]; then
@@ -37,12 +46,16 @@ truncate --size 0 /etc/opendkim/KeyTable
 truncate --size 0 /etc/opendkim/SigningTable
 
 for fn in $STORAGE_ROOT/dns/*.txt; do
+	# $fn is the zone configuration file, which is just a placeholder now.
+	#     For every file like mydomain.com.txt we'll create zone information
+	#     for that domain. We don't actually read the file.
+	# $fn2 is the file without the directory.
+	# $zone is the domain name (just mydomain.com).
 	fn2=`basename $fn`
 	zone=`echo $fn2 | sed "s/.txt\$//"`
 	
-	# If the zone file exists, increment the serial number.
-	# TODO: This needs to be done better so that the existing serial number is
-	# persisted in the storage area.
+	# If the zone file exists, get the existing zone serial number so we can increment it.
+	# TODO: This needs to be done better so that the existing serial number is persisted in the storage area.
 	serial=`date +"%Y%m%d00"`
 	if [ -f /etc/nsd3/zones/$fn2 ]; then
 		existing_serial=`grep "serial number" /etc/nsd3/zones/$fn2 | sed "s/; serial number//"`
@@ -51,6 +64,7 @@ for fn in $STORAGE_ROOT/dns/*.txt; do
 		fi
 	fi
 
+	# Create the zone file.
 	cat > /etc/nsd3/zones/$fn2 << EOF;
 \$ORIGIN $zone.    ; default zone domain
 \$TTL 86400           ; default time to live
@@ -76,22 +90,28 @@ mail       IN     A    $PUBLIC_IP
 www        IN     A    $PUBLIC_IP
 EOF
 
-	# If OpenDKIM is set up, append that information to the zone.
+	# If OpenDKIM is set up, append the suggested TXT record to the zone.
 	if [ -f "$STORAGE_ROOT/mail/dkim/mail.txt" ]; then
 		cat "$STORAGE_ROOT/mail/dkim/mail.txt" >> /etc/nsd3/zones/$fn2;
 	fi
 	
+	# Add this zone file to the main nsd configuration file.
 	cat >> /etc/nsd3/nsd.conf << EOF;
 zone:
 	name: $zone
 	zonefile: $fn2
 EOF
 
-	# OpenDKIM
-	
-	# For every domain, we sign against the key listed in PRIMARY_HOSTNAME's DNS,
-	# in case the user is just delegating MX and hasn't set the DKIM info on the
-	# main DNS record.
+	# Append a record to OpenDKIM's KeyTable and SigningTable. The SigningTable maps
+	# email addresses to signing information. The KeyTable maps specify the hostname,
+	# the selector, and the path to the private key.
+	#
+	# Just in case we don't actually host the DNS for all domains of our mail users,
+	# we assume that DKIM is at least configured in the DNS of $PRIMARY_HOSTNAME and
+	# we use that host for all DKIM signatures.
+	#
+	# In SigningTable, we map every email address to a key record called $zone.
+	# Then we specify for the key record named $zone its domain, selector, and key.
 	echo "$zone $PRIMARY_HOSTNAME:mail:$STORAGE_ROOT/mail/dkim/mail.private" >> /etc/opendkim/KeyTable
 	echo "*@$zone $zone" >> /etc/opendkim/SigningTable
 

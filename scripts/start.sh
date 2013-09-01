@@ -1,4 +1,9 @@
+# This is the entry point for configuring the system.
+#####################################################
+
 # Check system setup.
+
+# Check that SSH login with password is disabled. Stop if it's enabled.
 if grep -q "^PasswordAuthentication yes" /etc/ssh/sshd_config \
  || ! grep -q "^PasswordAuthentication no" /etc/ssh/sshd_config ; then
         echo
@@ -10,7 +15,8 @@ if grep -q "^PasswordAuthentication yes" /etc/ssh/sshd_config \
         exit
 fi
 
-# Gather information from the user.
+# Gather information from the user about the hostname and public IP
+# address of this host.
 if [ -z "$PUBLIC_HOSTNAME" ]; then
 	echo
 	echo "Enter the hostname you want to assign to this machine."
@@ -30,17 +36,23 @@ if [ -z "$PUBLIC_IP" ]; then
 	read -e -i "`hostname -i`" -p "Public IP: " PUBLIC_IP
 fi
 
+# Create the user named "userconfig-data" and store all persistent user
+# data (mailboxes, etc.) in that user's home directory.
 if [ -z "$STORAGE_ROOT" ]; then
-	if [ ! -d /home/user-data ]; then useradd -m user-data; fi
-	STORAGE_ROOT=/home/user-data
+	STORAGE_USER=user-data
+	if [ ! -d /home/$STORAGE_USER ]; then useradd -m $STORAGE_USER; fi
+	STORAGE_ROOT=/home/$STORAGE_USER
 	mkdir -p $STORAGE_ROOT
 fi
 
+# Save the global options in /etc/mailinabox.conf so that standalone
+# tools know where to look for data.
 cat > /etc/mailinabox.conf << EOF;
 STORAGE_ROOT=$STORAGE_ROOT
 PUBLIC_HOSTNAME=$PUBLIC_HOSTNAME
 EOF
 
+# Start service configuration.
 . scripts/system.sh
 . scripts/dns.sh
 . scripts/mail.sh
@@ -49,5 +61,4 @@ EOF
 . scripts/dns_update.sh
 . scripts/add_mail_user.sh
 . scripts/users_update.sh
-. scripts/web.sh
 

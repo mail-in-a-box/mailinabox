@@ -1,10 +1,17 @@
-# Configures a DNS server using nsd.
-#
+# DNS: Configure a DNS server using nsd
+#######################################
+
 # After running this script, you also must run scripts/dns_update.sh,
-# and any time a zone file is added/changed/removed. It should be
-# run after DKIM is configured, however.
+# and any time a zone file is added/changed/removed, and any time a
+# new domain name becomes in use by a mail user.
+#
+# This script will turn on DNS for $PUBLIC_HOSTNAME.
+
+# Install nsd3, our DNS server software.
 
 apt-get -qq -y install nsd3
+
+# Get configuraton information.
 
 if [ -z "$PUBLIC_HOSTNAME" ]; then
 	PUBLIC_HOSTNAME=example.org
@@ -14,6 +21,8 @@ if [ -z "$PUBLIC_IP" ]; then
 	# works on EC2 only...
 	PUBLIC_IP=`wget -q -O- http://instance-data/latest/meta-data/public-ipv4`
 fi
+
+# Prepare nsd3's configuration.
 
 sudo mkdir -p /var/run/nsd3
 mkdir -p "$STORAGE_ROOT/dns";
@@ -34,7 +43,11 @@ if [ ! -f "$STORAGE_ROOT/dns/$PUBLIC_HOSTNAME.txt" ]; then
 EOF
 fi
 
-chown -R ubuntu.ubuntu $STORAGE_ROOT/dns
+# Let the storage user own all DNS configuration files.
+
+chown -R $STORAGE_USER.$STORAGE_USER $STORAGE_ROOT/dns
+
+# Permit DNS queries on TCP/UDP in the firewall.
 
 ufw allow domain
 
