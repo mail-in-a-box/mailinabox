@@ -48,10 +48,17 @@ elif sys.argv[1] == "user" and sys.argv[2] in ("add", "password"):
 			print("User already exists.")
 			sys.exit(1)
 			
-		# Create the user's INBOX and subscribe it.
 		conn.commit() # write it before next step
-		subprocess.check_call(["doveadm", "mailbox", "create", "-u", email, "-s", "INBOX"])
-		subprocess.check_call(["doveadm", "mailbox", "create", "-u", email, "-s", "Spam"])
+		
+		# Create the user's INBOX and Spam folders and subscribe them.
+
+		# Check if the mailboxes exist before creating them. When creating a user that had previously
+		# been deleted, the mailboxes will still exist because they are still on disk.
+		existing_mboxes = subprocess.check_output(["doveadm", "mailbox", "list", "-u", email, "-8"]).decode("utf8").split("\n")
+		
+		if "INBOX" not in existing_mboxes: subprocess.check_call(["doveadm", "mailbox", "create", "-u", email, "-s", "INBOX"])
+		if "Spam" not in existing_mboxes: subprocess.check_call(["doveadm", "mailbox", "create", "-u", email, "-s", "Spam"])
+		
 	elif sys.argv[2] == "password":
 		c.execute("UPDATE users SET password=? WHERE email=?", (pw, email))
 		if c.rowcount != 1:
