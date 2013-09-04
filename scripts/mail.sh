@@ -151,8 +151,11 @@ sed -i "s/#port = 110/port = 0/" /etc/dovecot/conf.d/10-master.conf
 # in a manner that made postfix configuration above easy.
 #
 # We also have dovecot listen on port 10026 (localhost only) for LMTP
-# in case we have other services that want to deliver local mail, namly
+# in case we have other services that want to deliver local mail, namely
 # spampd.
+#
+# Also increase the number of allowed connections per mailbox because we
+# all have so many devices lately.
 cat > /etc/dovecot/conf.d/99-local.conf << EOF;
 service auth {
   unix_listener /var/spool/postfix/private/auth {
@@ -171,6 +174,10 @@ service lmtp {
     port = 10026
   }
 }
+
+protocol imap {
+  mail_max_userip_connections = 20
+}
 EOF
 
 # Drew Crawford sets the auth-worker process to run as the mail user, but we don't care if it runs as root.
@@ -188,6 +195,8 @@ tools/editconf.py /etc/dovecot/conf.d/10-ssl.conf \
 mkdir -p $STORAGE_ROOT/ssl
 if [ ! -f $STORAGE_ROOT/ssl/ssl_certificate.pem ]; then cp /etc/dovecot/dovecot.pem $STORAGE_ROOT/ssl/ssl_certificate.pem; fi
 if [ ! -f $STORAGE_ROOT/ssl/ssl_private_key.pem ]; then cp /etc/dovecot/private/dovecot.pem $STORAGE_ROOT/ssl/ssl_private_key.pem; fi
+
+# 
 
 # Ensure configuration files are owned by dovecot and not world readable.
 chown -R mail:dovecot /etc/dovecot
