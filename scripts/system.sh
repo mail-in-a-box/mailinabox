@@ -1,6 +1,6 @@
 # Base system configuration.
 
-apt-get -q update
+apt-get -q -q update
 apt-get -q -y upgrade
 
 # Turn on basic services:

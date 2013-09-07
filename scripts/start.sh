@@ -59,6 +59,8 @@ EOF
 . scripts/dkim.sh
 . scripts/spamassassin.sh
 . scripts/dns_update.sh
+. scripts/web.sh
+. scripts/webmail.sh
 
 if [ -z `tools/mail.py user` ]; then
 	# The outut of "tools/mail.py user" is a list of mail users. If there
