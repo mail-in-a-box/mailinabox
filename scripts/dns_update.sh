@@ -69,7 +69,7 @@ for fn in $STORAGE_ROOT/dns/*.txt; do
 \$ORIGIN $zone.    ; default zone domain
 \$TTL 86400           ; default time to live
 
-@ IN SOA ns1.$zone. domain_contact.$zone. (
+@ IN SOA ns1.$zone. hostmaster.$PRIMARY_HOSTNAME. (
            $serial     ; serial number
            28800       ; Refresh
            7200        ; Retry

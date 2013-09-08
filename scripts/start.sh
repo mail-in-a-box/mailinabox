@@ -69,5 +69,6 @@ if [ -z `tools/mail.py user` ]; then
 	echo "Let's create your first mail user."
 	read -e -i "user@`hostname`" -p "Email Address: " EMAIL_ADDR
 	tools/mail.py user add $EMAIL_ADDR # will ask for password
+	tools/mail.py alias add hostmaster@$PUBLIC_HOSTNAME $EMAIL_ADDR
 fi
 
