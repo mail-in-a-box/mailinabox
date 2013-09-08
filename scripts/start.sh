@@ -50,6 +50,7 @@ fi
 cat > /etc/mailinabox.conf << EOF;
 STORAGE_ROOT=$STORAGE_ROOT
 PUBLIC_HOSTNAME=$PUBLIC_HOSTNAME
+PUBLIC_IP=$PUBLIC_IP
 EOF
 
 # Start service configuration.

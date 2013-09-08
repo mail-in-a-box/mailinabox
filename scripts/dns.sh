@@ -11,29 +11,10 @@
 
 apt-get -qq -y install nsd3
 
-# Get configuraton information.
-
-if [ -z "$PUBLIC_HOSTNAME" ]; then
-	PUBLIC_HOSTNAME=example.org
-fi
-
-if [ -z "$PUBLIC_IP" ]; then
-	# works on EC2 only...
-	PUBLIC_IP=`wget -q -O- http://instance-data/latest/meta-data/public-ipv4`
-fi
-
 # Prepare nsd3's configuration.
 
 sudo mkdir -p /var/run/nsd3
 mkdir -p "$STORAGE_ROOT/dns";
-
-# Store our desired IP address (to put in the zone files) for later.
-# Also store our primary hostname, which we'll use for all DKIM signatures
-# in case the user is only delegating MX and we aren't setting DKIM on
-# the main DNS.
-
-echo $PUBLIC_IP > $STORAGE_ROOT/dns/our_ip
-echo $PUBLIC_HOSTNAME > $STORAGE_ROOT/dns/primary_hostname
 
 # Create the default zone if it doesn't exist.
 

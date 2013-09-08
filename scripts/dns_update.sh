@@ -8,10 +8,7 @@
 
 # This script is safe to run on its own.
 
-# Load $STORAGE_ROOT, $PUBLIC_IP, and $PRIMARY_HOSTNAME.
-source /etc/mailinabox.conf
-PUBLIC_IP=`cat $STORAGE_ROOT/dns/our_ip`
-PRIMARY_HOSTNAME=`cat $STORAGE_ROOT/dns/primary_hostname`
+source /etc/mailinabox.conf # load global vars
 
 # Ensure a zone file exists for every domain name in use by a mail user.
 for mail_user in `tools/mail.py user`; do
@@ -69,7 +66,7 @@ for fn in $STORAGE_ROOT/dns/*.txt; do
 \$ORIGIN $zone.    ; default zone domain
 \$TTL 86400           ; default time to live
 
-@ IN SOA ns1.$PRIMARY_HOSTNAME. hostmaster.$PRIMARY_HOSTNAME. (
+@ IN SOA ns1.$PUBLIC_HOSTNAME. hostmaster.$PUBLIC_HOSTNAME. (
            $serial     ; serial number
            28800       ; Refresh
            7200        ; Retry
@@ -77,18 +74,18 @@ for fn in $STORAGE_ROOT/dns/*.txt; do
            86400       ; Min TTL
            )
 
-           NS          ns1.$PRIMARY_HOSTNAME.
-           NS          ns2.$PRIMARY_HOSTNAME.
+           NS          ns1.$PUBLIC_HOSTNAME.
+           NS          ns2.$PUBLIC_HOSTNAME.
            IN     A    $PUBLIC_IP
-           MX     10   $PRIMARY_HOSTNAME.
+           MX     10   $PUBLIC_HOSTNAME.
 
            300    TXT  "v=spf1 mx -all"
 
 www        IN     A    $PUBLIC_IP
 EOF
 
-	# In PRIMARY_HOSTNAME, also define ns1 and ns2.
-	if [ "$zone" = $PRIMARY_HOSTNAME ]; then
+	# In PUBLIC_HOSTNAME, also define ns1 and ns2.
+	if [ "$zone" = $PUBLIC_HOSTNAME ]; then
 		cat >> /etc/nsd3/zones/$fn2 << EOF;
 ns1        IN     A    $PUBLIC_IP
 ns2        IN     A    $PUBLIC_IP
@@ -112,12 +109,12 @@ EOF
 	# the selector, and the path to the private key.
 	#
 	# Just in case we don't actually host the DNS for all domains of our mail users,
-	# we assume that DKIM is at least configured in the DNS of $PRIMARY_HOSTNAME and
+	# we assume that DKIM is at least configured in the DNS of $PUBLIC_HOSTNAME and
 	# we use that host for all DKIM signatures.
 	#
 	# In SigningTable, we map every email address to a key record called $zone.
 	# Then we specify for the key record named $zone its domain, selector, and key.
-	echo "$zone $PRIMARY_HOSTNAME:mail:$STORAGE_ROOT/mail/dkim/mail.private" >> /etc/opendkim/KeyTable
+	echo "$zone $PUBLIC_HOSTNAME:mail:$STORAGE_ROOT/mail/dkim/mail.private" >> /etc/opendkim/KeyTable
 	echo "*@$zone $zone" >> /etc/opendkim/SigningTable
 
 done
