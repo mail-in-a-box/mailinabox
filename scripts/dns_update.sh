@@ -69,7 +69,7 @@ for fn in $STORAGE_ROOT/dns/*.txt; do
 \$ORIGIN $zone.    ; default zone domain
 \$TTL 86400           ; default time to live
 
-@ IN SOA ns1.$zone. hostmaster.$PRIMARY_HOSTNAME. (
+@ IN SOA ns1.$PRIMARY_HOSTNAME. hostmaster.$PRIMARY_HOSTNAME. (
            $serial     ; serial number
            28800       ; Refresh
            7200        ; Retry
@@ -77,18 +77,23 @@ for fn in $STORAGE_ROOT/dns/*.txt; do
            86400       ; Min TTL
            )
 
-           NS          ns1.$zone.
-           NS          ns2.$zone.
+           NS          ns1.$PRIMARY_HOSTNAME.
+           NS          ns2.$PRIMARY_HOSTNAME.
            IN     A    $PUBLIC_IP
-           MX     10   mail.$zone.
-           
+           MX     10   $PRIMARY_HOSTNAME.
+
            300    TXT  "v=spf1 mx -all"
 
-ns1        IN     A    $PUBLIC_IP
-ns2        IN     A    $PUBLIC_IP
-mail       IN     A    $PUBLIC_IP
 www        IN     A    $PUBLIC_IP
 EOF
+
+	# In PRIMARY_HOSTNAME, also define ns1 and ns2.
+	if [ "$zone" = $PRIMARY_HOSTNAME ]; then
+		cat >> /etc/nsd3/zones/$fn2 << EOF;
+ns1        IN     A    $PUBLIC_IP
+ns2        IN     A    $PUBLIC_IP
+EOF
+	fi
 
 	# If OpenDKIM is set up, append the suggested TXT record to the zone.
 	if [ -f "$STORAGE_ROOT/mail/dkim/mail.txt" ]; then

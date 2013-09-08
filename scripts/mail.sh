@@ -12,9 +12,12 @@
 
 # Install packages.
 
+source /etc/mailinabox.conf # load global vars
+
 DEBIAN_FRONTEND=noninteractive apt-get install -q -y \
 	postfix postgrey \
-	dovecot-core dovecot-imapd dovecot-lmtpd dovecot-sqlite sqlite3
+	dovecot-core dovecot-imapd dovecot-lmtpd dovecot-sqlite sqlite3 \
+	openssl
 
 mkdir -p $STORAGE_ROOT/mail
 
@@ -26,12 +29,16 @@ sed -i "s/#submission/submission/" /etc/postfix/master.cf
 
 # Enable TLS and require it for all user authentication.
 tools/editconf.py /etc/postfix/main.cf \
-	smtpd_use_tls=yes\
+	smtpd_tls_security_level=may\
 	smtpd_tls_auth_only=yes \
-	smtp_tls_security_level=may \
-	smtp_tls_loglevel=2 \
+	smtpd_tls_cert_file=$STORAGE_ROOT/ssl/ssl_certificate.pem \
+	smtpd_tls_key_file=$STORAGE_ROOT/ssl/ssl_private_key.pem \
 	smtpd_tls_received_header=yes
-	# note: smtpd_use_tls=yes appears to already be the default, but we can never be too sure
+
+# When connecting to remote SMTP servers, prefer TLS.
+tools/editconf.py /etc/postfix/main.cf \
+	smtp_tls_security_level=may \
+	smtp_tls_loglevel=2
 
 # Postfix will query dovecot for user authentication.
 tools/editconf.py /etc/postfix/main.cf \
@@ -187,16 +194,22 @@ tools/editconf.py /etc/dovecot/conf.d/10-ssl.conf \
 	ssl=required \
 	"ssl_cert=<$STORAGE_ROOT/ssl/ssl_certificate.pem" \
 	"ssl_key=<$STORAGE_ROOT/ssl/ssl_private_key.pem" \
-	
-# The Dovecot installation already created a self-signed public/private key pair
-# in /etc/dovecot/dovecot.pem and /etc/dovecot/private/dovecot.pem, which we'll
-# use unless certificates already exist. We'll move them into $STORAGE_ROOT/ssl
-# unless files exist there already.
-mkdir -p $STORAGE_ROOT/ssl
-if [ ! -f $STORAGE_ROOT/ssl/ssl_certificate.pem ]; then cp /etc/dovecot/dovecot.pem $STORAGE_ROOT/ssl/ssl_certificate.pem; fi
-if [ ! -f $STORAGE_ROOT/ssl/ssl_private_key.pem ]; then cp /etc/dovecot/private/dovecot.pem $STORAGE_ROOT/ssl/ssl_private_key.pem; fi
 
-# 
+# SSL CERTIFICATE
+	
+# Create a self-signed certifiate.
+mkdir -p $STORAGE_ROOT/ssl
+if [ ! -f $STORAGE_ROOT/ssl/ssl_certificate.pem ]; then
+	openssl genrsa -des3 -passout pass:x -out /tmp/server.key 2048 # create key, but it has a password...
+	openssl rsa -passin pass:x -in /tmp/server.key -out $STORAGE_ROOT/ssl/ssl_private_key.pem # remove password and save it to the right location
+	rm /tmp/server.key # remove temporary password-laden key
+	openssl req -new -key $STORAGE_ROOT/ssl/ssl_private_key.pem -out $STORAGE_ROOT/ssl/ssl_cert_sign_req.csr \
+	  -subj "/C=/ST=/L=/O=/CN=$PUBLIC_HOSTNAME"
+	openssl x509 -req -days 365 \
+	  -in $STORAGE_ROOT/ssl/ssl_cert_sign_req.csr -signkey $STORAGE_ROOT/ssl/ssl_private_key.pem -out $STORAGE_ROOT/ssl/ssl_certificate.pem
+fi
+
+# PERMISSIONS / RESTART SERVICES
 
 # Ensure configuration files are owned by dovecot and not world readable.
 chown -R mail:dovecot /etc/dovecot
