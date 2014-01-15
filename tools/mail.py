@@ -66,7 +66,7 @@ elif sys.argv[1] == "user" and sys.argv[2] in ("add", "password"):
 		if not os.path.exists(user_mail_dir):
 			os.makedirs(user_mail_dir)
 			os.chown(user_mail_dir, maildirstat.st_uid, maildirstat.st_gid)
-		shutil.copyfile("../conf/dovecot_sieve.txt", user_mail_dir + "/.dovecot.sieve")
+		shutil.copyfile("conf/dovecot_sieve.txt", user_mail_dir + "/.dovecot.sieve")
 		os.chown(user_mail_dir + "/.dovecot.sieve", maildirstat.st_uid, maildirstat.st_gid)
 
 	elif sys.argv[2] == "password":
