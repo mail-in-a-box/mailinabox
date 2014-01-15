@@ -3,18 +3,6 @@
 
 # Check system setup.
 
-# Check that SSH login with password is disabled. Stop if it's enabled.
-if grep -q "^PasswordAuthentication yes" /etc/ssh/sshd_config \
- || ! grep -q "^PasswordAuthentication no" /etc/ssh/sshd_config ; then
-        echo
-        echo "The SSH server on this machine permits password-based login."
-        echo "Add your SSH public key to $HOME/.ssh/authorized_keys, check"
-        echo "check that you can log in without a password, set the option"
-        echo "'PasswordAuthentication no' in /etc/ssh/sshd_config, and then"
-	echo "restart the machine."
-        exit
-fi
-
 # Gather information from the user about the hostname and public IP
 # address of this host.
 if [ -z "$PUBLIC_HOSTNAME" ]; then
@@ -60,8 +48,6 @@ EOF
 . scripts/dkim.sh
 . scripts/spamassassin.sh
 . scripts/dns_update.sh
-. scripts/web.sh
-. scripts/webmail.sh
 
 if [ -z `tools/mail.py user` ]; then
 	# The outut of "tools/mail.py user" is a list of mail users. If there
