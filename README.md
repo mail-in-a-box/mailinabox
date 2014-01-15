@@ -21,8 +21,8 @@ The goals of this project are:
 * Configuration must be automated, concise, auditable, and idempotent.
 * Promote decentralization and encryption on the web.
 
-This project was inspired in part by the "NSA-proof your email in 2 hours" blog post by Drew Crawford 
-(http://sealedabstract.com/code/nsa-proof-your-e-mail-in-2-hours/), Sovereign by Alex Payne (https://github.com/al3x/sovereign) and 
+This project was inspired in part by the "NSA-proof your email in 2 hours" blog post by Drew Crawford
+(http://sealedabstract.com/code/nsa-proof-your-e-mail-in-2-hours/), Sovereign by Alex Payne (https://github.com/al3x/sovereign) and
 conversations with <a href="http://twitter.com/shevski" target="_blank">@shevski</a> and <a href="https://github.com/konklone" target="_blank">@konklone</a>.
 
 This setup is currently what's powering my own personal email.
@@ -44,12 +44,12 @@ Get a Server
 * Log in with SSH. Again, your ISP will probably give you some instructions on how to do that. If your personal computer has a command line, you'll be doing something like this:
 
 	ssh -i yourkey.pem user@10.20.30.40
-	
+
 You should see a command prompt roughly similar to:
 
 	root@box:~# (<-- blinking cursor here)
 
-	
+
 All command-line instructions below assume you've logged into your machine with SSH already.
 
 Configuring the Server
@@ -58,13 +58,13 @@ Configuring the Server
 After logging into your server with SSH and becoming root, type the following in the console:
 
 	sudo apt-get install -y git
-	git clone https://github.com/tauberer/mailinabox
+	git clone https://github.com/Pamplemousse/mailinabox
 	cd mailinabox
-	
+
 Now you've got the Mail in a Box source code stored on your server. The next command starts the automatic configuration of the server:
-	
+
 	sudo scripts/start.sh
-	
+
 You will be asked to enter the hostname you chose and the public IP address of the server as assigned by your ISP.
 
 After that you'll see a lot of output as system programs are installed and configured.
