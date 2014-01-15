@@ -47,18 +47,18 @@ elif sys.argv[1] == "user" and sys.argv[2] in ("add", "password"):
 		except sqlite3.IntegrityError:
 			print("User already exists.")
 			sys.exit(1)
-			
+
 		conn.commit() # write it before next step
-		
+
 		# Create the user's INBOX and Spam folders and subscribe them.
 
 		# Check if the mailboxes exist before creating them. When creating a user that had previously
 		# been deleted, the mailboxes will still exist because they are still on disk.
 		existing_mboxes = subprocess.check_output(["doveadm", "mailbox", "list", "-u", email, "-8"]).decode("utf8").split("\n")
-		
+
 		if "INBOX" not in existing_mboxes: subprocess.check_call(["doveadm", "mailbox", "create", "-u", email, "-s", "INBOX"])
 		if "Spam" not in existing_mboxes: subprocess.check_call(["doveadm", "mailbox", "create", "-u", email, "-s", "Spam"])
-		
+
 		# Create the user's sieve script to move spam into the Spam folder, and make it owned by mail.
 		maildirstat = os.stat(env["STORAGE_ROOT"] + "/mail/mailboxes")
 		(em_user, em_domain) = email.split("@", 1)
@@ -66,9 +66,9 @@ elif sys.argv[1] == "user" and sys.argv[2] in ("add", "password"):
 		if not os.path.exists(user_mail_dir):
 			os.makedirs(user_mail_dir)
 			os.chown(user_mail_dir, maildirstat.st_uid, maildirstat.st_gid)
-		shutil.copyfile("conf/dovecot_sieve.txt", user_mail_dir + "/.dovecot.sieve")
+		shutil.copyfile("../conf/dovecot_sieve.txt", user_mail_dir + "/.dovecot.sieve")
 		os.chown(user_mail_dir + "/.dovecot.sieve", maildirstat.st_uid, maildirstat.st_gid)
-		
+
 	elif sys.argv[2] == "password":
 		c.execute("UPDATE users SET password=? WHERE email=?", (pw, email))
 		if c.rowcount != 1:
