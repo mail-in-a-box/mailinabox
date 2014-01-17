@@ -29,7 +29,7 @@ server:
 
   # The directory for zonefile: files.
   zonesdir: "/etc/nsd3/zones"
-  
+
 # ZONES
 EOF
 
@@ -96,7 +96,7 @@ EOF
 	if [ -f "$STORAGE_ROOT/mail/dkim/mail.txt" ]; then
 		cat "$STORAGE_ROOT/mail/dkim/mail.txt" >> /etc/nsd3/zones/$fn2;
 	fi
-	
+
 	# Add this zone file to the main nsd configuration file.
 	cat >> /etc/nsd3/nsd.conf << EOF;
 zone:
