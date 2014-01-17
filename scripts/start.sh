@@ -41,7 +41,7 @@ PUBLIC_HOSTNAME=$PUBLIC_HOSTNAME
 PUBLIC_IP=$PUBLIC_IP
 EOF
 
-# Start service configuration.
+# Start services configuration.
 . scripts/system.sh
 . scripts/dns.sh
 . scripts/mail.sh
