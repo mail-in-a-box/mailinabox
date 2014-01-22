@@ -82,17 +82,3 @@ For instance, in my case, I could tell my domain name registrar that `ns1.box.oc
 
 (In a more complex setup, you may have a different nameserver for your domain. In this case, you'll delegate DNS to your box for the box's own subdomain. In your main DNS, add a record like "box.occams.info. 3600 IN NS ns1.box.occams.info." and a second one for `ns2` (the final period may be important). This sets who is the authoritative server for the hostname. You'll then also need "ns1.box.ocacams.info IN A 10.20.30.40" providing the IP address of the authoritative server (and repeat for `ns2`). Then add an MX record on your main domain pointing to the hostname you chose for your server here so that you delegate mail for the domain to your new server using a record like "occams.info. 3600 IN MX 1 box.occams.info." (again the period at the end may be important). You'll also want to put an SPF record on your main domain like "occams.info IN TXT "v=spf1 a mx -all" ".)
 
-Checking Your Mail
-------------------
-
-You can access your email at https://`hostname`/mail, where `hostname` is again the hostname you chose at the start.
-
-If you want to set up a desktop mail client like Thunderbird, your IMAP and SMTP server is the hostname you chose at the top. For IMAP, you must choose SSL and port 993. For SMTP, you must choose STARTTLS and port 587. Your username is your complete email address. And your password you entered during server setup earlier. You're using a "self-signed certificate" for SSL connections, so you'll get security warnings when you try to read and send mail. It's safe to permanently ignore the warning the first time you see it (but not if you see the same warning later on).
-
-Checking that it Worked
------------------------
-
-...
-
-
-
