@@ -3,17 +3,15 @@ Mail in a Box
 
 This is a work-in-progress to create a one-click deployment of a personal mail server.
 
-After spinning up a fresh Ubuntu machine, just run `sudo scripts/start.sh` and you get:
+After spinning up a fresh machine, just run `sudo scripts/start.sh` and you get:
 
 * An SMTP server (postfix) for sending/receiving mail, with STARTTLS required for authentication, and greylisting to cut down on spam.
 * An IMAP server (dovecot) for checking your mail, with SSL required.
-* A webmail client (roundcube) so you can check your email from a web browser.
 * Mailboxes and aliases are configured by a command-line tool.
 * Spam filtering (spamassassin) with spam automatically going to your Spam folder, and moving mail in and out of the Spam folder triggers retraining on the message.
 * DKIM signing on outgoing messages.
 * DNS pre-configured for SPF and DKIM (just set your domain name nameservers to be the machine itself).
 
-Other things I'd like to add in the future are personal cloud services (file storage, calendar, etc.), an OpenID provider, a place for putting a simple homepage, support for Ubuntu cloud-init, etc.
 
 The goals of this project are:
 
@@ -32,25 +30,6 @@ Before You Begin
 
 * Decide what **hostname** you'll use for your new Mail in a Box. You may want to buy a domain name from your favorite registrar now. For the most flexibility, assign a subdomain to your box. For instance, my domain name is `occams.info` (my email address is something`@occams.info`), so I've assigned `box.occams.info` as the hostname for my Mail in a Box.
 
-Get a Server
-------------
-
-* Get a server. I've been a long-time customer of Rimuhosting.com which provides cheap VPS machines at several locations around the world. You could also go with Linode.com or any other cloud or VPS (virtual server) provider. (If you want to test on Amazon EC2, I've got instructions for you in ec2/README.md.) In a cloud environment like EC2 where your server's IP address is dynamic, this is a good time to assign a static IP (like a EC2 Elastic IP).
-
-* Choose Ubuntu 13.04 amd64 as your operating system (aka a Linux distribution). You won't need much memory or disk space. 768 MB of memory (RAM) and 4G of disk space should be plenty.
-
-* Once the machine is running, set up Reverse DNS. Each ISP handles that differently. You'll have to figure out from your ISP how to do that. Set the reverse DNS to the hostname you chose above (in my case `box.occams.info`).
-
-* Log in with SSH. Again, your ISP will probably give you some instructions on how to do that. If your personal computer has a command line, you'll be doing something like this:
-
-	ssh -i yourkey.pem user@10.20.30.40
-
-You should see a command prompt roughly similar to:
-
-	root@box:~# (<-- blinking cursor here)
-
-
-All command-line instructions below assume you've logged into your machine with SSH already.
 
 Configuring the Server
 ----------------------
