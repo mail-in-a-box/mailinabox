@@ -63,7 +63,7 @@ EOF
 . scripts/web.sh
 . scripts/webmail.sh
 
-if [ -z `tools/mail.py user` ]; then
+if [ -z "`tools/mail.py user`" ]; then
 	# The outut of "tools/mail.py user" is a list of mail users. If there
 	# are none configured, ask the user to configure one.
 	echo
