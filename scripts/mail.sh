@@ -61,11 +61,12 @@ tools/editconf.py /etc/postfix/main.cf \
 tools/editconf.py /etc/postfix/main.cf \
 	smtpd_recipient_restrictions=permit_sasl_authenticated,permit_mynetworks,"reject_rbl_client zen.spamhaus.org","check_policy_service inet:127.0.0.1:10023"
 
-# Have postfix listen on all network interfaces, and set the name of the local machine
-# to localhost for xxx@localhost mail, but I don't think this will have any effect because
-# there is no true local mail delivery.
+# Have postfix listen on all network interfaces, set our name (the Debian default seems to be localhost),
+# and set the name of the local machine to localhost for xxx@localhost mail (but I don't think this will have any effect because
+# there is no true local mail delivery).
 tools/editconf.py /etc/postfix/main.cf \
 	inet_interfaces=all \
+	myhostname=$PUBLIC_HOSTNAME\
 	mydestination=localhost
 
 # Handle all local mail delivery by passing it directly to dovecot over LMTP.
