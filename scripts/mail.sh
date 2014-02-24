@@ -50,8 +50,9 @@ tools/editconf.py /etc/postfix/main.cf \
 # permit_sasl_authenticated: Authenticated users (i.e. on port 587).
 # permit_mynetworks: Mail that originates locally.
 # reject_unauth_destination: No one else. (Permits mail whose destination is local and rejects other mail.)
-tools/editconf.py /etc/postfix/main.cf \
-	smtpd_relay_restrictions=permit_sasl_authenticated,permit_mynetworks,reject_unauth_destination
+# Useless since postfix 2.10 : http://www.postfix.org/postconf.5.html#smtpd_relay_restrictions
+# tools/editconf.py /etc/postfix/main.cf \
+	# smtpd_relay_restrictions=permit_sasl_authenticated,permit_mynetworks,reject_unauth_destination
 
 # Who can send mail to us?
 # permit_sasl_authenticated: Authenticated users (i.e. on port 587).
@@ -59,7 +60,7 @@ tools/editconf.py /etc/postfix/main.cf \
 # reject_rbl_client: Reject connections from IP addresses blacklisted in zen.spamhaus.org
 # check_policy_service: Apply greylisting using postgrey.
 tools/editconf.py /etc/postfix/main.cf \
-	smtpd_recipient_restrictions=permit_sasl_authenticated,permit_mynetworks,"reject_rbl_client zen.spamhaus.org","check_policy_service inet:127.0.0.1:10023"
+	smtpd_recipient_restrictions=permit_sasl_authenticated,permit_mynetworks,"reject_rbl_client zen.spamhaus.org","check_policy_service inet:127.0.0.1:10023", reject_unauth_destination
 
 # Have postfix listen on all network interfaces, and set the name of the local machine
 # to localhost for xxx@localhost mail, but I don't think this will have any effect because
@@ -196,7 +197,7 @@ tools/editconf.py /etc/dovecot/conf.d/10-ssl.conf \
 	"ssl_key=<$STORAGE_ROOT/ssl/ssl_private_key.pem" \
 
 # SSL CERTIFICATE
-	
+
 # Create a self-signed certifiate.
 mkdir -p $STORAGE_ROOT/ssl
 if [ ! -f $STORAGE_ROOT/ssl/ssl_certificate.pem ]; then
