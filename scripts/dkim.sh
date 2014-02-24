@@ -30,7 +30,7 @@ RequireSafeKeys         false
 EOF
 fi
 
-# Create a new DKIM key if we don't have one already. This creates
+# Create a new DKIM key if we don't have one already. This creates 
 # mail.private and mail.txt in $STORAGE_ROOT/mail/dkim. The former
 # is the actual private key and the latter is the suggested DNS TXT
 # entry which we'll want to include in our DNS setup.

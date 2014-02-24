@@ -201,12 +201,12 @@ tools/editconf.py /etc/dovecot/conf.d/10-ssl.conf \
 # Create a self-signed certifiate.
 mkdir -p $STORAGE_ROOT/ssl
 if [ ! -f $STORAGE_ROOT/ssl/ssl_certificate.pem ]; then
-	openssl genrsa -des3 -passout pass:x -out /tmp/server.key 2048 # create key, but it has a password...
+	openssl genrsa -des3 -passout pass:x -out /tmp/server.key 4096 # create key, but it has a password...
 	openssl rsa -passin pass:x -in /tmp/server.key -out $STORAGE_ROOT/ssl/ssl_private_key.pem # remove password and save it to the right location
 	rm /tmp/server.key # remove temporary password-laden key
 	openssl req -new -key $STORAGE_ROOT/ssl/ssl_private_key.pem -out $STORAGE_ROOT/ssl/ssl_cert_sign_req.csr \
 	  -subj "/C=/ST=/L=/O=/CN=$PUBLIC_HOSTNAME"
-	openssl x509 -req -days 365 \
+	openssl x509 -req -days 3650 \
 	  -in $STORAGE_ROOT/ssl/ssl_cert_sign_req.csr -signkey $STORAGE_ROOT/ssl/ssl_private_key.pem -out $STORAGE_ROOT/ssl/ssl_certificate.pem
 fi
 
@@ -228,4 +228,3 @@ service dovecot restart
 ufw allow smtp
 ufw allow submission
 ufw allow imaps
-
