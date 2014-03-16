@@ -1,98 +1,79 @@
-Mail in a Box
+Mail-in-a-Box
 =============
 
-This is a work-in-progress to create a one-click deployment of a personal mail server.
+Mass electronic surveillance by governments revealed over the last year has spurred a new movement to re-decentralize the web, that is, to empower netizens to be their own service providers again. SMTP, the protocol of email, is decentralized in principle but highly centralized in practice due to the high cost of implementing all of the modern protocols that surround it. As a result, most individuals trade their independence for access to a “free” email service.
 
-After spinning up a fresh Ubuntu machine, just run `sudo scripts/start.sh` and you get:
+Mail-in-a-Box helps individuals take back control of their email by defining a one-click, easy-to-deploy SMTP+everything else server: a mail server in a box.
 
-* An SMTP server (postfix) for sending/receiving mail, with STARTTLS required for authentication, and greylisting to cut down on spam.
-* An IMAP server (dovecot) for checking your mail, with SSL required.
-* A webmail client (roundcube) so you can check your email from a web browser.
-* Mailboxes and aliases are configured by a command-line tool.
-* Spam filtering (spamassassin) with spam automatically going to your Spam folder, and moving mail in and out of the Spam folder triggers retraining on the message.
-* DKIM signing on outgoing messages.
-* DNS pre-configured for SPF and DKIM (just set your domain name nameservers to be the machine itself).
+*This is a work in progress.*
 
-Other things I'd like to add in the future are personal cloud services (file storage, calendar, etc.), an OpenID provider, a place for putting a simple homepage, support for Ubuntu cloud-init, etc.
+On March 13, 2014 I submitted Mail-in-a-Box to the [Knight News Challenge](https://www.newschallenge.org/challenge/2014/submissions/mail-in-a-box).
 
-The goals of this project are:
+The Box
+-------
 
-* Make the deployment of a mail server ridiculously easy.
-* Configuration must be automated, concise, auditable, and idempotent.
-* Promote decentralization and encryption on the web.
+Mail-in-a-Box provides a single shell script that turns a fresh Ubuntu 13.04 64-bit machine into a working mail server, including:
 
-This project was inspired in part by the "NSA-proof your email in 2 hours" blog post by Drew Crawford 
-(http://sealedabstract.com/code/nsa-proof-your-e-mail-in-2-hours/), Sovereign by Alex Payne (https://github.com/al3x/sovereign) and 
-conversations with <a href="http://twitter.com/shevski" target="_blank">@shevski</a> and <a href="https://github.com/konklone" target="_blank">@konklone</a>.
+* An SMTP server for sending/receiving mail, with STARTTLS required for authentication, and greylisting to cut down on spam (postfix, postgrey).
+* An IMAP server for checking your mail, with SSL required (dovecot).
+* A webmail client over SSL so you can check your email from a web browser (roundcube, nginx).
+* Spam filtering with spam automatically going to your Spam folder (spamassassin).
+* DKIM signing on outgoing messages (opendkim).
+* The machine acts as its own DNS server and is automatically configured for SPF and DKIM (nsd3).
+* Configuration of mailboxes and mail aliases is done using a command-line tool.
+* Basic system services like a firewall, intrusion protection, and setting the system clock are automatically configured (ufw, fail2ban, ntp).
 
-This setup is currently what's powering my own personal email.
+Since this is a work in progress certainly more, such as personal cloud services, could be added in the future.
 
-Before You Begin
-----------------
+This setup is what has been powering my own personal email since September 2013.
 
-* Decide what **hostname** you'll use for your new Mail in a Box. You may want to buy a domain name from your favorite registrar now. For the most flexibility, assign a subdomain to your box. For instance, my domain name is `occams.info` (my email address is something`@occams.info`), so I've assigned `box.occams.info` as the hostname for my Mail in a Box.
-
-Get a Server
-------------
-
-* Get a server. I've been a long-time customer of Rimuhosting.com which provides cheap VPS machines at several locations around the world. You could also go with Linode.com or any other cloud or VPS (virtual server) provider. (If you want to test on Amazon EC2, I've got instructions for you in ec2/README.md.) In a cloud environment like EC2 where your server's IP address is dynamic, this is a good time to assign a static IP (like a EC2 Elastic IP).
-
-* Choose Ubuntu 13.04 amd64 as your operating system (aka a Linux distribution). You won't need much memory or disk space. 768 MB of memory (RAM) and 4G of disk space should be plenty.
-
-* Once the machine is running, set up Reverse DNS. Each ISP handles that differently. You'll have to figure out from your ISP how to do that. Set the reverse DNS to the hostname you chose above (in my case `box.occams.info`).
-
-* Log in with SSH. Again, your ISP will probably give you some instructions on how to do that. If your personal computer has a command line, you'll be doing something like this:
-
-	ssh -i yourkey.pem user@10.20.30.40
-	
-You should see a command prompt roughly similar to:
-
-	root@box:~# (<-- blinking cursor here)
-
-	
-All command-line instructions below assume you've logged into your machine with SSH already.
-
-Configuring the Server
-----------------------
-
-After logging into your server with SSH and becoming root, type the following in the console:
+Please see the initial and very barebones [Documentation](docs/index.md) for more information on how to set up a Mail-in-a-Box. But in short, it's like this:
 
 	sudo apt-get install -y git
 	git clone https://github.com/tauberer/mailinabox
 	cd mailinabox
-	
-Now you've got the Mail in a Box source code stored on your server. The next command starts the automatic configuration of the server:
-	
 	sudo scripts/start.sh
-	
-You will be asked to enter the hostname you chose and the public IP address of the server as assigned by your ISP.
 
-After that you'll see a lot of output as system programs are installed and configured.
+The Rationale
+-------------
 
-At the end you'll be asked to create a mail user for the system. Enter your email address. It doesn't have to be @... the hostname you chose earlier, but if it's not then your DNS setup will be more complicated. The user's email address is also his/her IMAP/SMTP username. Then enter the user's password.
+Mass electronic surveillance by governments that have been revealed over the last year has spurred a new movement to re-decentralize the web. Centralization of services has created efficiencies at the expense of freedom. One can get a “free” email account or a “free” social media account, but what the user gives up is his or her privacy, both explicitly as a term of service and implicitly as the service providers comply with classified government intelligence programs. Users put their sensitive communications at risk (think journalists, lawyers, investors, and innovators) also give up control of their Internet experience and the opportunity to innovate that experience.
 
-It is safe to run the start script again in case something went wrong. To add more mail users, run `tools/mail.py`.
+Netizens are looking for ways to rely less on the large, centralized service providers such as Google and Yahoo and more on smaller providers or even themselves. Users of Mail-in-a-Box might be journalists, lawyers, and other individuals at risk for government surveillance, individuals communicating sensitive information who want to be protected from criminal activity, and anyone who prefers to take control over their experience on the Internet.
 
-Configuring DNS
----------------
+SMTP, the protocol of email, is an open protocol that is decentralized in principle but highly centralized in practice. While SMTP itself is a simple protocol, the demands of modern life have lead to the development of a constellation of other protocols in the last 15 years that are now required to have one’s outgoing mail delivered securely and reliably, and one’s incoming mail clean and secure. These protocols include SPF, DKIM, digital signatures, public key exchanges, TLS, DNSSEC, reputation management, spam and abuse reporting, spam filtering, and graylisting, to name a few.
 
-Your server is set up as a nameserver to provide DNS information for the hostname you chose as well as the domain name in your email address. Go to your domain name registrar and tell it that `ns1.yourhostname` is your nameserver (DNS server). If it requires two, use `ns1.yourhostname` and `ns2.yourhostname`.
+Implementing all of the modern protocols that surround SMTP is difficult, and thus costly. As a result, most individuals trade their independence for access to a “free” email service, meaning one of the few, centralized services.
 
-For instance, in my case, I could tell my domain name registrar that `ns1.box.occams.info` and `ns2.box.occams.info` are the nameservers for `occams.info`.
+Mail-in-a-Box helps individuals take back control of their email by defining a one-click, easy-to-deploy SMTP+everything else server. It is a mail server in a box aimed to be deployed securely into any cloud infrastructure. It provides no user interface to send or check one’s mail but implements all of the underlying protocols that other applications (mail clients), such as Google K-9 for mobile devices, Mailpile, and Mozilla Thunderbird, can interoperate with.
 
-(In a more complex setup, you may have a different nameserver for your domain. In this case, you'll delegate DNS to your box for the box's own subdomain. In your main DNS, add a record like "box.occams.info. 3600 IN NS ns1.box.occams.info." and a second one for `ns2` (the final period may be important). This sets who is the authoritative server for the hostname. You'll then also need "ns1.box.occams.info IN A 10.20.30.40" providing the IP address of the authoritative server (and repeat for `ns2`). Then add an MX record on your main domain pointing to the hostname you chose for your server here so that you delegate mail for the domain to your new server using a record like "occams.info. 3600 IN MX 1 box.occams.info." (again the period at the end may be important). You'll also want to put an SPF record on your main domain like "occams.info IN TXT "v=spf1 a mx -all" ".)
+The Goals / Next Steps
+----------------------
 
-Checking Your Mail
-------------------
+Goals:
 
-You can access your email at https://`hostname`/mail, where `hostname` is again the hostname you chose at the start.
+* Make the deployment of a mail server ridiculously easy.
+* Configuration must be automated, concise, auditable, and idempotent.
+* Promote decentralization, innovation, and privacy on the web.
 
-If you want to set up a desktop mail client like Thunderbird, your IMAP and SMTP server is the hostname you chose at the top. For IMAP, you must choose SSL and port 993. For SMTP, you must choose STARTTLS and port 587. Your username is your complete email address. And your password you entered during server setup earlier. You're using a "self-signed certificate" for SSL connections, so you'll get security warnings when you try to read and send mail. It's safe to permanently ignore the warning the first time you see it (but not if you see the same warning later on).
+Success is achieving any of that. I am *not* looking to create a mail server that the NSA cannot hack.
 
-Checking that it Worked
------------------------
+Next Steps:
 
-...
+* Finish the automated tests to verify that a system is functioning correctly.
+* Backups. Restore backups to a new machine. Versioning and upgrading.
+* Create a web-based UI for managing mail users.
+* Document how to buy your own domain, set up DNS, rent a server, and improve the existing docs.
+* Turn the scripts into Chef or Dockerize, simplify as much as possible.
+* Make spam learning work. Maybe switch to dspam.
+* Make IPV6 work. If the machine is at an IPV6 address, it may not work.
 
+The Acknowledgements
+--------------------
 
+This project was inspired in part by the ["NSA-proof your email in 2 hours"](http://sealedabstract.com/code/nsa-proof-your-e-mail-in-2-hours/) blog post by Drew Crawford, [Sovereign](https://github.com/al3x/sovereign) by Alex Payne, and conversations with <a href="http://twitter.com/shevski" target="_blank">@shevski</a>, <a href="https://github.com/konklone" target="_blank">@konklone</a>, and <a href="https://github.com/gregelin" target="_blank">@GregElin</a>.
 
+The History
+-----------
+
+* In 2007 I wrote a relatively popular Mozilla Thunderbird extension that added client-side SPF and DKIM checks to mail to warn users about possible phishing: [add-on page](https://addons.mozilla.org/en-us/thunderbird/addon/sender-verification-anti-phish/), [source](https://github.com/JoshData/thunderbird-spf).

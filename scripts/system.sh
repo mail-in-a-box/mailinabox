@@ -16,7 +16,8 @@ apt-get -q -y install python3
 apt-get install -q -y ntp fail2ban
 
 # Turn on the firewall. First allow incoming SSH, then turn on the firewall. Additional open
-# ports will be set up in the scripts that set up those services.
+# ports will be set up in the scripts that set up those services. Some virtual machine providers
+# (ehm, Rimuhosting) don't provide a kernel that supports ufw, so let advanced users skip it.
 if [ -z "$DISABLE_FIREWALL" ]; then
 	ufw allow ssh;
 	ufw --force enable;
