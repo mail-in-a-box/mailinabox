@@ -3,6 +3,8 @@
 apt-get -q -q update
 apt-get -q -y upgrade
 
+apt-get -q -y install python3
+
 # Turn on basic services:
 #
 #   ntp: keeps the system time correct
