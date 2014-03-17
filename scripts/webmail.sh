@@ -1,6 +1,8 @@
 # Webmail: Using roundcube
 ##########################
 
+source /etc/mailinabox.conf # load global vars
+
 DEBIAN_FRONTEND=noninteractive apt-get install -q -y \
 	roundcube-core php5-sqlite
 
