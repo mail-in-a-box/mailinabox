@@ -3,7 +3,7 @@
 
 source /etc/mailinabox.conf # load global vars
 
-DEBIAN_FRONTEND=noninteractive apt-get install -q -y \
+DEBIAN_FRONTEND=noninteractive apt-get -q -q -y install \
 	roundcube-core php5-sqlite
 
 # The version of roundcube shipped with Ubuntu is really out of date so we'll
@@ -15,10 +15,12 @@ wget -nc -P externals http://ftp.debian.org/debian/pool/main/r/roundcube/{roundc
 DEBIAN_FRONTEND=noninteractive dpkg -Gi externals/{roundcube,roundcube-core,roundcube-sqlite3,roundcube-plugins}_$pkg_ver.deb
 
 # Buuuut.... the .deb is missing things?
-wget -nc -P externals http://downloads.sourceforge.net/project/roundcubemail/roundcubemail/0.9.3/roundcubemail-0.9.3.tar.gz
-tar -xzf externals/roundcubemail-0.9.3.tar.gz
-if [ ! -d /usr/share/roundcube/SQL ]; then mv roundcubemail-0.9.3/SQL/ /usr/share/roundcube/; fi
-rm -rf roundcubemail-0.9.3
+src_fn=roundcube_0.9.5.orig.tar.gz
+src_dir=roundcubemail-0.9.5-dep
+wget -nc -P externals http://ftp.debian.org/debian/pool/main/r/roundcube/$src_fn
+tar -C /tmp -xzf $(pwd)/externals/$src_fn
+if [ ! -d /usr/share/roundcube/SQL ]; then mv /tmp/$src_dir/SQL/ /usr/share/roundcube/; fi
+rm -rf /tmp/$src_dir
 
 # Settings
 tools/editconf.py /etc/roundcube/main.inc.php \
