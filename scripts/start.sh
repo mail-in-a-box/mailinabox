@@ -3,6 +3,15 @@
 
 # Check system setup.
 
+if [ "`lsb_release -d | sed 's/.*:\s*//'`" != "Ubuntu 13.04" ]; then
+	echo "Mail-in-a-Box only supports being installed on Ubuntu 13.04, sorry. You are running:"
+	echo
+	lsb_release -d | sed 's/.*:\s*//'
+	echo
+	echo "We can't write scripts that run on every possible setup, sorry."
+	exit
+fi
+
 # Check that SSH login with password is disabled. Stop if it's enabled.
 if grep -q "^PasswordAuthentication yes" /etc/ssh/sshd_config \
  || ! grep -q "^PasswordAuthentication no" /etc/ssh/sshd_config ; then
