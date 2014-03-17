@@ -10,7 +10,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -q -y \
 # now upgrade the packages. We do it this way so the other dependencies are
 # pulled in via apt for us automatically.
 mkdir -p externals
-pkg_ver=0.9.2-2_all
+pkg_ver=0.9.5-4_all
 wget -nc -P externals http://ftp.debian.org/debian/pool/main/r/roundcube/{roundcube,roundcube-core,roundcube-sqlite3,roundcube-plugins}_$pkg_ver.deb
 DEBIAN_FRONTEND=noninteractive dpkg -Gi externals/{roundcube,roundcube-core,roundcube-sqlite3,roundcube-plugins}_$pkg_ver.deb
 
