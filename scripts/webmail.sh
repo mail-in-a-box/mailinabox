@@ -47,4 +47,10 @@ cat - > /etc/roundcube/debian-db.php <<EOF;
 EOF
 chown -R www-data.www-data $STORAGE_ROOT/mail/roundcube
 
-
+# Create an init script to start the PHP FastCGI daemon and keep it
+# running after a reboot. Use 'restart' to start it here since it may
+# already be running.
+rm -f /etc/init.d/php-fastcgi
+ln -s $(pwd)/conf/phpfcgi-initscript /etc/init.d/php-fastcgi
+update-rc.d php-fastcgi defaults
+service php-fastcgi restart
