@@ -4,7 +4,7 @@ Documentation
 Before You Begin
 ----------------
 
-* Decide what **hostname** you'll use for your new Mail in a Box. You may want to buy a domain name from your favorite registrar now. For the most flexibility, assign a subdomain to your box. For instance, my domain name is `occams.info` (my email address is something`@occams.info`), so I've assigned `box.occams.info` as the hostname for my Mail in a Box.
+* Decide what **hostname** you'll use for your new Mail-in-a-Box. You may want to buy a domain name from your favorite registrar now. For the most flexibility, assign a subdomain to your box. For instance, my domain name is `occams.info` (my email address is something`@occams.info`), so I've assigned `box.occams.info` as the hostname for my Mail-in-a-Box.
 
 Get a Server
 ------------
@@ -35,7 +35,7 @@ After logging into your server with SSH and becoming root, type the following in
 	git clone https://github.com/tauberer/mailinabox
 	cd mailinabox
 	
-Now you've got the Mail in a Box source code stored on your server. The next command starts the automatic configuration of the server:
+Now you've got the Mail-in-a-Box source code stored on your server. The next command starts the automatic configuration of the server:
 	
 	sudo scripts/start.sh
 	
