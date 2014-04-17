@@ -1,8 +1,8 @@
 # HTTP: Turn on a web server serving static files
 #################################################
 
-apt-get install -q -y \
-	nginx
+apt-get remove -q -y apache2
+apt-get install -q -y nginx
 
 rm -f /etc/nginx/sites-enabled/default
 
