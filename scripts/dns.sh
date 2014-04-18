@@ -7,13 +7,13 @@
 #
 # This script will turn on DNS for $PUBLIC_HOSTNAME.
 
-# Install nsd3, our DNS server software.
+# Install nsd, our DNS server software.
 
-apt-get -qq -y install nsd3
+apt-get -qq -y install nsd
 
-# Prepare nsd3's configuration.
+# Prepare nsd's configuration.
 
-sudo mkdir -p /var/run/nsd3
+sudo mkdir -p /var/run/nsd
 mkdir -p "$STORAGE_ROOT/dns";
 
 # Create the default zone if it doesn't exist.

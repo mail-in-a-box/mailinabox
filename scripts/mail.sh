@@ -121,11 +121,13 @@ tools/editconf.py /etc/dovecot/conf.d/10-mail.conf \
 	first_valid_uid=0
 
 # Require that passwords are sent over SSL only, and allow the usual IMAP authentication mechanisms.
+# The LOGIN mechanism is supposedly for Microsoft products like Outlook to do SMTP login (I guess
+# since we're using Dovecot to handle SMTP authentication?).
 tools/editconf.py /etc/dovecot/conf.d/10-auth.conf \
 	disable_plaintext_auth=yes \
 	"auth_mechanisms=plain login"
 
-# Query out Sqlite3 database, and not system users, for authentication.
+# Query our Sqlite3 database, and not system users, for authentication.
 sed -i "s/\(\!include auth-system.conf.ext\)/#\1/"  /etc/dovecot/conf.d/10-auth.conf
 sed -i "s/#\(\!include auth-sql.conf.ext\)/\1/"  /etc/dovecot/conf.d/10-auth.conf
 
@@ -148,6 +150,7 @@ connect = $db_path
 default_pass_scheme = SHA512-CRYPT
 password_query = SELECT email as user, password FROM users WHERE email='%u';
 EOF
+chmod 0600 /etc/dovecot/dovecot-sql.conf.ext # per Dovecot instructions
 
 # Disable in-the-clear IMAP and POP because we're paranoid (we haven't even
 # enabled POP).

@@ -3,8 +3,8 @@
 
 # Check system setup.
 
-if [ "`lsb_release -d | sed 's/.*:\s*//'`" != "Ubuntu 13.04" ]; then
-	echo "Mail-in-a-Box only supports being installed on Ubuntu 13.04, sorry. You are running:"
+if [ "`lsb_release -d | sed 's/.*:\s*//'`" != "Ubuntu 14.04 LTS" ]; then
+	echo "Mail-in-a-Box only supports being installed on Ubuntu 14.04, sorry. You are running:"
 	echo
 	lsb_release -d | sed 's/.*:\s*//'
 	echo
@@ -20,7 +20,7 @@ if grep -q "^PasswordAuthentication yes" /etc/ssh/sshd_config \
         echo "Add your SSH public key to $HOME/.ssh/authorized_keys, check"
         echo "check that you can log in without a password, set the option"
         echo "'PasswordAuthentication no' in /etc/ssh/sshd_config, and then"
-	echo "restart the machine."
+        echo "restart the machine."
         exit
 fi
 

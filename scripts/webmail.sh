@@ -51,3 +51,6 @@ cat - > /etc/roundcube/debian-db.php <<EOF;
 EOF
 chown -R www-data.www-data $STORAGE_ROOT/mail/roundcube
 
+# Enable PHP modules.
+php5enmod mcrypt
+service php-fastcgi restart

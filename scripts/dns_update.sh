@@ -20,7 +20,7 @@ done
 
 # Create the top of nsd.conf.
 
-cat > /etc/nsd3/nsd.conf << EOF;
+cat > /etc/nsd/nsd.conf << EOF;
 server:
   hide-version: yes
 
@@ -28,7 +28,7 @@ server:
   identity: ""
 
   # The directory for zonefile: files.
-  zonesdir: "/etc/nsd3/zones"
+  zonesdir: "/etc/nsd/zones"
   
 # ZONES
 EOF
@@ -37,7 +37,7 @@ EOF
 # file and mention it in nsd.conf. And add information to the
 # OpenDKIM signing tables.
 
-mkdir -p /etc/nsd3/zones;
+mkdir -p /etc/nsd/zones;
 
 truncate --size 0 /etc/opendkim/KeyTable
 truncate --size 0 /etc/opendkim/SigningTable
@@ -54,15 +54,15 @@ for fn in $STORAGE_ROOT/dns/*.txt; do
 	# If the zone file exists, get the existing zone serial number so we can increment it.
 	# TODO: This needs to be done better so that the existing serial number is persisted in the storage area.
 	serial=`date +"%Y%m%d00"`
-	if [ -f /etc/nsd3/zones/$fn2 ]; then
-		existing_serial=`grep "serial number" /etc/nsd3/zones/$fn2 | sed "s/; serial number//"`
+	if [ -f /etc/nsd/zones/$fn2 ]; then
+		existing_serial=`grep "serial number" /etc/nsd/zones/$fn2 | sed "s/; serial number//"`
 		if [ ! -z "$existing_serial" ]; then
 			serial=`echo $existing_serial + 1 | bc`
 		fi
 	fi
 
 	# Create the zone file.
-	cat > /etc/nsd3/zones/$fn2 << EOF;
+	cat > /etc/nsd/zones/$fn2 << EOF;
 \$ORIGIN $zone.    ; default zone domain
 \$TTL 86400           ; default time to live
 
@@ -86,7 +86,7 @@ EOF
 
 	# In PUBLIC_HOSTNAME, also define ns1 and ns2.
 	if [ "$zone" = $PUBLIC_HOSTNAME ]; then
-		cat >> /etc/nsd3/zones/$fn2 << EOF;
+		cat >> /etc/nsd/zones/$fn2 << EOF;
 ns1        IN     A    $PUBLIC_IP
 ns2        IN     A    $PUBLIC_IP
 EOF
@@ -94,11 +94,11 @@ EOF
 
 	# If OpenDKIM is set up, append the suggested TXT record to the zone.
 	if [ -f "$STORAGE_ROOT/mail/dkim/mail.txt" ]; then
-		cat "$STORAGE_ROOT/mail/dkim/mail.txt" >> /etc/nsd3/zones/$fn2;
+		cat "$STORAGE_ROOT/mail/dkim/mail.txt" >> /etc/nsd/zones/$fn2;
 	fi
 	
 	# Add this zone file to the main nsd configuration file.
-	cat >> /etc/nsd3/nsd.conf << EOF;
+	cat >> /etc/nsd/nsd.conf << EOF;
 zone:
 	name: $zone
 	zonefile: $fn2
@@ -120,8 +120,8 @@ EOF
 done
 
 # Kick nsd.
-service nsd3 rebuild
-service nsd3 restart # ensure it is running
+service nsd rebuild
+service nsd restart # ensure it is running
 
 # Kick opendkim.
 service opendkim restart

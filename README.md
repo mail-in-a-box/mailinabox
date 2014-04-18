@@ -12,14 +12,14 @@ On March 13, 2014 I submitted Mail-in-a-Box to the [Knight News Challenge](https
 The Box
 -------
 
-Mail-in-a-Box provides a single shell script that turns a fresh Ubuntu 13.04 64-bit machine into a working mail server, including:
+Mail-in-a-Box provides a single shell script that turns a fresh Ubuntu 14.04 LTS 64-bit machine into a working mail server, including:
 
 * An SMTP server for sending/receiving mail, with STARTTLS required for authentication, and greylisting to cut down on spam (postfix, postgrey).
 * An IMAP server for checking your mail, with SSL required (dovecot).
 * A webmail client over SSL so you can check your email from a web browser (roundcube, nginx).
 * Spam filtering with spam automatically going to your Spam folder (spamassassin).
 * DKIM signing on outgoing messages (opendkim).
-* The machine acts as its own DNS server and is automatically configured for SPF and DKIM (nsd3).
+* The machine acts as its own DNS server and is automatically configured for SPF and DKIM (nsd).
 * Configuration of mailboxes and mail aliases is done using a command-line tool.
 * Basic system services like a firewall, intrusion protection, and setting the system clock are automatically configured (ufw, fail2ban, ntp).
 

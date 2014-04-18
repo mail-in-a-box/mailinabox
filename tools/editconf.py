@@ -35,7 +35,7 @@ for line in open(filename):
 			# comment-out the existing line
 			buf += "#" + line
 			
-			# if this option oddly appears more than once, don't add the settingg again
+			# if this option oddly appears more than once, don't add the setting again
 			if i in found:
 				break
 			
