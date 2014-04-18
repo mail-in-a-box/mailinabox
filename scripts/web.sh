@@ -15,6 +15,7 @@ cat conf/nginx.conf \
 	| sed "s/\$STORAGE_ROOT/$STORAGE_ROOT_ESC/g" \
 	| sed "s/\$PUBLIC_HOSTNAME/$PUBLIC_HOSTNAME_ESC/g" \
 	> /etc/nginx/conf.d/local.conf
+cp conf/nginx-ssl.conf /etc/nginx/nginx-ssl.conf
 
 # make a default homepage
 mkdir -p $STORAGE_ROOT/www/static
