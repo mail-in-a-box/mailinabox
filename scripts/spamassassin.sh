@@ -10,25 +10,33 @@
 # user when the mail user is created.
 
 # Install packages.
-apt-get -q -y install spampd dovecot-sieve dovecot-antispam
+apt-get -q -y install spampd razor pyzor dovecot-sieve dovecot-antispam
+
+# Allow spamassassin to download new rules.
+tools/editconf.py /etc/default/spamassassin \
+	CRON=1
+
+# Configure pyzor.
+pyzor discover
 
 # Hook into postfix. Replace dovecot with spampd as the mail delivery agent.
 tools/editconf.py /etc/postfix/main.cf virtual_transport=lmtp:[127.0.0.1]:10025
 
 # Pass messages on to docevot on port 10026.
 # This is actually the default setting but we don't want to lose track of it.
+# We've already configured Dovecot to listen on this port.
 tools/editconf.py /etc/default/spampd DESTPORT=10026
 
-# Enable the sieve plugin which let's us set a script that automatically moves
+# Enable the Dovecot sieve plugin which let's us set a script that automatically moves
 # spam into the user's Spam mail filter.
 # (Note: Be careful if we want to use multiple plugins later.)
 sudo sed -i "s/#mail_plugins = .*/mail_plugins = \$mail_plugins sieve/" /etc/dovecot/conf.d/20-lmtp.conf
 
-# Enable the antispam plugin to detect when a message moves between folders so we can
+# Enable the Dovecot antispam plugin to detect when a message moves between folders so we can
 # pass it to sa-learn for training. (Be careful if we use multiple plugins later.)
 sudo sed -i "s/#mail_plugins = .*/mail_plugins = \$mail_plugins antispam/" /etc/dovecot/conf.d/20-imap.conf
 
-# When mail is moved in or out of the dovecot Spam folder, re-train using this script
+# When mail is moved in or out of the Dovecot Spam folder, re-train using this script
 # that sends the mail to spamassassin.
 # from http://wiki2.dovecot.org/Plugins/Antispam
 cat > /usr/bin/sa-learn-pipe.sh << EOF;
