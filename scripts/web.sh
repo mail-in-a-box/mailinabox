@@ -2,7 +2,7 @@
 #################################################
 
 apt-get remove -q -y apache2
-apt-get install -q -y nginx
+apt-get install -q -y nginx php5-cgi
 
 rm -f /etc/nginx/sites-enabled/default
 
