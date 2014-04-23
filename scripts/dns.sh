@@ -11,12 +11,15 @@
 
 # ...but first, we have to create the user because the 
 # current Ubuntu forgets to do so in the .deb
+# see issue #25 and https://bugs.launchpad.net/ubuntu/+source/nsd/+bug/1311886
 if id nsd > /dev/null 2>&1; then
-	echo "nsd user exists... good";
+	true; #echo "nsd user exists... good";
 else
 	useradd nsd;
-if
-	
+fi
+
+# Okay now install the package.
+
 apt-get -qq -y install nsd
 
 # Prepare nsd's configuration.
