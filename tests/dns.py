@@ -40,7 +40,6 @@ def dig(server, digargs):
 	return response
 
 def test(server, description):
-	# call dig a few times with different parameters
 	digoutput = \
 	   dig(server, [hostname])\
 	 + dig(server, ["ns", hostname]) \
@@ -50,7 +49,15 @@ def test(server, description):
 	 + dig(server, ["mx", hostname]) \
 	 + dig(server, ["txt", hostname]) \
 	 + dig(server, ["txt", "mail._domainkey." + hostname])
+	return test2(digoutput, server, description, expected)
 
+def test_ptr(server, description):
+	ipaddr_reversed = ".".join( reversed( ipaddr.split(".") ) )
+	expected = "%s.in-addr.arpa. ##### IN	PTR	%s.\n" % (ipaddr_reversed, hostname)
+	digoutput = dig(server, ["-x", ipaddr])
+	return test2(digoutput, server, description, expected)
+
+def test2(digoutput, server, description, expected):
 	# Show a diff if there are any changes
 	has_diff = False
 	def split(s): return [line+"\n" for line in s.split("\n")]
@@ -59,20 +66,26 @@ def test(server, description):
 			print("The response from %s (%s) is not correct:" % (description, server))
 			print()
 		has_diff = True
-
-		sys.stdout.write(line)   
-
+		sys.stdout.write(line)
 	return not has_diff
 
 # Test the response from the machine itself.
-if test(ipaddr, "Mail-in-a-Box"):
+if not test(ipaddr, "Mail-in-a-Box"):
+	print ()
+	print ("Please run the Mail-in-a-Box setup script on %s again." % hostname)
+	sys.exit(1)
+else:
 	# If those settings are OK, also test Google's Public DNS
 	# to see if the machine is hooked up to recursive DNS properly.
-	if test("8.8.8.8", "Google Public DNS"):
-		print ("DNS is OK.")
-		sys.exit(0)
-	else:
+	if not test("8.8.8.8", "Google Public DNS"):
 		print ()
-		print ("Check that the nameserver settings for %s are correct at your domain registrar." % hostname)
-
-sys.exit(1)
+		print ("Check that the nameserver settings for %s are correct at your domain registrar. It may take a few hours for Google Public DNS to update after changes on your Mail-in-a-Box." % hostname)
+		sys.exit(1)
+	else:
+		# And if that's OK, also check reverse DNS (the PTR record).
+		if not test_ptr("8.8.8.8", "Google Public DNS (Reverse DNS)"):
+			print ()
+			print ("The reverse DNS for %s is not correct. Consult your ISP for how to set the reverse DNS (also called the PTR record) for %s to %s." % (hostname, hostname, ipaddr))
+			sys.exit(1)
+		else:
+			print ("DNS is OK.")
