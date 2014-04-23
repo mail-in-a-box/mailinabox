@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # Tests sending and receiving mail by sending a test message to yourself.
 
-import sys, imaplib, smtplib, uuid, time, dkim
+import sys, imaplib, smtplib, uuid, time
 
 if len(sys.argv) < 3:
 	print("Usage: tests/mail.py hostname emailaddress password")
