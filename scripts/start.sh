@@ -1,3 +1,4 @@
+#!/bin/bash
 # This is the entry point for configuring the system.
 #####################################################
 
