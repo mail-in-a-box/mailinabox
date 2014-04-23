@@ -9,7 +9,14 @@
 
 # Install nsd, our DNS server software.
 
-useradd nsd
+# ...but first, we have to create the user because the 
+# current Ubuntu forgets to do so in the .deb
+if id nsd > /dev/null 2>&1; then
+	echo "nsd user exists... good";
+else
+	useradd nsd;
+if
+	
 apt-get -qq -y install nsd
 
 # Prepare nsd's configuration.
