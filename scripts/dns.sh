@@ -9,6 +9,7 @@
 
 # Install nsd, our DNS server software.
 
+useradd nsd
 apt-get -qq -y install nsd
 
 # Prepare nsd's configuration.
