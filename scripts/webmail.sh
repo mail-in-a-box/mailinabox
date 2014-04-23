@@ -19,7 +19,7 @@ src_fn=roundcube_0.9.5.orig.tar.gz
 src_dir=roundcubemail-0.9.5-dep
 wget -nc -P externals http://ftp.debian.org/debian/pool/main/r/roundcube/$src_fn
 tar -C /tmp -xzf $(pwd)/externals/$src_fn
-if [ ! -d /usr/share/roundcube/SQL ]; then mv /tmp/$src_dir/SQL/ /usr/share/roundcube/; fi
+if [ ! -d /var/lib/roundcube/SQL ]; then mv /tmp/$src_dir/SQL/ /var/lib/roundcube/; fi
 rm -rf /tmp/$src_dir
 
 # Settings
