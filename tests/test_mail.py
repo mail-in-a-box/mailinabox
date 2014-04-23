@@ -2,6 +2,7 @@
 # Tests sending and receiving mail by sending a test message to yourself.
 
 import sys, imaplib, smtplib, uuid, time
+import socket, dns.reversename, dns.resolver
 
 if len(sys.argv) < 3:
 	print("Usage: tests/mail.py hostname emailaddress password")
@@ -28,9 +29,24 @@ This is a test message. It should be automatically deleted by the test script.""
 	emailto=emailto,
 	subject=mailsubject,
 	)
+
+# Connect to the server on the SMTP submission TLS port.
 server = smtplib.SMTP(host, 587)
 #server.set_debuglevel(1)
 server.starttls()
+
+# Verify that the EHLO name matches the server's reverse DNS.
+ipaddr = socket.gethostbyname(host) # IPv4 only!
+reverse_ip = dns.reversename.from_address(ipaddr) # e.g. "1.0.0.127.in-addr.arpa."
+reverse_dns = dns.resolver.query(reverse_ip, 'PTR')[0].target.to_text(omit_final_dot=True) # => hostname
+server.ehlo_or_helo_if_needed() # must send EHLO before getting the server's EHLO name
+helo_name = server.ehlo_resp.decode("utf8").split("\n")[0] # first line is the EHLO name
+if helo_name != reverse_dns:
+	print("The server's EHLO name does not match its reverse hostname. Check DNS settings.")
+	sys.exit(1)
+print("SMTP EHLO name (%s) is OK." % helo_name)
+
+# Login and send a test email.
 server.login(emailaddress, pw)
 server.sendmail(emailaddress, [emailto], msg)
 server.quit()
