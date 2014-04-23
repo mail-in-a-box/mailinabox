@@ -7,7 +7,8 @@
 # where ipaddr is the IP address of your Mail-in-a-Box
 # and hostname is the domain name to check the DNS for.
 
-import sys, subprocess, re, difflib
+import sys, re, difflib
+import dns.reversename, dns.resolver
 
 if len(sys.argv) < 3:
 	print("Usage: tests/dns.py ipaddress hostname")
@@ -15,59 +16,49 @@ if len(sys.argv) < 3:
 
 ipaddr, hostname = sys.argv[1:]
 
-# construct the expected output
-subs = { "ipaddr": ipaddr, "hostname": hostname }
-expected = """
-{hostname}.	#####	IN	A	{ipaddr}
-{hostname}.	#####	IN	NS	ns1.{hostname}.
-{hostname}.	#####	IN	NS	ns2.{hostname}.
-ns1.{hostname}.	#####	IN	A	{ipaddr}
-ns2.{hostname}.	#####	IN	A	{ipaddr}
-www.{hostname}.	#####	IN	A	{ipaddr}
-{hostname}.	#####	IN	MX	10 {hostname}.
-{hostname}.	#####	IN	TXT	"v=spf1 mx -all"
-mail._domainkey.{hostname}. ##### IN TXT	"v=DKIM1\; k=rsa\; s=email\; " "p=__KEY__"
-""".format(**subs).strip() + "\n"
-
-def dig(server, digargs):
-	# run dig and clean the output
-	response = subprocess.check_output(['dig', '@' + server, "+noadditional", "+noauthority"] + digargs).decode('utf8')
-	response = re.sub('[\r\n]+', '\n', response) # remove blank lines
-	response = re.sub('\n;.*', '', response) # remove comments
-	response = re.sub('(\n\S+\s+)(\d+)', r'\1#####', response) # normalize TTLs
-	response = re.sub(r"(\"p=).*(\")", r"\1__KEY__\2", response) # normalize DKIM key
-	response = response.strip() + "\n"
-	return response
-
 def test(server, description):
-	digoutput = \
-	   dig(server, [hostname])\
-	 + dig(server, ["ns", hostname]) \
-	 + dig(server, ["ns1." + hostname]) \
-	 + dig(server, ["ns2." + hostname]) \
-	 + dig(server, ["www." + hostname]) \
-	 + dig(server, ["mx", hostname]) \
-	 + dig(server, ["txt", hostname]) \
-	 + dig(server, ["txt", "mail._domainkey." + hostname])
-	return test2(digoutput, server, description, expected)
+	tests = [
+		(hostname, "A", ipaddr),
+		(hostname, "NS", "ns1.%s.;ns2.%s." % (hostname, hostname)),
+		("ns1." + hostname, "A", ipaddr),
+		("ns2." + hostname, "A", ipaddr),
+		("www." + hostname, "A", ipaddr),
+		(hostname, "MX", "10 " + hostname + "."),
+		(hostname, "TXT", "\"v=spf1 mx -all\""),
+		("mail._domainkey." + hostname, "TXT", "\"v=DKIM1; k=rsa; s=email; \" \"p=__KEY__\""),
+	]
+	return test2(tests, server, description)
 
 def test_ptr(server, description):
-	ipaddr_reversed = ".".join( reversed( ipaddr.split(".") ) )
-	expected = "%s.in-addr.arpa. ##### IN	PTR	%s.\n" % (ipaddr_reversed, hostname)
-	digoutput = dig(server, ["-x", ipaddr])
-	return test2(digoutput, server, description, expected)
+	ipaddr_rev = dns.reversename.from_address(ipaddr)
+	tests = [
+		(ipaddr_rev, "PTR", hostname+'.'),
+	]
+	return test2(tests, server, description)
 
-def test2(digoutput, server, description, expected):
-	# Show a diff if there are any changes
-	has_diff = False
-	def split(s): return [line+"\n" for line in s.split("\n")]
-	for line in difflib.unified_diff(split(expected), split(digoutput), fromfile='expected DNS settings', tofile=description):
-		if not has_diff:
-			print("The response from %s (%s) is not correct:" % (description, server))
+def test2(tests, server, description):
+	first = True
+	resolver = dns.resolver.get_default_resolver()
+	resolver.nameservers = [server]
+	for qname, rtype, expected_answer in tests:
+		# do the query and format the result as a string
+		response = dns.resolver.query(qname, rtype)
+		response = ";".join(str(r) for r in response)
+		response = re.sub(r"(\"p=).*(\")", r"\1__KEY__\2", response) # normalize DKIM key
+
+		# is it right?
+		if response == expected_answer:
+			#print(server, ":", qname, rtype, "?", response)
+			continue
+
+		# show prolem
+		if first:
+			print("Incorrect DNS Response from", description)
 			print()
-		has_diff = True
-		sys.stdout.write(line)
-	return not has_diff
+			first = False
+
+		print(qname, rtype, "got", repr(response), "but we should have gotten", repr(expected_answer))
+	return first # success
 
 # Test the response from the machine itself.
 if not test(ipaddr, "Mail-in-a-Box"):
