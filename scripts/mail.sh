@@ -192,6 +192,10 @@ protocol imap {
 }
 EOF
 
+# postmaster_address seems to be required or LMTP won't start
+tools/editconf.py /etc/dovecot/conf.d/15-lda.conf \
+	postmaster_address=postmaster@$PUBLIC_HOSTNAME
+
 # Drew Crawford sets the auth-worker process to run as the mail user, but we don't care if it runs as root.
 
 # Enable SSL and specify the location of the SSL certificate and private key files.
