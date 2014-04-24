@@ -46,6 +46,7 @@ Implementing all of the modern protocols that surround SMTP is difficult, and th
 Mail-in-a-Box helps individuals take back control of their email by defining a one-click, easy-to-deploy SMTP+everything else server. It is a mail server in a box aimed to be deployed securely into any cloud infrastructure. It provides no user interface to send or check one’s mail but implements all of the underlying protocols that other applications (mail clients), such as Google K-9 for mobile devices, Mailpile, and Mozilla Thunderbird, can interoperate with.
 
 The Goals
+---------
 
 * Make the deployment of a mail server ridiculously easy starting with a single platform (currently a fresh Ubuntu 14.04 instance).
 * Configuration must be automated, concise, auditable/justified/documented, and idempotent (meaning we can run the `start` script over and over safely).
