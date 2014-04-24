@@ -23,8 +23,6 @@ Mail-in-a-Box provides a single shell script that turns a fresh Ubuntu 14.04 LTS
 * Configuration of mailboxes and mail aliases is done using a command-line tool.
 * Basic system services like a firewall, intrusion protection, and setting the system clock are automatically configured (ufw, fail2ban, ntp).
 
-Since this is a work in progress certainly more, such as personal cloud services, could be added in the future.
-
 This setup is what has been powering my own personal email since September 2013.
 
 Please see the initial and very barebones [Documentation](docs/index.md) for more information on how to set up a Mail-in-a-Box. But in short, it's like this:
@@ -47,26 +45,13 @@ Implementing all of the modern protocols that surround SMTP is difficult, and th
 
 Mail-in-a-Box helps individuals take back control of their email by defining a one-click, easy-to-deploy SMTP+everything else server. It is a mail server in a box aimed to be deployed securely into any cloud infrastructure. It provides no user interface to send or check one’s mail but implements all of the underlying protocols that other applications (mail clients), such as Google K-9 for mobile devices, Mailpile, and Mozilla Thunderbird, can interoperate with.
 
-The Goals / Next Steps
-----------------------
+The Goals
 
-Goals:
-
-* Make the deployment of a mail server ridiculously easy.
-* Configuration must be automated, concise, auditable, and idempotent.
+* Make the deployment of a mail server ridiculously easy starting with a single platform (currently a fresh Ubuntu 14.04 instance).
+* Configuration must be automated, concise, auditable/justified/documented, and idempotent (meaning we can run the `start` script over and over safely).
 * Promote decentralization, innovation, and privacy on the web.
 
 Success is achieving any of that. I am *not* looking to create a mail server that the NSA cannot hack.
-
-Next Steps:
-
-* Finish the automated tests to verify that a system is functioning correctly.
-* Backups. Restore backups to a new machine. Versioning and upgrading.
-* Create a web-based UI for managing mail users.
-* Document how to buy your own domain, set up DNS, rent a server, and improve the existing docs.
-* Turn the scripts into Chef or Dockerize, simplify as much as possible.
-* Make spam learning work. Maybe switch to dspam.
-* Make IPV6 work. If the machine is at an IPV6 address, it may not work.
 
 The Acknowledgements
 --------------------
