@@ -3,12 +3,19 @@
 
 source /etc/mailinabox.conf # load global vars
 
-DEBIAN_FRONTEND=noninteractive apt-get -q -q -y install \
-	roundcube-core php5-sqlite
+# Ubuntu's roundcube-core has a dependency on Apache & MySQL, which we don't want, so we can't
+# install roundcube directly via apt-get install. We'll use apt-get to manually install the
+# dependencies of roundcube that we know we need, and then we'll manually install debs for the
+# roundcube version we want from Debian.
+#
+# 'DEBIAN_FRONTEND=noninteractive' is to prevent dbconfig-common from asking you questions.
+# The dependencies are from 'apt-cache showpkg roundcube-core'.
 
-# The version of roundcube shipped with Ubuntu is really out of date so we'll
-# now upgrade the packages. We do it this way so the other dependencies are
-# pulled in via apt for us automatically.
+DEBIAN_FRONTEND=noninteractive apt-get -q -q -y install \
+	dbconfig-common \
+	php5 php5-sqlite php5-mcrypt php5-intl php5-json php5-common php-auth php-net-smtp php-net-socket php-net-sieve php-mail-mime php-crypt-gpg php5-gd php5-pspell \
+	tinymce libjs-jquery libjs-jquery-mousewheel libmagic1
+
 mkdir -p externals
 pkg_ver=0.9.5-4_all
 wget -nc -P externals http://ftp.debian.org/debian/pool/main/r/roundcube/{roundcube,roundcube-core,roundcube-sqlite3,roundcube-plugins}_$pkg_ver.deb
