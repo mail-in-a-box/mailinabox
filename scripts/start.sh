@@ -13,17 +13,6 @@ if [ "`lsb_release -d | sed 's/.*:\s*//'`" != "Ubuntu 14.04 LTS" ]; then
 	exit
 fi
 
-# Check that SSH login with password is disabled. Stop if it's enabled.
-if grep -q "^PasswordAuthentication yes" /etc/ssh/sshd_config \
- || ! grep -q "^PasswordAuthentication no" /etc/ssh/sshd_config ; then
-        echo
-        echo "The SSH server on this machine permits password-based login."
-        echo "Add your SSH public key to $HOME/.ssh/authorized_keys, check"
-        echo "check that you can log in without a password, set the option"
-        echo "'PasswordAuthentication no' in /etc/ssh/sshd_config, and then"
-        echo "restart the machine."
-        exit
-fi
 
 # Gather information from the user about the hostname and public IP
 # address of this host.
