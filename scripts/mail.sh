@@ -14,7 +14,7 @@
 
 source /etc/mailinabox.conf # load global vars
 
-DEBIAN_FRONTEND=noninteractive apt-get install -q -y \
+DEBIAN_FRONTEND=noninteractive apt-get -q -y install \
 	postfix postgrey \
 	dovecot-core dovecot-imapd dovecot-lmtpd dovecot-sqlite sqlite3 \
 	openssl

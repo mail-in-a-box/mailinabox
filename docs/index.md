@@ -32,7 +32,7 @@ Configuring the Server
 After logging into your server with SSH and becoming root, type the following in the console:
 
 	sudo apt-get install -y git
-	git clone https://github.com/tauberer/mailinabox
+	git clone https://github.com/joshdata/mailinabox
 	cd mailinabox
 	
 Now you've got the Mail-in-a-Box source code stored on your server. The next command starts the automatic configuration of the server:

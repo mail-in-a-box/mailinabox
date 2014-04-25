@@ -13,7 +13,7 @@ apt-get -q -y install python3
 #
 # These services don't need further configuration and are started immediately after installation.
 
-apt-get install -q -y ntp fail2ban
+apt-get -q -y install ntp fail2ban
 
 # Turn on the firewall. First allow incoming SSH, then turn on the firewall.
 # Other ports will be opened at the point where we set up those services.

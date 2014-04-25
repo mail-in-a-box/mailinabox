@@ -46,7 +46,7 @@ if [ -z "$PUBLIC_IP" ]; then
 	read -e -i "`hostname -i`" -p "Public IP: " PUBLIC_IP
 fi
 
-# Create the user named "userconfig-data" and store all persistent user
+# Create the user named "user-data" and store all persistent user
 # data (mailboxes, etc.) in that user's home directory.
 if [ -z "$STORAGE_ROOT" ]; then
 	STORAGE_USER=user-data
