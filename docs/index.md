@@ -66,4 +66,4 @@ If you want to set up a desktop mail client like Thunderbird, your IMAP and SMTP
 Checking that it Worked
 -----------------------
 
-...
+You can also debug your DKIM (and SPF) settings with e.g. [this tool](http://www.brandonchecketts.com/emailtest.php).
