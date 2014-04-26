@@ -67,3 +67,4 @@ Checking that it Worked
 -----------------------
 
 You can also debug your DKIM (and SPF) settings with e.g. [this tool](http://www.brandonchecketts.com/emailtest.php).
+[This site](http://pingability.com/zoneinfo.jsp) will also give useful information about your DNS and mail servers.
