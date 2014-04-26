@@ -1,7 +1,7 @@
 Mail-in-a-Box
 =============
 
-:![logo](images/mailinabox-01.png):
+![logo](images/mailinabox-01.png)
 
 Mass electronic surveillance by governments revealed over the last year has spurred a new movement to re-decentralize the web, that is, to empower netizens to be their own service providers again. SMTP, the protocol of email, is decentralized in principle but highly centralized in practice due to the high cost of implementing all of the modern protocols that surround it. As a result, most individuals trade their independence for access to a “free” email service.
 
@@ -68,4 +68,4 @@ The History
 
 * In 2007 I wrote a relatively popular Mozilla Thunderbird extension that added client-side SPF and DKIM checks to mail to warn users about possible phishing: [add-on page](https://addons.mozilla.org/en-us/thunderbird/addon/sender-verification-anti-phish/), [source](https://github.com/JoshData/thunderbird-spf).
 
-:![logo](images/mailinabox-01.png):
+![logo](images/mailinabox-02.png)
