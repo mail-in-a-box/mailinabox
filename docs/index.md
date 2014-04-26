@@ -29,7 +29,7 @@ All command-line instructions below assume you've logged into your machine with 
 Configuring the Server
 ----------------------
 
-After logging into your server with SSH and becoming root, type the following in the console:
+After logging into your *new* server with SSH and becoming root, type the following in the console:
 
 	sudo apt-get install -y git
 	git clone https://github.com/joshdata/mailinabox
@@ -39,6 +39,8 @@ Now you've got the Mail-in-a-Box source code stored on your server. The next com
 	
 	sudo scripts/start.sh
 	
+*(Just a reminder, do this on a fresh Ubuntu 14.04 machine only! If you're reusing an existing server, unpredictable things may happen.)*
+
 You will be asked to enter the hostname you chose and the public IP address of the server as assigned by your ISP.
 
 After that you'll see a lot of output as system programs are installed and configured.

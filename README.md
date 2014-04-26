@@ -27,6 +27,7 @@ This setup is what has been powering my own personal email since September 2013.
 
 Please see the initial and very barebones [Documentation](docs/index.md) for more information on how to set up a Mail-in-a-Box. But in short, it's like this:
 
+	# do this on a fresh install of Ubuntu 14.04 only!
 	sudo apt-get install -y git
 	git clone https://github.com/joshdata/mailinabox
 	cd mailinabox
