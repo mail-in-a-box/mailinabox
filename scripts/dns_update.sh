@@ -120,8 +120,7 @@ EOF
 done
 
 # Kick nsd.
-service nsd rebuild
-service nsd restart # ensure it is running
+service nsd restart
 
 # Kick opendkim.
 service opendkim restart
