@@ -79,8 +79,8 @@ usermod -a -G dovecot www-data
 # could use dovecot instead of www-data, but not sure it matters
 chown root.www-data $STORAGE_ROOT/mail
 chmod 775 $STORAGE_ROOT/mail
-chown root.www-data /home/user-data/mail/users.sqlite 
-chmod 664 /home/user-data/mail/users.sqlite 
+chown root.www-data $STORAGE_ROOT/mail/users.sqlite 
+chmod 664 $STORAGE_ROOT/mail/users.sqlite 
 
 # Enable PHP modules.
 php5enmod mcrypt
