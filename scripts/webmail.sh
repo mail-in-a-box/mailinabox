@@ -55,7 +55,7 @@ cp /usr/share/roundcube/plugins/password/config.inc.php.dist \
 
 tools/editconf.py /etc/roundcube/plugins/password/config.inc.php \
 	"\$rcmail_config['password_minimum_length']=6;" \
-	"\$rcmail_config['password_db_dsn']='sqlite:////home/user-data/mail/users.sqlite';" \
+	"\$rcmail_config['password_db_dsn']='sqlite:///$STORAGE_ROOT/mail/users.sqlite';" \
 	"\$rcmail_config['password_query']='UPDATE users SET password=%D WHERE email=%u';" \
 	"\$rcmail_config['password_dovecotpw']='/usr/bin/doveadm pw';" \
 	"\$rcmail_config['password_dovecotpw_method']='SHA512-CRYPT';" \
