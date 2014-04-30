@@ -44,8 +44,22 @@ tools/editconf.py /etc/roundcube/main.inc.php \
 	"\$rcmail_config['message_sort_col']='arrival';" \
 	"\$rcmail_config['junk_mbox']='Spam';" \
 	"\$rcmail_config['default_folders']=array('INBOX', 'Drafts', 'Sent', 'Spam', 'Trash');" \
-	"\$rcmail_config['draft_autosave']=30;"
+	"\$rcmail_config['draft_autosave']=30;" \
+	"\$rcmail_config['plugins']=array('password');"
 
+# Password changing plugin settings
+# The config comes empty by default, so we need the settings 
+# we're not planning to change in config.inc.dist...
+cp /usr/share/roundcube/plugins/password/config.inc.php.dist \
+	/etc/roundcube/plugins/password/config.inc.php 
+
+tools/editconf.py /etc/roundcube/plugins/password/config.inc.php \
+	"\$rcmail_config['password_minimum_length']=6;" \
+	"\$rcmail_config['password_db_dsn']='sqlite:////home/user-data/mail/users.sqlite';" \
+	"\$rcmail_config['password_query']='UPDATE users SET password=%D WHERE email=%u';" \
+	"\$rcmail_config['password_dovecotpw']='/usr/bin/doveadm pw';" \
+	"\$rcmail_config['password_dovecotpw_method']='SHA512-CRYPT';" \
+	"\$rcmail_config['password_dovecotpw_with_method']=true;"
 
 # Configure storage of user preferences.
 mkdir -p $STORAGE_ROOT/mail/roundcube
@@ -57,6 +71,16 @@ cat - > /etc/roundcube/debian-db.php <<EOF;
 ?>
 EOF
 chown -R www-data.www-data $STORAGE_ROOT/mail/roundcube
+
+# so PHP can use doveadm
+usermod -a -G dovecot www-data
+
+# set permissions so that PHP can use users.sqlite
+# could use dovecot instead of www-data, but not sure it matters
+chown root.www-data $STORAGE_ROOT/mail
+chmod 775 $STORAGE_ROOT/mail
+chown root.www-data /home/user-data/mail/users.sqlite 
+chmod 664 /home/user-data/mail/users.sqlite 
 
 # Enable PHP modules.
 php5enmod mcrypt
