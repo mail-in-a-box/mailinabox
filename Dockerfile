@@ -2,7 +2,6 @@
 # see https://www.docker.io
 ###########################
 
-# Change to this directory and then
 # sudo docker.io build -t box .
 # sudo docker.io run -i -t box
 
@@ -21,14 +20,16 @@ ENV PUBLIC_IP 127.0.123.123
 # Our install will fail if SSH is installed and allows password-based authentication.
 RUN apt-get install -q -y openssh-server
 RUN sed -i /etc/ssh/sshd_config -e "s/^#PasswordAuthentication yes/PasswordAuthentication no/g"
-RUN service ssh restart
 
-# Start our setup.
-RUN apt-get install -q -y git
-RUN git clone https://github.com/joshdata/mailinabox
-RUN cd mailinabox; scripts/start.sh
+# Add this repo into the image so we have the configuration scripts.
+ADD conf /usr/local/mailinabox/conf
+ADD containers/docker /usr/local/mailinabox/containers/docker
+ADD scripts /usr/local/mailinabox/scripts
+ADD tools /usr/local/mailinabox/tools
+
+# Start the configuration.
+RUN cd /usr/local/mailinabox; scripts/start.sh
 
 # Launch configuration.
-ADD start_services.sh /usr/local/bin/start_services.sh
-CMD bash /usr/local/bin/start_services.sh
+CMD bash /usr/local/mailinabox/containers/docker/start_services.sh
 EXPOSE 22 25 53 443 587 993
