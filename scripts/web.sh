@@ -39,6 +39,6 @@ service nginx restart
 service php-fastcgi restart
 
 # Open ports.
-ufw allow http
-ufw allow https
+ufw_allow http
+ufw_allow https
 

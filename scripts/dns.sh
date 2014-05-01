@@ -43,5 +43,5 @@ chown -R $STORAGE_USER.$STORAGE_USER $STORAGE_ROOT/dns
 
 # Permit DNS queries on TCP/UDP in the firewall.
 
-ufw allow domain
+ufw_allow domain
 

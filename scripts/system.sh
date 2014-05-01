@@ -35,6 +35,6 @@ apt_install ntp fail2ban
 # Turn on the firewall. First allow incoming SSH, then turn on the firewall.
 # Other ports will be opened at the point where we set up those services.
 apt_install ufw
-ufw allow ssh;
+ufw_allow ssh;
 ufw --force enable;
 

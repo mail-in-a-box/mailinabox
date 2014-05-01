@@ -234,7 +234,7 @@ service postfix restart
 service dovecot restart
 
 # Allow mail-related ports in the firewall.
-ufw allow smtp
-ufw allow submission
-ufw allow imaps
+ufw_allow smtp
+ufw_allow submission
+ufw_allow imaps
 

@@ -19,3 +19,8 @@ function apt_install {
 	DEBIAN_FRONTEND=noninteractive apt-get -qq -y install $PACKAGES > /dev/null;
 }
 
+function ufw_allow {
+	# ufw has completely unhelpful output
+	ufw allow $1 > /dev/null;
+}
+
