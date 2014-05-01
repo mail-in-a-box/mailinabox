@@ -85,10 +85,10 @@ tools/editconf.py /etc/postfix/main.cf \
 # Here's the path to the database.
 db_path=$STORAGE_ROOT/mail/users.sqlite
 
-# SQL statement to check if we handle mail for a domain.
+# SQL statement to check if we handle mail for a domain, either for users or aliases.
 cat > /etc/postfix/virtual-mailbox-domains.cf << EOF;
 dbpath=$db_path
-query = SELECT 1 FROM users WHERE email LIKE '%%@%s'
+query = SELECT 1 FROM users WHERE email LIKE '%%@%s' UNION SELECT 1 FROM aliases WHERE source LIKE '%%@%s'
 EOF
 
 # SQL statement to check if we handle mail for a user.
