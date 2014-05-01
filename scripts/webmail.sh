@@ -1,6 +1,7 @@
 # Webmail: Using roundcube
 ##########################
 
+source scripts/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
 # Ubuntu's roundcube-core has a dependency on Apache & MySQL, which we don't want, so we can't
@@ -8,10 +9,9 @@ source /etc/mailinabox.conf # load global vars
 # dependencies of roundcube that we know we need, and then we'll manually install debs for the
 # roundcube version we want from Debian.
 #
-# 'DEBIAN_FRONTEND=noninteractive' is to prevent dbconfig-common from asking you questions.
 # The dependencies are from 'apt-cache showpkg roundcube-core'.
 
-DEBIAN_FRONTEND=noninteractive apt-get -q -q -y install \
+apt_install \
 	dbconfig-common \
 	php5 php5-sqlite php5-mcrypt php5-intl php5-json php5-common php-auth php-net-smtp php-net-socket php-net-sieve php-mail-mime php-crypt-gpg php5-gd php5-pspell \
 	tinymce libjs-jquery libjs-jquery-mousewheel libmagic1

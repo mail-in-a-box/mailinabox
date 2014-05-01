@@ -1,10 +1,12 @@
+source scripts/functions.sh # load our functions
+
 # Base system configuration.
 
 apt-get -q -q update
 apt-get -q -y upgrade
 
 # Install openssh-server to ensure that the end result is consistent across all Mail-in-a-Boxes.
-apt-get -q -y install openssh-server
+apt_install openssh-server
 
 # Check that SSH login with password is disabled. Stop if it's enabled.
 if grep -q "^PasswordAuthentication yes" /etc/ssh/sshd_config \
@@ -18,7 +20,7 @@ if grep -q "^PasswordAuthentication yes" /etc/ssh/sshd_config \
         exit
 fi
 
-apt-get -q -y install python3
+apt_install python3
 
 # Turn on basic services:
 #
@@ -28,11 +30,11 @@ apt-get -q -y install python3
 #
 # These services don't need further configuration and are started immediately after installation.
 
-apt-get -q -y install ntp fail2ban
+apt_install ntp fail2ban
 
 # Turn on the firewall. First allow incoming SSH, then turn on the firewall.
 # Other ports will be opened at the point where we set up those services.
-apt-get -q -y install ufw;
+apt_install ufw
 ufw allow ssh;
 ufw --force enable;
 

@@ -9,8 +9,10 @@
 # plugin. The tools/mail.py tool creates the necessary sieve script for each mail
 # user when the mail user is created.
 
+source scripts/functions.sh # load our functions
+
 # Install packages.
-apt-get -q -y install spampd razor pyzor dovecot-sieve dovecot-antispam
+apt_install spampd razor pyzor dovecot-sieve dovecot-antispam
 
 # Allow spamassassin to download new rules.
 tools/editconf.py /etc/default/spamassassin \

@@ -1,12 +1,14 @@
 # HTTP: Turn on a web server serving static files
 #################################################
 
+source scripts/functions.sh # load our functions
+
 # Remove Apache before installing Nginx. Apache may leave
 # some unwanted configuration files around (e.g. a ufw
 # application config), so purge the packages.
 apt-get purge -q -y apache2 apache2.2-common
 
-apt-get install -q -y nginx php5-cgi
+apt_install nginx php5-cgi
 
 rm -f /etc/nginx/sites-enabled/default
 

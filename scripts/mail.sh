@@ -12,9 +12,10 @@
 
 # Install packages.
 
+source scripts/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
-DEBIAN_FRONTEND=noninteractive apt-get -q -y install \
+apt_install \
 	postfix postgrey \
 	dovecot-core dovecot-imapd dovecot-lmtpd dovecot-sqlite sqlite3 \
 	openssl

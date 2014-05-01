@@ -4,8 +4,10 @@
 # After this, you'll still need to run dns_update.sh to get the DKIM
 # signature in the DNS zones.
 
+source scripts/functions.sh # load our functions
+
 # Install DKIM
-apt-get install -q -y opendkim opendkim-tools
+apt_install opendkim opendkim-tools
 
 # Make sure configuration directories exist.
 mkdir -p /etc/opendkim;

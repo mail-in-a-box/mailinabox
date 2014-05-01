@@ -7,6 +7,8 @@
 #
 # This script will turn on DNS for $PUBLIC_HOSTNAME.
 
+source scripts/functions.sh # load our functions
+
 # Install nsd, our DNS server software.
 
 # ...but first, we have to create the user because the 
@@ -20,7 +22,7 @@ fi
 
 # Okay now install the package.
 
-apt-get -qq -y install nsd
+apt_install nsd
 
 # Prepare nsd's configuration.
 
