@@ -22,14 +22,14 @@ RUN apt-get install -q -y openssh-server
 RUN sed -i /etc/ssh/sshd_config -e "s/^#PasswordAuthentication yes/PasswordAuthentication no/g"
 
 # Add this repo into the image so we have the configuration scripts.
-ADD conf /usr/local/mailinabox/conf
-ADD containers/docker /usr/local/mailinabox/containers/docker
 ADD scripts /usr/local/mailinabox/scripts
+ADD conf /usr/local/mailinabox/conf
 ADD tools /usr/local/mailinabox/tools
 
 # Start the configuration.
 RUN cd /usr/local/mailinabox; scripts/start.sh
 
-# Launch configuration.
+# How the instance is launched.
+ADD containers/docker /usr/local/mailinabox/containers/docker
 CMD bash /usr/local/mailinabox/containers/docker/start_services.sh
 EXPOSE 22 25 53 443 587 993
