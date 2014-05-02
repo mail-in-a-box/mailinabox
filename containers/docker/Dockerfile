@@ -6,7 +6,11 @@
 # sudo docker.io build -t box .
 # sudo docker.io run -i -t box
 
-FROM ubuntu:14.04
+# Revert to phusion's baseimage once they upgrade to Ubuntu 14.04
+#FROM phusion/baseimage:<version-based-on-14.04>
+# For now use an upgraded image provided by pjz, based on his
+# a PR: https://github.com/phusion/baseimage-docker/pull/64
+FROM pjzz/phusion-baseimage:0.9.10
 MAINTAINER Joshua Tauberer (http://razor.occams.info)
 
 ENV PUBLIC_HOSTNAME box.local
@@ -16,19 +20,20 @@ ENV PUBLIC_HOSTNAME box.local
 # host forward its port 53 (TCP/UDP) traffic to the docker container.
 # Since we can't get the host's IP address here, we'll set this to
 # a dummy value.
-ENV PUBLIC_IP 127.0.123.123
+ENV PUBLIC_IP 127.0.122.123
 
-# Our install will fail if SSH is installed and allows password-based authentication.
-RUN apt-get install -q -y openssh-server
-RUN sed -i /etc/ssh/sshd_config -e "s/^#PasswordAuthentication yes/PasswordAuthentication no/g"
-RUN service ssh restart
+# Turn off password-based authentication; for ssh access see the phusion-baseimage docs
+RUN sed -i 's/^#\s*\(PasswordAuthentication no\)/\1/' /etc/ssh/sshd_config
 
-# Start our setup.
-RUN apt-get install -q -y git
+# install some tools to install mailinabox
+RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -q -y git ca-certificates wget && apt-get clean
+
+# actually install mailinabox
 RUN git clone https://github.com/joshdata/mailinabox
-RUN cd mailinabox; scripts/start.sh
+RUN cd mailinabox && scripts/start.sh
 
-# Launch configuration.
-ADD start_services.sh /usr/local/bin/start_services.sh
-CMD bash /usr/local/bin/start_services.sh
+# configure mailinabox services
+ADD setup_services.sh /usr/local/bin/setup_services.sh
+RUN bash /usr/local/bin/setup_services.sh
+
 EXPOSE 22 25 53 443 587 993
