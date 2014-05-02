@@ -32,9 +32,14 @@ apt_install python3
 
 apt_install ntp fail2ban
 
-# Turn on the firewall. First allow incoming SSH, then turn on the firewall.
-# Other ports will be opened at the point where we set up those services.
-apt_install ufw
-ufw_allow ssh;
-ufw --force enable;
-
+if [ -z "$DISABLE_FIREWALL" ]; then
+	# Turn on the firewall. First allow incoming SSH, then turn on the firewall.
+	# Other ports will be opened at the point where we set up those services.
+	#
+	# Various virtualized environments like Docker and some VPSs don't provide
+	# a kernel that supports iptables. To avoid error-like output in these cases,
+	# let us disable the firewall.
+	apt_install ufw
+	ufw_allow ssh;
+	ufw --force enable;
+fi

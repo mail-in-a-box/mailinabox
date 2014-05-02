@@ -20,7 +20,9 @@ function apt_install {
 }
 
 function ufw_allow {
-	# ufw has completely unhelpful output
-	ufw allow $1 > /dev/null;
+	if [ -z "$DISABLE_FIREWALL" ]; then
+		# ufw has completely unhelpful output
+		ufw allow $1 > /dev/null;
+	fi
 }
 

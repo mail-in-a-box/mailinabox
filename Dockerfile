@@ -22,6 +22,9 @@ MAINTAINER Joshua Tauberer (http://razor.occams.info)
 ENV PUBLIC_HOSTNAME box.local
 ENV PUBLIC_IP 127.0.123.123
 
+# Docker-specific Mail-in-a-Box configuration.
+ENV DISABLE_FIREWALL 1
+
 # Our install will fail if SSH is installed and allows password-based authentication.
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -qq -y openssh-server
 RUN sed -i /etc/ssh/sshd_config -e "s/^#PasswordAuthentication yes/PasswordAuthentication no/g"
