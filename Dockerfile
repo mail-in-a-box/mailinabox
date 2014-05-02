@@ -16,17 +16,14 @@
 FROM ubuntu:14.04
 MAINTAINER Joshua Tauberer (http://razor.occams.info)
 
+# We can't know these values ahead of time, so set them to something
+# obviously local. The start.sh script will need to be run again once
+# these values are known. 
 ENV PUBLIC_HOSTNAME box.local
-
-# The PUBLIC_IP is only used for serving DNS, which means it is only
-# useful if we set it to the host machine's IP address and have the
-# host forward its port 53 (TCP/UDP) traffic to the docker container.
-# Since we can't get the host's IP address here, we'll set this to
-# a dummy value.
 ENV PUBLIC_IP 127.0.123.123
 
 # Our install will fail if SSH is installed and allows password-based authentication.
-RUN apt-get install -q -y openssh-server
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -qq -y openssh-server
 RUN sed -i /etc/ssh/sshd_config -e "s/^#PasswordAuthentication yes/PasswordAuthentication no/g"
 
 # Add this repo into the image so we have the configuration scripts.
