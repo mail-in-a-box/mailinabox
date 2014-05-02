@@ -62,14 +62,15 @@ EOF
 . scripts/web.sh
 . scripts/webmail.sh
 
+if [ -t 0 ]; then # are we in an interactive shell?
 if [ -z "`tools/mail.py user`" ]; then
 	# The outut of "tools/mail.py user" is a list of mail users. If there
 	# are none configured, ask the user to configure one.
 	echo
 	echo "Let's create your first mail user."
-	read -e -i "user@`hostname`" -p "Email Address: " EMAIL_ADDR
+	read -e -i "user@$PUBLIC_HOSTNAME" -p "Email Address: " EMAIL_ADDR
 	tools/mail.py user add $EMAIL_ADDR # will ask for password
 	tools/mail.py alias add hostmaster@$PUBLIC_HOSTNAME $EMAIL_ADDR
 	tools/mail.py alias add postmaster@$PUBLIC_HOSTNAME $EMAIL_ADDR
 fi
-
+fi
