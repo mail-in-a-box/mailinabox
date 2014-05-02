@@ -20,7 +20,9 @@ if grep -q "^PasswordAuthentication yes" /etc/ssh/sshd_config \
         exit
 fi
 
-apt_install python3
+# Install basic utilities.
+
+apt_install python3 curl bind9-host
 
 # Turn on basic services:
 #
