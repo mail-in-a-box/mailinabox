@@ -21,8 +21,9 @@ else
 fi
 
 # Okay now install the package.
+# bc is needed by dns_update.
 
-apt_install nsd
+apt_install nsd bc
 
 # Prepare nsd's configuration.
 
