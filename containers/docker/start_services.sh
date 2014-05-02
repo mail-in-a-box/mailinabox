@@ -8,5 +8,22 @@ service opendkim start
 service nginx start
 service php-fastcgi start
 
-echo "Your Mail-in-a-Box is running."
-bash
+if [ -t 0 ]
+then
+  # This is an interactive shell. You get a command prompt within
+  # the container.
+  #
+  # You get here by running 'docker run -i -t'.
+
+  echo "Welcome to your Mail-in-a-Box."
+  bash
+
+else
+  # This is a non-interactive shell. It loops forever to prevent
+  # the docker container from stopping.
+  #
+  # You get here by omitting '-t' from the docker run arguments.
+
+  echo "Your Mail-in-a-Box is running..."
+  while true; do sleep 10; done
+fi
