@@ -52,6 +52,17 @@ PUBLIC_HOSTNAME=$PUBLIC_HOSTNAME
 PUBLIC_IP=$PUBLIC_IP
 EOF
 
+# For docker, we don't want any of our scripts to start daemons.
+# Mask the 'service' program by defining a function of the same name
+# so that whenever we try to restart a service we just silently do
+# nothing.
+if [ "$NO_RESTART_SERVICES" == "1" ]; then
+	function service {
+		# we could output some status, but it's not important
+		echo skipping service $@ > /dev/null;
+	}
+fi
+
 # Start service configuration.
 . scripts/system.sh
 . scripts/dns.sh

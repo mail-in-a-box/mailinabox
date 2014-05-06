@@ -15,27 +15,10 @@ if grep "^PUBLIC_IP=192.168.200.1" /etc/mailinabox.conf > /dev/null; then
   export PUBLIC_HOSTNAME=`host $PUBLIC_IP | sed -e "s/.* //" | sed -e "s/\.$//"`
   echo Your hostname is $PUBLIC_HOSTNAME.
 
-  # Start configuration again.
+  # Start configuration again. Hide the terminal. The system services
+  # have not been started yet, so we can't ask the user to create an
+  # account yet.
   cd /usr/local/mailinabox
-  scripts/start.sh
+  scripts/start.sh < /dev/null
 fi
 
-if [ -t 0 ]
-then
-  # This is an interactive shell. You get a command prompt within
-  # the container.
-  #
-  # You get here by running 'docker run -i -t'.
-
-  echo "Welcome to your Mail-in-a-Box."
-  bash
-
-else
-  # This is a non-interactive shell. Just display status. Because
-  # other services are running, the container remains running after
-  # this script exits.
-  #
-  # You get here by omitting '-t' from the docker run arguments.
-
-  echo "Your Mail-in-a-Box is running..."
-fi

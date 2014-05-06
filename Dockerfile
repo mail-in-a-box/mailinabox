@@ -5,14 +5,10 @@
 # To build the image:
 # sudo docker.io build -t box .
 
-# Run your container the first time with an interactive console so you can
-# create your first mail account.
-# sudo docker.io run -i -t box
-
-# Then run it in the background and expose all of the ports so that the *host* acts as a Mail-in-a-Box:
-# (the SSH port is only available locally, but other ports are exposed publicly and must be available
-# otherwise the container won't start)
-# sudo docker.io run -d -p 22 -p 25:25 -p 53:53/udp -p 443:443 -p 587:587 -p 993:993 box
+# Run your container.
+#  -i -t: creates an interactive console so you can poke around (CTRL+D will terminate the container)
+#  -p ...: Maps container ports to host ports so that the host begins acting as a Mail-in-a-Box.
+# sudo docker.io run -i -t -p 22 -p 25:25 -p 53:53/udp -p 443:443 -p 587:587 -p 993:993 box
 
 ###########################################
 
@@ -43,6 +39,7 @@ ENV PUBLIC_IP 192.168.200.1
 
 # Docker-specific Mail-in-a-Box configuration.
 ENV DISABLE_FIREWALL 1
+ENV NO_RESTART_SERVICES 1
 
 # Our install will fail if SSH is installed and allows password-based authentication.
 # The base image already installs openssh-server. Just edit its configuration.
@@ -59,6 +56,7 @@ RUN cd /usr/local/mailinabox && scripts/start.sh
 # Configure services for docker.
 ADD containers/docker /usr/local/mailinabox/containers/docker
 RUN /usr/local/mailinabox/containers/docker/setup_services.sh
+RUN ln -s /usr/local/mailinabox/containers/docker/container_start.sh /etc/my_init.d/99-mailinabox.sh
 
-# How the container is launched.
-CMD bash /usr/local/mailinabox/containers/docker/container_start.sh
+# Start bash so we can poke around.
+CMD ["/sbin/my_init", "--", "bash"]
