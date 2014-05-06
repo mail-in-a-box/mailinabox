@@ -2,8 +2,8 @@ source scripts/functions.sh # load our functions
 
 # Base system configuration.
 
-apt-get -q -q update
-apt-get -q -y upgrade
+apt-get -qq update
+apt-get -qq -y upgrade
 
 # Install openssh-server to ensure that the end result is consistent across all Mail-in-a-Boxes.
 apt_install openssh-server
