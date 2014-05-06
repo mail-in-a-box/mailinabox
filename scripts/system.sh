@@ -22,7 +22,7 @@ fi
 
 # Install basic utilities.
 
-apt_install python3 curl bind9-host
+apt_install python3 wget curl bind9-host
 
 # Turn on basic services:
 #
