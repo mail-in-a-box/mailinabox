@@ -9,7 +9,7 @@ done
 
 cat <<EORUN >/etc/service/nsd/run
 #!/bin/sh
-exec /usr/bin/nsd -d
+exec /usr/sbin/nsd -d
 EORUN
 
 cat <<EORUN >/etc/service/postfix/run
@@ -30,7 +30,7 @@ EORUN
 
 cat <<EORUN >/etc/service/dovecot/run
 #!/bin/sh
-exec dovecot
+exec dovecot -F
 EORUN
 
 cat <<EORUN >/etc/service/opendkim/run
