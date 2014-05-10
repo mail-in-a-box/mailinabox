@@ -108,13 +108,13 @@ EOF
 	# email addresses to signing information. The KeyTable maps specify the hostname,
 	# the selector, and the path to the private key.
 	#
-	# Just in case we don't actually host the DNS for all domains of our mail users,
-	# we assume that DKIM is at least configured in the DNS of $PUBLIC_HOSTNAME and
-	# we use that host for all DKIM signatures.
+	# DKIM ADSP and DMARC both only support policies where the signing domain matches
+	# the From address, so the KeyTable must specify that the signing domain for a
+	# sender matches the sender's domain.
 	#
 	# In SigningTable, we map every email address to a key record called $zone.
 	# Then we specify for the key record named $zone its domain, selector, and key.
-	echo "$zone $PUBLIC_HOSTNAME:mail:$STORAGE_ROOT/mail/dkim/mail.private" >> /etc/opendkim/KeyTable
+	echo "$zone $zone:mail:$STORAGE_ROOT/mail/dkim/mail.private" >> /etc/opendkim/KeyTable
 	echo "*@$zone $zone" >> /etc/opendkim/SigningTable
 
 done
