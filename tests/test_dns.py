@@ -42,7 +42,11 @@ def test2(tests, server, description):
 	resolver.nameservers = [server]
 	for qname, rtype, expected_answer in tests:
 		# do the query and format the result as a string
-		response = dns.resolver.query(qname, rtype)
+		try:
+			response = dns.resolver.query(qname, rtype)
+		except dns.resolver.NXDOMAIN:
+			# host did not have an answer for this query
+			response = ["NOT SET"]
 		response = ";".join(str(r) for r in response)
 		response = re.sub(r"(\"p=).*(\")", r"\1__KEY__\2", response) # normalize DKIM key
 
