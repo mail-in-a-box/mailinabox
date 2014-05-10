@@ -29,6 +29,8 @@ def test(server, description):
 		(hostname, "MX", "10 " + primary_hostname + "."),
 		(hostname, "TXT", "\"v=spf1 mx -all\""),
 		("mail._domainkey." + hostname, "TXT", "\"v=DKIM1; k=rsa; s=email; \" \"p=__KEY__\""),
+		("_adsp._domainkey." + hostname, "TXT", "\"dkim=all\""),
+		("_dmarc." + hostname, "TXT", "\"v=DMARC1; p=quarantine\""),
 	]
 	return test2(tests, server, description)
 
