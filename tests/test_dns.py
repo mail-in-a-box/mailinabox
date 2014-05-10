@@ -11,19 +11,22 @@ import sys, re, difflib
 import dns.reversename, dns.resolver
 
 if len(sys.argv) < 3:
-	print("Usage: tests/dns.py ipaddress hostname")
+	print("Usage: tests/dns.py ipaddress hostname [primary hostname]")
 	sys.exit(1)
 
-ipaddr, hostname = sys.argv[1:]
+ipaddr, hostname = sys.argv[1:3]
+primary_hostname = hostname
+if len(sys.argv) == 4:
+	primary_hostname = sys.argv[3]
 
 def test(server, description):
 	tests = [
 		(hostname, "A", ipaddr),
-		(hostname, "NS", "ns1.%s.;ns2.%s." % (hostname, hostname)),
-		("ns1." + hostname, "A", ipaddr),
-		("ns2." + hostname, "A", ipaddr),
+		(hostname, "NS", "ns1.%s.;ns2.%s." % (primary_hostname, primary_hostname)),
+		("ns1." + primary_hostname, "A", ipaddr),
+		("ns2." + primary_hostname, "A", ipaddr),
 		("www." + hostname, "A", ipaddr),
-		(hostname, "MX", "10 " + hostname + "."),
+		(hostname, "MX", "10 " + primary_hostname + "."),
 		(hostname, "TXT", "\"v=spf1 mx -all\""),
 		("mail._domainkey." + hostname, "TXT", "\"v=DKIM1; k=rsa; s=email; \" \"p=__KEY__\""),
 	]
