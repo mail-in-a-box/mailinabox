@@ -1,3 +1,4 @@
+#!/bin/bash
 # DNS: Creates DNS zone files
 #############################
 
