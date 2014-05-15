@@ -55,12 +55,18 @@ tools/editconf.py /etc/postfix/main.cf \
 	smtpd_relay_restrictions=permit_sasl_authenticated,permit_mynetworks,reject_unauth_destination
 
 # Who can send mail to us?
+# reject_non_fqdn_sender: Reject not-nice-looking return paths.
+# reject_unknown_sender_domain: Reject return paths with invalid domains.
+# reject_rhsbl_sender: Reject return paths that use blacklisted domains.
 # permit_sasl_authenticated: Authenticated users (i.e. on port 587).
 # permit_mynetworks: Mail that originates locally.
+# permit_dnswl_client: Mail from whitelisted IP addresses. (Good to put before greylisting so these IPs get mail delivered quickly).
 # reject_rbl_client: Reject connections from IP addresses blacklisted in zen.spamhaus.org
 # check_policy_service: Apply greylisting using postgrey.
 tools/editconf.py /etc/postfix/main.cf \
-	smtpd_recipient_restrictions=permit_sasl_authenticated,permit_mynetworks,"reject_rbl_client zen.spamhaus.org","check_policy_service inet:127.0.0.1:10023"
+	smtpd_sender_restrictions="reject_non_fqdn_sender,reject_unknown_sender_domain,reject_rhsbl_sender dbl.spamhaus.org"
+tools/editconf.py /etc/postfix/main.cf \
+	smtpd_recipient_restrictions=permit_sasl_authenticated,permit_mynetworks,"permit_dnswl_client list.dnswl.org","reject_rbl_client zen.spamhaus.org","check_policy_service inet:127.0.0.1:10023"
 
 # Have postfix listen on all network interfaces, set our name (the Debian default seems to be localhost),
 # and set the name of the local machine to localhost for xxx@localhost mail (but I don't think this will have any effect because
