@@ -48,8 +48,8 @@ if reverse_dns is not None:
 	helo_name = server.ehlo_resp.decode("utf8").split("\n")[0] # first line is the EHLO name
 	if helo_name != reverse_dns:
 		print("The server's EHLO name does not match its reverse hostname. Check DNS settings.")
-		sys.exit(1)
-	print("SMTP EHLO name (%s) is OK." % helo_name)
+	else:
+		print("SMTP EHLO name (%s) is OK." % helo_name)
 
 # Login and send a test email.
 server.login(emailaddress, pw)
