@@ -60,13 +60,18 @@ tools/editconf.py /etc/postfix/main.cf \
 # reject_rhsbl_sender: Reject return paths that use blacklisted domains.
 # permit_sasl_authenticated: Authenticated users (i.e. on port 587).
 # permit_mynetworks: Mail that originates locally.
-# permit_dnswl_client: Mail from whitelisted IP addresses. (Good to put before greylisting so these IPs get mail delivered quickly).
 # reject_rbl_client: Reject connections from IP addresses blacklisted in zen.spamhaus.org
 # check_policy_service: Apply greylisting using postgrey.
+#
+# Notes:
+# permit_dnswl_client can pass through mail from whitelisted IP addresses, which would be good to put before greylisting
+# so these IPs get mail delivered quickly. But when an IP is not listed in the permit_dnswl_client list (i.e. it is not
+# whitelisted) then postfix does a DEFER_IF_REJECT, which results in all "unknown user" sorts of messages turning into
+# "450 4.7.1 Client host rejected: Service unavailable". This is a retry code, so the mail doesn't properly bounce.
 tools/editconf.py /etc/postfix/main.cf \
 	smtpd_sender_restrictions="reject_non_fqdn_sender,reject_unknown_sender_domain,reject_rhsbl_sender dbl.spamhaus.org"
 tools/editconf.py /etc/postfix/main.cf \
-	smtpd_recipient_restrictions=permit_sasl_authenticated,permit_mynetworks,"permit_dnswl_client list.dnswl.org","reject_rbl_client zen.spamhaus.org","check_policy_service inet:127.0.0.1:10023"
+	smtpd_recipient_restrictions=permit_sasl_authenticated,permit_mynetworks,"reject_rbl_client zen.spamhaus.org","check_policy_service inet:127.0.0.1:10023"
 
 # Have postfix listen on all network interfaces, set our name (the Debian default seems to be localhost),
 # and set the name of the local machine to localhost for xxx@localhost mail (but I don't think this will have any effect because
