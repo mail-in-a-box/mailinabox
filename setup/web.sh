@@ -1,7 +1,7 @@
 # HTTP: Turn on a web server serving static files
 #################################################
 
-source scripts/functions.sh # load our functions
+source setup/functions.sh # load our functions
 
 apt_install nginx php5-cgi
 

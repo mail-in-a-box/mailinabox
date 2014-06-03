@@ -1,7 +1,7 @@
 # Webmail: Using roundcube
 ##########################
 
-source scripts/functions.sh # load our functions
+source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
 # Ubuntu's roundcube-core has dependencies on Apache & MySQL, which we don't want, so we can't

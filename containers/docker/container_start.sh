@@ -19,6 +19,6 @@ if grep "^PUBLIC_IP=192.168.200.1" /etc/mailinabox.conf > /dev/null; then
   # have not been started yet, so we can't ask the user to create an
   # account yet.
   cd /usr/local/mailinabox
-  scripts/start.sh < /dev/null
+  setup/start.sh < /dev/null
 fi
 

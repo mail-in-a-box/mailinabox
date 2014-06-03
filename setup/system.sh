@@ -1,4 +1,4 @@
-source scripts/functions.sh # load our functions
+source setup/functions.sh # load our functions
 
 # Base system configuration.
 

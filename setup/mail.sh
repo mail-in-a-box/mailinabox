@@ -12,7 +12,7 @@
 
 # Install packages.
 
-source scripts/functions.sh # load our functions
+source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
 apt_install \

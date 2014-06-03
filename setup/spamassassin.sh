@@ -9,7 +9,7 @@
 # plugin. The tools/mail.py tool creates the necessary sieve script for each mail
 # user when the mail user is created.
 
-source scripts/functions.sh # load our functions
+source setup/functions.sh # load our functions
 
 # Install packages.
 apt_install spampd razor pyzor dovecot-sieve dovecot-antispam

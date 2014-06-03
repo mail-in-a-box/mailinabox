@@ -64,14 +64,14 @@ if [ "$NO_RESTART_SERVICES" == "1" ]; then
 fi
 
 # Start service configuration.
-. scripts/system.sh
-. scripts/dns.sh
-. scripts/mail.sh
-. scripts/dkim.sh
-. scripts/spamassassin.sh
-. scripts/dns_update.sh
-. scripts/web.sh
-. scripts/webmail.sh
+. setup/system.sh
+. setup/dns.sh
+. setup/mail.sh
+. setup/dkim.sh
+. setup/spamassassin.sh
+. setup/dns_update.sh
+. setup/web.sh
+. setup/webmail.sh
 
 if [ -t 0 ]; then # are we in an interactive shell?
 if [ -z "`tools/mail.py user`" ]; then

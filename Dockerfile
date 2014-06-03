@@ -46,12 +46,12 @@ ENV NO_RESTART_SERVICES 1
 RUN sed -i -e "s/^#*\s*PasswordAuthentication \(yes\|no\)/PasswordAuthentication no/g" /etc/ssh/sshd_config
 
 # Add this repo into the image so we have the configuration scripts.
-ADD scripts /usr/local/mailinabox/scripts
+ADD setup /usr/local/mailinabox/setup
 ADD conf /usr/local/mailinabox/conf
 ADD tools /usr/local/mailinabox/tools
 
 # Start the configuration.
-RUN cd /usr/local/mailinabox && scripts/start.sh
+RUN cd /usr/local/mailinabox && setup/start.sh
 
 # Configure services for docker.
 ADD containers/docker /usr/local/mailinabox/containers/docker

@@ -37,7 +37,7 @@ After logging into your *new* server with SSH and becoming root, type the follow
 	
 Now you've got the Mail-in-a-Box source code stored on your server. The next command starts the automatic configuration of the server:
 	
-	sudo scripts/start.sh
+	sudo setup/start.sh
 	
 *(Just a reminder, do this on a fresh Ubuntu 14.04 machine only! If you're reusing an existing server, unpredictable things may happen.)*
 

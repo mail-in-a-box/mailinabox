@@ -30,7 +30,7 @@ Please see the initial and very barebones [Documentation](docs/index.md) for mor
 	sudo apt-get install -y git
 	git clone https://github.com/joshdata/mailinabox
 	cd mailinabox
-	sudo scripts/start.sh
+	sudo setup/start.sh
 
 **Status**: This is a work in progress. It works for what it is, but it is missing such things as quotas, backup/restore, etc.
 

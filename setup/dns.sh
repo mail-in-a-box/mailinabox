@@ -1,13 +1,13 @@
 # DNS: Configure a DNS server using nsd
 #######################################
 
-# After running this script, you also must run scripts/dns_update.sh,
+# After running this script, you also must run setup/dns_update.sh,
 # and any time a zone file is added/changed/removed, and any time a
 # new domain name becomes in use by a mail user.
 #
 # This script will turn on DNS for $PUBLIC_HOSTNAME.
 
-source scripts/functions.sh # load our functions
+source setup/functions.sh # load our functions
 
 # Install nsd, our DNS server software.
 
