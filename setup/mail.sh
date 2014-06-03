@@ -233,6 +233,10 @@ if [ ! -f $STORAGE_ROOT/ssl/ssl_certificate.pem ]; then
 	openssl x509 -req -days 365 \
 	  -in $STORAGE_ROOT/ssl/ssl_cert_sign_req.csr -signkey $STORAGE_ROOT/ssl/ssl_private_key.pem -out $STORAGE_ROOT/ssl/ssl_certificate.pem
 fi
+echo
+echo "Your SSL certificate's fingerpint is:"
+openssl x509 -in /home/user-data/ssl/ssl_certificate.pem -noout -fingerprint
+echo
 
 # PERMISSIONS / RESTART SERVICES
 
