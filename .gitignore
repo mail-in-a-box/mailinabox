@@ -1,2 +1,4 @@
 *~
 tests/__pycache__/
+management/__pycache__/
+tools/__pycache__/

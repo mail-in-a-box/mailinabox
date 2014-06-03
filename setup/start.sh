@@ -69,9 +69,13 @@ fi
 . setup/mail.sh
 . setup/dkim.sh
 . setup/spamassassin.sh
-. setup/dns_update.sh
 . setup/web.sh
 . setup/webmail.sh
+. setup/management.sh
+
+# Write the DNS configuration files.
+sleep 2 # wait for the daemon to start
+curl -d POSTDATA http://127.0.0.1:10222/dns/update
 
 if [ -t 0 ]; then # are we in an interactive shell?
 if [ -z "`tools/mail.py user`" ]; then
@@ -85,3 +89,4 @@ if [ -z "`tools/mail.py user`" ]; then
 	tools/mail.py alias add postmaster@$PUBLIC_HOSTNAME $EMAIL_ADDR
 fi
 fi
+
