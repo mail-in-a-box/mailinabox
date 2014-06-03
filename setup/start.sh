@@ -35,6 +35,15 @@ if [ -z "$PUBLIC_IP" ]; then
 	read -e -i "`hostname -i`" -p "Public IP: " PUBLIC_IP
 fi
 
+if [ -z "$CSR_COUNTRY" ]; then
+	echo
+	echo "Enter the two-letter, uppercase country code for where you"
+	echo "live or where your organization is based. (This is used to"
+	echo "create an SSL certificate.)"
+	echo
+	read -e -p "Country Code: " CSR_COUNTRY
+fi
+
 # Create the user named "user-data" and store all persistent user
 # data (mailboxes, etc.) in that user's home directory.
 if [ -z "$STORAGE_ROOT" ]; then
@@ -50,6 +59,7 @@ cat > /etc/mailinabox.conf << EOF;
 STORAGE_ROOT=$STORAGE_ROOT
 PUBLIC_HOSTNAME=$PUBLIC_HOSTNAME
 PUBLIC_IP=$PUBLIC_IP
+CSR_COUNTRY=$CSR_COUNTRY
 EOF
 
 # For docker, we don't want any of our scripts to start daemons.

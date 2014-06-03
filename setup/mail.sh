@@ -218,12 +218,18 @@ tools/editconf.py /etc/dovecot/conf.d/10-ssl.conf \
 
 # SSL CERTIFICATE
 	
-# Create a self-signed certifiate.
 mkdir -p $STORAGE_ROOT/ssl
 if [ ! -f $STORAGE_ROOT/ssl/ssl_certificate.pem ]; then
+	# Generate a new private key if one doesn't already exist.
 	openssl genrsa -out $STORAGE_ROOT/ssl/ssl_private_key.pem 2048
+fi
+if [ ! -f $STORAGE_ROOT/ssl/ssl_cert_sign_req.csr ]; then
+	# Generate a certificate signing request if one doesn't already exist.
 	openssl req -new -key $STORAGE_ROOT/ssl/ssl_private_key.pem -out $STORAGE_ROOT/ssl/ssl_cert_sign_req.csr \
-	  -subj "/C=/ST=/L=/O=/CN=$PUBLIC_HOSTNAME"
+	  -subj "/C=$CSR_COUNTRY/ST=/L=/O=/CN=$PUBLIC_HOSTNAME"
+fi
+if [ ! -f $STORAGE_ROOT/ssl/ssl_certificate.pem ]; then
+	# Generate a SSL certificate by self-signing if a SSL certificate doesn't yet exist.
 	openssl x509 -req -days 365 \
 	  -in $STORAGE_ROOT/ssl/ssl_cert_sign_req.csr -signkey $STORAGE_ROOT/ssl/ssl_private_key.pem -out $STORAGE_ROOT/ssl/ssl_certificate.pem
 fi
