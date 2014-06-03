@@ -13,6 +13,11 @@ if [ "`lsb_release -d | sed 's/.*:\s*//'`" != "Ubuntu 14.04 LTS" ]; then
 	exit
 fi
 
+# Recall the last settings used if we're running this a second time.
+if [ -f /etc/mailinabox.conf ]; then
+	cat /etc/mailinabox.conf | sed s/^/DEFAULT_/ > /tmp/mailinabox.prev.conf
+	source /tmp/mailinabox.prev.conf
+fi
 
 # Gather information from the user about the hostname and public IP
 # address of this host.
@@ -23,7 +28,13 @@ if [ -z "$PUBLIC_HOSTNAME" ]; then
 	echo "Josh uses box.occams.info as his hostname. Yours should"
 	echo "be similar."
 	echo
-	read -e -i "`hostname`" -p "Hostname: " PUBLIC_HOSTNAME
+
+	if [ -z "$DEFAULT_PUBLIC_HOSTNAME" ]; then
+		# set a default on first run
+		DEFAULT_PUBLIC_HOSTNAME=`hostname`
+	fi
+
+	read -e -i "$DEFAULT_PUBLIC_HOSTNAME" -p "Hostname: " PUBLIC_HOSTNAME
 fi
 
 if [ -z "$PUBLIC_IP" ]; then
@@ -32,7 +43,13 @@ if [ -z "$PUBLIC_IP" ]; then
 	echo "you by your ISP. We've guessed a value, but just backspace"
 	echo "it if it's wrong."
 	echo
-	read -e -i "`hostname -i`" -p "Public IP: " PUBLIC_IP
+
+	if [ -z "$DEFAULT_PUBLIC_IP" ]; then
+		# set a default on first run
+		DEFAULT_PUBLIC_IP=`hostname -i`
+	fi
+
+	read -e -i "$DEFAULT_PUBLIC_IP" -p "Public IP: " PUBLIC_IP
 fi
 
 if [ -z "$CSR_COUNTRY" ]; then
@@ -41,7 +58,13 @@ if [ -z "$CSR_COUNTRY" ]; then
 	echo "live or where your organization is based. (This is used to"
 	echo "create an SSL certificate.)"
 	echo
-	read -e -p "Country Code: " CSR_COUNTRY
+
+	#if [ -z "$DEFAULT_CSR_COUNTRY" ]; then
+	#	# set a default on first run
+	#	DEFAULT_CSR_COUNTRY=...?
+	#fi
+
+	read -e -i "$DEFAULT_CSR_COUNTRY" -p "Country Code: " CSR_COUNTRY
 fi
 
 # Create the user named "user-data" and store all persistent user
