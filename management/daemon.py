@@ -5,12 +5,10 @@ import os, os.path
 from flask import Flask, request, render_template
 app = Flask(__name__)
 
-# Load settings from /etc/mailinabox.conf.
-env = { }
-for line in open("/etc/mailinabox.conf"): env.setdefault(*line.strip().split("=", 1))
-env["CONF_DIR"] = os.path.join(os.path.dirname(__file__), "../conf")
-
+import utils
 from mailconfig import get_mail_users, add_mail_user, set_mail_password, remove_mail_user, get_mail_aliases, get_mail_domains, add_mail_alias, remove_mail_alias
+
+env = utils.load_environment()
 
 @app.route('/')
 def index():
