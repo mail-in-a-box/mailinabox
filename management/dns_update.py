@@ -27,6 +27,7 @@ def do_dns_update(env):
 	for domain, zonefile in zonefiles:
 		records = build_zone(domain, env)
 		if write_nsd_zone(domain, "/etc/nsd/zones/" + zonefile, records, env):
+			justtestingdotemail(domain, records)
 			updated_domains.append(domain)
 
 	# Write the main nsd.conf file.
@@ -186,3 +187,43 @@ def write_opendkim_tables(zonefiles, env):
 			for domain, zonefile in zonefiles
 		))
 
+########################################################################
+
+def justtestingdotemail(domain, records):
+	# If the domain is a subdomain of justtesting.email, which we own,
+	# automatically populate the zone where it is set up on dns4e.com.
+	# Ideally if dns4e.com supported NS records we would just have it
+	# delegate DNS to us, but instead we will populate the whole zone.
+
+	import subprocess, json, urllib.parse
+
+	if not domain.endswith(".justtesting.email"):
+		return
+
+	for subdomain, querytype, value in records:
+		if querytype in ("NS",): continue
+		if subdomain in ("www", "ns1", "ns2"): continue # don't do unnecessary things
+
+		if subdomain == None:
+			subdomain = domain
+		else:
+			subdomain = subdomain + "." + domain
+
+		if querytype == "TXT":
+			# nsd requires parentheses around txt records with multiple parts,
+			# but DNS4E requires there be no parentheses; also it goes into
+			# nsd with a newline and a tab, which we replace with a space here
+			value = re.sub("^\s*\(\s*([\w\W]*)\)", r"\1", value)
+			value = re.sub("\s+", " ", value)
+		else:
+			continue
+
+		print("Updating DNS for %s/%s..." % (subdomain, querytype))
+		resp = json.loads(subprocess.check_output([
+			"curl",
+			"-s",
+			"https://api.dns4e.com/v7/%s/%s" % (urllib.parse.quote(subdomain), querytype.lower()),
+			"--user", "2ddbd8e88ed1495fa0ec:A97TDJV26CVUJS6hqAs0CKnhj4HvjTM7MwAAg8xb",
+			"--data", "record=%s" % urllib.parse.quote(value),
+			]).decode("utf8"))
+		print("\t...", resp.get("message", "?"))

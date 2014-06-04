@@ -67,6 +67,24 @@ if [ -z "$CSR_COUNTRY" ]; then
 	read -e -i "$DEFAULT_CSR_COUNTRY" -p "Country Code: " CSR_COUNTRY
 fi
 
+# Automatic configuration, e.g. as used in our Vagrant configuration.
+if [ "$PUBLIC_IP" == "auto" ]; then
+	# Assume `hostname -i` gives the correct public IP address for the machine.
+	PUBLIC_IP=`hostname -i`
+	echo "IP Address: $PUBLIC_IP"
+fi
+if [ "$PUBLIC_IP" == "auto-web" ]; then
+	# Use a public API to get our public IP address.
+	PUBLIC_IP=`curl -s icanhazip.com`
+	echo "IP Address: $PUBLIC_IP"
+fi
+if [ "$PUBLIC_HOSTNAME" == "auto-easy" ]; then
+	# Generate a probably-unique subdomain under our justtesting.email domain.
+	PUBLIC_HOSTNAME=m`hostname -i | sha1sum | cut -c1-5`.justtesting.email
+	echo "Public Hostname: $PUBLIC_HOSTNAME"
+fi
+
+
 # Create the user named "user-data" and store all persistent user
 # data (mailboxes, etc.) in that user's home directory.
 if [ -z "$STORAGE_ROOT" ]; then
@@ -107,19 +125,30 @@ fi
 . setup/management.sh
 
 # Write the DNS configuration files.
-sleep 2 # wait for the daemon to start
+sleep 5 # wait for the daemon to start
 curl -d POSTDATA http://127.0.0.1:10222/dns/update
 
-if [ -t 0 ]; then # are we in an interactive shell?
+# If there aren't any mail users yet, create one.
 if [ -z "`tools/mail.py user`" ]; then
 	# The outut of "tools/mail.py user" is a list of mail users. If there
-	# are none configured, ask the user to configure one.
-	echo
-	echo "Let's create your first mail user."
-	read -e -i "user@$PUBLIC_HOSTNAME" -p "Email Address: " EMAIL_ADDR
-	tools/mail.py user add $EMAIL_ADDR # will ask for password
+	# aren't any yet, it'll be empty.
+
+	# In an interactive shell, ask the user for an email address.
+	if [ -t 0 ]; then
+		echo
+		echo "Let's create your first mail user."
+		read -e -i "user@$PUBLIC_HOSTNAME" -p "Email Address: " EMAIL_ADDR
+	else
+		# Use me@PUBLIC_HOSTNAME
+		EMAIL_ADDR=me@$PUBLIC_HOSTNAME
+		EMAIL_PW=1234
+		echo
+		echo "Creating a new mail account for $EMAIL_ADDR with password $EMAIL_PW."
+		echo
+	fi
+
+	tools/mail.py user add $EMAIL_ADDR $EMAIL_PW # will ask for password if none given
 	tools/mail.py alias add hostmaster@$PUBLIC_HOSTNAME $EMAIL_ADDR
 	tools/mail.py alias add postmaster@$PUBLIC_HOSTNAME $EMAIL_ADDR
-fi
 fi
 
