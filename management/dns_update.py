@@ -31,6 +31,9 @@ def do_dns_update(env):
 	# Write the main nsd.conf file.
 	write_nsd_conf(zonefiles)
 
+	# Write the OpenDKIM configuration tables.
+	write_opendkim_tables(zonefiles, env)
+
 	# Kick nsd.
 	os.system("service nsd restart")
 
