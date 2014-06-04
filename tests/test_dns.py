@@ -49,8 +49,13 @@ def test2(tests, server, description):
 		# do the query and format the result as a string
 		try:
 			response = dns.resolver.query(qname, rtype)
-		except dns.resolver.NXDOMAIN:
+		except dns.resolver.NoNameservers:
 			# host did not have an answer for this query
+			print("Could not connect to %s for DNS query." % server)
+			sys.exit(1)
+		except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+			# host did not have an answer for this query; not sure what the
+			# difference is between the two exceptions
 			response = ["[no value]"]
 		response = ";".join(str(r) for r in response)
 		response = re.sub(r"(\"p=).*(\")", r"\1__KEY__\2", response) # normalize DKIM key
