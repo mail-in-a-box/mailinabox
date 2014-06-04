@@ -12,8 +12,18 @@ host, emailaddress, pw = sys.argv[1:4]
 
 # Attempt to login with IMAP. Our setup uses email addresses
 # as IMAP/SMTP usernames.
-M = imaplib.IMAP4_SSL(host)
-M.login(emailaddress, pw)
+try:
+	M = imaplib.IMAP4_SSL(host)
+	M.login(emailaddress, pw)
+except OSError as e:
+	print("Connection error:", e)
+	sys.exit(1)
+except imaplib.IMAP4.error as e:
+	# any sort of login error
+	e = ", ".join(a.decode("utf8") for a in e.args)
+	print("IMAP error:", e)
+	sys.exit(1)
+
 M.select()
 print("IMAP login is OK.")
 
