@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import os, os.path
+import os, os.path, subprocess
 
 from flask import Flask, request, render_template
 app = Flask(__name__)
@@ -54,6 +54,20 @@ def mail_domains():
 def dns_update():
 	from dns_update import do_dns_update
 	return do_dns_update(env)
+
+# System
+
+@app.route('/system/updates')
+def show_updates():
+	subprocess.check_call("apt-get -qq update", shell=True)
+	return subprocess.check_output(
+		r"""apt-get -qq -s upgrade | grep -v ^Conf | sed "s/^Inst /Updated Package Available: /" | sed "s/\[\(.*\)\] (\(\S*\).*/\(\1 => \2\)/" """,
+		shell=True)
+
+@app.route('/system/update-packages', methods=["POST"])
+def do_updates():
+	subprocess.check_call("apt-get -qq update", shell=True)
+	return subprocess.check_output("DEBIAN_FRONTEND=noninteractive  apt-get -y upgrade", shell=True)
 
 # APP
 
