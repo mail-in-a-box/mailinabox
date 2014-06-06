@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import sys, urllib.request, urllib.error
+import sys, getpass, urllib.request, urllib.error
 
 def mgmt(cmd, data=None):
 	req = urllib.request.Request('http://localhost:10222' + cmd, urllib.parse.urlencode(data).encode("utf8") if data else None)
@@ -10,6 +10,15 @@ def mgmt(cmd, data=None):
 		print(e.read().decode('utf8'))
 		sys.exit(1)
 	return response.read().decode('utf8')
+
+def read_password():
+	first  = getpass.getpass('password: ')
+	second = getpass.getpass(' (again): ')
+	while first != second:
+		print('Passwords not the same. Try again.')
+		first  = getpass.getpass('password: ')
+		second = getpass.getpass(' (again): ')
+	return first
 
 if len(sys.argv) < 2:
 	print("Usage: ")
@@ -33,7 +42,7 @@ elif sys.argv[1] == "user" and sys.argv[2] in ("add", "password"):
 			email = input("email: ")
 		else:
 			email = sys.argv[3]
-		pw = input("password: ")
+		pw = read_password()
 	else:
 		email, pw = sys.argv[3:5]
 
