@@ -2,21 +2,17 @@
 # vi: set ft=ruby :
 
 Vagrant.configure("2") do |config|
-  config.vm.box = "ubuntu14.04-gitmachine"
-  config.vm.box_url = "ubuntu14.04-gitmachine.box"
+  config.vm.box = "ubuntu14.04"
+  config.vm.box_url = "http://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box"
 
-  # Network config: Since it's a mail server, it only makes sense
-  # to put it on the public network. This will let the machine
-  # take an IP address from your DHCP server. It's up to you to
-  # make sure its ports are exposed on the public web.
+  # Network config: Since it's a mail server, the machine must be connected
+  # to the public web. However, we currently don't want to expose SSH since
+  # the machine's box will let anyone log into it. So instead we'll put the
+  # machine on a private network.
   config.vm.hostname = "mailinabox"
-  config.vm.network "public_network"
+  config.vm.network "private_network", ip: "192.168.50.4"
 
   config.vm.provision :shell, :inline => <<-SH
-	# Our install will fail if SSH is installed and allows password-based authentication.
-	# `vagrant ssh` will still work if we disable password authentication.
-	echo "PasswordAuthentication no" >> /etc/ssh/sshd_config
-
 	# Set environment variables so that the setup script does
 	# not ask any questions during provisioning. We'll let the
 	# machine figure out its own public IP and it'll take a
