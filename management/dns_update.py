@@ -31,19 +31,27 @@ def do_dns_update(env):
 			updated_domains.append(domain)
 
 	# Write the main nsd.conf file.
-	write_nsd_conf(zonefiles)
+	if write_nsd_conf(zonefiles):
+		# Make sure updated_domains contains *something* if we wrote an updated
+		# nsd.conf so that we know to restart nsd.
+		if len(updated_domains) == 0:
+			updated_domains.append("DNS configuration")
+
+	# Kick nsd if anything changed.
+	if len(updated_domains) > 0:
+		os.system("service nsd restart")
 
 	# Write the OpenDKIM configuration tables.
 	write_opendkim_tables(zonefiles, env)
 
-	# Kick nsd.
-	os.system("service nsd restart")
-
 	# Kick opendkim.
 	os.system("service opendkim restart")
 
-	if len(updated_domains) == 0: updated_domains = ['(no domains required an update)']
-	return "Updated: " + ",".join(updated_domains) + "\n"
+	if len(updated_domains) == 0:
+		# if nothing was updated (except maybe DKIM), don't show any output
+		return ""
+	else:
+		return "updated: " + ",".join(updated_domains) + "\n"
 
 ########################################################################
 
@@ -136,8 +144,7 @@ $TTL 86400           ; default time to live
 ########################################################################
 
 def write_nsd_conf(zonefiles):
-	with open("/etc/nsd/nsd.conf", "w") as f:
-		f.write("""
+	nsdconf = """
 server:
   hide-version: yes
 
@@ -148,14 +155,25 @@ server:
   zonesdir: "/etc/nsd/zones"
   
 # ZONES
-""")
+"""
 
-		for domain, zonefile in zonefiles:
-			f.write("""
+	for domain, zonefile in zonefiles:
+		nsdconf += """
 zone:
 	name: %s
 	zonefile: %s
-""" % (domain, zonefile))
+""" % (domain, zonefile)
+
+	# Check if the nsd.conf is changing. If it isn't changing,
+	# return False to flag that no change was made.
+	with open("/etc/nsd/nsd.conf") as f:
+		if f.read() == nsdconf:
+			return False
+
+	with open("/etc/nsd/nsd.conf", "w") as f:
+		f.write(nsdconf)
+
+	return True
 
 ########################################################################
 
