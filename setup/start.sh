@@ -2,6 +2,8 @@
 # This is the entry point for configuring the system.
 #####################################################
 
+source setup/functions.sh # load our functions
+
 # Check system setup.
 
 if [ "`lsb_release -d | sed 's/.*:\s*//'`" != "Ubuntu 14.04 LTS" ]; then
@@ -31,7 +33,7 @@ if [ -z "$PUBLIC_HOSTNAME" ]; then
 
 	if [ -z "$DEFAULT_PUBLIC_HOSTNAME" ]; then
 		# set a default on first run
-		DEFAULT_PUBLIC_HOSTNAME=`hostname`
+		DEFAULT_PUBLIC_HOSTNAME=`get_default_hostname`
 	fi
 
 	read -e -i "$DEFAULT_PUBLIC_HOSTNAME" -p "Hostname: " PUBLIC_HOSTNAME
@@ -46,7 +48,7 @@ if [ -z "$PUBLIC_IP" ]; then
 
 	if [ -z "$DEFAULT_PUBLIC_IP" ]; then
 		# set a default on first run
-		DEFAULT_PUBLIC_IP=`hostname -i`
+		DEFAULT_PUBLIC_IP=`get_default_publicip`
 	fi
 
 	read -e -i "$DEFAULT_PUBLIC_IP" -p "Public IP: " PUBLIC_IP
@@ -69,18 +71,18 @@ fi
 
 # Automatic configuration, e.g. as used in our Vagrant configuration.
 if [ "$PUBLIC_IP" == "auto" ]; then
-	# Assume `hostname -i` gives the correct public IP address for the machine.
-	PUBLIC_IP=`hostname -i`
+	# Assume `get_publicip_from_dns` gives the correct public IP address for the machine.
+	PUBLIC_IP=`get_publicip_from_dns`
 	echo "IP Address: $PUBLIC_IP"
 fi
 if [ "$PUBLIC_IP" == "auto-web" ]; then
 	# Use a public API to get our public IP address.
-	PUBLIC_IP=`curl -s icanhazip.com`
+	PUBLIC_IP=`get_publicip_from_web_service`
 	echo "IP Address: $PUBLIC_IP"
 fi
 if [ "$PUBLIC_HOSTNAME" == "auto-easy" ]; then
 	# Generate a probably-unique subdomain under our justtesting.email domain.
-	PUBLIC_HOSTNAME=m`hostname -i | sha1sum | cut -c1-5`.justtesting.email
+	PUBLIC_HOSTNAME=m`get_publicip_from_dns | sha1sum | cut -c1-5`.justtesting.email
 	echo "Public Hostname: $PUBLIC_HOSTNAME"
 fi
 
