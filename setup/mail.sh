@@ -217,11 +217,12 @@ tools/editconf.py /etc/dovecot/conf.d/10-ssl.conf \
 	"ssl_key=<$STORAGE_ROOT/ssl/ssl_private_key.pem" \
 
 # SSL CERTIFICATE
-	
+
 mkdir -p $STORAGE_ROOT/ssl
 if [ ! -f $STORAGE_ROOT/ssl/ssl_certificate.pem ]; then
 	# Generate a new private key if one doesn't already exist.
-	openssl genrsa -out $STORAGE_ROOT/ssl/ssl_private_key.pem 2048
+	# Set the umask so the key file is not world-readable.
+	(umask 077; openssl genrsa -out $STORAGE_ROOT/ssl/ssl_private_key.pem 2048)
 fi
 if [ ! -f $STORAGE_ROOT/ssl/ssl_cert_sign_req.csr ]; then
 	# Generate a certificate signing request if one doesn't already exist.
