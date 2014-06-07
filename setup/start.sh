@@ -71,18 +71,13 @@ fi
 
 # Automatic configuration, e.g. as used in our Vagrant configuration.
 if [ "$PUBLIC_IP" == "auto" ]; then
-	# Assume `get_publicip_from_dns` gives the correct public IP address for the machine.
-	PUBLIC_IP=`get_publicip_from_dns`
-	echo "IP Address: $PUBLIC_IP"
-fi
-if [ "$PUBLIC_IP" == "auto-web" ]; then
 	# Use a public API to get our public IP address.
-	PUBLIC_IP=`get_publicip_from_web_service`
+	PUBLIC_IP=`get_default_publicip`
 	echo "IP Address: $PUBLIC_IP"
 fi
 if [ "$PUBLIC_HOSTNAME" == "auto-easy" ]; then
 	# Generate a probably-unique subdomain under our justtesting.email domain.
-	PUBLIC_HOSTNAME=m`get_publicip_from_dns | sha1sum | cut -c1-5`.justtesting.email
+	PUBLIC_HOSTNAME=m`get_default_publicip | sha1sum | cut -c1-5`.justtesting.email
 	echo "Public Hostname: $PUBLIC_HOSTNAME"
 fi
 
