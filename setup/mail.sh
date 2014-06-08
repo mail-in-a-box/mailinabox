@@ -26,7 +26,26 @@ mkdir -p $STORAGE_ROOT/mail
 #########
 
 # Enable the 'submission' port 587 listener.
-sed -i "s/#submission/submission/" /etc/postfix/master.cf
+sed -i 's/^#submission\b/submission/' /etc/postfix/master.cf
+
+# Add 'authclean' service hook (if necessary) to 'submission' service options.
+if ! grep -Eq '^\s+-o cleanup_service_name=authclean\b' /etc/postfix/master.cf; then
+	sed -i $'/^submission\\b/ a\\\n  -o cleanup_service_name=authclean' /etc/postfix/master.cf
+fi
+
+# Add the 'authclean' service (if necessary) after the 'cleanup' service.  It
+# will be used to filter privacy-sensitive headers on mail being sent out by
+# authenticated users.
+if ! grep -q '^authclean\b' /etc/postfix/master.cf; then
+	sed -i '/^cleanup\b/ a\
+authclean unix  n       -       -       -       0       cleanup\
+  -o header_checks=regexp:/etc/postfix/submission_header_checks' /etc/postfix/master.cf
+fi
+
+# Install `submission_header_checks` file required by 'authclean' service.
+if [ ! -f /etc/postfix/submission_header_checks ]; then
+	cp conf/submission_header_checks /etc/postfix/submission_header_checks
+fi
 
 # Enable TLS and require it for all user authentication.
 tools/editconf.py /etc/postfix/main.cf \
