@@ -28,19 +28,6 @@ mkdir -p $STORAGE_ROOT/mail
 # Enable the 'submission' port 587 listener.
 sed -i 's/^#submission\b/submission/' /etc/postfix/master.cf
 
-# Enable selected 'submission' service options.
-perl -i -pe 's/	^[#] ( \s+ -o \s (?:
-			syslog_name                     |
-			smtpd_reject_unlisted_recipient |
-			smtpd_recipient_restrictions    |
-			smtpd_relay_restrictions        |
-			milter_macro_daemon_name
-		) )
-	/\1/x
-	if $rc = /^submission\b/ ... ($_ !~ /^#?\s/) and  # submission line to next "logical" line
-	   $rc !~ /(^1|E0)$/                              # exclude outer matching lines' \
-	/etc/postfix/master.cf
-
 # Add 'authclean' service hook (if necessary) to 'submission' service options.
 if ! grep -Eq '^\s+-o cleanup_service_name=authclean\b' /etc/postfix/master.cf; then
 	sed -i $'/^submission\\b/ a\\\n  -o cleanup_service_name=authclean' /etc/postfix/master.cf
