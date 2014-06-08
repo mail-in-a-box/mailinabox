@@ -1,3 +1,4 @@
+#!/bin/bash
 # SMTP/IMAP: Postfix and Dovecot
 ################################
 
@@ -25,8 +26,11 @@ mkdir -p $STORAGE_ROOT/mail
 # POSTFIX
 #########
 
-# Enable the 'submission' port 587 listener.
-sed -i "s/#submission/submission/" /etc/postfix/master.cf
+# Enable the 'submission' port 587 smtpd server, and give it a different
+# name in syslog to distinguish it from the port 25 smtpd server.
+tools/editconf.py /etc/postfix/master.cf -s -w \
+	"submission=inet n       -       -       -       -       smtpd
+	  -o syslog_name=postfix/submission"
 
 # Enable TLS and require it for all user authentication.
 tools/editconf.py /etc/postfix/main.cf \
