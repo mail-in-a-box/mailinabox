@@ -1,0 +1,10 @@
+# Remove the first line of the Received: header. Note that we cannot fully remove the Received: header
+# because OpenDKIM requires that a header be present when signing outbound mail. The first line is
+# where the user's home IP address would be.
+/^\s*Received:[^\n]*(.*)/         REPLACE Received: from authenticated-user (unknown [127.0.0.1])$1
+
+# Remove other typically private information.
+/^\s*User-Agent:/        IGNORE
+/^\s*X-Enigmail:/        IGNORE
+/^\s*X-Mailer:/          IGNORE
+/^\s*X-Originating-IP:/  IGNORE

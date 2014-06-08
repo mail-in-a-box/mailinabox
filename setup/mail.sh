@@ -17,7 +17,7 @@ source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
 apt_install \
-	postfix postgrey \
+	postfix postgrey postfix-pcre \
 	dovecot-core dovecot-imapd dovecot-lmtpd dovecot-sqlite sqlite3 \
 	openssl
 
@@ -28,9 +28,19 @@ mkdir -p $STORAGE_ROOT/mail
 
 # Enable the 'submission' port 587 smtpd server, and give it a different
 # name in syslog to distinguish it from the port 25 smtpd server.
+#
+# Add a new cleanup service specific to the submission service ('authclean')
+# that filters out privacy-sensitive headers on mail being sent out by
+# authenticated users.
 tools/editconf.py /etc/postfix/master.cf -s -w \
 	"submission=inet n       -       -       -       -       smtpd
-	  -o syslog_name=postfix/submission"
+	  -o syslog_name=postfix/submission
+	  -o cleanup_service_name=authclean" \
+	"authclean=unix  n       -       -       -       0       cleanup
+	  -o header_checks=pcre:/etc/postfix/outgoing_mail_header_filters"
+
+# Install `outgoing_mail_header_filters` file required by 'authclean' service.
+cp conf/postfix_outgoing_mail_header_filters /etc/postfix/outgoing_mail_header_filters
 
 # Enable TLS and require it for all user authentication.
 tools/editconf.py /etc/postfix/main.cf \
