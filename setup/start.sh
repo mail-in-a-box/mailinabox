@@ -54,6 +54,19 @@ if [ -z "$PUBLIC_IP" ]; then
 	read -e -i "$DEFAULT_PUBLIC_IP" -p "Public IP: " PUBLIC_IP
 fi
 
+if [ -z "$PUBLIC_IPV6" ]; then
+	echo
+	echo "(Optional) Enter the IPv6 address of this machine. Leave blank"
+	echo "           if the machine does not have an IPv6 address."
+
+	if [ -z "$DEFAULT_PUBLIC_IPV6" ]; then 
+		# set a default on first run
+		DEFAULT_PUBLIC_IPV6=`get_default_publicipv6`
+	fi
+
+	read -e -i "$DEFAULT_PUBLIC_IPV6" -p "Public IPv6: " PUBLIC_IPV6
+fi
+
 if [ -z "$CSR_COUNTRY" ]; then
 	echo
 	echo "Enter the two-letter, uppercase country code for where you"
@@ -70,12 +83,17 @@ if [ -z "$CSR_COUNTRY" ]; then
 fi
 
 # Automatic configuration, e.g. as used in our Vagrant configuration.
-if [ "$PUBLIC_IP" == "auto" ]; then
+if [ "$PUBLIC_IP" = "auto" ]; then
 	# Use a public API to get our public IP address.
 	PUBLIC_IP=`get_default_publicip`
 	echo "IP Address: $PUBLIC_IP"
 fi
-if [ "$PUBLIC_HOSTNAME" == "auto-easy" ]; then
+if [ "$PUBLIC_IPV6" = "auto" ]; then
+	# Use a public API to get our public IP address.
+	PUBLIC_IPV6=`get_default_publicipv6`
+	echo "IPv6 Address: $PUBLIC_IPV6"
+fi
+if [ "$PUBLIC_HOSTNAME" = "auto-easy" ]; then
 	# Generate a probably-unique subdomain under our justtesting.email domain.
 	PUBLIC_HOSTNAME=m`get_default_publicip | sha1sum | cut -c1-5`.justtesting.email
 	echo "Public Hostname: $PUBLIC_HOSTNAME"
@@ -97,6 +115,7 @@ cat > /etc/mailinabox.conf << EOF;
 STORAGE_ROOT=$STORAGE_ROOT
 PUBLIC_HOSTNAME=$PUBLIC_HOSTNAME
 PUBLIC_IP=$PUBLIC_IP
+PUBLIC_IPV6=$PUBLIC_IPV6
 CSR_COUNTRY=$CSR_COUNTRY
 EOF
 

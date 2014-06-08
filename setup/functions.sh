@@ -39,11 +39,19 @@ function get_default_publicip {
 	get_publicip_from_web_service || get_publicip_fallback
 }
 
+function get_default_publicipv6 {
+	get_publicipv6_from_web_service || get_publicipv6_fallback
+}
+
 function get_publicip_from_web_service {
 	# This seems to be the most reliable way to determine the
 	# machine's public IP address: asking a very nice web API
 	# for how they see us. Thanks go out to icanhazip.com.
-	curl --fail --silent icanhazip.com 2>/dev/null
+	curl -4 --fail --silent icanhazip.com 2>/dev/null
+}
+
+function get_publicipv6_from_web_service {
+	curl -6 --fail --silent icanhazip.com 2>/dev/null
 }
 
 function get_publicip_fallback {
@@ -53,15 +61,37 @@ function get_publicip_fallback {
 	# have multiple addresses if it has multiple network adapters.
 	set -- $(hostname --ip-address       2>/dev/null) \
 	       $(hostname --all-ip-addresses 2>/dev/null)
-	while (( $# )) && is_loopback_ip "$1"; do
+	while (( $# )) && { ! is_ipv4 "$1" || is_loopback_ip "$1"; }; do
 		shift
 	done
 	printf '%s\n' "$1" # return this value
 }
 
+function get_publicipv6_fallback {
+	set -- $(hostname --ip-address       2>/dev/null) \
+	       $(hostname --all-ip-addresses 2>/dev/null)
+	while (( $# )) && { ! is_ipv6 "$1" || is_loopback_ipv6 "$1"; }; do
+		shift
+	done
+	printf '%s\n' "$1" # return this value
+}
+
+function is_ipv4 {
+	# helper for get_publicip_fallback
+	[[ "$1" == *.*.*.* ]]
+}
+
+function is_ipv6 {
+	[[ "$1" == *:*:* ]]
+}
+
 function is_loopback_ip {
 	# helper for get_publicip_fallback
 	[[ "$1" == 127.* ]]
+}
+
+function is_loopback_ipv6 {
+	[[ "$1" == ::1 ]]
 }
 
 function ufw_allow {
