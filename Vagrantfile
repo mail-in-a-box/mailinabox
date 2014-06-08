@@ -19,6 +19,7 @@ Vagrant.configure("2") do |config|
 	# subdomain on our justtesting.email domain so we can get
 	# started quickly.
     export PUBLIC_IP=auto
+    export PUBLIC_IPV6=auto
     export PUBLIC_HOSTNAME=auto-easy
     export CSR_COUNTRY=US
 

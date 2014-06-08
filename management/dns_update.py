@@ -60,9 +60,13 @@ def build_zone(domain, env):
 	records.append((None,  "NS",  "ns1.%s." % env["PUBLIC_HOSTNAME"]))
 	records.append((None,  "NS",  "ns2.%s." % env["PUBLIC_HOSTNAME"]))
 	records.append((None,  "A",   env["PUBLIC_IP"]))
+	if env.get('PUBLIC_IPV6'):
+		records.append((None, "AAAA", env["PUBLIC_IPV6"]))
 	records.append((None,  "MX",  "10 %s." % env["PUBLIC_HOSTNAME"]))
 	records.append((None,  "TXT", '"v=spf1 mx -all"'))
 	records.append(("www", "A",   env["PUBLIC_IP"]))
+	if env.get('PUBLIC_IPV6'):
+		records.append(("www", "AAAA", env["PUBLIC_IPV6"]))
 
 	# In PUBLIC_HOSTNAME, also define ns1 and ns2.
 	if domain == env["PUBLIC_HOSTNAME"]:
