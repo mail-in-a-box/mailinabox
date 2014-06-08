@@ -1,0 +1,5 @@
+/^\s*Received:/          IGNORE
+/^\s*User-Agent:/        IGNORE
+/^\s*X-Enigmail:/        IGNORE
+/^\s*X-Mailer:/          IGNORE
+/^\s*X-Originating-IP:/  IGNORE
