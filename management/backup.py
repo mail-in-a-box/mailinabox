@@ -41,6 +41,7 @@ try:
 		"--archive-dir", "/tmp/duplicity-archive-dir",
 		"--name", "mailinabox",
 		"--exclude", backup_dir,
+		"--volsize", "100",
 		"--verbosity", "warning",
 		env["STORAGE_ROOT"],
 		"file://" + backup_duplicity_dir
