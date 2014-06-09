@@ -12,7 +12,7 @@
 
 import os, os.path, subprocess
 
-from utils import exclusive_process, load_environment
+from utils import exclusive_process, load_environment, shell
 
 env = load_environment()
 
@@ -24,31 +24,43 @@ rdiff_backup_dir = os.path.join(backup_dir, 'rdiff-history')
 os.makedirs(backup_dir, exist_ok=True)
 
 # Stop services.
-subprocess.check_call(["service", "dovecot", "stop"])
-subprocess.check_call(["service", "postfix", "stop"])
+shell('check_call', ["/usr/sbin/service", "dovecot", "stop"])
+shell('check_call', ["/usr/sbin/service", "postfix", "stop"])
 
 # Update the backup directory which stores increments.
 try:
-	subprocess.check_call([
-		"rdiff-backup",
+	shell('check_call', [
+		"/usr/bin/rdiff-backup",
 		"--exclude", backup_dir,
 	 	env["STORAGE_ROOT"],
 	 	rdiff_backup_dir])
 except subprocess.CalledProcessError:
+	# Trap the error so we restart services again.
 	pass
 
 # Start services.
-subprocess.check_call(["service", "dovecot", "start"])
-subprocess.check_call(["service", "postfix", "start"])
+shell('check_call', ["/usr/sbin/service", "dovecot", "start"])
+shell('check_call', ["/usr/sbin/service", "postfix", "start"])
 
-# Tar the rdiff-backup directory into a single file encrypted using the backup private key.
-os.system(
-	"tar -zcC %s . | openssl enc -aes-256-cbc -a -salt -in /dev/stdin -out %s -pass file:%s"
-	%
-	(	rdiff_backup_dir,
-		os.path.join(backup_dir, "latest.tgz.enc"),
-		os.path.join(backup_dir, "secret_key.txt"),
-	))
+# Tar the rdiff-backup directory into a single file.
+shell('check_call', [
+	"/bin/tar",
+	"-zc",
+	"-f", os.path.join(backup_dir, "latest.tgz"),
+	"-C", rdiff_backup_dir,
+	"."])
+
+# Encrypt the backup using the backup private key.
+shell('check_call', [
+	"/usr/bin/openssl",
+	"enc",
+	"-aes-256-cbc",
+	"-a",
+	"-salt",
+	"-in", os.path.join(backup_dir, "latest.tgz"),
+	"-out", os.path.join(backup_dir, "latest.tgz.enc"),
+	"-pass", "file:%s" % os.path.join(backup_dir, "secret_key.txt"),
+	])
 
 # The backup can be decrypted with:
 # openssl enc -d -aes-256-cbc -a -in latest.tgz.enc -out /dev/stdout -pass file:secret_key.txt | tar -z

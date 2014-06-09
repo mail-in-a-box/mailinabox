@@ -1,4 +1,5 @@
 import subprocess, shutil, os, sqlite3, re
+import utils
 
 def validate_email(email, strict):
 	# There are a lot of characters permitted in email addresses, but
@@ -52,7 +53,7 @@ def add_mail_user(email, pw, env):
 	conn, c = open_database(env, with_connection=True)
 
 	# hash the password
-	pw = subprocess.check_output(["/usr/bin/doveadm", "pw", "-s", "SHA512-CRYPT", "-p", pw]).strip()
+	pw = utils.shell('check_output', ["/usr/bin/doveadm", "pw", "-s", "SHA512-CRYPT", "-p", pw]).strip()
 
 	# add the user to the database
 	try:
@@ -68,14 +69,14 @@ def add_mail_user(email, pw, env):
 	# Check if the mailboxes exist before creating them. When creating a user that had previously
 	# been deleted, the mailboxes will still exist because they are still on disk.
 	try:
-		existing_mboxes = subprocess.check_output(["doveadm", "mailbox", "list", "-u", email, "-8"], stderr=subprocess.STDOUT).decode("utf8").split("\n")
+		existing_mboxes = utils.shell('check_output', ["doveadm", "mailbox", "list", "-u", email, "-8"], capture_stderr=True).split("\n")
 	except subprocess.CalledProcessError as e:
 		c.execute("DELETE FROM users WHERE email=?", (email,))
 		conn.commit()
 		return ("Failed to initialize the user: " + e.output.decode("utf8"), 400)
 
-	if "INBOX" not in existing_mboxes: subprocess.check_call(["doveadm", "mailbox", "create", "-u", email, "-s", "INBOX"])
-	if "Spam" not in existing_mboxes: subprocess.check_call(["doveadm", "mailbox", "create", "-u", email, "-s", "Spam"])
+	if "INBOX" not in existing_mboxes: utils.shell('check_call', ["doveadm", "mailbox", "create", "-u", email, "-s", "INBOX"])
+	if "Spam" not in existing_mboxes: utils.shell('check_call', ["doveadm", "mailbox", "create", "-u", email, "-s", "Spam"])
 
 	# Create the user's sieve script to move spam into the Spam folder, and make it owned by mail.
 	maildirstat = os.stat(env["STORAGE_ROOT"] + "/mail/mailboxes")
@@ -93,7 +94,7 @@ def add_mail_user(email, pw, env):
 
 def set_mail_password(email, pw, env):
 	# hash the password
-	pw = subprocess.check_output(["/usr/bin/doveadm", "pw", "-s", "SHA512-CRYPT", "-p", pw]).strip()
+	pw = utils.shell('check_output', ["/usr/bin/doveadm", "pw", "-s", "SHA512-CRYPT", "-p", pw]).strip()
 
 	# update the database
 	conn, c = open_database(env, with_connection=True)

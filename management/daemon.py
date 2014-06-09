@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import os, os.path, subprocess
+import os, os.path, re
 
 from flask import Flask, request, render_template
 app = Flask(__name__)
@@ -59,15 +59,21 @@ def dns_update():
 
 @app.route('/system/updates')
 def show_updates():
-	subprocess.check_call("apt-get -qq update", shell=True)
-	return subprocess.check_output(
-		r"""apt-get -qq -s upgrade | grep -v ^Conf | sed "s/^Inst /Updated Package Available: /" | sed "s/\[\(.*\)\] (\(\S*\).*/\(\1 => \2\)/" """,
-		shell=True)
+	utils.shell("check_call", ["/usr/bin/apt-get", "-qq", "update"])
+	simulated_install = utils.shell("check_output", ["/usr/bin/apt-get", "-qq", "-s", "upgrade"])
+	pkgs = []
+	for line in simulated_install.split('\n'):
+		if re.match(r'^Conf .*', line): continue # remove these lines, not informative
+		line = re.sub(r'^Inst (.*) \[(.*)\] \((\S*).*', r'Updated Package Available: \1 (\3)', line) # make these lines prettier
+		pkgs.append(line)
+	return "\n".join(pkgs)
 
 @app.route('/system/update-packages', methods=["POST"])
 def do_updates():
-	subprocess.check_call("apt-get -qq update", shell=True)
-	return subprocess.check_output("DEBIAN_FRONTEND=noninteractive  apt-get -y upgrade", shell=True)
+	utils.shell("check_call", ["/usr/bin/apt-get", "-qq", "update"])
+	return utils.shell("check_output", ["/usr/bin/apt-get", "-y", "upgrade"], env={
+		"DEBIAN_FRONTEND": "noninteractive"
+	})
 
 # APP
 
