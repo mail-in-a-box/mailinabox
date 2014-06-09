@@ -2,7 +2,7 @@
 
 source setup/functions.sh
 
-apt_install python3-flask links rdiff-backup
+apt_install python3-flask links duplicity
 
 # Create a backup directory and a random key for encrypting backups.
 mkdir -p $STORAGE_ROOT/backup
