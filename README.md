@@ -59,4 +59,4 @@ The History
 -----------
 
 * In 2007 I wrote a relatively popular Mozilla Thunderbird extension that added client-side SPF and DKIM checks to mail to warn users about possible phishing: [add-on page](https://addons.mozilla.org/en-us/thunderbird/addon/sender-verification-anti-phish/), [source](https://github.com/JoshData/thunderbird-spf).
-* On March 13, 2014 I submitted Mail-in-a-Box to the [Knight News Challenge](https://www.newschallenge.org/challenge/2014/submissions/mail-in-a-box).
+* Mail-in-a-Box was a semifinalist in the 2014 [Knight News Challenge](https://www.newschallenge.org/challenge/2014/submissions/mail-in-a-box), but it was not selected as a winner.
