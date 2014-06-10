@@ -26,6 +26,15 @@ mkdir -p $STORAGE_ROOT/mail
 # POSTFIX
 #########
 
+# Have postfix listen on all network interfaces, set our name (the Debian default seems to be localhost),
+# and set the name of the local machine to localhost for xxx@localhost mail (but I don't think this will have any effect because
+# there is no true local mail delivery). Also set the banner (must have the hostname first, then anything).
+tools/editconf.py /etc/postfix/main.cf \
+	inet_interfaces=all \
+	myhostname=$PUBLIC_HOSTNAME\
+	smtpd_banner="\$myhostname ESMTP Hi, I'm a Mail-in-a-Box (Ubuntu/Postfix; see https://github.com/joshdata/mailinabox)" \
+	mydestination=localhost
+
 # Enable the 'submission' port 587 smtpd server, and give it a different
 # name in syslog to distinguish it from the port 25 smtpd server.
 #
@@ -39,7 +48,7 @@ tools/editconf.py /etc/postfix/master.cf -s -w \
 	"authclean=unix  n       -       -       -       0       cleanup
 	  -o header_checks=pcre:/etc/postfix/outgoing_mail_header_filters"
 
-# Install `outgoing_mail_header_filters` file required by 'authclean' service.
+# Install the `outgoing_mail_header_filters` file required by the new 'authclean' service.
 cp conf/postfix_outgoing_mail_header_filters /etc/postfix/outgoing_mail_header_filters
 
 # Enable TLS and require it for all user authentication.
@@ -54,12 +63,6 @@ tools/editconf.py /etc/postfix/main.cf \
 tools/editconf.py /etc/postfix/main.cf \
 	smtp_tls_security_level=may \
 	smtp_tls_loglevel=2
-
-# Postfix will query dovecot for user authentication.
-tools/editconf.py /etc/postfix/main.cf \
-	smtpd_sasl_type=dovecot \
-	smtpd_sasl_path=private/auth \
-	smtpd_sasl_auth_enable=yes
 
 # Who can send outbound mail?
 # permit_sasl_authenticated: Authenticated users (i.e. on port 587).
@@ -83,21 +86,21 @@ tools/editconf.py /etc/postfix/main.cf \
 # whitelisted) then postfix does a DEFER_IF_REJECT, which results in all "unknown user" sorts of messages turning into
 # "450 4.7.1 Client host rejected: Service unavailable". This is a retry code, so the mail doesn't properly bounce.
 tools/editconf.py /etc/postfix/main.cf \
-	smtpd_sender_restrictions="reject_non_fqdn_sender,reject_unknown_sender_domain,reject_rhsbl_sender dbl.spamhaus.org"
-tools/editconf.py /etc/postfix/main.cf \
+	smtpd_sender_restrictions="reject_non_fqdn_sender,reject_unknown_sender_domain,reject_rhsbl_sender dbl.spamhaus.org" \
 	smtpd_recipient_restrictions=permit_sasl_authenticated,permit_mynetworks,"reject_rbl_client zen.spamhaus.org","check_policy_service inet:127.0.0.1:10023"
 
-# Have postfix listen on all network interfaces, set our name (the Debian default seems to be localhost),
-# and set the name of the local machine to localhost for xxx@localhost mail (but I don't think this will have any effect because
-# there is no true local mail delivery). Also set the banner (must have the hostname first, then anything).
-tools/editconf.py /etc/postfix/main.cf \
-	inet_interfaces=all \
-	myhostname=$PUBLIC_HOSTNAME\
-	smtpd_banner="\$myhostname ESMTP Hi, I'm a Mail-in-a-Box (Ubuntu/Postfix; see https://github.com/joshdata/mailinabox)" \
-	mydestination=localhost
+# In a basic setup we would handle all local mail delivery by passing
+# it directly to dovecot over LMTP. However when we setup spamassassin
+# we will instead pass mail to spampd which will in turn pass it off
+# to dovecot. So we will skip setting this here and instead set it in
+# spamassassin.sh.
+#tools/editconf.py /etc/postfix/main.cf virtual_transport=lmtp:unix:private/dovecot-lmtp
 
-# Handle all local mail delivery by passing it directly to dovecot over LMTP.
-tools/editconf.py /etc/postfix/main.cf virtual_transport=lmtp:unix:private/dovecot-lmtp
+# Postfix will query dovecot for user authentication.
+tools/editconf.py /etc/postfix/main.cf \
+	smtpd_sasl_type=dovecot \
+	smtpd_sasl_path=private/auth \
+	smtpd_sasl_auth_enable=yes
 
 # Use a Sqlite3 database to check whether a destination email address exists,
 # and to perform any email alias rewrites.
