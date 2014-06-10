@@ -89,6 +89,10 @@ tools/editconf.py /etc/postfix/main.cf \
 	smtpd_sender_restrictions="reject_non_fqdn_sender,reject_unknown_sender_domain,reject_rhsbl_sender dbl.spamhaus.org" \
 	smtpd_recipient_restrictions=permit_sasl_authenticated,permit_mynetworks,"reject_rbl_client zen.spamhaus.org","check_policy_service inet:127.0.0.1:10023"
 
+# Increase the message size limit from 10MB to 128MB.
+tools/editconf.py /etc/postfix/main.cf \
+	message_size_limit=134217728
+
 # In a basic setup we would handle all local mail delivery by passing
 # it directly to dovecot over LMTP. However when we setup spamassassin
 # we will instead pass mail to spampd which will in turn pass it off
