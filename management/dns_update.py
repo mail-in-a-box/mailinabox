@@ -162,7 +162,7 @@ server:
 # ZONES
 """
 
-	for domain, zonefile in zonefiles:
+	for domain, zonefile in sorted(zonefiles):
 		nsdconf += """
 zone:
 	name: %s
