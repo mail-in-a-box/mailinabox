@@ -5,6 +5,7 @@
 import os, os.path, urllib.parse, time, re
 
 from mailconfig import get_mail_domains
+from utils import shell
 
 def do_dns_update(env):
 	# What domains should we serve DNS for?
@@ -39,13 +40,13 @@ def do_dns_update(env):
 
 	# Kick nsd if anything changed.
 	if len(updated_domains) > 0:
-		os.system("service nsd restart")
+		shell('check_call', ["/usr/sbin/service", "nsd", "restart"])
 
 	# Write the OpenDKIM configuration tables.
 	write_opendkim_tables(zonefiles, env)
 
 	# Kick opendkim.
-	os.system("service opendkim restart")
+	shell('check_call', ["/usr/sbin/service", "opendkim", "restart"])
 
 	if len(updated_domains) == 0:
 		# if nothing was updated (except maybe DKIM), don't show any output
