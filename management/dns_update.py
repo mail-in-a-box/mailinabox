@@ -2,12 +2,12 @@
 # and mail aliases and restarts nsd.
 ########################################################################
 
-import os, os.path, urllib.parse, time, re
+import os, os.path, urllib.parse, datetime, re
 
 from mailconfig import get_mail_domains
-from utils import shell
+from utils import shell, load_env_vars_from_file
 
-def do_dns_update(env):
+def get_dns_domains(env):
 	# What domains should we serve DNS for?
 	domains = set()
 
@@ -16,20 +16,55 @@ def do_dns_update(env):
 
 	# Add all domain names in use by email users and mail aliases.
 	domains |= get_mail_domains(env)
-	
+
 	# Make a nice and safe filename for each domain.
 	zonefiles = []
 	for domain in domains:
-		zonefiles.append((domain, urllib.parse.quote(domain, safe='') + ".txt" ))
+		zonefiles.append([domain, urllib.parse.quote(domain, safe='') + ".txt"])
+
+	return zonefiles
+	
+
+def do_dns_update(env):
+	# What domains (and their zone filenames) should we build?
+	zonefiles = get_dns_domains(env)
 
 	# Write zone files.
 	os.makedirs('/etc/nsd/zones', exist_ok=True)
 	updated_domains = []
-	for domain, zonefile in zonefiles:
+	for i, (domain, zonefile) in enumerate(zonefiles):
+		# Build the records to put in the zone.
 		records = build_zone(domain, env)
-		if write_nsd_zone(domain, "/etc/nsd/zones/" + zonefile, records, env):
+
+		# See if the zone has changed, and if so update the serial number
+		# and write the zone file.
+		if not write_nsd_zone(domain, "/etc/nsd/zones/" + zonefile, records, env):
+			# Zone was not updated. There were no changes.
+			continue
+
+		# If this is a .justtesting.email domain, then post the update.
+		try:
 			justtestingdotemail(domain, records)
-			updated_domains.append(domain)
+		except:
+			# Hmm. Might be a network issue. If we stop now, will we end
+			# up in an inconsistent state? Let's just continue.
+			pass
+
+		# Mark that we just updated this domain.
+		updated_domains.append(domain)
+
+		# Sign the zone.
+		#
+		# Every time we sign the zone we get a new result, which means
+		# we can't sign a zone without bumping the zone's serial number.
+		# Thus we only sign a zone if write_nsd_zone returned True
+		# indicating the zone changed, and thus it got a new serial number.
+		# write_nsd_zone is smart enough to check if a zone's signature
+		# is nearing experiation and if so it'll bump the serial number
+		# and return True so we get a chance to re-sign it.
+		#
+		# Also update the zone's filename so nsd.conf uses the signed file.
+		zonefiles[i][1] = sign_zone(domain, zonefile, env)
 
 	# Write the main nsd.conf file.
 	if write_nsd_conf(zonefiles):
@@ -94,8 +129,12 @@ def write_nsd_zone(domain, zonefile, records, env):
 	# We set the administrative email address for every domain to domain_contact@[domain.com].
 	# You should probably create an alias to your email address.
 
+	# On the $ORIGIN line, there's typically a ';' comment at the end explaining
+	# what the $ORIGIN line does. Any further data after the domain confuses
+	# ldns-signzone, however. It used to say '; default zone domain'.
+
 	zone = """
-$ORIGIN {domain}.    ; default zone domain
+$ORIGIN {domain}.
 $TTL 86400           ; default time to live
 
 @ IN SOA ns1.{primary_domain}. hostmaster.{primary_domain}. (
@@ -117,8 +156,36 @@ $TTL 86400           ; default time to live
 		zone += "\tIN\t" + querytype + "\t"
 		zone += value + "\n"
 
+	# DNSSEC requires re-signing a zone periodically. That requires
+	# bumping the serial number even if no other records have changed.
+	# We don't see the DNSSEC records yet, so we have to figure out
+	# if a re-signing is necessary so we can prematurely bump the
+	# serial number.
+	force_bump = False
+	if not os.path.exists(zonefile + ".signed"):
+		# No signed file yet. Shouldn't normally happen unless a box
+		# is going from not using DNSSEC to using DNSSEC.
+		force_bump = True
+	else:
+		# We've signed the domain. Check if we are close to the expiration
+		# time of the signature. If so, we'll force a bump of the serial
+		# number so we can re-sign it.
+		with open(zonefile + ".signed") as f:
+			signed_zone = f.read()
+		expiration_times = re.findall(r"\sRRSIG\s+SOA\s+\d+\s+\d+\s\d+\s+(\d{14})", signed_zone)
+		if len(expiration_times) == 0:
+			# weird
+			force_bump = True
+		else:
+			# All of the times should be the same, but if not choose the soonest.
+			expiration_time = min(expiration_times)
+			expiration_time = datetime.datetime.strptime(expiration_time, "%Y%m%d%H%M%S")
+			if expiration_time - datetime.datetime.now() < datetime.timedelta(days=3):
+				# We're within three days of the expiration, so bump serial & resign.
+				force_bump = True
+
 	# Set the serial number.
-	serial = time.strftime("%Y%m%d00")
+	serial = datetime.datetime.now().strftime("%Y%m%d00")
 	if os.path.exists(zonefile):
 		# If the zone already exists, is different, and has a later serial number,
 		# increment the number.
@@ -126,15 +193,20 @@ $TTL 86400           ; default time to live
 			existing_zone = f.read()
 			m = re.search(r"(\d+)\s*;\s*serial number", existing_zone)
 			if m:
+				# Clear out the serial number in the existing zone file for the
+				# purposes of seeing if anything *else* in the zone has changed.
 				existing_serial = m.group(1)
 				existing_zone = existing_zone.replace(m.group(0), "__SERIAL__     ; serial number")
 
 				# If the existing zone is the same as the new zone (modulo the serial number),
-				# there is no need to update the file.
-				if zone == existing_zone:
+				# there is no need to update the file. Unless we're forcing a bump.
+				if zone == existing_zone and not force_bump:
 					return False
 
-				# If the existing serial is not less than the new one, increment it.
+				# If the existing serial is not less than a serial number
+				# based on the current date plus 00, increment it. Otherwise,
+				# the serial number is less than our desired new serial number
+				# so we'll use the desired new number.
 				if existing_serial >= serial:
 					serial = str(int(existing_serial) + 1)
 
@@ -180,6 +252,89 @@ zone:
 
 	return True
 
+########################################################################
+
+def sign_zone(domain, zonefile, env):
+	dnssec_keys = load_env_vars_from_file(os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/keys.conf'))
+
+	# In order to use the same keys for all domains, we have to generate
+	# a new .key file with a DNSSEC record for the specific domain. We
+	# can reuse the same key, but it won't validate without a DNSSEC
+	# record specifically for the domain.
+	# 
+	# Copy the .key and .private files to /tmp to patch them up.
+	#
+	# Use os.umask and open().write() to securely create a copy that only
+	# we (root) can read.
+	files_to_kill = []
+	for key in ("KSK", "ZSK"):
+		if dnssec_keys.get(key, "").strip() == "": raise Exception("DNSSEC is not properly set up.")
+		oldkeyfn = os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/' + dnssec_keys[key])
+		newkeyfn = '/tmp/' + dnssec_keys[key].replace("_domain_", domain)
+		dnssec_keys[key] = newkeyfn
+		for ext in (".private", ".key"):
+			if not os.path.exists(oldkeyfn + ext): raise Exception("DNSSEC is not properly set up.")
+			with open(oldkeyfn + ext, "r") as fr:
+				keydata = fr.read()
+			keydata = keydata.replace("_domain_", domain) # trick ldns-signkey into letting our generic key be used by this zone
+			fn = newkeyfn + ext
+			prev_umask = os.umask(0o77) # ensure written file is not world-readable
+			try:
+				with open(fn, "w") as fw:
+					fw.write(keydata)
+			finally:
+				os.umask(prev_umask) # other files we write should be world-readable
+			files_to_kill.append(fn)
+
+	# Do the signing.
+	expiry_date = (datetime.datetime.now() + datetime.timedelta(days=30)).strftime("%Y%m%d")
+	shell('check_call', ["/usr/bin/ldns-signzone",
+		# expire the zone after 30 days
+		"-e", expiry_date,
+
+		# use NSEC3
+		"-n",
+
+		# zonefile to sign
+		"/etc/nsd/zones/" + zonefile,
+
+		# keys to sign with (order doesn't matter -- it'll figure it out)
+		dnssec_keys["KSK"],
+		dnssec_keys["ZSK"],
+	])
+
+	# Create a DS record based on the patched-up key files. The DS record is specific to the
+	# zone being signed, so we can't use the .ds files generated when we created the keys.
+	# The DS record points to the KSK only. Write this next to the zone file so we can
+	# get it later to give to the user with instructions on what to do with it.
+	rr_ds = shell('check_output', ["/usr/bin/ldns-key2ds",
+		"-n", # output to stdout
+		"-2", # SHA256
+		dnssec_keys["KSK"] + ".key"
+	])
+	with open("/etc/nsd/zones/" + zonefile + ".ds", "w") as f:
+		f.write(rr_ds)
+
+	# Remove our temporary file.
+	for fn in files_to_kill:
+		os.unlink(fn)
+
+	# Update the zone's filename so nsd.conf uses the signed file.
+	return zonefile + ".signed"
+
+########################################################################
+
+def get_ds_records(env):
+	zonefiles = get_dns_domains(env)
+	ret = ""
+	for domain, zonefile in zonefiles:
+		fn = "/etc/nsd/zones/" + zonefile + ".ds"
+		if os.path.exists(fn):
+			with open(fn, "r") as fr:
+				ret += fr.read().strip() + "\n"
+	return ret
+	
+	
 ########################################################################
 
 def write_opendkim_tables(zonefiles, env):

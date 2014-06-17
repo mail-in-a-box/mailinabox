@@ -53,7 +53,18 @@ def mail_domains():
 @app.route('/dns/update', methods=['POST'])
 def dns_update():
 	from dns_update import do_dns_update
-	return do_dns_update(env)
+	try:
+		return do_dns_update(env)
+	except Exception as e:
+		return (str(e), 500)
+
+@app.route('/dns/ds')
+def dns_get_ds_records():
+	from dns_update import get_ds_records
+	try:
+		return get_ds_records(env)
+	except Exception as e:
+		return (str(e), 500)
 
 # System
 

@@ -1,9 +1,14 @@
 def load_environment():
     # Load settings from /etc/mailinabox.conf.
     import os.path
-    env = { }
-    for line in open("/etc/mailinabox.conf"): env.setdefault(*line.strip().split("=", 1))
+    env = load_env_vars_from_file("/etc/mailinabox.conf")
     env["CONF_DIR"] = os.path.join(os.path.dirname(__file__), "../conf")
+    return env
+
+def load_env_vars_from_file(fn):
+    # Load settings from a KEY=VALUE file.
+    env = { }
+    for line in open(fn): env.setdefault(*line.strip().split("=", 1))
     return env
 
 def exclusive_process(name):
