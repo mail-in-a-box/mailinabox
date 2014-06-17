@@ -165,7 +165,7 @@ def build_zone(domain, zonefile, env, with_ns=True):
 		records.append(("_dmarc", "TXT", '"v=DMARC1; p=quarantine"'))
 
 	# Sort the records. The None records *must* go first. Otherwise it doesn't matter.
-	records.sort(key = lambda rec : (rec[0] is not None, str(rec[0])))
+	records.sort(key = lambda rec : list(reversed(rec[0].split(".")) if rec[0] is not None else ""))
 
 	return records
 
