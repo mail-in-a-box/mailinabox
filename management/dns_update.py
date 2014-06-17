@@ -3,6 +3,7 @@
 ########################################################################
 
 import os, os.path, urllib.parse, datetime, re
+import rtyaml
 
 from mailconfig import get_mail_domains
 from utils import shell, load_env_vars_from_file
@@ -34,7 +35,7 @@ def do_dns_update(env):
 	updated_domains = []
 	for i, (domain, zonefile) in enumerate(zonefiles):
 		# Build the records to put in the zone.
-		records = build_zone(domain, env)
+		records = build_zone(domain, zonefile, env)
 
 		# See if the zone has changed, and if so update the serial number
 		# and write the zone file.
@@ -91,23 +92,42 @@ def do_dns_update(env):
 
 ########################################################################
 
-def build_zone(domain, env):
+def build_zone(domain, zonefile, env):
 	records = []
 	records.append((None,  "NS",  "ns1.%s." % env["PUBLIC_HOSTNAME"]))
 	records.append((None,  "NS",  "ns2.%s." % env["PUBLIC_HOSTNAME"]))
-	records.append((None,  "A",   env["PUBLIC_IP"]))
-	if env.get('PUBLIC_IPV6'):
-		records.append((None, "AAAA", env["PUBLIC_IPV6"]))
 	records.append((None,  "MX",  "10 %s." % env["PUBLIC_HOSTNAME"]))
 	records.append((None,  "TXT", '"v=spf1 mx -all"'))
-	records.append(("www", "A",   env["PUBLIC_IP"]))
-	if env.get('PUBLIC_IPV6'):
-		records.append(("www", "AAAA", env["PUBLIC_IPV6"]))
 
 	# In PUBLIC_HOSTNAME, also define ns1 and ns2.
 	if domain == env["PUBLIC_HOSTNAME"]:
 		records.append(("ns1", "A",   env["PUBLIC_IP"]))
 		records.append(("ns2", "A",   env["PUBLIC_IP"]))
+
+	def has_rec(qname, rtype):
+		for rec in records:
+			if rec[0] == qname and rec[1] == rtype:
+				return True
+		return False
+
+	# The user may set other records that don't conflict with our settings.
+	custom_zone_file = os.path.join(env['STORAGE_ROOT'], 'dns/custom', zonefile.replace(".txt", ".yaml"))
+	if os.path.exists(custom_zone_file):
+		custom_zone = rtyaml.load(open(custom_zone_file))
+		for qname, value in custom_zone.items():
+			if has_rec(qname, value): continue
+			if isinstance(value, str):
+				records.append((qname, "A", value))
+			elif isinstance(value, dict):
+				for rtype, value2 in value.items():
+					if rtype == "TXT": value2 = "\"" + value2 + "\""
+					records.append((qname, rtype, value2))
+
+	# Add defaults if not overridden by the user's custom settings.
+	if not has_rec(None, "A"): records.append((None, "A", env["PUBLIC_IP"]))
+	if env.get('PUBLIC_IPV6') and not has_rec(None, "AAAA"): records.append((None, "AAAA", env["PUBLIC_IPV6"]))
+	if not has_rec("www", "A"): records.append(("www", "A", env["PUBLIC_IP"]))
+	if env.get('PUBLIC_IPV6') and not has_rec("www", "AAAA"): records.append(("www", "AAAA", env["PUBLIC_IPV6"]))
 
 	# If OpenDKIM is in use..
 	opendkim_record_file = os.path.join(env['STORAGE_ROOT'], 'mail/dkim/mail.txt')
@@ -120,6 +140,9 @@ def build_zone(domain, env):
 		# Append ADSP (RFC 5617) and DMARC records.
 		records.append(("_adsp._domainkey", "TXT", '"dkim=all"'))
 		records.append(("_dmarc", "TXT", '"v=DMARC1; p=quarantine"'))
+
+	# Sort the records. The None records *must* go first. Otherwise it doesn't matter.
+	records.sort(key = lambda rec : (rec[0] is not None, str(rec[0])))
 
 	return records
 

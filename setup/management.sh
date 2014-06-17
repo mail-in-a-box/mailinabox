@@ -2,7 +2,8 @@
 
 source setup/functions.sh
 
-apt_install python3-flask links duplicity
+apt_install python3-flask links duplicity libyaml-dev
+pip3 install rtyaml
 
 # Create a backup directory and a random key for encrypting backups.
 mkdir -p $STORAGE_ROOT/backup

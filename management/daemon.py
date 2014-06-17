@@ -62,7 +62,7 @@ def dns_update():
 def dns_get_ds_records():
 	from dns_update import get_ds_records
 	try:
-		return get_ds_records(env)
+		return get_ds_records(env).replace("\t", " ") # tabs confuse godaddy
 	except Exception as e:
 		return (str(e), 500)
 
