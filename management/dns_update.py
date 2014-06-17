@@ -12,11 +12,20 @@ def get_dns_domains(env):
 	# What domains should we serve DNS for?
 	domains = set()
 
-	# Ensure the PUBLIC_HOSTNAME is in that list.
-	domains.add(env['PUBLIC_HOSTNAME'])
-
 	# Add all domain names in use by email users and mail aliases.
 	domains |= get_mail_domains(env)
+
+	# Ensure the PUBLIC_HOSTNAME is in that list if it is not a subdomain of
+	# any other domain we manage. If it's a subdomain, having it be a separate
+	# zone will confuse DNSSEC because it will be signed without having a DS
+	# record at the parent.
+	for d in domains:
+		if env['PUBLIC_HOSTNAME'].endswith("." + d):
+			break
+	else:
+		# No 'break' was executed, so it is not a subdomain of a domain
+		# we know about. Thus add it.
+		domains.add(env['PUBLIC_HOSTNAME'])
 
 	# Make a nice and safe filename for each domain.
 	zonefiles = []
@@ -92,12 +101,26 @@ def do_dns_update(env):
 
 ########################################################################
 
-def build_zone(domain, zonefile, env):
+def build_zone(domain, zonefile, env, with_ns=True):
 	records = []
-	records.append((None,  "NS",  "ns1.%s." % env["PUBLIC_HOSTNAME"]))
-	records.append((None,  "NS",  "ns2.%s." % env["PUBLIC_HOSTNAME"]))
+
+	# For top-level zones, define ourselves as the authoritative name server.
+	if with_ns:
+		records.append((None,  "NS",  "ns1.%s." % env["PUBLIC_HOSTNAME"]))
+		records.append((None,  "NS",  "ns2.%s." % env["PUBLIC_HOSTNAME"]))
+
 	records.append((None,  "MX",  "10 %s." % env["PUBLIC_HOSTNAME"]))
 	records.append((None,  "TXT", '"v=spf1 mx -all"'))
+
+	# If PUBLIC_HOSTNAME is a subdomain of this domain, define it here.
+	if env['PUBLIC_HOSTNAME'].endswith("." + domain):
+		ph = env['PUBLIC_HOSTNAME'][0:-len("." + domain)]
+		for child_qname, child_rtype, child_value in build_zone(env['PUBLIC_HOSTNAME'], None, env, with_ns=False):
+			if child_qname == None:
+				child_qname = ph
+			else:
+				child_qname += "." + ph
+			records.append((child_qname, child_rtype, child_value))
 
 	# In PUBLIC_HOSTNAME, also define ns1 and ns2.
 	if domain == env["PUBLIC_HOSTNAME"]:
@@ -111,8 +134,8 @@ def build_zone(domain, zonefile, env):
 		return False
 
 	# The user may set other records that don't conflict with our settings.
-	custom_zone_file = os.path.join(env['STORAGE_ROOT'], 'dns/custom', zonefile.replace(".txt", ".yaml"))
-	if os.path.exists(custom_zone_file):
+	custom_zone_file = os.path.join(env['STORAGE_ROOT'], 'dns/custom', zonefile.replace(".txt", ".yaml")) if zonefile else None
+	if zonefile and os.path.exists(custom_zone_file):
 		custom_zone = rtyaml.load(open(custom_zone_file))
 		for qname, value in custom_zone.items():
 			if has_rec(qname, value): continue
