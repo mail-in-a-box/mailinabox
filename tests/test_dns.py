@@ -59,6 +59,7 @@ def test2(tests, server, description):
 			response = ["[no value]"]
 		response = ";".join(str(r) for r in response)
 		response = re.sub(r"(\"p=).*(\")", r"\1__KEY__\2", response) # normalize DKIM key
+		response = response.replace("\"\" ", "") # normalize TXT records (DNSSEC signing inserts empty text string components)
 
 		# is it right?
 		if response == expected_answer:
