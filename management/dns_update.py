@@ -72,9 +72,13 @@ def do_dns_update(env):
 		# write_nsd_zone is smart enough to check if a zone's signature
 		# is nearing experiation and if so it'll bump the serial number
 		# and return True so we get a chance to re-sign it.
-		#
-		# Also update the zone's filename so nsd.conf uses the signed file.
-		zonefiles[i][1] = sign_zone(domain, zonefile, env)
+		sign_zone(domain, zonefile, env)
+
+	# Now that all zones are signed (some might not have changed and so didn't
+	# just get signed now, but were before) update the zone filename so nsd.conf
+	# uses the signed file.
+	for i in range(len(zonefiles)):
+		zonefiles[i][1] += ".signed"
 
 	# Write the main nsd.conf file.
 	if write_nsd_conf(zonefiles):
@@ -364,9 +368,6 @@ def sign_zone(domain, zonefile, env):
 	# Remove our temporary file.
 	for fn in files_to_kill:
 		os.unlink(fn)
-
-	# Update the zone's filename so nsd.conf uses the signed file.
-	return zonefile + ".signed"
 
 ########################################################################
 
