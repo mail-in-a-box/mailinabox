@@ -290,7 +290,7 @@ server:
 	# Internet sees this machine on. Get those interface addresses
 	# from `hostname -i` (which omits all localhost addresses).
 	for ipaddr in shell("check_output", ["/bin/hostname", "-I"]).strip().split(" "):
-		nsdconf += "ip-address: %s\n" % ipaddr
+		nsdconf += "  ip-address: %s\n" % ipaddr
 
 
 	# Append the zones.
