@@ -271,6 +271,7 @@ $TTL 86400           ; default time to live
 ########################################################################
 
 def write_nsd_conf(zonefiles):
+	# Basic header.
 	nsdconf = """
 server:
   hide-version: yes
@@ -280,10 +281,19 @@ server:
 
   # The directory for zonefile: files.
   zonesdir: "/etc/nsd/zones"
-  
-# ZONES
 """
+	
+	# Since we have bind9 listening on localhost for locally-generated
+	# DNS queries that require a recursive nameserver, we must have
+	# nsd listen only on public network interfaces. Those interfaces
+	# may have addresses different from the public IP address that the
+	# Internet sees this machine on. Get those interface addresses
+	# from `hostname -i` (which omits all localhost addresses).
+	for ipaddr in shell("check_output", ["/bin/hostname", "-I"]).strip().split(" "):
+		nsdconf += "ip-address: %s\n" % ipaddr
 
+
+	# Append the zones.
 	for domain, zonefile in sorted(zonefiles):
 		nsdconf += """
 zone:
