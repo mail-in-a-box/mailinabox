@@ -168,8 +168,7 @@ def build_zone(domain, zonefile, env, with_ns=True):
 			m = re.match(r"(\S+)\s+IN\s+TXT\s+(\(.*\))\s*;", orf.read(), re.S)
 			records.append((m.group(1), "TXT", m.group(2)))
 
-		# Append ADSP (RFC 5617) and DMARC records.
-		records.append(("_adsp._domainkey", "TXT", '"dkim=all"'))
+		# Append a DMARC record.
 		records.append(("_dmarc", "TXT", '"v=DMARC1; p=quarantine"'))
 
 	# Sort the records. The None records *must* go first. Otherwise it doesn't matter.
