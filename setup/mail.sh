@@ -59,9 +59,16 @@ tools/editconf.py /etc/postfix/main.cf \
 	smtpd_tls_key_file=$STORAGE_ROOT/ssl/ssl_private_key.pem \
 	smtpd_tls_received_header=yes
 
-# When connecting to remote SMTP servers, prefer TLS.
+# When connecting to remote SMTP servers, prefer TLS and use DANE if available.
+# Postfix queries for the TLSA record on the destination MX host. If no TLSA records are found,
+# then opportunistic TLS is used. Otherwise the server certificate must match the TLSA records
+# or else the mail bounces. TLSA also requires DNSSEC on the MX host. Postfix doesn't do DNSSEC
+# itself but assumes the system's nameserver does and reports DNSSEC status. Thus this also
+# relies on our local bind9 server being present and smtp_dns_support_level being set to dnssec
+# to use it.
 tools/editconf.py /etc/postfix/main.cf \
-	smtp_tls_security_level=may \
+	smtp_tls_security_level=dane \
+	smtp_dns_support_level=dnssec \
 	smtp_tls_loglevel=2
 
 # Who can send outbound mail?
