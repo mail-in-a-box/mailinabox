@@ -2,7 +2,7 @@
 # and mail aliases and restarts nsd.
 ########################################################################
 
-import os, os.path, urllib.parse, datetime, re
+import os, os.path, urllib.parse, datetime, re, hashlib
 import rtyaml
 
 from mailconfig import get_mail_domains
@@ -126,10 +126,14 @@ def build_zone(domain, zonefile, env, with_ns=True):
 				child_qname += "." + ph
 			records.append((child_qname, child_rtype, child_value))
 
-	# In PUBLIC_HOSTNAME, also define ns1 and ns2.
+	# In PUBLIC_HOSTNAME...
 	if domain == env["PUBLIC_HOSTNAME"]:
+		# Define ns1 and ns2.
 		records.append(("ns1", "A",   env["PUBLIC_IP"]))
 		records.append(("ns2", "A",   env["PUBLIC_IP"]))
+
+		# Add a TLSA record for SMTP.
+		records.append(("_25._tcp", "TLSA", build_tlsa_record(env)))
 
 	def has_rec(qname, rtype):
 		for rec in records:
@@ -172,6 +176,32 @@ def build_zone(domain, zonefile, env, with_ns=True):
 	records.sort(key = lambda rec : list(reversed(rec[0].split(".")) if rec[0] is not None else ""))
 
 	return records
+
+########################################################################
+
+def build_tlsa_record(env):
+	# A TLSA record in DNS specifies that connections on a port, e.g.
+	# the SMTP port, must use TLS and the certificate must match a
+	# particular certificate.
+	#
+	# Thanks to http://blog.huque.com/2012/10/dnssec-and-certificates.html
+	# for explaining all of this!
+
+	# Get the hex SHA256 of the DER-encoded server certificate:
+	certder = shell("check_output", [
+		"/usr/bin/openssl",
+		"x509",
+		"-in", os.path.join(env["STORAGE_ROOT"], "ssl", "ssl_certificate.pem"),
+		"-outform", "DER"
+		],
+		return_bytes=True)
+	certhash = hashlib.sha256(certder).hexdigest()
+
+	# Specify the TLSA parameters:
+	# 3: This is the certificate that the client should trust. No CA is needed.
+	# 0: The whole certificate is matched.
+	# 1: The certificate is SHA256'd here.
+	return "3 0 1 " + certhash
 
 ########################################################################
 

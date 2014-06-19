@@ -81,12 +81,12 @@ def is_pid_valid(pid):
     else:
         return True
 
-def shell(method, cmd_args, env={}, capture_stderr=False):
+def shell(method, cmd_args, env={}, capture_stderr=False, return_bytes=False):
     # A safe way to execute processes.
     # Some processes like apt-get require being given a sane PATH.
     import subprocess
     env.update({ "PATH": "/sbin:/bin:/usr/sbin:/usr/bin" })
     stderr = None if not capture_stderr else subprocess.STDOUT
     ret = getattr(subprocess, method)(cmd_args, env=env, stderr=stderr)
-    if isinstance(ret, bytes): ret = ret.decode("utf8")
+    if not return_bytes and isinstance(ret, bytes): ret = ret.decode("utf8")
     return ret
