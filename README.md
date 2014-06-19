@@ -13,13 +13,13 @@ The Box
 
 Mail-in-a-Box turns a fresh Ubuntu 14.04 LTS 64-bit machine into a working mail server, including:
 
-* An SMTP server for sending/receiving mail, with STARTTLS required for authentication, and greylisting to cut down on spam (postfix, postgrey).
-* An IMAP server for checking your mail, with SSL required (dovecot).
-* A webmail client over SSL so you can check your email from a web browser (roundcube, nginx).
-* Spam filtering with spam automatically going to your Spam folder (spamassassin).
-* DKIM signing on outgoing messages (opendkim).
-* The machine acts as its own DNS server and is automatically configured for SPF and DKIM (nsd).
-* Configuration of mailboxes and mail aliases is done using a command-line tool.
+* An SMTP server for sending/receiving mail, with SSL/TLS required to protect your password, opportunistic TLS to prevent mass surveillance, and greylisting to cut down on spam (postfix, postgrey).
+* An IMAP server for checking your mail, with SSL/TLS required to protect your password (dovecot).
+* A webmail client over HTTPS so you can check your email from a web browser (roundcube, nginx).
+* Spam filtering right to your Spam folder (spamassassin).
+* DNS pre-set with SPF and DKIM to prove to recipients that your email was from you (nsd, opendkim) --- the machine acts as its own nameserver to automatically set this up.
+* DNSSEC and DANE TLSA to force cryptographically-secure communications in certain cases, especially between Mail-in-a-Boxes.
+* Configuration of mailboxes and mail aliases is done using a command-line tool or an HTTP-based API (accessible from within the server only).
 * Basic system services like a firewall, intrusion protection, and setting the system clock are automatically configured (ufw, fail2ban, ntp).
 
 This setup is what has been powering my own personal email since September 2013.
