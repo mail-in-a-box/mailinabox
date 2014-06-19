@@ -22,14 +22,14 @@ if len(sys.argv) == 4:
 def test(server, description):
 	tests = [
 		(hostname, "A", ipaddr),
-		(hostname, "NS", "ns1.%s.;ns2.%s." % (primary_hostname, primary_hostname)),
+		#(hostname, "NS", "ns1.%s.;ns2.%s." % (primary_hostname, primary_hostname)),
 		("ns1." + primary_hostname, "A", ipaddr),
 		("ns2." + primary_hostname, "A", ipaddr),
 		("www." + hostname, "A", ipaddr),
 		(hostname, "MX", "10 " + primary_hostname + "."),
 		(hostname, "TXT", "\"v=spf1 mx -all\""),
 		("mail._domainkey." + hostname, "TXT", "\"v=DKIM1; k=rsa; s=email; \" \"p=__KEY__\""),
-		("_adsp._domainkey." + hostname, "TXT", "\"dkim=all\""),
+		#("_adsp._domainkey." + hostname, "TXT", "\"dkim=all\""),
 		("_dmarc." + hostname, "TXT", "\"v=DMARC1; p=quarantine\""),
 	]
 	return test2(tests, server, description)
