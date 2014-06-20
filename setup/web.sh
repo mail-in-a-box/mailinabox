@@ -31,6 +31,10 @@ rm -f /etc/init.d/php-fastcgi
 ln -s $(pwd)/conf/phpfcgi-initscript /etc/init.d/php-fastcgi
 update-rc.d php-fastcgi defaults
 
+# Put our webfinger server script into a well-known location.
+cp tools/webfinger.php /usr/bin/mailinabox-webfinger.php
+chown www-data.www-data /usr/bin/mailinabox-webfinger.php
+
 # Start services.
 service nginx restart
 service php-fastcgi restart
