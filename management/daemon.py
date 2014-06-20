@@ -66,6 +66,13 @@ def dns_get_ds_records():
 	except Exception as e:
 		return (str(e), 500)
 
+# WEB
+
+@app.route('/web/update', methods=['POST'])
+def web_update():
+	from web_update import do_web_update
+	return do_web_update(env)
+
 # System
 
 @app.route('/system/updates')

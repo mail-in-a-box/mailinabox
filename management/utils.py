@@ -11,6 +11,11 @@ def load_env_vars_from_file(fn):
     for line in open(fn): env.setdefault(*line.strip().split("=", 1))
     return env
 
+def safe_domain_name(name):
+    # Sanitize a domain name so it is safe to use as a file name on disk.
+    import urllib.parse
+    return urllib.parse.quote(name, safe='')
+
 def exclusive_process(name):
     # Ensure that a process named `name` does not execute multiple
     # times concurrently.

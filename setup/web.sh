@@ -1,27 +1,29 @@
+#!/bin/bash
 # HTTP: Turn on a web server serving static files
 #################################################
 
 source setup/functions.sh # load our functions
+source /etc/mailinabox.conf # load global vars
 
 apt_install nginx php5-cgi
 
 rm -f /etc/nginx/sites-enabled/default
 
-STORAGE_ROOT_ESC=$(echo $STORAGE_ROOT|sed 's/[\\\/&]/\\&/g')
-PUBLIC_HOSTNAME_ESC=$(echo $PUBLIC_HOSTNAME|sed 's/[\\\/&]/\\&/g')
-
-# copy in the nginx configuration file and substitute some
-# variables
-cat conf/nginx.conf \
-	| sed "s/\$STORAGE_ROOT/$STORAGE_ROOT_ESC/g" \
-	| sed "s/\$PUBLIC_HOSTNAME/$PUBLIC_HOSTNAME_ESC/g" \
-	> /etc/nginx/conf.d/local.conf
+# copy in a nginx configuration file for common and best-practices
+# SSL settings from @konklone
 cp conf/nginx-ssl.conf /etc/nginx/nginx-ssl.conf
 
+# Other nginx settings will be configured by the management service
+# since it depends on what domains we're serving, which we don't know
+# until mail accounts have been created.
+
 # make a default homepage
-mkdir -p $STORAGE_ROOT/www/static
-cp conf/www_default.html $STORAGE_ROOT/www/static/index.html
-chown -R $STORAGE_USER $STORAGE_ROOT/www/static/index.html
+if [ -d $STORAGE_ROOT/www/static ]; then mv $STORAGE_ROOT/www/static $STORAGE_ROOT/www/default; fi # migration
+mkdir -p $STORAGE_ROOT/www/default
+if [ ! -f STORAGE_ROOT/www/default/index.html ]; then
+	cp conf/www_default.html $STORAGE_ROOT/www/default/index.html
+	chown -R $STORAGE_USER $STORAGE_ROOT/www/default/index.html
+fi
 
 # Create an init script to start the PHP FastCGI daemon and keep it
 # running after a reboot. Allows us to serve Roundcube for webmail.

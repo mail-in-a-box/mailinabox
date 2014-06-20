@@ -6,7 +6,7 @@ import os, os.path, urllib.parse, datetime, re, hashlib
 import rtyaml
 
 from mailconfig import get_mail_domains
-from utils import shell, load_env_vars_from_file
+from utils import shell, load_env_vars_from_file, safe_domain_name
 
 def get_dns_domains(env):
 	# What domains should we serve DNS for?
@@ -30,7 +30,7 @@ def get_dns_domains(env):
 	# Make a nice and safe filename for each domain.
 	zonefiles = []
 	for domain in domains:
-		zonefiles.append([domain, urllib.parse.quote(domain, safe='') + ".txt"])
+		zonefiles.append([domain, safe_domain_name(domain) + ".txt"])
 
 	return zonefiles
 	
