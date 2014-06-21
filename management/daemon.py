@@ -2,13 +2,24 @@
 
 import os, os.path, re
 
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, abort
 app = Flask(__name__)
 
-import utils
+import auth, utils
 from mailconfig import get_mail_users, add_mail_user, set_mail_password, remove_mail_user, get_mail_aliases, get_mail_domains, add_mail_alias, remove_mail_alias
 
 env = utils.load_environment()
+
+auth_service = auth.KeyAuthService(env)
+
+@app.before_request
+def require_auth_key():
+	if not auth_service.is_authenticated(request):
+		abort(401)
+
+@app.errorhandler(401)
+def unauthorized(error):
+	return auth_service.make_unauthorized_response()
 
 @app.route('/')
 def index():
@@ -97,4 +108,15 @@ def do_updates():
 
 if __name__ == '__main__':
 	if "DEBUG" in os.environ: app.debug = True
+
+	# For testing on the command line, you can use `curl` like so:
+	#    curl --user $(</var/lib/mailinabox/api.key): http://localhost:10222/mail/users
+	auth_service.write_key()
+
+	# For testing in the browser, you can copy the API key that's output to the
+	# debug console and enter that as the username
+	app.logger.info('API key: ' + auth_service.key)
+
+
 	app.run(port=10222)
+
