@@ -14,7 +14,7 @@
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 DESC="Mail-in-a-Box Mgmt"
 NAME=mailinabox
-DAEMON=/usr/bin/mailinabox-daemon
+DAEMON=/usr/local/bin/mailinabox-daemon
 PIDFILE=/var/run/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
 

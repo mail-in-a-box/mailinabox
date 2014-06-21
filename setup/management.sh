@@ -12,8 +12,8 @@ if [ ! -f $STORAGE_ROOT/backup/secret_key.txt ]; then
 fi
 
 # Link the management server daemon into a well known location.
-rm -f /usr/bin/mailinabox-daemon
-ln -s `pwd`/management/daemon.py /usr/bin/mailinabox-daemon
+rm -f /usr/local/bin/mailinabox-daemon
+ln -s `pwd`/management/daemon.py /usr/local/bin/mailinabox-daemon
 
 # Create an init script to start the management daemon and keep it
 # running after a reboot.
