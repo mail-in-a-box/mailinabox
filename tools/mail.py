@@ -3,7 +3,11 @@
 import sys, getpass, urllib.request, urllib.error
 
 def mgmt(cmd, data=None):
-	req = urllib.request.Request('http://localhost:10222' + cmd, urllib.parse.urlencode(data).encode("utf8") if data else None)
+	mgmt_uri = 'http://localhost:10222'
+
+	setup_key_auth(mgmt_uri)
+
+	req = urllib.request.Request(mgmt_uri + cmd, urllib.parse.urlencode(data).encode("utf8") if data else None)
 	try:
 		response = urllib.request.urlopen(req)
 	except urllib.error.HTTPError as e:
@@ -19,6 +23,18 @@ def read_password():
 		first  = getpass.getpass('password: ')
 		second = getpass.getpass(' (again): ')
 	return first
+
+def setup_key_auth(mgmt_uri):
+	key = open('/var/lib/mailinabox/api.key').read().strip()
+
+	auth_handler = urllib.request.HTTPBasicAuthHandler()
+	auth_handler.add_password(
+		realm='Mail-in-a-Box Management Server',
+		uri=mgmt_uri,
+		user=key,
+		passwd='')
+	opener = urllib.request.build_opener(auth_handler)
+	urllib.request.install_opener(opener)
 
 if len(sys.argv) < 2:
 	print("Usage: ")
