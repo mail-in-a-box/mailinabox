@@ -34,6 +34,8 @@ update-rc.d php-fastcgi defaults
 # Put our webfinger server script into a well-known location.
 cp tools/webfinger.php /usr/local/bin/mailinabox-webfinger.php
 chown www-data.www-data /usr/local/bin/mailinabox-webfinger.php
+mkdir -p $STORAGE_ROOT/webfinger/acct;
+chown -R $STORAGE_USER $STORAGE_ROOT/webfinger
 
 # Start services.
 service nginx restart
