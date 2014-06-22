@@ -19,8 +19,8 @@ Mail-in-a-Box turns a fresh Ubuntu 14.04 LTS 64-bit machine into a working mail 
 * [Spam filtering](https://spamassassin.apache.org/) that puts spam into a spam folder and [greylisting](http://postgrey.schweikert.ch/) to stop spam as it arrives.
 * [SPF](https://en.wikipedia.org/wiki/Sender_Policy_Framework), [DKIM](https://en.wikipedia.org/wiki/DomainKeys_Identified_Mail), and [DMARC](https://en.wikipedia.org/wiki/DMARC) to prove to recipients that your email was from you --- the machine acts as its own DNS nameserver to automatically set this up.
 * [DNSSEC](https://en.wikipedia.org/wiki/DNSSEC) and [DANE TLSA](https://en.wikipedia.org/wiki/DNS-based_Authentication_of_Named_Entities) to force cryptographically-secure communications in certain cases, especially between Mail-in-a-Boxes, if you add "DS" records to your domain registration.
-* Configuration of mailboxes and mail aliases is done using a command-line tool or an HTTP-based API (accessible from within the server only).
-* Basic system services like a firewall, intrusion protection, and setting the system clock are automatically configured.
+* A command-line tool and an HTTP-based API for administering mailboxes and mail aliases.
+* Basic system services like a firewall, intrusion protection, and setting the system clock.
 
 This setup is what has been powering my own personal email since September 2013.
 
