@@ -8,28 +8,33 @@ import rtyaml
 from mailconfig import get_mail_domains
 from utils import shell, load_env_vars_from_file, safe_domain_name, sort_domains
 
-def get_dns_zones(env):
-	# What domains should we serve DNS for?
+def get_dns_domains(env):
+	# Add all domain names in use by email users and mail aliases and ensure
+	# PUBLIC_HOSTNAME is in the list.
 	domains = set()
-
-	# Add all domain names in use by email users and mail aliases.
 	domains |= get_mail_domains(env)
+	domains.add(env['PUBLIC_HOSTNAME'])
+	return domains
 
-	# Ensure the PUBLIC_HOSTNAME is in that list if it is not a subdomain of
-	# any other domain we manage. If it's a subdomain, having it be a separate
-	# zone will confuse DNSSEC because it will be signed without having a DS
-	# record at the parent.
-	for d in domains:
-		if env['PUBLIC_HOSTNAME'].endswith("." + d):
-			break
-	else:
-		# No 'break' was executed, so it is not a subdomain of a domain
-		# we know about. Thus add it.
-		domains.add(env['PUBLIC_HOSTNAME'])
+def get_dns_zones(domains, env):
+	# What domains should we create DNS zones for? Never create a zone for
+	# a domain & a subdomain of that domain.
+	
+	# Exclude domains that are subdomains of other domains we know. Proceed
+	# by looking at shorter domains first.
+	zone_domains = set()
+	for domain in sorted(domains, key=lambda d : len(d)):
+		for d in zone_domains:
+			if domain.endswith("." + d):
+				# We found a parent domain already in the list.
+				break
+		else:
+			# 'break' did not occur: there is no parent domain.
+			zone_domains.add(domain)
 
 	# Make a nice and safe filename for each domain.
 	zonefiles = []
-	for domain in domains:
+	for domain in zone_domains:
 		zonefiles.append([domain, safe_domain_name(domain) + ".txt"])
 
 	# Sort the list so that the order is nice and so that nsd.conf has a
@@ -43,14 +48,16 @@ def get_dns_zones(env):
 
 def do_dns_update(env):
 	# What domains (and their zone filenames) should we build?
-	zonefiles = get_dns_zones(env)
+	domains = get_dns_domains(env)
+	zonefiles = get_dns_zones(domains, env)
 
 	# Write zone files.
 	os.makedirs('/etc/nsd/zones', exist_ok=True)
 	updated_domains = []
 	for i, (domain, zonefile) in enumerate(zonefiles):
 		# Build the records to put in the zone.
-		records = build_zone(domain, zonefile, env)
+		subdomains = [d for d in domains if d.endswith("." + domain)]
+		records = build_zone(domain, zonefile, subdomains, env)
 
 		# See if the zone has changed, and if so update the serial number
 		# and write the zone file.
@@ -111,7 +118,7 @@ def do_dns_update(env):
 
 ########################################################################
 
-def build_zone(domain, zonefile, env, with_ns=True):
+def build_zone(domain, zonefile, subdomains, env, with_ns=True):
 	records = []
 
 	# For top-level zones, define ourselves as the authoritative name server.
@@ -122,14 +129,15 @@ def build_zone(domain, zonefile, env, with_ns=True):
 	records.append((None,  "MX",  "10 %s." % env["PUBLIC_HOSTNAME"]))
 	records.append((None,  "TXT", '"v=spf1 mx -all"'))
 
-	# If PUBLIC_HOSTNAME is a subdomain of this domain, define it here.
-	if env['PUBLIC_HOSTNAME'].endswith("." + domain):
-		ph = env['PUBLIC_HOSTNAME'][0:-len("." + domain)]
-		for child_qname, child_rtype, child_value in build_zone(env['PUBLIC_HOSTNAME'], None, env, with_ns=False):
+	# If we need to define DNS for any subdomains of this domain, include it
+	# in the zone.
+	for subdomain in subdomains:
+		subdomain_qname = subdomain[0:-len("." + domain)]
+		for child_qname, child_rtype, child_value in build_zone(subdomain, None, [], env, with_ns=False):
 			if child_qname == None:
-				child_qname = ph
+				child_qname = subdomain_qname
 			else:
-				child_qname += "." + ph
+				child_qname += "." + subdomain_qname
 			records.append((child_qname, child_rtype, child_value))
 
 	# In PUBLIC_HOSTNAME...
