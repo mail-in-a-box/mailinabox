@@ -67,6 +67,15 @@ if [ -z "$PUBLIC_IPV6" ]; then
 	read -e -i "$DEFAULT_PUBLIC_IPV6" -p "Public IPv6: " PUBLIC_IPV6
 fi
 
+# We need a country code to generate a certificate signing request. However
+# if a CSR already exists then we won't be generating a new one and there's
+# no reason to ask for the country code now. $STORAGE_ROOT has not yet been
+# set so we'll check if $DEFAULT_STORAGE_ROOT and $DEFAULT_CSR_COUNTRY are
+# set (the values from the current mailinabox.conf) and if the CSR exists
+# in the expected location.
+if [ ! -z "$DEFAULT_STORAGE_ROOT" ] && [ ! -z "$DEFAULT_CSR_COUNTRY" ] && [ -f $DEFAULT_STORAGE_ROOT/ssl/ssl_cert_sign_req.csr ]; then
+	CSR_COUNTRY=$DEFAULT_CSR_COUNTRY
+fi
 if [ -z "$CSR_COUNTRY" ]; then
 	echo
 	echo "Enter the two-letter, uppercase country code for where you"
