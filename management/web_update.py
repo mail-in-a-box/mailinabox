@@ -5,7 +5,7 @@
 import os, os.path
 
 from mailconfig import get_mail_domains
-from utils import shell, safe_domain_name
+from utils import shell, safe_domain_name, sort_domains
 
 def get_web_domains(env):
 	# What domains should we serve HTTP/HTTPS for?
@@ -19,7 +19,7 @@ def get_web_domains(env):
 
 	# Sort the list. Put PUBLIC_HOSTNAME first so it becomes the
 	# default server (nginx's default_server).
-	domains = sorted(domains, key = lambda domain : (domain != env["PUBLIC_HOSTNAME"], list(reversed(domain.split(".")))) )
+	domains = sort_domains(domains, env)
 
 	return domains
 	
@@ -49,6 +49,22 @@ def make_domain_config(domain, template, env):
 		root = os.path.join(env["STORAGE_ROOT"], "www", safe_domain_name(test_domain))
 		if os.path.exists(root): break
 
+	# What private key and SSL certificate will we use for this domain?
+	ssl_key, ssl_certificate, csr_path = get_domain_ssl_files(domain, env)
+
+	# For hostnames created after the initial setup, ensure we have an SSL certificate
+	# available. Make a self-signed one now if one doesn't exist.
+	ensure_ssl_certificate_exists(domain, ssl_key, ssl_certificate, csr_path, env)
+
+	# Replace substitution strings in the template & return.
+	nginx_conf = template
+	nginx_conf = nginx_conf.replace("$HOSTNAME", domain)
+	nginx_conf = nginx_conf.replace("$ROOT", root)
+	nginx_conf = nginx_conf.replace("$SSL_KEY", ssl_key)
+	nginx_conf = nginx_conf.replace("$SSL_CERTIFICATE", ssl_certificate)
+	return nginx_conf
+
+def get_domain_ssl_files(domain, env):
 	# What SSL private key will we use? Allow the user to override this, but
 	# in many cases using the same private key for all domains would be fine.
 	# Don't allow the user to override the key for PUBLIC_HOSTNAME because
@@ -59,37 +75,44 @@ def make_domain_config(domain, template, env):
 		ssl_key = alt_key
 
 	# What SSL certificate will we use? This has to be differnet for each
-	# domain name. The certificate is already generated for PUBLIC_HOSTNAME.
-	# For other domains, generate a self-signed certificate if one doesn't
-	# already exist. See setup/mail.sh for documentation.
+	# domain name. For PUBLIC_HOSTNAME, use the one we generated at set-up
+	# time.
 	if domain == env['PUBLIC_HOSTNAME']:
 		ssl_certificate = os.path.join(env["STORAGE_ROOT"], 'ssl/ssl_certificate.pem')
 	else:
 		ssl_certificate = os.path.join(env["STORAGE_ROOT"], 'ssl/domains/%s_certifiate.pem' % safe_domain_name(domain))
-		os.makedirs(os.path.dirname(ssl_certificate), exist_ok=True)
-		if not os.path.exists(ssl_certificate):
-			# Generate a new self-signed certificate using the same private key that we already have.
 
-			# Start with a CSR.
-			csr = os.path.join(env["STORAGE_ROOT"], 'ssl/domains/%s_cert_sign_req.csr' % safe_domain_name(domain))
-			shell("check_call", [
-				"openssl", "req", "-new",
-				"-key", ssl_key,
-				"-out",  csr,
-				"-subj", "/C=%s/ST=/L=/O=/CN=%s" % (env["CSR_COUNTRY"], domain)])
+	# Where would the CSR go?
+	csr_path = os.path.join(env["STORAGE_ROOT"], 'ssl/domains/%s_cert_sign_req.csr' % safe_domain_name(domain))
 
-			# And then make the certificate.
-			shell("check_call", [
-				"openssl", "x509", "-req",
-				"-days", "365",
-				"-in", csr,
-				"-signkey", ssl_key,
-				"-out", ssl_certificate])
+	return ssl_key, ssl_certificate, csr_path
 
-	# Replace substitution strings in the template & return.
-	nginx_conf = template
-	nginx_conf = nginx_conf.replace("$HOSTNAME", domain)
-	nginx_conf = nginx_conf.replace("$ROOT", root)
-	nginx_conf = nginx_conf.replace("$SSL_KEY", ssl_key)
-	nginx_conf = nginx_conf.replace("$SSL_CERTIFICATE", ssl_certificate)
-	return nginx_conf
+def ensure_ssl_certificate_exists(domain, ssl_key, ssl_certificate, csr_path, env):
+	# For domains besides PUBLIC_HOSTNAME, generate a self-signed certificate if one doesn't
+	# already exist. See setup/mail.sh for documentation.
+
+	if domain == env['PUBLIC_HOSTNAME']:
+		return
+
+	if os.path.exists(ssl_certificate):
+		return
+
+	os.makedirs(os.path.dirname(ssl_certificate), exist_ok=True)
+
+	# Generate a new self-signed certificate using the same private key that we already have.
+
+	# Start with a CSR.
+	shell("check_call", [
+		"openssl", "req", "-new",
+		"-key", ssl_key,
+		"-out",  csr_path,
+		"-subj", "/C=%s/ST=/L=/O=/CN=%s" % (env["CSR_COUNTRY"], domain)])
+
+	# And then make the certificate.
+	shell("check_call", [
+		"openssl", "x509", "-req",
+		"-days", "365",
+		"-in", csr_path,
+		"-signkey", ssl_key,
+		"-out", ssl_certificate])
+

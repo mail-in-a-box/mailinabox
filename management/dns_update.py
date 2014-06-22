@@ -6,9 +6,9 @@ import os, os.path, urllib.parse, datetime, re, hashlib
 import rtyaml
 
 from mailconfig import get_mail_domains
-from utils import shell, load_env_vars_from_file, safe_domain_name
+from utils import shell, load_env_vars_from_file, safe_domain_name, sort_domains
 
-def get_dns_domains(env):
+def get_dns_zones(env):
 	# What domains should we serve DNS for?
 	domains = set()
 
@@ -32,12 +32,18 @@ def get_dns_domains(env):
 	for domain in domains:
 		zonefiles.append([domain, safe_domain_name(domain) + ".txt"])
 
+	# Sort the list so that the order is nice and so that nsd.conf has a
+	# stable order so we don't rewrite the file & restart the service
+	# meaninglessly.
+	zone_order = sort_domains([ zone[0] for zone in zonefiles ], env)
+	zonefiles.sort(key = lambda zone : zone_order.index(zone[0]) )
+
 	return zonefiles
 	
 
 def do_dns_update(env):
 	# What domains (and their zone filenames) should we build?
-	zonefiles = get_dns_domains(env)
+	zonefiles = get_dns_zones(env)
 
 	# Write zone files.
 	os.makedirs('/etc/nsd/zones', exist_ok=True)
@@ -322,7 +328,7 @@ server:
 
 
 	# Append the zones.
-	for domain, zonefile in sorted(zonefiles):
+	for domain, zonefile in zonefiles:
 		nsdconf += """
 zone:
 	name: %s
@@ -410,7 +416,7 @@ def sign_zone(domain, zonefile, env):
 ########################################################################
 
 def get_ds_records(env):
-	zonefiles = get_dns_domains(env)
+	zonefiles = get_dns_zones(env)
 	ret = ""
 	for domain, zonefile in zonefiles:
 		fn = "/etc/nsd/zones/" + zonefile + ".ds"

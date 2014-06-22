@@ -16,6 +16,34 @@ def safe_domain_name(name):
     import urllib.parse
     return urllib.parse.quote(name, safe='')
 
+def sort_domains(domain_names, env):
+    # Put domain names in a nice sorted order. For web_update, PUBLIC_HOSTNAME
+    # must appear first so it becomes the nginx default server.
+    
+    # First group PUBLIC_HOSTNAME and its subdomains, then parent domains of PUBLIC_HOSTNAME, then other domains.
+    groups = ( [], [], [] )
+    for d in domain_names:
+        if d == env['PUBLIC_HOSTNAME'] or d.endswith("." + env['PUBLIC_HOSTNAME']):
+            groups[0].append(d)
+        elif env['PUBLIC_HOSTNAME'].endswith("." + d):
+            groups[1].append(d)
+        else:
+            groups[2].append(d)
+
+    # Within each group, sort parent domains before subdomains and after that sort lexicographically.
+    def sort_group(group):
+        # Find the top-most domains.
+        top_domains = sorted(d for d in group if len([s for s in group if s.startswith("." + d)]) == 0)
+        ret = []
+        for d in top_domains:
+            ret.append(d)
+            ret.extend( sort_group([s for s in group if s.endswith("." + d)]) )
+        return ret
+        
+    groups = [sort_group(g) for g in groups]
+
+    return groups[0] + groups[1] + groups[2]
+
 def exclusive_process(name):
     # Ensure that a process named `name` does not execute multiple
     # times concurrently.
@@ -86,15 +114,33 @@ def is_pid_valid(pid):
     else:
         return True
 
-def shell(method, cmd_args, env={}, capture_stderr=False, return_bytes=False):
+def shell(method, cmd_args, env={}, capture_stderr=False, return_bytes=False, trap=False, input=None):
     # A safe way to execute processes.
     # Some processes like apt-get require being given a sane PATH.
     import subprocess
+
     env.update({ "PATH": "/sbin:/bin:/usr/sbin:/usr/bin" })
-    stderr = None if not capture_stderr else subprocess.STDOUT
-    ret = getattr(subprocess, method)(cmd_args, env=env, stderr=stderr)
+    kwargs = {
+        'env': env,
+        'stderr': None if not capture_stderr else subprocess.STDOUT,
+    }
+    if method == "check_output" and input is not None:
+        kwargs['input'] = input
+
+    if not trap:
+        ret = getattr(subprocess, method)(cmd_args, **kwargs)
+    else:
+        try:
+            ret = getattr(subprocess, method)(cmd_args, **kwargs)
+            code = 0
+        except subprocess.CalledProcessError as e:
+            ret = e.output
+            code = e.returncode
     if not return_bytes and isinstance(ret, bytes): ret = ret.decode("utf8")
-    return ret
+    if not trap:
+        return ret
+    else:
+        return code, ret
 
 def create_syslog_handler():
     import logging.handlers
