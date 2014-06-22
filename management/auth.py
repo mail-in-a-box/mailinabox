@@ -15,7 +15,7 @@ class KeyAuthService:
 	def __init__(self, env):
 		self.auth_realm = DEFAULT_AUTH_REALM
 		self.key = self._generate_key()
-		self.key_path = env.get('API_KEY_FILE') or DEFAULT_KEY_PATH
+		self.key_path = DEFAULT_KEY_PATH
 
 	def write_key(self):
 		"""Write key to file so authorized clients can get the key
