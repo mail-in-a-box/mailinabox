@@ -58,7 +58,7 @@ For instance, in my case, I could tell my domain name registrar that `ns1.box.oc
 
 Optionally, to activate DNSSEC, you'll need to get a DS record from the box. While logged in on the box, run:
 
-	curl http://localhost:10222/dns/ds
+	sudo bash -c 'curl --user $(</var/lib/mailinabox/api.key): http://localhost:10222/dns/ds'
 
 This will print DS records for the domains that your box thinks it is the authoritative name server for. Copy the DS record and follow the DS record instructions provided by your domain name registrar.
 

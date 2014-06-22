@@ -133,8 +133,8 @@ EOF
 
 # Write the DNS and nginx configuration files.
 sleep 5 # wait for the daemon to start
-curl -s -d POSTDATA http://127.0.0.1:10222/dns/update
-curl -s -d POSTDATA http://127.0.0.1:10222/web/update
+curl -s -d POSTDATA --user $(</var/lib/mailinabox/api.key): http://127.0.0.1:10222/dns/update
+curl -s -d POSTDATA --user $(</var/lib/mailinabox/api.key): http://127.0.0.1:10222/web/update
 
 # If there aren't any mail users yet, create one.
 if [ -z "`tools/mail.py user`" ]; then
