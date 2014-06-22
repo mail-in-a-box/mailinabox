@@ -34,15 +34,17 @@ tools/editconf.py /etc/postfix/main.cf \
 	smtpd_banner="\$myhostname ESMTP Hi, I'm a Mail-in-a-Box (Ubuntu/Postfix; see https://github.com/joshdata/mailinabox)" \
 	mydestination=localhost
 
-# Enable the 'submission' port 587 smtpd server, and give it a different
-# name in syslog to distinguish it from the port 25 smtpd server.
-#
-# Add a new cleanup service specific to the submission service ('authclean')
-# that filters out privacy-sensitive headers on mail being sent out by
-# authenticated users.
+# Enable the 'submission' port 587 smtpd server and tweak its settings.
+# a) Require the best ciphers for incoming connections per http://baldric.net/2013/12/07/tls-ciphers-in-postfix-and-dovecot/.
+#    but without affecting opportunistic TLS on incoming mail, which will allow any cipher (it's better than none).
+# b) Give it a different name in syslog to distinguish it from the port 25 smtpd server.
+# c) Add a new cleanup service specific to the submission service ('authclean')
+#    that filters out privacy-sensitive headers on mail being sent out by
+#    authenticated users.
 tools/editconf.py /etc/postfix/master.cf -s -w \
 	"submission=inet n       -       -       -       -       smtpd
 	  -o syslog_name=postfix/submission
+	  -o smtpd_tls_ciphers=high -o smtpd_tls_protocols=!SSLv2,!SSLv3
 	  -o cleanup_service_name=authclean" \
 	"authclean=unix  n       -       -       -       0       cleanup
 	  -o header_checks=pcre:/etc/postfix/outgoing_mail_header_filters"
@@ -237,11 +239,13 @@ tools/editconf.py /etc/dovecot/conf.d/15-lda.conf \
 
 # Drew Crawford sets the auth-worker process to run as the mail user, but we don't care if it runs as root.
 
-# Enable SSL and specify the location of the SSL certificate and private key files.
+# Enable SSL, specify the location of the SSL certificate and private key files,
+# and allow only good ciphers per http://baldric.net/2013/12/07/tls-ciphers-in-postfix-and-dovecot/.
 tools/editconf.py /etc/dovecot/conf.d/10-ssl.conf \
 	ssl=required \
 	"ssl_cert=<$STORAGE_ROOT/ssl/ssl_certificate.pem" \
 	"ssl_key=<$STORAGE_ROOT/ssl/ssl_private_key.pem" \
+	"ssl_cipher_list=TLSv1+HIGH !SSLv2 !RC4 !aNULL !eNULL !3DES @STRENGTH"
 
 # PERMISSIONS / RESTART SERVICES
 
