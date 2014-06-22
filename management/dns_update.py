@@ -52,13 +52,19 @@ def do_dns_update(env):
 	domains = get_dns_domains(env)
 	zonefiles = get_dns_zones(env)
 
+	# Custom records to add to zones.
+	try:
+		additional_records = rtyaml.load(open(os.path.join(env['STORAGE_ROOT'], 'dns/custom.yaml')))
+	except:
+		additional_records = { }
+
 	# Write zone files.
 	os.makedirs('/etc/nsd/zones', exist_ok=True)
 	updated_domains = []
 	for i, (domain, zonefile) in enumerate(zonefiles):
 		# Build the records to put in the zone.
 		subdomains = [d for d in domains if d.endswith("." + domain)]
-		records = build_zone(domain, zonefile, subdomains, env)
+		records = build_zone(domain, subdomains, additional_records, env)
 
 		# See if the zone has changed, and if so update the serial number
 		# and write the zone file.
@@ -119,7 +125,7 @@ def do_dns_update(env):
 
 ########################################################################
 
-def build_zone(domain, zonefile, subdomains, env, with_ns=True):
+def build_zone(domain, subdomains, additional_records, env, with_ns=True):
 	records = []
 
 	# For top-level zones, define ourselves as the authoritative name server.
@@ -134,7 +140,7 @@ def build_zone(domain, zonefile, subdomains, env, with_ns=True):
 	# in the zone.
 	for subdomain in subdomains:
 		subdomain_qname = subdomain[0:-len("." + domain)]
-		for child_qname, child_rtype, child_value in build_zone(subdomain, None, [], env, with_ns=False):
+		for child_qname, child_rtype, child_value in build_zone(subdomain, [], {}, env, with_ns=False):
 			if child_qname == None:
 				child_qname = subdomain_qname
 			else:
@@ -157,17 +163,19 @@ def build_zone(domain, zonefile, subdomains, env, with_ns=True):
 		return False
 
 	# The user may set other records that don't conflict with our settings.
-	custom_zone_file = os.path.join(env['STORAGE_ROOT'], 'dns/custom', zonefile.replace(".txt", ".yaml")) if zonefile else None
-	if zonefile and os.path.exists(custom_zone_file):
-		custom_zone = rtyaml.load(open(custom_zone_file))
-		for qname, value in custom_zone.items():
-			if has_rec(qname, value): continue
-			if isinstance(value, str):
-				records.append((qname, "A", value))
-			elif isinstance(value, dict):
-				for rtype, value2 in value.items():
-					if rtype == "TXT": value2 = "\"" + value2 + "\""
-					records.append((qname, rtype, value2))
+	for qname, value in additional_records.items():
+		if qname != domain and not qname.endswith("." + domain): continue
+		if qname == domain:
+			qname = None
+		else:
+			qname = qname[0:len(qname)-len("." + domain)]
+		if has_rec(qname, value): continue
+		if isinstance(value, str):
+			records.append((qname, "A", value))
+		elif isinstance(value, dict):
+			for rtype, value2 in value.items():
+				if rtype == "TXT": value2 = "\"" + value2 + "\""
+				records.append((qname, rtype, value2))
 
 	# Add defaults if not overridden by the user's custom settings.
 	if not has_rec(None, "A"): records.append((None, "A", env["PUBLIC_IP"]))
