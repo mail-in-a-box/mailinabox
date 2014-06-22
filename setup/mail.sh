@@ -18,8 +18,7 @@ source /etc/mailinabox.conf # load global vars
 
 apt_install \
 	postfix postgrey postfix-pcre \
-	dovecot-core dovecot-imapd dovecot-lmtpd dovecot-sqlite sqlite3 \
-	openssl
+	dovecot-core dovecot-imapd dovecot-lmtpd dovecot-sqlite sqlite3
 
 mkdir -p $STORAGE_ROOT/mail
 
@@ -243,29 +242,6 @@ tools/editconf.py /etc/dovecot/conf.d/10-ssl.conf \
 	ssl=required \
 	"ssl_cert=<$STORAGE_ROOT/ssl/ssl_certificate.pem" \
 	"ssl_key=<$STORAGE_ROOT/ssl/ssl_private_key.pem" \
-
-# SSL CERTIFICATE
-
-mkdir -p $STORAGE_ROOT/ssl
-if [ ! -f $STORAGE_ROOT/ssl/ssl_certificate.pem ]; then
-	# Generate a new private key if one doesn't already exist.
-	# Set the umask so the key file is not world-readable.
-	(umask 077; openssl genrsa -out $STORAGE_ROOT/ssl/ssl_private_key.pem 2048)
-fi
-if [ ! -f $STORAGE_ROOT/ssl/ssl_cert_sign_req.csr ]; then
-	# Generate a certificate signing request if one doesn't already exist.
-	openssl req -new -key $STORAGE_ROOT/ssl/ssl_private_key.pem -out $STORAGE_ROOT/ssl/ssl_cert_sign_req.csr \
-	  -subj "/C=$CSR_COUNTRY/ST=/L=/O=/CN=$PUBLIC_HOSTNAME"
-fi
-if [ ! -f $STORAGE_ROOT/ssl/ssl_certificate.pem ]; then
-	# Generate a SSL certificate by self-signing if a SSL certificate doesn't yet exist.
-	openssl x509 -req -days 365 \
-	  -in $STORAGE_ROOT/ssl/ssl_cert_sign_req.csr -signkey $STORAGE_ROOT/ssl/ssl_private_key.pem -out $STORAGE_ROOT/ssl/ssl_certificate.pem
-fi
-echo
-echo "Your SSL certificate's fingerpint is:"
-openssl x509 -in /home/user-data/ssl/ssl_certificate.pem -noout -fingerprint
-echo
 
 # PERMISSIONS / RESTART SERVICES
 

@@ -109,6 +109,9 @@ def do_updates():
 if __name__ == '__main__':
 	if "DEBUG" in os.environ: app.debug = True
 
+	if not app.debug:
+		app.logger.addHandler(utils.create_syslog_handler())
+
 	# For testing on the command line, you can use `curl` like so:
 	#    curl --user $(</var/lib/mailinabox/api.key): http://localhost:10222/mail/users
 	auth_service.write_key()
@@ -116,7 +119,6 @@ if __name__ == '__main__':
 	# For testing in the browser, you can copy the API key that's output to the
 	# debug console and enter that as the username
 	app.logger.info('API key: ' + auth_service.key)
-
 
 	app.run(port=10222)
 

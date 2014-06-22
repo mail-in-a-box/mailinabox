@@ -132,7 +132,7 @@ def build_zone(domain, zonefile, env, with_ns=True):
 		records.append(("ns1", "A",   env["PUBLIC_IP"]))
 		records.append(("ns2", "A",   env["PUBLIC_IP"]))
 
-		# Add a TLSA record for SMTP.
+		# Add a DANE TLSA record for SMTP.
 		records.append(("_25._tcp", "TLSA", build_tlsa_record(env)))
 
 	def has_rec(qname, rtype):
@@ -179,9 +179,8 @@ def build_zone(domain, zonefile, env, with_ns=True):
 ########################################################################
 
 def build_tlsa_record(env):
-	# A TLSA record in DNS specifies that connections on a port, e.g.
-	# the SMTP port, must use TLS and the certificate must match a
-	# particular certificate.
+	# A DANE TLSA record in DNS specifies that connections on a port
+	# must use TLS and the certificate must match a particular certificate.
 	#
 	# Thanks to http://blog.huque.com/2012/10/dnssec-and-certificates.html
 	# for explaining all of this!

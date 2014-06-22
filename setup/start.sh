@@ -123,6 +123,7 @@ EOF
 
 # Start service configuration.
 . setup/system.sh
+. setup/ssl.sh
 . setup/dns.sh
 . setup/mail.sh
 . setup/dkim.sh
