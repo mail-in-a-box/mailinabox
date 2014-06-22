@@ -68,7 +68,7 @@ cat > /etc/cron.daily/mailinabox-dnssec << EOF;
 #!/bin/bash
 # Mail-in-a-Box
 # Re-sign any DNS zones with DNSSEC because the signatures expire periodically.
-curl -d GO http://localhost:10222/dns/update
+curl -d GO --user \$(</var/lib/mailinabox/api.key): http://localhost:10222/dns/update
 EOF
 chmod +x /etc/cron.daily/mailinabox-dnssec
 
