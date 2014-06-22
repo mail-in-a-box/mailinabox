@@ -10,7 +10,7 @@ from mailconfig import get_mail_users, add_mail_user, set_mail_password, remove_
 
 env = utils.load_environment()
 
-auth_service = auth.KeyAuthService(env)
+auth_service = auth.KeyAuthService()
 
 @app.before_request
 def require_auth_key():

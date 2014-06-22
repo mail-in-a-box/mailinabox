@@ -12,7 +12,7 @@ class KeyAuthService:
 	requests. The key is passed as the username field in the standard HTTP
 	Basic Auth header.
 	"""
-	def __init__(self, env):
+	def __init__(self):
 		self.auth_realm = DEFAULT_AUTH_REALM
 		self.key = self._generate_key()
 		self.key_path = DEFAULT_KEY_PATH
