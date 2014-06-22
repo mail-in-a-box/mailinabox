@@ -16,9 +16,10 @@ def get_dns_domains(env):
 	domains.add(env['PUBLIC_HOSTNAME'])
 	return domains
 
-def get_dns_zones(domains, env):
+def get_dns_zones(env):
 	# What domains should we create DNS zones for? Never create a zone for
 	# a domain & a subdomain of that domain.
+	domains = get_dns_domains(env)
 	
 	# Exclude domains that are subdomains of other domains we know. Proceed
 	# by looking at shorter domains first.
@@ -49,7 +50,7 @@ def get_dns_zones(domains, env):
 def do_dns_update(env):
 	# What domains (and their zone filenames) should we build?
 	domains = get_dns_domains(env)
-	zonefiles = get_dns_zones(domains, env)
+	zonefiles = get_dns_zones(env)
 
 	# Write zone files.
 	os.makedirs('/etc/nsd/zones', exist_ok=True)

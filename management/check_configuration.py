@@ -8,10 +8,14 @@ import dns.reversename, dns.resolver
 
 from dns_update import get_dns_zones
 from web_update import get_web_domains, get_domain_ssl_files
+from mailconfig import get_mail_domains, get_mail_aliases
 
 from utils import shell, sort_domains
 
 def run_checks(env):
+	# Get the list of domains we handle mail for.
+	mail_domains = get_mail_domains(env)
+
 	# Get the list of domains we serve DNS zones for (i.e. does not include subdomains).
 	dns_zonefiles = dict(get_dns_zones(env))
 	dns_domains = set(dns_zonefiles)
@@ -20,13 +24,25 @@ def run_checks(env):
 	web_domains = set(get_web_domains(env))
 
 	# Check the domains.
-	for domain in sort_domains(dns_domains | web_domains, env):
+	for domain in sort_domains(mail_domains | dns_domains | web_domains, env):
 		print(domain)
 		print("=" * len(domain))
-		if domain == env["PUBLIC_HOSTNAME"]: check_primary_hostname_dns(domain, env)
-		if domain in dns_domains: check_dns_zone(domain, env, dns_zonefiles)
-		check_mx(domain, env)
-		check_ssl_cert(domain, env)
+
+		if domain == env["PUBLIC_HOSTNAME"]:
+			check_primary_hostname_dns(domain, env)
+		
+		if domain in dns_domains:
+			check_dns_zone(domain, env, dns_zonefiles)
+		
+		if domain in mail_domains:
+			check_mail_domain(domain, env)
+
+		if domain == env["PUBLIC_HOSTNAME"] or domain in web_domains: 
+			# We need a SSL certificate for PUBLIC_HOSTNAME because that's where the
+			# user will log in with IMAP or webmail. Any other domain we serve a
+			# website for also needs a signed certificate.
+			check_ssl_cert(domain, env)
+
 		print()
 
 def check_primary_hostname_dns(domain, env):
@@ -60,6 +76,16 @@ def check_primary_hostname_dns(domain, env):
 	else:
 		print_error("""Your box's reverse DNS is currently %s, but it should be %s. Your ISP or cloud provider will have instructions
 			on setting up reverse DNS for your box at %s.""" % (existing_rdns, domain, env['PUBLIC_IP']) )
+
+	# Check that the hostmaster@ email address exists.
+	check_alias_exists("hostmaster@" + domain, env)
+
+def check_alias_exists(alias, env):
+	mail_alises = dict(get_mail_aliases(env))
+	if alias in mail_alises:
+		print_ok("%s exists as a mail alias [=> %s]" % (alias, mail_alises[alias]))
+	else:
+		print_error("""You must add a mail alias for %s and direct email to you or another administrator.""" % alias)
 
 def check_dns_zone(domain, env, dns_zonefiles):
 	# We provide a DNS zone for the domain. It should have NS records set up
@@ -106,7 +132,7 @@ def check_dns_zone(domain, env, dns_zonefiles):
 		print("   " + ds_correct)
 		print("")
 
-def check_mx(domain, env):
+def check_mail_domain(domain, env):
 	# Check the MX record.
 	mx = query_dns(domain, "MX")
 	expected_mx = "10 " + env['PUBLIC_HOSTNAME']
@@ -117,14 +143,14 @@ def check_mx(domain, env):
 			be delivered to this box. It may take several hours for public DNS to update after a change. This problem may result from
 			other issues listed here.""" % (mx, expected_mx))
 
+	# Check that the postmaster@ email address exists.
+	check_alias_exists("postmaster@" + domain, env)
+
 def query_dns(qname, rtype, nxdomain='[Not Set]'):
 	resolver = dns.resolver.get_default_resolver()
 	try:
 		response = dns.resolver.query(qname, rtype)
-	except dns.resolver.NoNameservers:
-		# Could not reach nameserver.
-		raise
-	except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+	except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
 		# Host did not have an answer for this query; not sure what the
 		# difference is between the two exceptions.
 		return nxdomain
@@ -137,6 +163,10 @@ def query_dns(qname, rtype, nxdomain='[Not Set]'):
 def check_ssl_cert(domain, env):
 	# Check that SSL certificate is signed.
 
+	# Skip the check if the A record is not pointed here.
+	if query_dns(domain, "A") != env['PUBLIC_IP']: return
+
+	# Where is the SSL stored?
 	ssl_key, ssl_certificate, ssl_csr_path = get_domain_ssl_files(domain, env)
 
 	if not os.path.exists(ssl_certificate):
