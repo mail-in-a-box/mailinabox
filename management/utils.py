@@ -95,3 +95,9 @@ def shell(method, cmd_args, env={}, capture_stderr=False, return_bytes=False):
     ret = getattr(subprocess, method)(cmd_args, env=env, stderr=stderr)
     if not return_bytes and isinstance(ret, bytes): ret = ret.decode("utf8")
     return ret
+
+def create_syslog_handler():
+    import logging.handlers
+    handler = logging.handlers.SysLogHandler(address='/dev/log')
+    handler.setLevel(logging.WARNING)
+    return handler

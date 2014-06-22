@@ -97,4 +97,8 @@ def do_updates():
 
 if __name__ == '__main__':
 	if "DEBUG" in os.environ: app.debug = True
+
+	if not app.debug:
+		app.logger.addHandler(utils.create_syslog_handler())
+
 	app.run(port=10222)
