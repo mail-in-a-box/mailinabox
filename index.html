@@ -19,18 +19,21 @@
     	}
     	#main {
     		background-color: white;
-    		padding-bottom: 200px;
+    		padding-bottom: 1em;
     	}
 
 		h1 {
 			font-family: 'Iceland', sans-serif;
 			font-size: 50px;
-		}
+		}	
 		#main h2 {
-			margin-top: 1.5em;
+			margin-top: 1.75em;
 			font-family: Ubuntu, Arial, sans-serif;
 			font-weight: 300;
 			font-size: 20px;
+			padding-bottom: .25em;
+			border-bottom: 1px solid #DDD;
+			margin-bottom: .5em;
 		}
 		#main a {
 			color: #24A;
@@ -39,12 +42,32 @@
 
 		p#deck {
 			font-size: 18px;
-			margin-bottom: 2em;
+			margin-bottom: 2.5em;
 		}
 
 		#example-toolbar {
 			margin-bottom: 1px;
 		}
+		#example {
+			background-color: #fafafa;
+			border: 1px solid #ccc;
+			border-radius: 4px;
+			margin-bottom: .5em;
+		}
+			#example pre {
+				border: none;
+				margin: 0;
+				background-color: #f0f0f0;
+			}
+			#example > div {
+				padding: 9.5px 9.5px 0 9.5px;
+				font-family: serif;
+				font-size: 14px;
+			}
+			#example ul {
+				padding-left: 1.5em;
+				list-style-type: square;
+			}
 
 		#sidebar {
 			color: #DDD;
@@ -70,14 +93,25 @@
 		#sidebar li {
 			margin-bottom: 6px;
 		}
+		@media (max-width: 768px) {
+			body, #sidebar, #sidebar h2 {
+	    		background-color: #FAFAFA;
+	    		color: black;
+	    	}
+			#sidebar a {
+	    		color: #005;
+	    	}
+		}
     </style>
 </head>
 <body>
-
 	<div class="container-fluid">
     	<div class="row">
     		<div id="main" class="col-sm-10 col-sm-push-2">
-    			<div style="max-width: 50em">
+				<a href="https://github.com/joshdata/mailinabox" class="visible-md visible-lg"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/365986a132ccd6a44c23a9169022c0b5c890c387/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f7265645f6161303030302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png"></a>
+
+
+    			<div style="padding-left: 1em; max-width: 50em">
 	    			<h1>Mail-in-a-Box</h1>
 	    			<p id="deck">Take back control of your email with this easy-to-deploy mail server in a box.</p>
 
@@ -87,15 +121,35 @@
 						<button type="button" class="btn btn-default" data-id="deploy">Deploy on Ubuntu 14.04</button>
 					  </div>
 					</div>    			
-	    			<pre id="example">
-<span class="vagrant">sudo apt-get install vagrant git</span><span class="hidden deploy"># spin up a fresh Ubuntu 14.04 machine --- it must be fresh!
-sudo apt-get install git</span>
+	    			<div id="example">
+	    				<pre class="vagrant">sudo apt-get install vagrant git
 git clone <a href="https://github.com/joshdata/mailinabox">https://github.com/joshdata/mailinabox</a>
 cd mailinabox
 
-<span class="vagrant">vagrant up
-vagrant ssh</span><span class="hidden deploy">sudo setup/start.sh</span>
+vagrant up
+vagrant ssh
 sudo management/whats_next.py</pre>
+						
+						<div class="deploy hidden">
+							<p>You will need:</p>
+							<ul>
+								<li>A domain name --- try <a href="https://www.gandi.net/">Gandi.net</a>.</li>
+								<li>A <i>completely</i> fresh machine --- try <a href="https://www.digitalocean.com/">Digital Ocean</a>. Select Ubuntu 14.04 amd64. 768 MB RAM / 4G disk is plenty.</li>
+							</ul>
+							<p>Log into your competely fresh Ubuntu machine using SSH, then type:</p>
+						</div>
+						<pre class="deploy hidden">sudo apt-get install git</span>
+git clone <a href="https://github.com/joshdata/mailinabox">https://github.com/joshdata/mailinabox</a>
+cd mailinabox
+sudo setup/start.sh</pre>
+						<div class="deploy hidden">
+							<p>You will be asked to enter your domain name, the email address you want, and a password.</p>
+						</div>
+						<pre class="deploy hidden">sudo management/whats_next.py</pre>
+						<div class="deploy hidden">
+							<p>This will tell you what to do next. Then visit <code>https://yourdomain.com/mail</code> to start emailing. Or use any mail program with IMAPS (port 993) and SMTP with STARTTLS (port 587). Your username is your complete email address.</p>
+						</div>
+	    			</div>
 
 					<p class="text-danger small">Note: This is a work in progress. I work on Mail-in-a-Box in my limited free time. Your mileage may vary.</p>
 
@@ -136,6 +190,7 @@ sudo management/whats_next.py</pre>
 
 					<p>Mail-in-a-Box is similar to <a href="http://www.iredmail.org/">iRedMail</a>.</p>
 
+					<div class="hidden-xs" style="height: 200px"> </div>
 				</div>
     		</div>
 
@@ -143,15 +198,17 @@ sudo management/whats_next.py</pre>
     			<h2>Inside Every Box . . .</h2>
     			<ul>
     				<li data-title="SMTP" data-content="SMTP is the core protocol of email. Mail servers talk in SMTP, and when you send off a new email you connect to your box using SMTP."><a href="http://www.postfix.org/">SMTP</a></li>
-    				<li data-title="Opportunistic Encryption" data-content="As a protection against passive surveillance, your mail will be encrypted in transit when communicating with other SMTP servers that support opportunistic TLS."><a href="https://en.wikipedia.org/wiki/Opportunistic_encryption">Opportunistic TLS</a></li>
 					<li data-title="IMAP" data-content="IMAP is the protocol you'll use to connect to your box to see if you have new mail."><a href="http://dovecot.org/">IMAP</a></li>
 					<li data-title="Webmail" data-content="Check your email from your browser from anywhere. We use the open source Roundcube Webmail project."><a href="http://roundcube.net/">Webmail</a></li>
 					<li>Your log-in to your box is always encrypted over TLS/HTTPS.</li>
-					<li><a href="https://spamassassin.apache.org/">Spam filtering</a></li>
+					<li data-title="Spam Filtering" data-content="Spamassassin and IP address blacklists protect you from spam."><a href="https://spamassassin.apache.org/">Spam filtering</a></li>
 					<li data-title="Greylisting" data-content="Greylisting cuts down on spam by soft-rejecting mail the first time it arrives. All compliant SMTP servers re-send the mail after a few minutes. Spammers don't usually bother trying again."><a href="http://postgrey.schweikert.ch/">Greylisting</a></li>
+					<li data-title="WWW" data-content="Upload static files to the box to host your own homepage too.">Website (static pages)</li>
 					<li>The box is also a DNS server and it manages five DNS protocols for you:</li>
-					<li data-title="Email Identity" data-content="Your box sets up SPF, DKIM, and DMARC records for you. These DNS-based protocols tell recipients of your mail that you were definitely the sender."><a href="https://en.wikipedia.org/wiki/Sender_Policy_Framework">SPF</a>, <a href="https://en.wikipedia.org/wiki/DomainKeys_Identified_Mail">DKIM</a>, <a href="https://en.wikipedia.org/wiki/DMARC">DMARC</a></li>
+					<li data-title="Email Identity" data-content="Your box sets up SPF, DKIM, and DMARC for you. These DNS-based protocols tell recipients of your mail that you were definitely the sender."><a href="https://en.wikipedia.org/wiki/Sender_Policy_Framework">SPF</a>, <a href="https://en.wikipedia.org/wiki/DomainKeys_Identified_Mail">DKIM</a>, <a href="https://en.wikipedia.org/wiki/DMARC">DMARC</a></li>
 					<li data-title="Secure DNS and TLSA" data-content="When enabled, DNSSEC provides a higher level of protection against active attacks. DANE TLSA guarantees that mail sent between two Mail-in-a-Boxes will be encrypted."><a href="https://en.wikipedia.org/wiki/DNSSEC">DNSSEC</a>, <a href="https://en.wikipedia.org/wiki/DNS-based_Authentication_of_Named_Entities">DANE TLSA</a></li>
+    				<li data-title="Opportunistic Encryption" data-content="As a protection against passive surveillance, your mail will be encrypted in transit when communicating with other SMTP servers that support opportunistic TLS."><a href="https://en.wikipedia.org/wiki/Opportunistic_encryption">Opportunistic TLS</a></li>
+					<li data-title="Cryptography Settings" data-content="Settings are tweaked for strong ciphers, the right protocols, and HSTS. Privacy sensitive mail headers in your outgoing email are stripped."><a href="https://gist.github.com/konklone/6532544">Other Good Crypto Settings</a></li>
 					<li>A command-line tool and an HTTP-based API for administering mailboxes and mail aliases.</li>
 					<li>As Mail-in-a-Box improves, you can update your machine in just a few minutes. No need to re-install from scratch.</li>
     			</ul>
@@ -167,11 +224,12 @@ sudo management/whats_next.py</pre>
 				var me = $(this);
 				$('#example-toolbar button').removeClass('active')
 				me.addClass('active');
-				$('pre#example span').addClass('hidden');
-				$('pre#example span.' + me.attr('data-id')).removeClass('hidden');
+				$('#example > *').addClass('hidden');
+				$('#example > .' + me.attr('data-id')).removeClass('hidden');
 			})
 
-			$('#sidebar li').popover({ animation: false, trigger: 'hover', container: 'body' })
+			if ($(window).width() > 768)
+				$('#sidebar li').popover({ animation: false, trigger: 'hover', container: 'body' })
 
 		})
 	</script>
