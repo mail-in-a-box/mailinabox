@@ -22,8 +22,8 @@ if [ -d $STORAGE_ROOT/www/static ]; then mv $STORAGE_ROOT/www/static $STORAGE_RO
 mkdir -p $STORAGE_ROOT/www/default
 if [ ! -f STORAGE_ROOT/www/default/index.html ]; then
 	cp conf/www_default.html $STORAGE_ROOT/www/default/index.html
-	chown -R $STORAGE_USER $STORAGE_ROOT/www/default/index.html
 fi
+chown -R $STORAGE_USER $STORAGE_ROOT/www
 
 # Create an init script to start the PHP FastCGI daemon and keep it
 # running after a reboot. Allows us to serve Roundcube for webmail.

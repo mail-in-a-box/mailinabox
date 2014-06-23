@@ -4,6 +4,8 @@
 # SSL certificates have been signed, etc., and if not tells the user
 # what to do next.
 
+__ALL__ = ['check_certificate']
+
 import os, os.path, re, subprocess
 
 import dns.reversename, dns.resolver
@@ -175,23 +177,11 @@ def check_ssl_cert(domain, env):
 		print_error("The SSL certificate file for this domain is missing.")
 		return
 
-	# Check that the certificate is good. In order to verify with openssl, we need to split out any
-	# intermediary certificates in the chain (if any) from our certificate (at the top).
+	# Check that the certificate is good.
 
-	cert = open(ssl_certificate).read()
-	mycert, chaincerts = re.match(r'(-*BEGIN CERTIFICATE-*.*?-*END CERTIFICATE-*)(.*)', cert, re.S).groups()
+	cert_status = check_certificate(ssl_certificate)
 
-	# This command returns a non-zero exit status in most cases, so trap errors.
-	retcode, verifyoutput = shell('check_output', [
-		"openssl",
-		"verify", "-verbose",
-		"-purpose", "sslserver", "-policy_check",]
-		+ ([] if chaincerts.strip() == "" else ["-untrusted", "/dev/stdin"])
-		+ [ssl_certificate],
-		input=chaincerts.encode('ascii'),
-		trap=True)
-
-	if "self signed" in verifyoutput:
+	if cert_status == "SELF-SIGNED":
 		fingerprint = shell('check_output', [
 			"openssl",
 			"x509",
@@ -216,14 +206,47 @@ def check_ssl_cert(domain, env):
 			If you receive intermediate certificates, use a text editor and paste your certificate on top and then the intermediate certificates
 			below it. Save the file and place it onto this machine at %s.""" % ssl_certificate)
 
-
-	elif retcode == 0:
+	elif cert_status == "OK":
 		print_ok("SSL certificate is signed.")
+
 	else:
 		print_error("The SSL certificate has a problem:")
 		print("")
-		print(verifyoutput.strip())
+		print(cert_status)
 		print("")
+
+def check_certificate(ssl_certificate):
+	# Use openssl verify to check the status of a certificate.
+
+	# In order to verify with openssl, we need to split out any
+	# intermediary certificates in the chain (if any) from our
+	# certificate (at the top). They need to be passed separately.
+
+	cert = open(ssl_certificate).read()
+	m = re.match(r'(-*BEGIN CERTIFICATE-*.*?-*END CERTIFICATE-*)(.*)', cert, re.S)
+	if m == None:
+		return "The certificate file is an invalid PEM certificate."
+	mycert, chaincerts = m.groups()
+
+	# This command returns a non-zero exit status in most cases, so trap errors.
+
+	retcode, verifyoutput = shell('check_output', [
+		"openssl",
+		"verify", "-verbose",
+		"-purpose", "sslserver", "-policy_check",]
+		+ ([] if chaincerts.strip() == "" else ["-untrusted", "/dev/stdin"])
+		+ [ssl_certificate],
+		input=chaincerts.encode('ascii'),
+		trap=True)
+
+	if "self signed" in verifyoutput:
+		# Certificate is self-signed.
+		return "SELF-SIGNED"
+	elif retcode == 0:
+		# Certificate is OK.
+		return "OK"
+	else:
+		return verifyoutput.strip()
 
 def print_ok(message):
 	print_block(message, first_line="✓  ")

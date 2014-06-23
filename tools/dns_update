@@ -1,0 +1,2 @@
+#!/bin/bash
+curl -s -d POSTDATA --user $(</var/lib/mailinabox/api.key): http://127.0.0.1:10222/dns/update

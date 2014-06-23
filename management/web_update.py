@@ -43,11 +43,9 @@ def do_web_update(env):
 def make_domain_config(domain, template, env):
 	# How will we configure this domain.
 
-	# Where will its root directory be for static files? Try STORAGE_ROOT/web/domain_name
-	# if it exists, but fall back to STORAGE_ROOT/web/default.
-	for test_domain in (domain, 'default'):
-		root = os.path.join(env["STORAGE_ROOT"], "www", safe_domain_name(test_domain))
-		if os.path.exists(root): break
+	# Where will its root directory be for static files?
+
+	root = get_web_root(domain, env)
 
 	# What private key and SSL certificate will we use for this domain?
 	ssl_key, ssl_certificate, csr_path = get_domain_ssl_files(domain, env)
@@ -63,6 +61,13 @@ def make_domain_config(domain, template, env):
 	nginx_conf = nginx_conf.replace("$SSL_KEY", ssl_key)
 	nginx_conf = nginx_conf.replace("$SSL_CERTIFICATE", ssl_certificate)
 	return nginx_conf
+
+def get_web_root(domain, env):
+	# Try STORAGE_ROOT/web/domain_name if it exists, but fall back to STORAGE_ROOT/web/default.
+	for test_domain in (domain, 'default'):
+		root = os.path.join(env["STORAGE_ROOT"], "www", safe_domain_name(test_domain))
+		if os.path.exists(root): break
+	return root
 
 def get_domain_ssl_files(domain, env):
 	# What SSL private key will we use? Allow the user to override this, but
