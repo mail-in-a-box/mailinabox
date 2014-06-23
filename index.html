@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html class="no-js">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width">
+    <title>Mail-in-a-Box</title>
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" />
+    <style>
+	    @import url(https://fonts.googleapis.com/css?family=Iceland);
+	    @import url(https://fonts.googleapis.com/css?family=Raleway:400,700);
+		@import url(https://fonts.googleapis.com/css?family=Ubuntu:300);
+
+
+    	body {
+    		background-color: black;
+    		font-family: Raleway, sans-serif;
+    		font-size: 16px;
+    	}
+    	#main {
+    		background-color: white;
+    		padding-bottom: 200px;
+    	}
+
+		h1 {
+			font-family: 'Iceland', sans-serif;
+			font-size: 50px;
+		}
+		#main h2 {
+			margin-top: 1.5em;
+			font-family: Ubuntu, Arial, sans-serif;
+			font-weight: 300;
+			font-size: 20px;
+		}
+		#main a {
+			color: #24A;
+			text-decoration: underline;
+		}
+
+		p#deck {
+			font-size: 18px;
+			margin-bottom: 2em;
+		}
+
+		#example-toolbar {
+			margin-bottom: 1px;
+		}
+
+		#sidebar {
+			color: #DDD;
+			font-family: Arial;
+			line-height: 125%;
+			font-size: 14px;
+		}
+		#sidebar h2 {
+			font-size: 18px;
+    		font-family: Raleway, sans-serif;
+    		color: #F2F2F2;
+    		margin-bottom: 1em;
+		}
+		#sidebar a {
+			font-size: 14px;
+			color: #5DF;
+    		font-family: Raleway, sans-serif;
+		}
+		#sidebar ul {
+			list-style: none;
+			padding: 0 1em 0 0;
+		}
+		#sidebar li {
+			margin-bottom: 6px;
+		}
+    </style>
+</head>
+<body>
+
+	<div class="container-fluid">
+    	<div class="row">
+    		<div id="main" class="col-sm-10 col-sm-push-2">
+    			<div style="max-width: 50em">
+	    			<h1>Mail-in-a-Box</h1>
+	    			<p id="deck">Take back control of your email with this easy-to-deploy mail server in a box.</p>
+
+					<div id="example-toolbar" class="btn-toolbar">
+					  <div class="btn-group btn-group-xs">
+						<button type="button" class="btn btn-default active" data-id="vagrant">Test with Vagrant</button>
+						<button type="button" class="btn btn-default" data-id="deploy">Deploy on Ubuntu 14.04</button>
+					  </div>
+					</div>    			
+	    			<pre id="example">
+<span class="vagrant">sudo apt-get install vagrant git</span><span class="hidden deploy"># spin up a fresh Ubuntu 14.04 machine --- it must be fresh!
+sudo apt-get install git</span>
+git clone <a href="https://github.com/joshdata/mailinabox">https://github.com/joshdata/mailinabox</a>
+cd mailinabox
+
+<span class="vagrant">vagrant up
+vagrant ssh</span><span class="hidden deploy">sudo setup/start.sh</span>
+sudo management/whats_next.py</pre>
+
+					<p class="text-danger small">Note: This is a work in progress. I work on Mail-in-a-Box in my limited free time. Your mileage may vary.</p>
+
+					<h2>Why build this?</h2>
+
+					<p>Mass electronic surveillance by governments revealed over the last year has spurred a new movement to <a href="http://redecentralize.org/">re-decentralize the web</a>: to empower individuals to be their own service providers again.</p>
+
+					<p>Although the core protocal of email, <a href="http://www.faqs.org/rfcs/rfc821.html">SMTP</a>, is completely decentralized, in practice email has become highly centralized because it is so damn difficult to implement the dozens of modern protocols that surround it. </p>
+
+					<h2>A mail server in a box</h2>
+
+					<p>Mail-in-a-Box turns a fresh Ubuntu 14.04 LTS 64-bit machine into a working mail server including all of the components listed <span class="hidden-xs">on the left</span><span class="hidden-sm hidden-md hidden-lg">below</span>.</p>
+
+					<h2>My goals</h2>
+
+					<p>I want to...</p>
+					<ul>
+					<li>Make deploying a good mail server easy.</li>
+					<li>Promote <a href="http://redecentralize.org/">decentralization</a>, innovation, and privacy on the web.</li>
+					<li>Have automated, auditable, and <a href="http://sharknet.us/2014/02/01/automated-configuration-management-challenges-with-idempotency/">idempotent</a> system configuration.</li>
+					<li><strong>Not</strong> build a mail server that the NSA cannot hack.</li>
+					<li><strong>Not</strong> be endlessly customizable by power users.</li>
+					</ul>
+
+					<p>Who am I? I'm <a href="http://razor.occams.info">@JoshData</a>. I&rsquo;ve been running my own mail server for 15 years and am tired of feeling like the last hold-out. So join me.</p>
+
+					<h2>Development</h2>
+
+					<p>Development takes place on github at <a href="https://github.com/joshdata/mailinabox">https://github.com/joshdata/mailinabox</a>.</p>
+
+					<p>Thank you to the contributors!</p>
+
+					<p>Mail-in-a-Box is dedicated to the public domain using CC0.</p>
+
+					<h2>Acknowledgements</h2>
+
+					<p>This project was inspired in part by the <a href="http://sealedabstract.com/code/nsa-proof-your-e-mail-in-2-hours/">"NSA-proof your email in 2 hours"</a> blog post by Drew Crawford, <a href="https://github.com/al3x/sovereign">Sovereign</a> by Alex Payne, and conversations with <a href="http://twitter.com/shevski" target="_blank">@shevski</a>, <a href="https://github.com/konklone" target="_blank">@konklone</a>, and <a href="https://github.com/gregelin" target="_blank">@GregElin</a>.</p>
+
+					<p>Mail-in-a-Box is similar to <a href="http://www.iredmail.org/">iRedMail</a>.</p>
+
+				</div>
+    		</div>
+
+    		<div id="sidebar" class="col-sm-2 col-sm-pull-10">
+    			<h2>Inside Every Box . . .</h2>
+    			<ul>
+    				<li data-title="SMTP" data-content="SMTP is the core protocol of email. Mail servers talk in SMTP, and when you send off a new email you connect to your box using SMTP."><a href="http://www.postfix.org/">SMTP</a></li>
+    				<li data-title="Opportunistic Encryption" data-content="As a protection against passive surveillance, your mail will be encrypted in transit when communicating with other SMTP servers that support opportunistic TLS."><a href="https://en.wikipedia.org/wiki/Opportunistic_encryption">Opportunistic TLS</a></li>
+					<li data-title="IMAP" data-content="IMAP is the protocol you'll use to connect to your box to see if you have new mail."><a href="http://dovecot.org/">IMAP</a></li>
+					<li data-title="Webmail" data-content="Check your email from your browser from anywhere. We use the open source Roundcube Webmail project."><a href="http://roundcube.net/">Webmail</a></li>
+					<li>Your log-in to your box is always encrypted over TLS/HTTPS.</li>
+					<li><a href="https://spamassassin.apache.org/">Spam filtering</a></li>
+					<li data-title="Greylisting" data-content="Greylisting cuts down on spam by soft-rejecting mail the first time it arrives. All compliant SMTP servers re-send the mail after a few minutes. Spammers don't usually bother trying again."><a href="http://postgrey.schweikert.ch/">Greylisting</a></li>
+					<li>The box is also a DNS server and it manages five DNS protocols for you:</li>
+					<li data-title="Email Identity" data-content="Your box sets up SPF, DKIM, and DMARC records for you. These DNS-based protocols tell recipients of your mail that you were definitely the sender."><a href="https://en.wikipedia.org/wiki/Sender_Policy_Framework">SPF</a>, <a href="https://en.wikipedia.org/wiki/DomainKeys_Identified_Mail">DKIM</a>, <a href="https://en.wikipedia.org/wiki/DMARC">DMARC</a></li>
+					<li data-title="Secure DNS and TLSA" data-content="When enabled, DNSSEC provides a higher level of protection against active attacks. DANE TLSA guarantees that mail sent between two Mail-in-a-Boxes will be encrypted."><a href="https://en.wikipedia.org/wiki/DNSSEC">DNSSEC</a>, <a href="https://en.wikipedia.org/wiki/DNS-based_Authentication_of_Named_Entities">DANE TLSA</a></li>
+					<li>A command-line tool and an HTTP-based API for administering mailboxes and mail aliases.</li>
+					<li>As Mail-in-a-Box improves, you can update your machine in just a few minutes. No need to re-install from scratch.</li>
+    			</ul>
+    		</div>
+    	</div>
+	</div>
+
+	<script src="//code.jquery.com/jquery-2.1.1.min.js"> </script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+	<script>
+		$(function() {
+			$('#example-toolbar button').click(function() {
+				var me = $(this);
+				$('#example-toolbar button').removeClass('active')
+				me.addClass('active');
+				$('pre#example span').addClass('hidden');
+				$('pre#example span.' + me.attr('data-id')).removeClass('hidden');
+			})
+
+			$('#sidebar li').popover({ animation: false, trigger: 'hover', container: 'body' })
+
+		})
+	</script>
+</body>
+</html>
