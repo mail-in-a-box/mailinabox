@@ -1,5 +1,7 @@
+#!/usr/bin/python3
+#
 # Checks that the upstream DNS has been set correctly and that
-# SSL certificates have been signed, and if not tells the user
+# SSL certificates have been signed, etc., and if not tells the user
 # what to do next.
 
 import os, os.path, re, subprocess
