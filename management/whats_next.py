@@ -17,6 +17,27 @@ from mailconfig import get_mail_domains, get_mail_aliases
 from utils import shell, sort_domains
 
 def run_checks(env):
+	run_system_checks(env)
+	run_domain_checks(env)
+
+def run_system_checks(env):
+	print("System")
+	print("======")
+
+	# Check that SSH login with password is disabled.
+	sshd = open("/etc/ssh/sshd_config").read()
+	if re.search("\nPasswordAuthentication\s+yes", sshd) \
+		or not re.search("\nPasswordAuthentication\s+no", sshd):
+		print_error("""The SSH server on this machine permits password-based login. A more secure
+			way to log in is using a public key. Add your SSH public key to $HOME/.ssh/authorized_keys, check
+			that you can log in without a password, set the option 'PasswordAuthentication no' in
+			/etc/ssh/sshd_config, and then restart the openssh via 'sudo service ssh restart'.""")
+	else:
+		print_ok("SSH disallows password-based login.")
+
+	print()
+
+def run_domain_checks(env):
 	# Get the list of domains we handle mail for.
 	mail_domains = get_mail_domains(env)
 
