@@ -133,7 +133,11 @@ def build_zone(domain, subdomains, additional_records, env, with_ns=True):
 		records.append((None,  "NS",  "ns1.%s." % env["PUBLIC_HOSTNAME"]))
 		records.append((None,  "NS",  "ns2.%s." % env["PUBLIC_HOSTNAME"]))
 
+	# The MX record says where email for the domain should be delivered: Here!
 	records.append((None,  "MX",  "10 %s." % env["PUBLIC_HOSTNAME"]))
+
+	# SPF record: Permit the box ('mx', see above) to send mail on behalf of
+	# the domain, and no one else.
 	records.append((None,  "TXT", '"v=spf1 mx -all"'))
 
 	# If we need to define DNS for any subdomains of this domain, include it
