@@ -21,5 +21,14 @@ rm -f /etc/init.d/mailinabox
 ln -s $(pwd)/conf/management-initscript /etc/init.d/mailinabox
 update-rc.d mailinabox defaults
 
+# Perform a daily backup.
+cat > /etc/cron.daily/mailinabox-backup << EOF;
+#!/bin/bash
+# Mail-in-a-Box --- Do not edit / will be overwritten on update.
+# Perform a backup.
+$(pwd)/management/backup.py
+EOF
+chmod +x /etc/cron.daily/mailinabox-backup
+
 # Start it.
 service mailinabox restart
