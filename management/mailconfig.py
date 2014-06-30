@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import subprocess, shutil, os, sqlite3, re
 import utils
 
@@ -18,8 +20,9 @@ def validate_email(email, strict):
 		# these characters are permitted in email address.
 		ATEXT = r'[\w!#$%&\'\*\+\-/=\?\^`\{\|\}~]' # see 3.2.4
 
-	DOT_ATOM_TEXT = ATEXT + r'+(?:\.' + ATEXT + r'+)*'     # see 3.2.4
-	ADDR_SPEC = '^%s@%s$' % (DOT_ATOM_TEXT, DOT_ATOM_TEXT) # see 3.4.1
+	DOT_ATOM_TEXT = ATEXT + r'+(?:\.' + ATEXT + r'+)*'      # see 3.2.4
+	DOT_ATOM_TEXT2 = ATEXT + r'+(?:\.' + ATEXT + r'+)+'      # as above, but with a "+" since the host part must be under some TLD
+	ADDR_SPEC = '^%s@%s$' % (DOT_ATOM_TEXT, DOT_ATOM_TEXT2) # see 3.4.1
 
 	return re.match(ADDR_SPEC, email)
 
@@ -140,3 +143,12 @@ def remove_mail_alias(source, env):
 	# Update DNS in case any domains are removed.
 	from dns_update import do_dns_update
 	return do_dns_update(env)
+
+if __name__ == "__main__":
+	import sys
+	if len(sys.argv) > 2 and sys.argv[1] == "validate-email":
+		# Validate that we can create a Dovecot account for a given string.
+		if validate_email(sys.argv[2], True):
+			sys.exit(0)
+		else:
+			sys.exit(1)

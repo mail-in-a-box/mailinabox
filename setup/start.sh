@@ -4,9 +4,20 @@
 
 source setup/functions.sh # load our functions
 
+if [ -t 0 ]; then
+	# In an interactive shell...
+	echo
+	echo "Hello and thanks for deploying a Mail-in-a-Box!"
+	echo "-----------------------------------------------"
+	echo
+	echo "I'm going to ask you a few questions. To change your answers later,"
+	echo "later, just re-run this script."
+fi
+
 # Check system setup.
 
 if [ "`lsb_release -d | sed 's/.*:\s*//'`" != "Ubuntu 14.04 LTS" ]; then
+	echo
 	echo "Mail-in-a-Box only supports being installed on Ubuntu 14.04, sorry. You are running:"
 	echo
 	lsb_release -d | sed 's/.*:\s*//'
@@ -21,24 +32,52 @@ if [ -f /etc/mailinabox.conf ]; then
 	source /tmp/mailinabox.prev.conf
 fi
 
-# Gather information from the user about the hostname and public IP
-# address of this host.
+# The box needs a name.
 if [ -z "$PRIMARY_HOSTNAME" ]; then
 	if [ -z "$DEFAULT_PRIMARY_HOSTNAME" ]; then
-		# set a default on first run
-		DEFAULT_PRIMARY_HOSTNAME=`get_default_hostname`
+		# This is the first run. Ask the user for his email address so we can
+		# provide the best default for the box's hostname.
+		echo
+		echo "What email address are you setting this box up to manage?"
+		echo ""
+		echo "The part after the @-sign must be a domain name or subdomain"
+		echo "that you control. You can add other email addresses to this"
+		echo "box later (including email addresses on other domain names"
+		echo "or subdomains you control)."
+		echo
+		echo "We've guessed an email address. Backspace it and type in what"
+		echo "you really want."
+		echo
+		read -e -i "me@`get_default_hostname`" -p "Email Address: " EMAIL_ADDR
+
+		while ! management/mailconfig.py validate-email "$EMAIL_ADDR"
+		do
+		   echo "That's not a valid email address."
+		   echo
+		read -e -i "$EMAIL_ADDR" -p "Email Address: " EMAIL_ADDR
+		done
+
+		# Take the part after the @-sign as the user's domain name, and add
+		# 'box.' to the beginning to create a default hostname for this machine.
+		DEFAULT_PRIMARY_HOSTNAME=box.$(echo $EMAIL_ADDR | sed 's/.*@//')
 	fi
 
 	echo
-	echo "Enter the hostname you want to assign to this machine."
-	echo "We've guessed a value. Just backspace it if it's wrong."
-	echo "Josh uses box.occams.info as his hostname. Yours should"
-	echo "be similar."
+	echo "This box needs a name, called a 'hostname'. The name will form a part"
+	echo "of the box's web address."
+	echo
+	echo "We recommend that the name be a subdomain of the domain in your email"
+	echo "address, so we're suggesting $DEFAULT_PRIMARY_HOSTNAME."
+	echo
+	echo "You can change it, but we recommend you don't."
 	echo
 
 	read -e -i "$DEFAULT_PRIMARY_HOSTNAME" -p "Hostname: " PRIMARY_HOSTNAME
 fi
 
+# If the machine is behind a NAT, inside a VM, etc., it may not know
+# its IP address on the public network / the Internet. We need to
+# confirm our best guess with the user.
 if [ -z "$PUBLIC_IP" ]; then
 	if [ -z "$DEFAULT_PUBLIC_IP" ]; then
 		# set a default on first run
@@ -46,14 +85,14 @@ if [ -z "$PUBLIC_IP" ]; then
 	fi
 
 	echo
-	echo "Enter the public IP address of this machine, as given to"
-	echo "you by your ISP. We've guessed a value, but just backspace"
-	echo "it if it's wrong."
+	echo "Enter the public IP address of this machine, as given to you by your"
+	echo "ISP. We've guessed a value, but just backspace it if it's wrong."
 	echo
 
 	read -e -i "$DEFAULT_PUBLIC_IP" -p "Public IP: " PUBLIC_IP
 fi
 
+# Same for IPv6.
 if [ -z "$PUBLIC_IPV6" ]; then
 	if [ -z "$DEFAULT_PUBLIC_IPV6" ]; then
 		# set a default on first run
@@ -150,18 +189,27 @@ if [ -z "`tools/mail.py user`" ]; then
 	# The outut of "tools/mail.py user" is a list of mail users. If there
 	# aren't any yet, it'll be empty.
 
-	# In an interactive shell, ask the user for an email address.
-	if [ -t 0 ]; then
-		echo
-		echo "Let's create your first mail user."
-		read -e -i "user@$PRIMARY_HOSTNAME" -p "Email Address: " EMAIL_ADDR
+	# If we didn't ask for an email address at the start, do so now.
+	if [ -z "$EMAIL_ADDR" ]; then
+		# In an interactive shell, ask the user for an email address.
+		if [ -t 0 ]; then
+			echo
+			echo "Let's create your first mail user."
+			read -e -i "user@$PRIMARY_HOSTNAME" -p "Email Address: " EMAIL_ADDR
+
+		# But in a non-interactive shell, just make something up. This
+		# is normally for testing.
+		else
+			# Use me@PRIMARY_HOSTNAME
+			EMAIL_ADDR=me@$PRIMARY_HOSTNAME
+			EMAIL_PW=1234
+			echo
+			echo "Creating a new mail account for $EMAIL_ADDR with password $EMAIL_PW."
+			echo
+		fi
 	else
-		# Use me@PRIMARY_HOSTNAME
-		EMAIL_ADDR=me@$PRIMARY_HOSTNAME
-		EMAIL_PW=1234
 		echo
-		echo "Creating a new mail account for $EMAIL_ADDR with password $EMAIL_PW."
-		echo
+		echo "Okay. I'm about to set up $EMAIL_ADDR for you."
 	fi
 
 	tools/mail.py user add $EMAIL_ADDR $EMAIL_PW # will ask for password if none given
