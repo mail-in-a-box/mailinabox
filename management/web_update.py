@@ -87,8 +87,12 @@ def get_domain_ssl_files(domain, env):
 	else:
 		ssl_certificate = os.path.join(env["STORAGE_ROOT"], 'ssl/domains/%s_certifiate.pem' % safe_domain_name(domain))
 
-	# Where would the CSR go?
-	csr_path = os.path.join(env["STORAGE_ROOT"], 'ssl/domains/%s_cert_sign_req.csr' % safe_domain_name(domain))
+	# Where would the CSR go? As with the SSL cert itself, the CSR must be
+	# different for each domain name.
+	if domain == env['PRIMARY_HOSTNAME']:
+		csr_path = os.path.join(env["STORAGE_ROOT"], 'ssl/ssl_cert_sign_req.csr')
+	else:
+		csr_path = os.path.join(env["STORAGE_ROOT"], 'ssl/domains/%s_cert_sign_req.csr' % safe_domain_name(domain))
 
 	return ssl_key, ssl_certificate, csr_path
 
