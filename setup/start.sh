@@ -28,6 +28,11 @@ fi
 
 # Recall the last settings used if we're running this a second time.
 if [ -f /etc/mailinabox.conf ]; then
+	# Run any system migrations before proceeding. Since this is a second run,
+	# we assume we have Python already installed.
+	setup/migrate.py
+
+	# Okay now load the old .conf file to get existing configuration options.
 	cat /etc/mailinabox.conf | sed s/^/DEFAULT_/ > /tmp/mailinabox.prev.conf
 	source /tmp/mailinabox.prev.conf
 fi

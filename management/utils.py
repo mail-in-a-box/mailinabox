@@ -1,15 +1,22 @@
+import os.path
+
+CONF_DIR = os.path.join(os.path.dirname(__file__), "../conf")
+
 def load_environment():
     # Load settings from /etc/mailinabox.conf.
-    import os.path
-    env = load_env_vars_from_file("/etc/mailinabox.conf")
-    env["CONF_DIR"] = os.path.join(os.path.dirname(__file__), "../conf")
-    return env
+    return load_env_vars_from_file("/etc/mailinabox.conf")
 
 def load_env_vars_from_file(fn):
     # Load settings from a KEY=VALUE file.
-    env = { }
+    import collections
+    env = collections.OrderedDict()
     for line in open(fn): env.setdefault(*line.strip().split("=", 1))
     return env
+
+def save_environment(env):
+    with open("/etc/mailinabox.conf", "w") as f:
+        for k, v in env.items():
+            f.write("%s=%s\n" % (k, v))
 
 def safe_domain_name(name):
     # Sanitize a domain name so it is safe to use as a file name on disk.

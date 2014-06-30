@@ -88,7 +88,7 @@ def add_mail_user(email, pw, env):
 	if not os.path.exists(user_mail_dir):
 		os.makedirs(user_mail_dir)
 		os.chown(user_mail_dir, maildirstat.st_uid, maildirstat.st_gid)
-	shutil.copyfile(env["CONF_DIR"] + "/dovecot_sieve.txt", user_mail_dir + "/.dovecot.sieve")
+	shutil.copyfile(utils.CONF_DIR + "/dovecot_sieve.txt", user_mail_dir + "/.dovecot.sieve")
 	os.chown(user_mail_dir + "/.dovecot.sieve", maildirstat.st_uid, maildirstat.st_gid)
 
 	# Update DNS in case any new domains are added.
