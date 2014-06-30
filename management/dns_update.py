@@ -10,10 +10,10 @@ from utils import shell, load_env_vars_from_file, safe_domain_name, sort_domains
 
 def get_dns_domains(env):
 	# Add all domain names in use by email users and mail aliases and ensure
-	# PUBLIC_HOSTNAME is in the list.
+	# PRIMARY_HOSTNAME is in the list.
 	domains = set()
 	domains |= get_mail_domains(env)
-	domains.add(env['PUBLIC_HOSTNAME'])
+	domains.add(env['PRIMARY_HOSTNAME'])
 	return domains
 
 def get_dns_zones(env):
@@ -130,11 +130,11 @@ def build_zone(domain, subdomains, additional_records, env, with_ns=True):
 
 	# For top-level zones, define ourselves as the authoritative name server.
 	if with_ns:
-		records.append((None,  "NS",  "ns1.%s." % env["PUBLIC_HOSTNAME"]))
-		records.append((None,  "NS",  "ns2.%s." % env["PUBLIC_HOSTNAME"]))
+		records.append((None,  "NS",  "ns1.%s." % env["PRIMARY_HOSTNAME"]))
+		records.append((None,  "NS",  "ns2.%s." % env["PRIMARY_HOSTNAME"]))
 
 	# The MX record says where email for the domain should be delivered: Here!
-	records.append((None,  "MX",  "10 %s." % env["PUBLIC_HOSTNAME"]))
+	records.append((None,  "MX",  "10 %s." % env["PRIMARY_HOSTNAME"]))
 
 	# SPF record: Permit the box ('mx', see above) to send mail on behalf of
 	# the domain, and no one else.
@@ -151,8 +151,8 @@ def build_zone(domain, subdomains, additional_records, env, with_ns=True):
 				child_qname += "." + subdomain_qname
 			records.append((child_qname, child_rtype, child_value))
 
-	# In PUBLIC_HOSTNAME...
-	if domain == env["PUBLIC_HOSTNAME"]:
+	# In PRIMARY_HOSTNAME...
+	if domain == env["PRIMARY_HOSTNAME"]:
 		# Define ns1 and ns2.
 		records.append(("ns1", "A",   env["PUBLIC_IP"]))
 		records.append(("ns2", "A",   env["PUBLIC_IP"]))
@@ -252,7 +252,7 @@ $TTL 86400           ; default time to live
 """
 
 	# Replace replacement strings.
-	zone = zone.format(domain=domain, primary_domain=env["PUBLIC_HOSTNAME"])
+	zone = zone.format(domain=domain, primary_domain=env["PRIMARY_HOSTNAME"])
 
 	# Add records.
 	for subdomain, querytype, value in records:

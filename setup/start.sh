@@ -23,10 +23,10 @@ fi
 
 # Gather information from the user about the hostname and public IP
 # address of this host.
-if [ -z "$PUBLIC_HOSTNAME" ]; then
-	if [ -z "$DEFAULT_PUBLIC_HOSTNAME" ]; then
+if [ -z "$PRIMARY_HOSTNAME" ]; then
+	if [ -z "$DEFAULT_PRIMARY_HOSTNAME" ]; then
 		# set a default on first run
-		DEFAULT_PUBLIC_HOSTNAME=`get_default_hostname`
+		DEFAULT_PRIMARY_HOSTNAME=`get_default_hostname`
 	fi
 
 	echo
@@ -36,7 +36,7 @@ if [ -z "$PUBLIC_HOSTNAME" ]; then
 	echo "be similar."
 	echo
 
-	read -e -i "$DEFAULT_PUBLIC_HOSTNAME" -p "Hostname: " PUBLIC_HOSTNAME
+	read -e -i "$DEFAULT_PRIMARY_HOSTNAME" -p "Hostname: " PRIMARY_HOSTNAME
 fi
 
 if [ -z "$PUBLIC_IP" ]; then
@@ -102,10 +102,10 @@ if [ "$PUBLIC_IPV6" = "auto" ]; then
 	PUBLIC_IPV6=`get_default_publicipv6`
 	echo "IPv6 Address: $PUBLIC_IPV6"
 fi
-if [ "$PUBLIC_HOSTNAME" = "auto-easy" ]; then
+if [ "$PRIMARY_HOSTNAME" = "auto-easy" ]; then
 	# Generate a probably-unique subdomain under our justtesting.email domain.
-	PUBLIC_HOSTNAME=m`get_default_publicip | sha1sum | cut -c1-5`.justtesting.email
-	echo "Public Hostname: $PUBLIC_HOSTNAME"
+	PRIMARY_HOSTNAME=m`get_default_publicip | sha1sum | cut -c1-5`.justtesting.email
+	echo "Public Hostname: $PRIMARY_HOSTNAME"
 fi
 
 
@@ -123,7 +123,7 @@ fi
 cat > /etc/mailinabox.conf << EOF;
 STORAGE_USER=$STORAGE_USER
 STORAGE_ROOT=$STORAGE_ROOT
-PUBLIC_HOSTNAME=$PUBLIC_HOSTNAME
+PRIMARY_HOSTNAME=$PRIMARY_HOSTNAME
 PUBLIC_IP=$PUBLIC_IP
 PUBLIC_IPV6=$PUBLIC_IPV6
 CSR_COUNTRY=$CSR_COUNTRY
@@ -154,10 +154,10 @@ if [ -z "`tools/mail.py user`" ]; then
 	if [ -t 0 ]; then
 		echo
 		echo "Let's create your first mail user."
-		read -e -i "user@$PUBLIC_HOSTNAME" -p "Email Address: " EMAIL_ADDR
+		read -e -i "user@$PRIMARY_HOSTNAME" -p "Email Address: " EMAIL_ADDR
 	else
-		# Use me@PUBLIC_HOSTNAME
-		EMAIL_ADDR=me@$PUBLIC_HOSTNAME
+		# Use me@PRIMARY_HOSTNAME
+		EMAIL_ADDR=me@$PRIMARY_HOSTNAME
 		EMAIL_PW=1234
 		echo
 		echo "Creating a new mail account for $EMAIL_ADDR with password $EMAIL_PW."
@@ -165,7 +165,7 @@ if [ -z "`tools/mail.py user`" ]; then
 	fi
 
 	tools/mail.py user add $EMAIL_ADDR $EMAIL_PW # will ask for password if none given
-	tools/mail.py alias add hostmaster@$PUBLIC_HOSTNAME $EMAIL_ADDR
-	tools/mail.py alias add postmaster@$PUBLIC_HOSTNAME $EMAIL_ADDR
+	tools/mail.py alias add hostmaster@$PRIMARY_HOSTNAME $EMAIL_ADDR
+	tools/mail.py alias add postmaster@$PRIMARY_HOSTNAME $EMAIL_ADDR
 fi
 

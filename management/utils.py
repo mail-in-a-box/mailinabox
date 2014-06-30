@@ -17,15 +17,15 @@ def safe_domain_name(name):
     return urllib.parse.quote(name, safe='')
 
 def sort_domains(domain_names, env):
-    # Put domain names in a nice sorted order. For web_update, PUBLIC_HOSTNAME
+    # Put domain names in a nice sorted order. For web_update, PRIMARY_HOSTNAME
     # must appear first so it becomes the nginx default server.
     
-    # First group PUBLIC_HOSTNAME and its subdomains, then parent domains of PUBLIC_HOSTNAME, then other domains.
+    # First group PRIMARY_HOSTNAME and its subdomains, then parent domains of PRIMARY_HOSTNAME, then other domains.
     groups = ( [], [], [] )
     for d in domain_names:
-        if d == env['PUBLIC_HOSTNAME'] or d.endswith("." + env['PUBLIC_HOSTNAME']):
+        if d == env['PRIMARY_HOSTNAME'] or d.endswith("." + env['PRIMARY_HOSTNAME']):
             groups[0].append(d)
-        elif env['PUBLIC_HOSTNAME'].endswith("." + d):
+        elif env['PRIMARY_HOSTNAME'].endswith("." + d):
             groups[1].append(d)
         else:
             groups[2].append(d)

@@ -4,14 +4,14 @@
 #
 # Create a self-signed SSL certificate if one has not yet been created.
 #
-# The certificate is for PUBLIC_HOSTNAME specifically and is used for:
+# The certificate is for PRIMARY_HOSTNAME specifically and is used for:
 #
 #  * IMAP
 #  * SMTP submission (port 587) and opportunistic TLS (when on the receiving end)
 #  * the DNSSEC DANE TLSA record for SMTP
-#  * HTTPS (for PUBLIC_HOSTNAME only)
+#  * HTTPS (for PRIMARY_HOSTNAME only)
 #
-# When other domains besides PUBLIC_HOSTNAME are served over HTTPS,
+# When other domains besides PRIMARY_HOSTNAME are served over HTTPS,
 # we generate a domain-specific self-signed certificate in the management
 # daemon (web_update.py) as needed.
 
@@ -29,7 +29,7 @@ fi
 if [ ! -f $STORAGE_ROOT/ssl/ssl_cert_sign_req.csr ]; then
 	# Generate a certificate signing request if one doesn't already exist.
 	openssl req -new -key $STORAGE_ROOT/ssl/ssl_private_key.pem -out $STORAGE_ROOT/ssl/ssl_cert_sign_req.csr \
-	  -subj "/C=$CSR_COUNTRY/ST=/L=/O=/CN=$PUBLIC_HOSTNAME"
+	  -subj "/C=$CSR_COUNTRY/ST=/L=/O=/CN=$PRIMARY_HOSTNAME"
 fi
 if [ ! -f $STORAGE_ROOT/ssl/ssl_certificate.pem ]; then
 	# Generate a SSL certificate by self-signing if a SSL certificate doesn't yet exist.

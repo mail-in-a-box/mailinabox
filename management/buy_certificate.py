@@ -17,9 +17,9 @@ from web_update import get_web_domains, get_domain_ssl_files, get_web_root
 from whats_next import check_certificate
 
 def buy_ssl_certificate(api_key, domain, command, env):
-	if domain != env['PUBLIC_HOSTNAME'] \
+	if domain != env['PRIMARY_HOSTNAME'] \
 		and domain not in get_web_domains(env):
-		raise ValueError("Domain is not %s or a domain we're serving a website for." % env['PUBLIC_HOSTNAME'])
+		raise ValueError("Domain is not %s or a domain we're serving a website for." % env['PRIMARY_HOSTNAME'])
 
 	# Initialize.
 
@@ -131,9 +131,9 @@ def buy_ssl_certificate(api_key, domain, command, env):
 
 		print("The certificate has been installed in %s. Restarting services..." % ssl_certificate)
 
-		# Restart dovecot and if this is for PUBLIC_HOSTNAME.
+		# Restart dovecot and if this is for PRIMARY_HOSTNAME.
 
-		if domain == env['PUBLIC_HOSTNAME']:
+		if domain == env['PRIMARY_HOSTNAME']:
 			shell('check_call', ["/usr/sbin/service", "dovecot", "restart"])
 			shell('check_call', ["/usr/sbin/service", "postfix", "restart"])
 

@@ -53,7 +53,7 @@ def run_domain_checks(env):
 		print(domain)
 		print("=" * len(domain))
 
-		if domain == env["PUBLIC_HOSTNAME"]:
+		if domain == env["PRIMARY_HOSTNAME"]:
 			check_primary_hostname_dns(domain, env)
 		
 		if domain in dns_domains:
@@ -62,8 +62,8 @@ def run_domain_checks(env):
 		if domain in mail_domains:
 			check_mail_domain(domain, env)
 
-		if domain == env["PUBLIC_HOSTNAME"] or domain in web_domains: 
-			# We need a SSL certificate for PUBLIC_HOSTNAME because that's where the
+		if domain == env["PRIMARY_HOSTNAME"] or domain in web_domains: 
+			# We need a SSL certificate for PRIMARY_HOSTNAME because that's where the
 			# user will log in with IMAP or webmail. Any other domain we serve a
 			# website for also needs a signed certificate.
 			check_ssl_cert(domain, env)
@@ -75,29 +75,29 @@ def check_primary_hostname_dns(domain, env):
 	# comes from the TLD since the information is set at the registrar.
 	ip = query_dns("ns1." + domain, "A") + '/' + query_dns("ns2." + domain, "A")
 	if ip == env['PUBLIC_IP'] + '/' + env['PUBLIC_IP']:
-		print_ok("Nameserver IPs are correct at registrar. [ns1/ns2.%s => %s]" % (env['PUBLIC_HOSTNAME'], env['PUBLIC_IP']))
+		print_ok("Nameserver IPs are correct at registrar. [ns1/ns2.%s => %s]" % (env['PRIMARY_HOSTNAME'], env['PUBLIC_IP']))
 	else:
 		print_error("""Nameserver IP addresses are incorrect. The ns1.%s and ns2.%s nameservers must be configured at your domain name
 			registrar as having the IP address %s. They currently report addresses of %s. It may take several hours for
 			public DNS to update after a change."""
-			% (env['PUBLIC_HOSTNAME'], env['PUBLIC_HOSTNAME'], env['PUBLIC_IP'], ip))
+			% (env['PRIMARY_HOSTNAME'], env['PRIMARY_HOSTNAME'], env['PUBLIC_IP'], ip))
 
-	# Check that PUBLIC_HOSTNAME resolves to PUBLIC_IP in public DNS.
+	# Check that PRIMARY_HOSTNAME resolves to PUBLIC_IP in public DNS.
 	ip = query_dns(domain, "A")
 	if ip == env['PUBLIC_IP']:
-		print_ok("Domain resolves to box's IP address. [%s => %s]" % (env['PUBLIC_HOSTNAME'], env['PUBLIC_IP']))
+		print_ok("Domain resolves to box's IP address. [%s => %s]" % (env['PRIMARY_HOSTNAME'], env['PUBLIC_IP']))
 	else:
 		print_error("""This domain must resolve to your box's IP address (%s) in public DNS but it currently resolves
 			to %s. It may take several hours for public DNS to update after a change. This problem may result from other
 			issues listed here."""
 			% (env['PUBLIC_IP'], ip))
 
-	# Check reverse DNS on the PUBLIC_HOSTNAME. Note that it might not be
+	# Check reverse DNS on the PRIMARY_HOSTNAME. Note that it might not be
 	# a DNS zone if it is a subdomain of another domain we have a zone for.
 	ipaddr_rev = dns.reversename.from_address(env['PUBLIC_IP'])
 	existing_rdns = query_dns(ipaddr_rev, "PTR")
 	if existing_rdns == domain:
-		print_ok("Reverse DNS is set correctly at ISP. [%s => %s]" % (env['PUBLIC_IP'], env['PUBLIC_HOSTNAME']))
+		print_ok("Reverse DNS is set correctly at ISP. [%s => %s]" % (env['PUBLIC_IP'], env['PRIMARY_HOSTNAME']))
 	else:
 		print_error("""Your box's reverse DNS is currently %s, but it should be %s. Your ISP or cloud provider will have instructions
 			on setting up reverse DNS for your box at %s.""" % (existing_rdns, domain, env['PUBLIC_IP']) )
@@ -116,7 +116,7 @@ def check_dns_zone(domain, env, dns_zonefiles):
 	# We provide a DNS zone for the domain. It should have NS records set up
 	# at the domain name's registrar pointing to this box.
 	existing_ns = query_dns(domain, "NS")
-	correct_ns = "ns1.BOX; ns2.BOX".replace("BOX", env['PUBLIC_HOSTNAME'])
+	correct_ns = "ns1.BOX; ns2.BOX".replace("BOX", env['PRIMARY_HOSTNAME'])
 	if existing_ns == correct_ns:
 		print_ok("Nameservers are set correctly at registrar. [%s]" % correct_ns)
 	else:
@@ -125,9 +125,9 @@ def check_dns_zone(domain, env, dns_zonefiles):
 				% (existing_ns, correct_ns) )
 
 	# See if the domain's A record resolves to our PUBLIC_IP. This is already checked
-	# for PUBLIC_HOSTNAME, for which it is required. For other domains it is just nice
+	# for PRIMARY_HOSTNAME, for which it is required. For other domains it is just nice
 	# to have if we want web.
-	if domain != env['PUBLIC_HOSTNAME']:
+	if domain != env['PRIMARY_HOSTNAME']:
 		ip = query_dns(domain, "A")
 		if ip == env['PUBLIC_IP']:
 			print_ok("Domain resolves to this box's IP address. [%s => %s]" % (domain, env['PUBLIC_IP']))
@@ -160,7 +160,7 @@ def check_dns_zone(domain, env, dns_zonefiles):
 def check_mail_domain(domain, env):
 	# Check the MX record.
 	mx = query_dns(domain, "MX")
-	expected_mx = "10 " + env['PUBLIC_HOSTNAME']
+	expected_mx = "10 " + env['PRIMARY_HOSTNAME']
 	if mx == expected_mx:
 		print_ok("Domain's email is directed to this domain. [%s => %s]" % (domain, mx))
 	else:

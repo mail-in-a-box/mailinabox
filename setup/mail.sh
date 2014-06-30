@@ -30,7 +30,7 @@ mkdir -p $STORAGE_ROOT/mail
 # there is no true local mail delivery). Also set the banner (must have the hostname first, then anything).
 tools/editconf.py /etc/postfix/main.cf \
 	inet_interfaces=all \
-	myhostname=$PUBLIC_HOSTNAME\
+	myhostname=$PRIMARY_HOSTNAME\
 	smtpd_banner="\$myhostname ESMTP Hi, I'm a Mail-in-a-Box (Ubuntu/Postfix; see https://github.com/joshdata/mailinabox)" \
 	mydestination=localhost
 
@@ -235,7 +235,7 @@ EOF
 
 # postmaster_address seems to be required or LMTP won't start
 tools/editconf.py /etc/dovecot/conf.d/15-lda.conf \
-	postmaster_address=postmaster@$PUBLIC_HOSTNAME
+	postmaster_address=postmaster@$PRIMARY_HOSTNAME
 
 # Drew Crawford sets the auth-worker process to run as the mail user, but we don't care if it runs as root.
 
