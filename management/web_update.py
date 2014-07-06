@@ -31,14 +31,21 @@ def do_web_update(env):
 	for domain in get_web_domains(env):
 		nginx_conf += make_domain_config(domain, template, env)
 
+	# Did the file change? If not, don't bother writing & restarting nginx.
+	nginx_conf_fn = "/etc/nginx/conf.d/local.conf"
+	if os.path.exists(nginx_conf_fn):
+		with open(nginx_conf_fn) as f:
+			if f.read() == nginx_conf:
+				return ""
+
 	# Save the file.
-	with open("/etc/nginx/conf.d/local.conf", "w") as f:
+	with open(nginx_conf_fn, "w") as f:
 		f.write(nginx_conf)
 
-	# Nick nginx.
+	# Kick nginx.
 	shell('check_call', ["/usr/sbin/service", "nginx", "restart"])
 
-	return "OK"
+	return "web updated\n"
 
 def make_domain_config(domain, template, env):
 	# How will we configure this domain.

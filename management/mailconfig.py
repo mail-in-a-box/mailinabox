@@ -91,9 +91,8 @@ def add_mail_user(email, pw, env):
 	shutil.copyfile(utils.CONF_DIR + "/dovecot_sieve.txt", user_mail_dir + "/.dovecot.sieve")
 	os.chown(user_mail_dir + "/.dovecot.sieve", maildirstat.st_uid, maildirstat.st_gid)
 
-	# Update DNS in case any new domains are added.
-	from dns_update import do_dns_update
-	return do_dns_update(env)
+	# Update DNS/web in case any new domains are added.
+	return kick(env, "mail user added")
 
 def set_mail_password(email, pw, env):
 	# hash the password
@@ -114,9 +113,8 @@ def remove_mail_user(email, env):
 		return ("That's not a user (%s)." % email, 400)
 	conn.commit()
 
-	# Update DNS in case any domains are removed.
-	from dns_update import do_dns_update
-	return do_dns_update(env)
+	# Update DNS/web in case any domains are removed.
+	return kick(env, "mail user removed")
 
 def add_mail_alias(source, destination, env):
 	if not validate_email(source, False):
@@ -129,9 +127,8 @@ def add_mail_alias(source, destination, env):
 		return ("Alias already exists (%s)." % source, 400)
 	conn.commit()
 
-	# Update DNS in case any new domains are added.
-	from dns_update import do_dns_update
-	return do_dns_update(env)
+	# Update DNS/web in case any new domains are added.
+	return kick(env, "alias added")
 
 def remove_mail_alias(source, env):
 	conn, c = open_database(env, with_connection=True)
@@ -140,9 +137,19 @@ def remove_mail_alias(source, env):
 		return ("That's not an alias (%s)." % source, 400)
 	conn.commit()
 
-	# Update DNS in case any domains are removed.
+	# Update DNS and nginx in case any domains are removed.
+	return kick(env, "alias removed")
+
+def kick(env, mail_result):
+	# Update DNS and nginx in case any domains are added/removed.
 	from dns_update import do_dns_update
-	return do_dns_update(env)
+	from web_update import do_web_update
+	results = [
+		do_dns_update(env),
+		mail_result + "\n",
+		do_web_update(env),
+	]
+	return "".join(s for s in results if s != "")
 
 if __name__ == "__main__":
 	import sys
