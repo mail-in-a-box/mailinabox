@@ -133,8 +133,8 @@ sudo management/whats_next.py</pre>
 						<div class="deploy hidden">
 							<p>You will need:</p>
 							<ul>
-								<li>A domain name --- try <a href="https://www.gandi.net/">Gandi.net</a>.</li>
-								<li>A <i>completely</i> fresh Ubuntu 14.04 machine --- try <a href="https://www.digitalocean.com/">Digital Ocean</a> using Ubuntu 14.04 x64 with 1 GB RAM / 30 GB disk ($10/mo.).</li>
+								<li>A domain name.</li>
+								<li>A <i>completely</i> fresh Ubuntu 14.04 machine, e.g. from <a href="https://www.digitalocean.com/">Digital Ocean</a> (please read the <a href="guide.html">setup guide</a> for details).</li>
 							</ul>
 							<p>Log into your competely fresh Ubuntu machine using SSH, then type:</p>
 						</div>
@@ -143,15 +143,16 @@ git clone <a href="https://github.com/joshdata/mailinabox">https://github.com/jo
 cd mailinabox
 sudo setup/start.sh</pre>
 						<div class="deploy hidden">
-							<p>You will be asked to enter your domain name, the email address you want, and a password.</p>
+							<p>You will be asked to enter the email address you want and a few other configuration questions.</p>
+							<p>Then run the post-install checklist command to see what you need to do next:</p>
 						</div>
 						<pre class="deploy hidden">sudo management/whats_next.py</pre>
 						<div class="deploy hidden">
-							<p>This will tell you what to do next. Then visit <code>https://yourdomain.com/mail</code> to start emailing. Or use any mail program with IMAPS (port 993) and SMTP with STARTTLS (port 587). Your username is your complete email address.</p>
+							<p>Consult the <a href="guide.html">setup guide</a> for further details. Or visit <code>https://yourdomain.com/mail</code> to start emailing.</p>
 						</div>
 	    			</div>
 
-					<p class="text-danger small">Note: This is a work in progress. I work on Mail-in-a-Box in my limited free time. Your mileage may vary.</p>
+					<p class="text-danger small" style="margin-top: 2em;">Note: This is a work in progress. I work on Mail-in-a-Box in my limited free time. Your mileage may vary.</p>
 
 					<h2>Why build this?</h2>
 
@@ -162,6 +163,8 @@ sudo setup/start.sh</pre>
 					<h2>A mail server in a box</h2>
 
 					<p>Mail-in-a-Box turns a fresh Ubuntu 14.04 LTS 64-bit machine into a working mail server including all of the components listed <span class="hidden-xs">on the left</span><span class="hidden-sm hidden-md hidden-lg">below</span>.</p>
+
+					<p>For help getting up and running, please read the <a href="guide.html">setup guide</a>.</p>
 
 					<h2>My goals</h2>
 
