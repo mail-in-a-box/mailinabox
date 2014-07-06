@@ -95,6 +95,7 @@
 			#nav a { color: #E64; text-decoration: none; }
 			#nav li.active { background-color: #D55; }
 			#nav li.active a { color: white; }
+			#nav li.active a:hover { color: #E64; }
 			
     </style>
 </head>
@@ -116,8 +117,8 @@
 					<p style="margin: 0 0 1em 14px; border-bottom: 1px solid #CCC; color: #888;">Table of Contents</p>
 			        <ul class="nav nav-list">
 			          <li><a href="#cost">Cost</a></li>
-			          <li><a href="#domain-name-registration">Domain Name Registration</a></li>
-			          <li><a href="#hostname">Hostname</a></li>
+			          <li><a href="#domain-name-registration">Getting a Domain Name</a></li>
+			          <li><a href="#hostname">The Box&rsquo;s Hostname</a></li>
 			          <li><a href="#machine">The Machine</a></li>
 			          <li><a href="#domain-name-configuration">Domain Name Configuration</a></li>
 			          <li><a href="#setup">Machine Setup</a></li>
@@ -190,7 +191,7 @@
 
 	    			<p>Wherever you rent your box, you must choose the Ubuntu 14.04 x64 operating system. Most any cloud provider will do but not Amazon Web Services because its network is often blocked to prevent users from sending spam.</p>
 
-	    			<p>Each cloud provider will have different instructions for setting up &ldquo;reverse DNS.&rdquo; You <strong>must</strong> follow your cloud provider&rsquo;s instructions for setting the reverse of your box to your box&rsquo;s hostname.</p>
+	    			<p>Each cloud provider will have different instructions for setting up &ldquo;reverse DNS.&rdquo; You <strong>must</strong> follow your cloud provider&rsquo;s instructions for setting the reverse DNS of your box to your box&rsquo;s hostname.</p>
 
 	    				<p class="example">Josh&rsquo;s box&rsquo;s reverse DNS is set to the same as the box&rsquo;s hostname: <code>box.occams.info</code>.</p>
 
