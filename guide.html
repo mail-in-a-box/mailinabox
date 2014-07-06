@@ -112,8 +112,8 @@
 
 	<div class="container">
     	<div class="row">
-    		<div id="sidebar" class="col-sm-3">
-				<div id="nav" data-spy="affix">
+    		<div id="sidebar" class="col-sm-4 col-md-3">
+				<div id="nav" class="small">
 					<p style="margin: 0 0 1em 14px; border-bottom: 1px solid #CCC; color: #888;">Table of Contents</p>
 			        <ul class="nav nav-list">
 			          <li><a href="#cost">Cost</a></li>
@@ -132,7 +132,7 @@
 				</div>
     		</div>
 
-    		<div class="col-sm-9">
+    		<div class="col-sm-8 col-md-9">
 
     			<div style="padding-left: 1em; max-width: 55em">
 	    			<h1>Mail-in-a-Box Setup Guide</h1>
@@ -378,7 +378,11 @@ cd mailinabox</pre>
 	<script src="//code.jquery.com/jquery-2.1.1.min.js"> </script>
     <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
 	<script>
-		$('body').scrollspy()
+		if ($(window).width() >= 768) {
+			// scroll spy with a fixed TOC doesn't work on small screens
+			$('#nav').attr('data-spy', 'affix');
+			$('body').scrollspy()
+		}
 	</script>
 </body>
 </html>
