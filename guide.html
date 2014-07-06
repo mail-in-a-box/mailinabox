@@ -21,7 +21,7 @@
 		h1 {
 			font-family: 'Iceland', sans-serif;
 			font-size: 50px;
-		}	
+		}
 
 		h2 {
 			margin-top: 1.75em;
@@ -96,7 +96,7 @@
 			#nav li.active { background-color: #D55; }
 			#nav li.active a { color: white; }
 			#nav li.active a:hover { color: #E64; }
-			
+
     </style>
 </head>
 <body data-spy="scroll" data-target="#nav">
@@ -174,7 +174,7 @@
 
 	    				<p class="example">Josh&rsquo;s Mail-in-a-Box is named <code>box.occams.info</code>. This is its hostname.</p>
 
-	    			<p>Your Mail-in-a-Box may handle the email for multiple domains names, but the box has a single name.</p>
+	    			<p>Your Mail-in-a-Box may handle the email for multiple domain names, but the box has a single name.</p>
 
 
 	    			<h2 id="machine">The Machine</h2>
@@ -191,9 +191,9 @@
 
 	    			<p>I've been a long-time customer of <a href="http://rimuhosting.com/order/v2orderstart.jsp">Rimuhosting.com</a> which also provides cheap virtual machines, which they call &ldquo;VPS&rdquo;s, at several locations around the world. Choose a location near you &mdash; it&rsquo;ll be faster!</p>
 
-	    			<p>Wherever you rent your box, you must choose the Ubuntu 14.04 x64 operating system. Most any cloud provider will do but not Amazon Web Services because its network is often blocked to prevent users from sending spam.</p>
+	    			<p>Wherever you rent your box, you must choose the Ubuntu 14.04 x64 operating system. Most any cloud provider will do, but not Amazon Web Services because its network is often blocked to prevent users from sending spam.</p>
 
-	    			<p>Each cloud provider will have different instructions for setting up &ldquo;reverse DNS.&rdquo; You <strong>must</strong> follow your cloud provider&rsquo;s instructions for setting the reverse DNS of your box to your box&rsquo;s hostname.</p>
+	    			<p>Each cloud provider will have different instructions for setting up &ldquo;reverse DNS.&rdquo; As described above, Digital Ocean's method is to give your droplet the same name as your hostname, but other providers may use differentmethods. You <strong>must</strong> follow your cloud provider&rsquo;s instructions for setting the reverse DNS of your box to your box&rsquo;s hostname.</p>
 
 	    				<p class="example">Josh&rsquo;s box&rsquo;s reverse DNS is set to the same as the box&rsquo;s hostname: <code>box.occams.info</code>.</p>
 
@@ -224,11 +224,11 @@
 
 	    			<img src="static/domain_hostnames.png" title="Hostname Configuration at Your Domain Registrar" class="img-responsive figure"/>
 
-	    			<p>Your registar may ask you to enter these hostnames with the domain name part omitted, as mine did in this case. When you enter is the part of the fake hostname before the domain name.</p>
+	    			<p>Your registrar may ask you to enter these hostnames with the domain name part omitted, as mine did in this case. What you enter is the part of the fake hostname before the domain name.</p>
 
-	    				<p class="example">Josh&rsquo;s domain name is <code>occams.info</code>. The two fake hostnames are <code>ns1.box.occams.info</code> and <code>ns2.box.occams.info</code>, but his registar asks him to enter them with &ldquo;.occams.info&rdquo; omitted leaving just <code>ns1.box</code> and <code>ns2.box</code>.</p>
+	    				<p class="example">Josh&rsquo;s domain name is <code>occams.info</code>. The two fake hostnames are <code>ns1.box.occams.info</code> and <code>ns2.box.occams.info</code>, but his registrar asks him to enter them with &ldquo;.occams.info&rdquo; omitted leaving just <code>ns1.box</code> and <code>ns2.box</code>.</p>
 
-	    			<p>If your Mail-in-a-Box is handling mail for multiple domains, you only set these hostnames once.</p>
+	    			<p>If your Mail-in-a-Box is handling mail for multiple domains, you will still only set these hostnames once.</p>
 
 	    			<h3>Nameservers</h3>
 
@@ -236,7 +236,7 @@
 
 	    			<p>You will usually be turning off the registrar&rsquo;s provided nameservers and turning on custom servers. This is usually <i>not</i> found in the domain name&rsquo;s DNS control panel. You will be disabling that control panel.</p>
 
-	    			<p>Here&rsquo;s what that looks like:</p>
+	    			<p>Here&rsquo;s what that looks like in my registrar:</p>
 
 	    			<img src="static/domain_nameservers.png" title="Nameserver Configuration at Your Domain Registrar" class="img-responsive figure"/>
 
@@ -321,7 +321,7 @@ cd mailinabox</pre>
 
 	    			<p>This command will help you add and remove email accounts and email aliases (forwarders).</p>
 
-	    			<p>You may add email addresses on other domain names. If you do, you will need to set the nameservers for those domains in the domain name registar configuration too, as described above.</p>
+	    			<p>You may add email addresses on other domain names. If you do, you will need to set the nameservers for those domains in the domain name registrar configuration too, as described above.</p>
 
 
 	    			<h2 id="ssl">Getting a Signed Certificate</h2>
