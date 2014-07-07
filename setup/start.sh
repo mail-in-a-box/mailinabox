@@ -35,6 +35,10 @@ if [ -f /etc/mailinabox.conf ]; then
 	# Okay now load the old .conf file to get existing configuration options.
 	cat /etc/mailinabox.conf | sed s/^/DEFAULT_/ > /tmp/mailinabox.prev.conf
 	source /tmp/mailinabox.prev.conf
+	MIGRATIONID=$DEFAULT_MIGRATIONID
+else
+	# What migration are we at for new installs?
+	MIGRATIONID=1
 fi
 
 # The box needs a name.
@@ -171,6 +175,7 @@ PRIMARY_HOSTNAME=$PRIMARY_HOSTNAME
 PUBLIC_IP=$PUBLIC_IP
 PUBLIC_IPV6=$PUBLIC_IPV6
 CSR_COUNTRY=$CSR_COUNTRY
+MIGRATIONID=$MIGRATIONID
 EOF
 
 # Start service configuration.
