@@ -13,6 +13,11 @@ rm -f /etc/nginx/sites-enabled/default
 # SSL settings from @konklone
 cp conf/nginx-ssl.conf /etc/nginx/nginx-ssl.conf
 
+# Fix some nginx defaults.
+# The server_names_hash_bucket_size seems to prevent long domain names?
+tools/editconf.py /etc/nginx/nginx.conf -s \
+	server_names_hash_bucket_size="64;"
+
 # Other nginx settings will be configured by the management service
 # since it depends on what domains we're serving, which we don't know
 # until mail accounts have been created.

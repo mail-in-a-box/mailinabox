@@ -68,24 +68,29 @@ while len(input_lines) > 0:
 	for i in range(len(settings)):
 		# Check that this line contain this setting from the command-line arguments.
 		name, val = settings[i].split("=", 1)
-		m = re.match("\s*" + re.escape(name) + delimiter_re + "(.*?)\s*$", line, re.S)
+		m = re.match("(\s*)(#\s*)?" + re.escape(name) + delimiter_re + "(.*?)\s*$", line, re.S)
 		if not m: continue
+		indent, is_comment, existing_val = m.groups()
 
 		# If this is already the setting, do nothing.
-		if m.group(1) == val:
+		if is_comment is None and existing_val == val:
 			buf += line
 			found.add(i)
 			break
 		
 		# comment-out the existing line (also comment any folded lines)
-		buf += "#" + line.rstrip().replace("\n", "\n#") + "\n"
+		if is_comment is None:
+			buf += "#" + line.rstrip().replace("\n", "\n#") + "\n"
+		else:
+			# the line is already commented, pass it through
+			buf += line
 		
 		# if this option oddly appears more than once, don't add the setting again
 		if i in found:
 			break
 		
 		# add the new setting
-		buf += name + delimiter + val + "\n"
+		buf += indent + name + delimiter + val + "\n"
 		
 		# note that we've applied this option
 		found.add(i)
