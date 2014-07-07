@@ -108,7 +108,7 @@ def buy_ssl_certificate(api_key, domain, command, env):
 
 		# Check before we overwrite something we shouldn't.
 		if os.path.exists(ssl_certificate):
-			cert_status = check_certificate(ssl_certificate)
+			cert_status = check_certificate(None, ssl_certificate)
 			if cert_status != "SELF-SIGNED":
 				print("Please back up and delete the file %s so I can save your new certificate." % ssl_certificate)
 				sys.exit(1)

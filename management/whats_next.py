@@ -223,7 +223,7 @@ def check_ssl_cert(domain, env):
 
 	# Check that the certificate is good.
 
-	cert_status = check_certificate(ssl_certificate)
+	cert_status = check_certificate(domain, ssl_certificate)
 
 	if cert_status == "SELF-SIGNED":
 		fingerprint = shell('check_output', [
@@ -265,8 +265,43 @@ def check_ssl_cert(domain, env):
 		print(cert_status)
 		print("")
 
-def check_certificate(ssl_certificate):
+def check_certificate(domain ,ssl_certificate):
 	# Use openssl verify to check the status of a certificate.
+
+	# First check that the certificate is for the right domain. The domain
+	# must be found in the Subject Common Name (CN) or be one of the
+	# Subject Alternative Names.
+	cert_dump = shell('check_output', [
+		"openssl", "x509",
+		"-in", ssl_certificate,
+		"-noout", "-text", "-nameopt", "rfc2253",
+		])
+	cert_dump = cert_dump.split("\n")
+	certificate_names = set()
+	while len(cert_dump) > 0:
+		line = cert_dump.pop(0)
+
+		# Grab from the Subject Common Name. We include the indentation
+		# at the start of the line in case maybe the cert includes the
+		# common name of some other referenced entity (which would be
+		# indented, I hope).
+		m = re.match("        Subject: CN=([^,]+)", line)
+		if m:
+			certificate_names.add(m.group(1))
+	
+		# Grab from the Subject Alternative Name, which is a comma-delim
+		# list of names, like DNS:mydomain.com, DNS:otherdomain.com.
+		m = re.match("            X509v3 Subject Alternative Name:", line)
+		if m:
+			names = re.split(",\s*", cert_dump.pop(0).strip())
+			for n in names:
+				m = re.match("DNS:(.*)", n)
+				if m:
+					certificate_names.add(m.group(1))
+
+	if domain is not None and domain not in certificate_names:
+		return "This certificate is for the wrong domain names. It is for %s." % \
+			", ".join(sorted(certificate_names))
 
 	# In order to verify with openssl, we need to split out any
 	# intermediary certificates in the chain (if any) from our
