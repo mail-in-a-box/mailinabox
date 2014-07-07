@@ -281,13 +281,17 @@ def print_ok(message):
 def print_error(message):
 	print_block(message, first_line="✖  ")
 
+try:
+	terminal_columns = int(shell('check_output', ['stty', 'size']).split()[1])
+except:
+	terminal_columns = 76
 def print_block(message, first_line="   "):
 	print(first_line, end='')
 	message = re.sub("\n\s*", " ", message)
 	words = re.split("(\s+)", message)
 	linelen = 0
 	for w in words:
-		if linelen + len(w) > 75:
+		if linelen + len(w) > terminal_columns-1-len(first_line):
 			print()
 			print("   ", end="")
 			linelen = 0
