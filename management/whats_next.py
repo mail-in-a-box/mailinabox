@@ -158,17 +158,35 @@ def check_dns_zone(domain, env, dns_zonefiles):
 		print("")
 
 def check_mail_domain(domain, env):
-	# Check the MX record. A missing MX record is okay on the primary hostname
-	# because the primary hostname's A record (the MX fallback) is... itself,
-	# which s what we want the MX to be.
+	# Check the MX record.
+
 	mx = query_dns(domain, "MX", nxdomain=None)
 	expected_mx = "10 " + env['PRIMARY_HOSTNAME']
+
 	if mx == expected_mx:
 		print_ok("Domain's email is directed to this domain. [%s => %s]" % (domain, mx))
-	elif mx == None and domain == env['PRIMARY_HOSTNAME']:
-		print_ok("Domain's email is directed to this domain. [%s has no MX record, which is ok]" % (domain,))
+
+	elif mx == None:
+		# A missing MX record is okay on the primary hostname because
+		# the primary hostname's A record (the MX fallback) is... itself,
+		# which is what we want the MX to be.
+		if domain == env['PRIMARY_HOSTNAME']:
+			print_ok("Domain's email is directed to this domain. [%s has no MX record, which is ok]" % (domain,))
+
+		# And a missing MX record is okay on other domains if the A record
+		# matches the A record of the PRIMARY_HOSTNAME. Actually this will
+		# probably confuse DANE TLSA, but we'll let that slide for now.
+		else:
+			domain_a = query_dns(domain, "A", nxdomain=None)
+			primary_a = query_dns(env['PRIMARY_HOSTNAME'], "A", nxdomain=None)
+			if domain_a != None and domain_a == primary_a:
+				print_ok("Domain's email is directed to this domain. [%s has no MX record but its A record is OK]" % (domain,))
+			else:
+				print_error("""This domain's DNS MX record is not set. It should be '%s'. Mail will not
+					be delivered to this box. It may take several hours for public DNS to update after a
+					change. This problem may result from other issues listed here.""" % (expected_mx,))
+
 	else:
-		if mx == None: mx = "[Not Set]"
 		print_error("""This domain's DNS MX record is incorrect. It is currently set to '%s' but should be '%s'. Mail will not
 			be delivered to this box. It may take several hours for public DNS to update after a change. This problem may result from
 			other issues listed here.""" % (mx, expected_mx))
