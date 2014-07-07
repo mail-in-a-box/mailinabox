@@ -212,11 +212,17 @@ def check_ssl_cert(domain, env):
 			])
 		fingerprint = re.sub(".*Fingerprint=", "", fingerprint).strip()
 
-		print_error("""The SSL certificate for this domain is currently self-signed. That's OK if you are willing to confirm security
-			exceptions when you check your mail (either via IMAP or webmail), but if you are serving a website on this domain then users
-			will not be able to access the site. When confirming security exceptions, check that the certificate fingerprint matches:""")
-		print()
-		print("   " + fingerprint)
+		if domain == env['PRIMARY_HOSTNAME']:
+			print_error("""The SSL certificate for this domain is currently self-signed. You will get a security
+			warning when you check or send email and when visiting this domain in a web browser (for webmail or
+			static site hosting). You may choose to confirm the security exception, but check that the certificate
+			fingerprint matches the following:""")
+			print()
+			print("   " + fingerprint)
+		else:
+			print_error("""The SSL certificate for this domain is currently self-signed. Visitors to a website on
+			this domain will get a security warning. If you are not serving a website on this domain, then it is
+			safe to leave the self-signed certificate in place.""")
 		print()
 		print_block("""You can purchase a signed certificate from many places. You will need to provide this Certificate Signing Request (CSR)
 			to whoever you purchase the SSL certificate from:""")
