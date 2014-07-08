@@ -74,6 +74,9 @@ while len(input_lines) > 0:
 
 		# If this is already the setting, do nothing.
 		if is_comment is None and existing_val == val:
+			# It may be that we've already inserted this setting higher
+			# in the file so check for that first.
+			if i in found: break
 			buf += line
 			found.add(i)
 			break
