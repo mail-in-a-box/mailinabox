@@ -223,7 +223,7 @@ def check_ssl_cert(domain, env):
 
 	# Check that the certificate is good.
 
-	cert_status = check_certificate(domain, ssl_certificate)
+	cert_status = check_certificate(domain, ssl_certificate, ssl_key)
 
 	if cert_status == "SELF-SIGNED":
 		fingerprint = shell('check_output', [
@@ -265,7 +265,7 @@ def check_ssl_cert(domain, env):
 		print(cert_status)
 		print("")
 
-def check_certificate(domain ,ssl_certificate):
+def check_certificate(domain, ssl_certificate, ssl_private_key):
 	# Use openssl verify to check the status of a certificate.
 
 	# First check that the certificate is for the right domain. The domain
@@ -302,6 +302,27 @@ def check_certificate(domain ,ssl_certificate):
 	if domain is not None and domain not in certificate_names:
 		return "This certificate is for the wrong domain names. It is for %s." % \
 			", ".join(sorted(certificate_names))
+
+	# Second, check that the certificate matches the private key. Get the modulus of the
+	# private key and of the public key in the certificate. They should match. The output
+	# of each command looks like "Modulus=XXXXX".
+	if ssl_private_key is not None:
+		private_key_modulus = shell('check_output', [
+			"openssl", "rsa",
+			"-inform", "PEM",
+			"-noout", "-modulus",
+			"-in", ssl_private_key])
+		cert_key_modulus = shell('check_output', [
+			"openssl", "x509",
+			"-in", ssl_certificate,
+			"-noout", "-modulus"])
+		if private_key_modulus != cert_key_modulus:
+			return "The certificate installed at %s does not correspond to the private key at %s." % (ssl_certificate, ssl_private_key)
+
+	# Next validate that the certificate is valid. This checks whether the certificate
+	# is self-signed, that the chain of trust makes sense, that it is signed by a CA
+	# that Ubuntu has installed on this machine's list of CAs, and I think that it hasn't
+	# expired.
 
 	# In order to verify with openssl, we need to split out any
 	# intermediary certificates in the chain (if any) from our
