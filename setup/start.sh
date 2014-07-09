@@ -186,6 +186,7 @@ EOF
 . setup/dkim.sh
 . setup/spamassassin.sh
 . setup/web.sh
+. setup/managesieve.sh
 . setup/webmail.sh
 . setup/management.sh
 
@@ -222,10 +223,8 @@ if [ -z "`tools/mail.py user`" ]; then
 		echo "Okay. I'm about to set up $EMAIL_ADDR for you."
 	fi
 
-	# Create the user's mail account. This will ask for a password if none was given above.
-	tools/mail.py user add $EMAIL_ADDR $EMAIL_PW
-
-	# Create an alias to which we'll direct all automatically-created administrative aliases.
-	tools/mail.py alias add administrator@$PRIMARY_HOSTNAME $EMAIL_ADDR
+	tools/mail.py user add $EMAIL_ADDR $EMAIL_PW # will ask for password if none given
+	tools/mail.py alias add hostmaster@$PRIMARY_HOSTNAME $EMAIL_ADDR
+	tools/mail.py alias add postmaster@$PRIMARY_HOSTNAME $EMAIL_ADDR
 fi
 
