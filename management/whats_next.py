@@ -55,6 +55,7 @@ def run_domain_checks(env):
 
 		if domain == env["PRIMARY_HOSTNAME"]:
 			check_primary_hostname_dns(domain, env)
+			check_alias_exists("administrator@" + domain, env)
 		
 		if domain in dns_domains:
 			check_dns_zone(domain, env, dns_zonefiles)
