@@ -2,7 +2,7 @@
 # domains for which a mail account has been set up.
 ########################################################################
 
-import os, os.path
+import os, os.path, re, rtyaml
 
 from mailconfig import get_mail_domains
 from utils import shell, safe_domain_name, sort_domains
@@ -67,6 +67,20 @@ def make_domain_config(domain, template, env):
 	nginx_conf = nginx_conf.replace("$ROOT", root)
 	nginx_conf = nginx_conf.replace("$SSL_KEY", ssl_key)
 	nginx_conf = nginx_conf.replace("$SSL_CERTIFICATE", ssl_certificate)
+
+	# Add in any user customizations.
+	nginx_conf_parts = re.split("(# ADDITIONAL DIRECTIVES HERE\n)", nginx_conf)
+	nginx_conf_custom_fn = os.path.join(env["STORAGE_ROOT"], "www/custom.yaml")
+	if os.path.exists(nginx_conf_custom_fn):
+		yaml = rtyaml.load(open(nginx_conf_custom_fn))
+		if domain in yaml:
+			yaml = yaml[domain]
+			if "proxy" in yaml:
+				nginx_conf_parts[1] += "\tlocation / {\n\t\tproxy_pass %s;\n\t}\n" % yaml["proxy"]
+
+	# Put it all together.	
+	nginx_conf = "".join(nginx_conf_parts)
+
 	return nginx_conf
 
 def get_web_root(domain, env):
