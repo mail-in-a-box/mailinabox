@@ -40,7 +40,7 @@ def sort_domains(domain_names, env):
     # Within each group, sort parent domains before subdomains and after that sort lexicographically.
     def sort_group(group):
         # Find the top-most domains.
-        top_domains = sorted(d for d in group if len([s for s in group if s.startswith("." + d)]) == 0)
+        top_domains = sorted(d for d in group if len([s for s in group if d.endswith("." + s)]) == 0)
         ret = []
         for d in top_domains:
             ret.append(d)
