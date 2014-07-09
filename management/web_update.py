@@ -96,17 +96,28 @@ def get_domain_ssl_files(domain, env):
 	# Don't allow the user to override the key for PRIMARY_HOSTNAME because
 	# that's what's in the main file.
 	ssl_key = os.path.join(env["STORAGE_ROOT"], 'ssl/ssl_private_key.pem')
+	ssl_key_is_alt = False
 	alt_key = os.path.join(env["STORAGE_ROOT"], 'ssl/%s/private_key.pem' % safe_domain_name(domain))
 	if domain != env['PRIMARY_HOSTNAME'] and os.path.exists(alt_key):
 		ssl_key = alt_key
+		ssl_key_is_alt = True
 
-	# What SSL certificate will we use? This has to be differnet for each
-	# domain name. For PRIMARY_HOSTNAME, use the one we generated at set-up
-	# time.
+	# What SSL certificate will we use?
+	ssl_certificate_primary = os.path.join(env["STORAGE_ROOT"], 'ssl/ssl_certificate.pem')
 	if domain == env['PRIMARY_HOSTNAME']:
-		ssl_certificate = os.path.join(env["STORAGE_ROOT"], 'ssl/ssl_certificate.pem')
+		# For PRIMARY_HOSTNAME, use the one we generated at set-up time.
+		ssl_certificate = ssl_certificate_primary
 	else:
+		# For other domains, we'll probably use a certificate in a different path.
 		ssl_certificate = os.path.join(env["STORAGE_ROOT"], 'ssl/%s/ssl_certificate.pem' % safe_domain_name(domain))
+
+		# But we can be smart and reuse the main SSL certificate if is has
+		# a Subject Alternative Name matching this domain. Don't do this if
+		# the user has uploaded a different private key for this domain.
+		if not ssl_key_is_alt:
+			from whats_next import check_certificate
+			if check_certificate(domain, ssl_certificate_primary, None) == "OK":
+				ssl_certificate = ssl_certificate_primary
 
 	# Where would the CSR go? As with the SSL cert itself, the CSR must be
 	# different for each domain name.
@@ -118,10 +129,15 @@ def get_domain_ssl_files(domain, env):
 	return ssl_key, ssl_certificate, csr_path
 
 def ensure_ssl_certificate_exists(domain, ssl_key, ssl_certificate, csr_path, env):
-	# For domains besides PRIMARY_HOSTNAME, generate a self-signed certificate if one doesn't
-	# already exist. See setup/mail.sh for documentation.
+	# For domains besides PRIMARY_HOSTNAME, generate a self-signed certificate if
+	# a certificate doesn't already exist. See setup/mail.sh for documentation.
 
 	if domain == env['PRIMARY_HOSTNAME']:
+		return
+
+	# Sanity check. Shouldn't happen. A non-primary domain might use this
+	# certificate (see above), but then the certificate should exist anyway.
+	if ssl_certificate == os.path.join(env["STORAGE_ROOT"], 'ssl/ssl_certificate.pem'):
 		return
 
 	if os.path.exists(ssl_certificate):
