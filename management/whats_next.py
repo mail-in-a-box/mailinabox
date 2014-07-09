@@ -254,7 +254,7 @@ def check_ssl_cert(domain, env):
 		print()
 		print_block("""When you purchase an SSL certificate you will receive a certificate in PEM format and possibly a file containing intermediate certificates in PEM format.
 			If you receive intermediate certificates, use a text editor and paste your certificate on top and then the intermediate certificates
-			below it. Save the file and place it onto this machine at %s.""" % ssl_certificate)
+			below it. Save the file and place it onto this machine at %s. Then run "service nginx restart".""" % ssl_certificate)
 
 	elif cert_status == "OK":
 		print_ok("SSL certificate is signed.")
