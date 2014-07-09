@@ -257,7 +257,7 @@ def check_ssl_cert(domain, env):
 			below it. Save the file and place it onto this machine at %s. Then run "service nginx restart".""" % ssl_certificate)
 
 	elif cert_status == "OK":
-		print_ok("SSL certificate is signed.")
+		print_ok("SSL certificate is signed & valid.")
 
 	else:
 		print_error("The SSL certificate has a problem:")
