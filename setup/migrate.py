@@ -36,7 +36,16 @@ def migration_1(env):
 	except:
 		pass
 
-if __name__ == "__main__":
+def get_current_migration():
+	ver = 0
+	while True:
+		next_ver = (ver + 1)
+		migration_func = globals().get("migration_%d" % next_ver)
+		if not migration_func:
+			return ver
+		ver = next_ver
+
+def run_migrations():
 	if not os.access("/etc/mailinabox.conf", os.W_OK, effective_ids=True):
 		print("This script must be run as root.", file=sys.stderr)
 		sys.exit(1)
@@ -74,4 +83,12 @@ if __name__ == "__main__":
 		save_environment(env)
 
 		# iterate and try next version...
+
+if __name__ == "__main__":
+	if sys.argv[-1] == "--current":
+		# Return the number of the highest migration.
+		print(str(get_current_migration()))
+	elif sys.argv[-1] == "--migrate":
+		# Perform migrations.
+		run_migrations()
 

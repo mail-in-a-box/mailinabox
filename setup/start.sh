@@ -30,7 +30,7 @@ fi
 if [ -f /etc/mailinabox.conf ]; then
 	# Run any system migrations before proceeding. Since this is a second run,
 	# we assume we have Python already installed.
-	setup/migrate.py
+	setup/migrate.py --migrate
 
 	# Okay now load the old .conf file to get existing configuration options.
 	cat /etc/mailinabox.conf | sed s/^/DEFAULT_/ > /tmp/mailinabox.prev.conf
@@ -38,7 +38,7 @@ if [ -f /etc/mailinabox.conf ]; then
 	MIGRATIONID=$DEFAULT_MIGRATIONID
 else
 	# What migration are we at for new installs?
-	MIGRATIONID=1
+	MIGRATIONID=$(setup/migrate.py --current)
 fi
 
 # The box needs a name.
