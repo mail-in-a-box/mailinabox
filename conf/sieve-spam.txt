@@ -1,7 +1,7 @@
 require ["regex", "fileinto", "imap4flags"];
 
 if allof (header :regex "X-Spam-Status" "^Yes") {
-  setflag "\\\\Seen";
+  setflag "\\Seen";
   fileinto "Spam";
   stop;
 }

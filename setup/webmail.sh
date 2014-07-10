@@ -62,7 +62,7 @@ cat - > /usr/local/lib/roundcubemail/config/config.inc.php <<EOF;
 \$config['support_url'] = 'https://mailinabox.email/';
 \$config['product_name'] = 'Mail-in-a-Box/Roundcube Webmail';
 \$config['des_key'] = '$SECRET_KEY';
-\$config['plugins'] = array('archive', 'zipdownload', 'password');
+\$config['plugins'] = array('archive', 'zipdownload', 'password', 'managesieve');
 \$config['skin'] = 'larry';
 \$config['login_autocomplete'] = 2;
 \$config['password_charset'] = 'UTF-8';

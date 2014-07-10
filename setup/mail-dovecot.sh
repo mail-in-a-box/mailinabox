@@ -20,7 +20,8 @@ source /etc/mailinabox.conf # load global vars
 # Install packages.
 
 apt_install \
-	dovecot-core dovecot-imapd dovecot-lmtpd dovecot-sqlite sqlite3 dovecot-sieve
+	dovecot-core dovecot-imapd dovecot-lmtpd dovecot-sqlite sqlite3 \
+	dovecot-sieve dovecot-managesieved
 
 # The dovecot-imapd dovecot-lmtpd packages automatically enable IMAP and LMTP protocols.
 
@@ -86,18 +87,35 @@ tools/editconf.py /etc/dovecot/conf.d/15-lda.conf \
 
 # SIEVE
 
-# Enable the Dovecot sieve plugin which let's us set a script that automatically moves
-# spam into the user's Spam mail filter. (Note: Be careful if we want to use multiple
-# plugins later.)
-#
-# The actual sieve script is copied into user mailboxes at the time the user account
-# is created. Our script moves spam into the user's Spam folder.
+# Enable the Dovecot sieve plugin which let's users run scripts that process
+# mail as it comes in. We'll also set a global script that moves mail marked
+# as spam by Spamassassin into the user's Spam folder.
 sudo sed -i "s/#mail_plugins = .*/mail_plugins = \$mail_plugins sieve/" /etc/dovecot/conf.d/20-lmtp.conf
 
-# PERMISSIONS
+cat > /etc/dovecot/conf.d/99-local-sieve.conf << EOF;
+plugin {
+  # The path to our global sieve which handles moving spam to the Spam folder.
+  sieve_before = /etc/dovecot/sieve-spam.sieve
 
-# Make the place for mailboxes.
-mkdir -p $STORAGE_ROOT/mail
+  # The path to the user's main active script. ManageSieve will create a symbolic
+  # link here to the actual sieve script. It should not be in the mailbox directory
+  # (because then it might appear as a folder) and it should not be in the sieve_dir
+  # (because then I suppose it might appear to the user as one of their scripts).
+  sieve = $STORAGE_ROOT/mail/sieve/%d/%n.sieve
+
+  # Directory for :personal include scripts for the include extension. This
+  # is also where the ManageSieve service stores the user's scripts.
+  sieve_dir = $STORAGE_ROOT/mail/sieve/%d/%n
+}
+EOF
+
+# Copy the global sieve script into where we've told Dovecot to look for it. Then
+# compile it. Global scripts must be compiled now because Dovecot won't have
+# permission later.
+cp `pwd`/conf/sieve-spam.txt /etc/dovecot/sieve-spam.sieve
+sievec /etc/dovecot/sieve-spam.sieve
+
+# PERMISSIONS
 
 # Ensure configuration files are owned by dovecot and not world readable.
 chown -R mail:dovecot /etc/dovecot
@@ -106,6 +124,10 @@ chmod -R o-rwx /etc/dovecot
 # Ensure mailbox files have a directory that exists and are owned by the mail user.
 mkdir -p $STORAGE_ROOT/mail/mailboxes
 chown -R mail.mail $STORAGE_ROOT/mail/mailboxes
+
+# Same for the sieve scripts.
+mkdir -p $STORAGE_ROOT/mail/sieve
+chown -R mail.mail $STORAGE_ROOT/mail/sieve
 
 # Allow the IMAP port in the firewall.
 ufw_allow imaps

@@ -36,6 +36,15 @@ def migration_1(env):
 	except:
 		pass
 
+def migration_2(env):
+	# Delete the .dovecot_sieve script everywhere. This was formerly a copy of our spam -> Spam
+	# script. We now install it as a global script, and we use managesieve, so the old file is
+	# irrelevant. Also delete the compiled binary form.
+	for fn in glob.glob(os.path.join(env["STORAGE_ROOT"], 'mail/mailboxes/*/*/.dovecot.sieve')):
+		os.unlink(fn)
+	for fn in glob.glob(os.path.join(env["STORAGE_ROOT"], 'mail/mailboxes/*/*/.dovecot.svbin')):
+		os.unlink(fn)
+
 def get_current_migration():
 	ver = 0
 	while True:

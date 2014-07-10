@@ -84,16 +84,6 @@ def add_mail_user(email, pw, env):
 	if "INBOX" not in existing_mboxes: utils.shell('check_call', ["doveadm", "mailbox", "create", "-u", email, "-s", "INBOX"])
 	if "Spam" not in existing_mboxes: utils.shell('check_call', ["doveadm", "mailbox", "create", "-u", email, "-s", "Spam"])
 
-	# Create the user's sieve script to move spam into the Spam folder, and make it owned by mail.
-	maildirstat = os.stat(env["STORAGE_ROOT"] + "/mail/mailboxes")
-	(em_user, em_domain) = email.split("@", 1)
-	user_mail_dir = env["STORAGE_ROOT"] + ("/mail/mailboxes/%s/%s" % (em_domain, em_user))
-	if not os.path.exists(user_mail_dir):
-		os.makedirs(user_mail_dir)
-		os.chown(user_mail_dir, maildirstat.st_uid, maildirstat.st_gid)
-	shutil.copyfile(utils.CONF_DIR + "/dovecot_sieve.txt", user_mail_dir + "/.dovecot.sieve")
-	os.chown(user_mail_dir + "/.dovecot.sieve", maildirstat.st_uid, maildirstat.st_gid)
-
 	# Update things in case any new domains are added.
 	return kick(env, "mail user added")
 
@@ -222,3 +212,4 @@ if __name__ == "__main__":
 	if len(sys.argv) > 1 and sys.argv[1] == "update":
 		from utils import load_environment
 		print(kick(load_environment()))
+
