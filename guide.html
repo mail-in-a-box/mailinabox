@@ -264,6 +264,8 @@ cd mailinabox</pre>
 
 					<p>This password will be used to login to webmail, and to authorize sending and receiving mail through SMTP and IMAP. It will <strong>not</strong> be used to log onto your Mail-in-a-Box server.</p>
 
+					<p>It is always safe to re-run the setup script. If something goes wrong or you just want to see it again, just do again <code>sudo setup/start.sh</code>.</p>
+
 					<p>When the setup script is done running, you have a working mail server. But first check that everything is correct so far by typing:</p>
 
 					<pre>sudo management/whats_next.py</pre>
@@ -345,6 +347,21 @@ cd mailinabox</pre>
 					<p>Copy the DS record(s) and follow the DS record instructions provided by your domain name registrar.</p>
 
 
+					<h2 id="maintenance">Keeping Your Box Humming</h2>
+
+					<p>You should periodically update the software on Mail-in-a-Box. Every now and then update the Ubuntu base packages in case there have been any security updates. Log into your machine with SS and then type:</p>
+
+					<pre>sudo apt-get update &amp;&amp; sudo apt-get upgrade</pre>
+
+					<p>You should also move to the latest Mail-in-a-Box release occasionally:</p>
+
+					<pre>cd mailinabox
+git pull
+sudo setup/start.sh</pre>
+
+					<p>Remember that it is always safe to re-run the setup script like this.</p>
+
+
 					<h2 id="other">To-be-written</h2>
 
 					<p>It is also possible to...</p>
@@ -354,6 +371,7 @@ cd mailinabox</pre>
 						<li>Add custom DNS records.</li>
 						<li>Backup your mail.</li>
 					</ul>
+
 
 					<h2 id="checks">Systems Checks</h2>
 
