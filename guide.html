@@ -212,17 +212,17 @@
 
 	    			<p>The way this works varies from registrar to registrar, but it goes something like this:</p>
 
-	    			<h3>Hostnames</h3>
+	    			<h3>Glue Records</h3>
 
-	    			<p>First, you&rsquo;ll associate two new hostnames with your IP address. The purpose of this step is to say that your box is becoming a part of the domain name system. For historical reasons we need two fake hostnames for this purpose.</p>
+	    			<p>First, you&rsquo;ll create two &ldquo;glue records.&rdquo; The purpose of glue records is to say that your box is becoming a part of the domain name system. These records go by different names at different registars, so also look out for &ldquo;hostnames&rdquo; or child nameservers. This will <em>not</em> be found in a DNS control panel.</p>
 
-	    			<p>The two fake hostnames will be <code>ns1</code> + <code>.</code> + your box&rsquo;s actual hostname and <code>ns2</code> + <code>.</code> + your box&rsquo;s actual hostname. (These stand for &ldquo;nameserver one&rdquo; and &ldquo;nameserver two&rdquo;.)</p>
+	    			<p>A glue record has a hostname and an IP address. For historical reasons we need two glue records. The two records you need to create are for <code>ns1</code> + <code>.</code> + your box&rsquo;s actual hostname and <code>ns2</code> + <code>.</code> + your box&rsquo;s actual hostname. Those are for the hostname part of the glue records. (They stand for &ldquo;nameserver one&rdquo; and &ldquo;nameserver two&rdquo;.) For the IP address, enter the IP address of your box.</p>
 
-	    				<p class="example">Josh&rsquo;s box&rsquo;s hostname is <code>box.occams.info</code>. The two fake hostnames are <code>ns1.box.occams.info</code> and <code>ns2.box.occams.info</code>.</p>
+	    				<p class="example">Josh&rsquo;s box&rsquo;s hostname is <code>box.occams.info</code>. The two glue records are for <code>ns1.box.occams.info</code> and <code>ns2.box.occams.info</code> and list the box&rsquo;s IP address is <code>94.76.202.152</code>.</p>
 
 	    			<p>It looks something like what&rsquo;s shown in the next image.</p>
 
-	    			<img src="static/domain_hostnames.png" title="Hostname Configuration at Your Domain Registrar" class="img-responsive figure"/>
+	    			<img src="static/domain_hostnames.png" title="Glue Record Configuration at Your Domain Registrar" class="img-responsive figure"/>
 
 	    			<p>Your registrar may ask you to enter these hostnames with the domain name part omitted, as mine did in this case. What you enter is the part of the fake hostname before the domain name.</p>
 
