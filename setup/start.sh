@@ -182,7 +182,9 @@ EOF
 . setup/system.sh
 . setup/ssl.sh
 . setup/dns.sh
-. setup/mail.sh
+. setup/mail-postfix.sh
+. setup/mail-dovecot.sh
+. setup/mail-users.sh
 . setup/dkim.sh
 . setup/spamassassin.sh
 . setup/web.sh
