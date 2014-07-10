@@ -242,13 +242,6 @@
 
 	    			<p>Don&rsquo;t worry if you are confused about what this all means. It is complicated &mdash; we all get confused at this point.</p>
 
-	    			<h3>DNSSEC</h3>
-
-	    			<p>The domain name system is not very secure. Enabling DNSSEC provides a layer of cryptographic security on top of the domain name system in a similar way to how HTTPS web addresses add a layer of security to the web.</p>
-
-	    			<p>DNSSEC is configured at your domain name registrar as well but you can&rsquo;t do it until after we set up the box, so we will come back to it below.</p>
-
-
 					<h2 id="setup">Setting Up The Box</h2>
 
 	    			<p class="pros">Clone our github repo <a href="https://github.com/JoshData/mailinabox">https://github.com/JoshData/mailinabox</a>, cd to the directory, and run <code>setup/start.sh</code>.</p>
@@ -339,7 +332,11 @@ cd mailinabox</pre>
 
 					<h2 id="dnssec">Configuring DNSSEC</h2>
 
-					<p>Optionally, to activate DNSSEC (see above), you'll need to get a DS record from the box. While logged in on the box, run:</p>
+	    			<p>The domain name system is not very secure. Enabling DNSSEC provides a layer of cryptographic security on top of the domain name system in a similar way to how HTTPS web addresses add a layer of security to the web.</p>
+
+	    			<p>DNSSEC is optional, but with it your box will advertise that it is secure. Other mail servers that support DNSSEC and DANE will begin encrypting mail to you while it is in transit. Mail-in-a-Box supports this, so email between DNSSEC-enabled Mail-in-a-Boxes are always encrypted in transit.</p>
+
+	    			<p>DNSSEC is configured at your domain name registrar. To activate DNSSEC, you'll need to get a DS record from the box and then enter that at your registrar. While logged in on the box, run:</p>
 
 					<pre>sudo bash -c 'curl --user $(&lt;/var/lib/mailinabox/api.key): http://localhost:10222/dns/ds'</pre>
 
