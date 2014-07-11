@@ -224,7 +224,7 @@
 
 	    			<img src="static/domain_hostnames.png" title="Glue Record Configuration at Your Domain Registrar" class="img-responsive figure"/>
 
-	    			<p>Your registrar may ask you to enter these hostnames with the domain name part omitted, as mine did in this case. What you enter is the part of the fake hostname before the domain name.</p>
+	    			<p>Your registrar may ask you to enter these hostnames with the domain name part omitted, as mine did in this case. If so, enter the part of the hostname up to the domain name.</p>
 
 	    				<p class="example">Josh&rsquo;s domain name is <code>occams.info</code>. The two fake hostnames are <code>ns1.box.occams.info</code> and <code>ns2.box.occams.info</code>, but his registrar asks him to enter them with &ldquo;.occams.info&rdquo; omitted leaving just <code>ns1.box</code> and <code>ns2.box</code>.</p>
 
@@ -349,7 +349,7 @@ cd mailinabox</pre>
 
 					<h2 id="maintenance">Keeping Your Box Humming</h2>
 
-					<p>You should periodically update the software on Mail-in-a-Box. Every now and then update the Ubuntu base packages in case there have been any security updates. Log into your machine with SS and then type:</p>
+					<p>You should periodically update the software on Mail-in-a-Box. Every now and then update the Ubuntu base packages in case there have been any security updates. Log into your machine with SSH and then type:</p>
 
 					<pre>sudo apt-get update &amp;&amp; sudo apt-get upgrade</pre>
 
