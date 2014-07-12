@@ -36,9 +36,14 @@ rm -f /etc/init.d/php-fastcgi
 ln -s $(pwd)/conf/phpfcgi-initscript /etc/init.d/php-fastcgi
 update-rc.d php-fastcgi defaults
 
-# Put our webfinger server script into a well-known location.
-cp tools/webfinger.php /usr/local/bin/mailinabox-webfinger.php
-chown www-data.www-data /usr/local/bin/mailinabox-webfinger.php
+# Put our webfinger and Exchange autodiscover.xml server scripts
+# into a well-known location.
+for f in webfinger exchange-autodiscover; do
+	cp tools/$f.php /usr/local/bin/mailinabox-$f.php
+	chown www-data.www-data /usr/local/bin/mailinabox-$f.php
+done
+
+# Make some space for users to customize their webfinger responses.
 mkdir -p $STORAGE_ROOT/webfinger/acct;
 chown -R $STORAGE_USER $STORAGE_ROOT/webfinger
 
