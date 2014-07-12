@@ -20,8 +20,11 @@ def validate_email(email, strict):
 		# these characters are permitted in email address.
 		ATEXT = r'[\w!#$%&\'\*\+\-/=\?\^`\{\|\}~]' # see 3.2.4
 
-	DOT_ATOM_TEXT = ATEXT + r'+(?:\.' + ATEXT + r'+)*'      # see 3.2.4
-	DOT_ATOM_TEXT2 = ATEXT + r'+(?:\.' + ATEXT + r'+)+'      # as above, but with a "+" since the host part must be under some TLD
+	DOT_ATOM_TEXT = r'(' + ATEXT + r'(?:\.' + ATEXT + r'+)*)' # see 3.2.4
+	if not strict:
+		DOT_ATOM_TEXT += r'?' # allow an empty local part for catchalls
+
+	DOT_ATOM_TEXT2 = ATEXT + r'+(?:\.' + ATEXT + r'+)+'     # as above, but with a "+" since the host part must be under some TLD
 	ADDR_SPEC = '^%s@%s$' % (DOT_ATOM_TEXT, DOT_ATOM_TEXT2) # see 3.4.1
 
 	return re.match(ADDR_SPEC, email)
@@ -66,7 +69,7 @@ def add_mail_user(email, pw, env):
 		c.execute("INSERT INTO users (email, password) VALUES (?, ?)", (email, pw))
 	except sqlite3.IntegrityError:
 		return ("User already exists.", 400)
-		
+
 	# write databasebefore next step
 	conn.commit()
 
@@ -212,4 +215,3 @@ if __name__ == "__main__":
 	if len(sys.argv) > 1 and sys.argv[1] == "update":
 		from utils import load_environment
 		print(kick(load_environment()))
-
