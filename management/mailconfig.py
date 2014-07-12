@@ -20,7 +20,7 @@ def validate_email(email, strict):
 		# these characters are permitted in email address.
 		ATEXT = r'[\w!#$%&\'\*\+\-/=\?\^`\{\|\}~]' # see 3.2.4
 
-	DOT_ATOM_TEXT = ATEXT + r'+(?:\.' + ATEXT + r'+)*'      # see 3.2.4
+	DOT_ATOM_TEXT = ATEXT + r'*(?:\.' + ATEXT + r'+)*'      # see 3.2.4
 	DOT_ATOM_TEXT2 = ATEXT + r'+(?:\.' + ATEXT + r'+)+'      # as above, but with a "+" since the host part must be under some TLD
 	ADDR_SPEC = '^%s@%s$' % (DOT_ATOM_TEXT, DOT_ATOM_TEXT2) # see 3.4.1
 
