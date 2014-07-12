@@ -189,6 +189,7 @@ EOF
 . setup/spamassassin.sh
 . setup/web.sh
 . setup/webmail.sh
+. setup/zpush.sh
 . setup/management.sh
 
 # Write the DNS and nginx configuration files.
