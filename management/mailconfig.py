@@ -3,7 +3,7 @@
 import subprocess, shutil, os, sqlite3, re
 import utils
 
-def validate_email(email, strict):
+def validate_email(email, mode=None):
 	# There are a lot of characters permitted in email addresses, but
 	# Dovecot's sqlite driver seems to get confused if there are any
 	# unusual characters in the address. Bah. Also note that since
@@ -12,20 +12,30 @@ def validate_email(email, strict):
 
 	if len(email) > 255: return False
 
-	if strict:
+	if mode == 'user':
 		# For Dovecot's benefit, only allow basic characters.
 		ATEXT = r'[\w\-]'
-	else:
+	elif mode == 'alias':
+		# For aliases, we can allow any valid email address.
 		# Based on RFC 2822 and https://github.com/SyrusAkbary/validate_email/blob/master/validate_email.py,
-		# these characters are permitted in email address.
+		# these characters are permitted in email addresses.
 		ATEXT = r'[\w!#$%&\'\*\+\-/=\?\^`\{\|\}~]' # see 3.2.4
+	else:
+		raise ValueError(mode)
 
-	DOT_ATOM_TEXT = r'(' + ATEXT + r'(?:\.' + ATEXT + r'+)*)' # see 3.2.4
-	if not strict:
-		DOT_ATOM_TEXT += r'?' # allow an empty local part for catchalls
+	# per RFC 2822 3.2.4
+	DOT_ATOM_TEXT_LOCAL = ATEXT + r'+(?:\.' + ATEXT + r'+)*'
+	if mode == 'alias':
+		# For aliases, Postfix accepts '@domain.tld' format for
+		# catch-all addresses. Make the local part optional.
+		DOT_ATOM_TEXT_LOCAL = '(?:' + DOT_ATOM_TEXT_LOCAL + ')?'
 
-	DOT_ATOM_TEXT2 = ATEXT + r'+(?:\.' + ATEXT + r'+)+'     # as above, but with a "+" since the host part must be under some TLD
-	ADDR_SPEC = '^%s@%s$' % (DOT_ATOM_TEXT, DOT_ATOM_TEXT2) # see 3.4.1
+	# as above, but we can require that the host part have at least
+	# one period in it, so use a "+" rather than a "*" at the end
+	DOT_ATOM_TEXT_HOST = ATEXT + r'+(?:\.' + ATEXT + r'+)+'
+
+	# per RFC 2822 3.4.1
+	ADDR_SPEC = '^%s@%s$' % (DOT_ATOM_TEXT_LOCAL, DOT_ATOM_TEXT_HOST)
 
 	return re.match(ADDR_SPEC, email)
 
@@ -55,7 +65,7 @@ def get_mail_domains(env, filter_aliases=lambda alias : True):
 		 )
 
 def add_mail_user(email, pw, env):
-	if not validate_email(email, True):
+	if not validate_email(email, mode='user'):
 		return ("Invalid email address.", 400)
 
 	# get the database
@@ -113,7 +123,7 @@ def remove_mail_user(email, env):
 	return kick(env, "mail user removed")
 
 def add_mail_alias(source, destination, env, do_kick=True):
-	if not validate_email(source, False):
+	if not validate_email(source, mode='alias'):
 		return ("Invalid email address.", 400)
 
 	conn, c = open_database(env, with_connection=True)
@@ -207,7 +217,7 @@ if __name__ == "__main__":
 	import sys
 	if len(sys.argv) > 2 and sys.argv[1] == "validate-email":
 		# Validate that we can create a Dovecot account for a given string.
-		if validate_email(sys.argv[2], True):
+		if validate_email(sys.argv[2], mode='user'):
 			sys.exit(0)
 		else:
 			sys.exit(1)
