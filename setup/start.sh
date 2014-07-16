@@ -153,7 +153,7 @@ fi
 if [ "$PRIMARY_HOSTNAME" = "auto-easy" ]; then
 	# Generate a probably-unique subdomain under our justtesting.email domain.
 	PRIMARY_HOSTNAME=m`get_default_publicip | sha1sum | cut -c1-5`.justtesting.email
-	echo "Public Hostname: $PRIMARY_HOSTNAME"
+	echo "Primary Hostname: $PRIMARY_HOSTNAME"
 fi
 
 
