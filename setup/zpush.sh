@@ -22,7 +22,7 @@ php5enmod imap
 
 if [ ! -d /usr/local/lib/z-push ]; then
 	ZPUSH=z-push-2.1.3-1892
-	wget -O /tmp/zpush.tgz http://download.z-push.org/final/2.1/$ZPUSH.tar.gz
+	wget -qO /tmp/zpush.tgz http://download.z-push.org/final/2.1/$ZPUSH.tar.gz
 	tar -C /tmp -zxf /tmp/zpush.tgz
 	mv /tmp/$ZPUSH /usr/local/lib/z-push
 	ln -s /usr/local/lib/z-push/z-push-admin.php /usr/sbin/z-push-admin
@@ -50,5 +50,4 @@ chown www-data:www-data /var/lib/z-push
 
 # Restart service.
 
-service php-fastcgi restart
-
+restart_service php-fastcgi

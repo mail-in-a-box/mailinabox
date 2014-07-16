@@ -100,7 +100,7 @@ EOF
 # Restart Services
 ##################
 
-service postfix restart
-service dovecot restart
+restart_service postfix
+restart_service dovecot
 
 

@@ -3,7 +3,7 @@
 source setup/functions.sh
 
 apt_install python3-flask links duplicity libyaml-dev python3-dnspython
-pip3 install rtyaml
+hide_output pip3 install rtyaml
 
 # Create a backup directory and a random key for encrypting backups.
 mkdir -p $STORAGE_ROOT/backup
@@ -19,7 +19,7 @@ ln -s `pwd`/management/daemon.py /usr/local/bin/mailinabox-daemon
 # running after a reboot.
 rm -f /etc/init.d/mailinabox
 ln -s $(pwd)/conf/management-initscript /etc/init.d/mailinabox
-update-rc.d mailinabox defaults
+hide_output update-rc.d mailinabox defaults
 
 # Perform a daily backup.
 cat > /etc/cron.daily/mailinabox-backup << EOF;
@@ -31,4 +31,4 @@ EOF
 chmod +x /etc/cron.daily/mailinabox-backup
 
 # Start it.
-service mailinabox restart
+restart_service mailinabox

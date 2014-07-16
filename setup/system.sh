@@ -2,8 +2,9 @@ source setup/functions.sh # load our functions
 
 # Base system configuration.
 
-apt-get -qq update
-apt-get -qq -y upgrade
+echo Updating system packages...
+hide_output apt-get update
+hide_output apt-get -y upgrade
 
 # Install basic utilities.
 
@@ -60,4 +61,4 @@ if ! grep -q "listen-on " /etc/bind/named.conf.options; then
 	sed -i "s/^}/\n\tlisten-on { 127.0.0.1; };\n}/" /etc/bind/named.conf.options
 fi
 
-service bind9 restart
+restart_service bind9

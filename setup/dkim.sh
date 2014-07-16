@@ -54,6 +54,6 @@ tools/editconf.py /etc/postfix/main.cf \
 	milter_default_action=accept
 
 # Restart services.
-service opendkim restart
-service postfix restart
+restart_service opendkim
+restart_service postfix
 

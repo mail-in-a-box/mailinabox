@@ -34,7 +34,7 @@ chown -R $STORAGE_USER $STORAGE_ROOT/www
 # running after a reboot. Allows us to serve Roundcube for webmail.
 rm -f /etc/init.d/php-fastcgi
 ln -s $(pwd)/conf/phpfcgi-initscript /etc/init.d/php-fastcgi
-update-rc.d php-fastcgi defaults
+hide_output update-rc.d php-fastcgi defaults
 
 # Put our webfinger and Exchange autodiscover.xml server scripts
 # into a well-known location.
@@ -48,8 +48,8 @@ mkdir -p $STORAGE_ROOT/webfinger/acct;
 chown -R $STORAGE_USER $STORAGE_ROOT/webfinger
 
 # Start services.
-service nginx restart
-service php-fastcgi restart
+restart_service nginx
+restart_service php-fastcgi
 
 # Open ports.
 ufw_allow http

@@ -19,7 +19,7 @@ tools/editconf.py /etc/default/spamassassin \
 	CRON=1
 
 # Configure pyzor.
-pyzor discover
+hide_output pyzor discover
 
 # Pass messages on to docevot on port 10026.
 # This is actually the default setting but we don't want to lose track of it.
@@ -58,6 +58,6 @@ EOF
 # sa-learn --spam storage/mail/mailboxes/*/*/.Spam/cur/
 
 # Kick services.
-sudo service spampd restart
-sudo service dovecot restart
+restart_service spampd
+restart_service dovecot
 

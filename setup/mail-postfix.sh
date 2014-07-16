@@ -137,4 +137,4 @@ ufw_allow submission
 
 # Restart services
 
-service postfix restart
+restart_service postfix

@@ -133,6 +133,4 @@ chown -R mail.mail $STORAGE_ROOT/mail/sieve
 ufw_allow imaps
 
 # Restart services.
-service dovecot restart
-
-
+restart_service dovecot

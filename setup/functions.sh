@@ -1,14 +1,45 @@
+function hide_output {
+	# This function hides the output of a command unless the command fails
+	# and returns a non-zero exit code.
+
+	# Get a temporary file.
+	OUTPUT=$(tempfile)
+
+	# Execute command, redirecting stderr/stdout to the temporary file.
+	$@ &> $OUTPUT
+
+	# If the command failed, show the output that was captured in the temporary file.
+	if [ $? != 0 ]; then
+		# Something failed.
+		echo
+		echo FAILED: $@
+		echo -----------------------------------------
+		cat $OUTPUT
+		echo -----------------------------------------
+	fi
+
+	# Remove temporary file.
+	rm -f $OUTPUT
+}
+
 function apt_install {
 	# Report any packages already installed.
 	PACKAGES=$@
 	TO_INSTALL=""
+	ALREADY_INSTALLED=""
 	for pkg in $PACKAGES; do
 		if dpkg -s $pkg 2>/dev/null | grep "^Status: install ok installed" > /dev/null; then
-			echo $pkg is already installed \(`dpkg -s $pkg | grep ^Version: | sed -e "s/.*: //"`\)
+			if [[ ! -z "$ALREADY_INSTALLED" ]]; then ALREADY_INSTALLED="$ALREADY_INSTALLED, "; fi
+			ALREADY_INSTALLED="$ALREADY_INSTALLED$pkg (`dpkg -s $pkg | grep ^Version: | sed -e 's/.*: //'`)"
 		else
 			TO_INSTALL="$TO_INSTALL""$pkg "
 		fi
 	done
+
+	# List the packages already installed.
+	if [[ ! -z "$ALREADY_INSTALLED" ]]; then
+		echo already installed: $ALREADY_INSTALLED
+	fi
 
 	# List the packages about to be installed.
 	if [[ ! -z "$TO_INSTALL" ]]; then
@@ -16,7 +47,12 @@ function apt_install {
 	fi
 
 	# 'DEBIAN_FRONTEND=noninteractive' is to prevent dbconfig-common from asking you questions.
-	DEBIAN_FRONTEND=noninteractive apt-get -qq -y install $PACKAGES > /dev/null;
+	# Although we could pass -qq to apt-get to make output quieter, many packages write to stdout
+	# and stderr things that aren't really important. Use our hide_output function to capture
+	# all of that and only show it if there is a problem (i.e. if apt_get returns a failure exit status).
+	DEBIAN_FRONTEND=noninteractive \
+	hide_output \
+	apt-get -y install $PACKAGES
 }
 
 function get_default_hostname {
@@ -101,3 +137,6 @@ function ufw_allow {
 	fi
 }
 
+function restart_service {
+	hide_output service $1 restart
+}
