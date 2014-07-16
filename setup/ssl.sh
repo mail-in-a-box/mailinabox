@@ -39,5 +39,5 @@ fi
 
 echo
 echo "Your SSL certificate's fingerpint is:"
-openssl x509 -in /home/user-data/ssl/ssl_certificate.pem -noout -fingerprint
+openssl x509 -in $STORAGE_ROOT/ssl/ssl_certificate.pem -noout -fingerprint
 echo
