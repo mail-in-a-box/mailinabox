@@ -4,21 +4,10 @@
 
 source setup/functions.sh # load our functions
 
-if [ -t 0 ]; then
-	# In an interactive shell...
-	echo
-	echo "Hello and thanks for deploying a Mail-in-a-Box!"
-	echo "-----------------------------------------------"
-	echo
-	echo "I'm going to ask you a few questions. To change your answers later,"
-	echo "later, just re-run this script."
-fi
-
 # Check system setup.
 
 # Check that we are running on  Ubuntu 14.04 LTS.
 if [ "`lsb_release -d | sed 's/.*:\s*//'`" != "Ubuntu 14.04 LTS" ]; then
-	echo
 	echo "Mail-in-a-Box only supports being installed on Ubuntu 14.04, sorry. You are running:"
 	echo
 	lsb_release -d | sed 's/.*:\s*//'
@@ -32,17 +21,27 @@ fi
 TOTAL_PHYSICAL_MEM=$(free -m | grep ^Mem: | sed "s/^Mem: *\([0-9]*\).*/\1/")
 if [ $TOTAL_PHYSICAL_MEM -lt 768 ]; then
 if [ ! -d /vagrant ]; then
-	echo
 	echo "Your Mail-in-a-Box needs more than $TOTAL_PHYSICAL_MEM MB RAM."
 	echo "Please provision a machine with at least 768 MB, 1 GB recommended."
 	exit
 fi
 fi
 
+if [ -t 0 ]; then
+	# In an interactive shell...
+	echo
+	echo "Hello and thanks for deploying a Mail-in-a-Box!"
+	echo "-----------------------------------------------"
+	echo
+	echo "I'm going to ask you a few questions. To change your answers later,"
+	echo "later, just re-run this script."
+fi
+
 # Recall the last settings used if we're running this a second time.
 if [ -f /etc/mailinabox.conf ]; then
 	# Run any system migrations before proceeding. Since this is a second run,
 	# we assume we have Python already installed.
+	echo
 	setup/migrate.py --migrate
 
 	# Okay now load the old .conf file to get existing configuration options.
