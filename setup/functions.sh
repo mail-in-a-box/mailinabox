@@ -47,9 +47,14 @@ function apt_install {
 	fi
 
 	# 'DEBIAN_FRONTEND=noninteractive' is to prevent dbconfig-common from asking you questions.
+	#
 	# Although we could pass -qq to apt-get to make output quieter, many packages write to stdout
 	# and stderr things that aren't really important. Use our hide_output function to capture
 	# all of that and only show it if there is a problem (i.e. if apt_get returns a failure exit status).
+	#
+	# Also note that we still include the whole original package list in the apt-get command in
+	# case it wants to upgrade anything, I guess? Maybe we can remove it. Doesn't normally make
+	# a difference.
 	DEBIAN_FRONTEND=noninteractive \
 	hide_output \
 	apt-get -y install $PACKAGES
