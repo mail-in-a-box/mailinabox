@@ -16,6 +16,7 @@ fi
 
 # Check system setup.
 
+# Check that we are running on  Ubuntu 14.04 LTS.
 if [ "`lsb_release -d | sed 's/.*:\s*//'`" != "Ubuntu 14.04 LTS" ]; then
 	echo
 	echo "Mail-in-a-Box only supports being installed on Ubuntu 14.04, sorry. You are running:"
@@ -24,6 +25,18 @@ if [ "`lsb_release -d | sed 's/.*:\s*//'`" != "Ubuntu 14.04 LTS" ]; then
 	echo
 	echo "We can't write scripts that run on every possible setup, sorry."
 	exit
+fi
+
+# Check that we have enough memory. Skip the check if we appear to be
+# running inside of Vagrant, because that's really just for testing.
+TOTAL_PHYSICAL_MEM=$(free -m | grep ^Mem: | sed "s/^Mem: *\([0-9]*\).*/\1/")
+if [ $TOTAL_PHYSICAL_MEM -lt 768 ]; then
+if [ ! -d /vagrant ]; then
+	echo
+	echo "Your Mail-in-a-Box needs more than $TOTAL_PHYSICAL_MEM MB RAM."
+	echo "Please provision a machine with at least 768 MB, 1 GB recommended."
+	exit
+fi
 fi
 
 # Recall the last settings used if we're running this a second time.
