@@ -6,6 +6,15 @@ source setup/functions.sh # load our functions
 
 # Check system setup.
 
+# Are we running as root?
+if [[ $EUID -ne 0 ]]; then
+	echo "This script must be run as root. Please re-run like this:"
+	echo
+	echo "sudo setup/start.sh"
+	echo
+	exit
+fi
+
 # Check that we are running on  Ubuntu 14.04 LTS.
 if [ "`lsb_release -d | sed 's/.*:\s*//'`" != "Ubuntu 14.04 LTS" ]; then
 	echo "Mail-in-a-Box only supports being installed on Ubuntu 14.04, sorry. You are running:"
