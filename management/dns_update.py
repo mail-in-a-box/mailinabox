@@ -126,13 +126,13 @@ def do_dns_update(env):
 
 ########################################################################
 
-def build_zone(domain, all_domains, additional_records, env, with_ns=True):
+def build_zone(domain, all_domains, additional_records, env, is_zone=True):
 	records = []
 
 	# For top-level zones, define ourselves as the authoritative name server.
 	# 'False' in the tuple indicates these records would not be used if the zone
 	# is managed outside of the box.
-	if with_ns:
+	if is_zone:
 		records.append((None,  "NS",  "ns1.%s." % env["PRIMARY_HOSTNAME"], False))
 		records.append((None,  "NS",  "ns2.%s." % env["PRIMARY_HOSTNAME"], False))
 
@@ -164,7 +164,7 @@ def build_zone(domain, all_domains, additional_records, env, with_ns=True):
 	subdomains = [d for d in all_domains if d.endswith("." + domain)]
 	for subdomain in subdomains:
 		subdomain_qname = subdomain[0:-len("." + domain)]
-		subzone = build_zone(subdomain, [], {}, env, with_ns=False)
+		subzone = build_zone(subdomain, [], {}, env, is_zone=False)
 		for child_qname, child_rtype, child_value, child_explanation in subzone:
 			if child_qname == None:
 				child_qname = subdomain_qname
@@ -205,6 +205,7 @@ def build_zone(domain, all_domains, additional_records, env, with_ns=True):
 	]
 	for qname, rtype, value, explanation in defaults:
 		if value is None or value.strip() == "": continue # skip IPV6 if not set
+		if not is_zone and qname == "www": continue # don't create any default 'www' subdomains on what are themselves subdomains
 		if not has_rec(qname, rtype):
 			records.append((qname, rtype, value, explanation))
 
