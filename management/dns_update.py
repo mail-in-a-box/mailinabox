@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 # Creates DNS zone files for all of the domains of all of the mail users
 # and mail aliases and restarts nsd.
 ########################################################################
@@ -63,8 +65,7 @@ def do_dns_update(env):
 	updated_domains = []
 	for i, (domain, zonefile) in enumerate(zonefiles):
 		# Build the records to put in the zone.
-		subdomains = [d for d in domains if d.endswith("." + domain)]
-		records = build_zone(domain, subdomains, additional_records, env)
+		records = build_zone(domain, domains, additional_records, env)
 
 		# See if the zone has changed, and if so update the serial number
 		# and write the zone file.
@@ -125,7 +126,7 @@ def do_dns_update(env):
 
 ########################################################################
 
-def build_zone(domain, subdomains, additional_records, env, with_ns=True):
+def build_zone(domain, all_domains, additional_records, env, with_ns=True):
 	records = []
 
 	# For top-level zones, define ourselves as the authoritative name server.
@@ -135,6 +136,22 @@ def build_zone(domain, subdomains, additional_records, env, with_ns=True):
 		records.append((None,  "NS",  "ns1.%s." % env["PRIMARY_HOSTNAME"], False))
 		records.append((None,  "NS",  "ns2.%s." % env["PRIMARY_HOSTNAME"], False))
 
+	# In PRIMARY_HOSTNAME...
+	if domain == env["PRIMARY_HOSTNAME"]:
+		# Define ns1 and ns2.
+		# 'False' in the tuple indicates these records would not be used if the zone
+		# is managed outside of the box.
+		records.append(("ns1", "A", env["PUBLIC_IP"], False))
+		records.append(("ns2", "A", env["PUBLIC_IP"], False))
+
+		# Set the A/AAAA records. Do this early for the PRIMARY_HOSTNAME so that the user cannot override them
+		# and we can provide different explanatory text.
+		records.append((None, "A", env["PUBLIC_IP"], "Required. Sets the IP address of the box."))
+		if env.get("PUBLIC_IPV6"): records.append((None, "AAAA", env["PUBLIC_IPV6"], "Required. Sets the IPv6 address of the box."))
+
+		# Add a DANE TLSA record for SMTP.
+		records.append(("_25._tcp", "TLSA", build_tlsa_record(env), "Recommended when DNSSEC is enabled. Advertises to mail servers connecting to the box that mandatory encryption should be used."))
+
 	# The MX record says where email for the domain should be delivered: Here!
 	records.append((None,  "MX",  "10 %s." % env["PRIMARY_HOSTNAME"], "Required. Specifies the hostname of the machine that handles @%s mail." % domain))
 
@@ -142,8 +159,9 @@ def build_zone(domain, subdomains, additional_records, env, with_ns=True):
 	# the domain, and no one else.
 	records.append((None,  "TXT", '"v=spf1 mx -all"', "Recomended. Specifies that only the box is permitted to send @%s mail." % domain))
 
-	# If we need to define DNS for any subdomains of this domain, include it
-	# in the zone.
+	# Add DNS records for any subdomains of this domain. We should not have a zone for
+	# both a domain and one of its subdomains.
+	subdomains = [d for d in all_domains if d.endswith("." + domain)]
 	for subdomain in subdomains:
 		subdomain_qname = subdomain[0:-len("." + domain)]
 		subzone = build_zone(subdomain, [], {}, env, with_ns=False)
@@ -153,17 +171,6 @@ def build_zone(domain, subdomains, additional_records, env, with_ns=True):
 			else:
 				child_qname += "." + subdomain_qname
 			records.append((child_qname, child_rtype, child_value, child_explanation))
-
-	# In PRIMARY_HOSTNAME...
-	if domain == env["PRIMARY_HOSTNAME"]:
-		# Define ns1 and ns2.
-		# 'False' in the tuple indicates these records would not be used if the zone
-		# is managed outside of the box.
-		records.append(("ns1", "A", env["PUBLIC_IP"], False))
-		records.append(("ns2", "A", env["PUBLIC_IP"], False))
-
-		# Add a DANE TLSA record for SMTP.
-		records.append(("_25._tcp", "TLSA", build_tlsa_record(env), "Recommended when DNSSEC is enabled. Advertises to mail servers connecting to the box that mandatory encryption should be used."))
 
 	def has_rec(qname, rtype):
 		for rec in records:
@@ -531,3 +538,29 @@ def justtestingdotemail(domain, records):
 			"--data", "record=%s" % urllib.parse.quote(value),
 			]).decode("utf8"))
 		print("\t...", resp.get("message", "?"))
+
+########################################################################
+
+if __name__ == "__main__":
+	from utils import load_environment
+	env = load_environment()
+	domains = get_dns_domains(env)
+	zonefiles = get_dns_zones(env)
+	for domain, zonefile in zonefiles:
+		records = build_zone(domain, domains, {}, env)
+
+		# remove records that we don't dislay
+		records = [r for r in records if r[3] is not False]
+
+		# put Required at the top
+		records.sort(key = lambda r : 0 if r[3].startswith("Required.") else (1 if r[3].startswith("Recommended.") else 2))
+
+		# print
+		for qname, rtype, value, explanation in records:
+			print("; " + explanation)
+			if qname == None:
+				qname = domain
+			else:
+				qname = qname + "." + domain
+			print(qname, rtype, value)
+			print()
