@@ -143,6 +143,9 @@ def build_zone(domain, all_domains, additional_records, env, is_zone=True):
 		# is managed outside of the box.
 		records.append(("ns1", "A", env["PUBLIC_IP"], False))
 		records.append(("ns2", "A", env["PUBLIC_IP"], False))
+		if env.get('PUBLIC_IPV6'):
+			records.append(("ns1", "AAAA", env["PUBLIC_IPV6"]))
+			records.append(("ns2", "AAAA", env["PUBLIC_IPV6"]))
 
 		# Set the A/AAAA records. Do this early for the PRIMARY_HOSTNAME so that the user cannot override them
 		# and we can provide different explanatory text.
