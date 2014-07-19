@@ -215,17 +215,14 @@ sudo setup/start.sh</pre>
 					<li data-title="IMAP" data-content="IMAP is the protocol you'll use to connect to your box to see if you have new mail."><a href="http://dovecot.org/">IMAP</a></li>
 					<li data-title="Exchange ActiveSync" data-content="An alternative to IMAP, Exchange ActiveSync is a protocol for checking if you have new mail."><a href="http://z-push.org/">Exchange ActiveSync</a></li>
 					<li data-title="Webmail" data-content="Check your email from your browser from anywhere. We use the open source Roundcube Webmail project."><a href="http://roundcube.net/">Webmail</a></li>
-					<li>Your log-in to your box is always encrypted over TLS/HTTPS.</li>
 					<li data-title="Spam Filtering" data-content="Spamassassin and IP address blacklists protect you from spam."><a href="https://spamassassin.apache.org/">Spam filtering</a></li>
 					<li data-title="Greylisting" data-content="Greylisting cuts down on spam by soft-rejecting mail the first time it arrives. All compliant SMTP servers re-send the mail after a few minutes. Spammers don't usually bother trying again."><a href="http://postgrey.schweikert.ch/">Greylisting</a></li>
-					<li data-title="WWW" data-content="Upload static files to the box to host your own homepage too.">Website (static pages)</li>
-					<li>The box is also a DNS server and it manages five DNS protocols for you:</li>
-					<li data-title="Email Identity" data-content="Your box sets up SPF, DKIM, and DMARC for you. These DNS-based protocols tell recipients of your mail that you were definitely the sender."><a href="https://en.wikipedia.org/wiki/Sender_Policy_Framework">SPF</a>, <a href="https://en.wikipedia.org/wiki/DomainKeys_Identified_Mail">DKIM</a>, <a href="https://en.wikipedia.org/wiki/DMARC">DMARC</a></li>
-					<li data-title="Secure DNS and TLSA" data-content="When enabled, DNSSEC provides a higher level of protection against active attacks. DANE TLSA guarantees that mail sent between two Mail-in-a-Boxes will be encrypted."><a href="https://en.wikipedia.org/wiki/DNSSEC">DNSSEC</a>, <a href="https://en.wikipedia.org/wiki/DNS-based_Authentication_of_Named_Entities">DANE TLSA</a></li>
-    				<li data-title="Opportunistic Encryption" data-content="As a protection against passive surveillance, your mail will be encrypted in transit when communicating with other SMTP servers that support opportunistic TLS."><a href="https://en.wikipedia.org/wiki/Opportunistic_encryption">Opportunistic TLS</a></li>
-					<li data-title="Cryptography Settings" data-content="Settings are tweaked for strong ciphers, the right protocols, and HSTS. Privacy sensitive mail headers in your outgoing email are stripped."><a href="https://gist.github.com/konklone/6532544">Other Good Crypto Settings</a></li>
-					<li>A command-line tool and an HTTP-based API for administering mailboxes and mail aliases.</li>
-					<li>As Mail-in-a-Box improves, you can update your machine in just a few minutes. No need to re-install from scratch.</li>
+					<li data-title="WWW" data-content="Upload static files to the box to host your own homepage too."><a href="http://nginx.org/">Static Website Hosting</a></li>
+					<li data-title="DNS" data-content="The box is also a non-recursive DNS server so that it can automatically configure SPF, DKIM, DMARC, DNSSEC, and DANE TLSA."><a href="https://en.wikipedia.org/wiki/Domain_Name_System">DNS Server</a></li>
+					<li data-title="Email Identity" data-content="Your box sets up SPF, DKIM, and DMARC for you. These DNS-based protocols tell recipients of your mail that you were definitely the sender."><a href="https://en.wikipedia.org/wiki/Sender_Policy_Framework">SPF</a>, <a href="https://en.wikipedia.org/wiki/DomainKeys_Identified_Mail">DKIM</a>, &amp; <a href="https://en.wikipedia.org/wiki/DMARC">DMARC</a></li>
+					<li data-title="Secure DNS and TLSA" data-content="When enabled, DNSSEC provides a higher level of protection against active attacks. DANE TLSA guarantees that mail sent between two Mail-in-a-Boxes will be encrypted."><a href="https://en.wikipedia.org/wiki/DNSSEC">DNSSEC</a> &amp; <a href="https://en.wikipedia.org/wiki/DNS-based_Authentication_of_Named_Entities">DANE TLSA</a></li>
+					<li data-title="Cryptography Settings" data-content="Settings are tweaked for opportunistic TLS, strong ciphers, the right protocols, and HSTS. Privacy sensitive mail headers in your outgoing email are stripped."><a href="https://gist.github.com/konklone/6532544">Good Crypto Settings</a></li>
+					<li><a href="https://launchpad.net/ufw">Firewall</a></li>
     			</ul>
     		</div>
     	</div>
