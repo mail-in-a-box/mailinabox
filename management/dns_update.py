@@ -182,22 +182,9 @@ def build_zone(domain, all_domains, additional_records, env, is_zone=True):
 		return False
 
 	# The user may set other records that don't conflict with our settings.
-	for qname, value in additional_records.items():
-		if qname != domain and not qname.endswith("." + domain): continue
-		if qname == domain:
-			qname = None
-		else:
-			qname = qname[0:len(qname)-len("." + domain)]
-		if isinstance(value, str):
-			values = [("A", value)]
-		elif isinstance(value, dict):
-			values = value.items()
-		else:
-			raise ValueError()
-		for rtype, value2 in values:
-			if has_rec(qname, rtype): continue
-			if rtype == "TXT": value2 = "\"" + value2 + "\""
-			records.append((qname, rtype, value2, "(Set by user.)"))
+	for qname, rtype, value in get_custom_records(domain, additional_records):
+		if has_rec(qname, rtype): continue
+		records.append((qname, rtype, value, "(Set by user.)"))
 
 	# Add defaults if not overridden by the user's custom settings.
 	defaults = [
@@ -227,6 +214,40 @@ def build_zone(domain, all_domains, additional_records, env, is_zone=True):
 	records.sort(key = lambda rec : list(reversed(rec[0].split(".")) if rec[0] is not None else ""))
 
 	return records
+
+########################################################################
+
+def get_custom_records(domain, additional_records):
+	for qname, value in additional_records.items():
+		# Is this record for the domain or one of its subdomains?
+		if qname != domain and not qname.endswith("." + domain): continue
+
+		# Turn the fully qualified domain name in the YAML file into
+		# our short form (None => domain, or a relative QNAME).
+		if qname == domain:
+			qname = None
+		else:
+			qname = qname[0:len(qname)-len("." + domain)]
+
+		# Short form. Mapping a domain name to a string is short-hand
+		# for creating A records.
+		if isinstance(value, str):
+			values = [("A", value)]
+
+		# A mapping creates multiple records.
+		elif isinstance(value, dict):
+			values = value.items()
+
+		# No other type of data is allowed.
+		else:
+			raise ValueError()
+
+		for rtype, value2 in values:
+			# For typical zone file output, quote a text record.
+			if rtype == "TXT":
+				value2 = "\"" + value2 + "\""
+
+			yield (qname, rtype, value2)
 
 ########################################################################
 
