@@ -5,17 +5,32 @@
 import os, os.path, re, rtyaml
 
 from mailconfig import get_mail_domains
+from dns_update import get_custom_dns_config
 from utils import shell, safe_domain_name, sort_domains
 
 def get_web_domains(env):
-	# What domains should we serve HTTP/HTTPS for?
+	# What domains should we serve websites for?
 	domains = set()
 
-	# Add all domain names in use by email users and mail aliases.
+	# At the least it's the PRIMARY_HOSTNAME so we can serve webmail
+	# as well as Z-Push for Exchange ActiveSync.
+	domains.add(env['PRIMARY_HOSTNAME'])
+
+	# Also serve web for all mail domains so that we might at least
+	# provide Webfinger and ActiveSync auto-discover of email settings
+	# (though the latter isn't really working). These will require that
+	# an SSL cert be installed.
 	domains |= get_mail_domains(env)
 
-	# Ensure the PRIMARY_HOSTNAME is in the list.
-	domains.add(env['PRIMARY_HOSTNAME'])
+	# ...Unless the domain has an A/AAAA record that maps it to a different
+	# IP address than this box. Remove those domains from our list.
+	dns = get_custom_dns_config(env)
+	for domain, value in dns.items():
+		if domain not in domains: continue
+		if (isinstance(value, str) and (value != "local")) \
+		  or (isinstance(value, dict) and ("A" in value) and (value["A"] != "local")) \
+		  or (isinstance(value, dict) and ("AAAA" in value) and (value["AAAA"] != "local")):
+			domains.remove(domain)
 
 	# Sort the list. Put PRIMARY_HOSTNAME first so it becomes the
 	# default server (nginx's default_server).
@@ -23,7 +38,6 @@ def get_web_domains(env):
 
 	return domains
 	
-
 def do_web_update(env):
 	# Build an nginx configuration file.
 	nginx_conf = ""

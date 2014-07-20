@@ -66,11 +66,8 @@ def run_domain_checks(env):
 		if domain in mail_domains:
 			check_mail_domain(domain, env)
 
-		if domain == env["PRIMARY_HOSTNAME"] or domain in web_domains: 
-			# We need a SSL certificate for PRIMARY_HOSTNAME because that's where the
-			# user will log in with IMAP or webmail. Any other domain we serve a
-			# website for also needs a signed certificate.
-			check_ssl_cert(domain, env)
+		if domain in web_domains:
+			check_web_domain(domain, env)
 
 		print()
 
@@ -127,18 +124,6 @@ def check_dns_zone(domain, env, dns_zonefiles):
 		print_error("""The nameservers set on this domain are incorrect. They are currently %s. Use your domain name registar's
 			control panel to set the nameservers to %s."""
 				% (existing_ns, correct_ns) )
-
-	# See if the domain's A record resolves to our PUBLIC_IP. This is already checked
-	# for PRIMARY_HOSTNAME, for which it is required. For other domains it is just nice
-	# to have if we want web.
-	if domain != env['PRIMARY_HOSTNAME']:
-		ip = query_dns(domain, "A")
-		if ip == env['PUBLIC_IP']:
-			print_ok("Domain resolves to this box's IP address. [%s => %s]" % (domain, env['PUBLIC_IP']))
-		else:
-			print_error("""This domain should resolve to your box's IP address (%s) if you would like the box to serve
-				webmail or a website on this domain. The domain currently resolves to %s in public DNS. It may take several hours for
-				public DNS to update after a change. This problem may result from other issues listed here.""" % (env['PUBLIC_IP'], ip))
 
 	# See if the domain has a DS record set.
 	ds = query_dns(domain, "DS", nxdomain=None)
@@ -197,6 +182,24 @@ def check_mail_domain(domain, env):
 
 	# Check that the postmaster@ email address exists.
 	check_alias_exists("postmaster@" + domain, env)
+
+def check_web_domain(domain, env):
+	# See if the domain's A record resolves to our PUBLIC_IP. This is already checked
+	# for PRIMARY_HOSTNAME, for which it is required for mail specifically. For it and
+	# other domains, it is required to access its website.
+	if domain != env['PRIMARY_HOSTNAME']:
+		ip = query_dns(domain, "A")
+		if ip == env['PUBLIC_IP']:
+			print_ok("Domain resolves to this box's IP address. [%s => %s]" % (domain, env['PUBLIC_IP']))
+		else:
+			print_error("""This domain should resolve to your box's IP address (%s) if you would like the box to serve
+				webmail or a website on this domain. The domain currently resolves to %s in public DNS. It may take several hours for
+				public DNS to update after a change. This problem may result from other issues listed here.""" % (env['PUBLIC_IP'], ip))
+
+	# We need a SSL certificate for PRIMARY_HOSTNAME because that's where the
+	# user will log in with IMAP or webmail. Any other domain we serve a
+	# website for also needs a signed certificate.
+	check_ssl_cert(domain, env)
 
 def query_dns(qname, rtype, nxdomain='[Not Set]'):
 	resolver = dns.resolver.get_default_resolver()

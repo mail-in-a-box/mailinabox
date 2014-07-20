@@ -48,6 +48,11 @@ def get_dns_zones(env):
 
 	return zonefiles
 	
+def get_custom_dns_config(env):
+	try:
+		return rtyaml.load(open(os.path.join(env['STORAGE_ROOT'], 'dns/custom.yaml')))
+	except:
+		return { }
 
 def do_dns_update(env):
 	# What domains (and their zone filenames) should we build?
@@ -55,10 +60,7 @@ def do_dns_update(env):
 	zonefiles = get_dns_zones(env)
 
 	# Custom records to add to zones.
-	try:
-		additional_records = rtyaml.load(open(os.path.join(env['STORAGE_ROOT'], 'dns/custom.yaml')))
-	except:
-		additional_records = { }
+	additional_records = get_custom_dns_config(env)
 
 	# Write zone files.
 	os.makedirs('/etc/nsd/zones', exist_ok=True)
