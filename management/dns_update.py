@@ -188,7 +188,6 @@ def build_zone(domain, all_domains, additional_records, env, is_zone=True):
 			qname = None
 		else:
 			qname = qname[0:len(qname)-len("." + domain)]
-		if has_rec(qname, value): continue
 		if isinstance(value, str):
 			values = [("A", value)]
 		elif isinstance(value, dict):
@@ -196,6 +195,7 @@ def build_zone(domain, all_domains, additional_records, env, is_zone=True):
 		else:
 			raise ValueError()
 		for rtype, value2 in values:
+			if has_rec(qname, rtype): continue
 			if rtype == "TXT": value2 = "\"" + value2 + "\""
 			records.append((qname, rtype, value2, "(Set by user.)"))
 
