@@ -89,10 +89,14 @@
 			margin-bottom: 1.25em; /* bottom must match p */
 		}
 
+		dl > dt {
+			margin-top: 1em;
+		}
+
 		#nav {
 			margin-top: 2em;
 		}
-			#nav a { color: #E64; text-decoration: none; }
+			#nav a { padding-bottom: .25em; color: #E64; text-decoration: none; }
 			#nav li.active { background-color: #D55; }
 			#nav li.active a { color: white; }
 			#nav li.active a:hover { color: #E64; }
@@ -114,9 +118,9 @@
     	<div class="row">
     		<div id="sidebar" class="col-sm-4 col-md-3">
 				<div id="nav" class="small">
-					<p style="margin: 0 0 1em 14px; border-bottom: 1px solid #CCC; color: #888;">Table of Contents</p>
+					<p style="margin: 0 0 .5em 14px; border-bottom: 1px solid #CCC; color: #888;">Table of Contents</p>
 			        <ul class="nav nav-list">
-			          <li><a href="#cost">Cost</a></li>
+			          <li><a href="#checklist">Checklist</a></li>
 			          <li><a href="#domain-name-registration">Getting a Domain Name</a></li>
 			          <li><a href="#hostname">The Box&rsquo;s Hostname</a></li>
 			          <li><a href="#machine">The Machine</a></li>
@@ -125,6 +129,8 @@
 			          <li><a href="#mail">Checking/Sending Mail</a></li>
 			          <li><a href="#mail-users">Adding Email Addresses</a></li>
 			          <li><a href="#ssl">SSL Certificate</a></li>
+			          <li><a href="#web">Your Website</a></li>
+			          <li><a href="#custom_dns">Custom DNS</a></li>
 			          <li><a href="#dnssec">DNSSEC</a></li>
 			          <li><a href="#other">Other</a></li>
 			          <li><a href="#checks">Systems Checks</a></li>
@@ -137,12 +143,21 @@
     			<div style="padding-left: 1em; max-width: 55em">
 	    			<h1>Mail-in-a-Box Setup Guide</h1>
 
-	    			<h2 id="cost">How much will this cost?</h2>
+	    			<h2 id="checklist">Pre-flight Checklist</h2>
 
-	    			<p>About $15/month. You&rsquo;re going to become your own Internet service provider &mdash; an ISP. It&rsquo;s going to cost a little bit of money to do so, but not much and you can divide it among friends and share your Mail-in-a-Box if you&rsquo;d like to split it up. Most of the cost is in having a (virtual) machine connected to the Internet 24/7.</p>
+	    			<dl>
+	    				<dt>Can I use my box for something else too?</dt>
+	    				<dd>No. Mail-in-a-Box must be installed on a <u>fresh</u> machine that will be <u>dedicated</u> to Mail-in-a-Box. You are on your own if you try any other configuration.</dd>
 
-	    			<p>There&rsquo;s also your time. Once a Mail-in-a-Box is set up, we hope it &ldquo; just works&rdquo; but when you are your own systems administrator you must be prepared to resolve issues as they arise.</p>
+	    				<dt>Can I use my domain name for something else?</dt>
+	    				<dd>Yes. Even though your Mail-in-a-Box will be handling mail for your domain name, you can actually point domain anywhere else. And you can create other subdomains. This is documented at the end of this guide.</dd>
 
+	    				<dt>Cost</dt>
+	    				<dd>This is going to cost you about $15 per month. You&rsquo;re going to become your own Internet service provider &mdash; an ISP. You can divide this among friends and share your Mail-in-a-Box if you&rsquo;d like to split it up. Most of the cost is in having a (virtual) machine connected to the Internet 24/7.</dd>
+
+	    				<dt>Your Time</dt>
+	    				<dd>There&rsquo;s also your time. Once a Mail-in-a-Box is set up, we hope it &ldquo;just works&rdquo; but when you are your own systems administrator you must be prepared to resolve issues as they arise.</dd>
+	    			</dl>
 
 	    			<h2 id="domain-name-registration">Your Domain Name</h2>
 
@@ -314,7 +329,7 @@ cd mailinabox</pre>
 
 	    			<p>Your box may manage the email for multiple email addresses. While logged in with SSH (see above), run:</p>
 
-	    			<pre>tools/mail.py</pre>
+	    			<pre>sudo tools/mail.py</pre>
 
 	    			<p>This command will help you add and remove email accounts and email aliases (forwarders).</p>
 
@@ -330,6 +345,47 @@ cd mailinabox</pre>
 					<p>The script will give you the CSR (which you give to your registrar or other SSL provider).</p>
 
 					<p>When you purchase an SSL certificate you will receive a certificate in PEM format and possibly a file containing &ldquo;intermediate certificates&rdquo; in PEM format. If you receive intermediate certificates, use a text editor like Notepad or Gedit and paste <em>your</em> certificate on top and <em>then</em> the intermediate certificates below it. Save the file and place this <em>combined</em> file onto your box in the location indicated by the <code>whats_next</code> script.</p>
+
+					<h2 id="web">Publishing Your Website</h2>
+
+	    			<p class="pros">Put static files in <code>/home/user-data/www/default</code>.</p>
+
+					<p>Your box will immediately begin serving a simple, default static website at the box&rsquo;s hostname (you already saw webmail there) and on any domain that you set up an email address for.</p>
+
+					<p>Replace the files in <tt>/home/user-data/www/default</tt> on your box with any HTML pages and other static files for your own website. You will probably need to use an SSH file transfer program such as <a href="https://filezilla-project.org/">FileZilla</a> or <a href="http://linuxcommand.org/man_pages/scp1.html">scp</a>. (Use the same login credentials as when you connected with <tt>ssh</tt>.)</p>
+
+					<p>If you want a different website to appear at different domain names, put the files instead in <tt>/home/user-data/www/[your.domainname.com]</tt>. Then run:</p>
+
+					<pre>sudo tools/web_update</pre>
+
+					<p>to update the web configuration so that it knows the new location of the static files.</p>
+
+					<p>The box also provides support for <a href="http://webfinger.net/">Webfinger</a>, which is a web-based protocol, if you have installed a signed certificate for the domain.</p>
+
+					<p>If you want to have the box host a static website on a domain that you have&rsquo;t set up an email address for, create a dummy email address on the domain (see above for how to do that). Then run the <tt>whats_next.py</tt> script as described in the previous section to ensure it is set up correctly.</p>
+
+					<p>Although your box is handling mail for your domain name, it is actually possible to host a website on another machine by using custom DNS. See below.</p>
+
+					<h2 id="custom_dns">Custom DNS</h2>
+
+					<p>Your box is managing the DNS for your domain names. If you run other web services on other machines, you may want to create custom DNS records.</p>
+
+					<p>Create a file named <tt>/home/user-data/dns/custom.yaml</tt> and put in it custom DNS settings in this format:</p>
+
+					<pre>www.yourdomain.com: 72.249.66.164</pre>
+
+					<p>or</p>
+
+					<pre>www.yourdomain.com:
+  CNAME: otherserver.com.</pre>
+
+  					<p>After modifying this file, run:</p>
+
+  					<pre>sudo tools/dns_update</pre>
+
+  					<p>to update the DNS settings.</p>
+
+					<p>Mail and web are handled by separate types of DNS records. You can actually override the DNS for any domain you have an email address at &mdash; except the box&rsquo;s hostname itself &mdash; to have the domain's website served by another machine without affecting its email.</p>
 
 
 					<h2 id="dnssec">Configuring DNSSEC</h2>
@@ -367,8 +423,6 @@ sudo setup/start.sh</pre>
 					<p>It is also possible to...</p>
 
 					<ul>
-						<li>Host a static website on the box.</li>
-						<li>Add custom DNS records.</li>
 						<li>Backup your mail.</li>
 					</ul>
 
