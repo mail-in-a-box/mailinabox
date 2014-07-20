@@ -8,7 +8,7 @@ hide_output apt-get -y upgrade
 
 # Install basic utilities.
 
-apt_install python3 python3-pip wget curl bind9-host
+apt_install python3 python3-pip wget curl bind9-host haveged
 
 # Turn on basic services:
 #

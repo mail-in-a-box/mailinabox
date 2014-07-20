@@ -41,13 +41,13 @@ if [ ! -f "$STORAGE_ROOT/dns/dnssec/keys.conf" ]; then
 	# instead of /dev/random for noise or else we'll be waiting
 	# a very long time. The domain name we provide ("_domain_")
 	# doesn't matter -- we'll use the same keys for all our domains.
-	KSK=$(umask 077; cd $STORAGE_ROOT/dns/dnssec; ldns-keygen -a RSASHA1-NSEC3-SHA1 -b 2048 -k -r /dev/urandom _domain_);
+	KSK=$(umask 077; cd $STORAGE_ROOT/dns/dnssec; ldns-keygen -a RSASHA1-NSEC3-SHA1 -b 2048 -k -r /dev/random _domain_);
 
 	# Now create a Zone-Signing Key (ZSK) which is expected to be
 	# rotated more often than a KSK, although we have no plans to
 	# rotate it (and doing so would be difficult to do without
 	# disturbing DNS availability.) Omit '-k' and use a shorter key.
-	ZSK=$(umask 077; cd $STORAGE_ROOT/dns/dnssec; ldns-keygen -a RSASHA1-NSEC3-SHA1 -b 1024 -r /dev/urandom _domain_);
+	ZSK=$(umask 077; cd $STORAGE_ROOT/dns/dnssec; ldns-keygen -a RSASHA1-NSEC3-SHA1 -b 1024 -r /dev/random _domain_);
 
 	# These generate two sets of files like:
 	# K_domain_.+007+08882.ds <- DS record for adding to NSD configuration files
