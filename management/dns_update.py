@@ -182,7 +182,7 @@ def build_zone(domain, all_domains, additional_records, env, is_zone=True):
 		return False
 
 	# The user may set other records that don't conflict with our settings.
-	for qname, rtype, value in get_custom_records(domain, additional_records):
+	for qname, rtype, value in get_custom_records(domain, additional_records, env):
 		if has_rec(qname, rtype): continue
 		records.append((qname, rtype, value, "(Set by user.)"))
 
@@ -217,7 +217,7 @@ def build_zone(domain, all_domains, additional_records, env, is_zone=True):
 
 ########################################################################
 
-def get_custom_records(domain, additional_records):
+def get_custom_records(domain, additional_records, env):
 	for qname, value in additional_records.items():
 		# Is this record for the domain or one of its subdomains?
 		if qname != domain and not qname.endswith("." + domain): continue
@@ -233,6 +233,8 @@ def get_custom_records(domain, additional_records):
 		# for creating A records.
 		if isinstance(value, str):
 			values = [("A", value)]
+			if value == "local" and env.get("PUBLIC_IPV6"):
+				values.appnd( ("AAAA", value) )
 
 		# A mapping creates multiple records.
 		elif isinstance(value, dict):
@@ -243,6 +245,14 @@ def get_custom_records(domain, additional_records):
 			raise ValueError()
 
 		for rtype, value2 in values:
+			# The "local" keyword on A/AAAA records are short-hand for our own IP.
+			# This also flags for web configuration that the user wants a website here.
+			if rtype == "A" and value2 == "local":
+				value2 = env["PUBLIC_IP"]
+			if rtype == "AAAA" and value2 == "local":
+				if "PUBLIC_IPV6" not in env: continue # no IPv6 address is available so don't set anything
+				value2 = env["PUBLIC_IPV6"]
+
 			# For typical zone file output, quote a text record.
 			if rtype == "TXT":
 				value2 = "\"" + value2 + "\""
