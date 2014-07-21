@@ -7,8 +7,12 @@ hide_output apt-get update
 hide_output apt-get -y upgrade
 
 # Install basic utilities.
+#
+#	haveged: Provides extra entropy to /dev/random so it doesn't stall
+#	         when generating random numbers for private keys (e.g. during
+#	         ldns-keygen).
 
-apt_install python3 python3-pip wget curl bind9-host
+apt_install python3 python3-pip wget curl bind9-host haveged
 
 # Turn on basic services:
 #
