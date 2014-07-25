@@ -65,6 +65,7 @@ fi
 
 # Force the dns_update script to be run every day to re-sign zones for DNSSEC.
 cat > /etc/cron.daily/mailinabox-dnssec << EOF;
+#!/bin/bash
 # Mail-in-a-Box
 # Re-sign any DNS zones with DNSSEC because the signatures expire periodically.
 `pwd`/tools/dns_update
