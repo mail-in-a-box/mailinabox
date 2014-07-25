@@ -30,8 +30,10 @@ source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
 # Install packages.
+# python-libmilter is needed by our encryption milter.
 
 apt_install postfix postgrey postfix-pcre
+hide_output pip3 install git+https://github.com/mail-in-a-box/python-libmilter
 
 # Basic Settings
 
@@ -53,11 +55,20 @@ tools/editconf.py /etc/postfix/main.cf \
 # c) Add a new cleanup service specific to the submission service ('authclean')
 #    that filters out privacy-sensitive headers on mail being sent out by
 #    authenticated users.
+# d) Create an alternative one running on port 10587 that requires that all recipients have findable
+#    OpenPGP keys. Encrypts the message for the recipients using a milter on port 882. The milter
+#    precedes the DKIM milter on 8891 so that the message isn't touched after DKIM signing. If the
+#    encryption milter isn't running, reject the message so we dont send anything in the clear.
 tools/editconf.py /etc/postfix/master.cf -s -w \
 	"submission=inet n       -       -       -       -       smtpd
 	  -o syslog_name=postfix/submission
 	  -o smtpd_tls_ciphers=high -o smtpd_tls_protocols=!SSLv2,!SSLv3
 	  -o cleanup_service_name=authclean" \
+	"10587=inet n       -       -       -       -       smtpd
+	  -o syslog_name=postfix/submission-encrypted
+	  -o smtpd_tls_ciphers=high -o smtpd_tls_protocols=!SSLv2,!SSLv3
+	  -o cleanup_service_name=authclean
+	  -o smtpd_milters=inet:127.0.0.1:8892,inet:127.0.0.1:8891 -o milter_default_action=reject" \
 	"authclean=unix  n       -       -       -       0       cleanup
 	  -o header_checks=pcre:/etc/postfix/outgoing_mail_header_filters"
 
@@ -134,6 +145,7 @@ tools/editconf.py /etc/postfix/main.cf \
 
 ufw_allow smtp
 ufw_allow submission
+ufw_allow 10587
 
 # Restart services
 
