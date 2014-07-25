@@ -11,7 +11,12 @@ def mgmt(cmd, data=None):
 	try:
 		response = urllib.request.urlopen(req)
 	except urllib.error.HTTPError as e:
-		print(e.read().decode('utf8'))
+		if e.code == 401:
+			print("The management daemon refused access. The API key file may be out of sync. Try 'service mailinabox restart'.", file=sys.stderr)
+		elif hasattr(e, 'read'):
+			print(e.read().decode('utf8'), file=sys.stderr)
+		else:
+			print(e, file=sys.stderr)
 		sys.exit(1)
 	return response.read().decode('utf8')
 
