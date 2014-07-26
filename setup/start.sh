@@ -177,6 +177,8 @@ if [ "$PRIMARY_HOSTNAME" = "auto-easy" ]; then
 	echo "Primary Hostname: $PRIMARY_HOSTNAME"
 fi
 
+# Run some network checks to make sure setup on this machine makes sense.
+. setup/network-checks.sh
 
 # Create the user named "user-data" and store all persistent user
 # data (mailboxes, etc.) in that user's home directory.
