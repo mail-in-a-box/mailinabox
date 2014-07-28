@@ -21,7 +21,7 @@ source /etc/mailinabox.conf # load global vars
 apt_install openssl
 
 mkdir -p $STORAGE_ROOT/ssl
-if [ ! -f $STORAGE_ROOT/ssl/ssl_certificate.pem ]; then
+if [ ! -f $STORAGE_ROOT/ssl/ssl_private_key.pem ]; then
 	# Generate a new private key if one doesn't already exist.
 	# Set the umask so the key file is not world-readable.
 	(umask 077; hide_output \
