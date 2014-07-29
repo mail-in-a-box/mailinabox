@@ -104,7 +104,7 @@ def do_dns_update(env):
 		zonefiles[i][1] += ".signed"
 
 	# Write the main nsd.conf file.
-	if write_nsd_conf(zonefiles):
+	if write_nsd_conf(zonefiles, env):
 		# Make sure updated_domains contains *something* if we wrote an updated
 		# nsd.conf so that we know to restart nsd.
 		if len(updated_domains) == 0:
@@ -383,7 +383,7 @@ $TTL 86400           ; default time to live
 
 ########################################################################
 
-def write_nsd_conf(zonefiles):
+def write_nsd_conf(zonefiles, env):
 	# Basic header.
 	nsdconf = """
 server:
@@ -397,14 +397,12 @@ server:
 """
 	
 	# Since we have bind9 listening on localhost for locally-generated
-	# DNS queries that require a recursive nameserver, we must have
-	# nsd listen only on public network interfaces. Those interfaces
-	# may have addresses different from the public IP address that the
-	# Internet sees this machine on. Get those interface addresses
-	# from `hostname -i` (which omits all localhost addresses).
-	for ipaddr in shell("check_output", ["/bin/hostname", "-I"]).strip().split(" "):
+	# DNS queries that require a recursive nameserver, and the system
+	# might have other network interfaces for e.g. tunnelling, we have
+	# to be specific about the network interfaces that nsd binds to.
+	for ipaddr in (env.get("PRIVATE_IP", "") + " " + env.get("PRIVATE_IPV6", "")).split(" "):
+		if ipaddr == "": continue
 		nsdconf += "  ip-address: %s\n" % ipaddr
-
 
 	# Append the zones.
 	for domain, zonefile in zonefiles:

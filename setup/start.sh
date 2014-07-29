@@ -136,6 +136,26 @@ if [ -z "$PUBLIC_IPV6" ]; then
 	read -e -i "$DEFAULT_PUBLIC_IPV6" -p "Public IPv6: " PUBLIC_IPV6
 fi
 
+# Get the IP addresses of the local network interface(s) that are connected
+# to the Internet. We need these when we want to have services bind only to
+# the public network interfaces (not loopback, not tunnel interfaces).
+if [ -z "$PRIVATE_IP" ]; then
+	PRIVATE_IP=$(get_default_privateip 4)
+fi
+if [ -z "$PRIVATE_IPV6" ]; then
+	PRIVATE_IPV6=$(get_default_privateip 6)
+fi
+if [[ -z "$PRIVATE_IP" && -z "$PRIVATE_IPV6" ]]; then
+	echo
+	echo "I could not determine the IP or IPv6 address of the network inteface"
+	echo "for connecting to the Internet. Setup must stop."
+	echo
+	hostname -I
+	route
+	echo
+	exit
+fi
+
 # We need a country code to generate a certificate signing request. However
 # if a CSR already exists then we won't be generating a new one and there's
 # no reason to ask for the country code now. $STORAGE_ROOT has not yet been
@@ -199,6 +219,8 @@ STORAGE_ROOT=$STORAGE_ROOT
 PRIMARY_HOSTNAME=$PRIMARY_HOSTNAME
 PUBLIC_IP=$PUBLIC_IP
 PUBLIC_IPV6=$PUBLIC_IPV6
+PRIVATE_IP=$PRIVATE_IP
+PRIVATE_IPV6=$PRIVATE_IPV6
 CSR_COUNTRY=$CSR_COUNTRY
 MIGRATIONID=$MIGRATIONID
 EOF

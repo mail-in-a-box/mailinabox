@@ -77,62 +77,58 @@ function get_default_publicip {
 	# API, but if that fails (maybe we don't have Internet access
 	# right now) then use the IP address that this machine knows
 	# itself as.
-	get_publicip_from_web_service || get_publicip_fallback
+	get_publicip_from_web_service 4 || get_default_privateip 4
 }
 
 function get_default_publicipv6 {
-	get_publicipv6_from_web_service || get_publicipv6_fallback
+	get_publicip_from_web_service 6 || get_default_privateip 6
 }
 
 function get_publicip_from_web_service {
 	# This seems to be the most reliable way to determine the
 	# machine's public IP address: asking a very nice web API
 	# for how they see us. Thanks go out to icanhazip.com.
-	curl -4 --fail --silent icanhazip.com 2>/dev/null
+	# See: https://major.io/icanhazip-com-faq/
+	#
+	# Pass '4' or '6' as an argument to this function to specify
+	# what type of address to get (IPv4, IPv6).
+	curl -$1 --fail --silent icanhazip.com 2>/dev/null
 }
 
-function get_publicipv6_from_web_service {
-	curl -6 --fail --silent icanhazip.com 2>/dev/null
-}
+function get_default_privateip {
+	# Return the IP address of the network interface connected
+	# to the Internet.
+	#
+	# We used to use `hostname -I` and then filter for either
+	# IPv4 or IPv6 addresses. However if there are multiple
+	# network interfaces on the machine, not all may be for
+	# reaching the Internet.
+	#
+	# Instead use `ip route get` which asks the kernel to use
+	# the system's routes to select which interface would be
+	# used to reach a public address. We'll use 8.8.8.8 as
+	# the destination. It happens to be Google Public DNS, but
+	# no connection is made. We're just seeing how the box
+	# would connect to it. There many be multiple IP addresses
+	# assigned to an interface. `ip route get` reports the
+	# preferred. That's good enough for us. See issue #121.
+	#
+	# Also see ae67409603c49b7fa73c227449264ddd10aae6a9 and
+	# issue #3 for why/how we originally added IPv6.
+	#
+	# Pass '4' or '6' as an argument to this function to specify
+	# what type of address to get (IPv4, IPv6).
 
-function get_publicip_fallback {
-	# Return the IP address that this machine knows itself as.
-	# It certainly may not be the IP address that this machine
-	# operates as on the public Internet. The machine might
-	# have multiple addresses if it has multiple network adapters.
-	set -- $(hostname --ip-address       2>/dev/null) \
-	       $(hostname --all-ip-addresses 2>/dev/null)
-	while (( $# )) && { ! is_ipv4 "$1" || is_loopback_ip "$1"; }; do
-		shift
-	done
-	printf '%s\n' "$1" # return this value
-}
+	target=8.8.8.8
 
-function get_publicipv6_fallback {
-	set -- $(hostname --ip-address       2>/dev/null) \
-	       $(hostname --all-ip-addresses 2>/dev/null)
-	while (( $# )) && { ! is_ipv6 "$1" || is_loopback_ipv6 "$1"; }; do
-		shift
-	done
-	printf '%s\n' "$1" # return this value
-}
+	# For the IPv6 route, use the corresponding IPv6 address
+	# of Google Public DNS. Again, it doesn't matter so long
+	# as it's an address on the public Internet.
+	if [ "$1" == "6" ]; then target=2001:4860:4860::8888; fi
 
-function is_ipv4 {
-	# helper for get_publicip_fallback
-	[[ "$1" == *.*.*.* ]]
-}
-
-function is_ipv6 {
-	[[ "$1" == *:*:* ]]
-}
-
-function is_loopback_ip {
-	# helper for get_publicip_fallback
-	[[ "$1" == 127.* ]]
-}
-
-function is_loopback_ipv6 {
-	[[ "$1" == ::1 ]]
+	ip -$1 -o route get $target \
+		| grep -v unreachable \
+		| sed "s/.* src \([^ ]*\).*/\1/"
 }
 
 function ufw_allow {
