@@ -106,34 +106,62 @@ if [ -z "$PRIMARY_HOSTNAME" ]; then
 fi
 
 # If the machine is behind a NAT, inside a VM, etc., it may not know
-# its IP address on the public network / the Internet. We need to
-# confirm our best guess with the user.
+# its IP address on the public network / the Internet. Ask the Internet
+# and possibly confirm with user.
 if [ -z "$PUBLIC_IP" ]; then
-	if [ -z "$DEFAULT_PUBLIC_IP" ]; then
-		# set a default on first run
-		DEFAULT_PUBLIC_IP=`get_default_publicip`
+	# Ask the Internet.
+	GUESSED_IP=$(get_publicip_from_web_service 4)
+
+	# On the first run, if we got an answer from the Internet then don't
+	# ask the user.
+	if [[ -z "$DEFAULT_PUBLIC_IP" && ! -z "$GUESSED_IP" ]]; then
+		PUBLIC_IP=$GUESSED_IP
+
+	# Otherwise on the first run at least provide a default.
+	elif [[ -z "$DEFAULT_PUBLIC_IP" ]]; then
+		DEFAULT_PUBLIC_IP=$(get_default_privateip 4)
+
+	# On later runs, if the previous value matches the guessed value then
+	# don't ask the user either.
+	elif [ "$DEFAULT_PUBLIC_IP" == "$GUESSED_IP" ]; then
+		PUBLIC_IP=$GUESSED_IP
 	fi
 
-	echo
-	echo "Enter the public IP address of this machine, as given to you by your"
-	echo "ISP. We've guessed a value, but just backspace it if it's wrong."
-	echo
+	if [ -z "$PUBLIC_IP" ]; then
+		echo
+		echo "Enter the public IP address of this machine, as given to you by your ISP."
+		echo
 
-	read -e -i "$DEFAULT_PUBLIC_IP" -p "Public IP: " PUBLIC_IP
+		read -e -i "$DEFAULT_PUBLIC_IP" -p "Public IP: " PUBLIC_IP
+	fi
 fi
 
-# Same for IPv6.
+# Same for IPv6. But it's optional. Also, if it looks like the system
+# doesn't have an IPv6, don't ask for one.
 if [ -z "$PUBLIC_IPV6" ]; then
-	if [ -z "$DEFAULT_PUBLIC_IPV6" ]; then
-		# set a default on first run
-		DEFAULT_PUBLIC_IPV6=`get_default_publicipv6`
+	# Ask the Internet.
+	GUESSED_IP=$(get_publicip_from_web_service 6)
+	MATCHED=0
+	if [[ -z "$DEFAULT_PUBLIC_IPV6" && ! -z "$GUESSED_IP" ]]; then
+		PUBLIC_IPV6=$GUESSED_IP
+	elif [[ "$DEFAULT_PUBLIC_IPV6" == "$GUESSED_IP" ]]; then
+		# No IPv6 entered and machine seems to have none, or what
+		# the user entered matches what the Internet tells us.
+		PUBLIC_IPV6=$GUESSED_IP
+		MATCHED=1
+	elif [[ -z "$DEFAULT_PUBLIC_IPV6" ]]; then
+		DEFAULT_PUBLIC_IP=$(get_default_privateip 6)
 	fi
 
-	echo
-	echo "(Optional) Enter the IPv6 address of this machine. Leave blank"
-	echo "           if the machine does not have an IPv6 address."
+	if [[ -z "$PUBLIC_IPV6" && $MATCHED == 0 ]]; then
+		echo
+		echo "Optional:"
+		echo "Enter the public IPv6 address of this machine, as given to you by your ISP."
+		echo "Leave blank if the machine does not have an IPv6 address."
+		echo
 
-	read -e -i "$DEFAULT_PUBLIC_IPV6" -p "Public IPv6: " PUBLIC_IPV6
+		read -e -i "$DEFAULT_PUBLIC_IPV6" -p "Public IPv6: " PUBLIC_IPV6
+	fi
 fi
 
 # Get the IP addresses of the local network interface(s) that are connected
@@ -182,20 +210,32 @@ fi
 
 # Automatic configuration, e.g. as used in our Vagrant configuration.
 if [ "$PUBLIC_IP" = "auto" ]; then
-	# Use a public API to get our public IP address.
-	PUBLIC_IP=`get_default_publicip`
-	echo "IP Address: $PUBLIC_IP"
+	# Use a public API to get our public IP address, or fall back to local network configuration.
+	PUBLIC_IP=$(get_publicip_from_web_service 4 || get_default_privateip 4)
 fi
 if [ "$PUBLIC_IPV6" = "auto" ]; then
-	# Use a public API to get our public IP address.
-	PUBLIC_IPV6=`get_default_publicipv6`
-	echo "IPv6 Address: $PUBLIC_IPV6"
+	# Use a public API to get our public IPv6 address, or fall back to local network configuration.
+	PUBLIC_IPV6=$(get_publicip_from_web_service 6 || get_default_privateip 6)
 fi
 if [ "$PRIMARY_HOSTNAME" = "auto-easy" ]; then
 	# Generate a probably-unique subdomain under our justtesting.email domain.
-	PRIMARY_HOSTNAME=m`get_default_publicip | sha1sum | cut -c1-5`.justtesting.email
-	echo "Primary Hostname: $PRIMARY_HOSTNAME"
+	PRIMARY_HOSTNAME=`echo $PUBLIC_IP | sha1sum | cut -c1-5`.justtesting.email
 fi
+
+# Show the configuration, since the user may have not entered it manually.
+echo
+echo "Primary Hostname: $PRIMARY_HOSTNAME"
+echo "Public IP Address: $PUBLIC_IP"
+if [ ! -z "$PUBLIC_IPV6" ]; then
+	echo "Public IPv6 Address: $PUBLIC_IPV6"
+fi
+if [ "$PRIVATE_IP" != "$PUBLIC_IP" ]; then
+	echo "Private IP Address: $PRIVATE_IP"
+fi
+if [ "$PRIVATE_IPV6" != "$PUBLIC_IPV6" ]; then
+	echo "Private IPv6 Address: $PRIVATE_IPV6"
+fi
+echo
 
 # Run some network checks to make sure setup on this machine makes sense.
 if [ -z "$SKIP_NETWORK_CHECKS" ]; then

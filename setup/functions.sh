@@ -70,20 +70,6 @@ function get_default_hostname {
 	printf '%s\n' "$1" # return this value
 }
 
-function get_default_publicip {
-	# Get the machine's public IP address. The machine might have
-	# an IP on a private network, but the IP address that we put
-	# into DNS must be one on the public Internet. Try a public
-	# API, but if that fails (maybe we don't have Internet access
-	# right now) then use the IP address that this machine knows
-	# itself as.
-	get_publicip_from_web_service 4 || get_default_privateip 4
-}
-
-function get_default_publicipv6 {
-	get_publicip_from_web_service 6 || get_default_privateip 6
-}
-
 function get_publicip_from_web_service {
 	# This seems to be the most reliable way to determine the
 	# machine's public IP address: asking a very nice web API
