@@ -93,6 +93,12 @@
 			margin-top: 1em;
 		}
 
+		code {
+			 background-color: black;
+			 color: #FDD;
+			 font-weight: bold;
+		}
+
 		#nav {
 			margin-top: 2em;
 		}
@@ -152,10 +158,10 @@
 	    				<dt>Can I use my domain name for something else?</dt>
 	    				<dd>Yes. Even though your Mail-in-a-Box will be handling mail for your domain name, you can actually point domain anywhere else. And you can create other subdomains. This is documented at the end of this guide.</dd>
 
-	    				<dt>Cost</dt>
+	    				<dt>What will it cost?</dt>
 	    				<dd>This is going to cost you about $15 per month. You&rsquo;re going to become your own Internet service provider &mdash; an ISP. You can divide this among friends and share your Mail-in-a-Box if you&rsquo;d like to split it up. Most of the cost is in having a (virtual) machine connected to the Internet 24/7.</dd>
 
-	    				<dt>Your Time</dt>
+	    				<dt>Do I have time?</dt>
 	    				<dd>There&rsquo;s also your time. Once a Mail-in-a-Box is set up, we hope it &ldquo;just works&rdquo; but when you are your own systems administrator you must be prepared to resolve issues as they arise.</dd>
 	    			</dl>
 
@@ -163,9 +169,9 @@
 
 	    			<p class="pros">Register a new domain name, or have a domain name that you can have your Mail-in-a-Box completely take over.</p>
 
-	    			<p>The first step in setting up a Mail-in-a-Box is to pick your new email address. An email address has two parts. The part after the @-sign is the &ldquo;domain name.&rdquo; Each domain name is owned by someone, and you are going to be the owner of your own.</p>
+	    			<p>The first step in setting up a Mail-in-a-Box is to pick your new email address. An email address has two parts. The part after the @-sign is the <b>domain name</b>. Each domain name is owned by someone, and you are going to be the owner of your own.</p>
 
-	    				<p class="example">Josh&rsquo;s email address is <code><script>document.write("tj".split("").reverse().join(""));</script>@occams.info</code>. His domain name is <code>occams.info</code>.</p>
+	    				<p class="example">Josh&rsquo;s email address is <script>document.write("tj".split("").reverse().join(""));</script>@occams.info. His domain name is <code>occams.info</code>.</p>
 
 	    			<p>Besides using the domain name for email, you&rsquo;ll also be able to put a simple website at the domain.</p>
 
@@ -179,11 +185,11 @@
 
 	    			<p class="pros">Your box&rsquo;s hostname should be <tt>box.yourdomain.com</tt>.</p>
 
-	    			<p>Every machine connected to the Internet has a name and an address.</p>
+	    			<p>Every machine connected to the Internet has a <b>name</b> and an <b>address</b>.</p>
 
-	    			<p>The address, an IP address, is like a telephone number. It&rsquo;s made up of numbers and is assigned to you by whoever provides Internet access to you.</p>
+	    			<p>The <b>address</b>, an IP address, is like a telephone number. It&rsquo;s made up of numbers and is assigned to you by whoever provides Internet access to you.</p>
 
-	    			<p>The name &mdash; called a &ldquo;hostname&rdquo; &mdash; is something you decide. It can be a domain name you own or any &ldquo;subdomain&rdquo; of a domain you own.</p>
+	    			<p>The name &mdash; called a <b>hostname</b> &mdash; is something you decide. It can be a domain name you own or any &ldquo;subdomain&rdquo; of a domain you own.</p>
 
 	    			<p>For your Mail-in-a-Box, we recommend naming your box <code>box</code> + <code>.</code> + your domain name.</p>
 
@@ -198,15 +204,13 @@
 
 	    			<p>Now you will rent a machine, or a virtual part of a machine, somewhere in &ldquo;the cloud.&rdquo; We&rsquo;ll call this machine your box.</p>
 
-	    			<p>We recommend going over to <a href="https://www.digitalocean.com/">Digital Ocean</a>. You must choose the Ubuntu 14.04 x64 operating system. We recommend using a machine with 1 GB of RAM and a 30 GB disk. At Digital Ocean this setup costs $10/month.</p>
+	    			<p>We recommend going over to <a href="https://www.digitalocean.com/">Digital Ocean</a>. You must choose the <code>Ubuntu 14.04 x64</code> operating system. We recommend using a machine with 1 GB of RAM and a 30 GB disk. This setup currently costs $10/month.</p>
 
 	    			<p>At Digital Ocean, your machine is called a &ldquo;droplet&rdquo; and you <strong>must</strong> name your droplet the same as its hostname.</p>
 
 	    				<p class="example">Josh&rsquo;s droplet would be named <code>box.occams.info</code> (if Josh used Digital Ocean).</p>
 
-	    			<p>I've been a long-time customer of <a href="http://rimuhosting.com/order/v2orderstart.jsp">Rimuhosting.com</a> which also provides cheap virtual machines, which they call &ldquo;VPS&rdquo;s, at several locations around the world. Choose a location near you &mdash; it&rsquo;ll be faster!</p>
-
-	    			<p>Wherever you rent your box, you must choose the Ubuntu 14.04 x64 operating system. Most any cloud provider will do, but not Amazon Web Services because its network is often blocked to prevent users from sending spam.</p>
+	    			<p>I've been a long-time customer of <a href="http://rimuhosting.com/order/v2orderstart.jsp">Rimuhosting.com</a> which also provides cheap virtual machines, which they call &ldquo;VPS&rdquo;s, at several locations around the world. Choose a location near you &mdash; it&rsquo;ll be faster! Most any cloud provider will do, but not Amazon Web Services because its network is often blocked to prevent users from sending spam. Wherever you rent your box, you <em>must</em> choose Ubuntu 14.04 x64 and at least 768 MB RAM.</p>
 
 	    			<p>Each cloud provider will have different instructions for setting up &ldquo;reverse DNS.&rdquo; You <strong>must</strong> follow your cloud provider&rsquo;s instructions for setting the reverse DNS of your box to your box&rsquo;s hostname. At Digital Ocean you set the name of your droplet to the box&rsquo;s hostname, as mentioned above.</p>
 
@@ -231,19 +235,19 @@
 
 	    			<p>First, you&rsquo;ll create two &ldquo;glue records.&rdquo; The purpose of glue records is to say that your box is becoming a part of the domain name system. These records go by different names at different registars, so also look out for &ldquo;hostnames&rdquo; or child nameservers. This will <em>not</em> be found in a DNS control panel.</p>
 
-	    			<p>A glue record has a hostname and an IP address. For historical reasons we need two glue records. The two records you need to create are for <code>ns1</code> + <code>.</code> + your box&rsquo;s actual hostname and <code>ns2</code> + <code>.</code> + your box&rsquo;s actual hostname. Those are for the hostname part of the glue records. (They stand for &ldquo;nameserver one&rdquo; and &ldquo;nameserver two&rdquo;.) For the IP address, enter the IP address of your box.</p>
+	    			<p>A glue record has a hostname and an IP address. For historical reasons we need two glue records. The two records you need to create are for <code>ns1</code> + <code>.</code> + your box&rsquo;s hostname and <code>ns2</code> + <code>.</code> + your box&rsquo;s hostname. (They stand for &ldquo;nameserver one&rdquo; and &ldquo;nameserver two&rdquo;.) For the IP address, enter the IP address of your box.</p>
 
-	    				<p class="example">Josh&rsquo;s box&rsquo;s hostname is <code>box.occams.info</code>. The two glue records are for <code>ns1.box.occams.info</code> and <code>ns2.box.occams.info</code> and list the box&rsquo;s IP address is <code>94.76.202.152</code>.</p>
+	    				<p class="example">Josh&rsquo;s box&rsquo;s hostname is box.occams.info. The two glue records are for <code>ns1.box.occams.info</code> and <code>ns2.box.occams.info</code> and list the box&rsquo;s IP address of <code>94.76.202.152</code>.</p>
 
-	    			<p>It looks something like what&rsquo;s shown in the next image.</p>
+	    			<p>It looks something like what&rsquo;s shown here:</p>
 
 	    			<img src="static/domain_hostnames.png" title="Glue Record Configuration at Your Domain Registrar" class="img-responsive figure"/>
 
 	    			<p>Your registrar may ask you to enter these hostnames with the domain name part omitted, as mine did in this case. If so, enter the part of the hostname up to the domain name.</p>
 
-	    				<p class="example">Josh&rsquo;s domain name is <code>occams.info</code>. The two glue hostnames are <code>ns1.box.occams.info</code> and <code>ns2.box.occams.info</code>, but his registrar asks him to enter them with &ldquo;.occams.info&rdquo; omitted leaving just <code>ns1.box</code> and <code>ns2.box</code>.</p>
+	    				<p class="example">Josh&rsquo;s domain name is occams.info. The two glue hostnames are <code>ns1.box.occams.info</code> and <code>ns2.box.occams.info</code>, but his registrar asks him to enter them with &ldquo;.occams.info&rdquo; omitted leaving just <code>ns1.box</code> and <code>ns2.box</code>.</p>
 
-	    			<p>If your Mail-in-a-Box is handling mail for multiple domains, you will still only set these hostnames once.</p>
+	    			<p>If your Mail-in-a-Box is handling mail for multiple domains, you only do the part above once. Other domain names skip this step.</p>
 
 	    			<h3>Nameservers</h3>
 
@@ -277,7 +281,7 @@ cd mailinabox</pre>
 
 					<p>You will be asked to enter the email address you want and a few other configuration questions. At the end you will be asked for a password for your email address.</p>
 
-					<p>This password will be used to login to webmail, and to authorize sending and receiving mail through SMTP and IMAP. It will <strong>not</strong> be used to log onto your Mail-in-a-Box server.</p>
+					<p>This password will be used to login to webmail, and to authorize sending and receiving mail through SMTP and IMAP. It will <strong>not</strong> be used to log onto your Mail-in-a-Box server using SSH.</p>
 
 					<p>It is always safe to re-run the setup script. If something goes wrong or you just want to see it again, just do again <code>sudo setup/start.sh</code>.</p>
 
