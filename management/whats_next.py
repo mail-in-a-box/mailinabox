@@ -14,7 +14,7 @@ from dns_update import get_dns_zones
 from web_update import get_web_domains, get_domain_ssl_files
 from mailconfig import get_mail_domains, get_mail_aliases
 
-from utils import shell, sort_domains
+from utils import shell, sort_domains, load_env_vars_from_file
 
 def run_checks(env):
 	run_system_checks(env)
@@ -125,25 +125,47 @@ def check_dns_zone(domain, env, dns_zonefiles):
 			control panel to set the nameservers to %s."""
 				% (existing_ns, correct_ns) )
 
-	# See if the domain has a DS record set.
+	# See if the domain has a DS record set at the registrar. The DS record may have
+	# several forms. We have to be prepared to check for any valid record. We've
+	# pre-generated all of the valid digests --- read them in.
+	ds_correct = open('/etc/nsd/zones/' + dns_zonefiles[domain] + '.ds').read().strip().split("\n")
+	digests = { }
+	for rr_ds in ds_correct:
+		ds_keytag, ds_alg, ds_digalg, ds_digest = rr_ds.split("\t")[4].split(" ")
+		digests[ds_digalg] = ds_digest
+
+	# Some registrars may want the public key so they can compute the digest. The DS
+	# record that we suggest using is for the KSK (and that's how the DS records were generated).
+	dnssec_keys = load_env_vars_from_file(os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/keys.conf'))
+	dnsssec_pubkey = open(os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/' + dnssec_keys['KSK'] + '.key')).read().split("\t")[3].split(" ")[3]
+
+	# Query public DNS for the DS record at the registrar.
 	ds = query_dns(domain, "DS", nxdomain=None)
-	ds_correct = open('/etc/nsd/zones/' + dns_zonefiles[domain] + '.ds').read().strip()
-	ds_expected = re.sub(r"\S+\.\s+3600\s+IN\s+DS\s*", "", ds_correct)
-	if ds == ds_expected:
+	ds_looks_valid = ds and len(ds.split(" ")) == 4
+	if ds_looks_valid: ds = ds.split(" ")
+	if ds_looks_valid and ds[0] == ds_keytag and ds[1] == '7' and ds[3] == digests.get(ds[2]):
 		print_ok("DNS 'DS' record is set correctly at registrar.")
-	elif ds == None:
-		print_error("""This domain's DNS DS record is not set. The DS record is optional. The DS record activates DNSSEC.
-			To set a DS record, you must follow the instructions provided by your domain name registrar and provide to them this information:""")
-		print("")
-		print("   " + ds_correct)
-		print("")
 	else:
-		print_error("""This domain's DNS DS record is incorrect. The chain of trust is broken between the public DNS system
-			and this machine's DNS server. It may take several hours for public DNS to update after a change. If you did not recently
-			make a change, you must resolve this immediately by following the instructions provided by your domain name registrar and
-			provide to them this information:""")
-		print("")
-		print("   " + ds_correct)
+		if ds == None:
+			print_error("""This domain's DNS DS record is not set. The DS record is optional. The DS record activates DNSSEC.
+				To set a DS record, you must follow the instructions provided by your domain name registrar and provide to them this information:""")
+		else:
+			print_error("""This domain's DNS DS record is incorrect. The chain of trust is broken between the public DNS system
+				and this machine's DNS server. It may take several hours for public DNS to update after a change. If you did not recently
+				make a change, you must resolve this immediately by following the instructions provided by your domain name registrar and
+				provide to them this information:""")
+		print()
+		print("\tKey Tag: " + ds_keytag + ("" if not ds_looks_valid or ds[0] == ds_keytag else " (Got '%s')" % ds[0]))
+		print("\tKey Flags: KSK")
+		print("\tAlgorithm: 7 / RSASHA1-NSEC3-SHA1" + ("" if not ds_looks_valid or ds[1] == '7' else " (Got '%s')" % ds[1]))
+		print("\tDigest Type: 2 / SHA-256")
+		print("\tDigest: " + digests['2'])
+		if ds_looks_valid and ds[3] != digests.get(ds[2]):
+			print("\t(Got digest type %s and digest %s which do not match.)" % (ds[2], ds[3]))
+		print("\tPublic Key: " + dnsssec_pubkey)
+		print()
+		print("\tBulk/Record Format:")
+		print("\t" + ds_correct[0])
 		print("")
 
 def check_mail_domain(domain, env):

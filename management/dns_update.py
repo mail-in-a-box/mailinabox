@@ -93,7 +93,7 @@ def do_dns_update(env, force=False):
 		# Thus we only sign a zone if write_nsd_zone returned True
 		# indicating the zone changed, and thus it got a new serial number.
 		# write_nsd_zone is smart enough to check if a zone's signature
-		# is nearing experiation and if so it'll bump the serial number
+		# is nearing expiration and if so it'll bump the serial number
 		# and return True so we get a chance to re-sign it.
 		sign_zone(domain, zonefile, env)
 
@@ -478,13 +478,18 @@ def sign_zone(domain, zonefile, env):
 	# zone being signed, so we can't use the .ds files generated when we created the keys.
 	# The DS record points to the KSK only. Write this next to the zone file so we can
 	# get it later to give to the user with instructions on what to do with it.
-	rr_ds = shell('check_output', ["/usr/bin/ldns-key2ds",
-		"-n", # output to stdout
-		"-2", # SHA256
-		dnssec_keys["KSK"] + ".key"
-	])
+	#
+	# We want to be able to validate DS records too, but multiple forms may be valid depending
+	# on the digest type. So we'll write all (both) valid records. Only one DS record should
+	# actually be deployed. Preferebly the first.
 	with open("/etc/nsd/zones/" + zonefile + ".ds", "w") as f:
-		f.write(rr_ds)
+		for digest_type in ('2', '1'):
+			rr_ds = shell('check_output', ["/usr/bin/ldns-key2ds",
+				"-n", # output to stdout
+				"-" + digest_type, # 1=SHA1, 2=SHA256
+				dnssec_keys["KSK"] + ".key"
+			])
+			f.write(rr_ds)
 
 	# Remove our temporary file.
 	for fn in files_to_kill:
