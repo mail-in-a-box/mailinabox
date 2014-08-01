@@ -65,7 +65,7 @@ def mail_domains():
 def dns_update():
 	from dns_update import do_dns_update
 	try:
-		return do_dns_update(env)
+		return do_dns_update(env, force=request.form.get('force', '') == '1')
 	except Exception as e:
 		return (str(e), 500)
 

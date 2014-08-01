@@ -54,7 +54,7 @@ def get_custom_dns_config(env):
 	except:
 		return { }
 
-def do_dns_update(env):
+def do_dns_update(env, force=False):
 	# What domains (and their zone filenames) should we build?
 	domains = get_dns_domains(env)
 	zonefiles = get_dns_zones(env)
@@ -71,7 +71,7 @@ def do_dns_update(env):
 
 		# See if the zone has changed, and if so update the serial number
 		# and write the zone file.
-		if not write_nsd_zone(domain, "/etc/nsd/zones/" + zonefile, records, env):
+		if not write_nsd_zone(domain, "/etc/nsd/zones/" + zonefile, records, env, force):
 			# Zone was not updated. There were no changes.
 			continue
 
@@ -288,7 +288,7 @@ def build_tlsa_record(env):
 
 ########################################################################
 
-def write_nsd_zone(domain, zonefile, records, env):
+def write_nsd_zone(domain, zonefile, records, env, force):
 	# We set the administrative email address for every domain to domain_contact@[domain.com].
 	# You should probably create an alias to your email address.
 
@@ -363,7 +363,7 @@ $TTL 86400           ; default time to live
 
 				# If the existing zone is the same as the new zone (modulo the serial number),
 				# there is no need to update the file. Unless we're forcing a bump.
-				if zone == existing_zone and not force_bump:
+				if zone == existing_zone and not force_bump and not force:
 					return False
 
 				# If the existing serial is not less than a serial number
