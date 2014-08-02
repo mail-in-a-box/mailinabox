@@ -108,3 +108,12 @@ for fn in os.listdir(backup_encrypted_dir):
 	fn2 = os.path.join(backup_duplicity_dir, fn.replace(".enc", ""))
 	if os.path.exists(fn2): continue
 	os.unlink(os.path.join(backup_encrypted_dir, fn))
+
+# Execute a post-backup script that does the copying to a remote server.
+# Run as the STORAGE_USER user, not as root. Pass our settings in
+# environment variables so the script has access to STORAGE_ROOT.
+post_script = os.path.join(backup_dir, 'after-backup')
+if os.path.exists(post_script):
+	shell('check_call',
+		['su', env['STORAGE_USER'], '-c', post_script],
+		env=env)
