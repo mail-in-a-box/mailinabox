@@ -45,6 +45,12 @@ def migration_2(env):
 	for fn in glob.glob(os.path.join(env["STORAGE_ROOT"], 'mail/mailboxes/*/*/.dovecot.svbin')):
 		os.unlink(fn)
 
+def migration_3(env):
+	# Move the migration ID from /etc/mailinabox.conf to $STORAGE_ROOT/mailinabox.version
+	# so that the ID stays with the data files that it describes the format of. The writing
+	# of the file will be handled by the main function.
+	pass
+
 def get_current_migration():
 	ver = 0
 	while True:
@@ -61,7 +67,14 @@ def run_migrations():
 
 	env = load_environment()
 
-	ourver = int(env.get("MIGRATIONID", "0"))
+	migration_id_file = os.path.join(env['STORAGE_ROOT'], 'mailinabox.version')
+	if os.path.exists(migration_id_file):
+		with open(migration_id_file) as f:
+			ourver = int(f.read().strip())
+	else:
+		# Load the legacy location of the migration ID. We'll drop support
+		# for this eventually.
+		ourver = int(env.get("MIGRATIONID", "0"))
 
 	while True:
 		next_ver = (ourver + 1)
@@ -71,6 +84,7 @@ def run_migrations():
 			# No more migrations to run.
 			break
 
+		print()
 		print("Running migration to Mail-in-a-Box #%d..." % next_ver)
 
 		try:
@@ -88,8 +102,13 @@ def run_migrations():
 
 		# Write out our current version now. Do this sooner rather than later
 		# in case of any problems.
-		env["MIGRATIONID"] = ourver
-		save_environment(env)
+		with open(migration_id_file, "w") as f:
+			f.write(str(ourver) + "\n")
+
+		# Delete the legacy location of this field.
+		if "MIGRATIONID" in env:
+			del env["MIGRATIONID"]
+			save_environment(env)
 
 		# iterate and try next version...
 

@@ -50,16 +50,13 @@ fi
 if [ -f /etc/mailinabox.conf ]; then
 	# Run any system migrations before proceeding. Since this is a second run,
 	# we assume we have Python already installed.
-	echo
 	setup/migrate.py --migrate
 
-	# Okay now load the old .conf file to get existing configuration options.
+	# Load the old .conf file to get existing configuration options loaded
+	# into variables with a DEFAULT_ prefix.
 	cat /etc/mailinabox.conf | sed s/^/DEFAULT_/ > /tmp/mailinabox.prev.conf
 	source /tmp/mailinabox.prev.conf
-	MIGRATIONID=$DEFAULT_MIGRATIONID
-else
-	# What migration are we at for new installs?
-	MIGRATIONID=$(setup/migrate.py --current)
+	rm -f /tmp/mailinabox.prev.conf
 fi
 
 # The box needs a name.
@@ -249,6 +246,8 @@ if [ -z "$STORAGE_ROOT" ]; then
 	if [ ! -d /home/$STORAGE_USER ]; then useradd -m $STORAGE_USER; fi
 	STORAGE_ROOT=/home/$STORAGE_USER
 	mkdir -p $STORAGE_ROOT
+	echo $(setup/migrate.py --current) > $STORAGE_ROOT/mailinabox.version
+	chown $STORAGE_USER.$STORAGE_USER $STORAGE_ROOT/mailinabox.version
 fi
 
 # Save the global options in /etc/mailinabox.conf so that standalone
@@ -262,7 +261,6 @@ PUBLIC_IPV6=$PUBLIC_IPV6
 PRIVATE_IP=$PRIVATE_IP
 PRIVATE_IPV6=$PRIVATE_IPV6
 CSR_COUNTRY=$CSR_COUNTRY
-MIGRATIONID=$MIGRATIONID
 EOF
 
 # Start service configuration.
