@@ -99,6 +99,12 @@
 			 font-weight: bold;
 		}
 
+		table { margin-bottom: 1.25em; }
+		table thead th { border-bottom: 1px solid #555; }
+		table th, table td {
+			padding: .25em 1em .25em 0;
+		}
+
 		#nav {
 			margin-top: 2em;
 		}
@@ -318,11 +324,23 @@ cd mailinabox</pre>
 
 	    			<p>On mobile devices you might need to install a &ldquo;mail client&rdquo; app. We recommend <a href="https://play.google.com/store/apps/details?id=com.fsck.k9">K-9 Mail</a>. On a desktop you could try <a href="https://www.mozilla.org/en-US/thunderbird/">Mozilla Thunderbird</a>.</p>
 
-	    			<p>When configuring these applications you will need to provide them with IMAP and SMTP settings. Your IMAP and SMTP server is the box&rsquo;s hostname. For IMAP, you must choose SSL and port 993. For SMTP, you must choose STARTTLS and port 587.</p>
+	    			<p>Configure your device as follows:</p>
 
-	    				<p class="example">Josh&rsquo;s IMAP and SMTP server are <code>box.occams.info</code>. (You can&rsquo;t use mine!)</p>
+	    			<table>
+	    			<tr><th>Server Name:</th> <td>Your box&rsquo;s hostname.</td></tr>
+	    			<tr><th>Username:</th> <td>The complete <u>email address</u> you provided when you ran the setup program earlier.</td></tr>
+	    			<tr><th>Password:</th> <td>The password you gave the email address during the setup program earlier.</td></tr>
+	    			</table>
 
-	    			<p>Your username for IMAP and SMTP is the <u>email address</u> you entered when you ran the setup program above, the same as with webmail.</p>
+	    			<p>Depending on your mail program, you will either use IMAP &amp; SMTP or Exchange ActiveSync:</p>
+
+	    			<table>
+	    			<thead><tr><th>Protocol</th> <th>Port</th> <th>Options</th></tr></thead>
+	    			<tr><th>IMAP</th> <td>993</td> <td>SSL</td></tr>
+	    			<tr><th>SMTP</th> <td>587</td> <td>STARTTLS</td></tr>
+	    			<tr><th>Exchange ActiveSync</th> <td>n/a</td> <td>Secure Connection</td></tr>
+	    			<tr><td colspan="3" style="padding: 0 0 0 1em; font-size: 90%">see <a href="http://z-push.org/compatibility/">list of compatible devices</a> for Exchange ActiveSync</td></tr>
+	    			</table>
 
 	    			<p>Note: Mail-in-a-Box uses <a href="http://en.wikipedia.org/wiki/Greylisting">greylisting</a> to cut down on spam. The first time you receive an email from a recipient, it may be delayed for ten minutes.</p>
 
