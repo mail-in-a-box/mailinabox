@@ -56,7 +56,7 @@ fi
 #   name server, on IPV6.
 # * The listen-on directive in named.conf.options restricts bind9 to
 #   binding to the loopback interface instead of all interfaces.
-apt_install bind9
+apt_install bind9 resolvconf
 tools/editconf.py /etc/default/bind9 \
 	RESOLVCONF=yes \
 	"OPTIONS=\"-u bind -4\""
@@ -64,5 +64,10 @@ if ! grep -q "listen-on " /etc/bind/named.conf.options; then
 	# Add a listen-on directive if it doesn't exist inside the options block.
 	sed -i "s/^}/\n\tlisten-on { 127.0.0.1; };\n}/" /etc/bind/named.conf.options
 fi
+if [ -f /etc/resolvconf/resolv.conf.d/original ]; then
+	echo "Archiving old resolv.conf (was /etc/resolvconf/resolv.conf.d/original, now /etc/resolvconf/resolv.conf.original)."
+	mv /etc/resolvconf/resolv.conf.d/original /etc/resolvconf/resolv.conf.original
+fi
 
 restart_service bind9
+restart_service resolvconf
