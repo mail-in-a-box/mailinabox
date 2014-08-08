@@ -46,10 +46,16 @@ def open_database(env, with_connection=False):
 	else:
 		return conn, conn.cursor()
 
-def get_mail_users(env):
+def get_mail_users(env, as_json=False):
 	c = open_database(env)
-	c.execute('SELECT email FROM users')
-	return [row[0] for row in c.fetchall()]
+	c.execute('SELECT email, privileges FROM users')
+	if not as_json:
+		return [row[0] for row in c.fetchall()]
+	else:
+		return [
+			{ "email": row[0], "privileges": parse_privs(row[1]) }
+			for row in c.fetchall()
+			 ]
 
 def get_mail_aliases(env):
 	c = open_database(env)
@@ -121,6 +127,40 @@ def remove_mail_user(email, env):
 
 	# Update things in case any domains are removed.
 	return kick(env, "mail user removed")
+
+def parse_privs(value):
+	return [p for p in value.split("\n") if p.strip() != ""]
+
+def get_mail_user_privileges(email, env):
+	c = open_database(env)
+	c.execute('SELECT privileges FROM users WHERE email=?', (email,))
+	rows = c.fetchall()
+	if len(rows) != 1:
+		return ("That's not a user (%s)." % email, 400)
+	return parse_privs(rows[0][0])
+
+def add_remove_mail_user_privilege(email, priv, action, env):
+	if "\n" in priv or priv.strip() == "":
+		return ("That's not a valid privilege (%s)." % priv, 400)
+
+	privs = get_mail_user_privileges(email, env)
+	if isinstance(privs, tuple): return privs # error
+
+	if action == "add":
+		if priv not in privs:
+			privs.append(priv)
+	elif action == "remove":
+		privs = [p for p in privs if p != priv]
+	else:
+		return ("Invalid action.", 400)
+
+	conn, c = open_database(env, with_connection=True)
+	c.execute("UPDATE users SET privileges=? WHERE email=?", ("\n".join(privs), email))
+	if c.rowcount != 1:
+		return ("Something went wrong.", 400)
+	conn.commit()
+
+	return "OK"
 
 def add_mail_alias(source, destination, env, do_kick=True):
 	if not validate_email(source, mode='alias'):

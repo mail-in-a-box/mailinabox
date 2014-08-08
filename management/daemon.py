@@ -1,12 +1,14 @@
 #!/usr/bin/python3
 
-import os, os.path, re
+import os, os.path, re, json
 
-from flask import Flask, request, render_template, abort
+from flask import Flask, request, render_template, abort, Response
 app = Flask(__name__)
 
 import auth, utils
-from mailconfig import get_mail_users, add_mail_user, set_mail_password, remove_mail_user, get_mail_aliases, get_mail_domains, add_mail_alias, remove_mail_alias
+from mailconfig import get_mail_users, add_mail_user, set_mail_password, remove_mail_user
+from mailconfig import get_mail_user_privileges, add_remove_mail_user_privilege
+from mailconfig import get_mail_aliases, get_mail_domains, add_mail_alias, remove_mail_alias
 
 env = utils.load_environment()
 
@@ -29,7 +31,11 @@ def index():
 
 @app.route('/mail/users')
 def mail_users():
-    return "".join(x+"\n" for x in get_mail_users(env))
+	if request.args.get("format", "") == "json":
+		users = get_mail_users(env, as_json=True)
+		return Response(json.dumps(users), status=200, mimetype='application/json')
+	else:
+		return "".join(x+"\n" for x in get_mail_users(env))
 
 @app.route('/mail/users/add', methods=['POST'])
 def mail_users_add():
@@ -42,6 +48,22 @@ def mail_users_password():
 @app.route('/mail/users/remove', methods=['POST'])
 def mail_users_remove():
 	return remove_mail_user(request.form.get('email', ''), env)
+
+
+@app.route('/mail/users/privileges')
+def mail_user_privs():
+	privs = get_mail_user_privileges(request.args.get('email', ''), env)
+	if isinstance(privs, tuple): return privs # error
+	return "\n".join(privs)
+
+@app.route('/mail/users/privileges/add', methods=['POST'])
+def mail_user_privs_add():
+	return add_remove_mail_user_privilege(request.form.get('email', ''), request.form.get('privilege', ''), "add", env)
+
+@app.route('/mail/users/privileges/remove', methods=['POST'])
+def mail_user_privs_remove():
+	return add_remove_mail_user_privilege(request.form.get('email', ''), request.form.get('privilege', ''), "remove", env)
+
 
 @app.route('/mail/aliases')
 def mail_aliases():

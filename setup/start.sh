@@ -302,16 +302,20 @@ if [ -z "`tools/mail.py user`" ]; then
 			EMAIL_ADDR=me@$PRIMARY_HOSTNAME
 			EMAIL_PW=1234
 			echo
-			echo "Creating a new mail account for $EMAIL_ADDR with password $EMAIL_PW."
+			echo "Creating a new administrative mail account for $EMAIL_ADDR with password $EMAIL_PW."
 			echo
 		fi
 	else
 		echo
-		echo "Okay. I'm about to set up $EMAIL_ADDR for you."
+		echo "Okay. I'm about to set up $EMAIL_ADDR for you. This account will also"
+		echo "have access to the box's control panel."
 	fi
 
 	# Create the user's mail account. This will ask for a password if none was given above.
 	tools/mail.py user add $EMAIL_ADDR $EMAIL_PW
+
+	# Make it an admin.
+	hide_output tools/mail.py user make-admin $EMAIL_ADDR
 
 	# Create an alias to which we'll direct all automatically-created administrative aliases.
 	tools/mail.py alias add administrator@$PRIMARY_HOSTNAME $EMAIL_ADDR

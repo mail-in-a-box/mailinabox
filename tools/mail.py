@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 
-import sys, getpass, urllib.request, urllib.error
+import sys, getpass, urllib.request, urllib.error, json
 
-def mgmt(cmd, data=None):
+def mgmt(cmd, data=None, is_json=False):
 	mgmt_uri = 'http://localhost:10222'
 
 	setup_key_auth(mgmt_uri)
@@ -18,7 +18,9 @@ def mgmt(cmd, data=None):
 		else:
 			print(e, file=sys.stderr)
 		sys.exit(1)
-	return response.read().decode('utf8')
+	resp = response.read().decode('utf8')
+	if is_json: resp = json.loads(resp)
+	return resp
 
 def read_password():
 	first  = getpass.getpass('password: ')
@@ -47,6 +49,8 @@ if len(sys.argv) < 2:
 	print("  tools/mail.py user add user@domain.com [password]")
 	print("  tools/mail.py user password user@domain.com [password]")
 	print("  tools/mail.py user remove user@domain.com")
+	print("  tools/mail.py user make-admin user@domain.com")
+	print("  tools/mail.py user remove-admin user@domain.com")
 	print("  tools/mail.py alias  (lists aliases)")
 	print("  tools/mail.py alias add incoming.name@domain.com sent.to@other.domain.com")
 	print("  tools/mail.py alias remove incoming.name@domain.com")
@@ -55,7 +59,13 @@ if len(sys.argv) < 2:
 	print()
 
 elif sys.argv[1] == "user" and len(sys.argv) == 2:
-	print(mgmt("/mail/users"))
+	# Dump a list of users, one per line. Mark admins with an asterisk.
+	users = mgmt("/mail/users?format=json", is_json=True)
+	for user in users:
+		print(user['email'], end='')
+		if "admin" in user['privileges']:
+			print("*", end='')
+		print()
 
 elif sys.argv[1] == "user" and sys.argv[2] in ("add", "password"):
 	if len(sys.argv) < 5:
@@ -74,6 +84,13 @@ elif sys.argv[1] == "user" and sys.argv[2] in ("add", "password"):
 
 elif sys.argv[1] == "user" and sys.argv[2] == "remove" and len(sys.argv) == 4:
 	print(mgmt("/mail/users/remove", { "email": sys.argv[3] }))
+
+elif sys.argv[1] == "user" and sys.argv[2] in ("make-admin", "remove-admin") and len(sys.argv) == 4:
+	if sys.argv[2] == "make-admin":
+		action = "add"
+	else:
+		action = "remove"
+	print(mgmt("/mail/users/privileges/" + action, { "email": sys.argv[3], "privilege": "admin" }))
 
 elif sys.argv[1] == "alias" and len(sys.argv) == 2:
 	print(mgmt("/mail/aliases"))

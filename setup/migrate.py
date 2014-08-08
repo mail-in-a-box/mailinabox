@@ -8,7 +8,7 @@
 import sys, os, os.path, glob, re, shutil
 
 sys.path.insert(0, 'management')
-from utils import load_environment, save_environment, safe_domain_name
+from utils import load_environment, save_environment, shell
 
 def migration_1(env):
 	# Re-arrange where we store SSL certificates. There was a typo also.
@@ -50,6 +50,11 @@ def migration_3(env):
 	# so that the ID stays with the data files that it describes the format of. The writing
 	# of the file will be handled by the main function.
 	pass
+
+def migration_4(env):
+	# Add a new column to the mail users table where we can store administrative privileges.
+	db = os.path.join(env["STORAGE_ROOT"], 'mail/users.sqlite')
+	shell("check_call", ["sqlite3", db, "ALTER TABLE users ADD privileges TEXT NOT NULL DEFAULT ''"])
 
 def get_current_migration():
 	ver = 0
