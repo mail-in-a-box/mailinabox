@@ -47,11 +47,16 @@ class KeyAuthService:
 			if header is None:
 				return
 
+			if " " not in header:
+				return
 			scheme, credentials = header.split(maxsplit=1)
 			if scheme != 'Basic':
 				return
 
-			username, password = decode(credentials).split(':', maxsplit=1)
+			credentials = decode(credentials)
+			if ":" not in credentials:
+				return
+			username, password = credentials.split(':', maxsplit=1)
 			return username
 
 		request_key = parse_api_key(request.headers.get('Authorization'))
