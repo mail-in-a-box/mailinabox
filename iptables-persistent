@@ -72,7 +72,7 @@ save_rules()
     log_action_cont_msg " skipping IPset - no sets defined or not loaded"
   elif [ -x /usr/sbin/ipset ] || [ -x /sbin/ipset ]; then
     log_action_cont_msg " IPset"
-    ipset save > /etc/iptables/rules.ipsets
+    ipset save | grep -iv "f2b"> /etc/iptables/rules.ipsets
     if [ $? -ne 0 ]; then
       rc=1
     fi
