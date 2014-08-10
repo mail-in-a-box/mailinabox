@@ -103,4 +103,5 @@ elif sys.argv[1] == "alias" and sys.argv[2] == "remove" and len(sys.argv) == 4:
 
 else:
 	print("Invalid command-line arguments.")
+	sys.exit(1)
 
