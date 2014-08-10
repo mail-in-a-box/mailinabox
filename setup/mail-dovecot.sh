@@ -53,6 +53,15 @@ tools/editconf.py /etc/dovecot/conf.d/10-ssl.conf \
 sed -i "s/#port = 143/port = 0/" /etc/dovecot/conf.d/10-master.conf
 sed -i "s/#port = 110/port = 0/" /etc/dovecot/conf.d/10-master.conf
 
+# Make IMAP IDLE slightly more efficient. By default, Dovecot says "still here"
+# every two minutes. With K-9 mail, the bandwidth and battery usage due to
+# this are minimal. But for good measure, let's go to 4 minutes to halve the
+# bandwidth and number of times the device's networking might be woken up.
+# The risk is that if the connection is silent for too long it might be reset
+# by a peer. See #129 and http://razor.occams.info/blog/2014/08/09/how-bad-is-imap-idle/.
+tools/editconf.py /etc/dovecot/conf.d/20-imap.conf \
+	imap_idle_notify_interval="4 mins"
+
 # LDA (LMTP)
 
 # Enable Dovecot's LDA service with the LMTP protocol. It will listen
