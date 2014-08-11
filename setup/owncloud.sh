@@ -33,11 +33,11 @@ if [ ! -f "/usr/local/lib/owncloud/config/config.php" ]; then
 \  array (
 \    0 =>
 \    array (
-\        'class' => 'OC_User_IMAP',
-\        'arguments' =>
-\        array (
-\            0 => '{localhost:993/imap/ssl/novalidate-cert}',
-\        ),
+\      'class' => 'OC_User_IMAP',
+\      'arguments' =>
+\      array (
+\      0 => '{localhost:993/imap/ssl/novalidate-cert}',
+\      ),
 \    ),
 \  ),
 \  "memcached_servers" => array (
