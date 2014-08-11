@@ -117,7 +117,7 @@ define('IMAP_SMTP_METHOD', 'smtp');
 global $imap_smtp_params;
 // SMTP Parameters
 //      mail : no params
-$imap_smtp_params = array();
+//$imap_smtp_params = array();
 //      sendmail
 //$imap_smtp_params = array('sendmail_path' => '/usr/bin/sendmail', 'sendmail_args' => '-i');
 //      smtp
