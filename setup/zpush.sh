@@ -48,12 +48,12 @@ sed -i "s/define('IMAP_OPTIONS', .*/define('IMAP_OPTIONS', '\/ssl\/norsh\/novali
 sed -i "s/define('CARDDAV_PROTOCOL', .*/define('CARDDAV_PROTOCOL', 'https');/" /usr/local/lib/z-push/backend/carddav/config.php
 sed -i "s/define('CARDDAV_SERVER', .*/define('CARDDAV_SERVER', 'localhost');/" /usr/local/lib/z-push/backend/carddav/config.php
 sed -i "s/define('CARDDAV_PORT', .*/define('CARDDAV_PORT', '443');/" /usr/local/lib/z-push/backend/carddav/config.php
-sed -i "s/define('CARDDAV_PATH', .*/define('CARDDAV_PATH', '/remote.php/carddav/addressbooks/%u/');/" /usr/local/lib/z-push/backend/carddav/config.php
+sed -i "s/define('CARDDAV_PATH', .*/define('CARDDAV_PATH', '/owncloud/remote.php/carddav/addressbooks/%u/');/" /usr/local/lib/z-push/backend/carddav/config.php
 
 # Configure CalDav
 sed -i "s/define('CALDAV_SERVER', .*/define('CALDAV_SERVER', 'https://localhost');/" /usr/local/lib/z-push/backend/caldav/config.php
 sed -i "s/define('CALDAV_PORT', .*/define('CALDAV_PORT', '443');/" /usr/local/lib/z-push/backend/caldav/config.php
-sed -i "s/define('CALDAV_PATH', .*/define('CALDAV_PATH', '/remote.php/caldav/calendars/%u/');/" /usr/local/lib/z-push/backend/caldav/config.php
+sed -i "s/define('CALDAV_PATH', .*/define('CALDAV_PATH', '/owncloud/remote.php/caldav/calendars/%u/');/" /usr/local/lib/z-push/backend/caldav/config.php
 
 # Some directories it will use.
 
