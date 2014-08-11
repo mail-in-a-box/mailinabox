@@ -52,7 +52,7 @@ define('CALDAV_SERVER', 'https://localhost');
 define('CALDAV_PORT', '443');
 
 // Path
-define('CALDAV_PATH', '/owncloud/remote.php/caldav/calendars/%u/');
+define('CALDAV_PATH', '/remote.php/caldav/calendars/%u/');
 
 // Personal CalDAV folder (calendar folder/principal)
 define('CALDAV_PERSONAL', '');
