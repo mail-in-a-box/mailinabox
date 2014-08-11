@@ -67,8 +67,8 @@ chown -R www-data.www-data $STORAGE_ROOT/owncloud /usr/local/lib/owncloud
 # Download and install the mail app
 if [ ! -d /usr/local/lib/owncloud/apps/mail ]; then
 	rm -f /tmp/owncloud_mail.zip
-	hide_output wget -qO /tmp/owncloud_mail.zip https://github.com/owncloud/mail/archive/master.zip
-	hide_output unzip /tmp/owncloud_mail.zip -d /usr/local/lib/owncloud/apps
+	wget -qO /tmp/owncloud_mail.zip https://github.com/owncloud/mail/archive/master.zip
+	unzip /tmp/owncloud_mail.zip -d /usr/local/lib/owncloud/apps
 	mv /usr/local/lib/owncloud/apps/mail-master /usr/local/lib/owncloud/apps/mail
 	rm -f /tmp/owncloud.zip
 fi
