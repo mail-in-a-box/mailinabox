@@ -23,11 +23,10 @@ if [ ! -d /usr/local/lib/owncloud ]; then
 fi
 
 # Create a configuration file.
-cat - > /usr/local/lib/owncloud/config/config.php <<EOF;
+if [ ! -f "/usr/local/lib/owncloud/config/config.php" ]; then
+    cat - > /usr/local/lib/owncloud/config/config.php <<EOF;
 <?php
-/*
- * Do not edit. Written by Mail-in-a-Box. Regenerated on updates.
- */
+
 \$CONFIG = array (
 \  'datadirectory' => '$STORAGE_ROOT/owncloud',
 \  array (
@@ -41,7 +40,9 @@ cat - > /usr/local/lib/owncloud/config/config.php <<EOF;
 \  ),
 \ ),
 \);
+?>
 EOF
+fi
 
 # TODO: Insert the following above (owncloud config generation) when we found a good solution:
 #  'mail_smtpmode' => 'smtp',
