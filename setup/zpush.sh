@@ -14,7 +14,7 @@ source /etc/mailinabox.conf # load global vars
 # Prereqs.
 
 apt_install \
-	php-soap php5-imap
+	php-soap php5-imap libawl-php
 
 php5enmod imap
 

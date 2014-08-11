@@ -62,5 +62,4 @@ define('CALDAV_PERSONAL', '');
 // Setting this to false will work with most servers, but it will be slower
 define('CALDAV_SUPPORTS_SYNC', false);
 
-
 ?>

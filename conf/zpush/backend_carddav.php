@@ -106,3 +106,5 @@ define('CARDDAV_SUPPORTS_FN_SEARCH', false);
 //    Davical needs it
 //    SOGo official demo online needs it, but some SOGo installation don't need it, so test it
 define('CARDDAV_URL_VCARD_EXTENSION', '.vcf');
+
+?>
