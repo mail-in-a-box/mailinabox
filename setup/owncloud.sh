@@ -8,7 +8,7 @@ source /etc/mailinabox.conf # load global vars
 
 apt_install \
 	dbconfig-common \
-	php5-cli php5-sqlite php5-gd php5-curl php5-common php5-cgi sqlite3 php-pear php-apc curl libapr1 libtool curl libcurl4-openssl-dev php-xml-parser \
+	php5-cli php5-sqlite php5-gd php5-curl php-pear php-apc curl libapr1 libtool libcurl4-openssl-dev php-xml-parser \
 	php5 php5-dev php5-gd php5-fpm memcached php5-memcache unzip
 
 apt-get purge -qq -y owncloud*
@@ -39,8 +39,7 @@ if [ ! -d /usr/local/lib/owncloud/apps/mail ]; then
 fi
 
 # Currently the mail app dosnt ship with the dependencies, so we need to install them
-cd /usr/local/lib/owncloud/apps/mail
-curl -sS https://getcomposer.org/installer | php
-php composer.phar install
+curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/lib/owncloud/apps/mail
+php /usr/local/lib/owncloud/apps/mail/composer.phar install
 
 # TODO: enable mail app in ownCloud config?
