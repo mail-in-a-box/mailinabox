@@ -49,7 +49,7 @@ chown -R $STORAGE_USER $STORAGE_ROOT/webfinger
 
 # Start services.
 restart_service nginx
-restart_service php-fastcgi
+restart_service php5-fpm
 
 # Open ports.
 ufw_allow http
