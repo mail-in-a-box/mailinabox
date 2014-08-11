@@ -23,7 +23,37 @@ if [ ! -d /usr/local/lib/owncloud ]; then
 fi
 
 # Create a configuration file.
-# TODO:
+cat - > /usr/local/lib/owncloud/config/config.php <<EOF;
+<?php
+/*
+ * Do not edit. Written by Mail-in-a-Box. Regenerated on updates.
+ */
+\$CONFIG = array (
+\  'datadirectory' => '$STORAGE_ROOT/owncloud',
+\  array (
+\    0 =>
+\    array (
+\    'class' => 'OC_User_IMAP',
+\    'arguments' =>
+\    array (
+\      0 => '{localhost:993/imap/ssl/novalidate-cert}',
+\    ),
+\  ),
+\ ),
+\);
+EOF
+
+# Insert the following above (owncloud config generation) when we found a good solution:
+#  'mail_smtpmode' => 'smtp',
+#  'mail_smtpsecure' => 'ssl',
+#  'mail_from_address' => '**** need to figure this one out, nornamly: <user>@<domain>.<tld> ****',
+#  'mail_domain' => '**** need to figure this one out, nornamly: <domain>.<tld> ****',
+#  'mail_smtpauthtype' => 'LOGIN',
+#  'mail_smtpauth' => true,
+#  'mail_smtphost' => 'localhost',
+#  'mail_smtpport' => '587',
+#  'mail_smtpname' => '**** need to figure this one out, nornamly: <user>@<domain>.<tld> ****',
+#  'mail_smtppassword' => '**** need to figure this one out ****',
 
 # Set permissions
 mkdir -p $STORAGE_ROOT/owncloud
