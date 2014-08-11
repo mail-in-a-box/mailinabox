@@ -35,25 +35,19 @@ sed -i "s/define('BACKEND_PROVIDER', .*/define('BACKEND_PROVIDER', 'BackendCombi
 
 # Configure BACKEND
 rm -f /usr/local/lib/z-push/backend/combined/config.php
-cp conf/zpush_backend_combined.php /usr/local/lib/z-push/backend/combined/config.php
+cp conf/zpush/backend_combined.php /usr/local/lib/z-push/backend/combined/config.php
 
-# Configure IMAP. Tell is to connect to email via IMAP using SSL. Since we connect on
-# localhost, the certificate won't match (it may be self-signed and invalid anyway)
-# so don't check the cert.
-sed -i "s/define('IMAP_SERVER', .*/define('IMAP_SERVER', 'localhost');/" /usr/local/lib/z-push/backend/imap/config.php
-sed -i "s/define('IMAP_PORT', .*/define('IMAP_PORT', 993);/" /usr/local/lib/z-push/backend/imap/config.php
-sed -i "s/define('IMAP_OPTIONS', .*/define('IMAP_OPTIONS', '\/ssl\/norsh\/novalidate-cert');/" /usr/local/lib/z-push/backend/imap/config.php
+# Configure IMAP
+rm -f /usr/local/lib/z-push/backend/imap/config.php
+cp conf/zpush/backend_imap.php /usr/local/lib/z-push/backend/imap/config.php
 
 # Configure CardDav
-sed -i "s/define('CARDDAV_PROTOCOL', .*/define('CARDDAV_PROTOCOL', 'https');/" /usr/local/lib/z-push/backend/carddav/config.php
-sed -i "s/define('CARDDAV_SERVER', .*/define('CARDDAV_SERVER', 'localhost');/" /usr/local/lib/z-push/backend/carddav/config.php
-sed -i "s/define('CARDDAV_PORT', .*/define('CARDDAV_PORT', '443');/" /usr/local/lib/z-push/backend/carddav/config.php
-sed -i "s/define('CARDDAV_PATH', .*/define('CARDDAV_PATH', '/owncloud/remote.php/carddav/addressbooks/%u/');/" /usr/local/lib/z-push/backend/carddav/config.php
+rm -f /usr/local/lib/z-push/backend/carddav/config.php
+cp conf/zpush/backend_carddav.php /usr/local/lib/z-push/backend/carddav/config.php
 
 # Configure CalDav
-sed -i "s/define('CALDAV_SERVER', .*/define('CALDAV_SERVER', 'https://localhost');/" /usr/local/lib/z-push/backend/caldav/config.php
-sed -i "s/define('CALDAV_PORT', .*/define('CALDAV_PORT', '443');/" /usr/local/lib/z-push/backend/caldav/config.php
-sed -i "s/define('CALDAV_PATH', .*/define('CALDAV_PATH', '/owncloud/remote.php/caldav/calendars/%u/');/" /usr/local/lib/z-push/backend/caldav/config.php
+rm -f /usr/local/lib/z-push/backend/caldav/config.php
+cp conf/zpush/backend_caldav.php /usr/local/lib/z-push/backend/caldav/config.php
 
 # Some directories it will use.
 
