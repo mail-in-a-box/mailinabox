@@ -43,7 +43,7 @@ cat - > /usr/local/lib/owncloud/config/config.php <<EOF;
 \);
 EOF
 
-# Insert the following above (owncloud config generation) when we found a good solution:
+# TODO: Insert the following above (owncloud config generation) when we found a good solution:
 #  'mail_smtpmode' => 'smtp',
 #  'mail_smtpsecure' => 'ssl',
 #  'mail_from_address' => '**** need to figure this one out, nornamly: <user>@<domain>.<tld> ****',
