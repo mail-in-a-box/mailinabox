@@ -79,19 +79,6 @@ shell('check_call', [
 	"file://" + backup_duplicity_dir
 	])
 
-# Remove old increments. This deletes incremental data obsoleted by
-# any subsequent full backups.
-shell('check_call', [
-	"/usr/bin/duplicity",
-	"remove-all-inc-of-but-n-full",
-	"1",
-	"--archive-dir", "/tmp/duplicity-archive-dir",
-	"--name", "mailinabox",
-	"--force",
-	"--verbosity", "warning",
-	"file://" + backup_duplicity_dir
-	])
-
 # Remove duplicity's cache directory because it's redundant with our backup directory.
 shutil.rmtree("/tmp/duplicity-archive-dir")
 
