@@ -8,7 +8,7 @@ source /etc/mailinabox.conf # load global vars
 
 apt_install \
 	dbconfig-common \
-	php5-cli php5-sqlite php5-gd php5-curl php-pear php-apc curl libapr1 libtool libcurl4-openssl-dev php-xml-parser \
+	php5-cli php5-sqlite php5-gd php5-imap php5-curl php-pear php-apc curl libapr1 libtool libcurl4-openssl-dev php-xml-parser \
 	php5 php5-dev php5-gd php5-fpm memcached php5-memcache unzip
 
 apt-get purge -qq -y owncloud*
@@ -73,3 +73,6 @@ curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/lib
 php /usr/local/lib/owncloud/apps/mail/composer.phar install --working-dir=/usr/local/lib/owncloud/apps/mail
 
 # TODO: enable mail app in ownCloud config?
+
+php5enmod imap
+restart_service php-fastcgi
