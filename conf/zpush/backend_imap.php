@@ -112,7 +112,7 @@ define('IMAP_EXCLUDED_FOLDERS', '');
 // mail => mail() php function
 // sendmail => sendmail executable
 // smtp => direct connection against SMTP
-define('IMAP_SMTP_METHOD', 'mail');
+define('IMAP_SMTP_METHOD', 'smtp');
 
 global $imap_smtp_params;
 // SMTP Parameters
@@ -135,7 +135,7 @@ $imap_smtp_params = array();
 //$imap_smtp_params = array('host' => 'localhost', 'port' => 25, 'auth' => false);
 // If you want to use SSL with port 25 or port 465 you must preppend "ssl://" before the hostname or IP of your SMTP server
 // IMPORTANT: To use SSL you must use PHP 5.1 or later, install openssl libs and use ssl:// within the host variable
-//$imap_smtp_params = array('host' => 'ssl://localhost', 'port' => 465, 'auth' => true, 'username' => 'imap_username', 'password' => 'imap_password');
+$imap_smtp_params = array('host' => 'ssl://localhost', 'port' => 587, 'auth' => true, 'username' => 'imap_username', 'password' => 'imap_password');
 
 
 // If you are using IMAP_SMTP_METHOD = mail or sendmail and your sent messages are not correctly displayed you can change this to "\n".
