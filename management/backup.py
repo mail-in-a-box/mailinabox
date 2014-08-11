@@ -16,7 +16,7 @@ from utils import exclusive_process, load_environment, shell
 
 # settings
 full_backup = "--full" in sys.argv
-keep_backups_for = "31D" # destroy backups older than 31 days
+keep_backups_for = "31D" # destroy backups older than 31 days except the most recent full backup
 
 env = load_environment()
 
@@ -26,6 +26,11 @@ exclusive_process("backup")
 backup_dir = os.path.join(env["STORAGE_ROOT"], 'backup')
 backup_duplicity_dir = os.path.join(backup_dir, 'duplicity')
 os.makedirs(backup_dir, exist_ok=True)
+
+# On the first run, always do a full backup. Incremental
+# will fail.
+if len(os.listdir(backup_duplicity_dir)) == 0:
+	full_backup = True
 
 # Stop services.
 shell('check_call', ["/usr/sbin/service", "dovecot", "stop"])
