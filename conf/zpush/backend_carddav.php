@@ -71,7 +71,7 @@ define('CARDDAV_PATH', '/remote.php/carddav/addressbooks/%u/');
 // %u: replaced with the username
 // %d: replaced with the domain
 //   Add the trailing /
-define('CARDDAV_DEFAULT_PATH', '/remote.php/carddav/addressbooks/%u/contacts/');
+define('CARDDAV_DEFAULT_PATH', '/owncloud/remote.php/carddav/addressbooks/%u/contacts/');
 
 // Server path to the GAL addressbook. This addressbook is readonly and searchable by the user, but it will NOT be synced.
 // If you don't want GAL, comment it
