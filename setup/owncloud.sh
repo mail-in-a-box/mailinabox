@@ -74,8 +74,8 @@ if [ ! -d /usr/local/lib/owncloud/apps/mail ]; then
 fi
 
 # Currently the mail app dosnt ship with the dependencies, so we need to install them
-hide_output curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/lib/owncloud/apps/mail
-hide_output php /usr/local/lib/owncloud/apps/mail/composer.phar install --working-dir=/usr/local/lib/owncloud/apps/mail
+curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/lib/owncloud/apps/mail
+php /usr/local/lib/owncloud/apps/mail/composer.phar install --working-dir=/usr/local/lib/owncloud/apps/mail
 
 # TODO: enable mail app in ownCloud config?
 
