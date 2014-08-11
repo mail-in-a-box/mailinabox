@@ -10,7 +10,7 @@
 # 4) The backup directory is compressed into a single file using tar.
 # 5) That file is encrypted with a long password stored in backup/secret_key.txt.
 
-import sys, os, os.path, shutil
+import sys, os, os.path, shutil, glob
 
 from utils import exclusive_process, load_environment, shell
 
@@ -31,6 +31,15 @@ os.makedirs(backup_dir, exist_ok=True)
 # will fail.
 if len(os.listdir(backup_duplicity_dir)) == 0:
 	full_backup = True
+else:
+	# When the size of incremental backups exceeds the size of existing
+	# full backups, take a new full backup. We want to avoid full backups
+	# because they are costly to synchronize off-site.
+	full_sz = sum(os.path.getsize(f) for f in glob.glob(backup_duplicity_dir + '/*-full.*'))
+	inc_sz = sum(os.path.getsize(f) for f in glob.glob(backup_duplicity_dir + '/*-inc.*'))
+	# (n.b. not counting size of new-signatures files because they are relatively small)
+	if inc_sz > full_sz * 1.5:
+		full_backup = True
 
 # Stop services.
 shell('check_call', ["/usr/sbin/service", "dovecot", "stop"])
