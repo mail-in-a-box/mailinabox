@@ -61,4 +61,4 @@ chown www-data:www-data /var/lib/z-push
 
 # Restart service.
 
-restart_service php-fastcgi
+restart_service php5-fpm

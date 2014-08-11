@@ -28,22 +28,22 @@ if [ ! -f "/usr/local/lib/owncloud/config/config.php" ]; then
     cat - > /usr/local/lib/owncloud/config/config.php <<EOF;
 <?php
 
-\$CONFIG = array (
-\  'datadirectory' => '$STORAGE_ROOT/owncloud',
-\  array (
-\    0 =>
-\    array (
-\      'class' => 'OC_User_IMAP',
-\      'arguments' =>
-\      array (
-\      0 => '{localhost:993/imap/ssl/novalidate-cert}',
-\      ),
-\    ),
-\  ),
-\  "memcached_servers" => array (
-\    array('localhost', 11211),
-\  ),
-\);
+$CONFIG = array (
+  'datadirectory' => '$STORAGE_ROOT/owncloud',
+  array (
+    0 =>
+    array (
+      'class' => 'OC_User_IMAP',
+      'arguments' =>
+      array (
+      0 => '{localhost:993/imap/ssl/novalidate-cert}',
+      ),
+    ),
+  ),
+  "memcached_servers" => array (
+    array('localhost', 11211),
+  ),
+);
 ?>
 EOF
 fi
@@ -80,4 +80,4 @@ php /usr/local/lib/owncloud/apps/mail/composer.phar install --working-dir=/usr/l
 # TODO: enable mail app in ownCloud config?
 
 php5enmod imap
-restart_service php-fastcgi
+restart_service php5-fpm
