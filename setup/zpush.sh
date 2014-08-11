@@ -21,6 +21,7 @@ php5enmod imap
 # Copy Z-Push into place.
 if [ ! -d /usr/local/lib/z-push ]; then
 	rm -f /tmp/zpush.zip
+	echo Installing z-push...
 	wget -qO /tmp/zpush.zip https://github.com/fmbiete/Z-Push-contrib/archive/master.zip
 	unzip /tmp/zpush.zip -d /usr/local/lib/
 	mv /usr/local/lib/Z-Push-contrib-master /usr/local/lib/z-push

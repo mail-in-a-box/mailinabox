@@ -16,6 +16,7 @@ apt-get purge -qq -y owncloud*
 # Install ownCloud from source if it is not already present
 # TODO: Check version?
 if [ ! -d /usr/local/lib/owncloud ]; then
+	echo Installing ownCloud...
 	rm -f /tmp/owncloud.zip
 	wget -qO /tmp/owncloud.zip https://download.owncloud.org/community/owncloud-7.0.1.zip
 	unzip /tmp/owncloud.zip -d /usr/local/lib
@@ -32,13 +33,16 @@ if [ ! -f "/usr/local/lib/owncloud/config/config.php" ]; then
 \  array (
 \    0 =>
 \    array (
-\    'class' => 'OC_User_IMAP',
-\    'arguments' =>
-\    array (
-\      0 => '{localhost:993/imap/ssl/novalidate-cert}',
+\        'class' => 'OC_User_IMAP',
+\        'arguments' =>
+\        array (
+\            0 => '{localhost:993/imap/ssl/novalidate-cert}',
+\        ),
 \    ),
 \  ),
-\ ),
+\  "memcached_servers" => array (
+\    array('localhost', 11211),
+\  ),
 \);
 ?>
 EOF
@@ -63,15 +67,15 @@ chown -R www-data.www-data $STORAGE_ROOT/owncloud /usr/local/lib/owncloud
 # Download and install the mail app
 if [ ! -d /usr/local/lib/owncloud/apps/mail ]; then
 	rm -f /tmp/owncloud_mail.zip
-	wget -qO /tmp/owncloud_mail.zip https://github.com/owncloud/mail/archive/master.zip
-	unzip /tmp/owncloud_mail.zip -d /usr/local/lib/owncloud/apps
+	hide_output wget -qO /tmp/owncloud_mail.zip https://github.com/owncloud/mail/archive/master.zip
+	hide_output unzip /tmp/owncloud_mail.zip -d /usr/local/lib/owncloud/apps
 	mv /usr/local/lib/owncloud/apps/mail-master /usr/local/lib/owncloud/apps/mail
 	rm -f /tmp/owncloud.zip
 fi
 
 # Currently the mail app dosnt ship with the dependencies, so we need to install them
-curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/lib/owncloud/apps/mail
-php /usr/local/lib/owncloud/apps/mail/composer.phar install --working-dir=/usr/local/lib/owncloud/apps/mail
+hide_output curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/lib/owncloud/apps/mail
+hide_output php /usr/local/lib/owncloud/apps/mail/composer.phar install --working-dir=/usr/local/lib/owncloud/apps/mail
 
 # TODO: enable mail app in ownCloud config?
 
