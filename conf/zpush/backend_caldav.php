@@ -7,7 +7,7 @@
 
 define('CALDAV_SERVER', 'https://localhost');
 define('CALDAV_PORT', '443');
-define('CALDAV_PATH', '/remote.php/caldav/calendars/%u/');
+define('CALDAV_PATH', '/caldav/calendars/%u/');
 define('CALDAV_PERSONAL', '');
 
 // If the CalDAV server supports the sync-collection operation
