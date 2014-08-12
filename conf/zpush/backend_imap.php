@@ -32,7 +32,7 @@ define('IMAP_FROM_LDAP_FROM', '#givenname #sn <#mail>');
 define('IMAP_SENTFOLDER', '');
 define('IMAP_INLINE_FORWARD', true);
 define('IMAP_EXCLUDED_FOLDERS', '');
-define('IMAP_SMTP_METHOD', 'smtp');
+define('IMAP_SMTP_METHOD', 'sendmail');
 
 global $imap_smtp_params;
 $imap_smtp_params = array('host' => 'ssl://localhost', 'port' => 587, 'auth' => true, 'username' => 'imap_username', 'password' => 'imap_password');
