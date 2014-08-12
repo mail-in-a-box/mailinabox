@@ -40,7 +40,9 @@ def get_web_domains(env):
 	
 def do_web_update(env):
 	# Build an nginx configuration file.
-	nginx_conf = ""
+	nginx_conf = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-top.conf")).read()
+
+	# Add configuration for each web domain.
 	template = open(os.path.join(os.path.dirname(__file__), "../conf/nginx.conf")).read()
 	for domain in get_web_domains(env):
 		nginx_conf += make_domain_config(domain, template, env)
