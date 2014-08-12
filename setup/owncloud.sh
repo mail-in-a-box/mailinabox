@@ -14,7 +14,7 @@ apt-get purge -qq -y owncloud*
 # Install ownCloud from source if it is not already present
 # TODO: Check version?
 if [ ! -d /usr/local/lib/owncloud ]; then
-	echo Installing ownCloud...
+	echo installing ownCloud...
 	rm -f /tmp/owncloud.zip
 	wget -qO /tmp/owncloud.zip https://download.owncloud.org/community/owncloud-7.0.1.zip
 	unzip /tmp/owncloud.zip -d /usr/local/lib
