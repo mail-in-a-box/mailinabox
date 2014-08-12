@@ -22,11 +22,12 @@ if [ ! -d /usr/local/lib/owncloud ]; then
 fi
 
 # Create a configuration file.
+TIMEZONE=`cat /etc/timezone`
 if [ ! -f "/usr/local/lib/owncloud/config/config.php" ]; then
     cat - > /usr/local/lib/owncloud/config/config.php <<EOF;
 <?php
 
-$CONFIG = array (
+\$CONFIG = array (
   'datadirectory' => '$STORAGE_ROOT/owncloud',
   array (
     0 =>
@@ -43,7 +44,7 @@ $CONFIG = array (
   ),
   'mail_smtpmode' => 'smtp',
   'mail_smtpsecure' => 'ssl',
-  'mail_from_address' => 'no-reply@$PRIMARY_HOSTNAME',
+  'mail_from_address' => 'no-reply',
   'mail_domain' => '$PRIMARY_HOSTNAME',
   'mail_smtpauthtype' => 'LOGIN',
   'mail_smtpauth' => true,
@@ -51,6 +52,7 @@ $CONFIG = array (
   'mail_smtpport' => '587',
   'mail_smtpname' => 'no-reply@$PRIMARY_HOSTNAME',
   'mail_smtppassword' => '$SECRET_PASSWORD',
+  'logtimezone' => '$TIMEZONE',
 );
 ?>
 EOF
