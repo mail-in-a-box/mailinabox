@@ -14,7 +14,7 @@ source /etc/mailinabox.conf # load global vars
 # Prereqs.
 
 apt_install \
-	php-soap php5-imap libawl-php
+	php-soap php5-imap libawl-php php5-xsl
 
 php5enmod imap
 
@@ -29,7 +29,7 @@ fi
 if [ $needs_update == 1 ]; then
 	rm -rf /usr/local/lib/z-push
 	rm -f /tmp/zpush.zip
-	echo Installing z-push \(fmbiete fork\)...
+	echo installing z-push \(fmbiete fork\)...
 	wget -qO /tmp/zpush.zip https://github.com/fmbiete/Z-Push-contrib/archive/master.zip
 	unzip -q /tmp/zpush.zip -d /usr/local/lib/
 	mv /usr/local/lib/Z-Push-contrib-master /usr/local/lib/z-push

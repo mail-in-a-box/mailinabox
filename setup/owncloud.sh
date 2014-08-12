@@ -7,14 +7,14 @@ source /etc/mailinabox.conf # load global vars
 apt_install \
 	dbconfig-common \
 	php5-cli php5-sqlite php5-gd php5-imap php5-curl php-pear php-apc curl libapr1 libtool libcurl4-openssl-dev php-xml-parser \
-	php5 php5-dev php5-gd php5-fpm memcached php5-memcache unzip sqlite
+	php5 php5-dev php5-gd php5-fpm memcached php5-memcache unzip
 
 apt-get purge -qq -y owncloud*
 
 # Install ownCloud from source if it is not already present
 # TODO: Check version?
 if [ ! -d /usr/local/lib/owncloud ]; then
-	echo Installing ownCloud...
+	echo installing ownCloud...
 	rm -f /tmp/owncloud.zip
 	wget -qO /tmp/owncloud.zip https://download.owncloud.org/community/owncloud-7.0.1.zip
 	unzip -q /tmp/owncloud.zip -d /usr/local/lib
@@ -72,6 +72,13 @@ EOF
 mkdir -p $STORAGE_ROOT/owncloud
 chown -R www-data.www-data $STORAGE_ROOT/owncloud /usr/local/lib/owncloud
 
+# Set PHP FPM values to support large file uploads
+tools/editconf.py /etc/php5/fpm/php.ini \
+	upload_max_filesize=16G \
+	post_max_size=16G \
+	output_buffering=16384 \
+	memory_limit=512M
+
 # Download and install the mail app
 # TODO: enable mail app in ownCloud config, not exposed afaik?
 if [ ! -d /usr/local/lib/owncloud/apps/mail ]; then
@@ -90,6 +97,10 @@ chmod -R 777 /usr/local/lib/owncloud/apps/mail/vendor/ezyang/htmlpurifier/librar
 # Use Crontab instead of AJAX/webcron in ownCloud
 # TODO: somehow change the cron option in ownClouds config, not exposed afaik?
 (crontab -u www-data -l; echo "*/15  *  *  *  * php -f /usr/local/lib/owncloud/cron.php" ) | crontab -u www-data -
+
+# Enable apps.
+hide_output php /usr/local/lib/owncloud/console.php app:enable user_external
+hide_output php /usr/local/lib/owncloud/console.php app:enable mail
 
 # Enable apps.
 hide_output php /usr/local/lib/owncloud/console.php app:enable user_external
