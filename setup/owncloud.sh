@@ -23,12 +23,27 @@ fi
 
 # Create a configuration file.
 TIMEZONE=`cat /etc/timezone`
-if [ ! -f "/usr/local/lib/owncloud/config/config.php" ]; then
-    cat - > /usr/local/lib/owncloud/config/config.php <<EOF;
+instanceid=oc$(echo $PRIMARY_HOSTNAME | sha1sum | fold -w 10 | head -n 1)
+passwordsalt=$(dd if=/dev/random bs=40 count=1 2>/dev/null | sha1sum | fold -w 30 | head -n 1)
+cat - > /usr/local/lib/owncloud/config/config.php <<EOF;
 <?php
 
 \$CONFIG = array (
+  '___installed' => true,
+
+  'version' => '7.0.1.1',
+
   'datadirectory' => '$STORAGE_ROOT/owncloud',
+  'dbtype' => 'sqlite3',
+
+  'instanceid' => '$instanceid',
+  'passwordsalt' => '$passwordsalt',
+  'trusted_domains' => 
+    array (
+      0 => '$PRIMARY_HOSTNAME',
+    ),
+
+  'overwritewebroot' => '/cloud',
   'user_backends' => array(
     array(
       'class'=>'OC_User_IMAP',
@@ -52,7 +67,6 @@ if [ ! -f "/usr/local/lib/owncloud/config/config.php" ]; then
 );
 ?>
 EOF
-fi
 
 # Set permissions
 mkdir -p $STORAGE_ROOT/owncloud
@@ -63,7 +77,7 @@ chown -R www-data.www-data $STORAGE_ROOT/owncloud /usr/local/lib/owncloud
 if [ ! -d /usr/local/lib/owncloud/apps/mail ]; then
 	rm -f /tmp/owncloud_mail.zip
 	wget -qO /tmp/owncloud_mail.zip https://github.com/owncloud/mail/archive/master.zip
-	unzip /tmp/owncloud_mail.zip -d /usr/local/lib/owncloud/apps
+	unzip -q /tmp/owncloud_mail.zip -d /usr/local/lib/owncloud/apps
 	mv /usr/local/lib/owncloud/apps/mail-master /usr/local/lib/owncloud/apps/mail
 	rm -f /tmp/owncloud.zip
 fi
@@ -76,6 +90,10 @@ chmod -R 777 /usr/local/lib/owncloud/apps/mail/vendor/ezyang/htmlpurifier/librar
 # Use Crontab instead of AJAX/webcron in ownCloud
 # TODO: somehow change the cron option in ownClouds config, not exposed afaik?
 (crontab -u www-data -l; echo "*/15  *  *  *  * php -f /usr/local/lib/owncloud/cron.php" ) | crontab -u www-data -
+
+# Enable apps.
+hide_output php /usr/local/lib/owncloud/console.php app:enable user_external
+hide_output php /usr/local/lib/owncloud/console.php app:enable mail
 
 php5enmod imap
 restart_service php5-fpm
