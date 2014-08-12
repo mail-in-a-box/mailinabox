@@ -32,7 +32,7 @@ fi
 
 # Configure default config
 TIMEZONE=`cat /etc/timezone`
-sed -i "s/define('TIMEZONE', .*/define('TIMEZONE', '$TIMEZONE');/" /usr/local/lib/z-push/config.php
+sed -i "s/define('TIMEZONE', .*/define('TIMEZONE', '\$TIMEZONE');/" /usr/local/lib/z-push/config.php
 sed -i "s/define('BACKEND_PROVIDER', .*/define('BACKEND_PROVIDER', 'BackendCombined');/" /usr/local/lib/z-push/config.php
 
 # Configure BACKEND
