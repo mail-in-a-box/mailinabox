@@ -7,7 +7,7 @@ source /etc/mailinabox.conf # load global vars
 apt_install \
 	dbconfig-common \
 	php5-cli php5-sqlite php5-gd php5-imap php5-curl php-pear php-apc curl libapr1 libtool libcurl4-openssl-dev php-xml-parser \
-	php5 php5-dev php5-gd php5-fpm memcached php5-memcache unzip sqlite
+	php5 php5-dev php5-gd php5-fpm memcached php5-memcache unzip
 
 apt-get purge -qq -y owncloud*
 
@@ -83,6 +83,10 @@ chmod -R 777 /usr/local/lib/owncloud/apps/mail/vendor/ezyang/htmlpurifier/librar
 # Use Crontab instead of AJAX/webcron in ownCloud
 # TODO: somehow change the cron option in ownClouds config, not exposed afaik?
 (crontab -u www-user -l; echo "*/15  *  *  *  * php -f /usr/local/lib/owncloud/cron.php" ) | crontab -u www-user -
+
+# Enable apps.
+hide_output php /usr/local/lib/owncloud/console.php app:enable user_external
+hide_output php /usr/local/lib/owncloud/console.php app:enable mail
 
 php5enmod imap
 restart_service php5-fpm
