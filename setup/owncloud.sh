@@ -58,6 +58,13 @@ fi
 mkdir -p $STORAGE_ROOT/owncloud
 chown -R www-data.www-data $STORAGE_ROOT/owncloud /usr/local/lib/owncloud
 
+# Set PHP FPM values to support large file uploads
+tools/editconf.py /etc/php5/fpm/php.ini \
+	upload_max_filesize=16G \
+	post_max_size=16G \
+	output_buffering=16384 \
+	memory_limit=512M
+
 # Download and install the mail app
 # TODO: enable mail app in ownCloud config, not exposed afaik?
 if [ ! -d /usr/local/lib/owncloud/apps/mail ]; then
