@@ -1,8 +1,6 @@
 # Owncloud
 ##########################
 
-# TODO: Write documentation on what we're doing here :-)
-
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
@@ -77,6 +75,10 @@ fi
 curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/lib/owncloud/apps/mail
 php /usr/local/lib/owncloud/apps/mail/composer.phar install --working-dir=/usr/local/lib/owncloud/apps/mail
 chmod -R 777 /usr/local/lib/owncloud/apps/mail/vendor/ezyang/htmlpurifier/library/HTMLPurifier/DefinitionCache/Serializer
+
+# Use Crontab instead of AJAX/webcron in ownCloud
+# TODO: somehow change the cron option in admin settings, not exposed afaik?
+(crontab -u www-user -l; echo "*/15  *  *  *  * php -f /usr/local/lib/owncloud/cron.php" ) | crontab -u www-user -
 
 # TODO: enable mail app in ownCloud config?
 
