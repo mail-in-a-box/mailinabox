@@ -100,4 +100,4 @@ chmod 664 $STORAGE_ROOT/mail/users.sqlite
 
 # Enable PHP modules.
 php5enmod mcrypt
-restart_service php-fastcgi
+restart_service php5-fpm

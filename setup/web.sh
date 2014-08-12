@@ -5,7 +5,7 @@
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
-apt_install nginx php5-cgi
+apt_install nginx php5-fpm
 
 rm -f /etc/nginx/sites-enabled/default
 
@@ -30,11 +30,14 @@ if [ ! -f $STORAGE_ROOT/www/default/index.html ]; then
 fi
 chown -R $STORAGE_USER $STORAGE_ROOT/www
 
-# Create an init script to start the PHP FastCGI daemon and keep it
-# running after a reboot. Allows us to serve Roundcube for webmail.
-rm -f /etc/init.d/php-fastcgi
-ln -s $(pwd)/conf/phpfcgi-initscript /etc/init.d/php-fastcgi
-hide_output update-rc.d php-fastcgi defaults
+# We previously installed a custom init script to start the PHP FastCGI daemon.
+# Remove it now that we're using php5-fpm.
+if [ -L /etc/init.d/php-fastcgi ]; then
+	echo "Removing /etc/init.d/php-fastcgi, php5-cgi..."
+	rm -f /etc/init.d/php-fastcgi
+	hide_output update-rc.d php-fastcgi remove
+	apt-get -y purge php5-cgi
+fi
 
 # Put our webfinger and Exchange autodiscover.xml server scripts
 # into a well-known location.
@@ -49,7 +52,7 @@ chown -R $STORAGE_USER $STORAGE_ROOT/webfinger
 
 # Start services.
 restart_service nginx
-restart_service php-fastcgi
+restart_service php5-fpm
 
 # Open ports.
 ufw_allow http
