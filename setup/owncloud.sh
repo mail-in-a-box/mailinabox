@@ -55,6 +55,7 @@ $CONFIG = array (
 ?>
 EOF
 fi
+
 # Set permissions
 mkdir -p $STORAGE_ROOT/owncloud
 chown -R www-data.www-data $STORAGE_ROOT/owncloud /usr/local/lib/owncloud
@@ -74,10 +75,10 @@ php /usr/local/lib/owncloud/apps/mail/composer.phar install --working-dir=/usr/l
 chmod -R 777 /usr/local/lib/owncloud/apps/mail/vendor/ezyang/htmlpurifier/library/HTMLPurifier/DefinitionCache/Serializer
 
 # Use Crontab instead of AJAX/webcron in ownCloud
-# TODO: somehow change the cron option in admin settings, not exposed afaik?
+# TODO: somehow change the cron option in ownClouds config, not exposed afaik?
 (crontab -u www-user -l; echo "*/15  *  *  *  * php -f /usr/local/lib/owncloud/cron.php" ) | crontab -u www-user -
 
-# TODO: enable mail app in ownCloud config?
+# TODO: enable mail app in ownCloud config, not exposed afaik?
 
 php5enmod imap
 restart_service php5-fpm
