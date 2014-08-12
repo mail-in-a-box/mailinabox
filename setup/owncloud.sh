@@ -41,23 +41,20 @@ $CONFIG = array (
   "memcached_servers" => array (
     array('localhost', 11211),
   ),
+  'mail_smtpmode' => 'smtp',
+  'mail_smtpsecure' => 'ssl',
+  'mail_from_address' => 'no-reply@$PRIMARY_HOSTNAME',
+  'mail_domain' => '$PRIMARY_HOSTNAME',
+  'mail_smtpauthtype' => 'LOGIN',
+  'mail_smtpauth' => true,
+  'mail_smtphost' => 'localhost',
+  'mail_smtpport' => '587',
+  'mail_smtpname' => 'no-reply@$PRIMARY_HOSTNAME',
+  'mail_smtppassword' => '$SECRET_PASSWORD',
 );
 ?>
 EOF
 fi
-
-# TODO: Insert the following above (owncloud config generation) when we found a good solution:
-#  'mail_smtpmode' => 'smtp',
-#  'mail_smtpsecure' => 'ssl',
-#  'mail_from_address' => '**** need to figure this one out, nornamly: <user>@<domain>.<tld> ****',
-#  'mail_domain' => '**** need to figure this one out, nornamly: <domain>.<tld> ****',
-#  'mail_smtpauthtype' => 'LOGIN',
-#  'mail_smtpauth' => true,
-#  'mail_smtphost' => 'localhost',
-#  'mail_smtpport' => '587',
-#  'mail_smtpname' => '**** need to figure this one out, nornamly: <user>@<domain>.<tld> ****',
-#  'mail_smtppassword' => '**** need to figure this one out ****',
-
 # Set permissions
 mkdir -p $STORAGE_ROOT/owncloud
 chown -R www-data.www-data $STORAGE_ROOT/owncloud /usr/local/lib/owncloud

@@ -250,11 +250,15 @@ if [ -z "$STORAGE_ROOT" ]; then
 	chown $STORAGE_USER.$STORAGE_USER $STORAGE_ROOT/mailinabox.version
 fi
 
+# Generate a secret password to use with no-reply user (mainly for ownCloud SMTP atm)
+SECRET_PASSWORD=$(dd if=/dev/random bs=20 count=1 2>/dev/null | base64 | fold -w 24 | head -n 1)
+
 # Save the global options in /etc/mailinabox.conf so that standalone
 # tools know where to look for data.
 cat > /etc/mailinabox.conf << EOF;
 STORAGE_USER=$STORAGE_USER
 STORAGE_ROOT=$STORAGE_ROOT
+SECRET_PASSWORD=$SECRET_PASSWORD
 PRIMARY_HOSTNAME=$PRIMARY_HOSTNAME
 PUBLIC_IP=$PUBLIC_IP
 PUBLIC_IPV6=$PUBLIC_IPV6
@@ -319,5 +323,8 @@ if [ -z "`tools/mail.py user`" ]; then
 
 	# Create an alias to which we'll direct all automatically-created administrative aliases.
 	tools/mail.py alias add administrator@$PRIMARY_HOSTNAME $EMAIL_ADDR
+
+	# Create an no-reply user to use with ownCloud
+	tools/mail.py user add no-reply@$PRIMARY_HOSTNAME $SECRET_PASSWORD
 fi
 
