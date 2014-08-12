@@ -76,6 +76,7 @@ fi
 # Currently the mail app dosnt ship with the dependencies, so we need to install them
 curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/lib/owncloud/apps/mail
 php /usr/local/lib/owncloud/apps/mail/composer.phar install --working-dir=/usr/local/lib/owncloud/apps/mail
+chmod -R 777 /usr/local/lib/owncloud/apps/mail/vendor/ezyang/htmlpurifier/library/HTMLPurifier/DefinitionCache/Serializer
 
 # TODO: enable mail app in ownCloud config?
 
