@@ -25,6 +25,18 @@ In short, it's like this:
 	cd mailinabox
 	sudo setup/start.sh
 
+Then run the post-install checklist command to see what you need to do next:
+
+	sudo management/whats_next.py
+
+In addition to above once finished you need to:
+
+    Goto https://<your domain>.<tld>, and make a admin account. By default you don't need to edit the advanced settings
+    Once logged in, click the "Files" link beside the cloud in the top left corner and then click Apps button
+    Goto the "External user support" and activate it, do the same thing with the mail app
+
+Congratulations! You should now have a working setup. Feel free to login with your mail credentials created earlier in the setup
+
 **Status**: This is a work in progress. It works for what it is, but it is missing such things as quotas, backup/restore, etc.
 
 The Goals
