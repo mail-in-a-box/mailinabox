@@ -43,7 +43,7 @@ if [ ! -f "/usr/local/lib/owncloud/config/config.php" ]; then
     array('localhost', 11211),
   ),
   'mail_smtpmode' => 'smtp',
-  'mail_smtpsecure' => 'ssl',
+  'mail_smtpsecure' => 'tls',
   'mail_from_address' => 'no-reply',
   'mail_domain' => '$PRIMARY_HOSTNAME',
   'mail_smtpauthtype' => 'LOGIN',
