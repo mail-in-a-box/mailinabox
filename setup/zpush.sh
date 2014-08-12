@@ -19,20 +19,29 @@ apt_install \
 php5enmod imap
 
 # Copy Z-Push into place.
-if [ ! -d /usr/local/lib/z-push ]; then
+needs_update=0
+if [ ! -f /usr/local/lib/z-push/version ]; then
+	needs_update=1
+elif [[ `curl -s https://api.github.com/repos/fmbiete/Z-Push-contrib/git/refs/heads/master` != `cat /usr/local/lib/z-push/version` ]]; then
+	# checks if the version 
+	needs_update=1
+fi
+if [ $needs_update == 1 ]; then
+	rm -rf /usr/local/lib/z-push
 	rm -f /tmp/zpush.zip
-	echo Installing z-push...
+	echo Installing z-push \(fmbiete fork\)...
 	wget -qO /tmp/zpush.zip https://github.com/fmbiete/Z-Push-contrib/archive/master.zip
-	unzip /tmp/zpush.zip -d /usr/local/lib/
+	unzip -q /tmp/zpush.zip -d /usr/local/lib/
 	mv /usr/local/lib/Z-Push-contrib-master /usr/local/lib/z-push
+	rm -f /usr/sbin/z-push-{admin,top}
 	ln -s /usr/local/lib/z-push/z-push-admin.php /usr/sbin/z-push-admin
 	ln -s /usr/local/lib/z-push/z-push-top.php /usr/sbin/z-push-top
 	rm /tmp/zpush.zip;
+	curl -s https://api.github.com/repos/fmbiete/Z-Push-contrib/git/refs/heads/master > /usr/local/lib/z-push/version
 fi
 
-# Configure default config
-TIMEZONE=`cat /etc/timezone`
-sed -i "s/define('TIMEZONE', .*/define('TIMEZONE', '$TIMEZONE');/" /usr/local/lib/z-push/config.php
+# Configure default config.
+sed -i "s/define('TIMEZONE', .*/define('TIMEZONE', 'Etc\/UTC');/" /usr/local/lib/z-push/config.php
 sed -i "s/define('BACKEND_PROVIDER', .*/define('BACKEND_PROVIDER', 'BackendCombined');/" /usr/local/lib/z-push/config.php
 
 # Configure BACKEND

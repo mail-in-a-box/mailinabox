@@ -17,7 +17,7 @@ if [ ! -d /usr/local/lib/owncloud ]; then
 	echo Installing ownCloud...
 	rm -f /tmp/owncloud.zip
 	wget -qO /tmp/owncloud.zip https://download.owncloud.org/community/owncloud-7.0.1.zip
-	unzip /tmp/owncloud.zip -d /usr/local/lib
+	unzip -q /tmp/owncloud.zip -d /usr/local/lib
 	rm -f /tmp/owncloud.zip
 fi
 
@@ -75,7 +75,7 @@ chmod -R 777 /usr/local/lib/owncloud/apps/mail/vendor/ezyang/htmlpurifier/librar
 
 # Use Crontab instead of AJAX/webcron in ownCloud
 # TODO: somehow change the cron option in ownClouds config, not exposed afaik?
-(crontab -u www-user -l; echo "*/15  *  *  *  * php -f /usr/local/lib/owncloud/cron.php" ) | crontab -u www-user -
+(crontab -u www-data -l; echo "*/15  *  *  *  * php -f /usr/local/lib/owncloud/cron.php" ) | crontab -u www-data -
 
 php5enmod imap
 restart_service php5-fpm
