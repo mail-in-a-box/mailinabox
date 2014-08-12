@@ -5,7 +5,7 @@
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
-apt_install nginx php5-cgi
+apt_install nginx php5-fpm
 
 rm -f /etc/nginx/sites-enabled/default
 
