@@ -43,6 +43,7 @@ cat - > /usr/local/lib/owncloud/config/config.php <<EOF;
     array (
       0 => '$PRIMARY_HOSTNAME',
     ),
+  'forcessl' => true, # if unset/false, ownCloud sends a HSTS=0 header, which conflicts with nginx config
 
   'overwritewebroot' => '/cloud',
   'user_backends' => array(
