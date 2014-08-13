@@ -77,7 +77,9 @@ tools/editconf.py /etc/php5/fpm/php.ini \
 	upload_max_filesize=16G \
 	post_max_size=16G \
 	output_buffering=16384 \
-	memory_limit=512M
+	memory_limit=512M \
+	max_execution_time=600 \
+	short_open_tag=On
 
 # Download and install the mail app
 # TODO: enable mail app in ownCloud config, not exposed afaik?
