@@ -93,16 +93,16 @@ fi
 curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/lib/owncloud/apps/mail
 php /usr/local/lib/owncloud/apps/mail/composer.phar install --working-dir=/usr/local/lib/owncloud/apps/mail
 chmod -R 777 /usr/local/lib/owncloud/apps/mail/vendor/ezyang/htmlpurifier/library/HTMLPurifier/DefinitionCache/Serializer
+chown -R www-data.www-data /usr/local/lib/owncloud/apps/mail/
 
 # Use Crontab instead of AJAX/webcron in ownCloud
 # TODO: somehow change the cron option in ownClouds config, not exposed afaik?
 (crontab -u www-data -l; echo "*/15  *  *  *  * php -f /usr/local/lib/owncloud/cron.php" ) | crontab -u www-data -
 
-# Enable apps.
-hide_output php /usr/local/lib/owncloud/console.php app:enable user_external
-hide_output php /usr/local/lib/owncloud/console.php app:enable mail
+# This seems to need to be disabled or things just don't work right. Josh gets an empty modal box and can't use the site.
+hide_output php /usr/local/lib/owncloud/console.php app:disable firstrunwizard
 
-# Enable apps.
+# Enable apps. These don't seem to work until after the administrator account is created, which we haven't done here.
 hide_output php /usr/local/lib/owncloud/console.php app:enable user_external
 hide_output php /usr/local/lib/owncloud/console.php app:enable mail
 
