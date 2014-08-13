@@ -10,7 +10,7 @@ import os, os.path, re, subprocess
 
 import dns.reversename, dns.resolver
 
-from dns_update import get_dns_zones
+from dns_update import get_dns_zones, build_tlsa_record
 from web_update import get_web_domains, get_domain_ssl_files
 from mailconfig import get_mail_domains, get_mail_aliases
 
@@ -102,6 +102,20 @@ def check_primary_hostname_dns(domain, env):
 	else:
 		print_error("""Your box's reverse DNS is currently %s, but it should be %s. Your ISP or cloud provider will have instructions
 			on setting up reverse DNS for your box at %s.""" % (existing_rdns, domain, env['PUBLIC_IP']) )
+
+	# Check the TLSA record.
+	tlsa_qname = "_25._tcp." + domain
+	tlsa25 = query_dns(tlsa_qname, "TLSA", nxdomain=None)
+	tlsa25_expected = build_tlsa_record(env)
+	if tlsa25 == tlsa25_expected:
+		print_ok("""The DANE TLSA record for incoming mail is correct (%s).""" % tlsa_qname,)
+	elif tlsa25 is None:
+		print_error("""The DANE TLSA record for incoming mail is not set. This is optional.""")
+	else:
+		print_error("""The DANE TLSA record for incoming mail (%s) is not correct. It is '%s' but it should be '%s'. Try running tools/dns_update to
+			regenerate the record. It may take several hours for
+                        public DNS to update after a change."""
+                        % (tlsa_qname, tlsa25, tlsa25_expected))
 
 	# Check that the hostmaster@ email address exists.
 	check_alias_exists("hostmaster@" + domain, env)
