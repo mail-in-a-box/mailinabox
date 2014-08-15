@@ -1,3 +1,4 @@
+#!/bin/bash
 # Owncloud
 ##########################
 
@@ -73,7 +74,8 @@ mkdir -p $STORAGE_ROOT/owncloud
 chown -R www-data.www-data $STORAGE_ROOT/owncloud /usr/local/lib/owncloud
 
 # Set PHP FPM values to support large file uploads
-tools/editconf.py /etc/php5/fpm/php.ini \
+# (semicolon is the comment character in this file, hashes produce deprecation warnings)
+tools/editconf.py /etc/php5/fpm/php.ini -c ';' \
 	upload_max_filesize=16G \
 	post_max_size=16G \
 	output_buffering=16384 \
