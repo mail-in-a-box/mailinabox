@@ -25,20 +25,13 @@ fi
 # Create a configuration file.
 TIMEZONE=`cat /etc/timezone`
 instanceid=oc$(echo $PRIMARY_HOSTNAME | sha1sum | fold -w 10 | head -n 1)
-passwordsalt=$(dd if=/dev/random bs=40 count=1 2>/dev/null | sha1sum | fold -w 30 | head -n 1)
 cat - > /usr/local/lib/owncloud/config/config.php <<EOF;
 <?php
-
 \$CONFIG = array (
-  '___installed' => true,
-
-  'version' => '7.0.1.1',
-
   'datadirectory' => '$STORAGE_ROOT/owncloud',
-  'dbtype' => 'sqlite3',
 
   'instanceid' => '$instanceid',
-  'passwordsalt' => '$passwordsalt',
+
   'trusted_domains' => 
     array (
       0 => '$PRIMARY_HOSTNAME',
@@ -70,9 +63,36 @@ cat - > /usr/local/lib/owncloud/config/config.php <<EOF;
 ?>
 EOF
 
+# Create an auto-configuration file to fill in database settings.
+adminpassword=$(dd if=/dev/random bs=40 count=1 2>/dev/null | sha1sum | fold -w 30 | head -n 1)
+cat - > /usr/local/lib/owncloud/config/autoconfig.php <<EOF;
+<?php
+\$AUTOCONFIG = array (
+  # storage/database
+  'directory' => '$STORAGE_ROOT/owncloud',
+  'dbtype' => 'sqlite3',
+
+  # create an administrator account with a random password so that
+  # the user does not have to enter anything on first load of ownCloud
+  'adminlogin'    => 'root',
+  'adminpass'     => '$adminpassword',
+);
+?>
+EOF
+
 # Set permissions
 mkdir -p $STORAGE_ROOT/owncloud
 chown -R www-data.www-data $STORAGE_ROOT/owncloud /usr/local/lib/owncloud
+
+# Execute ownCloud's setup step, which creates the ownCloud sqlite database.
+# It also wipes it if it exists. And it deletes the autoconfig.php file.
+(cd /usr/local/lib/owncloud; sudo -u www-data php /usr/local/lib/owncloud/index.php;)
+
+# Enable/disable apps. Note that this must be done after the ownCloud setup.
+# The firstrunwizard gave Josh all sorts of problems, so disabling that.
+# user_external is what allows ownCloud to use IMAP for login.
+hide_output php /usr/local/lib/owncloud/console.php app:disable firstrunwizard
+hide_output php /usr/local/lib/owncloud/console.php app:enable user_external
 
 # Set PHP FPM values to support large file uploads
 # (semicolon is the comment character in this file, hashes produce deprecation warnings)
@@ -83,6 +103,8 @@ tools/editconf.py /etc/php5/fpm/php.ini -c ';' \
 	memory_limit=512M \
 	max_execution_time=600 \
 	short_open_tag=On
+
+# MAIL
 
 # Download and install the mail app
 # TODO: enable mail app in ownCloud config, not exposed afaik?
@@ -104,12 +126,9 @@ chown -R www-data.www-data /usr/local/lib/owncloud/apps/mail/
 # TODO: somehow change the cron option in ownClouds config, not exposed afaik?
 (crontab -u www-data -l; echo "*/15  *  *  *  * php -f /usr/local/lib/owncloud/cron.php" ) | crontab -u www-data -
 
-# This seems to need to be disabled or things just don't work right. Josh gets an empty modal box and can't use the site.
-hide_output php /usr/local/lib/owncloud/console.php app:disable firstrunwizard
-
-# Enable apps. These don't seem to work until after the administrator account is created, which we haven't done here.
-hide_output php /usr/local/lib/owncloud/console.php app:enable user_external
+# Enable mail app.
 hide_output php /usr/local/lib/owncloud/console.php app:enable mail
 
+# Finished.
 php5enmod imap
 restart_service php5-fpm
