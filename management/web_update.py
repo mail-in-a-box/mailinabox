@@ -79,6 +79,7 @@ def make_domain_config(domain, template, env):
 
 	# Replace substitution strings in the template & return.
 	nginx_conf = template
+	nginx_conf = nginx_conf.replace("$STORAGE_ROOT", env['STORAGE_ROOT'])
 	nginx_conf = nginx_conf.replace("$HOSTNAME", domain)
 	nginx_conf = nginx_conf.replace("$ROOT", root)
 	nginx_conf = nginx_conf.replace("$SSL_KEY", ssl_key)
