@@ -1,6 +1,8 @@
 Mail-in-a-Box
 =============
 
+By [@JoshData](https://github.com/JoshData) and contributors.
+
 Mail-in-a-Box helps individuals take back control of their email by defining a one-click, easy-to-deploy SMTP+everything else server: a mail server in a box.
 
 **This is a work in progress. I work on this in my limited free time.**
