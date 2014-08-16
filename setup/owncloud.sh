@@ -104,30 +104,9 @@ tools/editconf.py /etc/php5/fpm/php.ini -c ';' \
 	max_execution_time=600 \
 	short_open_tag=On
 
-# MAIL
-
-# Download and install the mail app
-# TODO: enable mail app in ownCloud config, not exposed afaik?
-if [ ! -d /usr/local/lib/owncloud/apps/mail ]; then
-	rm -f /tmp/owncloud_mail.zip
-	wget -qO /tmp/owncloud_mail.zip https://github.com/owncloud/mail/archive/master.zip
-	unzip -q /tmp/owncloud_mail.zip -d /usr/local/lib/owncloud/apps
-	mv /usr/local/lib/owncloud/apps/mail-master /usr/local/lib/owncloud/apps/mail
-	rm -f /tmp/owncloud.zip
-fi
-
-# Currently the mail app dosnt ship with the dependencies, so we need to install them
-curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/lib/owncloud/apps/mail
-php /usr/local/lib/owncloud/apps/mail/composer.phar install --working-dir=/usr/local/lib/owncloud/apps/mail
-chmod -R 777 /usr/local/lib/owncloud/apps/mail/vendor/ezyang/htmlpurifier/library/HTMLPurifier/DefinitionCache/Serializer
-chown -R www-data.www-data /usr/local/lib/owncloud/apps/mail/
-
 # Use Crontab instead of AJAX/webcron in ownCloud
 # TODO: somehow change the cron option in ownClouds config, not exposed afaik?
 (crontab -u www-data -l; echo "*/15  *  *  *  * php -f /usr/local/lib/owncloud/cron.php" ) | crontab -u www-data -
-
-# Enable mail app.
-hide_output php /usr/local/lib/owncloud/console.php app:enable mail
 
 # Finished.
 php5enmod imap
