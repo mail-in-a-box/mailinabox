@@ -43,9 +43,10 @@ def do_web_update(env):
 	nginx_conf = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-top.conf")).read()
 
 	# Add configuration for each web domain.
-	template = open(os.path.join(os.path.dirname(__file__), "../conf/nginx.conf")).read()
+	template1 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx.conf")).read()
+	template2 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-primaryonly.conf")).read()
 	for domain in get_web_domains(env):
-		nginx_conf += make_domain_config(domain, template, env)
+		nginx_conf += make_domain_config(domain, template1, template2, env)
 
 	# Did the file change? If not, don't bother writing & restarting nginx.
 	nginx_conf_fn = "/etc/nginx/conf.d/local.conf"
@@ -63,7 +64,7 @@ def do_web_update(env):
 
 	return "web updated\n"
 
-def make_domain_config(domain, template, env):
+def make_domain_config(domain, template, template_for_primaryhost, env):
 	# How will we configure this domain.
 
 	# Where will its root directory be for static files?
@@ -77,8 +78,13 @@ def make_domain_config(domain, template, env):
 	# available. Make a self-signed one now if one doesn't exist.
 	ensure_ssl_certificate_exists(domain, ssl_key, ssl_certificate, csr_path, env)
 
+	# Put pieces together.
+	nginx_conf_parts = re.split("\s*# ADDITIONAL DIRECTIVES HERE\s*", template)
+	nginx_conf = nginx_conf_parts[0] + "\n"
+	if domain == env['PRIMARY_HOSTNAME']:
+		nginx_conf += template_for_primaryhost + "\n"
+
 	# Replace substitution strings in the template & return.
-	nginx_conf = template
 	nginx_conf = nginx_conf.replace("$STORAGE_ROOT", env['STORAGE_ROOT'])
 	nginx_conf = nginx_conf.replace("$HOSTNAME", domain)
 	nginx_conf = nginx_conf.replace("$ROOT", root)
@@ -86,17 +92,16 @@ def make_domain_config(domain, template, env):
 	nginx_conf = nginx_conf.replace("$SSL_CERTIFICATE", ssl_certificate)
 
 	# Add in any user customizations.
-	nginx_conf_parts = re.split("(# ADDITIONAL DIRECTIVES HERE\n)", nginx_conf)
 	nginx_conf_custom_fn = os.path.join(env["STORAGE_ROOT"], "www/custom.yaml")
 	if os.path.exists(nginx_conf_custom_fn):
 		yaml = rtyaml.load(open(nginx_conf_custom_fn))
 		if domain in yaml:
 			yaml = yaml[domain]
 			if "proxy" in yaml:
-				nginx_conf_parts[1] += "\tlocation / {\n\t\tproxy_pass %s;\n\t}\n" % yaml["proxy"]
+				nginx_conf += "\tlocation / {\n\t\tproxy_pass %s;\n\t}\n" % yaml["proxy"]
 
-	# Put it all together.	
-	nginx_conf = "".join(nginx_conf_parts)
+	# Ending.
+	nginx_conf += nginx_conf_parts[1]
 
 	return nginx_conf
 
