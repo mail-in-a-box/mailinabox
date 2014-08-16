@@ -114,6 +114,13 @@ tools/editconf.py /etc/php5/fpm/php.ini -c ';' \
 # TODO: somehow change the cron option in ownClouds config, not exposed afaik?
 (crontab -u www-data -l; echo "*/15  *  *  *  * php -f /usr/local/lib/owncloud/cron.php" ) | crontab -u www-data -
 
+## Ensure all system admins are ownCloud admins.
+## Actually we don't do this. There's nothing much of interest that the user could
+## change from the ownCloud admin, and there's a lot they could mess up.
+#for user in $(tools/mail.py user admins); do
+#	sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_group_user VALUES ('admin', '$user')"
+#done
+
 # Finished.
 php5enmod imap
 restart_service php5-fpm
