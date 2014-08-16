@@ -22,10 +22,13 @@ if [ ! -d /usr/local/lib/owncloud ]; then
 	rm -f /tmp/owncloud.zip
 fi
 
-# Create a configuration file.
-TIMEZONE=`cat /etc/timezone`
-instanceid=oc$(echo $PRIMARY_HOSTNAME | sha1sum | fold -w 10 | head -n 1)
-cat - > /usr/local/lib/owncloud/config/config.php <<EOF;
+# Setup ownCloud if the ownCloud database does not yet exist. Running setup when
+# the database does exist wipes the database and user data.
+if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
+	# Create a configuration file.
+	TIMEZONE=`cat /etc/timezone`
+	instanceid=oc$(echo $PRIMARY_HOSTNAME | sha1sum | fold -w 10 | head -n 1)
+	cat - > /usr/local/lib/owncloud/config/config.php <<EOF;
 <?php
 \$CONFIG = array (
   'datadirectory' => '$STORAGE_ROOT/owncloud',
@@ -63,9 +66,11 @@ cat - > /usr/local/lib/owncloud/config/config.php <<EOF;
 ?>
 EOF
 
-# Create an auto-configuration file to fill in database settings.
-adminpassword=$(dd if=/dev/random bs=40 count=1 2>/dev/null | sha1sum | fold -w 30 | head -n 1)
-cat - > /usr/local/lib/owncloud/config/autoconfig.php <<EOF;
+	# Create an auto-configuration file to fill in database settings
+	# when the install script is run. Make an administrator account
+	# here or else the install can't finish.
+	adminpassword=$(dd if=/dev/random bs=40 count=1 2>/dev/null | sha1sum | fold -w 30 | head -n 1)
+	cat - > /usr/local/lib/owncloud/config/autoconfig.php <<EOF;
 <?php
 \$AUTOCONFIG = array (
   # storage/database
@@ -80,13 +85,14 @@ cat - > /usr/local/lib/owncloud/config/autoconfig.php <<EOF;
 ?>
 EOF
 
-# Set permissions
-mkdir -p $STORAGE_ROOT/owncloud
-chown -R www-data.www-data $STORAGE_ROOT/owncloud /usr/local/lib/owncloud
+	# Create user data directory and set permissions
+	mkdir -p $STORAGE_ROOT/owncloud
+	chown -R www-data.www-data $STORAGE_ROOT/owncloud /usr/local/lib/owncloud
 
-# Execute ownCloud's setup step, which creates the ownCloud sqlite database.
-# It also wipes it if it exists. And it deletes the autoconfig.php file.
-(cd /usr/local/lib/owncloud; sudo -u www-data php /usr/local/lib/owncloud/index.php;)
+	# Execute ownCloud's setup step, which creates the ownCloud sqlite database.
+	# It also wipes it if it exists. And it deletes the autoconfig.php file.
+	(cd /usr/local/lib/owncloud; sudo -u www-data php /usr/local/lib/owncloud/index.php;)
+fi
 
 # Enable/disable apps. Note that this must be done after the ownCloud setup.
 # The firstrunwizard gave Josh all sorts of problems, so disabling that.
