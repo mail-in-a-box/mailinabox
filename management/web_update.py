@@ -97,8 +97,8 @@ def make_domain_config(domain, template, template_for_primaryhost, env):
 		yaml = rtyaml.load(open(nginx_conf_custom_fn))
 		if domain in yaml:
 			yaml = yaml[domain]
-			if "proxy" in yaml:
-				nginx_conf += "\tlocation / {\n\t\tproxy_pass %s;\n\t}\n" % yaml["proxy"]
+			for path, url in yaml.get("proxies", {}).items():
+				nginx_conf += "\tlocation %s {\n\t\tproxy_pass %s;\n\t}\n" % (path, url)
 
 	# Ending.
 	nginx_conf += nginx_conf_parts[1]
