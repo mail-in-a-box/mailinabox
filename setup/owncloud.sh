@@ -110,9 +110,13 @@ tools/editconf.py /etc/php5/fpm/php.ini -c ';' \
 	max_execution_time=600 \
 	short_open_tag=On
 
-# Use Crontab instead of AJAX/webcron in ownCloud
-# TODO: somehow change the cron option in ownClouds config, not exposed afaik?
-(crontab -u www-data -l; echo "*/15  *  *  *  * php -f /usr/local/lib/owncloud/cron.php" ) | crontab -u www-data -
+# Set up a cron job for owncloud.
+cat > /etc/cron.hourly/mailinabox-owncloud << EOF;
+#!/bin/bash
+# Mail-in-a-Box
+sudo -u www-data php -f /usr/local/lib/owncloud/cron.php
+EOF
+chmod +x /etc/cron.hourly/mailinabox-owncloud
 
 ## Ensure all system admins are ownCloud admins.
 ## Actually we don't do this. There's nothing much of interest that the user could
