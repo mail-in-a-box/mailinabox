@@ -41,7 +41,7 @@ apt_install postfix postgrey postfix-pcre ca-certificates
 tools/editconf.py /etc/postfix/main.cf \
 	inet_interfaces=all \
 	myhostname=$PRIMARY_HOSTNAME\
-	smtpd_banner="\$myhostname ESMTP Hi, I'm a Mail-in-a-Box (Ubuntu/Postfix; see https://github.com/joshdata/mailinabox)" \
+	smtpd_banner="\$myhostname ESMTP Hi, I'm a Mail-in-a-Box (Ubuntu/Postfix; see https://mailinabox.email/)" \
 	mydestination=localhost
 
 # Outgoing Mail

@@ -21,7 +21,7 @@ In short, it's like this:
 
 	# do this on a fresh install of Ubuntu 14.04 only!
 	sudo apt-get install -y git
-	git clone https://github.com/joshdata/mailinabox
+	git clone https://github.com/mail-in-a-box/mailinabox
 	cd mailinabox
 	sudo setup/start.sh
 
@@ -34,7 +34,7 @@ The Goals
 * Promote decentralization, innovation, and privacy on the web.
 * Have automated, auditable, and [idempotent](http://sharknet.us/2014/02/01/automated-configuration-management-challenges-with-idempotency/) configuration.
 
-For more background, see [The Rationale](https://github.com/JoshData/mailinabox/wiki).
+For more background, see [The Rationale](https://github.com/mail-in-a-box/mailinabox/wiki).
 
 What I am not trying to do:
 
