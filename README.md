@@ -29,10 +29,6 @@ Then run the post-install checklist command to see what you need to do next:
 
 	sudo management/whats_next.py
 
-In addition to above once finished you need to:
-
-    Goto https://<your domain>.<tld>/cloud, and make an ownCloud admin account. Don't edit the advanced settings.
-
 Congratulations! You should now have a working setup. Feel free to login with your mail credentials created earlier in the setup
 
 **Status**: This is a work in progress. It works for what it is, but it is missing such things as quotas, backup/restore, etc.
