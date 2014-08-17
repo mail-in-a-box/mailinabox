@@ -248,8 +248,9 @@ def query_dns(qname, rtype, nxdomain='[Not Set]'):
 
 	# There may be multiple answers; concatenate the response. Remove trailing
 	# periods from responses since that's how qnames are encoded in DNS but is
-	# confusing for us.
-	return "; ".join(str(r).rstrip('.') for r in response)
+	# confusing for us. The order of the answers doesn't matter, so sort so we
+	# can compare to a well known order.
+	return "; ".join(sorted(str(r).rstrip('.') for r in response))
 
 def check_ssl_cert(domain, env):
 	# Check that SSL certificate is signed.
