@@ -11,7 +11,7 @@ if host $PRIMARY_HOSTNAME.dbl.spamhaus.org > /dev/null; then
 	echo "You will not be able to send mail using this domain name, so"
 	echo "setup cannot continue."
 	echo
-	exit
+	exit 1
 fi
 
 # Stop if the IPv4 address is listed in the ZEN Spamhouse Block List.
@@ -31,7 +31,7 @@ if host $REVERSED_IPV4.zen.spamhaus.org > /dev/null; then
 	echo "Many residential network IP addresses are listed, so Mail-in-a-Box"
 	echo "typically cannot be used on a residential Internet connection."
 	echo
-	exit
+	exit 1
 fi
 
 # Stop if we cannot make an outbound connection on port 25. Many residential
@@ -49,5 +49,5 @@ if ! nc -z -w5 aspmx.l.google.com 25; then
 	echo "to Google's mail server on port 25 but the connection did not"
 	echo "succeed."
 	echo
-	exit
+	exit 1
 fi
