@@ -1,0 +1,81 @@
+<style>
+#external_dns_settings .heading td {
+  font-weight: bold;
+  font-size: 120%;
+  padding-top: 1.5em;
+}
+#external_dns_settings .heading.first td {
+  border-top: none;
+  padding-top: 0;
+}
+#external_dns_settings .values td {
+	padding-top: .75em;
+	padding-bottom: 0;
+	max-width: 50vw;
+	word-wrap: break-word;
+}
+#external_dns_settings .explanation td {
+	border: 0;
+	padding-top: .5em;
+	padding-bottom: .75em;
+	font-style: italic;
+	color: #777;
+}
+</style>
+
+<h2>External DNS</h2>
+
+<p class="text-danger">This is for advanced configurations.</p>
+
+<h3>Overview</h3>
+
+<p>Although your box is configured to serve its own DNS, it is possible to host your DNS elsewhere. We do not recommend this.</p>
+
+<p>If you do so, you are responsible for keeping your DNS entries up to date. In particular DNSSEC entries must be re-signed periodically. Do not set a DS record at your registrar or publish DNSSEC entries in your DNS zones if you do not intend to keep them up to date.</p>
+
+<h3>DNS Settings</h3>
+
+<p>Enter the following DNS entries at your DNS provider:</p>
+
+<table id="external_dns_settings" class="table">
+	<thead>
+		<tr>
+			<th>QName</th>
+			<th>Type</th>
+			<th>Value</th>
+		</tr>
+	</thead>
+	<tbody>
+	</tbody>
+</table>
+
+<script>
+function show_system_external_dns() {
+  $('#external_dns_settings tbody').html("<tr><td colspan='2' class='text-muted'>Loading...</td></tr>")
+  api(
+    "/dns/dump",
+    "GET",
+    { },
+    function(zones) {
+      $('#external_dns_settings tbody').html("");
+      for (var j = 0; j < zones.length; j++) {
+        var h = $("<tr class='heading'><td colspan='3'></td></tr>");
+        h.find("td").text(zones[j][0]);
+        $('#external_dns_settings tbody').append(h);
+
+        var r = zones[j][1];
+        for (var i = 0; i < r.length; i++) {
+          var n = $("<tr class='values'><td class='qname'/><td class='rtype'/><td class='value'/></tr>");
+          n.find('.qname').text(r[i].qname);
+          n.find('.rtype').text(r[i].rtype);
+          n.find('.value').text(r[i].value);
+          $('#external_dns_settings tbody').append(n);
+
+          var n = $("<tr class='explanation'><td colspan='3'/></tr>");
+          n.find('td').text(r[i].explanation);
+          $('#external_dns_settings tbody').append(n);
+        }
+      }
+    })
+}
+</script>

@@ -40,8 +40,3 @@ if [ ! -f $STORAGE_ROOT/ssl/ssl_certificate.pem ]; then
 	  -in $STORAGE_ROOT/ssl/ssl_cert_sign_req.csr -signkey $STORAGE_ROOT/ssl/ssl_private_key.pem -out $STORAGE_ROOT/ssl/ssl_certificate.pem
 fi
 
-echo
-echo "Your SSL certificate's fingerpint is:"
-openssl x509 -in $STORAGE_ROOT/ssl/ssl_certificate.pem -noout -fingerprint \
-	| sed "s/SHA1 Fingerprint=//"
-echo

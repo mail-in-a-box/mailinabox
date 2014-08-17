@@ -1,0 +1,159 @@
+<style>
+#alias_table .actions > * { padding-right: 3px; }
+#alias_table .alias-required .remove { display: none }
+</style>
+
+<h2>Aliases</h2>
+
+<h3>Add a mail alias</h3>
+
+<p>Aliases are email forwarders. An alias can forward email to a <a href="javascript:show_panel('users')">mail user</a> or to any email address.</p>
+
+<form class="form-horizontal" role="form" onsubmit="do_add_alias(); return false;">
+  <div class="form-group">
+    <label for="addaliasEmail" class="col-sm-2 control-label">Email Address</label>
+    <div class="col-sm-10">
+      <input type="email" class="form-control" id="addaliasEmail" placeholder="Incoming Email Address">
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="addaliasTargets" class="col-sm-2 control-label">Forward To</label>
+    <div class="col-sm-10">
+      <textarea class="form-control" rows="3" id="addaliasTargets" placeholder="Forward to these email addresses (one per line or separated by commas)"></textarea>
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="col-sm-offset-2 col-sm-10">
+      <button id="add-alias-button" type="submit" class="btn btn-primary">Add</button>
+      <button id="alias-cancel" class="btn btn-default hidden" onclick="aliases_reset_form(); return false;">Cancel</button>
+    </div>
+  </div>
+</form>
+
+<h3>Existing mail aliases</h3>
+<table id="alias_table" class="table" style="width: auto">
+  <thead>
+    <tr>
+      <th></th>
+      <th>Email Address<br></th>
+      <th>Forwards To</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+
+<p style="margin-top: 1.5em"><small>Hostmaster@, postmaster@, and admin@ email addresses are required on some domains.</small></p>
+
+<div style="display: none">
+  <table>
+  <tr id="alias-template">
+    <td class='actions'>
+        <a href="#" onclick="aliases_edit(this); return false;" class='edit' title="Edit Alias">
+          <span class="glyphicon glyphicon-pencil"></span>
+        </a>
+        <a href="#" onclick="aliases_remove(this); return false;" class='remove' title="Remove Alias">
+          <span class="glyphicon glyphicon-trash"></span>
+        </a>
+    </td>
+    <td class='email'> </td>
+    <td class='target'> </td>
+  </tr>
+  </table>
+</div>
+
+
+<script>
+function show_aliases() {
+  $('#alias_table tbody').html("<tr><td colspan='2' class='text-muted'>Loading...</td></tr>")
+  api(
+    "/mail/aliases",
+    "GET",
+    { format: 'json' },
+    function(r) {
+      $('#alias_table tbody').html("");
+      for (var i = 0; i < r.length; i++) {
+        var n = $("#alias-template").clone();
+        n.attr('id', '');
+
+        if (r[i].required) n.addClass('alias-required');
+        n.attr('data-email', r[i].source);
+        n.find('td.email').text(r[i].source)
+        for (var j = 0; j < r[i].destination.length; j++)
+          n.find('td.target').append($("<div></div>").text(r[i].destination[j]))
+        $('#alias_table tbody').append(n);
+      }
+    })
+}
+
+var is_alias_add_update = false;
+function do_add_alias() {
+  var title = (!is_alias_add_update) ? "Add Alias" : "Update Alias";
+  var email = $("#addaliasEmail").val();
+  var targets = $("#addaliasTargets").val();
+  api(
+    "/mail/aliases/add",
+    "POST",
+    {
+      update_if_exists: is_alias_add_update ? '1' : '0',
+      source: email,
+      destination: targets
+    },
+    function(r) {
+      // Responses are multiple lines of pre-formatted text.
+      show_modal_error(title, $("<pre/>").text(r));
+      show_aliases()
+      aliases_reset_form();
+    },
+    function(r) {
+      show_modal_error(title, r);
+    });
+  return false;
+}
+
+function aliases_reset_form() {
+  $("#addaliasEmail").prop('disabled', false);
+  $("#addaliasEmail").val('')
+  $("#addaliasTargets").val('')
+  $('#alias-cancel').addClass('hidden');
+  $('#add-alias-button').text('Add');
+  is_alias_add_update = false;
+}
+
+function aliases_edit(elem) {
+  var email = $(elem).parents('tr').attr('data-email');
+  var targetdivs = $(elem).parents('tr').find('.target div');
+  var targets = "";
+  for (var i = 0; i < targetdivs.length; i++)
+    targets += $(targetdivs[i]).text() + "\n";
+
+  is_alias_add_update = true;
+  $('#alias-cancel').removeClass('hidden');
+  $("#addaliasEmail").prop('disabled', true);
+  $("#addaliasEmail").val(email);
+  $("#addaliasTargets").val(targets);
+  $('#add-alias-button').text('Update');
+  $('body').animate({ scrollTop: 0 })
+}
+
+function aliases_remove(elem) {
+  var email = $(elem).parents('tr').attr('data-email');
+  show_modal_confirm(
+    "Remove Alias",
+    "Remove " + email + "?",
+    "Remove",
+    function() {
+      api(
+        "/mail/aliases/remove",
+        "POST",
+        {
+          source: email
+        },
+        function(r) {
+          // Responses are multiple lines of pre-formatted text.
+          show_modal_error("Remove User", $("<pre/>").text(r));
+          show_aliases();
+        });
+    });
+}
+</script>

@@ -59,8 +59,11 @@ def do_web_update(env):
 	with open(nginx_conf_fn, "w") as f:
 		f.write(nginx_conf)
 
-	# Kick nginx.
-	shell('check_call', ["/usr/sbin/service", "nginx", "restart"])
+	# Kick nginx. Since this might be called from the web admin
+	# don't do a 'restart'. That would kill the connection before
+	# the API returns its response. A 'reload' should be good
+	# enough and doesn't break any open connections.
+	shell('check_call', ["/usr/sbin/service", "nginx", "reload"])
 
 	return "web updated\n"
 

@@ -2,6 +2,9 @@ import base64, os, os.path
 
 from flask import make_response
 
+import utils
+from mailconfig import get_mail_user_privileges
+
 DEFAULT_KEY_PATH   = '/var/lib/mailinabox/api.key'
 DEFAULT_AUTH_REALM = 'Mail-in-a-Box Management Server'
 
@@ -37,37 +40,69 @@ class KeyAuthService:
 		with create_file_with_mode(self.key_path, 0o640) as key_file:
 			key_file.write(self.key + '\n')
 
-	def is_authenticated(self, request):
-		"""Test if the client key passed in HTTP header matches the service key"""
+	def is_authenticated(self, request, env):
+		"""Test if the client key passed in HTTP Authorization header matches the service key
+		or if the or username/password passed in the header matches an administrator user.
+		Returns 'OK' if the key is good or the user is an administrator, otherwise an error message."""
 
 		def decode(s):
-			return base64.b64decode(s.encode('utf-8')).decode('ascii')
+			return base64.b64decode(s.encode('ascii')).decode('ascii')
 
-		def parse_api_key(header):
-			if header is None:
-				return
-
+		def parse_basic_auth(header):
 			if " " not in header:
-				return
+				return None, None
 			scheme, credentials = header.split(maxsplit=1)
 			if scheme != 'Basic':
-				return
+				return None, None
 
 			credentials = decode(credentials)
 			if ":" not in credentials:
-				return
+				return None, None
 			username, password = credentials.split(':', maxsplit=1)
-			return username
+			return username, password
 
-		request_key = parse_api_key(request.headers.get('Authorization'))
+		header = request.headers.get('Authorization')
+		if not header:
+			return "No authorization header provided."
 
-		return request_key == self.key
+		username, password = parse_basic_auth(header)
 
-	def make_unauthorized_response(self):
-		return make_response(
-			'You must pass the API key from "{0}" as the username\n'.format(self.key_path),
-			401,
-			{ 'WWW-Authenticate': 'Basic realm="{0}"'.format(self.auth_realm) })
+		if username in (None, ""):
+			return "Authorization header invalid."
+		elif username == self.key:
+			return "OK"
+		else:
+			return self.check_imap_login( username, password, env)
+
+	def check_imap_login(self, email, pw, env):
+		# Validate a user's credentials.
+
+		# Sanity check.
+		if email == "" or pw == "":
+			return "Enter an email address and password."
+
+		# Authenticate.
+		try:
+			# Use doveadm to check credentials. doveadm will return
+			# a non-zero exit status if the credentials are no good,
+			# and check_call will raise an exception in that case.
+			utils.shell('check_call', [
+				"/usr/bin/doveadm",
+				"auth", "test",
+				email, pw
+				])
+		except:
+			# Login failed.
+			return "Invalid email address or password."
+
+		# Authorize.
+		# (This call should never fail on a valid user.)
+		privs = get_mail_user_privileges(email, env)
+		if isinstance(privs, tuple): raise Exception("Error getting privileges.")
+		if "admin" not in privs:
+			return "You are not an administrator for this system."
+
+		return "OK"
 
 	def _generate_key(self):
 		raw_key = os.urandom(32)

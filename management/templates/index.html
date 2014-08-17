@@ -1,11 +1,341 @@
-<!doctype html>
-<html>
-	<head>
-		<title>Mail-in-a-Box Management Server</title>
-	</head>
-	<body>
-		<h1>Mail-in-a-Box Management Server</h1>
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="viewport" content="width=device-width">
 
-		<p>Use this server to issue commands to the Mail-in-a-Box management daemon.</p>
-	</body>
+        <title>{{hostname}} - Mail-in-a-Box Control Panel</title>
+
+        <meta name="robots" content="noindex, nofollow">
+
+        <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+        <style>
+            @import url(https://fonts.googleapis.com/css?family=Raleway:400,700);
+            @import url(https://fonts.googleapis.com/css?family=Ubuntu:300);
+
+	    html {
+		overflow-y: scroll;
+	    }
+
+            body {
+                padding-top: 50px;
+                padding-bottom: 20px;
+            }
+
+            p {
+              margin-bottom: 1.25em;
+            }
+
+            h1, h2, h3 {
+              font-family: Raleway, sans-serif;
+              font-weight: bold;
+            }
+
+            h2 {
+              margin: 1em 0;
+            }
+
+            h3 {
+              font-size: 130%;
+              border-bottom: 1px solid black;
+              padding-bottom: 3px;
+              margin-bottom: 13px;
+              margin-top: 26px;
+            }
+
+            .panel {
+              display: none;
+            }
+
+            table.table {
+              margin: 1.5em 0;
+            }
+        </style>
+        <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+        <style>
+        </style>
+    </head>
+    <body>
+        <!--[if lt IE 7]>
+            <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
+        <![endif]-->
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">{{hostname}}</a>
+        </div>
+        <div class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li class="dropdown active">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">System <b class="caret"></b></a>
+              <ul class="dropdown-menu">
+                <li><a href="#system_status" onclick="return show_panel(this);">Status Checks</a></li>
+                <li><a href="#system_external_dns" onclick="return show_panel(this);">External DNS (Advanced)</a></li>
+              </ul>
+            </li>
+            <li class="dropdown active">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Mail <b class="caret"></b></a>
+              <ul class="dropdown-menu">
+                <li><a href="#mail-guide" onclick="return show_panel(this);">Instructions</a></li>
+                <li><a href="#users" onclick="return show_panel(this);">Users</a></li>
+                <li><a href="#aliases" onclick="return show_panel(this);">Aliases</a></li>
+                <!--<li><a href="#">Another action</a></li>
+                <li><a href="#">Something else here</a></li>
+                <li class="divider"></li>
+                <li class="dropdown-header">Nav header</li>
+                <li><a href="#">Separated link</a></li>
+                <li><a href="#">One more separated link</a></li>-->
+              </ul>
+            </li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="#" onclick="do_logout(); return false;" style="color: white">Log out?</a></li>
+          </ul>
+        </div><!--/.navbar-collapse -->
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div id="panel_system_status" class="container panel">
+      {% include "system-status.html" %}
+      </div>
+
+      <div id="panel_system_external_dns" class="container panel">
+      {% include "system-external-dns.html" %}
+      </div>
+
+      <div id="panel_login" class="panel">
+      {% include "login.html" %}
+      </div>
+
+      <div id="panel_mail-guide" class="container panel">
+      {% include "mail-guide.html" %}
+      </div>
+
+      <div id="panel_users" class="container panel">
+      {% include "users.html" %}
+      </div>
+
+      <div id="panel_aliases" class="container panel">
+      {% include "aliases.html" %}
+      </div>
+
+      <hr>
+
+      <footer>
+        <p>This is a <a href="https://mailinabox.email">Mail-in-a-Box</a>.</p>
+      </footer>
+    </div> <!-- /container -->
+
+        <div id="ajax_loading_indicator" style="display: none; position: absolute; left: 0; top: 0; width: 100%; height: 100%; text-align: center; background-color: rgba(255,255,255,.75)">
+          <div style="margin: 20% auto">
+            <div><span class="glyphicon glyphicon-time"></span></div>
+            <div>Loading...</div>
+          </div>
+        </div>
+
+        <div id="global_modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="errorModalTitle" aria-hidden="true">
+          <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="errorModalTitle"> </h4>
+              </div>
+              <div class="modal-body">
+                <p> </p>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
+                <button type="button" class="btn btn-danger" data-dismiss="modal">Yes</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+        <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+
+        <script>
+var global_modal_state = null;
+var global_modal_funcs = null;
+
+$(function() {
+  $('#global_modal .btn-danger').click(function() {
+    // Don't take action now. Wait for the modal to be totally hidden
+    // so that we don't attempt to show another modal while this one
+    // is closing.
+    global_modal_state = 0; // OK
+  })
+  $('#global_modal .btn-default').click(function() {
+    global_modal_state = 1; // Cancel
+  })
+  $('#global_modal').on('hidden.bs.modal', function (e) {
+    // do the cancel function
+    if (global_modal_state == null) global_modal_state = 1; // cancel if the user hit ESC or clicked outside of the modal
+    if (global_modal_funcs && global_modal_funcs[global_modal_state])
+      global_modal_funcs[global_modal_state]();
+  })  
+})
+
+function show_modal_error(title, message, callback) {
+  $('#global_modal h4').text(title);
+  $('#global_modal .modal-body').html("<p/>");
+  if (typeof question == String) {
+    $('#global_modal p').text(message);
+    $('#global_modal .modal-dialog').addClass("modal-sm");
+  } else {
+    $('#global_modal p').html("").append(message);
+    $('#global_modal .modal-dialog').removeClass("modal-sm");
+  }
+  $('#global_modal .btn-default').show().text("OK");
+  $('#global_modal .btn-danger').hide();
+  global_modal_funcs = [callback, callback];
+  global_modal_state = null;
+  $('#global_modal').modal({});
+}
+
+function show_modal_confirm(title, question, verb, yes_callback, cancel_callback) {
+  $('#global_modal h4').text(title);
+  if (typeof question == String) {
+    $('#global_modal .modal-dialog').addClass("modal-sm");
+    $('#global_modal .modal-body').html("<p/>");
+    $('#global_modal p').text(question);
+  } else {
+    $('#global_modal .modal-dialog').removeClass("modal-sm");
+    $('#global_modal .modal-body').html("").append(question);
+  }
+  $('#global_modal .btn-default').show().text("Cancel");
+  $('#global_modal .btn-danger').show().text(verb);
+  global_modal_funcs = [yes_callback, cancel_callback];
+  global_modal_state = null;
+  $('#global_modal').modal({});
+}
+
+var is_ajax_loading = false;
+function ajax(options) {
+  setTimeout("if (is_ajax_loading) $('#ajax_loading_indicator').fadeIn()", 100);
+  function hide_loading_indicator() {
+    is_ajax_loading = false;
+    $('#ajax_loading_indicator').hide();
+  }
+  var old_success = options.success;
+  var old_error = options.error;
+  options.success = function(data) {
+    hide_loading_indicator();
+    if (data.status == "error")
+      show_modal_error("Error", data.message);
+    else if (old_success)
+      old_success(data);
+  };
+  options.error = function(jqxhr) {
+    hide_loading_indicator();
+    if (!old_error) 
+      show_modal_error("Error", "Something went wrong, sorry.")
+    else
+      old_error(jqxhr.responseText);
+  };
+  is_ajax_loading = true;
+  $.ajax(options);
+}
+
+var api_credentials = ["", ""];
+function api(url, method, data, callback, callback_error) {
+  // from http://www.webtoolkit.info/javascript-base64.html
+  function base64encode(input) {
+    _keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+    var output = "";
+    var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+    var i = 0;
+    while (i < input.length) {
+        chr1 = input.charCodeAt(i++);
+        chr2 = input.charCodeAt(i++);
+        chr3 = input.charCodeAt(i++);
+        enc1 = chr1 >> 2;
+        enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+        enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+        enc4 = chr3 & 63;
+        if (isNaN(chr2)) {
+            enc3 = enc4 = 64;
+        } else if (isNaN(chr3)) {
+            enc4 = 64;
+        }
+        output = output +
+        _keyStr.charAt(enc1) + _keyStr.charAt(enc2) +
+        _keyStr.charAt(enc3) + _keyStr.charAt(enc4);
+    }
+
+    return output;
+  }
+
+  ajax({
+    url: "/admin" + url,
+    method: method,
+    data: data,
+    beforeSend: function(xhr) {
+      // We don't store user credentials in a cookie to avoid the hassle of CSRF
+      // attacks. The Authorization header only gets set in our AJAX calls triggered
+      // by user actions.
+      xhr.setRequestHeader(
+        'Authorization',
+        'Basic ' + base64encode(api_credentials[0] + ':' + api_credentials[1]));
+    },
+    success: callback,
+    error: callback_error,
+    statusCode: {
+      403: function(xhr) {
+        // Credentials are no longer valid. Try to login again.
+        var p = current_panel;
+        show_panel('login');
+        switch_back_to_panel = p;
+      }
+    }
+  })
+}
+
+var current_panel = null;
+var switch_back_to_panel = null;
+function show_panel(panelid) {
+  if (panelid.getAttribute)
+    // we might be passed an HTMLElement <a>.
+    panelid = panelid.getAttribute('href').substring(1);
+
+  $('.panel').hide();
+  $('#panel_' + panelid).show();
+  if (typeof localStorage != 'undefined')
+    localStorage.setItem("miab-cp-lastpanel", panelid);
+  if (window["show_" + panelid])
+    window["show_" + panelid]();
+
+  current_panel = panelid;
+  switch_back_to_panel = null;
+
+  return false; // when called from onclick, cancel navigation
+}
+
+$(function() {
+  // Recall saved user credentials.
+  if (typeof sessionStorage != 'undefined' && sessionStorage.getItem("miab-cp-credentials"))
+    api_credentials = sessionStorage.getItem("miab-cp-credentials").split(":");
+  else if (typeof localStorage != 'undefined' && localStorage.getItem("miab-cp-credentials"))
+    api_credentials = localStorage.getItem("miab-cp-credentials").split(":");
+
+  // Recall what the user was last looking at.
+  if (typeof localStorage != 'undefined' && localStorage.getItem("miab-cp-lastpanel")) {
+    show_panel(localStorage.getItem("miab-cp-lastpanel"));
+  } else {
+    show_panel('login');
+  }
+})
+
+        </script>
+    </body>
 </html>

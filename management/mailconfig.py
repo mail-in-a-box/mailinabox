@@ -49,18 +49,80 @@ def open_database(env, with_connection=False):
 def get_mail_users(env, as_json=False):
 	c = open_database(env)
 	c.execute('SELECT email, privileges FROM users')
+
+	# turn into a list of tuples, but sorted by domain & email address
+	users = { row[0]: row[1] for row in c.fetchall() } # make dict
+	users = [ (email, users[email]) for email in utils.sort_email_addresses(users.keys(), env) ]
+
 	if not as_json:
-		return [row[0] for row in c.fetchall()]
+		return [email for email, privileges in users]
 	else:
+		aliases = get_mail_alias_map(env)
 		return [
-			{ "email": row[0], "privileges": parse_privs(row[1]) }
-			for row in c.fetchall()
+			{
+				"email": email,
+				"privileges": parse_privs(privileges),
+				"status": "active",
+				"aliases": [
+					(alias, sorted(evaluate_mail_alias_map(alias, aliases, env)))
+					for alias in aliases.get(email.lower(), [])
+					]
+			}
+			for email, privileges in users
 			 ]
 
-def get_mail_aliases(env):
+def get_archived_mail_users(env):
+	real_users = set(get_mail_users(env))
+	root = os.path.join(env['STORAGE_ROOT'], 'mail/mailboxes')
+	ret = []
+	for domain_enc in os.listdir(root):
+		for user_enc in os.listdir(os.path.join(root, domain_enc)):
+			email = utils.unsafe_domain_name(user_enc) + "@" + utils.unsafe_domain_name(domain_enc)
+			if email in real_users: continue
+			ret.append({
+				"email": email, 
+				"privileges": "",
+				"status": "inactive"
+			})
+	return ret
+
+def get_mail_aliases(env, as_json=False):
 	c = open_database(env)
 	c.execute('SELECT source, destination FROM aliases')
-	return [(row[0], row[1]) for row in c.fetchall()]
+	aliases = { row[0]: row[1] for row in c.fetchall() } # make dict
+
+	# put in a canonical order: sort by domain, then by email address lexicographically
+	aliases = [ (source, aliases[source]) for source in utils.sort_email_addresses(aliases.keys(), env) ] # sort
+
+	# but put automatic aliases to administrator@ last
+	aliases.sort(key = lambda x : x[1] == get_system_administrator(env))
+
+	if as_json:
+		required_aliases = get_required_aliases(env)
+		aliases = [
+			{
+				"source": alias[0],
+				"destination": [d.strip() for d in alias[1].split(",")],
+				"required": alias[0] in required_aliases or alias[0] == get_system_administrator(env),
+			}
+			for alias in aliases
+		]
+	return aliases
+
+def get_mail_alias_map(env):
+	aliases = { }
+	for alias, targets in get_mail_aliases(env):
+		for em in targets.split(","):
+			em = em.strip().lower()
+			aliases.setdefault(em, []).append(alias)
+	return aliases
+
+def evaluate_mail_alias_map(email, aliases,  env):
+	ret = set()
+	for alias in aliases.get(email.lower(), []):
+		ret.add(alias)
+		ret |= evaluate_mail_alias_map(alias, aliases, env)
+	return ret
 
 def get_mail_domains(env, filter_aliases=lambda alias : True):
 	def get_domain(emailaddr):
@@ -70,9 +132,29 @@ def get_mail_domains(env, filter_aliases=lambda alias : True):
 		 + [get_domain(source) for source, target in get_mail_aliases(env) if filter_aliases((source, target)) ]
 		 )
 
-def add_mail_user(email, pw, env):
+def add_mail_user(email, pw, privs, env):
+	# validate email
+	if email.strip() == "":
+		return ("No email address provided.", 400)
 	if not validate_email(email, mode='user'):
 		return ("Invalid email address.", 400)
+
+	# validate password
+	if pw.strip() == "":
+		return ("No password provided.", 400)
+	if re.search(r"[\s]", pw):
+		return ("Passwords cannot contain spaces.", 400)
+	if len(pw) < 4:
+		return ("Passwords must be at least four characters.", 400)
+
+	# validate privileges
+	if privs is None or privs.strip() == "":
+		privs = []
+	else:
+		privs = privs.split("\n")
+		for p in privs:
+			validation = validate_privilege(p)
+			if validation: return validation
 
 	# get the database
 	conn, c = open_database(env, with_connection=True)
@@ -82,7 +164,8 @@ def add_mail_user(email, pw, env):
 
 	# add the user to the database
 	try:
-		c.execute("INSERT INTO users (email, password) VALUES (?, ?)", (email, pw))
+		c.execute("INSERT INTO users (email, password, privileges) VALUES (?, ?, ?)",
+			(email, pw, "\n".join(privs)))
 	except sqlite3.IntegrityError:
 		return ("User already exists.", 400)
 
@@ -142,13 +225,21 @@ def get_mail_user_privileges(email, env):
 		return ("That's not a user (%s)." % email, 400)
 	return parse_privs(rows[0][0])
 
-def add_remove_mail_user_privilege(email, priv, action, env):
+def validate_privilege(priv):
 	if "\n" in priv or priv.strip() == "":
 		return ("That's not a valid privilege (%s)." % priv, 400)
+	return None
 
+def add_remove_mail_user_privilege(email, priv, action, env):
+	# validate
+	validation = validate_privilege(priv)
+	if validation: return validation
+
+	# get existing privs, but may fail
 	privs = get_mail_user_privileges(email, env)
 	if isinstance(privs, tuple): return privs # error
 
+	# update privs set
 	if action == "add":
 		if priv not in privs:
 			privs.append(priv)
@@ -157,6 +248,7 @@ def add_remove_mail_user_privilege(email, priv, action, env):
 	else:
 		return ("Invalid action.", 400)
 
+	# commit to database
 	conn, c = open_database(env, with_connection=True)
 	c.execute("UPDATE users SET privileges=? WHERE email=?", ("\n".join(privs), email))
 	if c.rowcount != 1:
@@ -165,20 +257,42 @@ def add_remove_mail_user_privilege(email, priv, action, env):
 
 	return "OK"
 
-def add_mail_alias(source, destination, env, do_kick=True):
+def add_mail_alias(source, destination, env, update_if_exists=False, do_kick=True):
+	# validate source
+	if source.strip() == "":
+		return ("No incoming email address provided.", 400)
 	if not validate_email(source, mode='alias'):
-		return ("Invalid email address.", 400)
+		return ("Invalid incoming email address (%s)." % source, 400)
+
+	# parse comma and \n-separated destination emails & validate
+	dests = []
+	for line in destination.split("\n"):
+		for email in line.split(","):
+			email = email.strip()
+			if email == "": continue
+			if not validate_email(email, mode='alias'):
+				return ("Invalid destination email address (%s)." % email, 400)
+			dests.append(email)
+	if len(destination) == 0:
+		return ("No destination email address(es) provided.", 400)
+	destination = ",".join(dests)
 
 	conn, c = open_database(env, with_connection=True)
 	try:
 		c.execute("INSERT INTO aliases (source, destination) VALUES (?, ?)", (source, destination))
+		return_status = "alias added"
 	except sqlite3.IntegrityError:
-		return ("Alias already exists (%s)." % source, 400)
+		if not update_if_exists:
+			return ("Alias already exists (%s)." % source, 400)
+		else:
+			c.execute("UPDATE aliases SET destination = ? WHERE source = ?", (destination, source))
+			return_status = "alias updated"
+
 	conn.commit()
 
 	if do_kick:
 		# Update things in case any new domains are added.
-		return kick(env, "alias added")
+		return kick(env, return_status)
 
 def remove_mail_alias(source, env, do_kick=True):
 	conn, c = open_database(env, with_connection=True)
@@ -191,6 +305,35 @@ def remove_mail_alias(source, env, do_kick=True):
 		# Update things in case any domains are removed.
 		return kick(env, "alias removed")
 
+def get_system_administrator(env):
+	return "administrator@" + env['PRIMARY_HOSTNAME']
+
+def get_required_aliases(env):
+	# These are the aliases that must exist.
+	aliases = set()
+
+	# The hostmaster aliase is exposed in the DNS SOA for each zone.
+	aliases.add("hostmaster@" + env['PRIMARY_HOSTNAME'])
+
+	# Get a list of domains we serve mail for, except ones for which the only
+	# email on that domain is a postmaster/admin alias to the administrator.
+	real_mail_domains = get_mail_domains(env,
+		filter_aliases = lambda alias : \
+			(not alias[0].startswith("postmaster@") \
+			 and not alias[0].startswith("admin@")) \
+			or alias[1] != get_system_administrator(env) \
+			)
+
+	# Create postmaster@ and admin@ for all domains we serve mail on.
+	# postmaster@ is assumed to exist by our Postfix configuration. admin@
+	# isn't anything, but it might save the user some trouble e.g. when
+	# buying an SSL certificate.
+	for domain in real_mail_domains:
+		aliases.add("postmaster@" + domain)
+		aliases.add("admin@" + domain)
+
+	return aliases
+
 def kick(env, mail_result=None):
 	results = []
 
@@ -199,50 +342,32 @@ def kick(env, mail_result=None):
 	if mail_result is not None:
 		results.append(mail_result + "\n")
 
-	# Create hostmaster@ for the primary domain if it does not already exist.
-	# Default the target to administrator@ which the user is responsible for
-	# setting and keeping up to date.
+	# Ensure every required alias exists.
 
 	existing_aliases = get_mail_aliases(env)
-
-	administrator = "administrator@" + env['PRIMARY_HOSTNAME']
+	required_aliases = get_required_aliases(env)
 
 	def ensure_admin_alias_exists(source):
 		# Does this alias exists?
 		for s, t in existing_aliases:
 			if s == source:
 				return
-
 		# Doesn't exist.
+		administrator = get_system_administrator(env)
 		add_mail_alias(source, administrator, env, do_kick=False)
 		results.append("added alias %s (=> %s)\n" % (source, administrator))
 
-	ensure_admin_alias_exists("hostmaster@" + env['PRIMARY_HOSTNAME'])
 
-	# Get a list of domains we serve mail for, except ones for which the only
-	# email on that domain is a postmaster/admin alias to the administrator.
+	for alias in required_aliases:
+		ensure_admin_alias_exists(alias)
 
-	real_mail_domains = get_mail_domains(env,
-		filter_aliases = lambda alias : \
-			(not alias[0].startswith("postmaster@") \
-			 and not alias[0].startswith("admin@")) \
-			or alias[1] != administrator \
-			)
-
-	# Create postmaster@ and admin@ for all domains we serve mail on.
-	# postmaster@ is assumed to exist by our Postfix configuration. admin@
-	# isn't anything, but it might save the user some trouble e.g. when
-	# buying an SSL certificate.
-	for domain in real_mail_domains:
-		ensure_admin_alias_exists("postmaster@" + domain)
-		ensure_admin_alias_exists("admin@" + domain)
-
-	# Remove auto-generated hostmaster/postmaster/admin on domains we no
+	# Remove auto-generated postmaster/admin on domains we no
 	# longer have any other email addresses for.
 	for source, target in existing_aliases:
 		user, domain = source.split("@")
-		if user in ("postmaster", "admin") and domain not in real_mail_domains \
-			and target == administrator:
+		if user in ("postmaster", "admin") \
+			and source not in required_aliases \
+			and target == get_system_administrator(env):
 			remove_mail_alias(source, env, do_kick=False)
 			results.append("removed alias %s (was to %s; domain no longer used for email)\n" % (source, target))
 

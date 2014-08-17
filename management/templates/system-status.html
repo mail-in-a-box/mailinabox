@@ -1,0 +1,79 @@
+<h2>System Status Checks</h2>
+
+<style>
+#system-checks .heading td {
+  font-weight: bold;
+  font-size: 120%;
+  padding-top: 1.5em;
+}
+#system-checks .heading.first td {
+  border-top: none;
+  padding-top: 0;
+}
+#system-checks .error td {
+  color: #733;
+}
+#system-checks .ok td {
+  color: #030;
+}
+#system-checks div.extra {
+  display: none;
+  margin-top: 1em;
+  max-width: 50em;
+  word-wrap: break-word;
+}
+#system-checks a.showhide {
+  display: none;
+  font-size: 85%;
+}
+#system-checks .pre {
+  margin: 1em;
+  font-family: monospace;
+  white-space: pre-wrap;
+}
+</style>
+
+<table id="system-checks" class="table" style="max-width: 60em">
+  <thead>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+
+<script>
+function show_system_status() {
+  $('#system-checks tbody').html("<tr><td colspan='2' class='text-muted'>Loading...</td></tr>")
+  api(
+    "/system/status",
+    "POST",
+    { },
+    function(r) {
+      $('#system-checks tbody').html("");
+      for (var i = 0; i < r.length; i++) {
+        var n = $("<tr><td class='status'/><td class='message'><p style='margin: 0'/><div class='extra'/><a class='showhide' href='#'/></tr>");
+        if (i == 0) n.addClass('first')
+        n.addClass(r[i].type)
+        if (r[i].type == "ok") n.find('td.status').text("✓")
+        if (r[i].type == "error") n.find('td.status').text("✖")
+        n.find('td.message p').text(r[i].text)
+        $('#system-checks tbody').append(n);
+
+        if (r[i].extra.length > 0) {
+          n.find('a.showhide').show().text("show more").click(function() {
+            $(this).hide();
+            $(this).parent().find('.extra').fadeIn();
+            return false;
+          });
+        }
+
+        for (var j = 0; j < r[i].extra.length; j++) {
+
+          var m = $("<div/>").text(r[i].extra[j].text)
+          if (r[i].extra[j].monospace)
+            m.addClass("pre");
+          n.find('> td.message > div').append(m);
+        }
+      }
+    })
+}
+</script>

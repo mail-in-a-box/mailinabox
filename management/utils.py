@@ -23,6 +23,10 @@ def safe_domain_name(name):
     import urllib.parse
     return urllib.parse.quote(name, safe='')
 
+def unsafe_domain_name(name_encoded):
+    import urllib.parse
+    return urllib.parse.unquote(name_encoded)
+
 def sort_domains(domain_names, env):
     # Put domain names in a nice sorted order. For web_update, PRIMARY_HOSTNAME
     # must appear first so it becomes the nginx default server.
@@ -50,6 +54,17 @@ def sort_domains(domain_names, env):
     groups = [sort_group(g) for g in groups]
 
     return groups[0] + groups[1] + groups[2]
+
+def sort_email_addresses(email_addresses, env):
+    email_addresses = set(email_addresses)
+    domains = set(email.split("@", 1)[1] for email in email_addresses if "@" in email)
+    ret = []
+    for domain in sort_domains(domains, env):
+        domain_emails = set(email for email in email_addresses if email.endswith("@" + domain))
+        ret.extend(sorted(domain_emails))
+        email_addresses -= domain_emails
+    ret.extend(sorted(email_addresses)) # whatever is left
+    return ret
 
 def exclusive_process(name):
     # Ensure that a process named `name` does not execute multiple

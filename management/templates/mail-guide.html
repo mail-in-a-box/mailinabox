@@ -1,0 +1,41 @@
+<div class="container">
+	<h2>Checking and Sending Mail</h2>
+
+	<h4>App Configuration</h4>
+
+	<p>You can access your email using webmail, desktop mail clients, or mobile apps.</p>
+
+	<p>Here is what you need to know for webmail:</p>
+
+	<style>#panel_mail-guide table.table { width: auto; margin-left: 1.5em; }</style>
+
+	<table class="table">
+	<tr><th>Webmail Address:</th> <td><a href="https://{{hostname}}/mail"><b>https://{{hostname}}/mail</b></a></td></tr>
+	<tr><th>Username:</th> <td>Your whole email address.</td></tr>
+	<tr><th>Password:</th> <td>Your mail password.</td></tr>
+	</table>
+
+	<p>On mobile devices you might need to install a &ldquo;mail client&rdquo; app. We recommend <a href="https://play.google.com/store/apps/details?id=com.fsck.k9">K-9 Mail</a>. On a desktop you could try <a href="https://www.mozilla.org/en-US/thunderbird/">Mozilla Thunderbird</a>.</p>
+
+	<p>Configure your device or desktop mail client as follows:</p>
+
+	<table class="table" style="max-width: 30em">
+	<tr><th>Server Name:</th> <td>{{hostname}}</td></tr>
+	<tr><th>Username:</th> <td>Your whole email address.</td></tr>
+	<tr><th>Password:</th> <td>Your mail password.</td></tr>
+	</table>
+
+
+	<table class="table">
+	<thead><tr><th>Protocol</th> <th>Port</th> <th>Options</th></tr></thead>
+	<tr><th>IMAP</th> <td>993</td> <td>SSL</td></tr>
+	<tr><th>SMTP</th> <td>587</td> <td>STARTTLS</td></tr>
+	<tr><th>Exchange ActiveSync</th> <td>n/a</td> <td>Secure Connection</td></tr>
+	</table>
+
+	<p>Depending on your mail program, you will use either IMAP &amp; SMTP or Exchange ActiveSync. See this <a href="http://z-push.org/compatibility/">list of compatible devices</a> for Exchange ActiveSync.</p>
+
+	<h4>Notes</h4>
+
+	<p>Mail-in-a-Box uses <a href="http://en.wikipedia.org/wiki/Greylisting">greylisting</a> to cut down on spam. The first time you receive an email from a recipient, it may be delayed for ten minutes.</p>
+</div>
