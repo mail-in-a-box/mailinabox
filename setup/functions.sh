@@ -70,10 +70,18 @@ function get_default_hostname {
 	# Guess the machine's hostname. It should be a fully qualified
 	# domain name suitable for DNS. None of these calls may provide
 	# the right value, but it's the best guess we can make.
-	set -- $(hostname --fqdn      2>/dev/null ||
-                 hostname --all-fqdns 2>/dev/null ||
-                 hostname             2>/dev/null)
+	set -- $(
+		get_hostname_from_reversedns ||
+		hostname --fqdn      2>/dev/null ||
+		hostname --all-fqdns 2>/dev/null ||
+		hostname             2>/dev/null)
 	printf '%s\n' "$1" # return this value
+}
+
+function get_hostname_from_reversedns {
+	# Do a reverse DNS lookup on our public IPv4 address. The output of
+	# `host` is complex -- use sed to get the FDQN.
+	host $(get_publicip_from_web_service 4) | sed "s/.*pointer \(.*\)\./\1/"
 }
 
 function get_publicip_from_web_service {
@@ -151,7 +159,25 @@ function ufw_allow {
 }
 
 function restart_service {
-	hide_output service $1 restart
+	# Restart a service quietly.
+	if [ ! "$IS_DOCKER" ]; then
+		# The normal way to restart a service.
+		hide_output service $1 restart
+	else
+ 		# On docker, sysvinit is not present. Our base image provides
+ 		# a weird way to manage running services. But we're not going
+ 		# to use it. Just execute the init.d script directly.
+
+	 	if [ "$1" == "dovecot" ]; then
+			# Dovecot does not provide an init.d script. It just provides
+			# an upstart init configuration. But Docker doesn't provide
+			# upstart. Start Dovecot specially.
+			killall dovecot
+			dovecot -c /etc/dovecot/dovecot.conf
+		else
+	 		hide_output /etc/init.d/$1 restart
+	 	fi
+	fi
 }
 
 ## Dialog Functions ##
