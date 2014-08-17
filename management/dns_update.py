@@ -115,10 +115,12 @@ def do_dns_update(env, force=False):
 		shell('check_call', ["/usr/sbin/service", "nsd", "restart"])
 
 	# Write the OpenDKIM configuration tables.
-	write_opendkim_tables(zonefiles, env)
-
-	# Kick opendkim.
-	shell('check_call', ["/usr/sbin/service", "opendkim", "restart"])
+	if write_opendkim_tables(zonefiles, env):
+		# Settings changed. Kick opendkim.
+		shell('check_call', ["/usr/sbin/service", "opendkim", "restart"])
+		if len(updated_domains) == 0:
+			# If this is the only thing that changed?
+			updated_domains.append("OpenDKIM configuration")
 
 	if len(updated_domains) == 0:
 		# if nothing was updated (except maybe OpenDKIM's files), don't show any output
@@ -512,31 +514,53 @@ def get_ds_records(env):
 
 def write_opendkim_tables(zonefiles, env):
 	# Append a record to OpenDKIM's KeyTable and SigningTable for each domain.
-	#
-	# The SigningTable maps email addresses to signing information. The KeyTable
-	# maps specify the hostname, the selector, and the path to the private key.
-	#
-	# DKIM ADSP and DMARC both only support policies where the signing domain matches
-	# the From address, so the KeyTable must specify that the signing domain for a
-	# sender matches the sender's domain.
-	#
-	# In SigningTable, we map every email address to a key record named after the domain.
-	# Then we specify for the key record its domain, selector, and key.
 
 	opendkim_key_file = os.path.join(env['STORAGE_ROOT'], 'mail/dkim/mail.private')
-	if not os.path.exists(opendkim_key_file): return
 
-	with open("/etc/opendkim/KeyTable", "w") as f:
-		f.write("\n".join(
-			"{domain} {domain}:mail:{key_file}".format(domain=domain, key_file=opendkim_key_file)
-			for domain, zonefile in zonefiles
-		))
+	if not os.path.exists(opendkim_key_file):
+		# Looks like OpenDKIM is not installed.
+		return False
 
-	with open("/etc/opendkim/SigningTable", "w") as f:
-		f.write("\n".join(
-			"*@{domain} {domain}".format(domain=domain)
-			for domain, zonefile in zonefiles
-		))
+	config = {
+		# The SigningTable maps email addresses to a key in the KeyTable that
+		# specifies signing information for matching email addresses. Here we
+		# map each domain to a same-named key.
+		#
+		# Elsewhere we set the DMARC policy for each domain such that mail claiming
+		# to be From: the domain must be signed with a DKIM key on the same domain.
+		# So we must have a separate KeyTable entry for each domain.
+		"SigningTable":
+			"".join(
+				"*@{domain} {domain}\n".format(domain=domain)
+				for domain, zonefile in zonefiles
+			),
+
+		# The KeyTable specifies the signing domain, the DKIM selector, and the
+		# path to the private key to use for signing some mail. Per DMARC, the
+		# signing domain must match the sender's From: domain.
+		"KeyTable":
+			"".join(
+				"{domain} {domain}:mail:{key_file}\n".format(domain=domain, key_file=opendkim_key_file)
+				for domain, zonefile in zonefiles
+			),
+	}
+
+	did_update = False
+	for filename, content in config.items():
+		# Don't write the file if it doesn't need an update.
+		if os.path.exists("/etc/opendkim/" + filename):
+			with open("/etc/opendkim/" + filename) as f:
+				if f.read() == content:
+					continue
+
+		# The contents needs to change.
+		with open("/etc/opendkim/" + filename, "w") as f:
+			f.write(content)
+		did_update = True
+
+	# Return whether the files changed. If they didn't change, there's
+	# no need to kick the opendkim process.
+	return did_update
 
 ########################################################################
 
