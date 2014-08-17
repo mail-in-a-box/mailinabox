@@ -33,7 +33,7 @@ sudo mkdir -p /var/run/nsd
 
 mkdir -p "$STORAGE_ROOT/dns/dnssec";
 if [ ! -f "$STORAGE_ROOT/dns/dnssec/keys.conf" ]; then
-	# These two steps take a while.
+	echo "Generating DNSSEC signing keys. This may take a few minutes..."
 
 	# Create the Key-Signing Key (KSK) (-k) which is the so-called
 	# Secure Entry Point. Use a NSEC3-compatible algorithm (best
