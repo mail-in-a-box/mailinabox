@@ -59,7 +59,11 @@ if [ "$PUBLIC_IPV6" = "auto" ]; then
 	# Use a public API to get our public IPv6 address, or fall back to local network configuration.
 	PUBLIC_IPV6=$(get_publicip_from_web_service 6 || get_default_privateip 6)
 fi
-if [ "$PRIMARY_HOSTNAME" = "auto-easy" ]; then
+if [ "$PRIMARY_HOSTNAME" = "auto" ]; then
+	# Use reverse DNS to get this machine's hostname. Install bind9-host early.
+	hide_output apt-get -y install bind9-host
+	PRIMARY_HOSTNAME=$(get_default_hostname)
+elif [ "$PRIMARY_HOSTNAME" = "auto-easy" ]; then
 	# Generate a probably-unique subdomain under our justtesting.email domain.
 	PRIMARY_HOSTNAME=`echo $PUBLIC_IP | sha1sum | cut -c1-5`.justtesting.email
 fi
