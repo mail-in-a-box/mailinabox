@@ -33,6 +33,7 @@ settings = sys.argv[2:]
 
 delimiter = "="
 delimiter_re = r"\s*=\s*"
+comment_char = "#"
 folded_lines = False
 testing = False
 while settings[0][0] == "-" and settings[0] != "--":
@@ -42,7 +43,11 @@ while settings[0][0] == "-" and settings[0] != "--":
 		delimiter = " "
 		delimiter_re = r"\s+"
 	elif opt == "-w":
+		# Line folding is possible in this file.
 		folded_lines = True
+	elif opt == "-c":
+		# Specifies a different comment character.
+		comment_char = settings.pop(0)
 	elif opt == "-t":
 		testing = True
 	else:
@@ -60,7 +65,7 @@ while len(input_lines) > 0:
 
 	# If this configuration file uses folded lines, append any folded lines
 	# into our input buffer.
-	if folded_lines and line[0] not in ("#", " ", ""):
+	if folded_lines and line[0] not in (comment_char, " ", ""):
 		while len(input_lines) > 0 and input_lines[0][0] in " \t":
 			line += input_lines.pop(0)
 
@@ -68,7 +73,11 @@ while len(input_lines) > 0:
 	for i in range(len(settings)):
 		# Check that this line contain this setting from the command-line arguments.
 		name, val = settings[i].split("=", 1)
-		m = re.match("(\s*)(#\s*)?" + re.escape(name) + delimiter_re + "(.*?)\s*$", line, re.S)
+		m = re.match(
+			   "(\s*)"
+			 + "(" + re.escape(comment_char) + "\s*)?"
+			 + re.escape(name) + delimiter_re + "(.*?)\s*$",
+			 line, re.S)
 		if not m: continue
 		indent, is_comment, existing_val = m.groups()
 
@@ -83,7 +92,7 @@ while len(input_lines) > 0:
 		
 		# comment-out the existing line (also comment any folded lines)
 		if is_comment is None:
-			buf += "#" + line.rstrip().replace("\n", "\n#") + "\n"
+			buf += comment_char + line.rstrip().replace("\n", "\n" + comment_char) + "\n"
 		else:
 			# the line is already commented, pass it through
 			buf += line

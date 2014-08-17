@@ -51,6 +51,7 @@ if len(sys.argv) < 2:
 	print("  tools/mail.py user remove user@domain.com")
 	print("  tools/mail.py user make-admin user@domain.com")
 	print("  tools/mail.py user remove-admin user@domain.com")
+	print("  tools/mail.py user admins (lists admins)")
 	print("  tools/mail.py alias  (lists aliases)")
 	print("  tools/mail.py alias add incoming.name@domain.com sent.to@other.domain.com")
 	print("  tools/mail.py alias remove incoming.name@domain.com")
@@ -91,6 +92,13 @@ elif sys.argv[1] == "user" and sys.argv[2] in ("make-admin", "remove-admin") and
 	else:
 		action = "remove"
 	print(mgmt("/mail/users/privileges/" + action, { "email": sys.argv[3], "privilege": "admin" }))
+
+elif sys.argv[1] == "user" and sys.argv[2] == "admins":
+	# Dump a list of admin users.
+	users = mgmt("/mail/users?format=json", is_json=True)
+	for user in users:
+		if "admin" in user['privileges']:
+			print(user['email'])
 
 elif sys.argv[1] == "alias" and len(sys.argv) == 2:
 	print(mgmt("/mail/aliases"))

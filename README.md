@@ -27,6 +27,12 @@ In short, it's like this:
 	cd mailinabox
 	sudo setup/start.sh
 
+Then run the post-install checklist command to see what you need to do next:
+
+	sudo management/whats_next.py
+
+Congratulations! You should now have a working setup. Feel free to login with your mail credentials created earlier in the setup
+
 **Status**: This is a work in progress. It works for what it is, but it is missing such things as quotas, backup/restore, etc.
 
 The Goals
