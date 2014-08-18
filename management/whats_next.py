@@ -127,7 +127,7 @@ def check_dns_zone(domain, env, dns_zonefiles):
 	# at the domain name's registrar pointing to this box.
 	existing_ns = query_dns(domain, "NS")
 	correct_ns = "ns1.BOX; ns2.BOX".replace("BOX", env['PRIMARY_HOSTNAME'])
-	if existing_ns == correct_ns:
+	if existing_ns.lower() == correct_ns.lower():
 		env['out'].print_ok("Nameservers are set correctly at registrar. [%s]" % correct_ns)
 	else:
 		env['out'].print_error("""The nameservers set on this domain are incorrect. They are currently %s. Use your domain name registar's
