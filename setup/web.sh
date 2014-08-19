@@ -39,11 +39,16 @@ if [ -L /etc/init.d/php-fastcgi ]; then
 	apt-get -y purge php5-cgi
 fi
 
-# Put our webfinger and Exchange autodiscover.xml server scripts
-# into a well-known location.
-for f in webfinger exchange-autodiscover; do
+# Put our webfinger script into a well-known location.
+for f in webfinger; do
 	cp tools/$f.php /usr/local/bin/mailinabox-$f.php
 	chown www-data.www-data /usr/local/bin/mailinabox-$f.php
+done
+
+# Remove obsoleted scripts.
+# exchange-autodiscover is now handled by Z-Push.
+for f in exchange-autodiscover; do
+	rm /usr/local/bin/mailinabox-$f.php
 done
 
 # Make some space for users to customize their webfinger responses.
