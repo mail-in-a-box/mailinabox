@@ -9,7 +9,7 @@
 define('BASE_PATH', dirname($_SERVER['SCRIPT_FILENAME']). '/');
 
 // The Z-Push server location for the autodiscover response
-define('SERVERURL', 'https://' . $_SERVER['SERVER_NAME'] . '/Microsoft-Server-ActiveSync');
+define('SERVERURL', 'https://PRIMARY_HOSTNAME/Microsoft-Server-ActiveSync');
 
 define('USE_FULLEMAIL_FOR_LOGIN', true);
 
