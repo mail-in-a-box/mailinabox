@@ -19,6 +19,7 @@ from utils import shell, sort_domains, load_env_vars_from_file
 def run_checks(env, output):
 	env["out"] = output
 	run_system_checks(env)
+	run_network_checks(env)
 	run_domain_checks(env)
 
 def run_system_checks(env):
@@ -38,6 +39,35 @@ def run_system_checks(env):
 	# Check that the administrator alias exists since that's where all
 	# admin email is automatically directed.
 	check_alias_exists("administrator@" + env['PRIMARY_HOSTNAME'], env)
+
+def run_network_checks(env):
+	# Also see setup/network-checks.sh.
+
+	env["out"].add_heading("Network")
+
+	# Stop if we cannot make an outbound connection on port 25. Many residential
+	# networks block outbound port 25 to prevent their network from sending spam.
+	# See if we can reach one of Google's MTAs with a 5-second timeout.
+	code, ret = shell("check_call", ["/bin/nc", "-z", "-w5", "aspmx.l.google.com", "25"], trap=True)
+	if ret == 0:
+		env['out'].print_ok("Outbound mail (SMTP port 25) is not blocked.")
+	else:
+		env['out'].print_error("""Outbound mail (SMTP port 25) seems to be blocked by your network. You
+			will not be able to send any mail. Many residential networks block port 25 to prevent hijacked
+			machines from being able to send spam. A quick connection test to Google's mail server on port 25
+			failed.""")
+
+	# Stop if the IPv4 address is listed in the ZEN Spamhouse Block List.
+	# The user might have ended up on an IP address that was previously in use
+	# by a spammer, or the user may be deploying on a residential network. We
+	# will not be able to reliably send mail in these cases.
+	rev_ip4 = ".".join(reversed(env['PUBLIC_IP'].split('.')))
+	if not query_dns(rev_ip4+'.zen.spamhaus.org', 'A', nxdomain=None):
+		env['out'].print_ok("IP address is not blacklisted by zen.spamhaus.org.")
+	else:
+		env['out'].print_error("""The IP address of this machine %s is listed in the Spamhaus Block List,
+			which may prevent recipients from receiving your email. See http://www.spamhaus.org/query/ip/%s."""
+			% (env['PUBLIC_IP'], env['PUBLIC_IP']))
 
 def run_domain_checks(env):
 	# Get the list of domains we handle mail for.
@@ -214,6 +244,15 @@ def check_mail_domain(domain, env):
 
 	# Check that the postmaster@ email address exists.
 	check_alias_exists("postmaster@" + domain, env)
+
+	# Stop if the domain is listed in the Spamhaus Domain Block List.
+	# The user might have chosen a domain that was previously in use by a spammer
+	# and will not be able to reliably send mail.
+	if not query_dns(domain+'.dbl.spamhaus.org', "A", nxdomain=None):
+		env['out'].print_ok("Domain is not blacklisted by dbl.spamhaus.org.")
+	else:
+		env['out'].print_error("""This domain is listed in the Spamhaus Domain Block List, which may prevent recipients from receiving your mail.
+			See http://www.spamhaus.org/dbl/ and http://www.spamhaus.org/query/domain/%s.""" % domain)
 
 def check_web_domain(domain, env):
 	# See if the domain's A record resolves to our PUBLIC_IP. This is already checked
