@@ -11,15 +11,14 @@
 
 	// We might get two kinds of requests.
 	$post_body = file_get_contents('php://input');
-	preg_match('/<AcceptableResponseSchema>(.*?)<\/AcceptableResponseSchema>/', $post_body, $match);
+	$match = preg_match('/<AcceptableResponseSchema>(.*?)<\/AcceptableResponseSchema>/', $post_body, $match);
 	$AcceptableResponseSchema = $match[1];
 
 	if ($AcceptableResponseSchema == "http://schemas.microsoft.com/exchange/autodiscover/mobilesync/responseschema/2006") {
 		// There is no way to convey the user's login name with this?
 		?>
 <?xml version="1.0" encoding="utf-8"?>
-<Autodiscover
-xmlns:autodiscover="http://schemas.microsoft.com/exchange/autodiscover/mobilesync/responseschema/2006">
+<Autodiscover xmlns:autodiscover="http://schemas.microsoft.com/exchange/autodiscover/mobilesync/responseschema/2006">
     <autodiscover:Response>
         <autodiscover:Action>
             <autodiscover:Settings>
@@ -40,7 +39,7 @@ xmlns:autodiscover="http://schemas.microsoft.com/exchange/autodiscover/mobilesyn
 
 	// Parse the email address out of the POST request, which
 	// we pass back as the login name.
-	preg_match('/<EMailAddress>(.*?)<\/EMailAddress>/', $post_body, $match);
+	$match = preg_match('/<EMailAddress>(.*?)<\/EMailAddress>/', $post_body, $match);
 	$LOGIN = $match[1];
 
 	header("Content-type: text/xml");
