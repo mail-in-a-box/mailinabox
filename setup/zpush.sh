@@ -60,6 +60,10 @@ cp conf/zpush/backend_carddav.php /usr/local/lib/z-push/backend/carddav/config.p
 rm -f /usr/local/lib/z-push/backend/caldav/config.php
 cp conf/zpush/backend_caldav.php /usr/local/lib/z-push/backend/caldav/config.php
 
+# Configure Autodiscover
+rm -f /usr/local/lib/z-push/autodiscover/config.php
+cp conf/zpush/autodiscover_config.php /usr/local/lib/z-push/autodiscover/config.php
+
 # Some directories it will use.
 
 mkdir -p /var/log/z-push
