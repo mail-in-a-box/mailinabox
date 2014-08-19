@@ -1,5 +1,9 @@
 <?php
-	$resource = $_GET['resource'];
+	$resource = '';
+
+	if(isset($_GET['resource'])){
+		$resource = $_GET['resource'];
+	}
 
 	// Parse our configuration file to get the STORAGE_ROOT.
 	$STORAGE_ROOT = NULL;
