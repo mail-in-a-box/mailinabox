@@ -13,7 +13,7 @@ Why build this? Mass electronic surveillance by governments revealed over the la
 The Box
 -------
 
-Mail-in-a-Box turns a fresh Ubuntu 14.04 LTS 64-bit machine into a working mail server, including [SMTP](http://www.postfix.org/), [IMAP](http://dovecot.org/), [webmail](http://roundcube.net/), [spam filtering](https://spamassassin.apache.org/), [greylisting](http://postgrey.schweikert.ch/), DNS, [SPF](https://en.wikipedia.org/wiki/Sender_Policy_Framework), [DKIM](https://en.wikipedia.org/wiki/DomainKeys_Identified_Mail), [DMARC](https://en.wikipedia.org/wiki/DMARC), [DNSSEC](https://en.wikipedia.org/wiki/DNSSEC), [DANE TLSA](https://en.wikipedia.org/wiki/DNS-based_Authentication_of_Named_Entities), and basic system services like a firewall, intrusion protection, and setting the system clock.
+Mail-in-a-Box turns a fresh Ubuntu 14.04 LTS 64-bit machine into a working mail server, including SMTP ([postfix](http://www.postfix.org/)), IMAP ([dovecot](http://dovecot.org/)), Exchange ActiveSync ([z-push](https://github.com/fmbiete/Z-Push-contrib)), webmail ([Roundcube](http://roundcube.net/)), spam filtering ([spamassassin](https://spamassassin.apache.org/)), greylisting ([postgrey](http://postgrey.schweikert.ch/)), CardDAV/CalDAV ([ownCloud](http://owncloud.org/)), DNS, [SPF](https://en.wikipedia.org/wiki/Sender_Policy_Framework), DKIM ([OpenDKIM](http://www.opendkim.org/)), [DMARC](https://en.wikipedia.org/wiki/DMARC), [DNSSEC](https://en.wikipedia.org/wiki/DNSSEC), [DANE TLSA](https://en.wikipedia.org/wiki/DNS-based_Authentication_of_Named_Entities), and basic system services like a firewall, intrusion protection, and setting the system clock.
 
 This setup is what has been powering my own personal email since September 2013.
 
