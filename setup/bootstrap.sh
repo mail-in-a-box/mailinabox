@@ -6,6 +6,8 @@
 #
 #########################################################
 
+TAG=14.08-beta
+
 # Are we running as root?
 if [[ $EUID -ne 0 ]]; then
 	echo "This script must be run as root. Did you leave out sudo?"
@@ -19,14 +21,16 @@ cd
 if [ ! -d mailinabox ]; then
 	echo Downloading Mail-in-a-Box . . .
 	apt-get -q -q install -y git
-	git clone -q --depth 1 -b master https://github.com/mail-in-a-box/mailinabox
+	git clone -q https://github.com/mail-in-a-box/mailinabox
 	cd mailinabox
+	git checkout -q $TAG
 
 # If it does exist, update it.
 else
 	echo Updating Mail-in-a-Box . . .
 	cd mailinabox
-	if ! git pull -q --ff-only; then
+	git fetch
+	if ! git checkout -q $TAG; then
 		echo "Update failed. Did you modify something in `pwd`?"
 		exit
 	fi
