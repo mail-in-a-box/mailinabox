@@ -2,11 +2,7 @@
 #########################################################
 # This script is intended to be run like this:
 #
-#   wget https://raw.githubusercontent.com/mail-in-a-box/mailinabox/master/setup/bootstrap.sh
-#   sudo bash bootstrap.sh
-#
-# We can't pipe directly to bash because setup/start.sh
-# asks for user input on stdin.
+#   wget https://.../bootstrap.sh | sudo bash
 #
 #########################################################
 
