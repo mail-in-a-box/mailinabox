@@ -14,7 +14,7 @@ import rtyaml
 
 from utils import load_environment, shell
 from web_update import get_web_domains, get_domain_ssl_files, get_web_root
-from whats_next import check_certificate
+from status_checks import check_certificate
 
 def buy_ssl_certificate(api_key, domain, command, env):
 	if domain != env['PRIMARY_HOSTNAME'] \

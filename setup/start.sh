@@ -329,7 +329,7 @@ echo Your Mail-in-a-Box is running.
 echo
 echo Please log in to the control panel for further instructions at:
 echo
-if management/whats_next.py --check-primary-hostname; then
+if management/status_checks.py --check-primary-hostname; then
 	# Show the nice URL if it appears to be resolving and has a valid certificate.
 	echo https://$PRIMARY_HOSTNAME/admin
 	echo

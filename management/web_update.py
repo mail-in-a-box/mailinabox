@@ -140,7 +140,7 @@ def get_domain_ssl_files(domain, env):
 		# a Subject Alternative Name matching this domain. Don't do this if
 		# the user has uploaded a different private key for this domain.
 		if not ssl_key_is_alt:
-			from whats_next import check_certificate
+			from status_checks import check_certificate
 			if check_certificate(domain, ssl_certificate_primary, None) == "OK":
 				ssl_certificate = ssl_certificate_primary
 

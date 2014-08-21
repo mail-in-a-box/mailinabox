@@ -191,7 +191,7 @@ def web_update():
 @app.route('/system/status', methods=["POST"])
 @authorized_personnel_only
 def system_status():
-	from whats_next import run_checks
+	from status_checks import run_checks
 	class WebOutput:
 		def __init__(self):
 			self.items = []
