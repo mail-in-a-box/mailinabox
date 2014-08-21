@@ -43,7 +43,7 @@ if [ -t 0 ]; then
 	echo "-----------------------------------------------"
 	echo
 	echo "I'm going to ask you a few questions. To change your answers later,"
-	echo "later, just re-run this script."
+	echo "just re-run this script."
 fi
 
 # Recall the last settings used if we're running this a second time.
