@@ -38,11 +38,14 @@ fi
 
 if [ -t 0 ]; then
 	# In an interactive shell...
-	# Install dialog
-	echo "Preparing installation ... "
+	# Install 'dialog' so we can ask the user questions. The original motivation for
+	# this was being able to ask the user for input even if stdin has been redirected,
+	# e.g. if we piped a bootstrapping install script to bash to get started.
 	apt_install dialog
-	message_box "Hello and thanks for deploying a Mail-in-a-Box!" \
-	"I'm going to ask you a few questions. To change your answers later, just re-run this script."
+	message_box "Mail-in-a-Box Installation" \
+		"Hello and thanks for deploying a Mail-in-a-Box!
+		\n\nI'm going to ask you a few questions.
+		\n\nTo change your answers later, just re-run this script."
 fi
 
 # Recall the last settings used if we're running this a second time.
@@ -63,26 +66,32 @@ if [ -z "$PRIMARY_HOSTNAME" ]; then
 	if [ -z "$DEFAULT_PRIMARY_HOSTNAME" ]; then
 		# This is the first run. Ask the user for his email address so we can
 		# provide the best default for the box's hostname.
-		input_box "What email address are you setting this box up to manage?" \
-		"The part after the @-sign must be a domain name or subdomain
-		\nthat you control. You can add other email addresses to this
-		\nbox later (including email addresses on other domain names
-		\nor subdomains you control).\n
-		\nWe've guessed an email address. Backspace it and type in what
-		\nyou really want.\n
-		\nEmail Address (me@`get_default_hostname`): "
+		input_box "Your Email Address" \
+"What email address are you setting this box up to manage?
+\n\nThe part after the @-sign must be a domain name or subdomain
+that you control. You can add other email addresses to this
+box later (including email addresses on other domain names
+or subdomains you control).
+\n\nWe've guessed an email address. Backspace it and type in what
+you really want.
+\n\nEmail Address:" \
+			me@`get_default_hostname` \
+			EMAIL_ADDR
 
-		if [ -z "$result" ]; then
-			EMAIL_ADDR=me@`get_default_hostname`
-		else
-			EMAIL_ADDR=$result
+		if [ -z "$EMAIL_ADDR" ]; then
+			# user hit ESC/cancel
+			exit
 		fi
-
 		while ! management/mailconfig.py validate-email "$EMAIL_ADDR"
 		do
-		input_box "What email address are you setting this box up to manage?" \
-		"That's not a valid email address." $EMAIL_ADDR
-		EMAIL_ADDR=$result
+			input_box "Your Email Address" \
+				"That's not a valid email address.\n\nWhat email address are you setting this box up to manage?" \
+				$EMAIL_ADDR \
+				EMAIL_ADDR
+			if [ -z "$EMAIL_ADDR" ]; then
+				# user hit ESC/cancel
+				exit
+			fi
 		done
 
 		# Take the part after the @-sign as the user's domain name, and add
@@ -91,17 +100,17 @@ if [ -z "$PRIMARY_HOSTNAME" ]; then
 	fi
 
 	input_box "Hostname" \
-	 "This box needs a name, called a 'hostname'. The name will form a part
-	 \nof the box's web address.\n
-	 \nWe recommend that the name be a subdomain of the domain in your email
-	 \naddress, so we're suggesting $DEFAULT_PRIMARY_HOSTNAME.
-	 \nYou can change it, but we recommend you don't.\n
-	 \nHostname ($DEFAULT_PRIMARY_HOSTNAME): "
+"This box needs a name, called a 'hostname'. The name will form a part of the box's web address.
+\n\nWe recommend that the name be a subdomain of the domain in your email
+address, so we're suggesting $DEFAULT_PRIMARY_HOSTNAME.
+\n\nYou can change it, but we recommend you don't.
+\n\nHostname:" \
+		$DEFAULT_PRIMARY_HOSTNAME \
+		PRIMARY_HOSTNAME
 
-	if [ -z "$result" ]; then
-		PRIMARY_HOSTNAME=$DEFAULT_PRIMARY_HOSTNAME
-	else
-		PRIMARY_HOSTNAME=$result
+	if [ -z "$PRIMARY_HOSTNAME" ]; then
+		# user hit ESC/cancel
+		exit
 	fi
 fi
 
@@ -128,15 +137,15 @@ if [ -z "$PUBLIC_IP" ]; then
 	fi
 
 	if [ -z "$PUBLIC_IP" ]; then
-		input_box "Your public IP address" \
-		"Enter the public IP address of this machine,
-		as given to you by your ISP.\n
-		\nPublic IP ($DEFAULT_PUBLIC_IP): "
+		input_box "Public IP Address" \
+			"Enter the public IP address of this machine, as given to you by your ISP.
+			\n\nPublic IP address:" \
+			$DEFAULT_PUBLIC_IP \
+			PUBLIC_IP
 
-		if [ -z "$result" ]; then
-			PUBLIC_IP=$DEFAULT_PUBLIC_IP
-		else
-			PUBLIC_IP=$result
+		if [ -z "$PUBLIC_IP" ]; then
+			# user hit ESC/cancel
+			exit
 		fi
 	fi
 fi
@@ -159,15 +168,16 @@ if [ -z "$PUBLIC_IPV6" ]; then
 	fi
 
 	if [[ -z "$PUBLIC_IPV6" && $MATCHED == 0 ]]; then
-		input_box "IPv6 Optional" \
-		"Enter the public IPv6 address of this machine, as given to you by your ISP.
-		\nLeave blank if the machine does not have an IPv6 address.\n
-		\nPublic IPv6 ($DEFAULT_PUBLIC_IPV6): "
+		input_box "IPv6 Address (Optional)" \
+			"Enter the public IPv6 address of this machine, as given to you by your ISP.
+			\n\nLeave blank if the machine does not have an IPv6 address.
+			\n\nPublic IPv6 address:"
+			$DEFAULT_PUBLIC_IPV6 \
+			PUBLIC_IPV6
 
-		if [ -z "$result" ]; then
-			PUBLIC_IPV6=$DEFAULT_PUBLIC_IPV6
-		else
-			PUBLIC_IPV6=$result
+		if [ ! $PUBLIC_IPV6_EXITCODE ]; then
+			# user hit ESC/cancel
+			exit
 		fi
 	fi
 fi
@@ -182,11 +192,13 @@ if [ -z "$PRIVATE_IPV6" ]; then
 	PRIVATE_IPV6=$(get_default_privateip 6)
 fi
 if [[ -z "$PRIVATE_IP" && -z "$PRIVATE_IPV6" ]]; then
-	message_box "Error" \
-	"I could not determine the IP or IPv6 address of the network inteface
-	\nfor connecting to the Internet. Setup must stop.\n
-	`hostname -I`\n
-	`route`"
+	echo
+	echo "I could not determine the IP or IPv6 address of the network inteface"
+	echo "for connecting to the Internet. Setup must stop."
+	echo
+	hostname -I
+	route
+	echo
 	exit
 fi
 
@@ -201,23 +213,22 @@ if [ ! -z "$DEFAULT_STORAGE_ROOT" ] && [ ! -z "$DEFAULT_CSR_COUNTRY" ] && [ -f $
 fi
 
 if [ -z "$CSR_COUNTRY" ]; then
-	input_box "Country Code" \
-	"Enter the two-letter, uppercase country code for where you
-	\nlive or where your organization is based. (This is used to
-	\ncreate an SSL certificate.)\n
-	\nCountry Code ($DEFAULT_CSR_COUNTRY): "
-
-	if [ -z "$result" ]; then
-		CSR_COUNTRY=$DEFAULT_CSR_COUNTRY
-	else
-		CSR_COUNTRY=$result
-	fi
-
 	#if [ -z "$DEFAULT_CSR_COUNTRY" ]; then
 	#	# set a default on first run
 	#	DEFAULT_CSR_COUNTRY=...?
 	#fi
 
+	input_box "Country Code" \
+"Enter the two-letter, uppercase country code for where you live or where your
+organization is based. (This is used to create an SSL certificate.)
+\n\nCountry Code:" \
+		$DEFAULT_CSR_COUNTRY \
+		CSR_COUNTRY
+
+	if [ -z "$CSR_COUNTRY" ]; then
+		# user hit ESC/cancel
+		exit
+	fi
 fi
 
 # Automatic configuration, e.g. as used in our Vagrant configuration.
@@ -307,22 +318,29 @@ if [ -z "`tools/mail.py user`" ]; then
 	if [ -z "$EMAIL_ADDR" ]; then
 		# In an interactive shell, ask the user for an email address.
 		if [ -t 0 ]; then
-			input_box "Create your first mail user" \
-			"Let's create your first mail user.\n
-			\nEmail Address (user@$PRIMARY_HOSTNAME): "
+			input_box "Mail Account" \
+				"Let's create your first mail account.
+				\n\nWhat email address do you want?" \
+				me@`get_default_hostname` \
+				EMAIL_ADDR
 
-			if [ -z "$result" ]; then
-				EMAIL_ADDR=me@`get_default_hostname`
-			else
-				EMAIL_ADDR=$result
+			if [ -z "$EMAIL_ADDR" ]; then
+				# user hit ESC/cancel
+				exit
 			fi
-
 			while ! management/mailconfig.py validate-email "$EMAIL_ADDR"
 			do
-				input_box "What email address are you setting this box up to manage?"\
-				"That's not a valid email address." $EMAIL_ADDR
-				EMAIL_ADDR=$result
+				input_box "Mail Account" \
+					"That's not a valid email address.
+					\n\nWhat email address do you want?" \
+					$EMAIL_ADDR \
+					EMAIL_ADDR
+				if [ -z "$EMAIL_ADDR" ]; then
+					# user hit ESC/cancel
+					exit
+				fi
 			done
+
 		# But in a non-interactive shell, just make something up.
 		# This is normally for testing.
 		else
