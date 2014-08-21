@@ -213,16 +213,16 @@ if [ ! -z "$DEFAULT_STORAGE_ROOT" ] && [ ! -z "$DEFAULT_CSR_COUNTRY" ] && [ -f $
 fi
 
 if [ -z "$CSR_COUNTRY" ]; then
-	#if [ -z "$DEFAULT_CSR_COUNTRY" ]; then
-	#	# set a default on first run
-	#	DEFAULT_CSR_COUNTRY=...?
-	#fi
+	# Get a list of country codes. Separate codes from country names with a ^.
+	# The input_menu function modifies shell word expansion to ignore spaces
+	# (since country names can have spaces) and use ^ instead.
+	country_code_list=$(grep -v "^#" setup/csr_country_codes.tsv | sed "s/\(..\)\t\([^\t]*\).*/\1^\2/")
 
-	input_box "Country Code" \
-"Enter the two-letter, uppercase country code for where you live or where your
-organization is based. (This is used to create an SSL certificate.)
-\n\nCountry Code:" \
-		$DEFAULT_CSR_COUNTRY \
+	input_menu "Country Code" \
+		"Choose the country where you live or where your organization is based.
+		\n\n(This is used to create an SSL certificate.)
+		\n\nCountry Code:" \
+		"$country_code_list" \
 		CSR_COUNTRY
 
 	if [ -z "$CSR_COUNTRY" ]; then
