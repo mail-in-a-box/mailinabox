@@ -127,3 +127,28 @@ function ufw_allow {
 function restart_service {
 	hide_output service $1 restart
 }
+
+## Dialog Functions ##
+function message_box {
+	dialog --title "$1" --msgbox "$2" 0 0
+}
+
+function input_box {
+	TMP=`mktemp`
+	dialog --title "$1" --inputbox "$2" 0 0 "$3" 2>$TMP
+
+	respose=$?
+
+	case $respose in
+		0)
+			result=$(<$TMP)
+			;;
+		1)
+			exit
+			;;
+		255)
+			exit
+	esac
+
+	rm $TMP
+}
