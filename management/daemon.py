@@ -210,14 +210,11 @@ def system_status():
 @app.route('/system/updates')
 @authorized_personnel_only
 def show_updates():
-	utils.shell("check_call", ["/usr/bin/apt-get", "-qq", "update"])
-	simulated_install = utils.shell("check_output", ["/usr/bin/apt-get", "-qq", "-s", "upgrade"])
-	pkgs = []
-	for line in simulated_install.split('\n'):
-		if re.match(r'^Conf .*', line): continue # remove these lines, not informative
-		line = re.sub(r'^Inst (.*) \[(.*)\] \((\S*).*', r'Updated Package Available: \1 (\3)', line) # make these lines prettier
-		pkgs.append(line)
-	return "\n".join(pkgs)
+	from status_checks import list_apt_updates
+	return "".join(
+		"%s (%s)\n"
+		% (p["package"], p["version"])
+		for p in list_apt_updates())
 
 @app.route('/system/update-packages', methods=["POST"])
 @authorized_personnel_only
