@@ -86,6 +86,7 @@ if [ -z "$PRIMARY_HOSTNAME" ]; then
 
 		# Take the part after the @-sign as the user's domain name, and add
 		# 'box.' to the beginning to create a default hostname for this machine.
+		# If there is already a 'box.' in the EMAIL_ADDR, strip it from the string.
 		DEFAULT_PRIMARY_HOSTNAME=box.$(echo $EMAIL_ADDR | sed -e 's/.*@//' -e 's/^box\.//')
 	fi
 
