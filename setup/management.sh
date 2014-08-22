@@ -10,6 +10,8 @@ mkdir -p $STORAGE_ROOT/backup
 if [ ! -f $STORAGE_ROOT/backup/secret_key.txt ]; then
 	openssl rand -base64 2048 > $STORAGE_ROOT/backup/secret_key.txt
 fi
+# The secret key to encrypt backups should not be world readable.
+chmod 0600 $STORAGE_ROOT/backup/secret_key.txt
 
 # Link the management server daemon into a well known location.
 rm -f /usr/local/bin/mailinabox-daemon
