@@ -31,7 +31,7 @@ if [ ! -f $STORAGE_ROOT/ssl/ssl_cert_sign_req.csr ]; then
 	# Generate a certificate signing request if one doesn't already exist.
 	hide_output \
 	openssl req -new -key $STORAGE_ROOT/ssl/ssl_private_key.pem -out $STORAGE_ROOT/ssl/ssl_cert_sign_req.csr \
-	  -subj "/C=$CSR_COUNTRY/ST=/L=/O=/CN=$PRIMARY_HOSTNAME"
+	  -sha256 -subj "/C=$CSR_COUNTRY/ST=/L=/O=/CN=$PRIMARY_HOSTNAME"
 fi
 if [ ! -f $STORAGE_ROOT/ssl/ssl_certificate.pem ]; then
 	# Generate a SSL certificate by self-signing if a SSL certificate doesn't yet exist.
