@@ -62,6 +62,12 @@ fi
 # The box needs a name.
 if [ -z "$PRIMARY_HOSTNAME" ]; then
 	if [ -z "$DEFAULT_PRIMARY_HOSTNAME" ]; then
+		# We recommend to use box.example.com as this hosts name. The 
+		# domain the user possibly wants to use is example.com then. 
+		# We strip the string "box." from the hostname to get the mail 
+		# domain. If the hostname differs, nothing happens here.
+		DEFAULT_DOMAIN_GUESS=$(echo $(get_default_hostname) | sed -e 's/^box\.//')
+
 		# This is the first run. Ask the user for his email address so we can
 		# provide the best default for the box's hostname.
 		echo
@@ -75,7 +81,7 @@ if [ -z "$PRIMARY_HOSTNAME" ]; then
 		echo "We've guessed an email address. Backspace it and type in what"
 		echo "you really want."
 		echo
-		read -e -i "me@`get_default_hostname`" -p "Email Address: " EMAIL_ADDR
+		read -e -i "me@$DEFAULT_DOMAIN_GUESS" -p "Email Address: " EMAIL_ADDR
 
 		while ! management/mailconfig.py validate-email "$EMAIL_ADDR"
 		do
