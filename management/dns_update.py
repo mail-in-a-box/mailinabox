@@ -5,6 +5,7 @@
 ########################################################################
 
 import os, os.path, urllib.parse, datetime, re, hashlib
+import ipaddress
 import rtyaml
 
 from mailconfig import get_mail_domains
@@ -548,6 +549,79 @@ def write_opendkim_tables(zonefiles, env):
 	# Return whether the files changed. If they didn't change, there's
 	# no need to kick the opendkim process.
 	return did_update
+
+########################################################################
+
+def set_custom_dns_record(qname, rtype, value, env):
+	# validate
+	rtype = rtype.upper()
+	if value is not None:
+		if rtype in ("A", "AAAA"):
+			v = ipaddress.ip_address(value)
+			if rtype == "A" and not isinstance(v, ipaddress.IPv4Address): raise ValueError("That's an IPv6 address.")
+			if rtype == "AAAA" and not isinstance(v, ipaddress.IPv6Address): raise ValueError("That's an IPv4 address.")
+		elif rtype in ("CNAME", "TXT"):
+			# anything goes
+			pass
+		else:
+			raise ValueError("Unknown record type '%s'." % rtype)
+
+	# load existing config
+	config = get_custom_dns_config(env)
+
+	# update
+	if qname not in config:
+		if value is None:
+			# Is asking to delete a record that does not exist.
+			return False
+		elif rtype == "A":
+			# Add this record using the short form 'qname: value'.
+			config[qname] = value
+		else:
+			# Add this record. This is the qname's first record.
+			config[qname] = { rtype: value }
+	else:
+		if isinstance(config[qname], str):
+			# This is a short-form 'qname: value' implicit-A record.
+			if value is None and rtype != "A":
+				# Is asking to delete a record that doesn't exist.
+				return False
+			elif value is None and rtype == "A":
+				# Delete record.
+				del config[qname]
+			elif rtype == "A":
+				# Update, keeping short form.
+				if config[qname] == "value":
+					# No change.
+					return False
+				config[qname] = value
+			else:
+				# Expand short form so we can add a new record type.
+				config[qname] = { "A": config[qname], rtype: value }
+		else:
+			# This is the qname: { ... } (dict) format.
+			if value is None:
+				if rtype not in config[qname]:
+					# Is asking to delete a record that doesn't exist.
+					return False
+				else:
+					# Delete the record. If it's the last record, delete the domain.
+					del config[qname][rtype]
+					if len(config[qname]) == 0:
+						del config[qname]
+			else:
+				# Update the record.
+				if config[qname].get(rtype) == "value":
+					# No change.
+					return False
+				config[qname][rtype] = value
+
+	# serialize & save
+	config_yaml = rtyaml.dump(config)
+	with open(os.path.join(env['STORAGE_ROOT'], 'dns/custom.yaml'), "w") as f:
+		f.write(config_yaml)
+
+	return True
 
 ########################################################################
 
