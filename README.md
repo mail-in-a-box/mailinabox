@@ -36,8 +36,8 @@ The Goals
 
 I am trying to:
 
-* Create a push-button "Email Appliance" for everyday users.
-* Promote decentralization, innovation, and privacy on the web.
+* Make deploying a good mail server easy.
+* Promote [decentralization](http://redecentralize.org/), innovation, and privacy on the web.
 * Have automated, auditable, and [idempotent](http://sharknet.us/2014/02/01/automated-configuration-management-challenges-with-idempotency/) configuration.
 * **Not** to be a mail server that the NSA cannot hack.
 * **Not** to be customizable by power users.
