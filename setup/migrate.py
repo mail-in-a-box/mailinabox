@@ -58,7 +58,7 @@ def migration_4(env):
 
 def migration_5(env):
         # The secret key for encrypting backups was world readable. Fix here.
-        os.chmod(os.path.join(env["STORAGE_ROOT"], 'backup/secret_key.txt'), 600)
+        os.chmod(os.path.join(env["STORAGE_ROOT"], 'backup/secret_key.txt'), 0o600)
 
 def get_current_migration():
 	ver = 0
