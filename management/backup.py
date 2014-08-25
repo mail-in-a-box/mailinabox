@@ -2,13 +2,12 @@
 
 # This script performs a backup of all user data:
 # 1) System services are stopped while a copy of user data is made.
-# 2) An incremental backup is made using rdiff-backup into the
-#    directory STORAGE_ROOT/backup/rdiff-history. This directory
-#    will contain the latest files plus a complete history for
-#    all prior backups.
+# 2) An incremental backup is made using duplicity into the
+#    directory STORAGE_ROOT/backup/duplicity.
 # 3) The stopped services are restarted.
-# 4) The backup directory is compressed into a single file using tar.
-# 5) That file is encrypted with a long password stored in backup/secret_key.txt.
+# 4) The backup files are encrypted with a long password (stored in
+#    backup/secret_key.txt) to STORAGE_ROOT/backup/encrypted.
+# 5) STORAGE_ROOT/backup/after-backup is executd if it exists.
 
 import sys, os, os.path, shutil, glob
 
