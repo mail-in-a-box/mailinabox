@@ -24,7 +24,7 @@ exclusive_process("backup")
 # Ensure the backup directory exists.
 backup_dir = os.path.join(env["STORAGE_ROOT"], 'backup')
 backup_duplicity_dir = os.path.join(backup_dir, 'duplicity')
-os.makedirs(backup_dir, exist_ok=True)
+os.makedirs(backup_duplicity_dir, exist_ok=True)
 
 # On the first run, always do a full backup. Incremental
 # will fail.
