@@ -36,11 +36,12 @@ if [ ! -d /vagrant ]; then
 fi
 fi
 
-if [ -t 0 ]; then
-	# In an interactive shell...
+if [ -z "$NONINTERACTIVE" ]; then
 	# Install 'dialog' so we can ask the user questions. The original motivation for
 	# this was being able to ask the user for input even if stdin has been redirected,
-	# e.g. if we piped a bootstrapping install script to bash to get started.
+	# e.g. if we piped a bootstrapping install script to bash to get started. In that
+	# case, the nifty '[ -t 0 ]' test won't work. But with Vagrant we must suppress so we
+	# use a shell flag instead.
 	apt_install dialog
 	message_box "Mail-in-a-Box Installation" \
 		"Hello and thanks for deploying a Mail-in-a-Box!
@@ -317,7 +318,7 @@ if [ -z "`tools/mail.py user`" ]; then
 	# If we didn't ask for an email address at the start, do so now.
 	if [ -z "$EMAIL_ADDR" ]; then
 		# In an interactive shell, ask the user for an email address.
-		if [ -t 0 ]; then
+		if [ -z "$NONINTERACTIVE" ]; then
 			input_box "Mail Account" \
 				"Let's create your first mail account.
 				\n\nWhat email address do you want?" \
