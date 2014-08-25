@@ -41,7 +41,7 @@ if [ $needs_update == 1 ]; then
 fi
 
 # Configure default config.
-sed -i "s/define('TIMEZONE', .*/define('TIMEZONE', 'Etc\/UTC');/" /usr/local/lib/z-push/config.php
+sed -i "s^define('TIMEZONE', .*^define('TIMEZONE', '$(cat /etc/timezone)');^" /usr/local/lib/z-push/config.php
 sed -i "s/define('BACKEND_PROVIDER', .*/define('BACKEND_PROVIDER', 'BackendCombined');/" /usr/local/lib/z-push/config.php
 
 # Configure BACKEND
