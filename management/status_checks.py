@@ -6,7 +6,7 @@
 
 __ALL__ = ['check_certificate']
 
-import os, os.path, re, subprocess
+import os, os.path, re, subprocess, datetime
 
 import dns.reversename, dns.resolver
 
@@ -35,6 +35,17 @@ def run_system_checks(env):
 			/etc/ssh/sshd_config, and then restart the openssh via 'sudo service ssh restart'.""")
 	else:
 		env['out'].print_ok("SSH disallows password-based login.")
+
+	# Check for any software package updates.
+	pkgs = list_apt_updates()
+	if os.path.exists("/var/run/reboot-required"):
+		env['out'].print_error("System updates have been installed and a reboot of the machine is required.")
+	elif len(pkgs) == 0:
+		env['out'].print_ok("System software is up to date.")
+	else:
+		env['out'].print_error("There are %d software packages that can be updated." % len(pkgs))
+		for p in pkgs:
+			env['out'].print_line("%s (%s)" % (p["package"], p["version"]))
 
 	# Check that the administrator alias exists since that's where all
 	# admin email is automatically directed.
@@ -432,6 +443,39 @@ def check_certificate(domain, ssl_certificate, ssl_private_key):
 		return "OK"
 	else:
 		return verifyoutput.strip()
+
+_apt_updates = None
+def list_apt_updates():
+	# See if we have this information cached recently.
+	# Keep the information for 8 hours.
+	global _apt_updates
+	if _apt_updates is not None and _apt_updates[0] > datetime.datetime.now() - datetime.timedelta(hours=8):
+		return _apt_updates[1]
+
+	# Run apt-get update to refresh package list.
+	shell("check_call", ["/usr/bin/apt-get", "-qq", "update"])
+
+	# Run apt-get upgrade in simulate mode to get a list of what
+	# it would do.
+	simulated_install = shell("check_output", ["/usr/bin/apt-get", "-qq", "-s", "upgrade"])
+	pkgs = []
+	for line in simulated_install.split('\n'):
+		if line.strip() == "":
+			continue
+		if re.match(r'^Conf .*', line):
+			 # remove these lines, not informative
+			continue
+		m = re.match(r'^Inst (.*) \[(.*)\] \((\S*)', line)
+		if m:
+			pkgs.append({ "package": m.group(1), "version": m.group(3), "current_version": m.group(2) })
+		else:
+			pkgs.append({ "package": "[" + line + "]", "version": "", "current_version": "" })
+
+	# Cache for future requests.
+	_apt_updates = (datetime.datetime.now(), pkgs)
+
+	return pkgs
+
 
 try:
 	terminal_columns = int(shell('check_output', ['stty', 'size']).split()[1])

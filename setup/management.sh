@@ -2,7 +2,7 @@
 
 source setup/functions.sh
 
-apt_install python3-flask links duplicity libyaml-dev python3-dnspython
+apt_install python3-flask links duplicity libyaml-dev python3-dnspython unattended-upgrades
 hide_output pip3 install rtyaml
 
 # Create a backup directory and a random key for encrypting backups.
@@ -20,6 +20,14 @@ ln -s `pwd`/management/daemon.py /usr/local/bin/mailinabox-daemon
 rm -f /etc/init.d/mailinabox
 ln -s $(pwd)/conf/management-initscript /etc/init.d/mailinabox
 hide_output update-rc.d mailinabox defaults
+
+# Allow apt to install system updates automatically every day.
+cat > /etc/apt/apt.conf.d/02periodic <<EOF;
+APT::Periodic::MaxAge "7";
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+APT::Periodic::Verbose "1";
+EOF
 
 # Perform a daily backup.
 cat > /etc/cron.daily/mailinabox-backup << EOF;
