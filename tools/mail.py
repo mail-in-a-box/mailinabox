@@ -67,6 +67,7 @@ elif sys.argv[1] == "user" and len(sys.argv) == 2:
 	# Dump a list of users, one per line. Mark admins with an asterisk.
 	users = mgmt("/mail/users?format=json", is_json=True)
 	for user in users:
+		if user['status'] == 'inactive': continue
 		print(user['email'], end='')
 		if "admin" in user['privileges']:
 			print("*", end='')
