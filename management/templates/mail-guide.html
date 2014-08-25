@@ -1,41 +1,65 @@
+<style>#panel_mail-guide table.table { width: auto; margin-left: 1.5em; }</style>
+
 <div class="container">
 	<h2>Checking and Sending Mail</h2>
 
-	<h4>App Configuration</h4>
+	<p>You can use either webmail, IMAP/SMTP, or Exchange/ActiveSync to access your mail. Optionally you can store your contacts on this box too.</p>
 
-	<p>You can access your email using webmail, desktop mail clients, or mobile apps.</p>
+	<hr>
 
-	<p>Here is what you need to know for webmail:</p>
+	<div class="row">
+		<div class="col-sm-6">
+			<h4>How to log in</h4>
 
-	<style>#panel_mail-guide table.table { width: auto; margin-left: 1.5em; }</style>
+			<p>Your username and password are the same no matter how you check your mail:</p>
 
-	<table class="table">
-	<tr><th>Webmail Address:</th> <td><a href="https://{{hostname}}/mail"><b>https://{{hostname}}/mail</b></a></td></tr>
-	<tr><th>Username:</th> <td>Your whole email address.</td></tr>
-	<tr><th>Password:</th> <td>Your mail password.</td></tr>
-	</table>
+			<table class="table" style="max-width: 30em">
+			<tr><th>Username:</th> <td>Your whole email address.</td></tr>
+			<tr><th>Password:</th> <td>Your mail password.</td></tr>
+			</table>
+		</div>
 
-	<p>On mobile devices you might need to install a &ldquo;mail client&rdquo; app. We recommend <a href="https://play.google.com/store/apps/details?id=com.fsck.k9">K-9 Mail</a>. On a desktop you could try <a href="https://www.mozilla.org/en-US/thunderbird/">Mozilla Thunderbird</a>.</p>
+		<div class="col-sm-6">
+			<h4>Webmail</h4>
 
-	<p>Configure your device or desktop mail client as follows:</p>
+			<p>Your webmail site is <a href="https://{{hostname}}/mail">https://{{hostname}}/mail</a>.</p>
 
-	<table class="table" style="max-width: 30em">
-	<tr><th>Server Name:</th> <td>{{hostname}}</td></tr>
-	<tr><th>Username:</th> <td>Your whole email address.</td></tr>
-	<tr><th>Password:</th> <td>Your mail password.</td></tr>
-	</table>
+			<h4>Contacts</h4>
 
+			<p>Edit your contacts at <a href="https://{{hostname}}/mail">https://{{hostname}}/cloud</a>.</p>
+		</div>
 
-	<table class="table">
-	<thead><tr><th>Protocol</th> <th>Port</th> <th>Options</th></tr></thead>
-	<tr><th>IMAP</th> <td>993</td> <td>SSL</td></tr>
-	<tr><th>SMTP</th> <td>587</td> <td>STARTTLS</td></tr>
-	<tr><th>Exchange ActiveSync</th> <td>n/a</td> <td>Secure Connection</td></tr>
-	</table>
+	</div>
 
-	<p>Depending on your mail program, you will use either IMAP &amp; SMTP or Exchange ActiveSync. See this <a href="http://z-push.org/compatibility/">list of compatible devices</a> for Exchange ActiveSync.</p>
+	<div class="row">
+		<div class="col-sm-6">
+			<h4>IMAP/SMTP settings</h4>
 
-	<h4>Notes</h4>
+			<p>This method is preferred on Android devices and is not available on iOS devices.</p>
 
-	<p>Mail-in-a-Box uses <a href="http://en.wikipedia.org/wiki/Greylisting">greylisting</a> to cut down on spam. The first time you receive an email from a recipient, it may be delayed for ten minutes.</p>
+			<table class="table">
+			<thead>
+				<tr><th style="padding-bottom: 1em; border-bottom: none">Server:</th> <td colspan="2">{{hostname}}</td></tr>
+				<tr><th>Protocol</th> <th>Port</th> <th>Options</th></tr>
+			</thead>
+			<tr><th>IMAP</th> <td>993</td> <td>SSL</td></tr>
+			<tr><th>SMTP</th> <td>587</td> <td>STARTTLS</td></tr>
+			</table>
+
+			<p>In addition to setting up your email, you&rsquo;ll also need to install an app like <a href="https://play.google.com/store/apps/details?id=org.dmfs.carddav.sync">CardDAV-Sync free beta</a> to store your contacts on your box.</p>
+		</div>
+
+		<div class="col-sm-6">
+			<h4>Exchange/ActiveSync settings</h4>
+
+			<p>On iOS devices and devices on this <a href="http://z-push.org/compatibility/">compatibility list</a>, set up your mail as an Exchange or ActiveSync server:</p>
+
+			<table class="table">
+			<tr><th>Server</th> <td>{{hostname}}</td></tr>
+			<tr><th>Options</th> <td>Secure Connection</td></tr>
+			</table>
+
+			<p>Your contacts should be automatically synced to this box when you use this method.</p>
+		</div>
+	</div>
 </div>
