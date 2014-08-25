@@ -177,6 +177,7 @@ def ensure_ssl_certificate_exists(domain, ssl_key, ssl_certificate, csr_path, en
 		"openssl", "req", "-new",
 		"-key", ssl_key,
 		"-out",  csr_path,
+		"-sha256",
 		"-subj", "/C=%s/ST=/L=/O=/CN=%s" % (env["CSR_COUNTRY"], domain)])
 
 	# And then make the certificate.

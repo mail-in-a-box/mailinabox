@@ -48,7 +48,7 @@ done
 # Remove obsoleted scripts.
 # exchange-autodiscover is now handled by Z-Push.
 for f in exchange-autodiscover; do
-	rm /usr/local/bin/mailinabox-$f.php
+	rm -f /usr/local/bin/mailinabox-$f.php
 done
 
 # Make some space for users to customize their webfinger responses.

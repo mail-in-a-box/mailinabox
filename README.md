@@ -34,16 +34,15 @@ Congratulations! You should now have a working setup. You'll be given the addres
 The Goals
 ---------
 
-* Create a push-button "Email Appliance" for everyday users.
-* Promote decentralization, innovation, and privacy on the web.
+I am trying to:
+
+* Make deploying a good mail server easy.
+* Promote [decentralization](http://redecentralize.org/), innovation, and privacy on the web.
 * Have automated, auditable, and [idempotent](http://sharknet.us/2014/02/01/automated-configuration-management-challenges-with-idempotency/) configuration.
-
-For more background, see [The Rationale](https://github.com/mail-in-a-box/mailinabox/wiki).
-
-What I am not trying to do:
-
 * **Not** to be a mail server that the NSA cannot hack.
 * **Not** to be customizable by power users.
+
+For more background, see [The Rationale](https://github.com/mail-in-a-box/mailinabox/wiki).
 
 The Acknowledgements
 --------------------

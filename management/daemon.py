@@ -172,6 +172,30 @@ def dns_update():
 	except Exception as e:
 		return (str(e), 500)
 
+@app.route('/dns/set/<qname>', methods=['POST'])
+@app.route('/dns/set/<qname>/<rtype>', methods=['POST'])
+@app.route('/dns/set/<qname>/<rtype>/<value>', methods=['POST'])
+@authorized_personnel_only
+def dns_set_record(qname, rtype="A", value=None):
+	from dns_update import do_dns_update, set_custom_dns_record
+	try:
+		# Get the value from the URL, then the POST parameters, or if it is not set then
+		# use the remote IP address of the request --- makes dynamic DNS easy. To clear a
+		# value, '' must be explicitly passed.
+		print(request.environ)
+		if value is None:
+			value = request.form.get("value")
+		if value is None:
+			value = request.environ.get("HTTP_X_FORWARDED_FOR") # normally REMOTE_ADDR but we're behind nginx as a reverse proxy
+		if value == '':
+			# request deletion
+			value = None
+		if set_custom_dns_record(qname, rtype, value, env):
+			return do_dns_update(env)
+		return "OK"
+	except ValueError as e:
+		return (str(e), 400)
+
 @app.route('/dns/dump')
 @authorized_personnel_only
 def dns_get_dump():
