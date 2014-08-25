@@ -104,7 +104,7 @@ def make_domain_config(domain, template, template_for_primaryhost, env):
 				nginx_conf += "\tlocation %s {\n\t\tproxy_pass %s;\n\t}\n" % (path, url)
 
  	# Add in any user customizations in the includes/ folder.
-        nginx_conf_custom_include = os.path.join("/etc/nginx/conf.d/includes/", domain + ".conf")
+        nginx_conf_custom_include = os.path.join(env["STORAGE_ROOT"], "www", safe_domain_name(test_domain) + ".conf")
         if os.path.exists(nginx_conf_custom_include):
                 nginx_conf += "\tinclude %s;\n" % (nginx_conf_custom_include)
 
