@@ -670,8 +670,9 @@ def build_recommended_dns(env):
 	ret = []
 	domains = get_dns_domains(env)
 	zonefiles = get_dns_zones(env)
+	additional_records = get_custom_dns_config(env)
 	for domain, zonefile in zonefiles:
-		records = build_zone(domain, domains, {}, env)
+		records = build_zone(domain, domains, additional_records, env)
 
 		# remove records that we don't dislay
 		records = [r for r in records if r[3] is not False]
