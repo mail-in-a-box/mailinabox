@@ -23,17 +23,49 @@
 }
 </style>
 
-<h2>External DNS</h2>
+<h2>DNS (Advanced)</h2>
 
-<p class="text-danger">This is for advanced configurations.</p>
+<p class="text-danger">Custom and external DNS are for advanced configurations.</p>
 
-<h3>Overview</h3>
+<h3>Custom DNS</h3>
+
+<p>It is possible to set custom DNS records on domains hosted here. For instance, you can create your own dynamic DNS service. To do so, you will need to call your box&rsquo;s DNS API.</p>
+
+<p>It works like this:</p>
+
+<pre>curl -d "" --user {email}:{password} https://{{hostname}}/admin/dns/set/{qname}[/{rtype}[/{value}]]</pre>
+
+<p>The parameters are:</p>
+
+<table class="table">
+<thead><th>Parameter</th> <th>Value</th></thead>
+<tr><td>email</td> <td>The email address of any administrative user here.</td></tr>
+<tr><td>password</td> <td>That user&rsquo;s password.</td></tr>
+<tr><td>qname</td> <td>The fully qualified domain name for the record you are trying to set.</td></tr>
+<tr><td>rtype</td> <td>Optional. The resource type: A (an IPv4 address; the default), AAAA (an IPv6 address), TXT (a text string), or CNAME (an alias, which is a fully qualified domain name).</td></tr>
+<tr><td>value</td> <td>Optional-ish. The new record&rsquo;s value. If not provided, the IPv4 address of the remote host is used &mdash; this is handy for dynamic DNS! You can also set this in a POST parameter. To delete a record, pass &ldquo;value=&rdquo; in the POST body.</td></tr>
+</table>
+
+<p>Examples:</p>
+
+<pre># sets laptop.mydomain.com to point to the IP address of the machine you are executing curl on
+curl -d "" --user me@mydomain.com:###### https://{{hostname}}/admin/dns/set/laptop.mydomain.com
+
+# sets an alias
+curl -d "" --user me@mydomain.com:###### https://{{hostname}}/admin/dns/set/foo.mydomain.com/cname/bar.mydomain.com
+
+# sets a TXT record
+curl -d "value=something%20here" --user me@mydomain.com:###### https://{{hostname}}/admin/dns/set/foo.mydomain.com/txt
+
+# clears the TXT record
+curl -d "value=" --user me@mydomain.com:###### https://{{hostname}}/admin/dns/set/foo.mydomain.com/txt</pre>
+
+
+<h3>External DNS</h3>
 
 <p>Although your box is configured to serve its own DNS, it is possible to host your DNS elsewhere. We do not recommend this.</p>
 
 <p>If you do so, you are responsible for keeping your DNS entries up to date. In particular DNSSEC entries must be re-signed periodically. Do not set a DS record at your registrar or publish DNSSEC entries in your DNS zones if you do not intend to keep them up to date.</p>
-
-<h3>DNS Settings</h3>
 
 <p>Enter the following DNS entries at your DNS provider:</p>
 
@@ -50,7 +82,7 @@
 </table>
 
 <script>
-function show_system_external_dns() {
+function show_system_dns() {
   $('#external_dns_settings tbody').html("<tr><td colspan='2' class='text-muted'>Loading...</td></tr>")
   api(
     "/dns/dump",
