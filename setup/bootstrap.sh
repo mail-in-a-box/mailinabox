@@ -6,7 +6,9 @@
 #
 #########################################################
 
-TAG=14.08-beta
+if [ -z "$TAG" ]; then
+	TAG=14.08-beta
+fi
 
 # Are we running as root?
 if [[ $EUID -ne 0 ]]; then
@@ -27,7 +29,7 @@ if [ ! -d mailinabox ]; then
 
 # If it does exist, update it.
 else
-	echo Updating Mail-in-a-Box . . .
+	echo Updating Mail-in-a-Box to $TAG . . .
 	cd mailinabox
 	git fetch
 	if ! git checkout -q $TAG; then
