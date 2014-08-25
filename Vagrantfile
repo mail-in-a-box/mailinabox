@@ -18,6 +18,7 @@ Vagrant.configure("2") do |config|
 	# machine figure out its own public IP and it'll take a
 	# subdomain on our justtesting.email domain so we can get
 	# started quickly.
+    export NONINTERACTIVE=1
     export PUBLIC_IP=auto
     export PUBLIC_IPV6=auto
     export PRIMARY_HOSTNAME=auto-easy
