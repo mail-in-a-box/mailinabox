@@ -120,14 +120,15 @@ if management/status_checks.py --check-primary-hostname; then
 	# Show the nice URL if it appears to be resolving and has a valid certificate.
 	echo https://$PRIMARY_HOSTNAME/admin
 	echo
-	echo If there are problems with this URL, instead use:
+	echo If you have a DNS problem use the box\'s IP address and check the SSL fingerprint:
+	echo https://$PUBLIC_IP/admin
+else
+	echo https://$PUBLIC_IP/admin
+	echo
+	echo You will be alerted that the website has an invalid certificate. Check that
+	echo the certificate fingerprint matches:
 	echo
 fi
-echo https://$PUBLIC_IP/admin
-echo
-echo You will be alerted that the website has an invalid certificate. Check that
-echo the certificate fingerprint matches:
-echo
 openssl x509 -in $STORAGE_ROOT/ssl/ssl_certificate.pem -noout -fingerprint \
         | sed "s/SHA1 Fingerprint=//"
 echo
