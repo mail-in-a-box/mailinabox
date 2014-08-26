@@ -239,7 +239,7 @@ def get_custom_records(domain, additional_records, env):
 		if isinstance(value, str):
 			values = [("A", value)]
 			if value == "local" and env.get("PUBLIC_IPV6"):
-				values.appnd( ("AAAA", value) )
+				values.append( ("AAAA", value) )
 
 		# A mapping creates multiple records.
 		elif isinstance(value, dict):
