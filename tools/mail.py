@@ -58,6 +58,7 @@ if len(sys.argv) < 2:
 	print("  tools/mail.py user admins (lists admins)")
 	print("  tools/mail.py alias  (lists aliases)")
 	print("  tools/mail.py alias add incoming.name@domain.com sent.to@other.domain.com")
+	print("  tools/mail.py alias add incoming.name@domain.com 'sent.to@other.domain.com, multiple.people@other.domain.com'")
 	print("  tools/mail.py alias remove incoming.name@domain.com")
 	print()
 	print("Removing a mail user does not delete their mail folders on disk. It only prevents IMAP/SMTP login.")
