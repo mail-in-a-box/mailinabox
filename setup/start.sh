@@ -53,6 +53,7 @@ fi
 if [ "$PRIVATE_IPV6" != "$PUBLIC_IPV6" ]; then
 	echo "Private IPv6 Address: $PRIVATE_IPV6"
 fi
+echo "Mail-in-a-Box Version: " $(git describe)
 echo
 
 # Run some network checks to make sure setup on this machine makes sense.
