@@ -1,7 +1,20 @@
+<h1 style="margin: 1em; text-align: center">{{hostname}}</h1>
+
+{% if no_admins_exist %}
+<div class="container">
+<div class="col-md-offset-2 col-md-8">
+  <p class="text-danger">There are no administrative users on this system! To make an administrative user,
+  log into this machine using SSH (like when you first set it up) and run:</p>
+  <pre>cd mailinabox
+sudo tools/mail.py user make-admin your@emailaddress.com</pre>
+  <hr>
+</div>
+</div>  
+{% endif %}
+
 <div class="row">
   <div class="col-sm-offset-2 col-sm-8 col-md-offset-3 col-md-6 col-lg-offset-4 col-lg-4">
     <center>
-      <h1 style="margin: 1em">{{hostname}}</h1>
       <p style="margin: 2em">Log in here for your Mail-in-a-Box control panel.</p>
     </center>
 
@@ -35,6 +48,7 @@
   </form>
   </div>
 </div>
+
 
 <script>
 function do_login() {

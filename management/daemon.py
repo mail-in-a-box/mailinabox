@@ -71,8 +71,10 @@ def json_response(data):
 def index():
 	# Render the control panel. This route does not require user authentication
 	# so it must be safe!
+	no_admins_exist = (len([user for user in get_mail_users(env, as_json=True) if "admin" in user['privileges']]) == 0)
 	return render_template('index.html',
 		hostname=env['PRIMARY_HOSTNAME'],
+		no_admins_exist=no_admins_exist,
 	)
 
 @app.route('/me')
