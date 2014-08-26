@@ -94,7 +94,7 @@ def make_domain_config(domain, template, template_for_primaryhost, env):
 	nginx_conf = nginx_conf.replace("$SSL_KEY", ssl_key)
 	nginx_conf = nginx_conf.replace("$SSL_CERTIFICATE", ssl_certificate)
 
-	# Add in any user customizations.
+	# Add in any user customizations in YAML format.
 	nginx_conf_custom_fn = os.path.join(env["STORAGE_ROOT"], "www/custom.yaml")
 	if os.path.exists(nginx_conf_custom_fn):
 		yaml = rtyaml.load(open(nginx_conf_custom_fn))
@@ -102,6 +102,11 @@ def make_domain_config(domain, template, template_for_primaryhost, env):
 			yaml = yaml[domain]
 			for path, url in yaml.get("proxies", {}).items():
 				nginx_conf += "\tlocation %s {\n\t\tproxy_pass %s;\n\t}\n" % (path, url)
+
+ 	# Add in any user customizations in the includes/ folder.
+        nginx_conf_custom_include = os.path.join(env["STORAGE_ROOT"], "www", safe_domain_name(domain) + ".conf")
+        if os.path.exists(nginx_conf_custom_include):
+                nginx_conf += "\tinclude %s;\n" % (nginx_conf_custom_include)
 
 	# Ending.
 	nginx_conf += nginx_conf_parts[1]
