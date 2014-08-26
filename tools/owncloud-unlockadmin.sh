@@ -2,7 +2,7 @@
 
 source /etc/mailinabox.conf # load global vars
 
-ADMIN=$(sqlite3 $STORAGE_ROOT/mail/users.sqlite "SELECT email FROM users WHERE privileges = 'admin' ORDER BY id ASC LIMIT 1")
+ADMIN=$(./mail.py user admins | head -n 1)
 test -z "$1" || ADMIN=$1 
 
 echo I am going to unlock admin features for $ADMIN.
