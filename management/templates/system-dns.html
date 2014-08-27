@@ -31,22 +31,22 @@
 
 <p>It is possible to set custom DNS records on domains hosted here. For instance, you can create your own dynamic DNS service. To do so, you will need to call your box&rsquo;s DNS API.</p>
 
-<p>It works like this:</p>
+<h4>The HTTP POST request</h4>
+
+<p>Send a POST request like this:</p>
 
 <pre>curl -d "" --user {email}:{password} https://{{hostname}}/admin/dns/set/{qname}[/{rtype}[/{value}]]</pre>
-
-<p>The parameters are:</p>
 
 <table class="table">
 <thead><th>Parameter</th> <th>Value</th></thead>
 <tr><td>email</td> <td>The email address of any administrative user here.</td></tr>
 <tr><td>password</td> <td>That user&rsquo;s password.</td></tr>
 <tr><td>qname</td> <td>The fully qualified domain name for the record you are trying to set.</td></tr>
-<tr><td>rtype</td> <td>Optional. The resource type: A (an IPv4 address; the default), AAAA (an IPv6 address), TXT (a text string), or CNAME (an alias, which is a fully qualified domain name).</td></tr>
+<tr><td>rtype</td> <td>Optional. The resource type: <code>A</code> (an IPv4 address; the default), <code>AAAA</code> (an IPv6 address), <code>TXT</code> (a text string), or <code>CNAME</code> (an alias, which is a fully qualified domain name).</td></tr>
 <tr><td>value</td> <td>Optional-ish. The new record&rsquo;s value. If not provided, the IPv4 address of the remote host is used &mdash; this is handy for dynamic DNS! You can also set this in a POST parameter. To delete a record, pass &ldquo;value=&rdquo; in the POST body.</td></tr>
 </table>
 
-<p>Examples:</p>
+<h4>Examples:</h4>
 
 <pre># sets laptop.mydomain.com to point to the IP address of the machine you are executing curl on
 curl -d "" --user me@mydomain.com:###### https://{{hostname}}/admin/dns/set/laptop.mydomain.com
