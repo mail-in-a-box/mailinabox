@@ -3,8 +3,8 @@ if [ -z "$NONINTERACTIVE" ]; then
 	# this was being able to ask the user for input even if stdin has been redirected,
 	# e.g. if we piped a bootstrapping install script to bash to get started. In that
 	# case, the nifty '[ -t 0 ]' test won't work. But with Vagrant we must suppress so we
-	# use a shell flag instead.
-	apt_install dialog
+	# use a shell flag instead. Really supress any output from installing dialog.
+	hide_output apt-get -y install dialog
 	message_box "Mail-in-a-Box Installation" \
 		"Hello and thanks for deploying a Mail-in-a-Box!
 		\n\nI'm going to ask you a few questions.

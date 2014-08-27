@@ -12,7 +12,7 @@
 # Adapted from http://blog.codefront.net/2007/06/11/nginx-php-and-a-php-fastcgi-daemon-init-script/
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
-DESC="Mail-in-a-Box Mgmt"
+DESC="Mail-in-a-Box Management Daemon"
 NAME=mailinabox
 DAEMON=/usr/local/bin/mailinabox-daemon
 PIDFILE=/var/run/$NAME.pid
