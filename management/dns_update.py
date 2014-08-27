@@ -4,7 +4,7 @@
 # and mail aliases and restarts nsd.
 ########################################################################
 
-import os, os.path, urllib.parse, datetime, re, hashlib
+import os, os.path, urllib.parse, datetime, re, hashlib, base64
 import ipaddress
 import rtyaml
 
@@ -160,6 +160,10 @@ def build_zone(domain, all_domains, additional_records, env, is_zone=True):
 		# Add a DANE TLSA record for SMTP.
 		records.append(("_25._tcp", "TLSA", build_tlsa_record(env), "Recommended when DNSSEC is enabled. Advertises to mail servers connecting to the box that mandatory encryption should be used."))
 
+		# Add a SSHFP records to help SSH key validation. One per available SSH key on this system.
+		for value in build_sshfp_records():
+			records.append((None, "SSHFP", value, "Optional. Provides an out-of-band method for verifying an SSH key before connecting. Use 'VerifyHostKeyDNS yes' (or 'VerifyHostKeyDNS ask') when connecting with ssh."))
+
 	# The MX record says where email for the domain should be delivered: Here!
 	records.append((None,  "MX",  "10 %s." % env["PRIMARY_HOSTNAME"], "Required. Specifies the hostname (and priority) of the machine that handles @%s mail." % domain))
 
@@ -289,6 +293,41 @@ def build_tlsa_record(env):
 	# 1: The certificate is SHA256'd here.
 	return "3 0 1 " + certhash
 
+def build_sshfp_records():
+	# The SSHFP record is a way for us to embed this server's SSH public
+	# key fingerprint into the DNS so that remote hosts have an out-of-band
+	# method to confirm the fingerprint. See RFC 4255 and RFC 6594. This
+	# depends on DNSSEC.
+	#
+	# On the client side, set SSH's VerifyHostKeyDNS option to 'ask' to
+	# include this info in the key verification prompt or 'yes' to trust
+	# the SSHFP record.
+	#
+	# See https://github.com/xelerance/sshfp for inspiriation.
+
+	algorithm_number = {
+		"ssh-rsa": 1,
+		"ssh-dss": 2,
+		"ecdsa-sha2-nistp256": 3,
+	}
+
+	# Get our local fingerprints by running ssh-keyscan. The output looks
+	# like the known_hosts file: hostname, keytype, fingerprint.
+	keys = shell("check_output", ["ssh-keyscan", "localhost"])
+	for key in keys.split("\n"):
+		if key.strip() == "" or key[0] == "#": continue
+		try:
+			host, keytype, pubkey = key.split(" ")
+			yield "%d %d ( %s )" % (
+				algorithm_number[keytype],
+				2, # specifies we are using SHA-256 on next line
+				hashlib.sha256(base64.b64decode(pubkey)).hexdigest().upper(),
+				)
+		except:
+			# Lots of things can go wrong. Don't let it disturb the DNS
+			# zone.
+			pass
+	
 ########################################################################
 
 def write_nsd_zone(domain, zonefile, records, env, force):
@@ -497,7 +536,7 @@ def sign_zone(domain, zonefile, env):
 	# Remove our temporary file.
 	for fn in files_to_kill:
 		os.unlink(fn)
-	
+
 ########################################################################
 
 def write_opendkim_tables(zonefiles, env):
