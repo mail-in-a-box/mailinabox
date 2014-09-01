@@ -331,23 +331,27 @@ def build_sshfp_records():
 ########################################################################
 
 def write_nsd_zone(domain, zonefile, records, env, force):
-	# We set the administrative email address for every domain to domain_contact@[domain.com].
-	# You should probably create an alias to your email address.
-
 	# On the $ORIGIN line, there's typically a ';' comment at the end explaining
 	# what the $ORIGIN line does. Any further data after the domain confuses
 	# ldns-signzone, however. It used to say '; default zone domain'.
 
+	# The SOA contact address for all of the domains on this system is hostmaster
+	# @ the PRIMARY_HOSTNAME. Hopefully that's legit.
+
+	# For the refresh through TTL fields, a good reference is:
+	# http://www.peerwisdom.org/2013/05/15/dns-understanding-the-soa-record/
+
+
 	zone = """
 $ORIGIN {domain}.
-$TTL 86400           ; default time to live
+$TTL 1800           ; default time to live
 
 @ IN SOA ns1.{primary_domain}. hostmaster.{primary_domain}. (
            __SERIAL__     ; serial number
-           28800       ; Refresh
-           7200        ; Retry
-           864000      ; Expire
-           86400       ; Min TTL
+           7200     ; Refresh (secondary nameserver update interval)
+           1800     ; Retry (when refresh fails, how often to try again)
+           1209600  ; Expire (when refresh fails, how long secondary nameserver will keep records around anyway)
+           1800     ; Negative TTL (how long negative responses are cached)
            )
 """
 
