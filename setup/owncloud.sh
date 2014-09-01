@@ -13,20 +13,19 @@ apt_install \
 apt-get purge -qq -y owncloud*
 
 # Install ownCloud from source
-echo installing ownCloud...
-rm -f /tmp/owncloud.zip
-wget -qO /tmp/owncloud.zip https://download.owncloud.org/community/owncloud-latest.zip
+# Check if ownCloud dir exist, and check if version matches 7.0.1 (if it does, upgrade)
+owncloud_ver=7.0.2
 
-if [ ! -d /usr/local/lib/owncloud ]; then
-	# fresh install
-	unzip -q /tmp/owncloud.zip -d /usr/local/lib
-else
-	# upgrade existing install
-	unzip -u -o -q /tmp/owncloud.zip -d /usr/local/lib
-	hide_output php /usr/local/lib/owncloud/occ upgrade
+if [ ! -d /usr/local/lib/owncloud/ ] \
+	|| ! grep -q $owncloud_ver /usr/local/lib/owncloud/version.php; then
+
+	echo installing ownCloud...
+	rm -f /tmp/owncloud.zip
+	wget -qO /tmp/owncloud.zip https://download.owncloud.org/community/owncloud-$owncloud_ver.zip
+	unzip -u -o -q /tmp/owncloud.zip -d /usr/local/lib #either extracts new or replaces current files
+	hide_output php /usr/local/lib/owncloud/occ upgrade #if OC is up-to-date it wont matter
+	rm -f /tmp/owncloud.zip
 fi
-
-rm -f /tmp/owncloud.zip
 
 # Setup ownCloud if the ownCloud database does not yet exist. Running setup when
 # the database does exist wipes the database and user data.
