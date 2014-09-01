@@ -250,6 +250,12 @@ def do_updates():
 		"DEBIAN_FRONTEND": "noninteractive"
 	})
 
+@app.route('/system/backup/status')
+@authorized_personnel_only
+def backup_status():
+	from backup import backup_status
+	return json_response(backup_status(env))
+
 # APP
 
 if __name__ == '__main__':

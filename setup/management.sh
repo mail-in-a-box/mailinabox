@@ -2,7 +2,7 @@
 
 source setup/functions.sh
 
-apt_install python3-flask links duplicity libyaml-dev python3-dnspython
+apt_install python3-flask links duplicity libyaml-dev python3-dnspython python3-dateutil
 hide_output pip3 install rtyaml
 
 # Create a backup directory and a random key for encrypting backups.
