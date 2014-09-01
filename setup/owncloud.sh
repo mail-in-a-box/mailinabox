@@ -12,13 +12,18 @@ apt_install \
 
 apt-get purge -qq -y owncloud*
 
-# Install ownCloud from source if it is not already present
-# TODO: Check version?
-if [ ! -d /usr/local/lib/owncloud ]; then
+# Install ownCloud from source
+owncloud_ver=7.0.2
+
+# Check if ownCloud dir exist, and check if version matches owncloud_ver (if either doesn't - install/upgrade)
+if [ ! -d /usr/local/lib/owncloud/ ] \
+	|| ! grep -q $owncloud_ver /usr/local/lib/owncloud/version.php; then
+
 	echo installing ownCloud...
 	rm -f /tmp/owncloud.zip
-	wget -qO /tmp/owncloud.zip https://download.owncloud.org/community/owncloud-7.0.1.zip
-	unzip -q /tmp/owncloud.zip -d /usr/local/lib
+	wget -qO /tmp/owncloud.zip https://download.owncloud.org/community/owncloud-$owncloud_ver.zip
+	unzip -u -o -q /tmp/owncloud.zip -d /usr/local/lib #either extracts new or replaces current files
+	hide_output php /usr/local/lib/owncloud/occ upgrade #if OC is up-to-date it wont matter
 	rm -f /tmp/owncloud.zip
 fi
 
