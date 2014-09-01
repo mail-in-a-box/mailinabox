@@ -13,9 +13,9 @@ apt_install \
 apt-get purge -qq -y owncloud*
 
 # Install ownCloud from source
-# Check if ownCloud dir exist, and check if version matches 7.0.1 (if it does, upgrade)
 owncloud_ver=7.0.2
 
+# Check if ownCloud dir exist, and check if version matches owncloud_ver (if either doesn't - install/upgrade)
 if [ ! -d /usr/local/lib/owncloud/ ] \
 	|| ! grep -q $owncloud_ver /usr/local/lib/owncloud/version.php; then
 
