@@ -360,7 +360,8 @@ def check_certificate(domain, ssl_certificate, ssl_private_key):
 
 	# First check that the certificate is for the right domain. The domain
 	# must be found in the Subject Common Name (CN) or be one of the
-	# Subject Alternative Names.
+	# Subject Alternative Names. A wildcard might also appear as the CN
+	# or in the SAN list, so check for that tool.
 	cert_dump = shell('check_output', [
 		"openssl", "x509",
 		"-in", ssl_certificate,
@@ -389,7 +390,8 @@ def check_certificate(domain, ssl_certificate, ssl_private_key):
 				if m:
 					certificate_names.add(m.group(1))
 
-	if domain is not None and domain not in certificate_names:
+	wildcard_domain = re.sub("^[^\.]+", "*", domain)
+	if domain is not None and domain not in certificate_names and wildcard_domain not in certificate_names:
 		return "This certificate is for the wrong domain names. It is for %s." % \
 			", ".join(sorted(certificate_names))
 
