@@ -3,12 +3,12 @@
 <div class="container">
 	<h2>Checking and Sending Mail</h2>
 
-	<p>You can use either webmail, IMAP/SMTP, or Exchange/ActiveSync to access your mail. Optionally you can store your contacts on this box too.</p>
+	<p>You can use either webmail, IMAP/SMTP, or Exchange/ActiveSync to access your mail.</p>
 
 	<hr>
 
 	<div class="row">
-		<div class="col-sm-6">
+		<div class="col-md-6">
 			<h4>How to log in</h4>
 
 			<p>Your username and password are the same no matter how you check your mail:</p>
@@ -18,17 +18,14 @@
 			<tr><th>Password:</th> <td>Your mail password.</td></tr>
 			</table>
 		</div>
+	</div>
 
+	<div class="row">
 		<div class="col-sm-6">
 			<h4>Webmail</h4>
 
 			<p>Your webmail site is <a href="https://{{hostname}}/mail">https://{{hostname}}/mail</a>.</p>
-
-			<h4>Contacts</h4>
-
-			<p>Edit your contacts at <a href="https://{{hostname}}/cloud">https://{{hostname}}/cloud</a>.</p>
 		</div>
-
 	</div>
 
 	<div class="row">
@@ -46,7 +43,7 @@
 			<tr><th>SMTP</th> <td>587</td> <td>STARTTLS</td></tr>
 			</table>
 
-			<p>In addition to setting up your email, you&rsquo;ll also need to install an app like <a href="https://play.google.com/store/apps/details?id=org.dmfs.carddav.sync">CardDAV-Sync free beta</a> to store your contacts on your box.</p>
+			<p>In addition to setting up your email, you&rsquo;ll also need to set up <a href="#sync_guide" onclick="return show_panel(this);">contacts and calendar synchronization</a>.</p>
 		</div>
 
 		<div class="col-sm-6">
@@ -59,7 +56,7 @@
 			<tr><th>Options</th> <td>Secure Connection</td></tr>
 			</table>
 
-			<p>Your contacts should be automatically synced to this box when you use this method.</p>
+			<p>Your device should also provide a contacts list and calendar that syncs to this box when you use this method.</p>
 		</div>
 	</div>
 </div>

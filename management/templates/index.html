@@ -92,17 +92,13 @@
               </ul>
             </li>
             <li class="dropdown active">
-              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Mail <b class="caret"></b></a>
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Mail/Sync <b class="caret"></b></a>
               <ul class="dropdown-menu">
-                <li><a href="#mail-guide" onclick="return show_panel(this);">Instructions</a></li>
+                <li><a href="#mail-guide" onclick="return show_panel(this);">Mail Instructions</a></li>
+                <li><a href="#sync_guide" onclick="return show_panel(this);">Contacts/Calendar</a></li>
+                <li class="divider"></li>
                 <li><a href="#users" onclick="return show_panel(this);">Users</a></li>
                 <li><a href="#aliases" onclick="return show_panel(this);">Aliases</a></li>
-                <!--<li><a href="#">Another action</a></li>
-                <li><a href="#">Something else here</a></li>
-                <li class="divider"></li>
-                <li class="dropdown-header">Nav header</li>
-                <li><a href="#">Separated link</a></li>
-                <li><a href="#">One more separated link</a></li>-->
               </ul>
             </li>
           </ul>
@@ -140,6 +136,10 @@
 
       <div id="panel_aliases" class="container panel">
       {% include "aliases.html" %}
+      </div>
+
+      <div id="panel_sync_guide" class="container panel">
+      {% include "sync-guide.html" %}
       </div>
 
       <hr>
