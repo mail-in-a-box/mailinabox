@@ -6,9 +6,8 @@
 #user_table .aliases div:before { content: "⇖ "; }
 #user_table .aliases div {  }
 #user_table .actions { margin: .25em 0 0 1em; font-size: 95%; }
-#user_table .actions > * { display: none; }
-#user_table .account_active .actions a.archive { display: inline; }
-#user_table .account_inactive .actions .restore { display: inline; }
+#user_table .account_inactive .actions a.archive { display: none; }
+#user_table .account_active .actions .restore { display: none; }
 </style>
 
 <h3>Add a mail user</h3>
@@ -62,7 +61,7 @@
       <div class='address'> </div>
       <div class='aliases' style='display: none'> </div>
       <div class='actions'>
-        <span class='restore'>To restore account, create a new account with this email address.</span>
+        <span class='restore' style='color: #888; font-size: 90%'>To restore account, create a new account with this email address.</span>
       </div>
     </td>
     <td class='privs'> </td>
@@ -87,11 +86,14 @@ function show_users() {
         n.addClass("account_" + r[i].status);
         n.attr('data-email', r[i].email);
         n.find('td.email .address').text(r[i].email)
+        $('#user_table tbody').append(n);
+
+	if (r[i].status == 'inactive') continue;
 
         var add_privs = ["admin"];
 
         for (var j = 0; j < r[i].privileges.length; j++) {
-          var p = $("<div><span class='name'></span> <a href='#' onclick='mod_priv(this, \"remove\"); return false;'><span class=\"glyphicon glyphicon-trash\" style='font-size: 90%'></span></a></div>");
+          var p = $("<div><span class='name'></span> <a href='#' onclick='mod_priv(this, \"remove\"); return false;' title='Remove Privilege'><span class=\"glyphicon glyphicon-trash\" style='font-size: 90%'></span></a></div>");
           p.find('span.name').text(r[i].privileges[j]);
           n.find('td.privs').append(p);
           if (add_privs.indexOf(r[i].privileges[j]) >= 0)
@@ -99,9 +101,9 @@ function show_users() {
         }
 
         for (var j = 0; j < add_privs.length; j++) {
-          var p = $("<div><small><a href='#' onclick='mod_priv(this, \"add\"); return false;'><span class=\"glyphicon glyphicon-plus\" style='font-size: 90%'></span> <span class='name'></span>?</a></small></div>");
+          var p = $("<div><small><a href='#' onclick='mod_priv(this, \"add\"); return false;' title='Add Privilege'><span class=\"glyphicon glyphicon-plus\" style='font-size: 80%'></span><span class='name' style='padding-left: 3px'></span></a></small></div>");
           p.find('span.name').text(add_privs[j]);
-          n.find('td.privs').append(p);
+          n.find('.email .actions').append(p);
         }
 
         if (r[i].aliases && r[i].aliases.length > 0) {
@@ -113,7 +115,6 @@ function show_users() {
               ))
           }
         }
-        $('#user_table tbody').append(n);
       }
     })
 }
