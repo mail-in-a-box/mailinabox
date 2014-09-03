@@ -1,4 +1,10 @@
 #!/bin/bash
+#
+# This script will give you administrative access to the ownCloud
+# instance running here.
+#
+# Run this at your own risk. This is for testing & experimentation
+# purpopses only. After this point you are on your own.
 
 source /etc/mailinabox.conf # load global vars
 
