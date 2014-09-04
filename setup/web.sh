@@ -18,6 +18,10 @@ cp conf/nginx-ssl.conf /etc/nginx/nginx-ssl.conf
 tools/editconf.py /etc/nginx/nginx.conf -s \
 	server_names_hash_bucket_size="64;"
 
+# Bump up max_children to support more concurrent connections
+tools/editconf.py /etc/php5/fpm/pool.d/www.conf -c ';' \
+	pm.max_children=8
+
 # Other nginx settings will be configured by the management service
 # since it depends on what domains we're serving, which we don't know
 # until mail accounts have been created.
