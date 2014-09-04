@@ -65,10 +65,6 @@ rm -f /usr/local/lib/z-push/autodiscover/config.php
 cp conf/zpush/autodiscover_config.php /usr/local/lib/z-push/autodiscover/config.php
 sed -i "s/PRIMARY_HOSTNAME/$PRIMARY_HOSTNAME/" /usr/local/lib/z-push/autodiscover/config.php
 
-# Bump up max_children to support more concurrent connections
-tools/editconf.py /etc/php5/fpm/pool.d/www.conf -c ';' \
-	pm.max_children=8
-
 # Some directories it will use.
 
 mkdir -p /var/log/z-push
