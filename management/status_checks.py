@@ -208,7 +208,9 @@ def check_dns_zone(domain, env, dns_zonefiles):
 		env['out'].print_line("Key Tag: " + ds_keytag + ("" if not ds_looks_valid or ds[0] == ds_keytag else " (Got '%s')" % ds[0]))
 		env['out'].print_line("Key Flags: KSK")
 		env['out'].print_line("Algorithm: 7 / RSASHA1-NSEC3-SHA1" + ("" if not ds_looks_valid or ds[1] == '7' else " (Got '%s')" % ds[1]))
+			# see http://www.iana.org/assignments/dns-sec-alg-numbers/dns-sec-alg-numbers.xhtml
 		env['out'].print_line("Digest Type: 2 / SHA-256")
+			# http://www.ietf.org/assignments/ds-rr-types/ds-rr-types.xml
 		env['out'].print_line("Digest: " + digests['2'])
 		if ds_looks_valid and ds[3] != digests.get(ds[2]):
 			env['out'].print_line("(Got digest type %s and digest %s which do not match.)" % (ds[2], ds[3]))
