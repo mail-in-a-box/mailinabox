@@ -5,7 +5,9 @@ By [@JoshData](https://github.com/JoshData) and contributors.
 
 Mail-in-a-Box helps individuals take back control of their email by defining a one-click, easy-to-deploy SMTP+everything else server: a mail server in a box.
 
-**This is a work in progress. I work on this in my limited free time.**
+**Please see [https://mailinabox.email](https://mailinabox.email) for the project's website and setup guide!**
+
+* * *
 
 I am trying to:
 
@@ -25,8 +27,6 @@ The Box
 -------
 
 Mail-in-a-Box turns a fresh Ubuntu 14.04 LTS 64-bit machine into a working mail server, including SMTP ([postfix](http://www.postfix.org/)), IMAP ([dovecot](http://dovecot.org/)), Exchange ActiveSync ([z-push](https://github.com/fmbiete/Z-Push-contrib)), webmail ([Roundcube](http://roundcube.net/)), spam filtering ([spamassassin](https://spamassassin.apache.org/)), greylisting ([postgrey](http://postgrey.schweikert.ch/)), CardDAV/CalDAV ([ownCloud](http://owncloud.org/)), DNS, [SPF](https://en.wikipedia.org/wiki/Sender_Policy_Framework), DKIM ([OpenDKIM](http://www.opendkim.org/)), [DMARC](https://en.wikipedia.org/wiki/DMARC), [DNSSEC](https://en.wikipedia.org/wiki/DNSSEC), [DANE TLSA](https://en.wikipedia.org/wiki/DNS-based_Authentication_of_Named_Entities), [SSHFP](https://tools.ietf.org/html/rfc4255), and basic system services like a firewall, intrusion protection, and setting the system clock.
-
-Please see [mailinabox.email](https://mailinabox.email) for more information and how to set up a Mail-in-a-Box.
 
 The Acknowledgements
 --------------------
