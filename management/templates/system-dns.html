@@ -9,6 +9,7 @@
   padding-top: 0;
 }
 #external_dns_settings .values td {
+  border: 0;
 	padding-top: .75em;
 	padding-bottom: 0;
 	max-width: 50vw;
@@ -19,6 +20,7 @@
 	padding-top: .5em;
 	padding-bottom: .75em;
 	font-style: italic;
+  font-size: 95%;
 	color: #777;
 }
 </style>
@@ -63,9 +65,9 @@ curl -d "value=" --user me@mydomain.com:###### https://{{hostname}}/admin/dns/se
 
 <h3>External DNS</h3>
 
-<p>Although your box is configured to serve its own DNS, it is possible to host your DNS elsewhere. We do not recommend this.</p>
+<p>Although your box is configured to serve its own DNS, it is possible to host your DNS elsewhere.</p>
 
-<p>If you do so, you are responsible for keeping your DNS entries up to date. In particular DNSSEC entries must be re-signed periodically. Do not set a DS record at your registrar or publish DNSSEC entries in your DNS zones if you do not intend to keep them up to date.</p>
+<p>If you do so, you are responsible for keeping your DNS entries up to date! If you previously enabled DNSSEC on your domain name by setting a DS record at your registrar, you will likely have to turn it off before changing nameservers.</p>
 
 <p>Enter the following DNS entries at your DNS provider:</p>
 
