@@ -16,7 +16,7 @@ hide_output apt-get -y upgrade
 #   	fail2ban: scans log files for repeated failed login attempts and blocks the remote IP at the firewall
 
 apt_install python3 python3-pip \
-	wget curl bind9-host \
+	wget curl \
 	haveged unattended-upgrades ntp fail2ban
 
 # Allow apt to install system updates automatically every day.
