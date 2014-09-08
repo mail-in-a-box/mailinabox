@@ -5,11 +5,13 @@
 
 <h2>Backup Status</h2>
 
-<p>The box makes an incremental backup each night. The backup is stored on the machine itself. You are responsible for copying the backup files off of the machine. Many cloud providers make this easy by allowing you to take snapshots of the machine's disk.</p>
-
 <h3>Copying Backup Files</h3>
 
-<p>Use SFTP (FTP over SSH) to copy files from <tt id="backup-location"></tt>. These files are encrpyted, so they are safe to store anywhere. Copy the encryption password from <tt id="backup-encpassword-file"></tt> also but keep it in a safe location.</p>
+<p>The box makes an incremental backup each night. The backup is stored on the machine itself. You are responsible for copying the backup files off of the machine.</p>
+
+<p>Many cloud providers make this easy by allowing you to take snapshots of the machine's disk.</p>
+
+<p>You can also use SFTP (FTP over SSH) to copy files from <tt id="backup-location"></tt>. These files are encrpyted, so they are safe to store anywhere. Copy the encryption password from <tt id="backup-encpassword-file"></tt> also but keep it in a safe location.</p>
 
 <h3>Current Backups</h3>
 
