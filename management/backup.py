@@ -46,7 +46,7 @@ def backup_status(env):
 				"date_str": date.strftime("%x %X"),
 				"date_delta": reldate(date),
 				"full": m.group("incbase") is None,
-				"previous": m.group("incbase") is None,
+				"previous": m.group("incbase"),
 				"size": 0,
 				"encsize": 0,
 			}
@@ -58,6 +58,8 @@ def backup_status(env):
 		if os.path.exists(encfn):
 			backups[key]["encsize"] += os.path.getsize(encfn)
 
+	# Ensure the rows are sorted reverse chronologically.
+	# This is relied on by should_force_full().
 	backups = sorted(backups.values(), key = lambda b : b["date"], reverse=True)
 
 	return {
@@ -67,6 +69,25 @@ def backup_status(env):
 		"tz": now.tzname(),
 		"backups": backups,
 	}
+
+def should_force_full(env):
+	# Force a full backup when the total size of the increments
+	# since the last full backup is greater than half the size
+	# of that full backup.
+	inc_size = 0
+	for bak in backup_status(env)["backups"]:
+		if not bak["full"]:
+			# Scan through the incremental backups cumulating
+			# size...
+			inc_size += bak["size"]
+		else:
+			# ...until we reach the most recent full backup.
+			# Return if we should to a full backup.
+			return inc_size > .5*bak["size"]
+	else:
+		# If we got here there are no (full) backups, so make one.
+		# (I love for/else blocks. Here it's just to show off.)
+		return True
 
 def perform_backup(full_backup):
 	env = load_environment()
@@ -79,18 +100,10 @@ def perform_backup(full_backup):
 	os.makedirs(backup_duplicity_dir, exist_ok=True)
 
 	# On the first run, always do a full backup. Incremental
-	# will fail.
-	if len(os.listdir(backup_duplicity_dir)) == 0:
-		full_backup = True
-	else:
-		# When the size of incremental backups exceeds the size of existing
-		# full backups, take a new full backup. We want to avoid full backups
-		# because they are costly to synchronize off-site.
-		full_sz = sum(os.path.getsize(f) for f in glob.glob(backup_duplicity_dir + '/*-full.*'))
-		inc_sz = sum(os.path.getsize(f) for f in glob.glob(backup_duplicity_dir + '/*-inc.*'))
-		# (n.b. not counting size of new-signatures files because they are relatively small)
-		if inc_sz > full_sz * 1.5:
-			full_backup = True
+	# will fail. Otherwise do a full backup when the size of
+	# the increments since the most recent full backup are
+	# large.
+	full_backup = full_backup or should_force_full(env)
 
 	# Stop services.
 	shell('check_call', ["/usr/sbin/service", "dovecot", "stop"])
