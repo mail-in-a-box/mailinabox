@@ -73,12 +73,13 @@ def run_network_checks(env):
 	# by a spammer, or the user may be deploying on a residential network. We
 	# will not be able to reliably send mail in these cases.
 	rev_ip4 = ".".join(reversed(env['PUBLIC_IP'].split('.')))
-	if not query_dns(rev_ip4+'.zen.spamhaus.org', 'A', nxdomain=None):
+	zen = query_dns(rev_ip4+'.zen.spamhaus.org', 'A', nxdomain=None)
+	if zen is None:
 		env['out'].print_ok("IP address is not blacklisted by zen.spamhaus.org.")
 	else:
-		env['out'].print_error("""The IP address of this machine %s is listed in the Spamhaus Block List,
+		env['out'].print_error("""The IP address of this machine %s is listed in the Spamhaus Block List (code %s),
 			which may prevent recipients from receiving your email. See http://www.spamhaus.org/query/ip/%s."""
-			% (env['PUBLIC_IP'], env['PUBLIC_IP']))
+			% (env['PUBLIC_IP'], zen, env['PUBLIC_IP']))
 
 def run_domain_checks(env):
 	# Get the list of domains we handle mail for.
@@ -261,11 +262,13 @@ def check_mail_domain(domain, env):
 	# Stop if the domain is listed in the Spamhaus Domain Block List.
 	# The user might have chosen a domain that was previously in use by a spammer
 	# and will not be able to reliably send mail.
-	if not query_dns(domain+'.dbl.spamhaus.org', "A", nxdomain=None):
+	dbl = query_dns(domain+'.dbl.spamhaus.org', "A", nxdomain=None)
+	if dbl is None:
 		env['out'].print_ok("Domain is not blacklisted by dbl.spamhaus.org.")
 	else:
-		env['out'].print_error("""This domain is listed in the Spamhaus Domain Block List, which may prevent recipients from receiving your mail.
-			See http://www.spamhaus.org/dbl/ and http://www.spamhaus.org/query/domain/%s.""" % domain)
+		env['out'].print_error("""This domain is listed in the Spamhaus Domain Block List (code %s),
+			which may prevent recipients from receiving your mail.
+			See http://www.spamhaus.org/dbl/ and http://www.spamhaus.org/query/domain/%s.""" % (dbl, domain))
 
 def check_web_domain(domain, env):
 	# See if the domain's A record resolves to our PUBLIC_IP. This is already checked
