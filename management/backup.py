@@ -14,8 +14,9 @@ import dateutil.parser, dateutil.relativedelta, dateutil.tz
 
 from utils import exclusive_process, load_environment, shell
 
-# settings
-keep_backups_for = "31D" # destroy backups older than 31 days except the most recent full backup
+# destroy backups when the most recent increment in the chain
+# that depends on it is this many days old.
+keep_backups_for_days = 14
 
 def backup_status(env):
 	# What is the current status of backups?
@@ -24,8 +25,8 @@ def backup_status(env):
 	# see how large the storage is.
 
 	now = datetime.datetime.now(dateutil.tz.tzlocal())
-	def reldate(date):
-		rd = dateutil.relativedelta.relativedelta(now, date)
+	def reldate(date, ref):
+		rd = dateutil.relativedelta.relativedelta(ref, date)
 		if rd.days >= 7: return "%d days" % rd.days
 		if rd.days > 1: return "%d days, %d hours" % (rd.days, rd.hours)
 		if rd.days == 1: return "%d day, %d hours" % (rd.days, rd.hours)
@@ -44,7 +45,7 @@ def backup_status(env):
 			backups[key] = {
 				"date": m.group("date"),
 				"date_str": date.strftime("%x %X"),
-				"date_delta": reldate(date),
+				"date_delta": reldate(date, now),
 				"full": m.group("incbase") is None,
 				"previous": m.group("incbase"),
 				"size": 0,
@@ -59,8 +60,26 @@ def backup_status(env):
 			backups[key]["encsize"] += os.path.getsize(encfn)
 
 	# Ensure the rows are sorted reverse chronologically.
-	# This is relied on by should_force_full().
+	# This is relied on by should_force_full() and the next step.
 	backups = sorted(backups.values(), key = lambda b : b["date"], reverse=True)
+
+	# When will a backup be deleted?
+	saw_full = False
+	deleted_in = None
+	days_ago = now - datetime.timedelta(days=keep_backups_for_days)
+	for bak in backups:
+		if deleted_in:
+			# Subsequent backups are deleted when the most recent increment
+			# in the chain would be deleted.
+			bak["deleted_in"] = deleted_in
+		if bak["full"]:
+			# Reset when we get to a full backup. A new chain start next.
+			saw_full = True
+			deleted_in = None
+		elif saw_full and not deleted_in:
+			# Mark deleted_in only on the first increment after a full backup.
+			deleted_in = reldate(days_ago, dateutil.parser.parse(bak["date"]))
+			bak["deleted_in"] = deleted_in
 
 	return {
 		"directory": basedir,
@@ -135,7 +154,7 @@ def perform_backup(full_backup):
 	shell('check_call', [
 		"/usr/bin/duplicity",
 		"remove-older-than",
-		keep_backups_for,
+		"%dD" % keep_backups_for_days,
 		"--archive-dir", "/tmp/duplicity-archive-dir",
 		"--name", "mailinabox",
 		"--force",

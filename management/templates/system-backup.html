@@ -1,4 +1,5 @@
 <style>
+#backup-status th { text-align: center; }
 #backup-status tr.full-backup td { font-weight: bold; }
 </style>
 
@@ -19,6 +20,7 @@
     <th colspan="2">When</th>
     <th>Type</th>
     <th>Size</th>
+    <th>Deleted in...</th>
   </thead>
   <tbody>
   </tbody>
@@ -56,8 +58,12 @@ function show_system_backup() {
         if (b.full) tr.addClass("full-backup");
         tr.append( $('<td/>').text(b.date_str + " " + r.tz) );
         tr.append( $('<td/>').text(b.date_delta + " ago") );
-        tr.append( $('<td/>').text(b.full ? "full" : "incremental") );
+        tr.append( $('<td/>').text(b.full ? "full" : "increment") );
         tr.append( $('<td style="text-align: right"/>').text( nice_size(b.encsize)) );
+        if (b.deleted_in)
+          tr.append( $('<td/>').text(b.deleted_in) );
+        else
+          tr.append( $('<td class="text-muted">n/a</td>') );
         $('#backup-status tbody').append(tr);
 
         total_disk_size += b.size;
