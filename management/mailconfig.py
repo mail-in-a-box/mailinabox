@@ -312,7 +312,7 @@ def get_required_aliases(env):
 	# These are the aliases that must exist.
 	aliases = set()
 
-	# The hostmaster aliase is exposed in the DNS SOA for each zone.
+	# The hostmaster alias is exposed in the DNS SOA for each zone.
 	aliases.add("hostmaster@" + env['PRIMARY_HOSTNAME'])
 
 	# Get a list of domains we serve mail for, except ones for which the only
@@ -344,10 +344,15 @@ def kick(env, mail_result=None):
 
 	# Ensure every required alias exists.
 
+	existing_users = get_mail_users(env)
 	existing_aliases = get_mail_aliases(env)
 	required_aliases = get_required_aliases(env)
 
 	def ensure_admin_alias_exists(source):
+		# If a user account exists with that address, we're good.
+		if source in existing_users:
+			return
+
 		# Does this alias exists?
 		for s, t in existing_aliases:
 			if s == source:
