@@ -68,7 +68,7 @@ def run_network_checks(env):
 			machines from being able to send spam. A quick connection test to Google's mail server on port 25
 			failed.""")
 
-	# Stop if the IPv4 address is listed in the ZEN Spamhouse Block List.
+	# Stop if the IPv4 address is listed in the ZEN Spamhaus Block List.
 	# The user might have ended up on an IP address that was previously in use
 	# by a spammer, or the user may be deploying on a residential network. We
 	# will not be able to reliably send mail in these cases.
