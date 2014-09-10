@@ -29,9 +29,9 @@ apt-get purge -qq -y roundcube*
 # TODO: Check version?
 if [ ! -d /usr/local/lib/roundcubemail ]; then
 	rm -f /tmp/roundcube.tgz
-	wget -qO /tmp/roundcube.tgz http://downloads.sourceforge.net/project/roundcubemail/roundcubemail/1.0.1/roundcubemail-1.0.1.tar.gz
+	wget -qO /tmp/roundcube.tgz http://downloads.sourceforge.net/project/roundcubemail/roundcubemail/1.0.2/roundcubemail-1.0.2.tar.gz
 	tar -C /usr/local/lib -zxf /tmp/roundcube.tgz
-	mv /usr/local/lib/roundcubemail-1.0.1/ /usr/local/lib/roundcubemail
+	mv /usr/local/lib/roundcubemail-1.0.2/ /usr/local/lib/roundcubemail
 	rm -f /tmp/roundcube.tgz
 fi
 
