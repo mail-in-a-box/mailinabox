@@ -1,7 +1,7 @@
 Mail-in-a-Box
 =============
 
-By [@JoshData](https://github.com/JoshData) and contributors.
+By [@JoshData](https://github.com/JoshData) and [contributors](https://github.com/mail-in-a-box/mailinabox/graphs/contributors).
 
 Mail-in-a-Box helps individuals take back control of their email by defining a one-click, easy-to-deploy SMTP+everything else server: a mail server in a box.
 
@@ -14,8 +14,8 @@ I am trying to:
 * Make deploying a good mail server easy.
 * Promote [decentralization](http://redecentralize.org/), innovation, and privacy on the web.
 * Have automated, auditable, and [idempotent](http://sharknet.us/2014/02/01/automated-configuration-management-challenges-with-idempotency/) configuration.
-* **Not** to be a mail server that the NSA cannot hack.
-* **Not** to be customizable by power users.
+* **Not** be a mail server that the NSA cannot hack.
+* **Not** be customizable by power users.
 
 The long-term goal is to have this be a one-click email appliance with *no* user-configurable setup options.
 
