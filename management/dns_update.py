@@ -197,7 +197,7 @@ def build_zone(domain, all_domains, additional_records, env, is_zone=True):
 
 	# Add defaults if not overridden by the user's custom settings.
 	defaults = [
-		(None,  "A",    env["PUBLIC_IP"],       "Optional. Sets the IP address that %s resolves to, e.g. for web hosting. (It is not necessary for receiving mail on this domain.)" % domain),
+		(None,  "A",    env["PUBLIC_IP"],       "Required. May have a different value. Sets the IP address that %s resolves to for web hosting and other services besides mail. The A record must be present but its value does not affect mail delivery." % domain),
 		("www", "A",    env["PUBLIC_IP"],       "Optional. Sets the IP address that www.%s resolves to, e.g. for web hosting." % domain),
 		(None,  "AAAA", env.get('PUBLIC_IPV6'), "Optional. Sets the IPv6 address that %s resolves to, e.g. for web hosting. (It is not necessary for receiving mail on this domain.)" % domain),
 		("www", "AAAA", env.get('PUBLIC_IPV6'), "Optional. Sets the IPv6 address that www.%s resolves to, e.g. for web hosting." % domain),
