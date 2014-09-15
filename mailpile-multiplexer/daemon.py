@@ -9,7 +9,7 @@
 # When a user logs in, a new Mailpile instance is forked and we
 # proxy to that Mailpile for that user's session.
 
-import sys, os, os.path, re, urllib.request, urllib.parse, urllib.error, time
+import sys, os, os.path, re, urllib.request, urllib.parse, urllib.error, time, subprocess
 
 from flask import Flask, request, session, render_template, redirect, abort
 app = Flask(__name__)
@@ -160,7 +160,7 @@ def proxy_request_to_mailpile(path):
 
 	if content_type.startswith("text/html"):
 		# Rewrite URLs in HTML responses.
-		body = re.sub(rb" (href|src|HREF|SRC)=('[^']*'|\"[^\"]*\")",
+		body = re.sub(rb" (href|src|HREF|SRC|action)=('[^']*'|\"[^\"]*\")",
 			lambda m : b' ' + m.group(1) + b'=' + m.group(2)[0:1] + rewrite_url(m.group(2)[1:-1]) + m.group(2)[0:1],
 			body)
 
@@ -193,15 +193,8 @@ def get_mailpile_port(emailaddr):
 
 def spawn_mailpile(emailaddr):
 	# Spawn a new instance of Mailpile that will automatically die
-	# when this process exits (because then we've lost track of the
-	# Mailpile instances we started).
-	#
-	# To do that, use an inspired idea from http://stackoverflow.com/questions/284325/how-to-make-child-process-die-after-parent-exits
-	# which uses an intermediate process that catches a SIGPIPE from the parent.
-	# We don't need an intermediate process because Mailpile is waiting
-	# for commands on STDIN. By giving it a STDIN that is a file descriptor
-	# that we never write to but keep open, the process should die as soon
-	# as this process exits due to a SIGPIPE.
+	# when this process exits because it'll be reading from a pipe
+	# connected to this process.
 
 	# Prepare mailpile.
 
@@ -215,29 +208,22 @@ def spawn_mailpile(emailaddr):
 		utils.shell("check_call", cmd, env={ "MAILPILE_HOME": mp_home })
 
 	os.makedirs(mp_home, exist_ok=True)
-	mp("--setup")
-	mp("--add", maildir, "--rescan", "all")
-
-	# Create OS file descriptors for two ends of a pipe.
-	# The pipe's write end remains open until the process dies, which is right.
-	# But we close the read end immediately.
-
-	pipe_r, pipe_w = os.pipe()
-	os.close(pipe_r)
+	mp("add", maildir)
+	mp("rescan")
+	mp("set", "profiles.0.email=%s" % emailaddr)
+	mp("set", "profiles.0.name=%s" % emailaddr)
+	mp("set", "sys.http_port=%d" % port)
 
 	# Span mailpile in a way that lets us control its stdin.
 	mailpile_proc = \
-		utils.shell("Popen",
-		[
-			os.path.join(os.path.dirname(__file__), '../externals/Mailpile/mp'),
-			"--www",
-			"--set", "sys.http_port=%d" % port,
-			"--set", "profiles.0.email=%s" % emailaddr,
-			"--set", "profiles.0.name=%s" % emailaddr,
-		],
-		stdin=pipe_w,
-		env={ "MAILPILE_HOME": mp_home }
-	)
+		subprocess.Popen(
+			[
+				os.path.join(os.path.dirname(__file__), '../externals/Mailpile/mp'),
+			],
+			stdin=subprocess.PIPE,
+			#stdout=subprocess.DEVNULL,
+			env={ "MAILPILE_HOME": mp_home }
+		)
 
 	# Give mailpile time to start before trying to send over a request.
 	time.sleep(3)
