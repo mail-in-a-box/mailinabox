@@ -15,7 +15,7 @@ hide_output apt-get -y upgrade
 #   	ntp: keeps the system time correct
 #   	fail2ban: scans log files for repeated failed login attempts and blocks the remote IP at the firewall
 
-apt_install python3 python3-pip \
+apt_install python3 python3-dev python3-pip \
 	wget curl \
 	haveged unattended-upgrades ntp fail2ban
 
