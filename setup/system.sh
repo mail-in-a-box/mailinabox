@@ -35,8 +35,22 @@ if [ -z "$DISABLE_FIREWALL" ]; then
 	# Various virtualized environments like Docker and some VPSs don't provide
 	# a kernel that supports iptables. To avoid error-like output in these cases,
 	# let us disable the firewall.
+
 	apt_install ufw
+
 	ufw_allow ssh;
+
+	# ssh might be running on an alternate port. Use sshd -T to dump sshd's
+	# settings, find the port it is supposedly running on, and open that port
+	# too.
+	SSH_PORT=$(sshd -T 2>/dev/null | grep "^port " | sed "s/port //")
+	if [ ! -z "$SSH_PORT" ]; then
+		if [ "$SSH_PORT" != "22" ]; then
+			echo Opening alternate SSH port $SSH_PORT.
+			ufw_allow $SSH_PORT;
+		fi
+	fi
+
 	ufw --force enable;
 fi
 
