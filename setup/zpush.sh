@@ -1,6 +1,8 @@
 #!/bin/bash
 #
-# Z-Push: The Microsoft Exchange protocol server.
+# Z-Push: The Microsoft Exchange protocol server
+# ----------------------------------------------
+#
 # Mostly for use on iOS which doesn't support IMAP.
 #
 # Although Ubuntu ships Z-Push (as d-push) it has a dependency on Apache
@@ -19,12 +21,12 @@ apt_install \
 php5enmod imap
 
 # Copy Z-Push into place.
-needs_update=0
+needs_update=0 #NODOC
 if [ ! -f /usr/local/lib/z-push/version ]; then
-	needs_update=1
+	needs_update=1 #NODOC
 elif [[ `curl -s https://api.github.com/repos/fmbiete/Z-Push-contrib/git/refs/heads/master` != `cat /usr/local/lib/z-push/version` ]]; then
 	# checks if the version 
-	needs_update=1
+	needs_update=1 #NODOC
 fi
 if [ $needs_update == 1 ]; then
 	rm -rf /usr/local/lib/z-push

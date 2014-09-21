@@ -58,6 +58,11 @@ def generate_documentation():
 	    		padding: .5em;
 	    		margin: 0;
 	    	}
+
+	    	pre.shell > div:before {
+	    		content: "$ ";
+	    		color: #666;
+	    	}
         </style>
     </head>
     <body>
@@ -123,7 +128,9 @@ class Source(Grammar):
 class CatEOF(Grammar):
 	grammar = (ZERO_OR_MORE(SPACE), L('cat > '), ANY_EXCEPT(WHITESPACE), L(" <<"), OPTIONAL(SPACE), L("EOF;"), EOL, REPEAT(ANY, greedy=False), EOL, L("EOF"), EOL)
 	def value(self):
-		return "<div class='write-to'><div class='filename'>" + self[2].string + "</div><pre>" + cgi.escape(self[7].string) + "</pre></div>\n"
+		content = self[7].string
+		content = re.sub(r"\\([$])", r"\1", content) # un-escape bash-escaped characters
+		return "<div class='write-to'><div class='filename'>overwrite<br>" + self[2].string + "</div><pre>" + cgi.escape(content) + "</pre></div>\n"
 
 class HideOutput(Grammar):
 	grammar = (L("hide_output "), REF("BashElement"))
@@ -134,7 +141,7 @@ class SuppressedLine(Grammar):
 	grammar = (OPTIONAL(SPACE), L("echo "), REST_OF_LINE, EOL)
 	def value(self):
 		if "|" in self.string  or ">" in self.string:
-			return "<pre>" + cgi.escape(self.string) + "</pre>\n"
+			return "<pre class='shell'><div>" + cgi.escape(self.string.strip()) + "</div></pre>\n"
 		return ""
 
 class EditConf(Grammar):
@@ -143,7 +150,7 @@ class EditConf(Grammar):
 		FILENAME,
 		SPACE,
 		OPTIONAL((LIST_OF(
-			L("-w") | L("-s"),
+			L("-w") | L("-s") | L("-c ';'"),
 			sep=SPACE,
 		), SPACE)),
 		REST_OF_LINE,
@@ -172,7 +179,7 @@ class EditConf(Grammar):
 			else:
 				options[-1] += c
 		if options[-1] == "": options.pop(-1)
-		return "<div class='write-to'><div class='filename'>" + self[1].string + "</div><pre>" + "\n".join(cgi.escape(s) for s in options) + "</pre></div>\n"
+		return "<div class='write-to'><div class='filename'>additional settings for<br>" + self[1].string + "</div><pre>" + "\n".join(cgi.escape(s) for s in options) + "</pre></div>\n"
 
 class CaptureOutput(Grammar):
 	grammar = OPTIONAL(SPACE), WORD("A-Za-z_"), L('=$('), REST_OF_LINE, L(")"), OPTIONAL(L(';')), EOL
@@ -184,25 +191,32 @@ class CaptureOutput(Grammar):
 class SedReplace(Grammar):
 	grammar = OPTIONAL(SPACE), L('sed -i "s/'), OPTIONAL(L('^')), ONE_OR_MORE(WORD("-A-Za-z0-9 #=\\{};.*$_!()")), L('/'), ONE_OR_MORE(WORD("-A-Za-z0-9 #=\\{};.*$_!()")), L('/"'), SPACE, FILENAME, EOL
 	def value(self):
-		return "<div class='write-to'><div class='filename'>" + self[8].string + "</div><p>replace</p><pre>" + cgi.escape(self[3].string.replace(".*", ". . .")) + "</pre><p>with</p><pre>" + cgi.escape(self[5].string.replace("\\n", "\n").replace("\\t", "\t")) + "</pre></div>\n"
+		return "<div class='write-to'><div class='filename'>edit<br>" + self[8].string + "</div><p>replace</p><pre>" + cgi.escape(self[3].string.replace(".*", ". . .")) + "</pre><p>with</p><pre>" + cgi.escape(self[5].string.replace("\\n", "\n").replace("\\t", "\t")) + "</pre></div>\n"
+
+def shell_line(bash):
+	return "<pre class='shell'><div>" + cgi.escape(wrap_lines(bash.strip())) + "</div></pre>\n"
 
 class AptGet(Grammar):
 	grammar = (ZERO_OR_MORE(SPACE), L("apt_install "), REST_OF_LINE, EOL)
 	def value(self):
-		return "<pre>" + self[0].string + "apt-get install -y " + cgi.escape(re.sub(r"\s+", " ", self[2].string)) + "</pre>\n"
+		return shell_line("apt-get install -y " + re.sub(r"\s+", " ", self[2].string))
 class UfwAllow(Grammar):
 	grammar = (ZERO_OR_MORE(SPACE), L("ufw_allow "), REST_OF_LINE, EOL)
 	def value(self):
-		return "<pre>" + self[0].string + "ufw allow " + cgi.escape(self[2].string) + "</pre>\n"
+		return shell_line("ufw allow " + self[2].string)
+class RestartService(Grammar):
+	grammar = (ZERO_OR_MORE(SPACE), L("restart_service "), REST_OF_LINE, EOL)
+	def value(self):
+		return shell_line("service " + self[2].string + " restart")
 
 class OtherLine(Grammar):
 	grammar = (REST_OF_LINE, EOL)
 	def value(self):
 		if self.string.strip() == "": return ""
-		return "<pre>" + cgi.escape(self.string.rstrip()) + "</pre>\n"
+		return "<pre class='shell'><div>" + cgi.escape(self.string.rstrip()) + "</div></pre>\n"
 
 class BashElement(Grammar):
-	grammar = Comment | Source | CatEOF | SuppressedLine | HideOutput | EditConf | CaptureOutput | SedReplace | AptGet | UfwAllow | OtherLine
+	grammar = Comment | Source | CatEOF | SuppressedLine | HideOutput | EditConf | CaptureOutput | SedReplace | AptGet | UfwAllow | RestartService | OtherLine
 	def value(self):
 		return self[0].value()
 
@@ -218,14 +232,14 @@ class BashScript(Grammar):
 		string = open(fn).read()
 		string = re.sub(r"\s*\\\n\s*", " ", string)
 		string = re.sub(".* #NODOC\n", "", string)
-		string = re.sub("\n\s*if .*|\n\s*fi|\n\s*else", "", string)
+		string = re.sub("\n\s*if .*|\n\s*fi|\n\s*else|\n\s*elif .*", "", string)
 		string = re.sub("hide_output ", "", string)
 		result = parser.parse_string(string)
 	
 		v = "<div class='sourcefile'><a href=\"%s\">%s</a></div>\n" % ("https://github.com/mail-in-a-box/mailinabox/tree/master/" + fn, fn)
 		v += "".join(result.value())
 
-		v = v.replace("</pre>\n<pre>", "\n")
+		v = v.replace("</pre>\n<pre class='shell'>", "")
 		v = re.sub("<pre>([\w\W]*?)</pre>", lambda m : "<pre>" + strip_indent(m.group(1)) + "</pre>", v)
 
 		v = re.sub(r"\$?PRIMARY_HOSTNAME", "<b>box.yourdomain.com</b>", v)
@@ -233,6 +247,20 @@ class BashScript(Grammar):
 		v = v.replace("`pwd`",  "<code><b>/path/to/mailinabox</b></code>")
 
 		return v
+
+def wrap_lines(text, cols=60):
+	ret = ""
+	words = re.split("(\s+)", text)
+	linelen = 0
+	for w in words:
+		if linelen + len(w) > cols-1:
+			ret += " \\\n"
+			ret += "   "
+			linelen = 0
+		if linelen == 0 and w.strip() == "": continue
+		ret += w
+		linelen += len(w)
+	return ret
 
 if __name__ == '__main__':
 	generate_documentation()

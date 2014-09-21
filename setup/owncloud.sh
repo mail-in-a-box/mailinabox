@@ -5,6 +5,8 @@
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
+# ### Installing ownCloud
+
 apt_install \
 	dbconfig-common \
 	php5-cli php5-sqlite php5-gd php5-imap php5-curl php-pear php-apc curl libapr1 libtool libcurl4-openssl-dev php-xml-parser \
@@ -12,7 +14,7 @@ apt_install \
 
 apt-get purge -qq -y owncloud*
 
-# Install ownCloud from source
+# Install ownCloud from source of this version:
 owncloud_ver=7.0.2
 
 # Check if ownCloud dir exist, and check if version matches owncloud_ver (if either doesn't - install/upgrade)
@@ -27,13 +29,15 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 	rm -f /tmp/owncloud.zip
 fi
 
+# ### Configuring ownCloud
+
 # Setup ownCloud if the ownCloud database does not yet exist. Running setup when
 # the database does exist wipes the database and user data.
 if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
 	# Create a configuration file.
-	TIMEZONE=`cat /etc/timezone`
+	TIMEZONE=$(cat /etc/timezone)
 	instanceid=oc$(echo $PRIMARY_HOSTNAME | sha1sum | fold -w 10 | head -n 1)
-	cat - > /usr/local/lib/owncloud/config/config.php <<EOF;
+	cat > /usr/local/lib/owncloud/config/config.php <<EOF;
 <?php
 \$CONFIG = array (
   'datadirectory' => '$STORAGE_ROOT/owncloud',
@@ -75,7 +79,7 @@ EOF
 	# when the install script is run. Make an administrator account
 	# here or else the install can't finish.
 	adminpassword=$(dd if=/dev/random bs=1 count=40 2>/dev/null | sha1sum | fold -w 30 | head -n 1)
-	cat - > /usr/local/lib/owncloud/config/autoconfig.php <<EOF;
+	cat > /usr/local/lib/owncloud/config/autoconfig.php <<EOF;
 <?php
 \$AUTOCONFIG = array (
   # storage/database
@@ -123,13 +127,15 @@ sudo -u www-data php -f /usr/local/lib/owncloud/cron.php
 EOF
 chmod +x /etc/cron.hourly/mailinabox-owncloud
 
-## Ensure all system admins are ownCloud admins.
-## Actually we don't do this. There's nothing much of interest that the user could
-## change from the ownCloud admin, and there's a lot they could mess up.
-#for user in $(tools/mail.py user admins); do
-#	sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_group_user VALUES ('admin', '$user')"
-#done
+# There's nothing much of interest that a user could do as an admin for ownCloud,
+# and there's a lot they could mess up, so we don't make any users admins of ownCloud.
+# But if we wanted to, we would do this:
+# ```
+# for user in $(tools/mail.py user admins); do
+#	 sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_group_user VALUES ('admin', '$user')"
+# done
+# ```
 
-# Finished.
+# Enable PHP modules and restart PHP.
 php5enmod imap
 restart_service php5-fpm
