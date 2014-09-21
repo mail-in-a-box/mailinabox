@@ -184,12 +184,11 @@ def dns_set_record(qname, rtype="A", value=None):
 		# Get the value from the URL, then the POST parameters, or if it is not set then
 		# use the remote IP address of the request --- makes dynamic DNS easy. To clear a
 		# value, '' must be explicitly passed.
-		print(request.environ)
 		if value is None:
 			value = request.form.get("value")
 		if value is None:
 			value = request.environ.get("HTTP_X_FORWARDED_FOR") # normally REMOTE_ADDR but we're behind nginx as a reverse proxy
-		if value == '':
+		if value == '' or value == '__delete__':
 			# request deletion
 			value = None
 		if set_custom_dns_record(qname, rtype, value, env):

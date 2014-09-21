@@ -37,16 +37,18 @@
 
 <p>Send a POST request like this:</p>
 
-<pre>curl -d "" --user {email}:{password} https://{{hostname}}/admin/dns/set/{qname}[/{rtype}[/{value}]]</pre>
+<pre>curl -d "" --user {email}:{password} https://{{hostname}}/admin/dns/set/<b>qname</b>[/<b>rtype</b>[/<b>value</b>]]</pre>
 
 <table class="table">
 <thead><th>Parameter</th> <th>Value</th></thead>
 <tr><td>email</td> <td>The email address of any administrative user here.</td></tr>
 <tr><td>password</td> <td>That user&rsquo;s password.</td></tr>
 <tr><td>qname</td> <td>The fully qualified domain name for the record you are trying to set.</td></tr>
-<tr><td>rtype</td> <td>Optional. The resource type: <code>A</code> (an IPv4 address; the default), <code>AAAA</code> (an IPv6 address), <code>TXT</code> (a text string), or <code>CNAME</code> (an alias, which is a fully qualified domain name).</td></tr>
-<tr><td>value</td> <td>Optional-ish. The new record&rsquo;s value. If not provided, the IPv4 address of the remote host is used &mdash; this is handy for dynamic DNS! You can also set this in a POST parameter. To delete a record, pass &ldquo;value=&rdquo; in the POST body.</td></tr>
+<tr><td>rtype</td> <td>The resource type. <code>A</code> if omitted. Possible values: <code>A</code> (an IPv4 address), <code>AAAA</code> (an IPv6 address), <code>TXT</code> (a text string), or <code>CNAME</code> (an alias, which is a fully qualified domain name).</td></tr>
+<tr><td>value</td> <td>The new record&rsquo;s value. If omitted, the IPv4 address of the remote host is used. This is handy for dynamic DNS! To delete a record, use &ldquo;__delete__&rdquo;.</td></tr>
 </table>
+
+<p style="margin-top: 1em">Note that <code>-d ""</code> is merely to ensure curl sends a POST request. You do not need to put anything inside the quotes. You can also pass the value using typical form encoding in the POST body.</p>
 
 <h4>Examples:</h4>
 
@@ -56,11 +58,12 @@ curl -d "" --user me@mydomain.com:###### https://{{hostname}}/admin/dns/set/lapt
 # sets an alias
 curl -d "" --user me@mydomain.com:###### https://{{hostname}}/admin/dns/set/foo.mydomain.com/cname/bar.mydomain.com
 
-# sets a TXT record
-curl -d "value=something%20here" --user me@mydomain.com:###### https://{{hostname}}/admin/dns/set/foo.mydomain.com/txt
+# clears the alias
+curl -d "" --user me@mydomain.com:###### https://{{hostname}}/admin/dns/set/bar.mydomain.com/cname/__delete__
 
-# clears the TXT record
-curl -d "value=" --user me@mydomain.com:###### https://{{hostname}}/admin/dns/set/foo.mydomain.com/txt</pre>
+# sets a TXT record using the alternate value syntax
+curl -d "value=something%20here" --user me@mydomain.com:###### https://{{hostname}}/admin/dns/set/foo.mydomain.com/txt
+</pre>
 
 
 <h3>External DNS</h3>
