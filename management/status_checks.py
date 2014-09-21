@@ -37,7 +37,7 @@ def run_system_checks(env):
 		env['out'].print_ok("SSH disallows password-based login.")
 
 	# Check for any software package updates.
-	pkgs = list_apt_updates()
+	pkgs = list_apt_updates(apt_update=False)
 	if os.path.exists("/var/run/reboot-required"):
 		env['out'].print_error("System updates have been installed and a reboot of the machine is required.")
 	elif len(pkgs) == 0:
@@ -452,15 +452,17 @@ def check_certificate(domain, ssl_certificate, ssl_private_key):
 		return verifyoutput.strip()
 
 _apt_updates = None
-def list_apt_updates():
+def list_apt_updates(apt_update=True):
 	# See if we have this information cached recently.
 	# Keep the information for 8 hours.
 	global _apt_updates
 	if _apt_updates is not None and _apt_updates[0] > datetime.datetime.now() - datetime.timedelta(hours=8):
 		return _apt_updates[1]
 
-	# Run apt-get update to refresh package list.
-	shell("check_call", ["/usr/bin/apt-get", "-qq", "update"])
+	# Run apt-get update to refresh package list. This should be running daily
+	# anyway, so on the status checks page don't do this because it is slow.
+	if apt_update:
+		shell("check_call", ["/usr/bin/apt-get", "-qq", "update"])
 
 	# Run apt-get upgrade in simulate mode to get a list of what
 	# it would do.
