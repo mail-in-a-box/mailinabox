@@ -182,6 +182,11 @@ var global_modal_state = null;
 var global_modal_funcs = null;
 
 $(function() {
+  $('#global_modal').on('shown.bs.modal', function (e) {
+    // set focus to first input in the global modal's body
+    var input = $('#global_modal .modal-body input');
+    if (input.length > 0) $(input[0]).focus();  
+  })  
   $('#global_modal .btn-danger').click(function() {
     // Don't take action now. Wait for the modal to be totally hidden
     // so that we don't attempt to show another modal while this one

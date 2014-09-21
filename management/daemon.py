@@ -104,12 +104,18 @@ def mail_users():
 @app.route('/mail/users/add', methods=['POST'])
 @authorized_personnel_only
 def mail_users_add():
-	return add_mail_user(request.form.get('email', ''), request.form.get('password', ''), request.form.get('privileges', ''), env)
+	try:
+		return add_mail_user(request.form.get('email', ''), request.form.get('password', ''), request.form.get('privileges', ''), env)
+	except ValueError as e:
+		return (str(e), 400)
 
 @app.route('/mail/users/password', methods=['POST'])
 @authorized_personnel_only
 def mail_users_password():
-	return set_mail_password(request.form.get('email', ''), request.form.get('password', ''), env)
+	try:
+		return set_mail_password(request.form.get('email', ''), request.form.get('password', ''), env)
+	except ValueError as e:
+		return (str(e), 400)
 
 @app.route('/mail/users/remove', methods=['POST'])
 @authorized_personnel_only

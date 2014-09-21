@@ -139,13 +139,7 @@ def add_mail_user(email, pw, privs, env):
 	if not validate_email(email, mode='user'):
 		return ("Invalid email address.", 400)
 
-	# validate password
-	if pw.strip() == "":
-		return ("No password provided.", 400)
-	if re.search(r"[\s]", pw):
-		return ("Passwords cannot contain spaces.", 400)
-	if len(pw) < 4:
-		return ("Passwords must be at least four characters.", 400)
+	validate_password(pw)
 
 	# validate privileges
 	if privs is None or privs.strip() == "":
@@ -193,6 +187,8 @@ def add_mail_user(email, pw, privs, env):
 	return kick(env, "mail user added")
 
 def set_mail_password(email, pw, env):
+	validate_password(pw)
+	
 	# hash the password
 	pw = utils.shell('check_output', ["/usr/bin/doveadm", "pw", "-s", "SHA512-CRYPT", "-p", pw]).strip()
 
@@ -385,6 +381,16 @@ def kick(env, mail_result=None):
 	results.append( do_web_update(env) )
 
 	return "".join(s for s in results if s != "")
+
+def validate_password(pw):
+	# validate password
+	if pw.strip() == "":
+		raise ValueError("No password provided.")
+	if re.search(r"[\s]", pw):
+		raise ValueError("Passwords cannot contain spaces.")
+	if len(pw) < 4:
+		raise ValueError("Passwords must be at least four characters.")
+
 
 if __name__ == "__main__":
 	import sys

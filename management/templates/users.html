@@ -52,6 +52,13 @@
         <span class='privs'>
         </span>
 
+        <span class="if_active">
+          <a href="#" onclick="users_set_password(this); return false;" class='setpw' title="Set Password">
+            set password
+          </a>
+          |
+        </span>
+
         <span class='add-privs'>
         </span>
 
@@ -141,11 +148,35 @@ function do_add_user() {
   return false;
 }
 
+function users_set_password(elem) {
+  var email = $(elem).parents('tr').attr('data-email');
+  show_modal_confirm(
+    "Archive User",
+    $("<p>Set a new password for <b>" + email + "</b>?</p> <p><label for='users_set_password_pw' style='display: block; font-weight: normal'>New Password:</label><input type='password' id='users_set_password_pw'></p><p><small>Passwords must be at least four characters and may not contain spaces.</small></p>"),
+    "Set Password",
+    function() {
+      api(
+        "/mail/users/password",
+        "POST",
+        {
+          email: email,
+          password: $('#users_set_password_pw').val()
+        },
+        function(r) {
+          // Responses are multiple lines of pre-formatted text.
+          show_modal_error("Set Password", $("<pre/>").text(r));
+        },
+        function(r) {
+          show_modal_error("Set Password", r);
+        });
+    });
+}
+
 function users_remove(elem) {
   var email = $(elem).parents('tr').attr('data-email');
   show_modal_confirm(
     "Archive User",
-    $("<p>Are you sure you want to archive " + email + "?</p> <p>The user's mailboxes will not be deleted (you can do that later), but the user will no longer be able to log into any services on this machine.</p>"),
+    $("<p>Are you sure you want to archive <b>" + email + "</b>?</p> <p>The user's mailboxes will not be deleted (you can do that later), but the user will no longer be able to log into any services on this machine.</p>"),
     "Archive",
     function() {
       api(
@@ -178,7 +209,7 @@ function mod_priv(elem, add_remove) {
   var add_remove1 = add_remove.charAt(0).toUpperCase() + add_remove.substring(1);
   show_modal_confirm(
     "Modify Privileges",
-    "Are you sure you want to " + add_remove + " the " + priv + " privilege for " + email + "?",
+    "Are you sure you want to " + add_remove + " the " + priv + " privilege for <b>" + email + "</b>?",
     add_remove1,
     function() {
       api(
