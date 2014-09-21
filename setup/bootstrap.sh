@@ -2,12 +2,12 @@
 #########################################################
 # This script is intended to be run like this:
 #
-#   wget https://.../bootstrap.sh | sudo bash
+#   curl https://.../bootstrap.sh | sudo bash
 #
 #########################################################
 
 if [ -z "$TAG" ]; then
-	TAG=14.08-beta
+	TAG=v0.02
 fi
 
 # Are we running as root?
@@ -21,11 +21,12 @@ cd
 
 # Clone the Mail-in-a-Box repository if it doesn't exist.
 if [ ! -d mailinabox ]; then
-	echo Downloading Mail-in-a-Box . . .
+	echo Installing git . . .
 	apt-get -q -q install -y git
-	git clone -q https://github.com/mail-in-a-box/mailinabox
+
+	echo Downloading Mail-in-a-Box . . .
+	git clone -b $TAG --depth 1 https://github.com/mail-in-a-box/mailinabox 2> /dev/null
 	cd mailinabox
-	git checkout -q $TAG
 
 # If it does exist, update it.
 else
@@ -40,3 +41,4 @@ fi
 
 # Start setup script.
 setup/start.sh
+
