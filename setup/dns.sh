@@ -1,6 +1,6 @@
 #!/bin/bash
-# DNS: Configure a DNS server using nsd
-#######################################
+# DNS: Configure a DNS server to host our own DNS
+# -----------------------------------------------
 
 # This script installs packages, but the DNS zone files are only
 # created by the /dns/update API in the management server because
@@ -9,23 +9,23 @@
 
 source setup/functions.sh # load our functions
 
-# Install nsd, our DNS server software, and ldnsutils which helps
+# Install `nsd`, our DNS server software, and `ldnsutils` which helps
 # us sign zones for DNSSEC.
 
 # ...but first, we have to create the user because the 
 # current Ubuntu forgets to do so in the .deb
 # see issue #25 and https://bugs.launchpad.net/ubuntu/+source/nsd/+bug/1311886
 if id nsd > /dev/null 2>&1; then
-	true; #echo "nsd user exists... good";
+	true; #echo "nsd user exists... good"; #NODOC
 else
 	useradd nsd;
 fi
 
 # Okay now install the packages.
 #
-# nsd: The non-recursive nameserver that publishes our DNS records.
-# ldnsutils: Helper utilities for signing DNSSEC zones.
-# openssh-client: Provides ssh-keyscan which we use to create SSHFP records.
+# * nsd: The non-recursive nameserver that publishes our DNS records.
+# * ldnsutils: Helper utilities for signing DNSSEC zones.
+# * openssh-client: Provides ssh-keyscan which we use to create SSHFP records.
 
 apt_install nsd ldnsutils openssh-client
 
@@ -53,9 +53,10 @@ if [ ! -f "$STORAGE_ROOT/dns/dnssec/keys.conf" ]; then
 	ZSK=$(umask 077; cd $STORAGE_ROOT/dns/dnssec; ldns-keygen -a RSASHA1-NSEC3-SHA1 -b 1024 _domain_);
 
 	# These generate two sets of files like:
-	# K_domain_.+007+08882.ds <- DS record for adding to NSD configuration files
-	# K_domain_.+007+08882.key <- public key (goes into DS record & upstream DNS provider like your registrar)
-	# K_domain_.+007+08882.private  <- private key (secret!)
+	#
+	# * `K_domain_.+007+08882.ds`: DS record to provide to domain name registrar
+	# * `K_domain_.+007+08882.key`: public key (goes into DS record & upstream DNS provider like your registrar)
+	# * `K_domain_.+007+08882.private`: private key (secret!)
 
 	# The filenames are unpredictable and encode the key generation
 	# options. So we'll store the names of the files we just generated.

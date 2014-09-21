@@ -1,6 +1,7 @@
 #!/bin/bash
 #
 # User Authentication and Destination Validation
+# ----------------------------------------------
 #
 # This script configures user authentication for Dovecot
 # and Postfix (which relies on Dovecot) and destination
@@ -8,6 +9,8 @@
 
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
+
+# ### User and Alias Database
 
 # The database of mail users (i.e. authenticated users, who have mailboxes)
 # and aliases (forwarders).
@@ -21,8 +24,7 @@ if [ ! -f $db_path ]; then
 	echo "CREATE TABLE aliases (id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT NOT NULL UNIQUE, destination TEXT NOT NULL);" | sqlite3 $db_path;
 fi
 
-# User Authentication
-#####################
+# ### User Authentication
 
 # Have Dovecot query our database, and not system users, for authentication.
 sed -i "s/#*\(\!include auth-system.conf.ext\)/#\1/"  /etc/dovecot/conf.d/10-auth.conf
@@ -68,8 +70,7 @@ tools/editconf.py /etc/postfix/main.cf \
 	smtpd_sasl_path=private/auth \
 	smtpd_sasl_auth_enable=yes
 
-# Destination Validation
-########################
+# ### Destination Validation
 
 # Use a Sqlite3 database to check whether a destination email address exists,
 # and to perform any email alias rewrites in Postfix.

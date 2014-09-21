@@ -1,6 +1,7 @@
 #!/bin/bash
 #
 # Dovecot (IMAP and LDA)
+# ----------------------
 #
 # Dovecot is *both* the IMAP server (the protocol that email applications
 # use to query a mailbox) as well as the local delivery agent (LDA),
@@ -17,13 +18,13 @@
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
-# Install packages.
+# ### Install packages and basic setup
 
 apt_install \
 	dovecot-core dovecot-imapd dovecot-lmtpd dovecot-sqlite sqlite3 \
 	dovecot-sieve dovecot-managesieved
 
-# The dovecot-imapd dovecot-lmtpd packages automatically enable IMAP and LMTP protocols.
+# The dovecot-imapd and dovecot-lmtpd packages automatically enable IMAP and LMTP protocols.
 
 # Set the location where we'll store user mailboxes.
 tools/editconf.py /etc/dovecot/conf.d/10-mail.conf \
@@ -31,7 +32,7 @@ tools/editconf.py /etc/dovecot/conf.d/10-mail.conf \
 	mail_privileged_group=mail \
 	first_valid_uid=0
 
-# IMAP
+# ### IMAP
 
 # Require that passwords are sent over SSL only, and allow the usual IMAP authentication mechanisms.
 # The LOGIN mechanism is supposedly for Microsoft products like Outlook to do SMTP login (I guess
@@ -62,7 +63,7 @@ sed -i "s/#port = 110/port = 0/" /etc/dovecot/conf.d/10-master.conf
 tools/editconf.py /etc/dovecot/conf.d/20-imap.conf \
 	imap_idle_notify_interval="4 mins"
 
-# LDA (LMTP)
+# ### LDA (LMTP)
 
 # Enable Dovecot's LDA service with the LMTP protocol. It will listen
 # in port 10026, and Spamassassin will be configured to pass mail there.
@@ -94,12 +95,12 @@ EOF
 tools/editconf.py /etc/dovecot/conf.d/15-lda.conf \
 	postmaster_address=postmaster@$PRIMARY_HOSTNAME
 
-# SIEVE
+# ### Sieve
 
 # Enable the Dovecot sieve plugin which let's users run scripts that process
 # mail as it comes in. We'll also set a global script that moves mail marked
 # as spam by Spamassassin into the user's Spam folder.
-sudo sed -i "s/#mail_plugins = .*/mail_plugins = \$mail_plugins sieve/" /etc/dovecot/conf.d/20-lmtp.conf
+sed -i "s/#mail_plugins = .*/mail_plugins = \$mail_plugins sieve/" /etc/dovecot/conf.d/20-lmtp.conf
 
 cat > /etc/dovecot/conf.d/99-local-sieve.conf << EOF;
 plugin {

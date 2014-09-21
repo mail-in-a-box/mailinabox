@@ -1,6 +1,7 @@
 #!/bin/bash
 #
 # Postfix (SMTP)
+# --------------
 #
 # Postfix handles the transmission of email between servers
 # using the SMTP protocol. It is a Mail Transfer Agent (MTA).
@@ -29,11 +30,11 @@
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
-# Install packages.
+# ### Install packages.
 
 apt_install postfix postgrey postfix-pcre ca-certificates
 
-# Basic Settings
+# ### Basic Settings
 
 # Have postfix listen on all network interfaces, set our name (the Debian default seems to be localhost),
 # and set the name of the local machine to localhost for xxx@localhost mail (but I don't think this will have any effect because
@@ -44,15 +45,16 @@ tools/editconf.py /etc/postfix/main.cf \
 	smtpd_banner="\$myhostname ESMTP Hi, I'm a Mail-in-a-Box (Ubuntu/Postfix; see https://mailinabox.email/)" \
 	mydestination=localhost
 
-# Outgoing Mail
+# ### Outgoing Mail
 
 # Enable the 'submission' port 587 smtpd server and tweak its settings.
-# a) Require the best ciphers for incoming connections per http://baldric.net/2013/12/07/tls-ciphers-in-postfix-and-dovecot/.
-#    but without affecting opportunistic TLS on incoming mail, which will allow any cipher (it's better than none).
-# b) Give it a different name in syslog to distinguish it from the port 25 smtpd server.
-# c) Add a new cleanup service specific to the submission service ('authclean')
-#    that filters out privacy-sensitive headers on mail being sent out by
-#    authenticated users.
+#
+# * Require the best ciphers for incoming connections per http://baldric.net/2013/12/07/tls-ciphers-in-postfix-and-dovecot/.
+#   but without affecting opportunistic TLS on incoming mail, which will allow any cipher (it's better than none).
+# * Give it a different name in syslog to distinguish it from the port 25 smtpd server.
+# * Add a new cleanup service specific to the submission service ('authclean')
+#   that filters out privacy-sensitive headers on mail being sent out by
+#   authenticated users.
 tools/editconf.py /etc/postfix/master.cf -s -w \
 	"submission=inet n       -       -       -       -       smtpd
 	  -o syslog_name=postfix/submission
@@ -64,7 +66,7 @@ tools/editconf.py /etc/postfix/master.cf -s -w \
 # Install the `outgoing_mail_header_filters` file required by the new 'authclean' service.
 cp conf/postfix_outgoing_mail_header_filters /etc/postfix/outgoing_mail_header_filters
 
-# Enable TLS on incoming connections (i.e. ports 25 *and* 587) and
+# Enable TLS on these and all other connections (i.e. ports 25 *and* 587) and
 # require TLS before a user is allowed to authenticate. This also makes
 # opportunistic TLS available on *incoming* mail.
 tools/editconf.py /etc/postfix/main.cf \
@@ -74,6 +76,19 @@ tools/editconf.py /etc/postfix/main.cf \
 	smtpd_tls_key_file=$STORAGE_ROOT/ssl/ssl_private_key.pem \
 	smtpd_tls_received_header=yes
 
+# Prevent non-authenticated users from sending mail that requires being
+# relayed elsewhere. We don't want to be an "open relay". On outbound
+# mail, require one of:
+#
+# * permit_sasl_authenticated: Authenticated users (i.e. on port 587).
+# * permit_mynetworks: Mail that originates locally.
+# * reject_unauth_destination: No one else. (Permits mail whose destination is local and rejects other mail.)
+tools/editconf.py /etc/postfix/main.cf \
+	smtpd_relay_restrictions=permit_sasl_authenticated,permit_mynetworks,reject_unauth_destination
+
+
+# ### DANE
+#
 # When connecting to remote SMTP servers, prefer TLS and use DANE if available.
 #
 # Prefering ("opportunistic") TLS means Postfix will accept whatever SSL certificate the remote
@@ -98,38 +113,27 @@ tools/editconf.py /etc/postfix/main.cf \
 	smtp_tls_CAfile=/etc/ssl/certs/ca-certificates.crt \
 	smtp_tls_loglevel=2
 
-# Incoming Mail
+# ### Incoming Mail
 
 # Pass any incoming mail over to a local delivery agent. Spamassassin
 # will act as the LDA agent at first. It is listening on port 10025
 # with LMTP. Spamassassin will pass the mail over to Dovecot after.
 #
-# In a basic setup we would pass mail directly to Dovecot like so:
-# tools/editconf.py /etc/postfix/main.cf virtual_transport=lmtp:unix:private/dovecot-lmtp
+# In a basic setup we would pass mail directly to Dovecot by setting
+# virtual_transport to `lmtp:unix:private/dovecot-lmtp`.
 #
 tools/editconf.py /etc/postfix/main.cf virtual_transport=lmtp:[127.0.0.1]:10025
 
-# Who can send outbound mail? The purpose of this is to prevent
-# non-authenticated users from sending mail that requires being
-# relayed elsewhere. We don't want to be an "open relay".
-#
-# permit_sasl_authenticated: Authenticated users (i.e. on port 587).
-# permit_mynetworks: Mail that originates locally.
-# reject_unauth_destination: No one else. (Permits mail whose destination is local and rejects other mail.)
-tools/editconf.py /etc/postfix/main.cf \
-	smtpd_relay_restrictions=permit_sasl_authenticated,permit_mynetworks,reject_unauth_destination
-
 # Who can send mail to us? Some basic filters.
 #
-# reject_non_fqdn_sender: Reject not-nice-looking return paths.
-# reject_unknown_sender_domain: Reject return paths with invalid domains.
-# reject_rhsbl_sender: Reject return paths that use blacklisted domains.
-#
-# permit_sasl_authenticated: Authenticated users (i.e. on port 587) can skip further checks.
-# permit_mynetworks: Mail that originates locally can skip further checks.
-# reject_rbl_client: Reject connections from IP addresses blacklisted in zen.spamhaus.org
-# reject_unlisted_recipient: Although Postfix will reject mail to unknown recipients, it's nicer to reject such mail ahead of greylisting rather than after.
-# check_policy_service: Apply greylisting using postgrey.
+# * reject_non_fqdn_sender: Reject not-nice-looking return paths.
+# * reject_unknown_sender_domain: Reject return paths with invalid domains.
+# * reject_rhsbl_sender: Reject return paths that use blacklisted domains.
+# * permit_sasl_authenticated: Authenticated users (i.e. on port 587) can skip further checks.
+# * permit_mynetworks: Mail that originates locally can skip further checks.
+# * reject_rbl_client: Reject connections from IP addresses blacklisted in zen.spamhaus.org
+# * reject_unlisted_recipient: Although Postfix will reject mail to unknown recipients, it's nicer to reject such mail ahead of greylisting rather than after.
+# * check_policy_service: Apply greylisting using postgrey.
 #
 # Notes:
 # permit_dnswl_client can pass through mail from whitelisted IP addresses, which would be good to put before greylisting
