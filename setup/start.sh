@@ -21,6 +21,15 @@ if [ -f /etc/mailinabox.conf ]; then
 	rm -f /tmp/mailinabox.prev.conf
 fi
 
+# Put a start script in a global location. We tell the user to run 'mailinabox'
+# in the first dialog prompt, so we should do this before that starts.
+cat > /usr/local/bin/mailinabox << EOF;
+#!/bin/bash
+cd `pwd`
+source setup/start.sh
+EOF
+chmod +x /usr/local/bin/mailinabox
+
 # Ask the user for the PRIMARY_HOSTNAME, PUBLIC_IP, PUBLIC_IPV6, and CSR_COUNTRY
 # if values have not already been set in environment variables. When running
 # non-interactively, be sure to set values for all!

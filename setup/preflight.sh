@@ -2,7 +2,7 @@
 if [[ $EUID -ne 0 ]]; then
 	echo "This script must be run as root. Please re-run like this:"
 	echo
-	echo "sudo setup/start.sh"
+	echo "sudo $0"
 	echo
 	exit
 fi

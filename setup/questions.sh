@@ -8,7 +8,7 @@ if [ -z "$NONINTERACTIVE" ]; then
 	message_box "Mail-in-a-Box Installation" \
 		"Hello and thanks for deploying a Mail-in-a-Box!
 		\n\nI'm going to ask you a few questions.
-		\n\nTo change your answers later, just re-run this script."
+		\n\nTo change your answers later, just run 'sudo mailinabox' from the command line."
 fi
 
 # The box needs a name.
