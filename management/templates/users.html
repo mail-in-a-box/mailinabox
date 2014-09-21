@@ -2,12 +2,12 @@
 
 <style>
 #user_table tr.account_inactive td .address { color: #888; text-decoration: line-through; }
-#user_table .aliases { margin: .25em 0 0 1em; font-size: 95%; }
+#user_table .aliases { margin-top: .33em; font-size: 95%; }
 #user_table .aliases div:before { content: "⇖ "; }
 #user_table .aliases div {  }
-#user_table .actions { margin: .25em 0 0 1em; font-size: 95%; }
-#user_table .account_inactive .actions a.archive { display: none; }
-#user_table .account_active .actions .restore { display: none; }
+#user_table .actions { margin-top: .33em; font-size: 95%; }
+#user_table .account_inactive .if_active { display: none; }
+#user_table .account_active .if_inactive { display: none; }
 </style>
 
 <h3>Add a mail user</h3>
@@ -38,13 +38,6 @@
 
 <h3>Existing mail users</h3>
 <table id="user_table" class="table" style="width: auto">
-  <thead>
-    <tr>
-      <th></th>
-      <th>Email Address<br><small style="font-weight: normal">(Also the user&rsquo;s login username.)</small></th>
-      <th>Privileges</th>
-    </tr>
-  </thead>
   <tbody>
   </tbody>
 </table>
@@ -52,19 +45,25 @@
 <div style="display: none">
   <table>
   <tr id="user-template">
-    <td class='actions'>
-        <a href="#" onclick="users_remove(this); return false;" class='archive' title="Archive Account">
-          <span class="glyphicon glyphicon-trash"></span>
-        </a>
-    </td>
     <td class='email'>
       <div class='address'> </div>
-      <div class='aliases' style='display: none'> </div>
+
       <div class='actions'>
-        <span class='restore' style='color: #888; font-size: 90%'>To restore account, create a new account with this email address.</span>
+        <span class='privs'>
+        </span>
+
+        <span class='add-privs'>
+        </span>
+
+        <a href="#" onclick="users_remove(this); return false;" class='if_active' title="Archive Account">
+          archive account
+        </a>
+
+        <div class='if_inactive' style='color: #888; font-size: 90%'>To restore account, create a new account with this email address.</div>
       </div>
+
+      <div class='aliases' style='display: none'> </div>
     </td>
-    <td class='privs'> </td>
   </tr>
   </table>
 </div>
@@ -88,22 +87,22 @@ function show_users() {
         n.find('td.email .address').text(r[i].email)
         $('#user_table tbody').append(n);
 
-	if (r[i].status == 'inactive') continue;
+        if (r[i].status == 'inactive') continue;
 
         var add_privs = ["admin"];
 
         for (var j = 0; j < r[i].privileges.length; j++) {
-          var p = $("<div><span class='name'></span> <a href='#' onclick='mod_priv(this, \"remove\"); return false;' title='Remove Privilege'><span class=\"glyphicon glyphicon-trash\" style='font-size: 90%'></span></a></div>");
+          var p = $("<span><b><span class='name'></span></b> (<a href='#' onclick='mod_priv(this, \"remove\"); return false;' title='Remove Privilege'>remove privilege</a>) |</span>");
           p.find('span.name').text(r[i].privileges[j]);
-          n.find('td.privs').append(p);
+          n.find('.privs').append(p);
           if (add_privs.indexOf(r[i].privileges[j]) >= 0)
             add_privs.splice(add_privs.indexOf(r[i].privileges[j]), 1);
         }
 
         for (var j = 0; j < add_privs.length; j++) {
-          var p = $("<div><small><a href='#' onclick='mod_priv(this, \"add\"); return false;' title='Add Privilege'><span class=\"glyphicon glyphicon-plus\" style='font-size: 80%'></span><span class='name' style='padding-left: 3px'></span></a></small></div>");
+          var p = $("<span><a href='#' onclick='mod_priv(this, \"add\"); return false;' title='Add Privilege'>make <span class='name'></span></a> | </span>");
           p.find('span.name').text(add_privs[j]);
-          n.find('.email .actions').append(p);
+          n.find('.add-privs').append(p);
         }
 
         if (r[i].aliases && r[i].aliases.length > 0) {
