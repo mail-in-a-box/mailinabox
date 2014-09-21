@@ -596,7 +596,17 @@ def write_opendkim_tables(zonefiles, env):
 ########################################################################
 
 def set_custom_dns_record(qname, rtype, value, env):
-	# validate
+	# validate qname
+	for zone, fn in get_dns_zones(env):
+		# It must match a zone apex or be a subdomain of a zone
+		# that we are otherwise hosting.
+		if qname == zone or qname.endswith("."+zone):
+			break
+	else:
+		# No match.
+		raise ValueError("%s is not a domain name or a subdomain of a domain name managed by this box." % qname)
+
+	# validate rtype
 	rtype = rtype.upper()
 	if value is not None:
 		if rtype in ("A", "AAAA"):
