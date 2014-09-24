@@ -28,14 +28,24 @@ apt_install \
 # Now that we're beyond that, get rid of those debs before installing from source.
 apt-get purge -qq -y roundcube*
 
-# Install Roundcube from source if it is not already present.
-# TODO: Check version?
-if [ ! -d /usr/local/lib/roundcubemail ]; then
+# Install Roundcube from source if it is not already present or if it is out of date.
+VERSION=1.0.2
+needs_update=0 #NODOC
+if [ ! -f /usr/local/lib/roundcubemail/version ]; then
+	# not installed yet
+	needs_update=1 #NODOC
+elif [[ $VERSION != `cat /usr/local/lib/roundcubemail/version` ]]; then
+	# checks if the version is what we want
+	needs_update=1 #NODOC
+fi
+if [ $needs_update == 1 ]; then
+	echo installing roudcube webmail $VERSION...
 	rm -f /tmp/roundcube.tgz
-	wget -qO /tmp/roundcube.tgz http://downloads.sourceforge.net/project/roundcubemail/roundcubemail/1.0.2/roundcubemail-1.0.2.tar.gz
+	wget -qO /tmp/roundcube.tgz http://downloads.sourceforge.net/project/roundcubemail/roundcubemail/1.0.2/roundcubemail-$VERSION.tar.gz
 	tar -C /usr/local/lib -zxf /tmp/roundcube.tgz
-	mv /usr/local/lib/roundcubemail-1.0.2/ /usr/local/lib/roundcubemail
+	mv /usr/local/lib/roundcubemail-$VERSION/ /usr/local/lib/roundcubemail
 	rm -f /tmp/roundcube.tgz
+	echo $VERSION > /usr/local/lib/roundcubemail/version
 fi
 
 # ### Configuring Roundcube
