@@ -21,25 +21,27 @@ apt_install \
 php5enmod imap
 
 # Copy Z-Push into place.
+TARGETHASH=d0cd5a47c53afac5c3b287006dc8a48a1c4ffcd5
 needs_update=0 #NODOC
 if [ ! -f /usr/local/lib/z-push/version ]; then
 	needs_update=1 #NODOC
-elif [[ `curl -s https://api.github.com/repos/fmbiete/Z-Push-contrib/git/refs/heads/master` != `cat /usr/local/lib/z-push/version` ]]; then
+elif [[ $TARGETHASH != `cat /usr/local/lib/z-push/version` ]]; then
 	# checks if the version 
 	needs_update=1 #NODOC
 fi
 if [ $needs_update == 1 ]; then
 	rm -rf /usr/local/lib/z-push
-	rm -f /tmp/zpush.zip
+	rm -f /tmp/zpush-repo
 	echo installing z-push \(fmbiete fork\)...
-	wget -qO /tmp/zpush.zip https://github.com/fmbiete/Z-Push-contrib/archive/master.zip
-	unzip -q /tmp/zpush.zip -d /usr/local/lib/
-	mv /usr/local/lib/Z-Push-contrib-master /usr/local/lib/z-push
+	git clone -q https://github.com/fmbiete/Z-Push-contrib /tmp/zpush-repo
+	(cd /tmp/zpush-repo/; git checkout -q $TARGETHASH;)
+	rm -rf /tmp/zpush-repo/.git
+	mv /tmp/zpush-repo /usr/local/lib/z-push
 	rm -f /usr/sbin/z-push-{admin,top}
 	ln -s /usr/local/lib/z-push/z-push-admin.php /usr/sbin/z-push-admin
 	ln -s /usr/local/lib/z-push/z-push-top.php /usr/sbin/z-push-top
-	rm /tmp/zpush.zip;
-	curl -s https://api.github.com/repos/fmbiete/Z-Push-contrib/git/refs/heads/master > /usr/local/lib/z-push/version
+	rm -f /tmp/zpush-repo
+	echo $TARGETHASH > /usr/local/lib/z-push/version
 fi
 
 # Configure default config.
