@@ -1,3 +1,12 @@
+# Ensure Python reads/writes files in UTF-8. If the machine
+# triggers some other locale in Python, like ASCII encoding,
+# Python may not be able to read/write files. Here and in
+# the management daemon startup script.
+export LANGUAGE=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+export LANG=en_US.UTF-8
+export LC_TYPE=en_US.UTF-8
+
 function hide_output {
 	# This function hides the output of a command unless the command fails
 	# and returns a non-zero exit code.
