@@ -41,7 +41,7 @@ fi
 if [ $needs_update == 1 ]; then
 	echo installing roudcube webmail $VERSION...
 	rm -f /tmp/roundcube.tgz
-	wget -qO /tmp/roundcube.tgz http://downloads.sourceforge.net/project/roundcubemail/roundcubemail/1.0.2/roundcubemail-$VERSION.tar.gz
+	wget -qO /tmp/roundcube.tgz http://downloads.sourceforge.net/project/roundcubemail/roundcubemail/$VERSION/roundcubemail-$VERSION.tar.gz
 	tar -C /usr/local/lib -zxf /tmp/roundcube.tgz
 	mv /usr/local/lib/roundcubemail-$VERSION/ /usr/local/lib/roundcubemail
 	rm -f /tmp/roundcube.tgz
