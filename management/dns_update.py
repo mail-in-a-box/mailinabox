@@ -184,9 +184,9 @@ def build_zone(domain, all_domains, additional_records, env, is_zone=True):
 				child_qname += "." + subdomain_qname
 			records.append((child_qname, child_rtype, child_value, child_explanation))
 
-	def has_rec(qname, rtype):
+	def has_rec(qname, rtype, prefix=None):
 		for rec in records:
-			if rec[0] == qname and rec[1] == rtype:
+			if rec[0] == qname and rec[1] == rtype and (prefix is None or rec[2].startswith(prefix)):
 				return True
 		return False
 
@@ -217,6 +217,16 @@ def build_zone(domain, all_domains, additional_records, env, is_zone=True):
 
 	# Append a DMARC record.
 	records.append(("_dmarc", "TXT", 'v=DMARC1; p=quarantine', "Optional. Specifies that mail that does not originate from the box but claims to be from @%s is suspect and should be quarantined by the recipient's mail system." % domain))
+
+	# For any subdomain with an A record but no SPF or DMARC record, add strict policy records.
+	all_resolvable_qnames = set(r[0] for r in records if r[1] in ("A", "AAAA"))
+	for qname in all_resolvable_qnames:
+		if not has_rec(qname, "TXT", prefix="v=spf1 "):
+			records.append((qname,  "TXT", 'v=spf1 a mx -all', "Prevents unauthorized use of this domain name for outbound mail by requiring outbound mail to originate from the indicated host(s)."))
+		dmarc_qname = "_dmarc" + ("" if qname is None else "." + qname)
+		if not has_rec(dmarc_qname, "TXT", prefix="v=DMARC1; "):
+			records.append((dmarc_qname, "TXT", 'v=DMARC1; p=reject', "Prevents unauthorized use of this domain name for outbound mail by requiring a valid DKIM signature."))
+		
 
 	# Sort the records. The None records *must* go first in the nsd zone file. Otherwise it doesn't matter.
 	records.sort(key = lambda rec : list(reversed(rec[0].split(".")) if rec[0] is not None else ""))

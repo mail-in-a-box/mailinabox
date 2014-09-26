@@ -50,6 +50,8 @@
 
 <p style="margin-top: 1em">Note that <code>-d ""</code> is merely to ensure curl sends a POST request. You do not need to put anything inside the quotes. You can also pass the value using typical form encoding in the POST body.</p>
 
+<p>Strict <a href="http://tools.ietf.org/html/rfc4408">SPF</a> and <a href="https://datatracker.ietf.org/doc/draft-kucherawy-dmarc-base/?include_text=1">DMARC</a> records will be added to all custom domains unless you override them.</p>
+
 <h4>Examples:</h4>
 
 <pre># sets laptop.mydomain.com to point to the IP address of the machine you are executing curl on
