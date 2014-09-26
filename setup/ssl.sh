@@ -43,3 +43,8 @@ if [ ! -f $STORAGE_ROOT/ssl/ssl_certificate.pem ]; then
 	  -in $STORAGE_ROOT/ssl/ssl_cert_sign_req.csr -signkey $STORAGE_ROOT/ssl/ssl_private_key.pem -out $STORAGE_ROOT/ssl/ssl_certificate.pem
 fi
 
+# For nginx and postfix, pre-generate some better DH bits. They seem to
+# each rely on openssl's default of 1024 bits.
+if [ ! -f $STORAGE_ROOT/ssl/dh2048.pem ]; then
+	openssl dhparam -out $STORAGE_ROOT/ssl/dh2048.pem 2048
+fi

@@ -69,11 +69,13 @@ cp conf/postfix_outgoing_mail_header_filters /etc/postfix/outgoing_mail_header_f
 # Enable TLS on these and all other connections (i.e. ports 25 *and* 587) and
 # require TLS before a user is allowed to authenticate. This also makes
 # opportunistic TLS available on *incoming* mail.
+# Set stronger DH parameters, which via openssl tend to default to 1024 bits.
 tools/editconf.py /etc/postfix/main.cf \
 	smtpd_tls_security_level=may\
 	smtpd_tls_auth_only=yes \
 	smtpd_tls_cert_file=$STORAGE_ROOT/ssl/ssl_certificate.pem \
 	smtpd_tls_key_file=$STORAGE_ROOT/ssl/ssl_private_key.pem \
+	smtpd_tls_dh1024_param_file=$STORAGE_ROOT/ssl/dh2048.pem \
 	smtpd_tls_received_header=yes
 
 # Prevent non-authenticated users from sending mail that requires being

@@ -43,10 +43,14 @@ tools/editconf.py /etc/dovecot/conf.d/10-auth.conf \
 
 # Enable SSL, specify the location of the SSL certificate and private key files,
 # and allow only good ciphers per http://baldric.net/2013/12/07/tls-ciphers-in-postfix-and-dovecot/.
+# Set a higher default Diffie Hellman key size. The default is 1024. Higher than
+# 2048 takes considerably longer to regenerate, which dovecot does automatically
+# apparently weekly. See http://wiki2.dovecot.org/SSL/DovecotConfiguration for more.
 tools/editconf.py /etc/dovecot/conf.d/10-ssl.conf \
 	ssl=required \
 	"ssl_cert=<$STORAGE_ROOT/ssl/ssl_certificate.pem" \
 	"ssl_key=<$STORAGE_ROOT/ssl/ssl_private_key.pem" \
+	"ssl_dh_parameters_length=2048" \
 	"ssl_cipher_list=TLSv1+HIGH !SSLv2 !RC4 !aNULL !eNULL !3DES @STRENGTH"
 
 # Disable in-the-clear IMAP and POP because we're paranoid (we haven't even

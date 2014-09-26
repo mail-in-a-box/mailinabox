@@ -9,9 +9,11 @@ apt_install nginx php5-fpm
 
 rm -f /etc/nginx/sites-enabled/default
 
-# copy in a nginx configuration file for common and best-practices
-# SSL settings from @konklone
-cp conf/nginx-ssl.conf /etc/nginx/nginx-ssl.conf
+# Copy in a nginx configuration file for common and best-practices
+# SSL settings from @konklone. Replace STORAGE_ROOT so it can find
+# the DH params.
+sed "s#STORAGE_ROOT#$STORAGE_ROOT#" \
+	conf/nginx-ssl.conf > /etc/nginx/nginx-ssl.conf
 
 # Fix some nginx defaults.
 # The server_names_hash_bucket_size seems to prevent long domain names?
