@@ -11,20 +11,29 @@
 
 <form class="form-horizontal" role="form" onsubmit="do_add_alias(); return false;">
   <div class="form-group">
-    <label for="addaliasEmail" class="col-sm-2 control-label">Email Address</label>
-    <div class="col-sm-10">
-      <input type="email" class="form-control" id="addaliasEmail" placeholder="Incoming Email Address">
+    <div class="col-sm-offset-1 col-sm-11">
+      <div id="alias_type_buttons" class="btn-group btn-group-xs">
+        <button type="button" class="btn btn-default active">Regular</button>
+        <button type="button" class="btn btn-default">Catch-All</button>
+      </div>
+      <div id="alias_catchall_info" class="text-info small" style="display: none; margin: .5em 0 0 0;">A catch-all alias captures all otherwise unmatched email to a domain. Enter just a part of an email address starting with the @-sign.</div>
     </div>
   </div>
   <div class="form-group">
-    <label for="addaliasTargets" class="col-sm-2 control-label">Forward To</label>
+    <label for="addaliasEmail" class="col-sm-1 control-label">Alias</label>
     <div class="col-sm-10">
-      <textarea class="form-control" rows="3" id="addaliasTargets" placeholder="Forward to these email addresses (one per line or separated by commas)"></textarea>
+      <input type="email" class="form-control" id="addaliasEmail" placeholder="incoming email address (you@yourdomain.com)">
     </div>
   </div>
   <div class="form-group">
-    <div class="col-sm-offset-2 col-sm-10">
-      <button id="add-alias-button" type="submit" class="btn btn-primary">Add</button>
+    <label for="addaliasTargets" class="col-sm-1 control-label">Forward To</label>
+    <div class="col-sm-10">
+      <textarea class="form-control" rows="3" id="addaliasTargets" placeholder="forward to these email addresses (one per line or separated by commas)"></textarea>
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="col-sm-offset-1 col-sm-11">
+      <button id="add-alias-button" type="submit" class="btn btn-primary">Add Alias</button>
       <button id="alias-cancel" class="btn btn-default hidden" onclick="aliases_reset_form(); return false;">Cancel</button>
     </div>
   </div>
@@ -35,7 +44,7 @@
   <thead>
     <tr>
       <th></th>
-      <th>Email Address<br></th>
+      <th>Alias<br></th>
       <th>Forwards To</th>
     </tr>
   </thead>
@@ -84,6 +93,22 @@ function show_aliases() {
         $('#alias_table tbody').append(n);
       }
     })
+
+  $(function() {
+    $('#alias_type_buttons button').off('click').click(function() {
+      $('#alias_type_buttons button').removeClass('active');
+      $(this).addClass('active');
+      if ($(this).text() == "Regular") {
+        $('#addaliasEmail').attr('type', 'email');
+        $('#addaliasEmail').attr('placeholder', 'incoming email address (you@yourdomain.com)');
+        $('#alias_catchall_info').slideUp();
+      } else {
+        $('#addaliasEmail').attr('type', 'text');
+        $('#addaliasEmail').attr('placeholder', 'incoming catch-all address (@yourdomain.com)');
+        $('#alias_catchall_info').slideDown();
+      }
+    })
+  })
 }
 
 var is_alias_add_update = false;
@@ -116,7 +141,7 @@ function aliases_reset_form() {
   $("#addaliasEmail").val('')
   $("#addaliasTargets").val('')
   $('#alias-cancel').addClass('hidden');
-  $('#add-alias-button').text('Add');
+  $('#add-alias-button').text('Add Alias');
   is_alias_add_update = false;
 }
 
