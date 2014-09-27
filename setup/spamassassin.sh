@@ -1,3 +1,4 @@
+#!/bin/bash
 # Spam filtering with spamassassin via spampd
 #############################################
 
@@ -9,6 +10,7 @@
 # plugin. The tools/mail.py tool creates the necessary sieve script for each mail
 # user when the mail user is created.
 
+source /etc/mailinabox.conf # get global vars
 source setup/functions.sh # load our functions
 
 # Install packages.
@@ -35,7 +37,7 @@ sudo sed -i "s/#mail_plugins = .*/mail_plugins = \$mail_plugins antispam/" /etc/
 # from http://wiki2.dovecot.org/Plugins/Antispam
 cat > /usr/bin/sa-learn-pipe.sh << EOF;
 cat<&0 >> /tmp/sendmail-msg-\$\$.txt
-/usr/bin/sa-learn \$* /tmp/sendmail-msg-\$\$.txt --username user-data > /dev/null
+/usr/bin/sa-learn \$* /tmp/sendmail-msg-\$\$.txt > /dev/null
 rm -f /tmp/sendmail-msg-\$\$.txt
 exit 0
 EOF
@@ -53,14 +55,14 @@ plugin {
 }
 EOF
 
-# Configure spamassassin to use site-wide bayesian filtering
-source /etc/mailinabox.conf # get global vars
+# Tell spamassassin where to load and store site-wide bayesean filtering data.
 
 mkdir -p $STORAGE_ROOT/mail/spamassassin
 chown -R mail:mail $STORAGE_ROOT/mail/spamassassin
 chmod -R 775 $STORAGE_ROOT/mail/spamassassin
 
-tools/editconf.py /etc/spamassassin/local.cf -s bayes_path=$STORAGE_ROOT/mail/spamassassin/bayes
+tools/editconf.py /etc/spamassassin/local.cf -s \
+	bayes_path=$STORAGE_ROOT/mail/spamassassin/bayes
 
 # Initial training?
 # sa-learn --ham storage/mail/mailboxes/*/*/cur/
