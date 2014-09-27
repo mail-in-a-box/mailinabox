@@ -66,6 +66,60 @@ tools/editconf.py /etc/postfix/master.cf -s -w \
 # Install the `outgoing_mail_header_filters` file required by the new 'authclean' service.
 cp conf/postfix_outgoing_mail_header_filters /etc/postfix/outgoing_mail_header_filters
 
+# Enable relaying from TLS authenticated sibling hosts
+# The smtpd_tls_CAfile is superflous, but it turns warnings in the logs about untrusted certs
+# into notices about trusted certs. Since in these cases Postfix is checking the fingerprint,
+# it does not care about whether the remote certificate is signed by a trusted CA. But,
+# looking at the logs, it's nice to be able to see that it is.
+# The CA file is provided by the package ca-certificates.
+#
+# To grant relay access to a sibling host, install and configure Postfix on that host as a
+# smarthost and set relayhost to [yourbox.domain.tld]. Then add these three parameters to the
+# sibling host's /etc/postfix/main.cf (there's no such parameter as smtp_tls_wrappermode so we
+# have to use STARTTLS to port 25):
+# smtp_use_tls=yes
+# smtp_tls_cert_file=/etc/ssl/certs/yoursiblinghost.domain.tld.chain.pem
+# smtp_tls_key_file=/etc/ssl/private/yoursiblinghost.domain.tld.key
+#
+# Since we only care about the fingerprint, the certificate can be self-signed - it will just
+# be harmlessly logged as untrusted in the logs as per the above note about smtpd_tls_CAfile.
+#
+# Run:
+# openssl x509 -noout -fingerprint -sha1 -in /etc/ssl/certs/yoursiblinghost.domain.tld.chain.pem
+# to get the sibling host's public key fingerprint. Then on the mailinabox add an entry for that
+# fingerprint to /home/user-data/mail/relayers/relay_clientcerts, for example:
+# echo "B1:6A:87:2E:98:B6:BC:54:4F:6F:2D:98:0F:50:C3:43:AC:07:72:E7 yoursiblinghost.domain.tld" >> /home/user-data/mail/relayers/relay_clientcerts
+#
+# Finally, on the mailinabox run:
+# postmap /home/user-data/mail/relayers/relay_clientcerts
+#
+# To test on the sibling host, ensure you have mailutils installed (sudo aptitude install
+# mailutils) and then run something like:
+# echo "" | mail -r "an_address_that_your_mailinabox_receives_for@domain.tld" -s "Test" "an_address_your_mailinabox_does_not_receive_for@gmail.com"
+# where the e.g. gmail address is one you do actually have.
+#
+# If the configuration is correct you'll get a test email at the e.g. gmail.com address. If not,
+# you should at least get a relay rejection error email at the domain.tld address.  Watching the
+# box's logs should help diagnose any problems - to do so run:
+# tail -f /var/log/mail.log
+# To view the sibling host's queue you can use postqueue -p, and you can use postqueue -f to
+# retrigger attempts to submit to the mailinabox.
+#
+# Be sure to create receiving accounts/aliases for all addresses that the sibling host(s) will
+# send as!
+tools/editconf.py /etc/postfix/main.cf \
+	smtpd_tls_ask_ccert=yes \
+	smtpd_tls_CAfile=/etc/ssl/certs/ca-certificates.crt \
+	smtpd_tls_fingerprint_digest=sha1 \
+	smtpd_tls_loglevel=2 \
+	relay_clientcerts=hash:$STORAGE_ROOT/mail/relayers/relay_clientcerts
+
+mkdir -p $STORAGE_ROOT/mail/relayers
+if [[ ! -f $STORAGE_ROOT/mail/relayers/relay_clientcerts ]]; then
+	touch $STORAGE_ROOT/mail/relayers/relay_clientcerts
+	postmap /home/user-data/mail/relayers/relay_clientcerts
+fi
+
 # Enable TLS on these and all other connections (i.e. ports 25 *and* 587) and
 # require TLS before a user is allowed to authenticate. This also makes
 # opportunistic TLS available on *incoming* mail.
@@ -82,11 +136,12 @@ tools/editconf.py /etc/postfix/main.cf \
 # relayed elsewhere. We don't want to be an "open relay". On outbound
 # mail, require one of:
 #
-# * permit_sasl_authenticated: Authenticated users (i.e. on port 587).
+# * permit_tls_clientcerts: (TLS) authenticated sibling hosts (on port 25).
+# * permit_sasl_authenticated: (Password) authenticated users (on port 587).
 # * permit_mynetworks: Mail that originates locally.
 # * reject_unauth_destination: No one else. (Permits mail whose destination is local and rejects other mail.)
 tools/editconf.py /etc/postfix/main.cf \
-	smtpd_relay_restrictions=permit_sasl_authenticated,permit_mynetworks,reject_unauth_destination
+	smtpd_relay_restrictions=permit_tls_clientcerts,permit_sasl_authenticated,permit_mynetworks,reject_unauth_destination
 
 
 # ### DANE
@@ -131,7 +186,8 @@ tools/editconf.py /etc/postfix/main.cf virtual_transport=lmtp:[127.0.0.1]:10025
 # * reject_non_fqdn_sender: Reject not-nice-looking return paths.
 # * reject_unknown_sender_domain: Reject return paths with invalid domains.
 # * reject_rhsbl_sender: Reject return paths that use blacklisted domains.
-# * permit_sasl_authenticated: Authenticated users (i.e. on port 587) can skip further checks.
+# * permit_tls_clientcerts: (TLS) authenticated sibling hosts (on port 25) can skip further checks.
+# * permit_sasl_authenticated: (Password) authenticated users (on port 587) can skip further checks.
 # * permit_mynetworks: Mail that originates locally can skip further checks.
 # * reject_rbl_client: Reject connections from IP addresses blacklisted in zen.spamhaus.org
 # * reject_unlisted_recipient: Although Postfix will reject mail to unknown recipients, it's nicer to reject such mail ahead of greylisting rather than after.
@@ -144,7 +200,7 @@ tools/editconf.py /etc/postfix/main.cf virtual_transport=lmtp:[127.0.0.1]:10025
 # "450 4.7.1 Client host rejected: Service unavailable". This is a retry code, so the mail doesn't properly bounce.
 tools/editconf.py /etc/postfix/main.cf \
 	smtpd_sender_restrictions="reject_non_fqdn_sender,reject_unknown_sender_domain,reject_rhsbl_sender dbl.spamhaus.org" \
-	smtpd_recipient_restrictions=permit_sasl_authenticated,permit_mynetworks,"reject_rbl_client zen.spamhaus.org",reject_unlisted_recipient,"check_policy_service inet:127.0.0.1:10023"
+	smtpd_recipient_restrictions=permit_tls_clientcerts,permit_sasl_authenticated,permit_mynetworks,"reject_rbl_client zen.spamhaus.org",reject_unlisted_recipient,"check_policy_service inet:127.0.0.1:10023"
 
 # Increase the message size limit from 10MB to 128MB.
 tools/editconf.py /etc/postfix/main.cf \
