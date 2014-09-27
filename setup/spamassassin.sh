@@ -35,13 +35,14 @@ sudo sed -i "s/#mail_plugins = .*/mail_plugins = \$mail_plugins antispam/" /etc/
 # When mail is moved in or out of the Dovecot Spam folder, re-train using this script
 # that sends the mail to spamassassin.
 # from http://wiki2.dovecot.org/Plugins/Antispam
-cat > /usr/bin/sa-learn-pipe.sh << EOF;
+rm -f /usr/bin/sa-learn-pipe.sh # legacy location
+cat > /usr/local/bin/sa-learn-pipe.sh << EOF;
 cat<&0 >> /tmp/sendmail-msg-\$\$.txt
 /usr/bin/sa-learn \$* /tmp/sendmail-msg-\$\$.txt > /dev/null
 rm -f /tmp/sendmail-msg-\$\$.txt
 exit 0
 EOF
-chmod a+x /usr/bin/sa-learn-pipe.sh
+chmod a+x /usr/local/bin/sa-learn-pipe.sh
 
 # Configure the antispam plugin to call sa-learn-pipe.sh.
 cat > /etc/dovecot/conf.d/99-local-spampd.conf << EOF;
@@ -49,8 +50,8 @@ plugin {
     antispam_backend = pipe
     antispam_spam_pattern_ignorecase = SPAM
     antispam_allow_append_to_spam = yes
-    antispam_pipe_program_spam_args = /usr/bin/sa-learn-pipe.sh;--spam
-    antispam_pipe_program_notspam_args = /usr/bin/sa-learn-pipe.sh;--ham
+    antispam_pipe_program_spam_args = /usr/local/bin/sa-learn-pipe.sh;--spam
+    antispam_pipe_program_notspam_args = /usr/local/bin/sa-learn-pipe.sh;--ham
     antispam_pipe_program = /bin/bash
 }
 EOF
