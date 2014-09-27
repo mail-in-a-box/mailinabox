@@ -1,15 +1,11 @@
-<style>#panel_mail-guide table.table { width: auto; margin-left: 1.5em; }</style>
+<style>#panel_mail-guide table.table { width: auto; margin-left: .5em; }</style>
 
 <div class="container">
-	<h2>Checking and Sending Mail</h2>
-
-	<p>You can use either webmail, IMAP/SMTP, or Exchange/ActiveSync to access your mail.</p>
-
-	<hr>
+	<h2 style="margin-bottom: 0">Checking and Sending Mail</h2>
 
 	<div class="row">
-		<div class="col-md-6">
-			<h4>How to log in</h4>
+		<div class="col-sm-6">
+			<h3>How to log in</h3>
 
 			<p>Your username and password are the same no matter how you check your mail:</p>
 
@@ -17,46 +13,63 @@
 			<tr><th>Username:</th> <td>Your whole email address.</td></tr>
 			<tr><th>Password:</th> <td>Your mail password.</td></tr>
 			</table>
+
+			<h3>Webmail</h3>
+
+			<p>Webmail lets you check your email from any web browser. Your webmail site is:</p>
+			<p style="margin-left: 2em"><strong><a href="https://{{hostname}}/mail">https://{{hostname}}/mail</a></strong></p>
+
+			<h3>Mobile/desktop apps</h3>
+
+			<p>When you set up your email on your phone, desktop, or other device, you will be asked to choose a protocol.</p>
+
+			<ul>
+				<li>On Android devices, look for IMAP and SMTP.</li>
+				<li>On iOS devices, look for Exchange or ActiveSync.</li>
+			</ul>
+
+			<div class="row">
+				<div class="col-lg-6">
+					<h4>IMAP/SMTP settings</h4>
+
+					<p>This method is preferred on Android devices but is not available on iOS devices.</p>
+
+					<p>Your mail server is <strong>{{hostname}}</strong>. Use the following settings when prompted:</p>
+
+					<table class="table">
+					<thead>
+						<tr><th>Protocol</th> <th>Port</th> <th>Options</th></tr>
+					</thead>
+					<tr><th>IMAP</th> <td>993</td> <td>SSL</td></tr>
+					<tr><th>SMTP</th> <td>587</td> <td>STARTTLS <span>(&ldquo;always&rdquo; or &ldquo;required&rdquo;, if prompted)</span></td></tr>
+					</table>
+
+					<p>In addition to setting up your email, you&rsquo;ll also need to set up <a href="#sync_guide" onclick="return show_panel(this);">contacts and calendar synchronization</a> separately.</p>
+				</div>
+
+				<div class="col-lg-6">
+					<h4>Exchange/ActiveSync settings</h4>
+
+					<p>On iOS devices and devices on this <a href="http://z-push.org/compatibility/">compatibility list</a>, set up your mail as an Exchange or ActiveSync server. Use these settings when prompted:</p>
+
+					<table class="table">
+					<tr><th>Server</th> <td>{{hostname}}</td></tr>
+					<tr><th>Options</th> <td>Secure Connection</td></tr>
+					</table>
+
+					<p>Your device should also provide a contacts list and calendar that syncs to this box when you use this method.</p>
+				</div>
+			</div>
 		</div>
-	</div>
-
-	<div class="row">
-		<div class="col-sm-6">
-			<h4>Webmail</h4>
-
-			<p>Your webmail site is <a href="https://{{hostname}}/mail">https://{{hostname}}/mail</a>.</p>
-		</div>
-	</div>
-
-	<div class="row">
-		<div class="col-sm-6">
-			<h4>IMAP/SMTP settings</h4>
-
-			<p>This method is preferred on Android devices and is not available on iOS devices.</p>
-
-			<table class="table">
-			<thead>
-				<tr><th style="padding-bottom: 1em; border-bottom: none">Server:</th> <td colspan="2">{{hostname}}</td></tr>
-				<tr><th>Protocol</th> <th>Port</th> <th>Options</th></tr>
-			</thead>
-			<tr><th>IMAP</th> <td>993</td> <td>SSL</td></tr>
-			<tr><th>SMTP</th> <td>587</td> <td>STARTTLS</td></tr>
-			</table>
-
-			<p>In addition to setting up your email, you&rsquo;ll also need to set up <a href="#sync_guide" onclick="return show_panel(this);">contacts and calendar synchronization</a>.</p>
-		</div>
 
 		<div class="col-sm-6">
-			<h4>Exchange/ActiveSync settings</h4>
+			<h3>Other information about mail on your box</h3>
 
-			<p>On iOS devices and devices on this <a href="http://z-push.org/compatibility/">compatibility list</a>, set up your mail as an Exchange or ActiveSync server:</p>
+			<h4>Greylisting</h4>
+			<p>Your box using a technique called greylisting to cut down on spam. Greylisting works by delaying mail from people you haven&rsquo;t received mail from before for up to about 10 minutes. The vast majority of spam gets tricked by this. If you are waiting for an email from someone new, such as if you are registering on a new website and are waiting for an email confirmation, please give it up to 10-15 minutes to arrive.</p>
 
-			<table class="table">
-			<tr><th>Server</th> <td>{{hostname}}</td></tr>
-			<tr><th>Options</th> <td>Secure Connection</td></tr>
-			</table>
-
-			<p>Your device should also provide a contacts list and calendar that syncs to this box when you use this method.</p>
+			<h4>Use this box to send as you</h4>
+			<p>Your box sets strict email sending policies for your domain names to make it harder for spam and other fraudulent mail to claim to be you. Only this machine is authorized to send email on behalf of your domain names. If you use any other service to send email as you, it will likely get spam filtered by recipients.</p>
 		</div>
 	</div>
 </div>
