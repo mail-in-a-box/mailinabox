@@ -8,6 +8,21 @@ source setup/functions.sh # load our functions
 # machine with enough memory? If not, this shows an error and exits.
 . setup/preflight.sh
 
+# Ensure Python reads/writes files in UTF-8. If the machine
+# triggers some other locale in Python, like ASCII encoding,
+# Python may not be able to read/write files. Here and in
+# the management daemon startup script.
+
+if [ -z `locale -a | grep en_US.utf8` ]; then
+    # Generate locale if not exists
+    hide_output locale-gen en_US.UTF-8
+fi
+
+export LANGUAGE=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+export LANG=en_US.UTF-8
+export LC_TYPE=en_US.UTF-8
+
 # Recall the last settings used if we're running this a second time.
 if [ -f /etc/mailinabox.conf ]; then
 	# Run any system migrations before proceeding. Since this is a second run,
