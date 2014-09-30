@@ -26,6 +26,11 @@ if [ ! -d mailinabox ]; then
 
 	echo Downloading Mail-in-a-Box . . .
 	git clone -b $TAG --depth 1 https://github.com/mail-in-a-box/mailinabox 2> /dev/null
+	
+	# Generate the locale en_US.UTF-8
+	locale-gen en_US.UTF-8
+	dpkg-reconfigure locales
+	
 	cd mailinabox
 
 # If it does exist, update it.
