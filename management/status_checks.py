@@ -98,7 +98,7 @@ def run_domain_checks(env):
 		env["out"].add_heading(domain)
 
 		if domain == env["PRIMARY_HOSTNAME"]:
-			check_primary_hostname_dns(domain, env)
+			check_primary_hostname_dns(domain, env, dns_domains, dns_zonefiles)
 		
 		if domain in dns_domains:
 			check_dns_zone(domain, env, dns_zonefiles)
@@ -109,7 +109,16 @@ def run_domain_checks(env):
 		if domain in web_domains:
 			check_web_domain(domain, env)
 
-def check_primary_hostname_dns(domain, env):
+		if domain in dns_domains:
+			check_dns_zone_suggestions(domain, env, dns_zonefiles)
+
+def check_primary_hostname_dns(domain, env, dns_domains, dns_zonefiles):
+	# If a DS record is set on the zone containing this domain, check DNSSEC now.
+	for zone in dns_domains:
+		if zone == domain or domain.endswith("." + zone):
+			if query_dns(zone, "DS", nxdomain=None) is not None:
+				check_dnssec(zone, env, dns_zonefiles, is_checking_primary=True)
+
 	# Check that the ns1/ns2 hostnames resolve to A records. This information probably
 	# comes from the TLD since the information is set at the registrar.
 	ip = query_dns("ns1." + domain, "A") + '/' + query_dns("ns2." + domain, "A")
@@ -166,6 +175,11 @@ def check_alias_exists(alias, env):
 		env['out'].print_error("""You must add a mail alias for %s and direct email to you or another administrator.""" % alias)
 
 def check_dns_zone(domain, env, dns_zonefiles):
+	# If a DS record is set at the registrar, check DNSSEC first because it will affect the NS query.
+	# If it is not set, we suggest it last.
+	if query_dns(domain, "DS", nxdomain=None) is not None:
+		check_dnssec(domain, env, dns_zonefiles)
+
 	# We provide a DNS zone for the domain. It should have NS records set up
 	# at the domain name's registrar pointing to this box.
 	existing_ns = query_dns(domain, "NS")
@@ -177,6 +191,14 @@ def check_dns_zone(domain, env, dns_zonefiles):
 			control panel to set the nameservers to %s."""
 				% (existing_ns, correct_ns) )
 
+def check_dns_zone_suggestions(domain, env, dns_zonefiles):
+	# Since DNSSEC is optional, if a DS record is NOT set at the registrar suggest it.
+	# (If it was set, we did the check earlier.)
+	if query_dns(domain, "DS", nxdomain=None) is None:
+		check_dnssec(domain, env, dns_zonefiles)
+
+
+def check_dnssec(domain, env, dns_zonefiles, is_checking_primary=False):
 	# See if the domain has a DS record set at the registrar. The DS record may have
 	# several forms. We have to be prepared to check for any valid record. We've
 	# pre-generated all of the valid digests --- read them in.
@@ -196,13 +218,18 @@ def check_dns_zone(domain, env, dns_zonefiles):
 	ds_looks_valid = ds and len(ds.split(" ")) == 4
 	if ds_looks_valid: ds = ds.split(" ")
 	if ds_looks_valid and ds[0] == ds_keytag and ds[1] == '7' and ds[3] == digests.get(ds[2]):
-		env['out'].print_ok("DNS 'DS' record is set correctly at registrar.")
+		if is_checking_primary: return
+		env['out'].print_ok("DNSSEC 'DS' record is set correctly at registrar.")
 	else:
 		if ds == None:
-			env['out'].print_error("""This domain's DNS DS record is not set. The DS record is optional. The DS record activates DNSSEC.
+			if is_checking_primary: return
+			env['out'].print_error("""This domain's DNSSEC DS record is not set. The DS record is optional. The DS record activates DNSSEC.
 				To set a DS record, you must follow the instructions provided by your domain name registrar and provide to them this information:""")
 		else:
-			env['out'].print_error("""This domain's DNS DS record is incorrect. The chain of trust is broken between the public DNS system
+			if is_checking_primary:
+				env['out'].print_error("""The DNSSEC 'DS' record for %s is incorrect. See further details below.""" % domain)
+				return
+			env['out'].print_error("""This domain's DNSSEC DS record is incorrect. The chain of trust is broken between the public DNS system
 				and this machine's DNS server. It may take several hours for public DNS to update after a change. If you did not recently
 				make a change, you must resolve this immediately by following the instructions provided by your domain name registrar and
 				provide to them this information:""")
