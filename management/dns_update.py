@@ -479,8 +479,18 @@ zone:
 
 ########################################################################
 
+def dnssec_choose_algo(domain, env):
+	if domain.endswith(".email"):
+		# At least at GoDaddy, this is the only algorithm supported.
+		return "RSASHA256"
+
+	# For any domain we were able to sign before, don't change the algorithm
+	# on existing users. We'll probably want to migrate to SHA256 later.
+	return "RSASHA1-NSEC3-SHA1"
+
 def sign_zone(domain, zonefile, env):
-	dnssec_keys = load_env_vars_from_file(os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/keys.conf'))
+	algo = dnssec_choose_algo(domain, env)
+	dnssec_keys = load_env_vars_from_file(os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/%s.conf' % algo))
 
 	# In order to use the same keys for all domains, we have to generate
 	# a new .key file with a DNSSEC record for the specific domain. We

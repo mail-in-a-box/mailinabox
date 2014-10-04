@@ -60,6 +60,13 @@ def migration_5(env):
 	# The secret key for encrypting backups was world readable. Fix here.
 	os.chmod(os.path.join(env["STORAGE_ROOT"], 'backup/secret_key.txt'), 0o600)
 
+def migration_6(env):
+	# We now will generate multiple DNSSEC keys for different algorithms, since TLDs may
+	# not support them all. .email only supports RSA/SHA-256. Rename the keys.conf file
+	# to be algorithm-specific.
+	basepath = os.path.join(env["STORAGE_ROOT"], 'dns/dnssec')
+	shutil.move(os.path.join(basepath, 'keys.conf'), os.path.join(basepath, 'RSASHA1-NSEC3-SHA1.conf'))
+
 def get_current_migration():
 	ver = 0
 	while True:

@@ -210,14 +210,15 @@ def check_dnssec(domain, env, dns_zonefiles, is_checking_primary=False):
 
 	# Some registrars may want the public key so they can compute the digest. The DS
 	# record that we suggest using is for the KSK (and that's how the DS records were generated).
-	dnssec_keys = load_env_vars_from_file(os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/keys.conf'))
+	alg_name_map = { '7': 'RSASHA1-NSEC3-SHA1', '8': 'RSASHA256' }
+	dnssec_keys = load_env_vars_from_file(os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/%s.conf' % alg_name_map[ds_alg]))
 	dnsssec_pubkey = open(os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/' + dnssec_keys['KSK'] + '.key')).read().split("\t")[3].split(" ")[3]
 
 	# Query public DNS for the DS record at the registrar.
 	ds = query_dns(domain, "DS", nxdomain=None)
 	ds_looks_valid = ds and len(ds.split(" ")) == 4
 	if ds_looks_valid: ds = ds.split(" ")
-	if ds_looks_valid and ds[0] == ds_keytag and ds[1] == '7' and ds[3] == digests.get(ds[2]):
+	if ds_looks_valid and ds[0] == ds_keytag and ds[1] == ds_alg and ds[3] == digests.get(ds[2]):
 		if is_checking_primary: return
 		env['out'].print_ok("DNSSEC 'DS' record is set correctly at registrar.")
 	else:
@@ -236,7 +237,9 @@ def check_dnssec(domain, env, dns_zonefiles, is_checking_primary=False):
 		env['out'].print_line("")
 		env['out'].print_line("Key Tag: " + ds_keytag + ("" if not ds_looks_valid or ds[0] == ds_keytag else " (Got '%s')" % ds[0]))
 		env['out'].print_line("Key Flags: KSK")
-		env['out'].print_line("Algorithm: 7 / RSASHA1-NSEC3-SHA1" + ("" if not ds_looks_valid or ds[1] == '7' else " (Got '%s')" % ds[1]))
+		env['out'].print_line(
+			  ("Algorithm: %s / %s" % (ds_alg, alg_name_map[ds_alg]))
+			+ ("" if not ds_looks_valid or ds[1] == ds_alg else " (Got '%s')" % ds[1]))
 			# see http://www.iana.org/assignments/dns-sec-alg-numbers/dns-sec-alg-numbers.xhtml
 		env['out'].print_line("Digest Type: 2 / SHA-256")
 			# http://www.ietf.org/assignments/ds-rr-types/ds-rr-types.xml
