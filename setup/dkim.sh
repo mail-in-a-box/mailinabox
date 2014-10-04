@@ -1,12 +1,13 @@
-# OpenDKIM: Sign outgoing mail with DKIM
-########################################
-
-# After this, you'll still need to run dns_update.sh to get the DKIM
-# signature in the DNS zones.
+# OpenDKIM
+# ========
+#
+# OpenDKIM provides a service that puts a DKIM signature on outbound mail.
+#
+# The DNS configuration for DKIM is done in the management daemon.
 
 source setup/functions.sh # load our functions
 
-# Install DKIM
+# Install DKIM...
 apt_install opendkim opendkim-tools
 
 # Make sure configuration directories exist.
@@ -18,9 +19,9 @@ mkdir -p $STORAGE_ROOT/mail/dkim
 echo "127.0.0.1" > /etc/opendkim/TrustedHosts
 
 if grep -q "ExternalIgnoreList" /etc/opendkim.conf; then
-	true; # already done
+	true # already done #NODOC
 else
-	# Add various configuration options to the end.
+	# Add various configuration options to the end of `opendkim.conf`.
 	cat >> /etc/opendkim.conf << EOF;
 MinimumKeyBits          1024
 ExternalIgnoreList      refile:/etc/opendkim/TrustedHosts
@@ -32,7 +33,7 @@ RequireSafeKeys         false
 EOF
 fi
 
-# Create a new DKIM key if we don't have one already. This creates
+# Create a new DKIM key. This creates
 # mail.private and mail.txt in $STORAGE_ROOT/mail/dkim. The former
 # is the actual private key and the latter is the suggested DNS TXT
 # entry which we'll want to include in our DNS setup.
@@ -47,7 +48,7 @@ chmod go-rwx $STORAGE_ROOT/mail/dkim
 
 # Add OpenDKIM as a milter to postfix, which is how it intercepts outgoing
 # mail to perform the signing (by adding a mail header).
-# Be careful. If we add other milters later, it needs to be concatenated on the smtpd_milters line.
+# Be careful. If we add other milters later, it needs to be concatenated on the smtpd_milters line. #NODOC
 tools/editconf.py /etc/postfix/main.cf \
 	smtpd_milters=inet:127.0.0.1:8891 \
 	non_smtpd_milters=\$smtpd_milters \

@@ -1,11 +1,11 @@
 source setup/functions.sh # load our functions
 
-# Base system configuration
+# Basic System Configuration
 # -------------------------
 
-# ### Base packages
+# ### Install Packages
 
-# Update system packages:
+# Update system packages to make sure we have the latest upstream versions of things from Ubuntu.
 
 echo Updating system packages...
 hide_output apt-get update
@@ -35,8 +35,6 @@ EOF
 
 # ### Firewall
 
-# Turn on the firewall.
-#
 # Various virtualized environments like Docker and some VPSs don't provide #NODOC
 # a kernel that supports iptables. To avoid error-like output in these cases, #NODOC
 # we skip this if the user sets DISABLE_FIREWALL=1. #NODOC
@@ -47,15 +45,15 @@ if [ -z "$DISABLE_FIREWALL" ]; then
 	# Allow incoming connections to SSH.
 	ufw_allow ssh;
 
-	# ssh might be running on an alternate port. Use sshd -T to dump sshd's
-	# settings, find the port it is supposedly running on, and open that port
-	# too.
-	SSH_PORT=$(sshd -T 2>/dev/null | grep "^port " | sed "s/port //")
+	# ssh might be running on an alternate port. Use sshd -T to dump sshd's #NODOC
+	# settings, find the port it is supposedly running on, and open that port #NODOC
+	# too. #NODOC
+	SSH_PORT=$(sshd -T 2>/dev/null | grep "^port " | sed "s/port //") #NODOC
 	if [ ! -z "$SSH_PORT" ]; then
 	if [ "$SSH_PORT" != "22" ]; then
 
-	echo Opening alternate SSH port $SSH_PORT.
-	ufw_allow $SSH_PORT;
+	echo Opening alternate SSH port $SSH_PORT. #NODOC
+	ufw_allow $SSH_PORT #NODOC
 
 	fi
 	fi

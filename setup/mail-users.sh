@@ -53,7 +53,6 @@ EOF
 chmod 0600 /etc/dovecot/dovecot-sql.conf.ext # per Dovecot instructions
 
 # Have Dovecot provide an authorization service that Postfix can access & use.
-# Drew Crawford sets the auth-worker process to run as the mail user, but we don't care if it runs as root.
 cat > /etc/dovecot/conf.d/99-local-auth.conf << EOF;
 service auth {
   unix_listener /var/spool/postfix/private/auth {

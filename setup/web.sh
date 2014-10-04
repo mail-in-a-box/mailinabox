@@ -5,6 +5,10 @@
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
+# Install nginx and a PHP FastCGI daemon.
+#
+# Turn off nginx's default website.
+
 apt_install nginx php5-fpm
 
 rm -f /etc/nginx/sites-enabled/default
@@ -20,7 +24,7 @@ sed "s#STORAGE_ROOT#$STORAGE_ROOT#" \
 tools/editconf.py /etc/nginx/nginx.conf -s \
 	server_names_hash_bucket_size="64;"
 
-# Bump up max_children to support more concurrent connections
+# Bump up PHP's max_children to support more concurrent connections
 tools/editconf.py /etc/php5/fpm/pool.d/www.conf -c ';' \
 	pm.max_children=8
 
@@ -29,20 +33,20 @@ tools/editconf.py /etc/php5/fpm/pool.d/www.conf -c ';' \
 # until mail accounts have been created.
 
 # make a default homepage
-if [ -d $STORAGE_ROOT/www/static ]; then mv $STORAGE_ROOT/www/static $STORAGE_ROOT/www/default; fi # migration
+if [ -d $STORAGE_ROOT/www/static ]; then mv $STORAGE_ROOT/www/static $STORAGE_ROOT/www/default; fi # migration #NODOC
 mkdir -p $STORAGE_ROOT/www/default
 if [ ! -f $STORAGE_ROOT/www/default/index.html ]; then
 	cp conf/www_default.html $STORAGE_ROOT/www/default/index.html
 fi
 chown -R $STORAGE_USER $STORAGE_ROOT/www
 
-# We previously installed a custom init script to start the PHP FastCGI daemon.
-# Remove it now that we're using php5-fpm.
+# We previously installed a custom init script to start the PHP FastCGI daemon. #NODOC
+# Remove it now that we're using php5-fpm. #NODOC
 if [ -L /etc/init.d/php-fastcgi ]; then
-	echo "Removing /etc/init.d/php-fastcgi, php5-cgi..."
-	rm -f /etc/init.d/php-fastcgi
-	hide_output update-rc.d php-fastcgi remove
-	apt-get -y purge php5-cgi
+	echo "Removing /etc/init.d/php-fastcgi, php5-cgi..." #NODOC
+	rm -f /etc/init.d/php-fastcgi #NODOC
+	hide_output update-rc.d php-fastcgi remove #NODOC
+	apt-get -y purge php5-cgi #NODOC
 fi
 
 # Put our webfinger script into a well-known location.
@@ -51,11 +55,11 @@ for f in webfinger; do
 	chown www-data.www-data /usr/local/bin/mailinabox-$f.php
 done
 
-# Remove obsoleted scripts.
-# exchange-autodiscover is now handled by Z-Push.
-for f in exchange-autodiscover; do
-	rm -f /usr/local/bin/mailinabox-$f.php
-done
+# Remove obsoleted scripts. #NODOC
+# exchange-autodiscover is now handled by Z-Push. #NODOC
+for f in exchange-autodiscover; do #NODOC
+	rm -f /usr/local/bin/mailinabox-$f.php #NODOC
+done #NODOC
 
 # Make some space for users to customize their webfinger responses.
 mkdir -p $STORAGE_ROOT/webfinger/acct;

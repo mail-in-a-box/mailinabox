@@ -1,5 +1,5 @@
 #!/bin/bash
-# DNS: Configure a DNS server to host our own DNS
+# DNS
 # -----------------------------------------------
 
 # This script installs packages, but the DNS zone files are only
@@ -14,9 +14,9 @@ source setup/functions.sh # load our functions
 
 # ...but first, we have to create the user because the 
 # current Ubuntu forgets to do so in the .deb
-# see issue #25 and https://bugs.launchpad.net/ubuntu/+source/nsd/+bug/1311886
+# (see issue #25 and https://bugs.launchpad.net/ubuntu/+source/nsd/+bug/1311886)
 if id nsd > /dev/null 2>&1; then
-	true; #echo "nsd user exists... good"; #NODOC
+	true #echo "nsd user exists... good"; #NODOC
 else
 	useradd nsd;
 fi
@@ -40,17 +40,21 @@ mkdir -p "$STORAGE_ROOT/dns/dnssec";
 # TLDs don't all support the same algorithms, so we'll generate keys using a few
 # different algorithms.
 #
-# Supports RSASHA1-NSEC3-SHA1 (didn't test with RSASHA256):
-#   .info and .me.
+# Supports `RSASHA1-NSEC3-SHA1` (didn't test with `RSASHA256`):
 #
-# Requires RSASHA256
-#   .email
-FIRST=1
+#  * .info
+#  * .me
+#
+# Requires `RSASHA256`
+#
+#  * .email
+
+FIRST=1 #NODOC
 for algo in RSASHA1-NSEC3-SHA1 RSASHA256; do
 if [ ! -f "$STORAGE_ROOT/dns/dnssec/$algo.conf" ]; then
 	if [ $FIRST == 1 ]; then
 		echo "Generating DNSSEC signing keys. This may take a few minutes..."
-		FIRST=0
+		FIRST=0 #NODOC
 	fi
 
 	# Create the Key-Signing Key (KSK) (-k) which is the so-called
@@ -58,6 +62,9 @@ if [ ! -f "$STORAGE_ROOT/dns/dnssec/$algo.conf" ]; then
 	# practice), and a nice and long keylength. The domain name we
 	# provide ("_domain_") doesn't matter -- we'll use the same
 	# keys for all our domains.
+	#
+	# `ldns-keygen` outputs the new key's filename to stdout, which
+	# we're capturing into the `KSK` variable.
 	KSK=$(umask 077; cd $STORAGE_ROOT/dns/dnssec; ldns-keygen -a $algo -b 2048 -k _domain_);
 
 	# Now create a Zone-Signing Key (ZSK) which is expected to be
@@ -81,9 +88,13 @@ KSK=$KSK
 ZSK=$ZSK
 EOF
 fi
+
+	# And loop to do the next algorithm...
 done
 
-# Force the dns_update script to be run every day to re-sign zones for DNSSEC.
+# Force the dns_update script to be run every day to re-sign zones for DNSSEC
+# before they expire. When we sign zones (in `dns_update.py`) we specify a
+# 30-day validation window, so we had better re-sign before then.
 cat > /etc/cron.daily/mailinabox-dnssec << EOF;
 #!/bin/bash
 # Mail-in-a-Box

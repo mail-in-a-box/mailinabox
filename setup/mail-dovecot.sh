@@ -18,15 +18,17 @@
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
-# ### Install packages and basic setup
+# Install packages...
 
 apt_install \
 	dovecot-core dovecot-imapd dovecot-lmtpd dovecot-sqlite sqlite3 \
 	dovecot-sieve dovecot-managesieved
 
-# The dovecot-imapd and dovecot-lmtpd packages automatically enable IMAP and LMTP protocols.
+# The `dovecot-imapd` and `dovecot-lmtpd` packages automatically enable IMAP and LMTP protocols.
 
-# Set the location where we'll store user mailboxes.
+# Set the location where we'll store user mailboxes. '%d' is the domain name and '%n' is the
+# username part of the user's email address. We'll ensure that no bad domains or email addresses
+# are created within the management daemon.
 tools/editconf.py /etc/dovecot/conf.d/10-mail.conf \
 	mail_location=maildir:$STORAGE_ROOT/mail/mailboxes/%d/%n \
 	mail_privileged_group=mail \
@@ -66,7 +68,7 @@ tools/editconf.py /etc/dovecot/conf.d/20-imap.conf \
 # ### LDA (LMTP)
 
 # Enable Dovecot's LDA service with the LMTP protocol. It will listen
-# in port 10026, and Spamassassin will be configured to pass mail there.
+# on port 10026, and Spamassassin will be configured to pass mail there.
 #
 # The disabled unix socket listener is normally how Postfix and Dovecot
 # would communicate (see the Postfix setup script for the corresponding
@@ -91,30 +93,32 @@ protocol imap {
 }
 EOF
 
-# Setting a postmaster_address seems to be required or LMTP won't start.
+# Setting a `postmaster_address` is required or LMTP won't start. An alias
+# will be created automatically by our management daemon.
 tools/editconf.py /etc/dovecot/conf.d/15-lda.conf \
 	postmaster_address=postmaster@$PRIMARY_HOSTNAME
 
 # ### Sieve
 
 # Enable the Dovecot sieve plugin which let's users run scripts that process
-# mail as it comes in. We'll also set a global script that moves mail marked
-# as spam by Spamassassin into the user's Spam folder.
+# mail as it comes in.
 sed -i "s/#mail_plugins = .*/mail_plugins = \$mail_plugins sieve/" /etc/dovecot/conf.d/20-lmtp.conf
 
+# Configure sieve. We'll create a global script that moves mail marked
+# as spam by Spamassassin into the user's Spam folder.
+#
+# * `sieve_before`: The path to our global sieve which handles moving spam to the Spam folder.
+#
+# * `sieve`: The path to the user's main active script. ManageSieve will create a symbolic
+# link here to the actual sieve script. It should not be in the mailbox directory
+# (because then it might appear as a folder) and it should not be in the sieve_dir
+# (because then I suppose it might appear to the user as one of their scripts).
+# * `sieve_dir`: Directory for :personal include scripts for the include extension. This
+# is also where the ManageSieve service stores the user's scripts.
 cat > /etc/dovecot/conf.d/99-local-sieve.conf << EOF;
 plugin {
-  # The path to our global sieve which handles moving spam to the Spam folder.
   sieve_before = /etc/dovecot/sieve-spam.sieve
-
-  # The path to the user's main active script. ManageSieve will create a symbolic
-  # link here to the actual sieve script. It should not be in the mailbox directory
-  # (because then it might appear as a folder) and it should not be in the sieve_dir
-  # (because then I suppose it might appear to the user as one of their scripts).
   sieve = $STORAGE_ROOT/mail/sieve/%d/%n.sieve
-
-  # Directory for :personal include scripts for the include extension. This
-  # is also where the ManageSieve service stores the user's scripts.
   sieve_dir = $STORAGE_ROOT/mail/sieve/%d/%n
 }
 EOF
@@ -122,7 +126,7 @@ EOF
 # Copy the global sieve script into where we've told Dovecot to look for it. Then
 # compile it. Global scripts must be compiled now because Dovecot won't have
 # permission later.
-cp `pwd`/conf/sieve-spam.txt /etc/dovecot/sieve-spam.sieve
+cp conf/sieve-spam.txt /etc/dovecot/sieve-spam.sieve
 sievec /etc/dovecot/sieve-spam.sieve
 
 # PERMISSIONS

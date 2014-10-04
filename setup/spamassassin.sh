@@ -1,14 +1,13 @@
 #!/bin/bash
 # Spam filtering with spamassassin via spampd
-#############################################
-
+# ===========================================
+#
 # spampd sits between postfix and dovecot. It takes mail from postfix
 # over the LMTP protocol, runs spamassassin on it, and then passes the
 # message over LMTP to dovecot for local delivery.
-
+#
 # In order to move spam automatically into the Spam folder we use the dovecot sieve
-# plugin. The tools/mail.py tool creates the necessary sieve script for each mail
-# user when the mail user is created.
+# plugin.
 
 source /etc/mailinabox.conf # get global vars
 source setup/functions.sh # load our functions
@@ -29,13 +28,14 @@ hide_output pyzor discover
 tools/editconf.py /etc/default/spampd DESTPORT=10026
 
 # Enable the Dovecot antispam plugin to detect when a message moves between folders so we can
-# pass it to sa-learn for training. (Be careful if we use multiple plugins later.)
+# pass it to sa-learn for training.
+# (Be careful if we use multiple plugins later.) #NODOC
 sed -i "s/#mail_plugins = .*/mail_plugins = \$mail_plugins antispam/" /etc/dovecot/conf.d/20-imap.conf
 
 # When mail is moved in or out of the Dovecot Spam folder, re-train using this script
 # that sends the mail to spamassassin.
 # from http://wiki2.dovecot.org/Plugins/Antispam
-rm -f /usr/bin/sa-learn-pipe.sh # legacy location
+rm -f /usr/bin/sa-learn-pipe.sh # legacy location #NODOC
 cat > /usr/local/bin/sa-learn-pipe.sh << EOF;
 cat<&0 >> /tmp/sendmail-msg-\$\$.txt
 /usr/bin/sa-learn \$* /tmp/sendmail-msg-\$\$.txt > /dev/null

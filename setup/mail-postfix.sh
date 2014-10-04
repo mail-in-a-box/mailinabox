@@ -32,13 +32,26 @@ source /etc/mailinabox.conf # load global vars
 
 # ### Install packages.
 
-apt_install postfix postgrey postfix-pcre ca-certificates
+# Install postfix's packages.
+#
+# * `postfix`: The SMTP server.
+# * `postfix-pcre`: Enables header filtering.
+# * `postgrey`: A mail policy service that soft-rejects mail the first time
+#   it is received. Spammers don't usually try agian. Legitimate mail
+#   always will.
+# * `ca-certificates`: A trust store used to squelch postfix warnings about
+#   untrusted opportunistically-encrypted connections.
+
+apt_install postfix postfix-pcre postgrey ca-certificates
 
 # ### Basic Settings
 
-# Have postfix listen on all network interfaces, set our name (the Debian default seems to be localhost),
-# and set the name of the local machine to localhost for xxx@localhost mail (but I don't think this will have any effect because
-# there is no true local mail delivery). Also set the banner (must have the hostname first, then anything).
+# Set some basic settings...
+#
+# * Have postfix listen on all network interfaces.
+# * Set our name (the Debian default seems to be "localhost" but make it our hostname).
+# * Set the name of the local machine to localhost, which means xxx@localhost is delivered locally, although we don't use it.
+# * Set the SMTP banner (which must have the hostname first, then anything).
 tools/editconf.py /etc/postfix/main.cf \
 	inet_interfaces=all \
 	myhostname=$PRIMARY_HOSTNAME\
@@ -69,7 +82,8 @@ cp conf/postfix_outgoing_mail_header_filters /etc/postfix/outgoing_mail_header_f
 # Enable TLS on these and all other connections (i.e. ports 25 *and* 587) and
 # require TLS before a user is allowed to authenticate. This also makes
 # opportunistic TLS available on *incoming* mail.
-# Set stronger DH parameters, which via openssl tend to default to 1024 bits.
+# Set stronger DH parameters, which via openssl tend to default to 1024 bits
+# (see ssl.sh).
 tools/editconf.py /etc/postfix/main.cf \
 	smtpd_tls_security_level=may\
 	smtpd_tls_auth_only=yes \
@@ -90,25 +104,25 @@ tools/editconf.py /etc/postfix/main.cf \
 
 
 # ### DANE
-#
+
 # When connecting to remote SMTP servers, prefer TLS and use DANE if available.
 #
-# Prefering ("opportunistic") TLS means Postfix will accept whatever SSL certificate the remote
-# end provides, if the remote end offers STARTTLS during the connection. DANE takes this a
-# step further:
+# Prefering ("opportunistic") TLS means Postfix will use TLS if the remote end
+# offers it, otherwise it will transmit the message in the clear. Postfix will
+# accept whatever SSL certificate the remote end provides. Opportunistic TLS
+# protects against passive easvesdropping (but not man-in-the-middle attacks).
+# DANE takes this a step further:
 #
 # Postfix queries DNS for the TLSA record on the destination MX host. If no TLSA records are found,
 # then opportunistic TLS is used. Otherwise the server certificate must match the TLSA records
 # or else the mail bounces. TLSA also requires DNSSEC on the MX host. Postfix doesn't do DNSSEC
 # itself but assumes the system's nameserver does and reports DNSSEC status. Thus this also
-# relies on our local bind9 server being present and smtp_dns_support_level being set to dnssec
-# to use it.
+# relies on our local bind9 server being present and `smtp_dns_support_level=dnssec`.
 #
-# The smtp_tls_CAfile is superflous, but it turns warnings in the logs about untrusted certs
-# into notices about trusted certs. Since in these cases Postfix is doing opportunistic TLS,
-# it does not care about whether the remote certificate is trusted. But, looking at the logs,
-# it's nice to be able to see that the connection was in fact encrypted for the right party.
-# The CA file is provided by the package ca-certificates.
+# The `smtp_tls_CAfile` is superflous, but it eliminates warnings in the logs about untrusted certs,
+# which we don't care about seeing because Postfix is doing opportunistic TLS anyway. Better to encrypt,
+# even if we don't know if it's to the right party, than to not encrypt at all. Instead we'll
+# now see notices about trusted certs. The CA file is provided by the package `ca-certificates`.
 tools/editconf.py /etc/postfix/main.cf \
 	smtp_tls_security_level=dane \
 	smtp_dns_support_level=dnssec \

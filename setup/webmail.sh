@@ -23,16 +23,16 @@ apt_install \
 	php5 php5-sqlite php5-mcrypt php5-intl php5-json php5-common php-auth php-net-smtp php-net-socket php-net-sieve php-mail-mime php-crypt-gpg php5-gd php5-pspell \
 	tinymce libjs-jquery libjs-jquery-mousewheel libmagic1
 
-# We used to install Roundcube from Ubuntu, without triggering the dependencies
-# on Apache and MySQL, by downloading the debs and installing them manually.
-# Now that we're beyond that, get rid of those debs before installing from source.
-apt-get purge -qq -y roundcube*
+# We used to install Roundcube from Ubuntu, without triggering the dependencies #NODOC
+# on Apache and MySQL, by downloading the debs and installing them manually. #NODOC
+# Now that we're beyond that, get rid of those debs before installing from source. #NODOC
+apt-get purge -qq -y roundcube* #NODOC
 
 # Install Roundcube from source if it is not already present or if it is out of date.
 VERSION=1.0.2
 needs_update=0 #NODOC
 if [ ! -f /usr/local/lib/roundcubemail/version ]; then
-	# not installed yet
+	# not installed yet #NODOC
 	needs_update=1 #NODOC
 elif [[ $VERSION != `cat /usr/local/lib/roundcubemail/version` ]]; then
 	# checks if the version is what we want
