@@ -6,7 +6,7 @@ source setup/functions.sh # load our functions
 
 # Check system setup: Are we running as root on Ubuntu 14.04 on a
 # machine with enough memory? If not, this shows an error and exits.
-. setup/preflight.sh
+source setup/preflight.sh
 
 # Ensure Python reads/writes files in UTF-8. If the machine
 # triggers some other locale in Python, like ASCII encoding,
@@ -48,7 +48,7 @@ chmod +x /usr/local/bin/mailinabox
 # Ask the user for the PRIMARY_HOSTNAME, PUBLIC_IP, PUBLIC_IPV6, and CSR_COUNTRY
 # if values have not already been set in environment variables. When running
 # non-interactively, be sure to set values for all!
-. setup/questions.sh
+source setup/questions.sh
 
 # Automatic configuration, e.g. as used in our Vagrant configuration.
 if [ "$PUBLIC_IP" = "auto" ]; then
@@ -112,19 +112,19 @@ CSR_COUNTRY=$CSR_COUNTRY
 EOF
 
 # Start service configuration.
-. setup/system.sh
-. setup/ssl.sh
-. setup/dns.sh
-. setup/mail-postfix.sh
-. setup/mail-dovecot.sh
-. setup/mail-users.sh
-. setup/dkim.sh
-. setup/spamassassin.sh
-. setup/web.sh
-. setup/webmail.sh
-. setup/owncloud.sh
-. setup/zpush.sh
-. setup/management.sh
+source setup/system.sh
+source setup/ssl.sh
+source setup/dns.sh
+source setup/mail-postfix.sh
+source setup/mail-dovecot.sh
+source setup/mail-users.sh
+source setup/dkim.sh
+source setup/spamassassin.sh
+source setup/web.sh
+source setup/webmail.sh
+source setup/owncloud.sh
+source setup/zpush.sh
+source setup/management.sh
 
 # Write the DNS and nginx configuration files.
 sleep 5 # wait for the daemon to start
@@ -132,7 +132,7 @@ curl -s -d POSTDATA --user $(</var/lib/mailinabox/api.key): http://127.0.0.1:102
 curl -s -d POSTDATA --user $(</var/lib/mailinabox/api.key): http://127.0.0.1:10222/web/update
 
 # If there aren't any mail users yet, create one.
-. setup/firstuser.sh
+source setup/firstuser.sh
 
 # Done.
 echo
