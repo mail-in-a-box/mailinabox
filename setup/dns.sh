@@ -31,7 +31,7 @@ apt_install nsd ldnsutils openssh-client
 
 # Prepare nsd's configuration.
 
-sudo mkdir -p /var/run/nsd
+mkdir -p /var/run/nsd
 
 # Create DNSSEC signing keys.
 

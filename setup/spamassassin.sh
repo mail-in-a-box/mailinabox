@@ -30,7 +30,7 @@ tools/editconf.py /etc/default/spampd DESTPORT=10026
 
 # Enable the Dovecot antispam plugin to detect when a message moves between folders so we can
 # pass it to sa-learn for training. (Be careful if we use multiple plugins later.)
-sudo sed -i "s/#mail_plugins = .*/mail_plugins = \$mail_plugins antispam/" /etc/dovecot/conf.d/20-imap.conf
+sed -i "s/#mail_plugins = .*/mail_plugins = \$mail_plugins antispam/" /etc/dovecot/conf.d/20-imap.conf
 
 # When mail is moved in or out of the Dovecot Spam folder, re-train using this script
 # that sends the mail to spamassassin.
