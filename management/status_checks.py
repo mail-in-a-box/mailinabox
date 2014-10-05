@@ -11,7 +11,7 @@ import os, os.path, re, subprocess, datetime
 import dns.reversename, dns.resolver
 import dateutil.parser, dateutil.tz
 
-from dns_update import get_dns_zones, build_tlsa_record
+from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config
 from web_update import get_web_domains, get_domain_ssl_files
 from mailconfig import get_mail_domains, get_mail_aliases
 
@@ -120,7 +120,10 @@ def check_primary_hostname_dns(domain, env, dns_domains, dns_zonefiles):
 				check_dnssec(zone, env, dns_zonefiles, is_checking_primary=True)
 
 	# Check that the ns1/ns2 hostnames resolve to A records. This information probably
-	# comes from the TLD since the information is set at the registrar.
+	# comes from the TLD since the information is set at the registrar as glue records.
+	# We're probably not actually checking that here but instead checking that we, as
+	# the nameserver, are reporting the right info --- but if the glue is incorrect this
+	# will probably fail.
 	ip = query_dns("ns1." + domain, "A") + '/' + query_dns("ns2." + domain, "A")
 	if ip == env['PUBLIC_IP'] + '/' + env['PUBLIC_IP']:
 		env['out'].print_ok("Nameserver glue records are correct at registrar. [ns1/ns2.%s => %s]" % (env['PRIMARY_HOSTNAME'], env['PUBLIC_IP']))
@@ -181,9 +184,17 @@ def check_dns_zone(domain, env, dns_zonefiles):
 		check_dnssec(domain, env, dns_zonefiles)
 
 	# We provide a DNS zone for the domain. It should have NS records set up
-	# at the domain name's registrar pointing to this box.
+	# at the domain name's registrar pointing to this box. The secondary DNS
+	# server may be customized. Unfortunately this may not check the domain's
+	# whois information -- we may be getting the NS records from us rather than
+	# the TLD, and so we're not actually checking the TLD. For that we'd need
+	# to do a DNS trace.
+	custom_dns = get_custom_dns_config(env)
 	existing_ns = query_dns(domain, "NS")
-	correct_ns = "ns1.BOX; ns2.BOX".replace("BOX", env['PRIMARY_HOSTNAME'])
+	correct_ns = "; ".join([
+		"ns1." + env['PRIMARY_HOSTNAME'],
+		custom_dns.get("_secondary_nameserver", "ns2." + env['PRIMARY_HOSTNAME']),
+		])
 	if existing_ns.lower() == correct_ns.lower():
 		env['out'].print_ok("Nameservers are set correctly at registrar. [%s]" % correct_ns)
 	else:
