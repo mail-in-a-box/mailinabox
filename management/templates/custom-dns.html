@@ -1,15 +1,44 @@
 <style>
 </style>
 
-<h2>Custom DNS (Advanced)</h2>
+<h2>Custom DNS</h2>
 
-<p>It is possible to set custom DNS records on domains hosted here. For instance, you can create your own dynamic DNS service. To do so, you will need to call your box&rsquo;s DNS API.</p>
+<p class="text-warning">This is an advanced configuration page.</p>
 
-<h4>The HTTP POST request</h4>
+<p>It is possible to set custom DNS records on domains hosted here.</p>
+
+<h3>Using a Secondary Nameserver</h3>
+
+<p>If your TLD requires you to have two separate nameservers, you can either set up a secondary (aka &ldquo;slave&rdquo;) nameserver or, alternatively, set up <a href="#" onclick="return show_panel('external_dns')">external DNS</a> and ignore the DNS server on this box. If you choose to use a seconday/slave nameserver, you must find a seconday/slave nameserver service provider. Your domain name registrar or virtual cloud provider may provide this service for you. Once you set up the seconday/slave nameserver service, enter the hostname of <em>their</em> secondary nameserver:</p>
+
+<form class="form-horizontal" role="form" onsubmit="do_set_secondary_dns(); return false;">
+  <div class="form-group">
+    <label for="secondarydnsHostname" class="col-sm-1 control-label">Hostname</label>
+    <div class="col-sm-10">
+      <input type="text" class="form-control" id="secondarydnsHostname" placeholder="ns1.cloudprovider.com">
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="col-sm-offset-1 col-sm-11">
+      <button type="submit" class="btn btn-primary">Update</button>
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="col-sm-offset-1 col-sm-11">
+      <p class="small">Clear the box to use the box itself as secondary DNS, which is the default/normal setup.</p>
+    </div>
+  </div>
+</form>
+
+<h3>Custom DNS API</h3>
+
+<p>Use your box&rsquo;s DNS API to set custom DNS records on domains hosted here. For instance, you can create your own dynamic DNS service.</p>
 
 <p>Send a POST request like this:</p>
 
 <pre>curl -d "" --user {email}:{password} https://{{hostname}}/admin/dns/set/<b>qname</b>[/<b>rtype</b>[/<b>value</b>]]</pre>
+
+<h4>HTTP POST parameters</h4>
 
 <table class="table">
 <thead><th>Parameter</th> <th>Value</th></thead>
@@ -41,5 +70,28 @@ curl -d "value=something%20here" --user me@mydomain.com:###### https://{{hostnam
 
 <script>
 function show_custom_dns() {
+ api(
+    "/dns/secondary-nameserver",
+    "GET",
+    { },
+    function(data) {
+      $('#secondarydnsHostname').val(data.hostname ? data.hostname : '');
+    });
+}
+
+function do_set_secondary_dns() {
+ api(
+    "/dns/secondary-nameserver",
+    "POST",
+    {
+      hostname: $('#secondarydnsHostname').val()
+    },
+    function(data) {
+      if (data == "") return; // nothing updated
+      show_modal_error("Secondary DNS", $("<pre/>").text(data));
+    },
+    function(err) {
+      show_modal_error("Secondary DNS", $("<pre/>").text(err));
+    });
 }
 </script>

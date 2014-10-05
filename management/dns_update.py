@@ -7,6 +7,7 @@
 import os, os.path, urllib.parse, datetime, re, hashlib, base64
 import ipaddress
 import rtyaml
+import dns.resolver
 
 from mailconfig import get_mail_domains
 from utils import shell, load_env_vars_from_file, safe_domain_name, sort_domains
@@ -54,6 +55,11 @@ def get_custom_dns_config(env):
 		return rtyaml.load(open(os.path.join(env['STORAGE_ROOT'], 'dns/custom.yaml')))
 	except:
 		return { }
+
+def write_custom_dns_config(config, env):
+	config_yaml = rtyaml.dump(config)
+	with open(os.path.join(env['STORAGE_ROOT'], 'dns/custom.yaml'), "w") as f:
+		f.write(config_yaml)
 
 def do_dns_update(env, force=False):
 	# What domains (and their zone filenames) should we build?
@@ -105,7 +111,7 @@ def do_dns_update(env, force=False):
 		zonefiles[i][1] += ".signed"
 
 	# Write the main nsd.conf file.
-	if write_nsd_conf(zonefiles, env):
+	if write_nsd_conf(zonefiles, additional_records, env):
 		# Make sure updated_domains contains *something* if we wrote an updated
 		# nsd.conf so that we know to restart nsd.
 		if len(updated_domains) == 0:
@@ -134,12 +140,22 @@ def do_dns_update(env, force=False):
 def build_zone(domain, all_domains, additional_records, env, is_zone=True):
 	records = []
 
-	# For top-level zones, define ourselves as the authoritative name server.
+	# For top-level zones, define the authoritative name servers.
+	#
+	# Normally we are our own nameservers. Some TLDs require two distinct IP addresses,
+	# so we allow the user to override the second nameserver definition so that
+	# secondary DNS can be set up elsewhere.
+	#
 	# 'False' in the tuple indicates these records would not be used if the zone
 	# is managed outside of the box.
 	if is_zone:
+		# Obligatory definition of ns1.PRIMARY_HOSTNAME.
 		records.append((None,  "NS",  "ns1.%s." % env["PRIMARY_HOSTNAME"], False))
-		records.append((None,  "NS",  "ns2.%s." % env["PRIMARY_HOSTNAME"], False))
+
+		# Define ns2.PRIMARY_HOSTNAME or whatever the user overrides.
+		secondary_ns = additional_records.get("_secondary_nameserver", "ns2." + env["PRIMARY_HOSTNAME"])
+		records.append((None,  "NS", secondary_ns+'.', False))
+
 
 	# In PRIMARY_HOSTNAME...
 	if domain == env["PRIMARY_HOSTNAME"]:
@@ -437,7 +453,7 @@ $TTL 1800           ; default time to live
 
 ########################################################################
 
-def write_nsd_conf(zonefiles, env):
+def write_nsd_conf(zonefiles, additional_records, env):
 	# Basic header.
 	nsdconf = """
 server:
@@ -465,6 +481,19 @@ zone:
 	name: %s
 	zonefile: %s
 """ % (domain, zonefile)
+	
+		# If a custom secondary nameserver has been set, allow zone transfers
+		# and notifies to that nameserver.
+		if additional_records.get("_secondary_nameserver"):
+			# Get the IP address of the nameserver by resolving it.
+			hostname = additional_records.get("_secondary_nameserver")
+			resolver = dns.resolver.get_default_resolver()
+			response = dns.resolver.query(hostname, "A")
+			ipaddr = str(response[0])
+			nsdconf += """\tnotify: %s NOKEY
+	provide-xfr: %s NOKEY
+""" % (ipaddr, ipaddr)
+
 
 	# Check if the nsd.conf is changing. If it isn't changing,
 	# return False to flag that no change was made.
@@ -688,11 +717,35 @@ def set_custom_dns_record(qname, rtype, value, env):
 				config[qname][rtype] = value
 
 	# serialize & save
-	config_yaml = rtyaml.dump(config)
-	with open(os.path.join(env['STORAGE_ROOT'], 'dns/custom.yaml'), "w") as f:
-		f.write(config_yaml)
+	write_custom_dns_config(config, env)
 
 	return True
+
+########################################################################
+
+def set_secondary_dns(hostname, env):
+	config = get_custom_dns_config(env)
+		
+	if hostname in (None, ""):
+		# Clear.
+		if "_secondary_nameserver" in config:
+			del config["_secondary_nameserver"]
+	else:
+		# Validate.
+		hostname = hostname.strip().lower()
+		resolver = dns.resolver.get_default_resolver()
+		try:
+			response = dns.resolver.query(hostname, "A")
+		except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+			raise ValueError("Could not resolve the IP address of %s." % hostname)
+
+		# Set.
+		config["_secondary_nameserver"] = hostname
+
+	# Save and apply.
+	write_custom_dns_config(config, env)
+	return do_dns_update(env)
+
 
 ########################################################################
 

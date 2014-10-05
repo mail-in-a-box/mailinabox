@@ -180,6 +180,22 @@ def dns_update():
 	except Exception as e:
 		return (str(e), 500)
 
+@app.route('/dns/secondary-nameserver')
+@authorized_personnel_only
+def dns_get_secondary_nameserver():
+	from dns_update import get_custom_dns_config
+	return json_response({ "hostname": get_custom_dns_config(env).get("_secondary_nameserver") })
+
+@app.route('/dns/secondary-nameserver', methods=['POST'])
+@authorized_personnel_only
+def dns_set_secondary_nameserver():
+	from dns_update import set_secondary_dns
+	try:
+		return set_secondary_dns(request.form.get('hostname'), env)
+	except ValueError as e:
+		return (str(e), 400)
+
+
 @app.route('/dns/set/<qname>', methods=['POST'])
 @app.route('/dns/set/<qname>/<rtype>', methods=['POST'])
 @app.route('/dns/set/<qname>/<rtype>/<value>', methods=['POST'])
