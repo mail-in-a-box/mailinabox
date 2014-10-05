@@ -88,7 +88,8 @@
                 <li><a href="#system_backup" onclick="return show_panel(this);">Backup Status</a></li>
                 <li class="divider"></li>
                 <li class="dropdown-header">Super Advanced Options</li>
-                <li><a href="#system_dns" onclick="return show_panel(this);">DNS (Custom/External)</a></li>
+                <li><a href="#custom_dns" onclick="return show_panel(this);">Custom DNS</a></li>
+                <li><a href="#external_dns" onclick="return show_panel(this);">External DNS</a></li>
               </ul>
             </li>
             <li class="dropdown active">
@@ -118,8 +119,12 @@
       {% include "system-backup.html" %}
       </div>
 
-      <div id="panel_system_dns" class="container panel">
-      {% include "system-dns.html" %}
+      <div id="panel_external_dns" class="container panel">
+      {% include "external-dns.html" %}
+      </div>
+
+      <div id="panel_custom_dns" class="container panel">
+      {% include "custom-dns.html" %}
       </div>
 
       <div id="panel_login" class="panel">
