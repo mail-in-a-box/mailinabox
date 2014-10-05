@@ -27,6 +27,8 @@ def backup_status(env):
 	now = datetime.datetime.now(dateutil.tz.tzlocal())
 	def reldate(date, ref):
 		rd = dateutil.relativedelta.relativedelta(ref, date)
+		if rd.months > 1: return "%d months, %d days" % (rd.months, rd.days)
+		if rd.months == 1: return "%d month, %d days" % (rd.months, rd.days)
 		if rd.days >= 7: return "%d days" % rd.days
 		if rd.days > 1: return "%d days, %d hours" % (rd.days, rd.hours)
 		if rd.days == 1: return "%d day, %d hours" % (rd.days, rd.hours)
