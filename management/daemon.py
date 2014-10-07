@@ -74,6 +74,7 @@ def index():
 	no_admins_exist = (len([user for user in get_mail_users(env, as_json=True) if "admin" in user['privileges']]) == 0)
 	return render_template('index.html',
 		hostname=env['PRIMARY_HOSTNAME'],
+		storage_root=env['STORAGE_ROOT'],
 		no_admins_exist=no_admins_exist,
 	)
 
@@ -226,6 +227,12 @@ def dns_get_dump():
 	return json_response(build_recommended_dns(env))
 
 # WEB
+
+@app.route('/web/domains')
+@authorized_personnel_only
+def web_get_domains():
+	from web_update import get_web_domains_info
+	return json_response(get_web_domains_info(env))
 
 @app.route('/web/update', methods=['POST'])
 @authorized_personnel_only

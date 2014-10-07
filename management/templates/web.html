@@ -1,0 +1,100 @@
+<style>
+</style>
+
+<h2>Static Web Hosting</h2>
+
+<p>This machine is serving a simple, static website at <a href="https://{{hostname}}">https://{{hostname}}</a> and at all domain names that you set up an email user or alias for.</p>
+
+<h3>Uploading web files</h3>
+
+<p>You can replace this website with your own HTML or other static files:</p>
+
+<ol>
+<li>Ensure that the domains and SSL certificates are configured properly on the <a href="#system_status" onclick="return show_panel(this);">Status Checks</a> page.</li>
+
+<li>Install an SSH file transfer program such as <a href="https://filezilla-project.org/">FileZilla</a> or <a href="http://linuxcommand.org/man_pages/scp1.html">scp</a>.</li>
+
+<li>Log in with the file transfer program. The server is <strong>{{hostname}}</strong>, the protocol is SSH or SFTP, and use the <strong>SSH login credentials</strong> that you used when you originally created this machine at your cloud host provider. This is <strong>not</strong> what you use to log in either for email or this control panel. Your SSH credentials probably involves a private key file.</li>
+
+<li>Replace the files in <tt>{{storage_root}}/www/default</tt>, or the directory indicated in the table below, with any HTML pages or other static files. They will appear directly and immediately on the web.</li>
+
+<table id="web_domains_existing" class="table" style="margin-bottom: 2em; width: auto;">
+        <thead>
+                <tr>
+                        <th>Site</th>
+                        <th>Directory for Files</th>
+                </tr>
+        </thead>
+        <tbody>
+        </tbody>
+</table>
+
+<li>If you want to have this box host a static website on a domain that is not listed in the table, create a dummy <a href="#users" onclick="return show_panel(this);">mail user</a> or <a href="#aliases" onclick="return show_panel(this);">alias</a> on the domain first.</li>
+
+</ol>
+
+<h3>Different sites for different domains</h3>
+
+<p>Create one of the directories shown in the table below to create a space for different files for one of the websites.</p>
+
+<p>After you create one of these directories, click <button id="web_update" class="btn btn-primary" onclick="do_web_update()">Web Update</button> to restart the box&rsquo;s web server so that it sees the new website file location.</p>
+
+<table id="web_domains_custom" class="table" style="margin-bottom: 2em; width: auto;">
+        <thead>
+                <tr>
+                        <th>Site</th>
+                        <th>Create Directory</th>
+                </tr>
+        </thead>
+        <tbody>
+        </tbody>
+</table>
+
+
+<script>
+function show_web() {
+ api(
+    "/web/domains",
+    "GET",
+    {
+    },
+    function(domains) {
+	var tb = $('#web_domains_existing tbody');
+	tb.text('');
+	for (var i = 0; i < domains.length; i++) {
+		var row = $("<tr><td class='domain'><a href=''></a></td><td class='directory'/></tr>");
+		tb.append(row);
+		row.find('.domain a').text('https://' + domains[i].domain);
+		row.find('.domain a').attr('href', 'https://' + domains[i].domain);
+		row.find('.directory').text(domains[i].root);
+	}
+
+	tb = $('#web_domains_custom tbody');
+	tb.text('');
+	for (var i = 0; i < domains.length; i++) {
+		if (domains[i].root != domains[i].custom_root) {
+			var row = $("<tr><td class='domain'><a href=''></a></td><td class='directory'/></tr>");
+			tb.append(row);
+			row.find('.domain a').text('https://' + domains[i].domain);
+			row.find('.domain a').attr('href', 'https://' + domains[i].domain);
+			row.find('.directory').text(domains[i].custom_root);
+		}
+	}
+    });
+}
+
+function do_web_update() {
+ api(
+    "/web/update",
+    "POST",
+    {
+    },
+    function(data) {
+      if (data == "")
+        data = "Nothing changed.";
+      else
+        data = $("<pre/>").text(data);
+      show_modal_error("Web Update", data, function() { show_web() });
+    });
+}
+</script>

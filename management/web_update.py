@@ -113,11 +113,11 @@ def make_domain_config(domain, template, template_for_primaryhost, env):
 
 	return nginx_conf
 
-def get_web_root(domain, env):
+def get_web_root(domain, env, test_exists=True):
 	# Try STORAGE_ROOT/web/domain_name if it exists, but fall back to STORAGE_ROOT/web/default.
 	for test_domain in (domain, 'default'):
 		root = os.path.join(env["STORAGE_ROOT"], "www", safe_domain_name(test_domain))
-		if os.path.exists(root): break
+		if os.path.exists(root) or not test_exists: break
 	return root
 
 def get_domain_ssl_files(domain, env):
@@ -193,3 +193,12 @@ def ensure_ssl_certificate_exists(domain, ssl_key, ssl_certificate, csr_path, en
 		"-signkey", ssl_key,
 		"-out", ssl_certificate])
 
+def get_web_domains_info(env):
+	return [
+		{
+			"domain": domain,
+			"root": get_web_root(domain, env),
+			"custom_root": get_web_root(domain, env, test_exists=False),
+		}
+		for domain in get_web_domains(env)
+	]
