@@ -39,7 +39,12 @@ function nice_size(bytes) {
     bytes /= 1024;
     powers.shift();
   }
-  return (Math.round(bytes*10)/10) + " " + powers[0];
+  // round to have three significant figures but at most one decimal place
+  if (bytes >= 100)
+    bytes = Math.round(bytes)
+  else
+    bytes = Math.round(bytes*10)/10;
+  return bytes + " " + powers[0];
 }
 
 function show_system_backup() {

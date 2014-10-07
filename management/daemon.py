@@ -98,7 +98,7 @@ def me():
 @authorized_personnel_only
 def mail_users():
 	if request.args.get("format", "") == "json":
-		return json_response(get_mail_users_ex(env, with_archived=True))
+		return json_response(get_mail_users_ex(env, with_archived=True, with_slow_info=True))
 	else:
 		return "".join(x+"\n" for x in get_mail_users(env))
 

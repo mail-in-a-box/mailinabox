@@ -53,7 +53,7 @@ def get_mail_users(env):
 	users = [ row[0] for row in c.fetchall() ]
 	return utils.sort_email_addresses(users, env)
 
-def get_mail_users_ex(env, with_archived=False):
+def get_mail_users_ex(env, with_archived=False, with_slow_info=False):
 	# Returns a complex data structure of all user accounts, optionally
 	# including archived (status="inactive") accounts.
 	#
@@ -86,15 +86,20 @@ def get_mail_users_ex(env, with_archived=False):
 	c.execute('SELECT email, privileges FROM users')
 	for email, privileges in c.fetchall():
 		active_accounts.add(email)
-		users.append({
+
+		user = {
 			"email": email,
 			"privileges": parse_privs(privileges),
 			"status": "active",
-			"aliases": [
+		}
+		users.append(user)
+
+		if with_slow_info:
+			user["aliases"] = [
 				(alias, sorted(evaluate_mail_alias_map(alias, aliases, env)))
 				for alias in aliases.get(email.lower(), [])
 				]
-		})
+			user["mailbox_size"] = utils.du(os.path.join(env['STORAGE_ROOT'], 'mail/mailboxes', *reversed(email.split("@"))))
 
 	# Add in archived accounts.
 	if with_archived:
@@ -102,13 +107,17 @@ def get_mail_users_ex(env, with_archived=False):
 		for domain in os.listdir(root):
 			for user in os.listdir(os.path.join(root, domain)):
 				email = user + "@" + domain
+				mbox = os.path.join(root, domain, user)
 				if email in active_accounts: continue
-				users.append({
+				user = {
 					"email": email, 
 					"privileges": "",
 					"status": "inactive",
-					"mailbox": os.path.join(root, domain, user),
-				})
+					"mailbox": mbox,
+				}
+				users.append(user)
+				if with_slow_info:
+					user["mailbox_size"] = utils.du(mbox)
 
 	# Group by domain.
 	domains = { }

@@ -1,8 +1,8 @@
 <h2>Users</h2>
 
 <style>
-#user_table tr.account_inactive td .address { color: #888; text-decoration: line-through; }
-#user_table .aliases { margin-top: .33em; font-size: 95%; }
+#user_table tr.account_inactive td.address { color: #888; text-decoration: line-through; }
+#user_table .aliases { font-size: 90%; }
 #user_table .aliases div:before { content: "⇖ "; }
 #user_table .aliases div {  }
 #user_table .actions { margin-top: .33em; font-size: 95%; }
@@ -38,6 +38,13 @@
 
 <h3>Existing mail users</h3>
 <table id="user_table" class="table" style="width: auto">
+  <thead>
+    <tr>
+      <th width="50%">Email Address</th>
+      <th>Actions</th>
+      <th>Mailbox Size</th>
+    </tr>
+  </thead>
   <tbody>
   </tbody>
 </table>
@@ -45,10 +52,9 @@
 <div style="display: none">
   <table>
   <tr id="user-template">
-    <td class='email'>
-      <div class='address'> </div>
-
-      <div class='actions'>
+    <td class='address'>
+    </td>
+    <td class='actions'>
         <span class='privs'>
         </span>
 
@@ -65,9 +71,13 @@
         <a href="#" onclick="users_remove(this); return false;" class='if_active' title="Archive Account">
           archive account
         </a>
-
-        <div class='if_inactive restore_info' style='color: #888; font-size: 90%'>To restore account, create a new account with this email address. Or to permanently delete the mailbox, delete the directory <tt></tt> on the machine.</div>
-      </div>
+    </td>
+    <td class='mailboxsize'>
+    </td>
+  </tr>
+  <tr id="user-extra-template">
+    <td colspan="3" style="border-top: 0; padding-top: 0">
+      <div class='if_inactive restore_info' style='color: #888; font-size: 90%'>To restore account, create a new account with this email address. Or to permanently delete the mailbox, delete the directory <tt></tt> on the machine.</div>
 
       <div class='aliases' style='display: none'> </div>
     </td>
@@ -94,13 +104,19 @@ function show_users() {
           var user = r[i].users[k];
 
           var n = $("#user-template").clone();
+          var n2 = $("#user-extra-template").clone();
           n.attr('id', '');
+          n2.attr('id', '');
+          $('#user_table tbody').append(n);
+          $('#user_table tbody').append(n2);
 
           n.addClass("account_" + user.status);
+          n2.addClass("account_" + user.status);
+
           n.attr('data-email', user.email);
-          n.find('td.email .address').text(user.email)
-          $('#user_table tbody').append(n);
-          n.find('.restore_info tt').text(user.mailbox);
+          n.find('.address').text(user.email)
+          n.find('.mailboxsize').text(nice_size(user.mailbox_size))
+          n2.find('.restore_info tt').text(user.mailbox);
 
           if (user.status == 'inactive') continue;
 
@@ -121,9 +137,9 @@ function show_users() {
           }
 
           if (user.aliases && user.aliases.length > 0) {
-            n.find('.aliases').show();
+            n2.find('.aliases').show();
             for (var j = 0; j < user.aliases.length; j++) {
-              n.find('td.email .aliases').append($("<div/>").text(
+              n2.find('.aliases').append($("<div/>").text(
                 user.aliases[j][0]
                 + (user.aliases[j][1].length > 0 ? " ⇐ " + user.aliases[j][1].join(", ") : "")
                 ))

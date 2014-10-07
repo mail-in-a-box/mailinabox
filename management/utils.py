@@ -165,3 +165,22 @@ def create_syslog_handler():
     handler = logging.handlers.SysLogHandler(address='/dev/log')
     handler.setLevel(logging.WARNING)
     return handler
+
+def du(path):
+    # Computes the size of all files in the path, like the `du` command.
+    # Based on http://stackoverflow.com/a/17936789. Takes into account
+    # soft and hard links.
+    total_size = 0
+    seen = set()
+    for dirpath, dirnames, filenames in os.walk(path):
+        for f in filenames:
+            fp = os.path.join(dirpath, f)
+            try:
+                stat = os.lstat(fp)
+            except OSError:
+                continue
+            if stat.st_ino in seen:
+                continue
+            seen.add(stat.st_ino)
+            total_size += stat.st_size
+    return total_size
