@@ -7,16 +7,18 @@
 
 <h3>Uploading web files</h3>
 
-<p>You can replace this website with your own HTML or other static files:</p>
+<p>You can replace the default website with your own HTML pages and other static files. This control panel won&rsquo;t help you design a website, but once you have <tt>.html</tt> files you can upload it following these instructions:</p>
 
 <ol>
-<li>Ensure that the domains and SSL certificates are configured properly on the <a href="#system_status" onclick="return show_panel(this);">Status Checks</a> page.</li>
+<li>Ensure that any domains you are publishing a website for have no problems on the <a href="#system_status" onclick="return show_panel(this);">Status Checks</a> page.</li>
 
-<li>Install an SSH file transfer program such as <a href="https://filezilla-project.org/">FileZilla</a> or <a href="http://linuxcommand.org/man_pages/scp1.html">scp</a>.</li>
+<li>On your personal computer, install an SSH file transfer program such as <a href="https://filezilla-project.org/">FileZilla</a> or <a href="http://linuxcommand.org/man_pages/scp1.html">scp</a>.</li>
 
-<li>Log in with the file transfer program. The server is <strong>{{hostname}}</strong>, the protocol is SSH or SFTP, and use the <strong>SSH login credentials</strong> that you used when you originally created this machine at your cloud host provider. This is <strong>not</strong> what you use to log in either for email or this control panel. Your SSH credentials probably involves a private key file.</li>
+<li>Log in to this machine with the file transfer program. The server is <strong>{{hostname}}</strong>, the protocol is SSH or SFTP, and use the <strong>SSH login credentials</strong> that you used when you originally created this machine at your cloud host provider. This is <strong>not</strong> what you use to log in either for email or this control panel. Your SSH credentials probably involves a private key file.</li>
 
-<li>Replace the files in <tt>{{storage_root}}/www/default</tt>, or the directory indicated in the table below, with any HTML pages or other static files. They will appear directly and immediately on the web.</li>
+<li>Upload your <tt>.html</tt> or other files to the directory <tt>{{storage_root}}/www/default</tt> on this machine. They will appear directly and immediately on the web.</li>
+
+<li>The websites set up on this machine are listed in the table below with where to put the files for each website (if you have customized that, see next section).</li>
 
 <table id="web_domains_existing" class="table" style="margin-bottom: 2em; width: auto;">
         <thead>
@@ -62,22 +64,22 @@ function show_web() {
 	var tb = $('#web_domains_existing tbody');
 	tb.text('');
 	for (var i = 0; i < domains.length; i++) {
-		var row = $("<tr><td class='domain'><a href=''></a></td><td class='directory'/></tr>");
+		var row = $("<tr><th class='domain'><a href=''></a></th><td class='directory'><tt/></td></tr>");
 		tb.append(row);
 		row.find('.domain a').text('https://' + domains[i].domain);
 		row.find('.domain a').attr('href', 'https://' + domains[i].domain);
-		row.find('.directory').text(domains[i].root);
+		row.find('.directory tt').text(domains[i].root);
 	}
 
 	tb = $('#web_domains_custom tbody');
 	tb.text('');
 	for (var i = 0; i < domains.length; i++) {
 		if (domains[i].root != domains[i].custom_root) {
-			var row = $("<tr><td class='domain'><a href=''></a></td><td class='directory'/></tr>");
+			var row = $("<tr><th class='domain'><a href=''></a></th><td class='directory'><tt></td></tr>");
 			tb.append(row);
 			row.find('.domain a').text('https://' + domains[i].domain);
 			row.find('.domain a').attr('href', 'https://' + domains[i].domain);
-			row.find('.directory').text(domains[i].custom_root);
+			row.find('.directory tt').text(domains[i].custom_root);
 		}
 	}
     });
