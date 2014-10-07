@@ -146,7 +146,7 @@ def get_domain_ssl_files(domain, env):
 		# the user has uploaded a different private key for this domain.
 		if not ssl_key_is_alt:
 			from status_checks import check_certificate
-			if check_certificate(domain, ssl_certificate_primary, None) == "OK":
+			if check_certificate(domain, ssl_certificate_primary, None)[0] == "OK":
 				ssl_certificate = ssl_certificate_primary
 
 	# Where would the CSR go? As with the SSL cert itself, the CSR must be

@@ -360,9 +360,15 @@ def check_ssl_cert(domain, env):
 
 	# Check that the certificate is good.
 
-	cert_status = check_certificate(domain, ssl_certificate, ssl_key)
+	cert_status, cert_status_details = check_certificate(domain, ssl_certificate, ssl_key)
 
-	if cert_status == "SELF-SIGNED":
+	if cert_status == "OK":
+		# The certificate is ok. The details has expiry info.
+		env['out'].print_ok("SSL certificate is signed & valid. " + cert_status_details)
+
+	elif cert_status == "SELF-SIGNED":
+		# Offer instructions for purchasing a signed certificate.
+
 		fingerprint = shell('check_output', [
 			"openssl",
 			"x509",
@@ -393,14 +399,12 @@ def check_ssl_cert(domain, env):
 			If you receive intermediate certificates, use a text editor and paste your certificate on top and then the intermediate certificates
 			below it. Save the file and place it onto this machine at %s. Then run "service nginx restart".""" % ssl_certificate)
 
-	elif cert_status == "OK":
-		env['out'].print_ok("SSL certificate is signed & valid.")
-
 	else:
-		env['out'].print_error("The SSL certificate has a problem:")
-		env['out'].print_line("")
-		env['out'].print_line(cert_status)
-		env['out'].print_line("")
+		env['out'].print_error("The SSL certificate has a problem: " + cert_status)
+		if cert_status_details:
+			env['out'].print_line("")
+			env['out'].print_line(cert_status_details)
+			env['out'].print_line("")
 
 def check_certificate(domain, ssl_certificate, ssl_private_key):
 	# Use openssl verify to check the status of a certificate.
@@ -444,8 +448,8 @@ def check_certificate(domain, ssl_certificate, ssl_private_key):
 
 	wildcard_domain = re.sub("^[^\.]+", "*", domain)
 	if domain is not None and domain not in certificate_names and wildcard_domain not in certificate_names:
-		return "This certificate is for the wrong domain names. It is for %s." % \
-			", ".join(sorted(certificate_names))
+		return ("The certificate is for the wrong domain name. It is for %s."
+			% ", ".join(sorted(certificate_names)), None)
 
 	# Second, check that the certificate matches the private key. Get the modulus of the
 	# private key and of the public key in the certificate. They should match. The output
@@ -461,7 +465,7 @@ def check_certificate(domain, ssl_certificate, ssl_private_key):
 			"-in", ssl_certificate,
 			"-noout", "-modulus"])
 		if private_key_modulus != cert_key_modulus:
-			return "The certificate installed at %s does not correspond to the private key at %s." % (ssl_certificate, ssl_private_key)
+			return ("The certificate installed at %s does not correspond to the private key at %s." % (ssl_certificate, ssl_private_key), None)
 
 	# Next validate that the certificate is valid. This checks whether the certificate
 	# is self-signed, that the chain of trust makes sense, that it is signed by a CA
@@ -475,7 +479,7 @@ def check_certificate(domain, ssl_certificate, ssl_private_key):
 	cert = open(ssl_certificate).read()
 	m = re.match(r'(-*BEGIN CERTIFICATE-*.*?-*END CERTIFICATE-*)(.*)', cert, re.S)
 	if m == None:
-		return "The certificate file is an invalid PEM certificate."
+		return ("The certificate file is an invalid PEM certificate.", None)
 	mycert, chaincerts = m.groups()
 
 	# This command returns a non-zero exit status in most cases, so trap errors.
@@ -491,10 +495,10 @@ def check_certificate(domain, ssl_certificate, ssl_private_key):
 
 	if "self signed" in verifyoutput:
 		# Certificate is self-signed.
-		return "SELF-SIGNED"
+		return ("SELF-SIGNED", None)
 	elif retcode != 0:
 		# There is some unknown problem. Return the `openssl verify` raw output.
-		return verifyoutput.strip()
+		return ("There is a problem with the SSL certificate.", verifyoutput.strip())
 	else:
 		# `openssl verify` returned a zero exit status so the cert is currently
 		# good.
@@ -502,11 +506,12 @@ def check_certificate(domain, ssl_certificate, ssl_private_key):
 		# But is it expiring soon?
 		now = datetime.datetime.now(dateutil.tz.tzlocal())
 		ndays = (cert_expiration_date-now).days
+		expiry_info = "The certificate expires in %d days on %s." % (ndays, cert_expiration_date.strftime("%x"))
 		if ndays <= 31:
-			return "This certificate expires in %d days on %s." % (ndays, cert_expiration_date.strftime("%x"))
+			return ("The certificate is expiring soon: " + expiry_info, None)
 
 		# Return the special OK code.
-		return "OK"
+		return ("OK", expiry_info)
 
 _apt_updates = None
 def list_apt_updates(apt_update=True):
@@ -592,7 +597,7 @@ if __name__ == "__main__":
 		ssl_key, ssl_certificate, ssl_csr_path = get_domain_ssl_files(domain, env)
 		if not os.path.exists(ssl_certificate):
 			sys.exit(1)
-		cert_status = check_certificate(domain, ssl_certificate, ssl_key)
+		cert_status, cert_status_details = check_certificate(domain, ssl_certificate, ssl_key)
 		if cert_status != "OK":
 			sys.exit(1)
 		sys.exit(0)
