@@ -386,7 +386,7 @@ def check_ssl_cert(domain, env):
 			env['out'].print_line("")
 			env['out'].print_line("   " + fingerprint, monospace=True)
 		else:
-			env['out'].print_error("""The SSL certificate for this domain is currently self-signed. Visitors to a website on
+			env['out'].print_warning("""The SSL certificate for this domain is currently self-signed. Visitors to a website on
 			this domain will get a security warning. If you are not serving a website on this domain, then it is
 			safe to leave the self-signed certificate in place.""")
 		env['out'].print_line("")
@@ -570,6 +570,9 @@ class ConsoleOutput:
 
 	def print_error(self, message):
 		self.print_block(message, first_line="✖  ")
+
+	def print_warning(self, message):
+		self.print_block(message, first_line="?  ")
 
 	def print_block(self, message, first_line="   "):
 		print(first_line, end='')

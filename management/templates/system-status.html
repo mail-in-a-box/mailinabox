@@ -10,11 +10,14 @@
   border-top: none;
   padding-top: 0;
 }
-#system-checks .error td {
+#system-checks .status-error td {
   color: #733;
 }
-#system-checks .ok td {
-  color: #030;
+#system-checks .status-warning td {
+  color: #770;
+}
+#system-checks .status-ok td {
+  color: #040;
 }
 #system-checks div.extra {
   display: none;
@@ -52,9 +55,13 @@ function show_system_status() {
       for (var i = 0; i < r.length; i++) {
         var n = $("<tr><td class='status'/><td class='message'><p style='margin: 0'/><div class='extra'/><a class='showhide' href='#'/></tr>");
         if (i == 0) n.addClass('first')
-        n.addClass(r[i].type)
+        if (r[i].type == "heading")
+                n.addClass(r[i].type)
+        else
+                n.addClass("status-" + r[i].type)
         if (r[i].type == "ok") n.find('td.status').text("✓")
         if (r[i].type == "error") n.find('td.status').text("✖")
+        if (r[i].type == "warning") n.find('td.status').text("?")
         n.find('td.message p').text(r[i].text)
         $('#system-checks tbody').append(n);
 
