@@ -23,9 +23,9 @@
       <button type="submit" class="btn btn-primary">Update</button>
     </div>
   </div>
-  <div class="form-group">
+  <div id="secondarydns-clear-instructions" class="form-group" style="display: none">
     <div class="col-sm-offset-1 col-sm-11">
-      <p class="small">Clear the box to use the box itself as secondary DNS, which is the default/normal setup.</p>
+      <p class="small">Clear the input field above and click Update to use this machine itself as secondary DNS, which is the default/normal setup.</p>
     </div>
   </div>
 </form>
@@ -76,6 +76,7 @@ function show_custom_dns() {
     { },
     function(data) {
       $('#secondarydnsHostname').val(data.hostname ? data.hostname : '');
+      $('#secondarydns-clear-instructions').toggle(data.hostname != null);
     });
 }
 
@@ -89,6 +90,7 @@ function do_set_secondary_dns() {
     function(data) {
       if (data == "") return; // nothing updated
       show_modal_error("Secondary DNS", $("<pre/>").text(data));
+      $('#secondarydns-clear-instructions').slideDown();
     },
     function(err) {
       show_modal_error("Secondary DNS", $("<pre/>").text(err));

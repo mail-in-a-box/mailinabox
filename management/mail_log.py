@@ -42,8 +42,9 @@ def scan_mail_log(logger, env):
 			for date, sender, message in collector["rejected-mail"][k]:
 				logger.print_line(k + "\t" + str(date) + "\t" + sender + "\t" + message)
 
-	logger.add_heading("Other")
-	logger.print_block("Unrecognized services in the log: " + ", ".join(collector["other-services"]))
+	if len(collector["other-services"]) > 0:
+		logger.add_heading("Other")
+		logger.print_block("Unrecognized services in the log: " + ", ".join(collector["other-services"]))
 
 def scan_mail_log_line(line, collector):
 	m = re.match(r"(\S+ \d+ \d+:\d+:\d+) (\S+) (\S+?)(\[\d+\])?: (.*)", line)
