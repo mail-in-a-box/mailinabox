@@ -332,9 +332,11 @@ def build_sshfp_records():
 	}
 
 	# Get our local fingerprints by running ssh-keyscan. The output looks
-	# like the known_hosts file: hostname, keytype, fingerprint.
+	# like the known_hosts file: hostname, keytype, fingerprint. The order
+	# of the output is arbitrary, so sort it to prevent spurrious updates
+	# to the zone file (that trigger bumping the serial number).
 	keys = shell("check_output", ["ssh-keyscan", "localhost"])
-	for key in keys.split("\n"):
+	for key in sorted(keys.split("\n")):
 		if key.strip() == "" or key[0] == "#": continue
 		try:
 			host, keytype, pubkey = key.split(" ")
