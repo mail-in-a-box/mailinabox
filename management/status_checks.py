@@ -413,11 +413,18 @@ def check_certificate(domain, ssl_certificate, ssl_private_key):
 	# must be found in the Subject Common Name (CN) or be one of the
 	# Subject Alternative Names. A wildcard might also appear as the CN
 	# or in the SAN list, so check for that tool.
-	cert_dump = shell('check_output', [
+	retcode, cert_dump = shell('check_output', [
 		"openssl", "x509",
 		"-in", ssl_certificate,
 		"-noout", "-text", "-nameopt", "rfc2253",
-		])
+		], trap=True)
+
+	# If the certificate is catastrophically bad, catch that now and report it.
+	# More information was probably written to stderr (which we aren't capturing),
+	# but it is probably not helpful to the user anyway.
+	if retcode != 0:
+		return ("The SSL certificate file at %s appears to be corrupted or not a PEM-formatted SSL certificate file." % ssl_certificate, None)
+
 	cert_dump = cert_dump.split("\n")
 	certificate_names = set()
 	cert_expiration_date = None
