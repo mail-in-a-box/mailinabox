@@ -57,21 +57,11 @@ if [ -L /etc/init.d/php-fastcgi ]; then
 	apt-get -y purge php5-cgi #NODOC
 fi
 
-# Put our webfinger script into a well-known location.
-for f in webfinger; do
-	cp tools/$f.php /usr/local/bin/mailinabox-$f.php
-	chown www-data.www-data /usr/local/bin/mailinabox-$f.php
-done
-
 # Remove obsoleted scripts. #NODOC
 # exchange-autodiscover is now handled by Z-Push. #NODOC
-for f in exchange-autodiscover; do #NODOC
+for f in webfinger exchange-autodiscover; do #NODOC
 	rm -f /usr/local/bin/mailinabox-$f.php #NODOC
 done #NODOC
-
-# Make some space for users to customize their webfinger responses.
-mkdir -p $STORAGE_ROOT/webfinger/acct;
-chown -R $STORAGE_USER $STORAGE_ROOT/webfinger
 
 # Start services.
 restart_service nginx
