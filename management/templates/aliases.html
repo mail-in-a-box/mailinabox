@@ -82,15 +82,23 @@ function show_aliases() {
     function(r) {
       $('#alias_table tbody').html("");
       for (var i = 0; i < r.length; i++) {
-        var n = $("#alias-template").clone();
-        n.attr('id', '');
+        var hdr = $("<tr><td colspan='3'><h4/></td></tr>");
+        hdr.find('h4').text(r[i].domain);
+        $('#alias_table tbody').append(hdr);
 
-        if (r[i].required) n.addClass('alias-required');
-        n.attr('data-email', r[i].source);
-        n.find('td.email').text(r[i].source)
-        for (var j = 0; j < r[i].destination.length; j++)
-          n.find('td.target').append($("<div></div>").text(r[i].destination[j]))
-        $('#alias_table tbody').append(n);
+        for (var k = 0; k < r[i].aliases.length; k++) {
+          var alias = r[i].aliases[k];
+
+          var n = $("#alias-template").clone();
+          n.attr('id', '');
+
+          if (alias.required) n.addClass('alias-required');
+          n.attr('data-email', alias.source);
+          n.find('td.email').text(alias.source)
+          for (var j = 0; j < alias.destination.length; j++)
+            n.find('td.target').append($("<div></div>").text(alias.destination[j]))
+          $('#alias_table tbody').append(n);
+        }
       }
     })
 

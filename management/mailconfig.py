@@ -139,28 +139,61 @@ def get_admins(env):
 				users.add(user["email"])
 	return users
 
-def get_mail_aliases(env, as_json=False):
+def get_mail_aliases(env):
+	# Returns a sorted list of tuples of (alias, forward-to string).
 	c = open_database(env)
 	c.execute('SELECT source, destination FROM aliases')
 	aliases = { row[0]: row[1] for row in c.fetchall() } # make dict
 
 	# put in a canonical order: sort by domain, then by email address lexicographically
-	aliases = [ (source, aliases[source]) for source in utils.sort_email_addresses(aliases.keys(), env) ] # sort
-
-	# but put automatic aliases to administrator@ last
-	aliases.sort(key = lambda x : x[1] == get_system_administrator(env))
-
-	if as_json:
-		required_aliases = get_required_aliases(env)
-		aliases = [
-			{
-				"source": alias[0],
-				"destination": [d.strip() for d in alias[1].split(",")],
-				"required": alias[0] in required_aliases or alias[0] == get_system_administrator(env),
-			}
-			for alias in aliases
-		]
+	aliases = [ (source, aliases[source]) for source in utils.sort_email_addresses(aliases.keys(), env) ]
 	return aliases
+
+def get_mail_aliases_ex(env):
+	# Returns a complex data structure of all mail aliases, similar
+	# to get_mail_users_ex.
+	#
+	# [
+	#   {
+	#     domain: "domain.tld",
+	#     alias: [
+	#       {
+	#         source: "name@domain.tld",
+	#         destination: ["target1@domain.com", "target2@domain.com", ...],
+	#         required: True|False
+	#       },
+	#       ...
+	#     ]
+	#   },
+	#   ...
+	# ]
+
+	required_aliases = get_required_aliases(env)
+	domains = {}
+	for source, destination in get_mail_aliases(env):
+		# get alias info
+		domain = get_domain(source)
+		required = ((source in required_aliases) or (source == get_system_administrator(env)))
+
+		# add to list
+		if not domain in domains:
+			domains[domain] = {
+				"domain": domain,
+				"aliases": [],
+			}
+		domains[domain]["aliases"].append({
+			"source": source,
+			"destination": [d.strip() for d in destination.split(",")],
+			"required": required,
+		})
+
+	# Sort domains.
+	domains = [domains[domain] for domain in utils.sort_domains(domains.keys(), env)]
+
+	# Sort aliases within each domain first by required-ness then lexicographically by source address.
+	for domain in domains:
+		domain["aliases"].sort(key = lambda alias : (alias["required"], alias["source"]))
+	return domains
 
 def get_mail_alias_map(env):
 	aliases = { }

@@ -7,9 +7,9 @@ from functools import wraps
 from flask import Flask, request, render_template, abort, Response
 
 import auth, utils
-from mailconfig import get_mail_users_ex, get_admins, add_mail_user, set_mail_password, remove_mail_user
+from mailconfig import get_mail_users, get_mail_users_ex, get_admins, add_mail_user, set_mail_password, remove_mail_user
 from mailconfig import get_mail_user_privileges, add_remove_mail_user_privilege
-from mailconfig import get_mail_aliases, get_mail_domains, add_mail_alias, remove_mail_alias
+from mailconfig import get_mail_aliases, get_mail_aliases_ex, get_mail_domains, add_mail_alias, remove_mail_alias
 
 env = utils.load_environment()
 
@@ -146,7 +146,7 @@ def mail_user_privs_remove():
 @authorized_personnel_only
 def mail_aliases():
 	if request.args.get("format", "") == "json":
-		return json_response(get_mail_aliases(env, as_json=True))
+		return json_response(get_mail_aliases_ex(env))
 	else:
 		return "".join(x+"\t"+y+"\n" for x, y in get_mail_aliases(env))
 
