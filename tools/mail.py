@@ -68,12 +68,13 @@ if len(sys.argv) < 2:
 elif sys.argv[1] == "user" and len(sys.argv) == 2:
 	# Dump a list of users, one per line. Mark admins with an asterisk.
 	users = mgmt("/mail/users?format=json", is_json=True)
-	for user in users:
-		if user['status'] == 'inactive': continue
-		print(user['email'], end='')
-		if "admin" in user['privileges']:
-			print("*", end='')
-		print()
+	for domain in users:
+		for user in domain["users"]:
+			if user['status'] == 'inactive': continue
+			print(user['email'], end='')
+			if "admin" in user['privileges']:
+				print("*", end='')
+			print()
 
 elif sys.argv[1] == "user" and sys.argv[2] in ("add", "password"):
 	if len(sys.argv) < 5:
@@ -103,9 +104,10 @@ elif sys.argv[1] == "user" and sys.argv[2] in ("make-admin", "remove-admin") and
 elif sys.argv[1] == "user" and sys.argv[2] == "admins":
 	# Dump a list of admin users.
 	users = mgmt("/mail/users?format=json", is_json=True)
-	for user in users:
-		if "admin" in user['privileges']:
-			print(user['email'])
+	for domain in users:
+		for user in domain["users"]:
+			if "admin" in user['privileges']:
+				print(user['email'])
 
 elif sys.argv[1] == "alias" and len(sys.argv) == 2:
 	print(mgmt("/mail/aliases"))

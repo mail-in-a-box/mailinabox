@@ -46,45 +46,98 @@ def open_database(env, with_connection=False):
 	else:
 		return conn, conn.cursor()
 
-def get_mail_users(env, as_json=False):
+def get_mail_users(env):
+	# Returns a flat, sorted list of all user accounts.
+	c = open_database(env)
+	c.execute('SELECT email FROM users')
+	users = [ row[0] for row in c.fetchall() ]
+	return utils.sort_email_addresses(users, env)
+
+def get_mail_users_ex(env, with_archived=False):
+	# Returns a complex data structure of all user accounts, optionally
+	# including archived (status="inactive") accounts.
+	#
+	# [
+	#   {
+	#     domain: "domain.tld",
+	#     users: [
+	#       {
+	#         email: "name@domain.tld",
+	#         privileges: [ "priv1", "priv2", ... ],
+	#         status: "active",
+	#         aliases: [
+	#           ("alias@domain.tld", ["indirect.alias@domain.tld", ...]),
+	#           ...
+	#         ]
+	#       },
+	#       ...
+	#     ]
+	#   },
+	#   ...
+	# ]
+
+	# Pre-load all aliases.
+	aliases = get_mail_alias_map(env)
+
+	# Get users and their privileges.
+	users = []
+	active_accounts = set()
 	c = open_database(env)
 	c.execute('SELECT email, privileges FROM users')
+	for email, privileges in c.fetchall():
+		active_accounts.add(email)
+		users.append({
+			"email": email,
+			"privileges": parse_privs(privileges),
+			"status": "active",
+			"aliases": [
+				(alias, sorted(evaluate_mail_alias_map(alias, aliases, env)))
+				for alias in aliases.get(email.lower(), [])
+				]
+		})
 
-	# turn into a list of tuples, but sorted by domain & email address
-	users = { row[0]: row[1] for row in c.fetchall() } # make dict
-	users = [ (email, users[email]) for email in utils.sort_email_addresses(users.keys(), env) ]
+	# Add in archived accounts.
+	if with_archived:
+		root = os.path.join(env['STORAGE_ROOT'], 'mail/mailboxes')
+		for domain in os.listdir(root):
+			for user in os.listdir(os.path.join(root, domain)):
+				email = user + "@" + domain
+				if email in active_accounts: continue
+				users.append({
+					"email": email, 
+					"privileges": "",
+					"status": "inactive",
+					"mailbox": os.path.join(root, domain, user),
+				})
 
-	if not as_json:
-		return [email for email, privileges in users]
-	else:
-		aliases = get_mail_alias_map(env)
-		return [
-			{
-				"email": email,
-				"privileges": parse_privs(privileges),
-				"status": "active",
-				"aliases": [
-					(alias, sorted(evaluate_mail_alias_map(alias, aliases, env)))
-					for alias in aliases.get(email.lower(), [])
-					]
-			}
-			for email, privileges in users
-			 ]
+	# Group by domain.
+	domains = { }
+	for user in users:
+		domain = get_domain(user["email"])
+		if domain not in domains:
+			domains[domain] = {
+				"domain": domain,
+				"users": []
+				}
+		domains[domain]["users"].append(user)
 
-def get_archived_mail_users(env):
-	real_users = set(get_mail_users(env))
-	root = os.path.join(env['STORAGE_ROOT'], 'mail/mailboxes')
-	ret = []
-	for domain_enc in os.listdir(root):
-		for user_enc in os.listdir(os.path.join(root, domain_enc)):
-			email = utils.unsafe_domain_name(user_enc) + "@" + utils.unsafe_domain_name(domain_enc)
-			if email in real_users: continue
-			ret.append({
-				"email": email, 
-				"privileges": "",
-				"status": "inactive"
-			})
-	return ret
+	# Sort domains.
+	domains = [domains[domain] for domain in utils.sort_domains(domains.keys(), env)]
+
+	# Sort users within each domain first by status then lexicographically by email address.
+	for domain in domains:
+		domain["users"].sort(key = lambda user : (user["status"] != "active", user["email"]))
+
+	return domains
+
+def get_admins(env):
+	# Returns a set of users with admin privileges.
+	users = set()
+	for domain in get_mail_users_ex(env):
+		for user in domain["users"]:
+			if "admin" in user["privileges"]:
+				users.add(user["email"])
+	return users
 
 def get_mail_aliases(env, as_json=False):
 	c = open_database(env)
@@ -124,9 +177,10 @@ def evaluate_mail_alias_map(email, aliases,  env):
 		ret |= evaluate_mail_alias_map(alias, aliases, env)
 	return ret
 
+def get_domain(emailaddr):
+	return emailaddr.split('@', 1)[1]
+
 def get_mail_domains(env, filter_aliases=lambda alias : True):
-	def get_domain(emailaddr):
-		return emailaddr.split('@', 1)[1]
 	return set(
 		   [get_domain(addr) for addr in get_mail_users(env)]
 		 + [get_domain(source) for source, target in get_mail_aliases(env) if filter_aliases((source, target)) ]

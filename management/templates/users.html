@@ -66,7 +66,7 @@
           archive account
         </a>
 
-        <div class='if_inactive' style='color: #888; font-size: 90%'>To restore account, create a new account with this email address.</div>
+        <div class='if_inactive restore_info' style='color: #888; font-size: 90%'>To restore account, create a new account with this email address. Or to permanently delete the mailbox, delete the directory <tt></tt> on the machine.</div>
       </div>
 
       <div class='aliases' style='display: none'> </div>
@@ -86,39 +86,48 @@ function show_users() {
     function(r) {
       $('#user_table tbody').html("");
       for (var i = 0; i < r.length; i++) {
-        var n = $("#user-template").clone();
-        n.attr('id', '');
+        var hdr = $("<tr><td><h4/></td></tr>");
+        hdr.find('h4').text(r[i].domain);
+        $('#user_table tbody').append(hdr);
 
-        n.addClass("account_" + r[i].status);
-        n.attr('data-email', r[i].email);
-        n.find('td.email .address').text(r[i].email)
-        $('#user_table tbody').append(n);
+        for (var k = 0; k < r[i].users.length; k++) {
+          var user = r[i].users[k];
 
-        if (r[i].status == 'inactive') continue;
+          var n = $("#user-template").clone();
+          n.attr('id', '');
 
-        var add_privs = ["admin"];
+          n.addClass("account_" + user.status);
+          n.attr('data-email', user.email);
+          n.find('td.email .address').text(user.email)
+          $('#user_table tbody').append(n);
+          n.find('.restore_info tt').text(user.mailbox);
 
-        for (var j = 0; j < r[i].privileges.length; j++) {
-          var p = $("<span><b><span class='name'></span></b> (<a href='#' onclick='mod_priv(this, \"remove\"); return false;' title='Remove Privilege'>remove privilege</a>) |</span>");
-          p.find('span.name').text(r[i].privileges[j]);
-          n.find('.privs').append(p);
-          if (add_privs.indexOf(r[i].privileges[j]) >= 0)
-            add_privs.splice(add_privs.indexOf(r[i].privileges[j]), 1);
-        }
+          if (user.status == 'inactive') continue;
 
-        for (var j = 0; j < add_privs.length; j++) {
-          var p = $("<span><a href='#' onclick='mod_priv(this, \"add\"); return false;' title='Add Privilege'>make <span class='name'></span></a> | </span>");
-          p.find('span.name').text(add_privs[j]);
-          n.find('.add-privs').append(p);
-        }
+          var add_privs = ["admin"];
 
-        if (r[i].aliases && r[i].aliases.length > 0) {
-          n.find('.aliases').show();
-          for (var j = 0; j < r[i].aliases.length; j++) {
-            n.find('td.email .aliases').append($("<div/>").text(
-              r[i].aliases[j][0]
-              + (r[i].aliases[j][1].length > 0 ? " ⇐ " + r[i].aliases[j][1].join(", ") : "")
-              ))
+          for (var j = 0; j < user.privileges.length; j++) {
+            var p = $("<span><b><span class='name'></span></b> (<a href='#' onclick='mod_priv(this, \"remove\"); return false;' title='Remove Privilege'>remove privilege</a>) |</span>");
+            p.find('span.name').text(user.privileges[j]);
+            n.find('.privs').append(p);
+            if (add_privs.indexOf(user.privileges[j]) >= 0)
+              add_privs.splice(add_privs.indexOf(user.privileges[j]), 1);
+          }
+
+          for (var j = 0; j < add_privs.length; j++) {
+            var p = $("<span><a href='#' onclick='mod_priv(this, \"add\"); return false;' title='Add Privilege'>make <span class='name'></span></a> | </span>");
+            p.find('span.name').text(add_privs[j]);
+            n.find('.add-privs').append(p);
+          }
+
+          if (user.aliases && user.aliases.length > 0) {
+            n.find('.aliases').show();
+            for (var j = 0; j < user.aliases.length; j++) {
+              n.find('td.email .aliases').append($("<div/>").text(
+                user.aliases[j][0]
+                + (user.aliases[j][1].length > 0 ? " ⇐ " + user.aliases[j][1].join(", ") : "")
+                ))
+            }
           }
         }
       }

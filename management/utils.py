@@ -23,10 +23,6 @@ def safe_domain_name(name):
     import urllib.parse
     return urllib.parse.quote(name, safe='')
 
-def unsafe_domain_name(name_encoded):
-    import urllib.parse
-    return urllib.parse.unquote(name_encoded)
-
 def sort_domains(domain_names, env):
     # Put domain names in a nice sorted order. For web_update, PRIMARY_HOSTNAME
     # must appear first so it becomes the nginx default server.

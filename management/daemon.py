@@ -7,7 +7,7 @@ from functools import wraps
 from flask import Flask, request, render_template, abort, Response
 
 import auth, utils
-from mailconfig import get_mail_users, add_mail_user, set_mail_password, remove_mail_user, get_archived_mail_users
+from mailconfig import get_mail_users_ex, get_admins, add_mail_user, set_mail_password, remove_mail_user
 from mailconfig import get_mail_user_privileges, add_remove_mail_user_privilege
 from mailconfig import get_mail_aliases, get_mail_domains, add_mail_alias, remove_mail_alias
 
@@ -71,7 +71,7 @@ def json_response(data):
 def index():
 	# Render the control panel. This route does not require user authentication
 	# so it must be safe!
-	no_admins_exist = (len([user for user in get_mail_users(env, as_json=True) if "admin" in user['privileges']]) == 0)
+	no_admins_exist = (len(get_admins(env)) == 0)
 	return render_template('index.html',
 		hostname=env['PRIMARY_HOSTNAME'],
 		storage_root=env['STORAGE_ROOT'],
@@ -98,7 +98,7 @@ def me():
 @authorized_personnel_only
 def mail_users():
 	if request.args.get("format", "") == "json":
-		return json_response(get_mail_users(env, as_json=True) + get_archived_mail_users(env))
+		return json_response(get_mail_users_ex(env, with_archived=True))
 	else:
 		return "".join(x+"\n" for x in get_mail_users(env))
 
