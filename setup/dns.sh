@@ -8,6 +8,7 @@
 # mail users & aliases created by the user later.
 
 source setup/functions.sh # load our functions
+source /etc/mailinabox.conf # load global vars
 
 # Install `nsd`, our DNS server software, and `ldnsutils` which helps
 # us sign zones for DNSSEC.
