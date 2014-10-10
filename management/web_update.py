@@ -38,7 +38,7 @@ def get_web_domains(env):
 
 	return domains
 	
-def do_web_update(env):
+def do_web_update(env, ok_status="web updated\n"):
 	# Build an nginx configuration file.
 	nginx_conf = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-top.conf")).read()
 
@@ -65,7 +65,7 @@ def do_web_update(env):
 	# enough and doesn't break any open connections.
 	shell('check_call', ["/usr/sbin/service", "nginx", "reload"])
 
-	return "web updated\n"
+	return ok_status
 
 def make_domain_config(domain, template, template_for_primaryhost, env):
 	# How will we configure this domain.
@@ -93,6 +93,19 @@ def make_domain_config(domain, template, template_for_primaryhost, env):
 	nginx_conf = nginx_conf.replace("$ROOT", root)
 	nginx_conf = nginx_conf.replace("$SSL_KEY", ssl_key)
 	nginx_conf = nginx_conf.replace("$SSL_CERTIFICATE", ssl_certificate)
+
+	# Because the certificate may change, we should recognize this so we
+	# can trigger an nginx update.
+	def hashfile(filepath):
+		import hashlib
+		sha1 = hashlib.sha1()
+		f = open(filepath, 'rb')
+		try:
+			sha1.update(f.read())
+		finally:
+			f.close()
+		return sha1.hexdigest()
+	nginx_conf += "# ssl files sha1: %s / %s\n" % (hashfile(ssl_key), hashfile(ssl_certificate))
 
 	# Add in any user customizations in YAML format.
 	nginx_conf_custom_fn = os.path.join(env["STORAGE_ROOT"], "www/custom.yaml")
@@ -178,12 +191,8 @@ def ensure_ssl_certificate_exists(domain, ssl_key, ssl_certificate, csr_path, en
 	# Generate a new self-signed certificate using the same private key that we already have.
 
 	# Start with a CSR.
-	shell("check_call", [
-		"openssl", "req", "-new",
-		"-key", ssl_key,
-		"-out",  csr_path,
-		"-sha256",
-		"-subj", "/C=%s/ST=/L=/O=/CN=%s" % (env["CSR_COUNTRY"], domain)])
+	with open(csr_path, "w") as f:
+		f.write(create_csr(domain, ssl_key, env))
 
 	# And then make the certificate.
 	shell("check_call", [
@@ -193,12 +202,62 @@ def ensure_ssl_certificate_exists(domain, ssl_key, ssl_certificate, csr_path, en
 		"-signkey", ssl_key,
 		"-out", ssl_certificate])
 
+def create_csr(domain, ssl_key, env):
+	return shell("check_output", [
+                "openssl", "req", "-new",
+                "-key", ssl_key,
+                "-out",  "/dev/stdout",
+                "-sha256",
+                "-subj", "/C=%s/ST=/L=/O=/CN=%s" % (env["CSR_COUNTRY"], domain)])
+
+def install_cert(domain, ssl_cert, ssl_chain, env):
+	if domain not in get_web_domains(env):
+		return "Invalid domain name."
+
+	# Write the combined cert+chain to a temporary path and validate that it is OK.
+	# The certificate always goes above the chain.
+	import tempfile, os
+	fd, fn = tempfile.mkstemp('.pem')
+	os.write(fd, (ssl_cert + '\n' + ssl_chain).encode("ascii"))
+	os.close(fd)
+
+	# Do validation on the certificate before installing it.
+	from status_checks import check_certificate
+	ssl_key, ssl_certificate, ssl_csr_path = get_domain_ssl_files(domain, env)
+	cert_status, cert_status_details = check_certificate(domain, fn, ssl_key)
+	if cert_status != "OK":
+		if cert_status == "SELF-SIGNED":
+			cert_status = "This is a self-signed certificate. I can't install that."
+		os.unlink(fn)
+		return cert_status
+
+	# Copy the certificate to its expected location.
+	os.makedirs(os.path.dirname(ssl_certificate), exist_ok=True)
+	os.rename(fn, ssl_certificate)
+
+	# Kick nginx so it sees the cert.
+	return do_web_update(env, ok_status="")
+
 def get_web_domains_info(env):
+	def check_cert(domain):
+		from status_checks import check_certificate
+		ssl_key, ssl_certificate, ssl_csr_path = get_domain_ssl_files(domain, env)
+		if not os.path.exists(ssl_certificate):
+			return ("danger", "No Certificate Installed")
+		cert_status, cert_status_details = check_certificate(domain, ssl_certificate, ssl_key)
+		if cert_status == "OK":
+			return ("success", "Signed & valid. " + cert_status_details)
+		elif cert_status == "SELF-SIGNED":
+			return ("warning", "Self-signed. Get a signed certificate to stop warnings.")
+		else:
+			return ("danger", "Certificate has a problem: " + cert_status)
+
 	return [
 		{
 			"domain": domain,
 			"root": get_web_root(domain, env),
 			"custom_root": get_web_root(domain, env, test_exists=False),
+			"ssl_certificate": check_cert(domain),
 		}
 		for domain in get_web_domains(env)
 	]

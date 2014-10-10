@@ -226,6 +226,24 @@ def dns_get_dump():
 	from dns_update import build_recommended_dns
 	return json_response(build_recommended_dns(env))
 
+# SSL
+
+@app.route('/ssl/csr/<domain>', methods=['POST'])
+@authorized_personnel_only
+def ssl_get_csr(domain):
+	from web_update import get_domain_ssl_files, create_csr
+	ssl_key, ssl_certificate, csr_path = get_domain_ssl_files(domain, env)
+	return create_csr(domain, ssl_key, env)
+
+@app.route('/ssl/install', methods=['POST'])
+@authorized_personnel_only
+def ssl_install_cert():
+	from web_update import install_cert
+	domain = request.form.get('domain')
+	ssl_cert = request.form.get('cert')
+	ssl_chain = request.form.get('chain')
+	return install_cert(domain, ssl_cert, ssl_chain, env)
+
 # WEB
 
 @app.route('/web/domains')

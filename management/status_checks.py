@@ -381,23 +381,16 @@ def check_ssl_cert(domain, env):
 		if domain == env['PRIMARY_HOSTNAME']:
 			env['out'].print_error("""The SSL certificate for this domain is currently self-signed. You will get a security
 			warning when you check or send email and when visiting this domain in a web browser (for webmail or
-			static site hosting). You may choose to confirm the security exception, but check that the certificate
-			fingerprint matches the following:""")
+			static site hosting). Use the SSL Certificates page in this control panel to install a signed SSL certificate.
+			You may choose to leave the self-signed certificate in place and confirm the security exception, but check that
+			the certificate fingerprint matches the following:""")
 			env['out'].print_line("")
 			env['out'].print_line("   " + fingerprint, monospace=True)
 		else:
 			env['out'].print_warning("""The SSL certificate for this domain is currently self-signed. Visitors to a website on
 			this domain will get a security warning. If you are not serving a website on this domain, then it is
-			safe to leave the self-signed certificate in place.""")
-		env['out'].print_line("")
-		env['out'].print_line("""You can purchase a signed certificate from many places. You will need to provide this Certificate Signing Request (CSR)
-			to whoever you purchase the SSL certificate from:""")
-		env['out'].print_line("")
-		env['out'].print_line(open(ssl_csr_path).read().strip(), monospace=True)
-		env['out'].print_line("")
-		env['out'].print_line("""When you purchase an SSL certificate you will receive a certificate in PEM format and possibly a file containing intermediate certificates in PEM format.
-			If you receive intermediate certificates, use a text editor and paste your certificate on top and then the intermediate certificates
-			below it. Save the file and place it onto this machine at %s. Then run "service nginx restart".""" % ssl_certificate)
+			safe to leave the self-signed certificate in place. Use the SSL Certificates page in this control panel to
+			install a signed SSL certificate.""")
 
 	else:
 		env['out'].print_error("The SSL certificate has a problem: " + cert_status)
@@ -423,7 +416,7 @@ def check_certificate(domain, ssl_certificate, ssl_private_key):
 	# More information was probably written to stderr (which we aren't capturing),
 	# but it is probably not helpful to the user anyway.
 	if retcode != 0:
-		return ("The SSL certificate file at %s appears to be corrupted or not a PEM-formatted SSL certificate file." % ssl_certificate, None)
+		return ("The SSL certificate appears to be corrupted or not a PEM-formatted SSL certificate file. (%s)" % ssl_certificate, None)
 
 	cert_dump = cert_dump.split("\n")
 	certificate_names = set()
