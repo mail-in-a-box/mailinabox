@@ -198,7 +198,7 @@ def check_dns_zone(domain, env, dns_zonefiles):
 	if existing_ns.lower() == correct_ns.lower():
 		env['out'].print_ok("Nameservers are set correctly at registrar. [%s]" % correct_ns)
 	else:
-		env['out'].print_error("""The nameservers set on this domain are incorrect. They are currently %s. Use your domain name registar's
+		env['out'].print_error("""The nameservers set on this domain are incorrect. They are currently %s. Use your domain name registrar's
 			control panel to set the nameservers to %s."""
 				% (existing_ns, correct_ns) )
 
