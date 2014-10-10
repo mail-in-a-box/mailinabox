@@ -8,8 +8,8 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 # Check that we are running on Ubuntu 14.04 LTS (or 14.04.xx).
-if [ `lsb_release -d | sed 's/.*:\sUbuntu *//' | cut -d'.' -f1` -lt 12 ]; then
-	echo "Mail-in-a-Box only supports being installed on Ubuntu 12 and newer, sorry. You are running:"
+if [ "`lsb_release -d | sed 's/.*:\s*//' | sed 's/14\.04\.[0-9]/14.04/' `" != "Ubuntu 14.04 LTS" ]; then
+	echo "Mail-in-a-Box only supports being installed on Ubuntu 14.04, sorry. You are running:"
 	echo
 	lsb_release -d | sed 's/.*:\s*//'
 	echo
