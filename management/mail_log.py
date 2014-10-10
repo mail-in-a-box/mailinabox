@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import re
+import re, os.path
 import dateutil.parser
 
 import mailconfig
@@ -16,9 +16,11 @@ def scan_mail_log(logger, env):
 
 	collector["real_mail_addresses"] = set(mailconfig.get_mail_users(env)) | set(alias[0] for alias in mailconfig.get_mail_aliases(env))
 
-	with open("/var/log/mail.log") as log:
-		for line in log:
-			scan_mail_log_line(line.strip(), collector)
+	for fn in ('/var/log/mail.log.1', '/var/log/mail.log'):
+		if not os.path.exists(fn): continue
+		with open(fn) as log:
+			for line in log:
+				scan_mail_log_line(line.strip(), collector)
 
 	if collector["imap-logins"]:
 		logger.add_heading("Recent IMAP Logins")
@@ -33,7 +35,7 @@ def scan_mail_log(logger, env):
 		logger.print_line("recipient" + "\t" + "received" + "\t" + "sender" + "\t" + "delivered")
 		for recipient in utils.sort_email_addresses(collector["postgrey"], env):
 			for (client_address, sender), (first_date, delivered_date) in sorted(collector["postgrey"][recipient].items(), key = lambda kv : kv[1][0]):
-				logger.print_line(recipient + "\t" + str(first_date) + "\t" + sender + "\t" + (("delivered " + str(delivered_date)) if delivered_date else "no retry"))
+				logger.print_line(recipient + "\t" + str(first_date) + "\t" + sender + "\t" + (("delivered " + str(delivered_date)) if delivered_date else "no retry yet"))
 
 	if collector["rejected-mail"]:
 		logger.add_heading("Rejected Mail")
