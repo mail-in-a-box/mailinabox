@@ -27,11 +27,9 @@ fi
 # * ldnsutils: Helper utilities for signing DNSSEC zones.
 # * openssh-client: Provides ssh-keyscan which we use to create SSHFP records.
 
-apt_install nsd ldnsutils openssh-client
+apt_install $NSD_PACKAGE ldnsutils openssh-client
 
-# Prepare nsd's configuration.
-
-mkdir -p /var/run/nsd
+mkdir -p /var/run/$NSD_PACKAGE
 
 # Create DNSSEC signing keys.
 

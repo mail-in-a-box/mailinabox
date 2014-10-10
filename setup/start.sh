@@ -8,6 +8,13 @@ source setup/functions.sh # load our functions
 # machine with enough memory? If not, this shows an error and exits.
 source setup/preflight.sh
 
+# if Ubuntu major version is less than 14 use nsd3 package
+if [ `lsb_release -d | sed 's/.*:\sUbuntu *//' | cut -d'.' -f1` -lt 14 ]; then
+    NSD_PACKAGE="nsd3"
+else
+    NSD_PACKAGE="nsd"
+fi
+
 # Ensure Python reads/writes files in UTF-8. If the machine
 # triggers some other locale in Python, like ASCII encoding,
 # Python may not be able to read/write files. Here and in
@@ -109,6 +116,7 @@ PUBLIC_IPV6=$PUBLIC_IPV6
 PRIVATE_IP=$PRIVATE_IP
 PRIVATE_IPV6=$PRIVATE_IPV6
 CSR_COUNTRY=$CSR_COUNTRY
+NSD_PACKAGE=$NSD_PACKAGE
 EOF
 
 # Start service configuration.

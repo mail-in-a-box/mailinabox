@@ -70,7 +70,7 @@ def do_dns_update(env, force=False):
 	additional_records = get_custom_dns_config(env)
 
 	# Write zone files.
-	os.makedirs('/etc/nsd/zones', exist_ok=True)
+	os.makedirs('/etc/' + env.get("NSD_PACKAGE", "nsd") + '/zones', exist_ok=True)
 	updated_domains = []
 	for i, (domain, zonefile) in enumerate(zonefiles):
 		# Build the records to put in the zone.
@@ -78,7 +78,7 @@ def do_dns_update(env, force=False):
 
 		# See if the zone has changed, and if so update the serial number
 		# and write the zone file.
-		if not write_nsd_zone(domain, "/etc/nsd/zones/" + zonefile, records, env, force):
+		if not write_nsd_zone(domain, "/etc/" + env.get("NSD_PACKAGE", "nsd") + "/zones/" + zonefile, records, env, force):
 			# Zone was not updated. There were no changes.
 			continue
 
@@ -119,7 +119,7 @@ def do_dns_update(env, force=False):
 
 	# Kick nsd if anything changed.
 	if len(updated_domains) > 0:
-		shell('check_call', ["/usr/sbin/service", "nsd", "restart"])
+		shell('check_call', ["/usr/sbin/service", env.get("NSD_PACKAGE", "nsd"), "restart"])
 
 	# Write the OpenDKIM configuration tables.
 	if write_opendkim_tables(zonefiles, env):
@@ -465,8 +465,8 @@ server:
   identity: ""
 
   # The directory for zonefile: files.
-  zonesdir: "/etc/nsd/zones"
 """
+  nsdconf += '  zonesdir: "/etc/' + env.get("NSD_PACKAGE", "nsd") + '/zones"'
 	
 	# Since we have bind9 listening on localhost for locally-generated
 	# DNS queries that require a recursive nameserver, and the system
@@ -499,11 +499,11 @@ zone:
 
 	# Check if the nsd.conf is changing. If it isn't changing,
 	# return False to flag that no change was made.
-	with open("/etc/nsd/nsd.conf") as f:
+	with open("/etc/" + env.get("NSD_PACKAGE", "nsd") + "/nsd.conf") as f:
 		if f.read() == nsdconf:
 			return False
 
-	with open("/etc/nsd/nsd.conf", "w") as f:
+	with open("/etc/" + env.get("NSD_PACKAGE", "nsd") + "/nsd.conf", "w") as f:
 		f.write(nsdconf)
 
 	return True
@@ -562,7 +562,7 @@ def sign_zone(domain, zonefile, env):
 		"-n",
 
 		# zonefile to sign
-		"/etc/nsd/zones/" + zonefile,
+		"/etc/" + env.get("NSD_PACKAGE", "nsd") + "/zones/" + zonefile,
 
 		# keys to sign with (order doesn't matter -- it'll figure it out)
 		dnssec_keys["KSK"],
@@ -577,7 +577,7 @@ def sign_zone(domain, zonefile, env):
 	# We want to be able to validate DS records too, but multiple forms may be valid depending
 	# on the digest type. So we'll write all (both) valid records. Only one DS record should
 	# actually be deployed. Preferebly the first.
-	with open("/etc/nsd/zones/" + zonefile + ".ds", "w") as f:
+	with open("/etc/" + env.get("NSD_PACKAGE", "nsd") + "/zones/" + zonefile + ".ds", "w") as f:
 		for digest_type in ('2', '1'):
 			rr_ds = shell('check_output', ["/usr/bin/ldns-key2ds",
 				"-n", # output to stdout
