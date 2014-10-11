@@ -59,7 +59,7 @@ EOF
 # Tell spamassassin where to load and store site-wide bayesean filtering data.
 
 mkdir -p $STORAGE_ROOT/mail/spamassassin
-chown -R mail:mail $STORAGE_ROOT/mail/spamassassin
+chown -R spampd:spampd $STORAGE_ROOT/mail/spamassassin
 chmod -R 775 $STORAGE_ROOT/mail/spamassassin
 
 tools/editconf.py /etc/spamassassin/local.cf -s \
