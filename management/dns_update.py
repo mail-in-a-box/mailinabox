@@ -192,7 +192,7 @@ def build_zone(domain, all_domains, additional_records, env, is_zone=True):
 	subdomains = [d for d in all_domains if d.endswith("." + domain)]
 	for subdomain in subdomains:
 		subdomain_qname = subdomain[0:-len("." + domain)]
-		subzone = build_zone(subdomain, [], {}, env, is_zone=False)
+		subzone = build_zone(subdomain, [], additional_records, env, is_zone=False)
 		for child_qname, child_rtype, child_value, child_explanation in subzone:
 			if child_qname == None:
 				child_qname = subdomain_qname
@@ -483,7 +483,7 @@ zone:
 	name: %s
 	zonefile: %s
 """ % (domain, zonefile)
-	
+
 		# If a custom secondary nameserver has been set, allow zone transfers
 		# and notifies to that nameserver.
 		if additional_records.get("_secondary_nameserver"):
@@ -727,7 +727,7 @@ def set_custom_dns_record(qname, rtype, value, env):
 
 def set_secondary_dns(hostname, env):
 	config = get_custom_dns_config(env)
-		
+
 	if hostname in (None, ""):
 		# Clear.
 		if "_secondary_nameserver" in config:
