@@ -277,7 +277,7 @@ function ajax(options) {
     if (!old_error) 
       show_modal_error("Error", "Something went wrong, sorry.")
     else
-      old_error(jqxhr.responseText);
+      old_error(jqxhr.responseText, jqxhr);
   };
   is_ajax_loading = true;
   $.ajax(options);
@@ -312,6 +312,11 @@ function api(url, method, data, callback, callback_error) {
     return output;
   }
 
+  function default_error(text, xhr) {
+    if (xhr.status != 403) // else handled below
+      show_modal_error("Error", "Something went wrong, sorry.")
+  }
+
   ajax({
     url: "/admin" + url,
     method: method,
@@ -325,7 +330,7 @@ function api(url, method, data, callback, callback_error) {
         'Basic ' + base64encode(api_credentials[0] + ':' + api_credentials[1]));
     },
     success: callback,
-    error: callback_error,
+    error: callback_error || default_error,
     statusCode: {
       403: function(xhr) {
         // Credentials are no longer valid. Try to login again.
