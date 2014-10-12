@@ -49,7 +49,6 @@ tools/editconf.py /etc/spamassassin/local.cf -s \
 
 mkdir -p $STORAGE_ROOT/mail/spamassassin
 chown -R spampd:spampd $STORAGE_ROOT/mail/spamassassin
-chmod -R 775 $STORAGE_ROOT/mail/spamassassin
 
 # To mark mail as spam or ham, just drag it in or out of the Spam folder. We'll
 # use the Dovecot antispam plugin to detect the message move operation and execute
@@ -89,8 +88,11 @@ exit 0
 EOF
 chmod a+x /usr/local/bin/sa-learn-pipe.sh
 
-# Create empty bayes training data (if it doesn't exist) owned by spampd.
+# Create empty bayes training data (if it doesn't exist). Once the files exist,
+# ensure they are group-writable so that the Dovecot process has access.
 sudo -u spampd /usr/bin/sa-learn --sync 2>/dev/null
+chmod -R 660 $STORAGE_ROOT/mail/spamassassin
+chmod 770 $STORAGE_ROOT/mail/spamassassin
 
 # Initial training?
 # sa-learn --ham storage/mail/mailboxes/*/*/cur/
