@@ -12,6 +12,9 @@
 source /etc/mailinabox.conf # get global vars
 source setup/functions.sh # load our functions
 
+# Install packages and basic configuration
+# ----------------------------------------
+
 # Install packages.
 apt_install spampd razor pyzor dovecot-antispam
 
@@ -27,22 +30,34 @@ hide_output pyzor discover
 # We've already configured Dovecot to listen on this port.
 tools/editconf.py /etc/default/spampd DESTPORT=10026
 
-# Enable the Dovecot antispam plugin to detect when a message moves between folders so we can
-# pass it to sa-learn for training.
+# Bayesean learning
+# -----------------
+#
+# Spamassassin can learn from mail marked as spam or ham, but it needs to be
+# configured. We'll store the learning data in our storage area.
+#
+# These files must be:
+#
+# * Writable by sa-learn-pipe script below, which run as the 'mail' user, for manual tagging of mail as spam/ham.
+# * Readable by the spampd process ('spampd' user) during mail filtering.
+# * Writable by the debian-spamd user, which runs /etc/cron.daily/spamassassin.
+#
+# We'll have these files owned by spampd and grant access to the other two processes.
+
+tools/editconf.py /etc/spamassassin/local.cf -s \
+	bayes_path=$STORAGE_ROOT/mail/spamassassin/bayes
+
+mkdir -p $STORAGE_ROOT/mail/spamassassin
+chown -R spampd:spampd $STORAGE_ROOT/mail/spamassassin
+chmod -R 775 $STORAGE_ROOT/mail/spamassassin
+
+# To mark mail as spam or ham, just drag it in or out of the Spam folder. We'll
+# use the Dovecot antispam plugin to detect the message move operation and execute
+# a shell script that invokes learning.
+
+# Enable the Dovecot antispam plugin.
 # (Be careful if we use multiple plugins later.) #NODOC
 sed -i "s/#mail_plugins = .*/mail_plugins = \$mail_plugins antispam/" /etc/dovecot/conf.d/20-imap.conf
-
-# When mail is moved in or out of the Dovecot Spam folder, re-train using this script
-# that sends the mail to spamassassin.
-# from http://wiki2.dovecot.org/Plugins/Antispam
-rm -f /usr/bin/sa-learn-pipe.sh # legacy location #NODOC
-cat > /usr/local/bin/sa-learn-pipe.sh << EOF;
-cat<&0 >> /tmp/sendmail-msg-\$\$.txt
-/usr/bin/sa-learn \$* /tmp/sendmail-msg-\$\$.txt > /dev/null
-rm -f /tmp/sendmail-msg-\$\$.txt
-exit 0
-EOF
-chmod a+x /usr/local/bin/sa-learn-pipe.sh
 
 # Configure the antispam plugin to call sa-learn-pipe.sh.
 cat > /etc/dovecot/conf.d/99-local-spampd.conf << EOF;
@@ -56,30 +71,26 @@ plugin {
 }
 EOF
 
-# Configure site-wide bayesean learning. These files must be:
-#
-# * Writable by the sa-learn-pipe script which run as the 'mail' user, for manual tagging of mail as spam/ham.
-# * Readable by the spampd process ('spampd' user) during mail filtering.
-# * Writable by the debian-spamd user, which runs /etc/cron.daily/spamassassin.
-#
-# We'll have these files owned by spampd and grant access to the other two processes.
+# Have Dovecot run its mail process with a supplementary group (the spampd group)
+# so that it can access the learning files.
 
-# Create the storage space owned by spampd.
-mkdir -p $STORAGE_ROOT/mail/spamassassin
-chown -R spampd:spampd $STORAGE_ROOT/mail/spamassassin
-chmod -R 775 $STORAGE_ROOT/mail/spamassassin
-
-# Create empty bayes training data (if it doesn't exist) owned by spampd.
-sudo -u spampd /usr/bin/sa-learn --sync 2>/dev/null
-
-# Have dovecot execute the antispam script (and other mail processes) in the spampd group
-# (as a supplementary group) so that it can read/write these files.
 tools/editconf.py /etc/dovecot/conf.d/10-mail.conf \
 	mail_access_groups=spampd
 
-# Tell spamassassin where the file is.
-tools/editconf.py /etc/spamassassin/local.cf -s \
-	bayes_path=$STORAGE_ROOT/mail/spamassassin/bayes
+# Here's the script that the antispam plugin executes. It spools the message into
+# a temporary file and then runs sa-learn on it.
+# from http://wiki2.dovecot.org/Plugins/Antispam
+rm -f /usr/bin/sa-learn-pipe.sh # legacy location #NODOC
+cat > /usr/local/bin/sa-learn-pipe.sh << EOF;
+cat<&0 >> /tmp/sendmail-msg-\$\$.txt
+/usr/bin/sa-learn \$* /tmp/sendmail-msg-\$\$.txt > /dev/null
+rm -f /tmp/sendmail-msg-\$\$.txt
+exit 0
+EOF
+chmod a+x /usr/local/bin/sa-learn-pipe.sh
+
+# Create empty bayes training data (if it doesn't exist) owned by spampd.
+sudo -u spampd /usr/bin/sa-learn --sync 2>/dev/null
 
 # Initial training?
 # sa-learn --ham storage/mail/mailboxes/*/*/cur/
