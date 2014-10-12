@@ -56,12 +56,28 @@ plugin {
 }
 EOF
 
-# Tell spamassassin where to load and store site-wide bayesean filtering data.
+# Configure site-wide bayesean learning. These files must be:
+#
+# * Writable by the sa-learn-pipe script which run as the 'mail' user, for manual tagging of mail as spam/ham.
+# * Readable by the spampd process ('spampd' user) during mail filtering.
+# * Writable by the debian-spamd user, which runs /etc/cron.daily/spamassassin.
+#
+# We'll have these files owned by spampd and grant access to the other two processes.
 
+# Create the storage space owned by spampd.
 mkdir -p $STORAGE_ROOT/mail/spamassassin
 chown -R spampd:spampd $STORAGE_ROOT/mail/spamassassin
 chmod -R 775 $STORAGE_ROOT/mail/spamassassin
 
+# Create empty bayes training data (if it doesn't exist) owned by spampd.
+sudo -u spampd /usr/bin/sa-learn --sync 2>/dev/null
+
+# Have dovecot execute the antispam script (and other mail processes) in the spampd group
+# (as a supplementary group) so that it can read/write these files.
+tools/editconf.py /etc/dovecot/conf.d/10-mail.conf \
+	mail_access_groups=spampd
+
+# Tell spamassassin where the file is.
 tools/editconf.py /etc/spamassassin/local.cf -s \
 	bayes_path=$STORAGE_ROOT/mail/spamassassin/bayes
 
