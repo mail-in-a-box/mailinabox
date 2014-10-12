@@ -52,6 +52,19 @@ def run_system_checks(env):
 	# admin email is automatically directed.
 	check_alias_exists("administrator@" + env['PRIMARY_HOSTNAME'], env)
 
+	# Check free disk space.
+	st = os.statvfs(env['STORAGE_ROOT'])
+	bytes_total = st.f_blocks * st.f_frsize
+	bytes_free = st.f_bavail * st.f_frsize
+	disk_msg = "The disk has %s GB space remaining." % str(round(bytes_free/1024.0/1024.0/1024.0*10.0)/10.0)
+	if bytes_free > .3 * bytes_total:
+		env['out'].print_ok(disk_msg)
+	elif bytes_free > .15 * bytes_total:
+		env['out'].print_warning(disk_msg)
+	else:
+		env['out'].print_error(disk_msg)
+
+
 def run_network_checks(env):
 	# Also see setup/network-checks.sh.
 
