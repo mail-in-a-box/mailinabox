@@ -4,6 +4,10 @@ CHANGELOG
 To-be-released
 --------------
 
+Breaking changes:
+
+* On-disk backups are now retained for a minimum of 3 days instead of 14. Beyond that the user is responsible for making off-site copies.
+
 Control panel:
 
 * The control panel has a new page for installing SSL certificates.

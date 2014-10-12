@@ -16,7 +16,7 @@ from utils import exclusive_process, load_environment, shell
 
 # destroy backups when the most recent increment in the chain
 # that depends on it is this many days old.
-keep_backups_for_days = 14
+keep_backups_for_days = 3
 
 def backup_status(env):
 	# What is the current status of backups?
