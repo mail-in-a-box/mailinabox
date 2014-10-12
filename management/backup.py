@@ -25,7 +25,8 @@ def backup_status(env):
 	# see how large the storage is.
 
 	now = datetime.datetime.now(dateutil.tz.tzlocal())
-	def reldate(date, ref):
+	def reldate(date, ref, clip):
+		if ref < date: return clip
 		rd = dateutil.relativedelta.relativedelta(ref, date)
 		if rd.months > 1: return "%d months, %d days" % (rd.months, rd.days)
 		if rd.months == 1: return "%d month, %d days" % (rd.months, rd.days)
@@ -47,7 +48,7 @@ def backup_status(env):
 			backups[key] = {
 				"date": m.group("date"),
 				"date_str": date.strftime("%x %X"),
-				"date_delta": reldate(date, now),
+				"date_delta": reldate(date, now, "the future?"),
 				"full": m.group("incbase") is None,
 				"previous": m.group("incbase"),
 				"size": 0,
@@ -80,7 +81,7 @@ def backup_status(env):
 			deleted_in = None
 		elif saw_full and not deleted_in:
 			# Mark deleted_in only on the first increment after a full backup.
-			deleted_in = reldate(days_ago, dateutil.parser.parse(bak["date"]))
+			deleted_in = reldate(days_ago, dateutil.parser.parse(bak["date"]), "on next daily backup")
 			bak["deleted_in"] = deleted_in
 
 	return {
