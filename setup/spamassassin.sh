@@ -1,6 +1,6 @@
 #!/bin/bash
 # Spam filtering with spamassassin via spampd
-# ===========================================
+# -------------------------------------------
 #
 # spampd sits between postfix and dovecot. It takes mail from postfix
 # over the LMTP protocol, runs spamassassin on it, and then passes the

@@ -63,7 +63,7 @@ tools/editconf.py /etc/postfix/main.cf \
 # Enable the 'submission' port 587 smtpd server and tweak its settings.
 #
 # * Require the best ciphers for incoming connections per http://baldric.net/2013/12/07/tls-ciphers-in-postfix-and-dovecot/.
-#   but without affecting opportunistic TLS on incoming mail, which will allow any cipher (it's better than none).
+#   By putting this setting here we leave opportunistic TLS on incoming mail at default cipher settings (any cipher is better than none).
 # * Give it a different name in syslog to distinguish it from the port 25 smtpd server.
 # * Add a new cleanup service specific to the submission service ('authclean')
 #   that filters out privacy-sensitive headers on mail being sent out by
@@ -96,9 +96,9 @@ tools/editconf.py /etc/postfix/main.cf \
 # relayed elsewhere. We don't want to be an "open relay". On outbound
 # mail, require one of:
 #
-# * permit_sasl_authenticated: Authenticated users (i.e. on port 587).
-# * permit_mynetworks: Mail that originates locally.
-# * reject_unauth_destination: No one else. (Permits mail whose destination is local and rejects other mail.)
+# * `permit_sasl_authenticated`: Authenticated users (i.e. on port 587).
+# * `permit_mynetworks`: Mail that originates locally.
+# * `reject_unauth_destination`: No one else. (Permits mail whose destination is local and rejects other mail.)
 tools/editconf.py /etc/postfix/main.cf \
 	smtpd_relay_restrictions=permit_sasl_authenticated,permit_mynetworks,reject_unauth_destination
 
@@ -142,20 +142,20 @@ tools/editconf.py /etc/postfix/main.cf virtual_transport=lmtp:[127.0.0.1]:10025
 
 # Who can send mail to us? Some basic filters.
 #
-# * reject_non_fqdn_sender: Reject not-nice-looking return paths.
-# * reject_unknown_sender_domain: Reject return paths with invalid domains.
-# * reject_rhsbl_sender: Reject return paths that use blacklisted domains.
-# * permit_sasl_authenticated: Authenticated users (i.e. on port 587) can skip further checks.
-# * permit_mynetworks: Mail that originates locally can skip further checks.
-# * reject_rbl_client: Reject connections from IP addresses blacklisted in zen.spamhaus.org
-# * reject_unlisted_recipient: Although Postfix will reject mail to unknown recipients, it's nicer to reject such mail ahead of greylisting rather than after.
-# * check_policy_service: Apply greylisting using postgrey.
+# * `reject_non_fqdn_sender`: Reject not-nice-looking return paths.
+# * `reject_unknown_sender_domain`: Reject return paths with invalid domains.
+# * `reject_rhsbl_sender`: Reject return paths that use blacklisted domains.
+# * `permit_sasl_authenticated`: Authenticated users (i.e. on port 587) can skip further checks.
+# * `permit_mynetworks`: Mail that originates locally can skip further checks.
+# * `reject_rbl_client`: Reject connections from IP addresses blacklisted in zen.spamhaus.org
+# * `reject_unlisted_recipient`: Although Postfix will reject mail to unknown recipients, it's nicer to reject such mail ahead of greylisting rather than after.
+# * `check_policy_service`: Apply greylisting using postgrey.
 #
-# Notes:
-# permit_dnswl_client can pass through mail from whitelisted IP addresses, which would be good to put before greylisting
-# so these IPs get mail delivered quickly. But when an IP is not listed in the permit_dnswl_client list (i.e. it is not
-# whitelisted) then postfix does a DEFER_IF_REJECT, which results in all "unknown user" sorts of messages turning into
-# "450 4.7.1 Client host rejected: Service unavailable". This is a retry code, so the mail doesn't properly bounce.
+# Notes: #NODOC
+# permit_dnswl_client can pass through mail from whitelisted IP addresses, which would be good to put before greylisting #NODOC
+# so these IPs get mail delivered quickly. But when an IP is not listed in the permit_dnswl_client list (i.e. it is not #NODOC
+# whitelisted) then postfix does a DEFER_IF_REJECT, which results in all "unknown user" sorts of messages turning into #NODOC
+# "450 4.7.1 Client host rejected: Service unavailable". This is a retry code, so the mail doesn't properly bounce. #NODOC
 tools/editconf.py /etc/postfix/main.cf \
 	smtpd_sender_restrictions="reject_non_fqdn_sender,reject_unknown_sender_domain,reject_rhsbl_sender dbl.spamhaus.org" \
 	smtpd_recipient_restrictions=permit_sasl_authenticated,permit_mynetworks,"reject_rbl_client zen.spamhaus.org",reject_unlisted_recipient,"check_policy_service inet:127.0.0.1:10023"

@@ -1,5 +1,5 @@
 # OpenDKIM
-# ========
+# --------
 #
 # OpenDKIM provides a service that puts a DKIM signature on outbound mail.
 #

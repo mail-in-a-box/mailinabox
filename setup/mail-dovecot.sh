@@ -52,8 +52,9 @@ tools/editconf.py /etc/dovecot/conf.d/10-ssl.conf \
 	"ssl_protocols=!SSLv3 !SSLv2" \
 	"ssl_cipher_list=TLSv1+HIGH !SSLv2 !RC4 !aNULL !eNULL !3DES @STRENGTH"
 
-# Disable in-the-clear IMAP and POP because we're paranoid (we haven't even
-# enabled POP).
+# Disable in-the-clear IMAP because there is no reason for a user to transmit
+# login credentials outside of an encrypted connection. Although we haven't
+# even installed the POP server, ensure it is disabled too.
 sed -i "s/#port = 143/port = 0/" /etc/dovecot/conf.d/10-master.conf
 sed -i "s/#port = 110/port = 0/" /etc/dovecot/conf.d/10-master.conf
 

@@ -67,6 +67,10 @@ def generate_documentation():
 	    		padding-bottom: 1em;
 	    	}
 
+	    	ul {
+	    		padding-left: 1.25em;
+	    	}
+
 	    	pre {
 	    		color: black;
 	    		border: 0;
@@ -82,7 +86,7 @@ def generate_documentation():
 	    		margin: 0;
 	    	}
 	    	div.write-to .filename {
-	    		padding: .25em;
+	    		padding: .25em .5em;
 	    		background-color: #666;
 	    		color: white;
 	    		font-family: monospace;
@@ -94,7 +98,7 @@ def generate_documentation():
 	    	}
 	    	div.write-to pre {
 	    		margin: 0;
-	    		padding: .25em;
+	    		padding: .5em;
 	    		border: 1px solid #999;
 	    		border-radius: 0;
 	    		font-size: 90%;
@@ -197,11 +201,11 @@ class HideOutput(Grammar):
 	def value(self):
 		return self[1].value()
 
-class SuppressedLine(Grammar):
+class EchoLine(Grammar):
 	grammar = (OPTIONAL(SPACE), L("echo "), REST_OF_LINE, EOL)
 	def value(self):
 		if "|" in self.string  or ">" in self.string:
-			return "<pre class='shell'><div>" + cgi.escape(self.string.strip()) + "</div></pre>\n"
+			return "<pre class='shell'><div>" + recode_bash(self.string.strip()) + "</div></pre>\n"
 		return ""
 
 class EditConf(Grammar):
@@ -244,10 +248,10 @@ class EchoPipe(Grammar):
 	grammar = OPTIONAL(SPACE), L("echo "), REST_OF_LINE, L(' | '), REST_OF_LINE, EOL
 	def value(self):
 		text = " ".join("\"%s\"" % s for s in self[2].string.split(" "))
-		return "<pre class='shell'><div>echo " + cgi.escape(text) + " \<br> | " + self[4].string + "</div></pre>\n"
+		return "<pre class='shell'><div>echo " + recode_bash(text) + " \<br> | " + recode_bash(self[4].string) + "</div></pre>\n"
 
 def shell_line(bash):
-	return "<pre class='shell'><div>" + cgi.escape(bash.strip()) + "</div></pre>\n"
+	return "<pre class='shell'><div>" + recode_bash(bash.strip()) + "</div></pre>\n"
 
 class AptGet(Grammar):
 	grammar = (ZERO_OR_MORE(SPACE), L("apt_install "), REST_OF_LINE, EOL)
@@ -268,17 +272,24 @@ class OtherLine(Grammar):
 		if self.string.strip() == "": return ""
 		if "source setup/functions.sh" in self.string: return ""
 		if "source /etc/mailinabox.conf" in self.string: return ""
-		return "<pre class='shell'><div>" + cgi.escape(self.string.strip()) + "</div></pre>\n"
+		return "<pre class='shell'><div>" + recode_bash(self.string.strip()) + "</div></pre>\n"
 
 class BashElement(Grammar):
-	grammar = Comment | CatEOF | EchoPipe | SuppressedLine | HideOutput | EditConf | SedReplace | AptGet | UfwAllow | RestartService | OtherLine
+	grammar = Comment | CatEOF | EchoPipe | EchoLine | HideOutput | EditConf | SedReplace | AptGet | UfwAllow | RestartService | OtherLine
 	def value(self):
 		return self[0].value()
 
 # Make some special characters to private use Unicode code points.
-bash_special_characters = {
+bash_special_characters1 = {
 	"\n": "\uE000",
 	" ": "\uE001",
+}
+bash_special_characters2 = {
+	"$": "\uE010",
+}
+bash_escapes = {
+	"n": "\uE020",
+	"t": "\uE021",
 }
 
 def quasitokenize(bashscript):
@@ -297,11 +308,13 @@ def quasitokenize(bashscript):
 		elif escape_next:
 			# Previous character was a \. Normally the next character
 			# comes through literally, but escaped newlines are line
-			# continuations.
+			# continuations and some escapes are for special characters
+			# which we'll recode and then turn back into escapes later.
 			if c == "\n":
 				c = " "
-			else:
-				newscript += c
+			elif c in bash_escapes:
+				c = bash_escapes[c]
+			newscript += c
 			escape_next = False
 		elif c == "\\":
 			# Escaping next character.
@@ -312,10 +325,10 @@ def quasitokenize(bashscript):
 		elif c == quote_mode:
 			# Ending a quoted word.
 			quote_mode = None
-		elif quote_mode is not None and quote_mode != "EOF" and c in bash_special_characters:
+		elif quote_mode is not None and quote_mode != "EOF" and c in bash_special_characters1:
 			# Replace special tokens within quoted words so that they
 			# don't interfere with tokenization later.
-			newscript += bash_special_characters[c]
+			newscript += bash_special_characters1[c]
 		elif quote_mode is None and c == '#':
 			# Start of a line comment.
 			newscript += c
@@ -335,6 +348,12 @@ def quasitokenize(bashscript):
 			# Make these just spaces.
 			if newscript[-1] != " ":
 				newscript += " "
+		elif quote_mode is None and c == ' ':
+			# Collapse consecutive spaces.
+			if newscript[-1] != " ":
+				newscript += " "
+		elif c in bash_special_characters2:
+			newscript += bash_special_characters2[c]
 		else:
 			# All other characters.
 			newscript += c
@@ -347,9 +366,27 @@ def quasitokenize(bashscript):
 
 	return newscript
 
+def recode_bash(s):
+	def requote(tok):
+		tok = tok.replace("\\", "\\\\")
+		for c in bash_special_characters2:
+			tok = tok.replace(c, "\\" + c)
+		tok = fixup_tokens(tok)
+		if " " in tok or '"' in tok:
+			tok = tok.replace("\"", "\\\"")
+			tok = '"' + tok +'"'
+		else:
+			tok = tok.replace("'", "\\'")
+		return tok
+	return cgi.escape(" ".join(requote(tok) for tok in s.split(" ")))
+
 def fixup_tokens(s):
-	for c, enc in bash_special_characters.items():
+	for c, enc in bash_special_characters1.items():
 		s = s.replace(enc, c)
+	for c, enc in bash_special_characters2.items():
+		s = s.replace(enc, c)
+	for esc, c in bash_escapes.items():
+		s = s.replace(c, "\\" + esc)
 	return s
 
 class BashScript(Grammar):
@@ -364,7 +401,7 @@ class BashScript(Grammar):
 
 		# tokenize
 		string = re.sub(".* #NODOC\n", "", string)
-		string = re.sub("\n\s*if .*\n.*then.*|\n\s*fi|\n\s*else|\n\s*elif .*", "", string)
+		string = re.sub("\n\s*if .*then.*|\n\s*fi|\n\s*else|\n\s*elif .*", "", string)
 		string = quasitokenize(string)
 		string = re.sub("hide_output ", "", string)
 
