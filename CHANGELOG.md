@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-To-be-released
---------------
+v0.04 (October 15, 2014)
+------------------------
 
 Breaking changes:
 
