@@ -28,7 +28,7 @@
   </tbody>
 </table>
 
-<p><small>The size column in the table indicates the size of the encrpyted backup, but the total size on disk shown above includes storage for unencrpyted intermediate files.</small></p>
+<p style="margin-top: 2em"><small>The size column in the table indicates the size of the encrpyted backup, but the total size on disk shown above includes storage for unencrpyted intermediate files.</small></p>
 
 <script>
 function nice_size(bytes) {
@@ -59,6 +59,12 @@ function show_system_backup() {
 
       $('#backup-status tbody').html("");
       var total_disk_size = 0;
+
+      if (r.backups.length == 0) {
+        var tr = $('<tr><td colspan="3">No backups have been made yet.</td></tr>');
+        $('#backup-status tbody').append(tr);
+      }
+
       for (var i = 0; i < r.backups.length; i++) {
         var b = r.backups[i];
         var tr = $('<tr/>');

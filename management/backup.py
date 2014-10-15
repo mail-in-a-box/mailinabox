@@ -38,6 +38,7 @@ def backup_status(env):
 	backups = { }
 	basedir = os.path.join(env['STORAGE_ROOT'], 'backup/duplicity/')
 	encdir = os.path.join(env['STORAGE_ROOT'], 'backup/encrypted/')
+	os.makedirs(basedir, exist_ok=True) # os.listdir fails if directory does not exist
 	for fn in os.listdir(basedir):
 		m = re.match(r"duplicity-(full|full-signatures|(inc|new-signatures)\.(?P<incbase>\d+T\d+Z)\.to)\.(?P<date>\d+T\d+Z)\.", fn)
 		if not m: raise ValueError(fn)
