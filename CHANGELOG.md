@@ -31,6 +31,7 @@ Security:
 
 Other:
 
+* Spam filter learning by dragging mail in and out of the Spam folder should hopefully be working now.
 * Some things were broken if the machine had an IPv6 address.
 * Other things were broken if the machine was on a non-utf8 locale.
 * No longer implementing webfinger.
