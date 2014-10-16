@@ -161,6 +161,7 @@ tools/editconf.py /etc/postfix/main.cf \
 	smtpd_recipient_restrictions=permit_sasl_authenticated,permit_mynetworks,"reject_rbl_client zen.spamhaus.org",reject_unlisted_recipient,"check_policy_service inet:127.0.0.1:10023"
 
 # Increase the message size limit from 10MB to 128MB.
+# The same limit is specified in nginx.conf for mail submitted via webmail and Z-Push.
 tools/editconf.py /etc/postfix/main.cf \
 	message_size_limit=134217728
 
