@@ -50,6 +50,11 @@ tools/editconf.py /etc/spamassassin/local.cf -s \
 mkdir -p $STORAGE_ROOT/mail/spamassassin
 chown -R spampd:spampd $STORAGE_ROOT/mail/spamassassin
 
+# To simplify the correction of false-positives, we do not want to encapsulate
+# spam.
+tools/editconf.py /etc/spamassassin/local.cf -s \
+	report_safe=0
+
 # To mark mail as spam or ham, just drag it in or out of the Spam folder. We'll
 # use the Dovecot antispam plugin to detect the message move operation and execute
 # a shell script that invokes learning.
