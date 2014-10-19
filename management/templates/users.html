@@ -1,252 +1,261 @@
-<h2>Users</h2>
+<div class="container-fluid">
 
-<style>
-#user_table tr.account_inactive td.address { color: #888; text-decoration: line-through; }
-#user_table .aliases { font-size: 90%; }
-#user_table .aliases div:before { content: "⇖ "; }
-#user_table .aliases div {  }
-#user_table .actions { margin-top: .33em; font-size: 95%; }
-#user_table .account_inactive .if_active { display: none; }
-#user_table .account_active .if_inactive { display: none; }
-</style>
+    <style>
+        #user_table tr.account_inactive td.address { color: #888; text-decoration: line-through; }
+        #user_table .aliases { font-size: 90%; }
+        #user_table .aliases div:before { content: "⇖ "; }
+        #user_table .aliases div {  }
+        #user_table .actions { margin-top: .33em; font-size: 95%; }
+        #user_table .account_inactive .if_active { display: none; }
+        #user_table .account_active .if_inactive { display: none; }
+    </style>
 
-<h3>Add a mail user</h3>
+    <div class="row">
+        <div class="col-sm-12">
 
-<p>Add an email address to this system. This will create a new login username/password. (Use <a href="javascript:show_panel('aliases')">aliases</a> to create email addresses that forward to existing accounts.)</p>
+            <h2>Users</h2>
 
-<form class="form-inline" role="form" onsubmit="return do_add_user(); return false;">
-  <div class="form-group">
-    <label class="sr-only" for="adduserEmail">Email address</label>
-    <input type="email" class="form-control" id="adduserEmail" placeholder="Email Address">
-  </div>
-  <div class="form-group">
-    <label class="sr-only" for="adduserPassword">Password</label>
-    <input type="password" class="form-control" id="adduserPassword" placeholder="Password">
-  </div>
-  <div class="form-group">
-    <select class="form-control" id="adduserPrivs">
-      <option value="">Normal User</option>
-      <option value="admin">Administrator</option>
-    </select>
-  </div>
-  <button type="submit" class="btn btn-primary">Add User</button>
-</form>
-<p style="margin-top: .5em"><small>
-  Passwords must be at least four characters and may not contain spaces.
-  Administrators get access to this control panel.
-</small></p>
+            <h3>Add a mail user</h3>
 
-<h3>Existing mail users</h3>
-<table id="user_table" class="table" style="width: auto">
-  <thead>
-    <tr>
-      <th width="50%">Email Address</th>
-      <th>Actions</th>
-      <th>Mailbox Size</th>
-    </tr>
-  </thead>
-  <tbody>
-  </tbody>
-</table>
+            <p>Add an email address to this system. This will create a new login username/password. (Use <a href="javascript:show_panel('aliases')">aliases</a> to create email addresses that forward to existing accounts.)</p>
 
-<div style="display: none">
-  <table>
-  <tr id="user-template">
-    <td class='address'>
-    </td>
-    <td class='actions'>
-        <span class='privs'>
-        </span>
+            <form class="form-inline" role="form" onsubmit="return do_add_user(); return false;">
+                <div class="form-group">
+                    <label class="sr-only" for="adduserEmail">Email address</label>
+                    <input type="email" class="form-control" id="adduserEmail" placeholder="Email Address">
+                </div>
+                <div class="form-group">
+                    <label class="sr-only" for="adduserPassword">Password</label>
+                    <input type="password" class="form-control" id="adduserPassword" placeholder="Password">
+                </div>
+                <div class="form-group">
+                    <select class="form-control" id="adduserPrivs">
+                        <option value="">Normal User</option>
+                        <option value="admin">Administrator</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Add User</button>
+            </form>
+            <p style="margin-top: .5em"><small>
+              Passwords must be at least four characters and may not contain spaces.
+              Administrators get access to this control panel.
+            </small></p>
 
-        <span class="if_active">
-          <a href="#" onclick="users_set_password(this); return false;" class='setpw' title="Set Password">
-            set password
-          </a>
-          |
-        </span>
+            <h3>Existing mail users</h3>
+            <table id="user_table" class="table" style="width: auto">
+                <thead>
+                    <tr>
+                        <th width="50%">Email Address</th>
+                        <th>Actions</th>
+                        <th>Mailbox Size</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
 
-        <span class='add-privs'>
-        </span>
+            <div style="display: none">
+                <table>
+                    <tr id="user-template">
+                        <td class='address'>
+                        </td>
+                        <td class='actions'>
+                            <span class='privs'>
+                            </span>
 
-        <a href="#" onclick="users_remove(this); return false;" class='if_active' title="Archive Account">
-          archive account
-        </a>
-    </td>
-    <td class='mailboxsize'>
-    </td>
-  </tr>
-  <tr id="user-extra-template">
-    <td colspan="3" style="border-top: 0; padding-top: 0">
-      <div class='if_inactive restore_info' style='color: #888; font-size: 90%'>To restore account, create a new account with this email address. Or to permanently delete the mailbox, delete the directory <tt></tt> on the machine.</div>
+                            <span class="if_active">
+                                <a href="#" onclick="users_set_password(this); return false;" class='setpw' title="Set Password">
+                                    set password
+                                </a>
+                                |
+                            </span>
 
-      <div class='aliases' style='display: none'> </div>
-    </td>
-  </tr>
-  </table>
-</div>
+                            <span class='add-privs'>
+                            </span>
 
+                            <a href="#" onclick="users_remove(this); return false;" class='if_active' title="Archive Account">
+                                archive account
+                            </a>
+                        </td>
+                        <td class='mailboxsize'>
+                        </td>
+                    </tr>
+                    <tr id="user-extra-template">
+                        <td colspan="3" style="border-top: 0; padding-top: 0">
+                            <div class='if_inactive restore_info' style='color: #888; font-size: 90%'>To restore account, create a new account with this email address. Or to permanently delete the mailbox, delete the directory <tt></tt> on the machine.</div>
 
-<script>
-function show_users() {
-  $('#user_table tbody').html("<tr><td colspan='2' class='text-muted'>Loading...</td></tr>")
-  api(
-    "/mail/users",
-    "GET",
-    { format: 'json' },
-    function(r) {
-      $('#user_table tbody').html("");
-      for (var i = 0; i < r.length; i++) {
-        var hdr = $("<tr><td><h4/></td></tr>");
-        hdr.find('h4').text(r[i].domain);
-        $('#user_table tbody').append(hdr);
+                            <div class='aliases' style='display: none'></div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
 
-        for (var k = 0; k < r[i].users.length; k++) {
-          var user = r[i].users[k];
+        </div>
+    </div>
 
-          var n = $("#user-template").clone();
-          var n2 = $("#user-extra-template").clone();
-          n.attr('id', '');
-          n2.attr('id', '');
-          $('#user_table tbody').append(n);
-          $('#user_table tbody').append(n2);
+    <script>
+    function show_users() {
+      $('#user_table tbody').html("<tr><td colspan='2' class='text-muted'>Loading...</td></tr>")
+      api(
+        "/mail/users",
+        "GET",
+        { format: 'json' },
+        function(r) {
+          $('#user_table tbody').html("");
+          for (var i = 0; i < r.length; i++) {
+            var hdr = $("<tr><td><h4/></td></tr>");
+            hdr.find('h4').text(r[i].domain);
+            $('#user_table tbody').append(hdr);
 
-          n.addClass("account_" + user.status);
-          n2.addClass("account_" + user.status);
+            for (var k = 0; k < r[i].users.length; k++) {
+              var user = r[i].users[k];
 
-          n.attr('data-email', user.email);
-          n.find('.address').text(user.email)
-          n.find('.mailboxsize').text(nice_size(user.mailbox_size))
-          n2.find('.restore_info tt').text(user.mailbox);
+              var n = $("#user-template").clone();
+              var n2 = $("#user-extra-template").clone();
+              n.attr('id', '');
+              n2.attr('id', '');
+              $('#user_table tbody').append(n);
+              $('#user_table tbody').append(n2);
 
-          if (user.status == 'inactive') continue;
+              n.addClass("account_" + user.status);
+              n2.addClass("account_" + user.status);
 
-          var add_privs = ["admin"];
+              n.attr('data-email', user.email);
+              n.find('.address').text(user.email)
+              n.find('.mailboxsize').text(nice_size(user.mailbox_size))
+              n2.find('.restore_info tt').text(user.mailbox);
 
-          for (var j = 0; j < user.privileges.length; j++) {
-            var p = $("<span><b><span class='name'></span></b> (<a href='#' onclick='mod_priv(this, \"remove\"); return false;' title='Remove Privilege'>remove privilege</a>) |</span>");
-            p.find('span.name').text(user.privileges[j]);
-            n.find('.privs').append(p);
-            if (add_privs.indexOf(user.privileges[j]) >= 0)
-              add_privs.splice(add_privs.indexOf(user.privileges[j]), 1);
-          }
+              if (user.status == 'inactive') continue;
 
-          for (var j = 0; j < add_privs.length; j++) {
-            var p = $("<span><a href='#' onclick='mod_priv(this, \"add\"); return false;' title='Add Privilege'>make <span class='name'></span></a> | </span>");
-            p.find('span.name').text(add_privs[j]);
-            n.find('.add-privs').append(p);
-          }
+              var add_privs = ["admin"];
 
-          if (user.aliases && user.aliases.length > 0) {
-            n2.find('.aliases').show();
-            for (var j = 0; j < user.aliases.length; j++) {
-              n2.find('.aliases').append($("<div/>").text(
-                user.aliases[j][0]
-                + (user.aliases[j][1].length > 0 ? " ⇐ " + user.aliases[j][1].join(", ") : "")
-                ))
+              for (var j = 0; j < user.privileges.length; j++) {
+                var p = $("<span><b><span class='name'></span></b> (<a href='#' onclick='mod_priv(this, \"remove\"); return false;' title='Remove Privilege'>remove privilege</a>) |</span>");
+                p.find('span.name').text(user.privileges[j]);
+                n.find('.privs').append(p);
+                if (add_privs.indexOf(user.privileges[j]) >= 0)
+                  add_privs.splice(add_privs.indexOf(user.privileges[j]), 1);
+              }
+
+              for (var j = 0; j < add_privs.length; j++) {
+                var p = $("<span><a href='#' onclick='mod_priv(this, \"add\"); return false;' title='Add Privilege'>make <span class='name'></span></a> | </span>");
+                p.find('span.name').text(add_privs[j]);
+                n.find('.add-privs').append(p);
+              }
+
+              if (user.aliases && user.aliases.length > 0) {
+                n2.find('.aliases').show();
+                for (var j = 0; j < user.aliases.length; j++) {
+                  n2.find('.aliases').append($("<div/>").text(
+                    user.aliases[j][0]
+                    + (user.aliases[j][1].length > 0 ? " ⇐ " + user.aliases[j][1].join(", ") : "")
+                    ))
+                }
+              }
             }
           }
-        }
+        })
+    }
+
+    function do_add_user() {
+      var email = $("#adduserEmail").val();
+      var pw = $("#adduserPassword").val();
+      var privs = $("#adduserPrivs").val();
+      api(
+        "/mail/users/add",
+        "POST",
+        {
+          email: email,
+          password: pw,
+          privileges: privs
+        },
+        function(r) {
+          // Responses are multiple lines of pre-formatted text.
+          show_modal_error("Add User", $("<pre/>").text(r));
+          show_users()
+        },
+        function(r) {
+          show_modal_error("Add User", r);
+        });
+      return false;
+    }
+
+    function users_set_password(elem) {
+      var email = $(elem).parents('tr').attr('data-email');
+      show_modal_confirm(
+        "Archive User",
+        $("<p>Set a new password for <b>" + email + "</b>?</p> <p><label for='users_set_password_pw' style='display: block; font-weight: normal'>New Password:</label><input type='password' id='users_set_password_pw'></p><p><small>Passwords must be at least four characters and may not contain spaces.</small></p>"),
+        "Set Password",
+        function() {
+          api(
+            "/mail/users/password",
+            "POST",
+            {
+              email: email,
+              password: $('#users_set_password_pw').val()
+            },
+            function(r) {
+              // Responses are multiple lines of pre-formatted text.
+              show_modal_error("Set Password", $("<pre/>").text(r));
+            },
+            function(r) {
+              show_modal_error("Set Password", r);
+            });
+        });
+    }
+
+    function users_remove(elem) {
+      var email = $(elem).parents('tr').attr('data-email');
+      show_modal_confirm(
+        "Archive User",
+        $("<p>Are you sure you want to archive <b>" + email + "</b>?</p> <p>The user's mailboxes will not be deleted (you can do that later), but the user will no longer be able to log into any services on this machine.</p>"),
+        "Archive",
+        function() {
+          api(
+            "/mail/users/remove",
+            "POST",
+            {
+              email: email
+            },
+            function(r) {
+              // Responses are multiple lines of pre-formatted text.
+              show_modal_error("Remove User", $("<pre/>").text(r));
+              show_users();
+            },
+            function(r) {
+              show_modal_error("Remove User", r);
+            });
+        });
+    }
+
+    function mod_priv(elem, add_remove) {
+      var email = $(elem).parents('tr').attr('data-email');
+      var priv = $(elem).parents('td').find('.name').text();
+
+      // can't remove your own admin access
+      if (priv == "admin" && add_remove == "remove" && api_credentials != null && email == api_credentials[0]) {
+        show_modal_error("Modify Privileges", "You cannot remove the admin privilege from yourself.");
+        return;
       }
-    })
-}
 
-function do_add_user() {
-  var email = $("#adduserEmail").val();
-  var pw = $("#adduserPassword").val();
-  var privs = $("#adduserPrivs").val();
-  api(
-    "/mail/users/add",
-    "POST",
-    {
-      email: email,
-      password: pw,
-      privileges: privs
-    },
-    function(r) {
-      // Responses are multiple lines of pre-formatted text.
-      show_modal_error("Add User", $("<pre/>").text(r));
-      show_users()
-    },
-    function(r) {
-      show_modal_error("Add User", r);
-    });
-  return false;
-}
-
-function users_set_password(elem) {
-  var email = $(elem).parents('tr').attr('data-email');
-  show_modal_confirm(
-    "Archive User",
-    $("<p>Set a new password for <b>" + email + "</b>?</p> <p><label for='users_set_password_pw' style='display: block; font-weight: normal'>New Password:</label><input type='password' id='users_set_password_pw'></p><p><small>Passwords must be at least four characters and may not contain spaces.</small></p>"),
-    "Set Password",
-    function() {
-      api(
-        "/mail/users/password",
-        "POST",
-        {
-          email: email,
-          password: $('#users_set_password_pw').val()
-        },
-        function(r) {
-          // Responses are multiple lines of pre-formatted text.
-          show_modal_error("Set Password", $("<pre/>").text(r));
-        },
-        function(r) {
-          show_modal_error("Set Password", r);
+      var add_remove1 = add_remove.charAt(0).toUpperCase() + add_remove.substring(1);
+      show_modal_confirm(
+        "Modify Privileges",
+        "Are you sure you want to " + add_remove + " the " + priv + " privilege for <b>" + email + "</b>?",
+        add_remove1,
+        function() {
+          api(
+            "/mail/users/privileges/" + add_remove,
+            "POST",
+            {
+              email: email,
+              privilege: priv
+            },
+            function(r) {
+              show_users();
+            });
         });
-    });
-}
+    }
+    </script>
 
-function users_remove(elem) {
-  var email = $(elem).parents('tr').attr('data-email');
-  show_modal_confirm(
-    "Archive User",
-    $("<p>Are you sure you want to archive <b>" + email + "</b>?</p> <p>The user's mailboxes will not be deleted (you can do that later), but the user will no longer be able to log into any services on this machine.</p>"),
-    "Archive",
-    function() {
-      api(
-        "/mail/users/remove",
-        "POST",
-        {
-          email: email
-        },
-        function(r) {
-          // Responses are multiple lines of pre-formatted text.
-          show_modal_error("Remove User", $("<pre/>").text(r));
-          show_users();
-        },
-        function(r) {
-          show_modal_error("Remove User", r);
-        });
-    });
-}
-
-function mod_priv(elem, add_remove) {
-  var email = $(elem).parents('tr').attr('data-email');
-  var priv = $(elem).parents('td').find('.name').text();
-
-  // can't remove your own admin access
-  if (priv == "admin" && add_remove == "remove" && api_credentials != null && email == api_credentials[0]) {
-    show_modal_error("Modify Privileges", "You cannot remove the admin privilege from yourself.");
-    return;
-  }
-
-  var add_remove1 = add_remove.charAt(0).toUpperCase() + add_remove.substring(1);
-  show_modal_confirm(
-    "Modify Privileges",
-    "Are you sure you want to " + add_remove + " the " + priv + " privilege for <b>" + email + "</b>?",
-    add_remove1,
-    function() {
-      api(
-        "/mail/users/privileges/" + add_remove,
-        "POST",
-        {
-          email: email,
-          privilege: priv
-        },
-        function(r) {
-          show_users();
-        });
-    });
-}
-</script>
+</div>

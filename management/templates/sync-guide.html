@@ -1,49 +1,55 @@
-<div class="container">
-	<h2>Contacts &amp; Calendar Synchronization</h2>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-sm-12">
 
-	<p>This box can hold your contacts and calendar, just like it holds your email.</p>
+            <h2>Contacts &amp; Calendar Synchronization</h2>
 
-	<hr>
+            <p>This box can hold your contacts and calendar, just like it holds your email.</p>
 
-	<div class="row">
-		<div class="col-sm-6">
-			<h4>In your browser</h4>
+            <hr>
 
-			<p>You can edit your contacts and calendar from your web browser.</p>
+            </div>
+        </div>
+    <div class="row">
+        <div class="col-sm-6">
+            <h4>In your browser</h4>
 
-			<table class="table">
-			<thead><tr><th>For...</th> <th>Visit this URL</th></tr></thead>
-			<tr><th>Contacts</td> <td><a href="https://{{hostname}}/cloud/contacts">https://{{hostname}}/cloud/contacts</a></td></tr>
-			<tr><th>Calendar</td> <td><a href="https://{{hostname}}/cloud/calendar">https://{{hostname}}/cloud/calendar</a></td></tr>
-			</table>
+            <p>You can edit your contacts and calendar from your web browser.</p>
 
-			<p>Log in settings are the same as with <a href="#mail-guide" onclick="return show_panel(this);">mail</a>: your
-			complete email address and your mail password.</p>
-		</div>
+            <table class="table">
+                <thead><tr><th>For...</th> <th>Visit this URL</th></tr></thead>
+                <tr><th>Contacts</td> <td><a href="https://{{hostname}}/cloud/contacts">https://{{hostname}}/cloud/contacts</a></td></tr>
+                <tr><th>Calendar</td> <td><a href="https://{{hostname}}/cloud/calendar">https://{{hostname}}/cloud/calendar</a></td></tr>
+            </table>
 
-		<div class="col-sm-6">
-			<h4>On your mobile device</h4>
+            <p>Log in settings are the same as with <a href="#mail-guide" onclick="return show_panel(this);">mail</a>: your
+            complete email address and your mail password.</p>
 
-			<p>If you set up your <a href="#mail-guide" onclick="return show_panel(this);">mail</a> using Exchange/ActiveSync,
-			your contacts and calendar may already appear on your device.</p>
-			<p>Otherwise, here are some apps that can synchronize your contacts and calendar to your Android phone.</p>
+        </div>
+        <div class="col-sm-6">
+            <h4>On your mobile device</h4>
 
-			<table class="table">
-			<thead><tr><th>For...</th> <th>Use...</th></tr></thead>
-			<tr><td>Contacts and Calendar</td> <td><a href="https://play.google.com/store/apps/details?id=at.bitfire.davdroid">DAVdroid</a> ($3.69; free <a href="https://f-droid.org/repository/browse/?fdfilter=dav&fdid=at.bitfire.davdroid">here</a>)</td></tr>
-			<tr><td>Only Contacts</td> <td><a href="https://play.google.com/store/apps/details?id=org.dmfs.carddav.sync">CardDAV-Sync free beta</a> (free)</td></tr>
-			<tr><td>Only Calendar</td> <td><a href="https://play.google.com/store/apps/details?id=org.dmfs.caldav.lib">CalDAV-Sync</a> ($2.89)</td></tr>
-			</table>
+            <p>If you set up your <a href="#mail-guide" onclick="return show_panel(this);">mail</a> using Exchange/ActiveSync,
+            your contacts and calendar may already appear on your device.</p>
+            <p>Otherwise, here are some apps that can synchronize your contacts and calendar to your Android phone.</p>
 
-			<p>Use the following settings:</p>
+            <table class="table">
+                <thead><tr><th>For...</th> <th>Use...</th></tr></thead>
+                <tr><td>Contacts and Calendar</td> <td><a href="https://play.google.com/store/apps/details?id=at.bitfire.davdroid">DAVdroid</a> ($3.69; free <a href="https://f-droid.org/repository/browse/?fdfilter=dav&fdid=at.bitfire.davdroid">here</a>)</td></tr>
+                <tr><td>Only Contacts</td> <td><a href="https://play.google.com/store/apps/details?id=org.dmfs.carddav.sync">CardDAV-Sync free beta</a> (free)</td></tr>
+                <tr><td>Only Calendar</td> <td><a href="https://play.google.com/store/apps/details?id=org.dmfs.caldav.lib">CalDAV-Sync</a> ($2.89)</td></tr>
+            </table>
 
-			<table class="table">
-			<tr><td>Account Type</td> <td>CardDAV or CalDAV</td></tr>
-			<tr><td>Server Name</td> <td>{{hostname}}</td></tr>
-			<tr><td>Use SSL</td> <td>Yes</td></tr>
-			<tr><td>Username</td> <td>Your complete email address.</td></tr>
-			<tr><td>Password</td> <td>Your mail password.</td></tr>
-			</table>
-		</div>
-	</div>
+            <p>Use the following settings:</p>
+
+            <table class="table">
+                <tr><td>Account Type</td> <td>CardDAV or CalDAV</td></tr>
+                <tr><td>Server Name</td> <td>{{hostname}}</td></tr>
+                <tr><td>Use SSL</td> <td>Yes</td></tr>
+                <tr><td>Username</td> <td>Your complete email address.</td></tr>
+                <tr><td>Password</td> <td>Your mail password.</td></tr>
+            </table>
+
+        </div>
+    </div>
 </div>

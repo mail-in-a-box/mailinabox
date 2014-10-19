@@ -1,118 +1,123 @@
-<style>
-</style>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-sm-12">
 
-<h2>SSL Certificates</h2>
+            <h2>SSL Certificates</h2>
 
-<h3>Certificate Status</h3>
+            <h3>Certificate Status</h3>
 
+            <table id="ssl_domains" class="table" style="margin-bottom: 2em; width: auto;">
+                <thead>
+                    <tr>
+                        <th>Domain</th>
+                        <th>Certificate Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
 
-<table id="ssl_domains" class="table" style="margin-bottom: 2em; width: auto;">
-  <thead>
-    <tr>
-      <th>Domain</th>
-      <th>Certificate Status</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-  </tbody>
-</table>
+            <h3 id="ssl_install_header">Install SSL Certificate</h3>
 
-<h3 id="ssl_install_header">Install SSL Certificate</h3>
+            <p>There are many places where you can get a free or cheap SSL certificate. We recommend <a href="https://www.namecheap.com/cart/remove.aspx?itemid=47016639&i=i2">Namecheap&rsquo;s $9 certificate</a> or <a href="https://www.startssl.com/">StartSSL&rsquo;s free express lane</a>.</p>
 
-<p>There are many places where you can get a free or cheap SSL certificate. We recommend <a href="https://www.namecheap.com/cart/remove.aspx?itemid=47016639&i=i2">Namecheap&rsquo;s $9 certificate</a> or <a href="https://www.startssl.com/">StartSSL&rsquo;s free express lane</a>.</p>
+            <p>Which domain are you getting an SSL certificate for?</p>
 
-<p>Which domain are you getting an SSL certificate for?</p>
+            <p><select id="ssldomain" onchange="show_csr()" class="form-control" style="width: auto"></select></p>
 
-<p><select id="ssldomain" onchange="show_csr()" class="form-control" style="width: auto"></select></p>
+            <div id="csr_info" style="display: none">
+                <p>You will need to provide the SSL certificate provider this Certificate Signing Request (CSR):</p>
 
-<div id="csr_info" style="display: none">
-  <p>You will need to provide the SSL certificate provider this Certificate Signing Request (CSR):</p>
+                <pre id="ssl_csr"></pre>
 
-  <pre id="ssl_csr"></pre>
+                <p><small>The CSR is safe to share. It can only be used in combination with a secret key stored on this machine.</small></p>
 
-  <p><small>The CSR is safe to share. It can only be used in combination with a secret key stored on this machine.</small></p>
+                <p>The SSL certificate provider will then provide you with an SSL certificate. They may also provide you with an intermediate chain. Paste each separately into the boxes below:</p>
 
-  <p>The SSL certificate provider will then provide you with an SSL certificate. They may also provide you with an intermediate chain. Paste each separately into the boxes below:</p>
+                <p style="margin-bottom: .5em">SSL certificate:</p>
+                <p><textarea id="ssl_paste_cert" class="form-control" style="max-width: 40em; height: 8em" placeholder="-----BEGIN CERTIFICATE-----&#xA;stuff here&#xA;-----END CERTIFICATE-----"></textarea></p>
 
-  <p style="margin-bottom: .5em">SSL certificate:</p>
-  <p><textarea id="ssl_paste_cert" class="form-control" style="max-width: 40em; height: 8em" placeholder="-----BEGIN CERTIFICATE-----&#xA;stuff here&#xA;-----END CERTIFICATE-----"></textarea></p>
+                <p style="margin-bottom: .5em">SSL intermediate chain (if provided):</p>
+                <p><textarea id="ssl_paste_chain" class="form-control" style="max-width: 40em; height: 8em" placeholder="-----BEGIN CERTIFICATE-----&#xA;stuff here&#xA;-----END CERTIFICATE-----&#xA;-----BEGIN CERTIFICATE-----&#xA;more stuff here&#xA;-----END CERTIFICATE-----"></textarea></p>
 
-  <p style="margin-bottom: .5em">SSL intermediate chain (if provided):</p>
-  <p><textarea id="ssl_paste_chain" class="form-control" style="max-width: 40em; height: 8em" placeholder="-----BEGIN CERTIFICATE-----&#xA;stuff here&#xA;-----END CERTIFICATE-----&#xA;-----BEGIN CERTIFICATE-----&#xA;more stuff here&#xA;-----END CERTIFICATE-----"></textarea></p>
+                <p>After you paste in the information, click the install button.</p>
 
-  <p>After you paste in the information, click the install button.</p>
+                <button class="btn-primary" onclick="install_cert()">Install</button>
+            </div>
 
-  <button class="btn-primary" onclick="install_cert()">Install</button>
+        </div>
+    </div>
+
+    <script>
+    function show_ssl() {
+     api(
+        "/web/domains",
+        "GET",
+        {
+        },
+        function(domains) {
+          var tb = $('#ssl_domains tbody');
+          tb.text('');
+          $('#ssldomain').html('<option value="">(select)</option>');
+
+          for (var i = 0; i < domains.length; i++) {
+            var row = $("<tr><th class='domain'><a href=''></a></th><td class='status'></td> <td class='actions'><a href='#' onclick='return ssl_install(this);' class='btn btn-xs'>Install Certificate</a></td></tr>");
+            tb.append(row);
+            row.attr('data-domain', domains[i].domain);
+            row.find('.domain a').text(domains[i].domain);
+            row.find('.domain a').attr('href', 'https://' + domains[i].domain);
+            row.addClass("text-" + domains[i].ssl_certificate[0]);
+            row.find('.status').text(domains[i].ssl_certificate[1]);
+            if (domains[i].ssl_certificate[0] == "success") {
+              row.find('.actions a').addClass('btn-default').text('Replace Certificate');
+            } else {
+              row.find('.actions a').addClass('btn-primary').text('Install Certificate');
+            }
+
+            $('#ssldomain').append($('<option>').text(domains[i].domain));
+          }
+        });
+    }
+
+    function ssl_install(elem) {
+      var domain = $(elem).parents('tr').attr('data-domain');
+      $('#ssldomain').val(domain);
+      $('#csr_info').slideDown();
+      $('#ssl_csr').text('Loading...');
+      show_csr();
+      $('html, body').animate({ scrollTop: $('#ssl_install_header').offset().top })
+      return false;
+    }
+
+    function show_csr() {
+     api(
+        "/ssl/csr/" + $('#ssldomain').val(),
+        "POST",
+        {
+        },
+        function(data) {
+          $('#ssl_csr').text(data);
+        });
+    }
+
+    function install_cert() {
+     api(
+        "/ssl/install",
+        "POST",
+        {
+          domain: $('#ssldomain').val(),
+          cert: $('#ssl_paste_cert').val(),
+          chain: $('#ssl_paste_chain').val()
+        },
+        function(status) {
+          if (status == "") {
+            show_modal_error("SSL Certificate Installation", "Certificate has been installed. Check that you have no connection problems to the domain.", function() { show_ssl(); $('#csr_info').slideUp(); });
+          } else {
+            show_modal_error("SSL Certificate Installation", status);
+          }
+        });
+    }
+    </script>
+
 </div>
-
-<script>
-function show_ssl() {
- api(
-    "/web/domains",
-    "GET",
-    {
-    },
-    function(domains) {
-      var tb = $('#ssl_domains tbody');
-      tb.text('');
-      $('#ssldomain').html('<option value="">(select)</option>');
-
-      for (var i = 0; i < domains.length; i++) {
-        var row = $("<tr><th class='domain'><a href=''></a></th><td class='status'></td> <td class='actions'><a href='#' onclick='return ssl_install(this);' class='btn btn-xs'>Install Certificate</a></td></tr>");
-        tb.append(row);
-        row.attr('data-domain', domains[i].domain);
-        row.find('.domain a').text(domains[i].domain);
-        row.find('.domain a').attr('href', 'https://' + domains[i].domain);
-        row.addClass("text-" + domains[i].ssl_certificate[0]);
-        row.find('.status').text(domains[i].ssl_certificate[1]);
-        if (domains[i].ssl_certificate[0] == "success") {
-          row.find('.actions a').addClass('btn-default').text('Replace Certificate');
-        } else {
-          row.find('.actions a').addClass('btn-primary').text('Install Certificate');
-        }
-
-        $('#ssldomain').append($('<option>').text(domains[i].domain));
-      }
-    });
-}
-
-function ssl_install(elem) {
-  var domain = $(elem).parents('tr').attr('data-domain');
-  $('#ssldomain').val(domain);
-  $('#csr_info').slideDown();
-  $('#ssl_csr').text('Loading...');
-  show_csr();
-  $('html, body').animate({ scrollTop: $('#ssl_install_header').offset().top })
-  return false;
-}
-
-function show_csr() {
- api(
-    "/ssl/csr/" + $('#ssldomain').val(),
-    "POST",
-    {
-    },
-    function(data) {
-      $('#ssl_csr').text(data);
-    });
-}
-
-function install_cert() {
- api(
-    "/ssl/install",
-    "POST",
-    {
-      domain: $('#ssldomain').val(),
-      cert: $('#ssl_paste_cert').val(),
-      chain: $('#ssl_paste_chain').val()
-    },
-    function(status) {
-      if (status == "") {
-        show_modal_error("SSL Certificate Installation", "Certificate has been installed. Check that you have no connection problems to the domain.", function() { show_ssl(); $('#csr_info').slideUp(); });
-      } else {
-        show_modal_error("SSL Certificate Installation", status);
-      }
-    });
-}
-</script>
