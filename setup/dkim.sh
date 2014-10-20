@@ -1,3 +1,4 @@
+#!/bin/bash
 # OpenDKIM
 # --------
 #
@@ -6,6 +7,7 @@
 # The DNS configuration for DKIM is done in the management daemon.
 
 source setup/functions.sh # load our functions
+source /etc/mailinabox.conf # load global vars
 
 # Install DKIM...
 apt_install opendkim opendkim-tools
