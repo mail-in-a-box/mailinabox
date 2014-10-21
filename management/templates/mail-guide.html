@@ -1,10 +1,17 @@
-<style>#panel_mail-guide table.table { width: auto; margin-left: .5em; }</style>
+<div class="container-fluid">
 
-<div class="container">
-	<h2 style="margin-bottom: 0">Checking and Sending Mail</h2>
+    <style>#panel_mail-guide table.table { width: auto; margin-left: .5em; }</style>
 
 	<div class="row">
+        <div class="col-sm-12">
+
+            <h2 style="margin-bottom: 0">Checking and Sending Mail</h2>
+
+        </div>
+    </div>
+	<div class="row">
 		<div class="col-sm-6">
+
 			<h3>How to log in</h3>
 
 			<p>Your username and password are the same no matter how you check your mail:</p>
@@ -28,41 +35,45 @@
 				<li>On iOS devices, look for Exchange or ActiveSync.</li>
 			</ul>
 
-			<div class="row">
-				<div class="col-lg-6">
-					<h4>IMAP/SMTP settings</h4>
+            <div class="row">
+                <div class="col-lg-6">
 
-					<p>This method is preferred on Android devices but is not available on iOS devices.</p>
+                    <h4>IMAP/SMTP settings</h4>
 
-					<p>Your mail server is <strong>{{hostname}}</strong>. Use the following settings when prompted:</p>
+                    <p>This method is preferred on Android devices but is not available on iOS devices.</p>
 
-					<table class="table">
-					<thead>
-						<tr><th>Protocol</th> <th>Port</th> <th>Options</th></tr>
-					</thead>
-					<tr><th>IMAP</th> <td>993</td> <td>SSL</td></tr>
-					<tr><th>SMTP</th> <td>587</td> <td>STARTTLS <span>(&ldquo;always&rdquo; or &ldquo;required&rdquo;, if prompted)</span></td></tr>
-					</table>
+                    <p>Your mail server is <strong>{{hostname}}</strong>. Use the following settings when prompted:</p>
 
-					<p>In addition to setting up your email, you&rsquo;ll also need to set up <a href="#sync_guide" onclick="return show_panel(this);">contacts and calendar synchronization</a> separately.</p>
-				</div>
+                    <table class="table">
+                        <thead>
+                            <tr><th>Protocol</th> <th>Port</th> <th>Options</th></tr>
+                        </thead>
+                        <tr><th>IMAP</th> <td>993</td> <td>SSL</td></tr>
+                        <tr><th>SMTP</th> <td>587</td> <td>STARTTLS <span>(&ldquo;always&rdquo; or &ldquo;required&rdquo;, if prompted)</span></td></tr>
+                    </table>
 
-				<div class="col-lg-6">
-					<h4>Exchange/ActiveSync settings</h4>
+                    <p>In addition to setting up your email, you&rsquo;ll also need to set up <a href="#sync_guide" onclick="return show_panel(this);">contacts and calendar synchronization</a> separately.</p>
 
-					<p>On iOS devices and devices on this <a href="http://z-push.org/compatibility/">compatibility list</a>, set up your mail as an Exchange or ActiveSync server. Use these settings when prompted:</p>
+                </div>
+                <div class="col-lg-6">
 
-					<table class="table">
-					<tr><th>Server</th> <td>{{hostname}}</td></tr>
-					<tr><th>Options</th> <td>Secure Connection</td></tr>
-					</table>
+                    <h4>Exchange/ActiveSync settings</h4>
 
-					<p>Your device should also provide a contacts list and calendar that syncs to this box when you use this method.</p>
-				</div>
-			</div>
+                    <p>On iOS devices and devices on this <a href="http://z-push.org/compatibility/">compatibility list</a>, set up your mail as an Exchange or ActiveSync server. Use these settings when prompted:</p>
+
+                    <table class="table">
+                        <tr><th>Server</th> <td>{{hostname}}</td></tr>
+                        <tr><th>Options</th> <td>Secure Connection</td></tr>
+                    </table>
+
+                    <p>Your device should also provide a contacts list and calendar that syncs to this box when you use this method.</p>
+
+                </div>
+            </div>
+
 		</div>
-
 		<div class="col-sm-6">
+
 			<h3>Other information about mail on your box</h3>
 
 			<h4>Greylisting</h4>
@@ -70,6 +81,7 @@
 
 			<h4>Use this box to send as you</h4>
 			<p>Your box sets strict email sending policies for your domain names to make it harder for spam and other fraudulent mail to claim to be you. Only this machine is authorized to send email on behalf of your domain names. If you use any other service to send email as you, it will likely get spam filtered by recipients.</p>
+
 		</div>
 	</div>
 </div>

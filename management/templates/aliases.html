@@ -1,198 +1,201 @@
-<style>
-#alias_table .actions > * { padding-right: 3px; }
-#alias_table .alias-required .remove { display: none }
-</style>
+<div class="container-fluid">
 
-<h2>Aliases</h2>
+    <style>
+        #alias_table .actions > * { padding-right: 3px; }
+        #alias_table .alias-required .remove { display: none }
+    </style>
 
-<h3>Add a mail alias</h3>
+    <div class="row">
+        <div class="col-sm-12">
 
-<p>Aliases are email forwarders. An alias can forward email to a <a href="javascript:show_panel('users')">mail user</a> or to any email address.</p>
+            <h2>Aliases</h2>
 
-<form class="form-horizontal" role="form" onsubmit="do_add_alias(); return false;">
-  <div class="form-group">
-    <div class="col-sm-offset-1 col-sm-11">
-      <div id="alias_type_buttons" class="btn-group btn-group-xs">
-        <button type="button" class="btn btn-default active">Regular</button>
-        <button type="button" class="btn btn-default">Catch-All</button>
-      </div>
-      <div id="alias_catchall_info" class="text-info small" style="display: none; margin: .5em 0 0 0;">A catch-all alias captures all otherwise unmatched email to a domain. Enter just a part of an email address starting with the @-sign.</div>
+            <h3>Add a mail alias</h3>
+
+            <p>Aliases are email forwarders. An alias can forward email to a <a href="javascript:show_panel('users')">mail user</a> or to any email address.</p>
+
+            <form class="form-horizontal" role="form" onsubmit="do_add_alias(); return false;">
+                <div class="form-group">
+                    <div class="col-sm-offset-1 col-sm-11">
+                        <div id="alias_type_buttons" class="btn-group btn-group-xs">
+                            <button type="button" class="btn btn-default active">Regular</button>
+                            <button type="button" class="btn btn-default">Catch-All</button>
+                        </div>
+                        <div id="alias_catchall_info" class="text-info small" style="display: none; margin: .5em 0 0 0;">A catch-all alias captures all otherwise unmatched email to a domain. Enter just a part of an email address starting with the @-sign.</div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="addaliasEmail" class="col-sm-1 control-label">Alias</label>
+                    <div class="col-sm-10">
+                        <input type="email" class="form-control" id="addaliasEmail" placeholder="incoming email address (you@yourdomain.com)">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="addaliasTargets" class="col-sm-1 control-label">Forward To</label>
+                    <div class="col-sm-10">
+                        <textarea class="form-control" rows="3" id="addaliasTargets" placeholder="forward to these email addresses (one per line or separated by commas)"></textarea>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-sm-offset-1 col-sm-11">
+                        <button id="add-alias-button" type="submit" class="btn btn-primary">Add Alias</button>
+                        <button id="alias-cancel" class="btn btn-default hidden" onclick="aliases_reset_form(); return false;">Cancel</button>
+                    </div>
+                </div>
+            </form>
+
+            <h3>Existing mail aliases</h3>
+            <table id="alias_table" class="table" style="width: auto">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Alias<br></th>
+                    <th>Forwards To</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+            </table>
+
+            <p style="margin-top: 1.5em"><small>Hostmaster@, postmaster@ and admin@ email addresses are required on some domains.</small></p>
+
+            <div style="display: none">
+                <table>
+                    <tr id="alias-template">
+                        <td class='actions'>
+                            <a href="#" onclick="aliases_edit(this); scroll_top(); return false;" class='edit' title="Edit Alias">
+                                <span class="glyphicon glyphicon-pencil"></span>
+                            </a>
+                            <a href="#" onclick="aliases_remove(this); return false;" class='remove' title="Remove Alias">
+                                <span class="glyphicon glyphicon-trash"></span>
+                            </a>
+                        </td>
+                        <td class='email'> </td>
+                        <td class='target'> </td>
+                    </tr>
+                </table>
+            </div>
+
+        </div>
     </div>
-  </div>
-  <div class="form-group">
-    <label for="addaliasEmail" class="col-sm-1 control-label">Alias</label>
-    <div class="col-sm-10">
-      <input type="email" class="form-control" id="addaliasEmail" placeholder="incoming email address (you@yourdomain.com)">
-    </div>
-  </div>
-  <div class="form-group">
-    <label for="addaliasTargets" class="col-sm-1 control-label">Forward To</label>
-    <div class="col-sm-10">
-      <textarea class="form-control" rows="3" id="addaliasTargets" placeholder="forward to these email addresses (one per line or separated by commas)"></textarea>
-    </div>
-  </div>
-  <div class="form-group">
-    <div class="col-sm-offset-1 col-sm-11">
-      <button id="add-alias-button" type="submit" class="btn btn-primary">Add Alias</button>
-      <button id="alias-cancel" class="btn btn-default hidden" onclick="aliases_reset_form(); return false;">Cancel</button>
-    </div>
-  </div>
-</form>
 
-<h3>Existing mail aliases</h3>
-<table id="alias_table" class="table" style="width: auto">
-  <thead>
-    <tr>
-      <th></th>
-      <th>Alias<br></th>
-      <th>Forwards To</th>
-    </tr>
-  </thead>
-  <tbody>
-  </tbody>
-</table>
-
-<p style="margin-top: 1.5em"><small>Hostmaster@, postmaster@, and admin@ email addresses are required on some domains.</small></p>
-
-<div style="display: none">
-  <table>
-  <tr id="alias-template">
-    <td class='actions'>
-        <a href="#" onclick="aliases_edit(this); scroll_top(); return false;" class='edit' title="Edit Alias">
-          <span class="glyphicon glyphicon-pencil"></span>
-        </a>
-        <a href="#" onclick="aliases_remove(this); return false;" class='remove' title="Remove Alias">
-          <span class="glyphicon glyphicon-trash"></span>
-        </a>
-    </td>
-    <td class='email'> </td>
-    <td class='target'> </td>
-  </tr>
-  </table>
-</div>
-
-
-<script>
-function show_aliases() {
-  $('#alias_table tbody').html("<tr><td colspan='2' class='text-muted'>Loading...</td></tr>")
-  api(
-    "/mail/aliases",
-    "GET",
-    { format: 'json' },
-    function(r) {
-      $('#alias_table tbody').html("");
-      for (var i = 0; i < r.length; i++) {
-        var hdr = $("<tr><td colspan='3'><h4/></td></tr>");
-        hdr.find('h4').text(r[i].domain);
-        $('#alias_table tbody').append(hdr);
-
-        for (var k = 0; k < r[i].aliases.length; k++) {
-          var alias = r[i].aliases[k];
-
-          var n = $("#alias-template").clone();
-          n.attr('id', '');
-
-          if (alias.required) n.addClass('alias-required');
-          n.attr('data-email', alias.source);
-          n.find('td.email').text(alias.source)
-          for (var j = 0; j < alias.destination.length; j++)
-            n.find('td.target').append($("<div></div>").text(alias.destination[j]))
-          $('#alias_table tbody').append(n);
-        }
-      }
-    })
-
-  $(function() {
-    $('#alias_type_buttons button').off('click').click(function() {
-      $('#alias_type_buttons button').removeClass('active');
-      $(this).addClass('active');
-      if ($(this).text() == "Regular") {
-        $('#addaliasEmail').attr('type', 'email');
-        $('#addaliasEmail').attr('placeholder', 'incoming email address (you@yourdomain.com)');
-        $('#alias_catchall_info').slideUp();
-      } else {
-        $('#addaliasEmail').attr('type', 'text');
-        $('#addaliasEmail').attr('placeholder', 'incoming catch-all address (@yourdomain.com)');
-        $('#alias_catchall_info').slideDown();
-      }
-    })
-  })
-}
-
-var is_alias_add_update = false;
-function do_add_alias() {
-  var title = (!is_alias_add_update) ? "Add Alias" : "Update Alias";
-  var email = $("#addaliasEmail").val();
-  var targets = $("#addaliasTargets").val();
-  api(
-    "/mail/aliases/add",
-    "POST",
-    {
-      update_if_exists: is_alias_add_update ? '1' : '0',
-      source: email,
-      destination: targets
-    },
-    function(r) {
-      // Responses are multiple lines of pre-formatted text.
-      show_modal_error(title, $("<pre/>").text(r));
-      show_aliases()
-      aliases_reset_form();
-    },
-    function(r) {
-      show_modal_error(title, r);
-    });
-  return false;
-}
-
-function aliases_reset_form() {
-  $("#addaliasEmail").prop('disabled', false);
-  $("#addaliasEmail").val('')
-  $("#addaliasTargets").val('')
-  $('#alias-cancel').addClass('hidden');
-  $('#add-alias-button').text('Add Alias');
-  is_alias_add_update = false;
-}
-
-function aliases_edit(elem) {
-  var email = $(elem).parents('tr').attr('data-email');
-  var targetdivs = $(elem).parents('tr').find('.target div');
-  var targets = "";
-  for (var i = 0; i < targetdivs.length; i++)
-    targets += $(targetdivs[i]).text() + "\n";
-
-  is_alias_add_update = true;
-  $('#alias-cancel').removeClass('hidden');
-  $("#addaliasEmail").prop('disabled', true);
-  $("#addaliasEmail").val(email);
-  $("#addaliasTargets").val(targets);
-  $('#add-alias-button').text('Update');
-  $('body').animate({ scrollTop: 0 })
-}
-
-function aliases_remove(elem) {
-  var email = $(elem).parents('tr').attr('data-email');
-  show_modal_confirm(
-    "Remove Alias",
-    "Remove " + email + "?",
-    "Remove",
-    function() {
+    <script>
+    function show_aliases() {
+      $('#alias_table tbody').html("<tr><td colspan='2' class='text-muted'>Loading...</td></tr>")
       api(
-        "/mail/aliases/remove",
+        "/mail/aliases",
+        "GET",
+        { format: 'json' },
+        function(r) {
+          $('#alias_table tbody').html("");
+          for (var i = 0; i < r.length; i++) {
+            var hdr = $("<tr><td colspan='3'><h4/></td></tr>");
+            hdr.find('h4').text(r[i].domain);
+            $('#alias_table tbody').append(hdr);
+
+            for (var k = 0; k < r[i].aliases.length; k++) {
+              var alias = r[i].aliases[k];
+
+              var n = $("#alias-template").clone();
+              n.attr('id', '');
+
+              if (alias.required) n.addClass('alias-required');
+              n.attr('data-email', alias.source);
+              n.find('td.email').text(alias.source)
+              for (var j = 0; j < alias.destination.length; j++)
+                n.find('td.target').append($("<div></div>").text(alias.destination[j]))
+              $('#alias_table tbody').append(n);
+            }
+          }
+        })
+
+      $(function() {
+        $('#alias_type_buttons button').off('click').click(function() {
+          $('#alias_type_buttons button').removeClass('active');
+          $(this).addClass('active');
+          if ($(this).text() == "Regular") {
+            $('#addaliasEmail').attr('type', 'email');
+            $('#addaliasEmail').attr('placeholder', 'incoming email address (you@yourdomain.com)');
+            $('#alias_catchall_info').slideUp();
+          } else {
+            $('#addaliasEmail').attr('type', 'text');
+            $('#addaliasEmail').attr('placeholder', 'incoming catch-all address (@yourdomain.com)');
+            $('#alias_catchall_info').slideDown();
+          }
+        })
+      })
+    }
+
+    var is_alias_add_update = false;
+    function do_add_alias() {
+      var title = (!is_alias_add_update) ? "Add Alias" : "Update Alias";
+      var email = $("#addaliasEmail").val();
+      var targets = $("#addaliasTargets").val();
+      api(
+        "/mail/aliases/add",
         "POST",
         {
-          source: email
+          update_if_exists: is_alias_add_update ? '1' : '0',
+          source: email,
+          destination: targets
         },
         function(r) {
           // Responses are multiple lines of pre-formatted text.
-          show_modal_error("Remove User", $("<pre/>").text(r));
-          show_aliases();
+          show_modal_error(title, $("<pre/>").text(r));
+          show_aliases()
+          aliases_reset_form();
+        },
+        function(r) {
+          show_modal_error(title, r);
         });
-    });
-}
+      return false;
+    }
 
-function scroll_top() {
-        $('html, body').animate({
-            scrollTop: $("#panel_aliases").offset().top
-        }, 1000);
-}
-</script>
+    function aliases_reset_form() {
+      $("#addaliasEmail").prop('disabled', false);
+      $("#addaliasEmail").val('')
+      $("#addaliasTargets").val('')
+      $('#alias-cancel').addClass('hidden');
+      $('#add-alias-button').text('Add Alias');
+      is_alias_add_update = false;
+    }
+
+    function aliases_edit(elem) {
+      var email = $(elem).parents('tr').attr('data-email');
+      var targetdivs = $(elem).parents('tr').find('.target div');
+      var targets = "";
+      for (var i = 0; i < targetdivs.length; i++)
+        targets += $(targetdivs[i]).text() + "\n";
+
+      is_alias_add_update = true;
+      $('#alias-cancel').removeClass('hidden');
+      $("#addaliasEmail").prop('disabled', true);
+      $("#addaliasEmail").val(email);
+      $("#addaliasTargets").val(targets);
+      $('#add-alias-button').text('Update');
+      $('body').animate({ scrollTop: 0 })
+    }
+
+    function aliases_remove(elem) {
+      var email = $(elem).parents('tr').attr('data-email');
+      show_modal_confirm(
+        "Remove Alias",
+        "Remove " + email + "?",
+        "Remove",
+        function() {
+          api(
+            "/mail/aliases/remove",
+            "POST",
+            {
+              source: email
+            },
+            function(r) {
+              // Responses are multiple lines of pre-formatted text.
+              show_modal_error("Remove User", $("<pre/>").text(r));
+              show_aliases();
+            });
+        });
+    }
+    </script>
+
+</div>

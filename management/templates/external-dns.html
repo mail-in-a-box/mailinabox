@@ -1,77 +1,88 @@
-<style>
-#external_dns_settings .heading td {
-  font-weight: bold;
-  font-size: 120%;
-  padding-top: 1.5em;
-}
-#external_dns_settings .heading.first td {
-  border-top: none;
-  padding-top: 0;
-}
-#external_dns_settings .values td {
-  border: 0;
-	padding-top: .75em;
-	padding-bottom: 0;
-	max-width: 50vw;
-	word-wrap: break-word;
-}
-#external_dns_settings .explanation td {
-	border: 0;
-	padding-top: .5em;
-	padding-bottom: .75em;
-	font-style: italic;
-  font-size: 95%;
-	color: #777;
-}
-</style>
+<div class="container-fluid">
 
-<h2>External DNS</h2>
-
-<p class="text-warning">This is an advanced configuration page.</p>
-
-<p>Although your box is configured to serve its own DNS, it is possible to host your DNS elsewhere &mdash; such as in the DNS control panel provided by your domain name registrar or virtual cloud provider &mdash; by copying the DNS zone information shown in the table below into your external DNS server&rsquo;s control panel.</p>
-
-<p>If you do so, you are responsible for keeping your DNS entries up to date! If you previously enabled DNSSEC on your domain name by setting a DS record at your registrar, you will likely have to turn it off before changing nameservers.</p>
-
-<table id="external_dns_settings" class="table">
-	<thead>
-		<tr>
-			<th>QName</th>
-			<th>Type</th>
-			<th>Value</th>
-		</tr>
-	</thead>
-	<tbody>
-	</tbody>
-</table>
-
-<script>
-function show_external_dns() {
-  $('#external_dns_settings tbody').html("<tr><td colspan='2' class='text-muted'>Loading...</td></tr>")
-  api(
-    "/dns/dump",
-    "GET",
-    { },
-    function(zones) {
-      $('#external_dns_settings tbody').html("");
-      for (var j = 0; j < zones.length; j++) {
-        var h = $("<tr class='heading'><td colspan='3'></td></tr>");
-        h.find("td").text(zones[j][0]);
-        $('#external_dns_settings tbody').append(h);
-
-        var r = zones[j][1];
-        for (var i = 0; i < r.length; i++) {
-          var n = $("<tr class='values'><td class='qname'/><td class='rtype'/><td class='value'/></tr>");
-          n.find('.qname').text(r[i].qname);
-          n.find('.rtype').text(r[i].rtype);
-          n.find('.value').text(r[i].value);
-          $('#external_dns_settings tbody').append(n);
-
-          var n = $("<tr class='explanation'><td colspan='3'/></tr>");
-          n.find('td').text(r[i].explanation);
-          $('#external_dns_settings tbody').append(n);
+    <style>
+        #external_dns_settings .heading td {
+            font-weight: bold;
+            font-size: 120%;
+            padding-top: 1.5em;
         }
-      }
-    })
-}
-</script>
+        #external_dns_settings .heading.first td {
+            border-top: none;
+            padding-top: 0;
+        }
+        #external_dns_settings .values td {
+            border: 0;
+            padding-top: .75em;
+            padding-bottom: 0;
+        }
+        #external_dns_settings .value {
+            word-break: break-all;
+        }
+        #external_dns_settings .explanation td {
+            border: 0;
+            padding-top: .5em;
+            padding-bottom: .75em;
+            font-style: italic;
+            font-size: 95%;
+            color: #777;
+        }
+    </style>
+
+    <div class="row">
+        <div class="col-sm-12">
+
+            <h2>External DNS</h2>
+
+            <p class="text-warning">This is an advanced configuration page.</p>
+
+            <p>Although your box is configured to serve its own DNS, it is possible to host your DNS elsewhere &mdash; such as in the DNS control panel provided by your domain name registrar or virtual cloud provider &mdash; by copying the DNS zone information shown in the table below into your external DNS server&rsquo;s control panel.</p>
+
+            <p>If you do so, you are responsible for keeping your DNS entries up to date! If you previously enabled DNSSEC on your domain name by setting a DS record at your registrar, you will likely have to turn it off before changing nameservers.</p>
+
+            <table id="external_dns_settings" class="table">
+                <thead>
+                    <tr>
+                        <th>QName</th>
+                        <th>Type</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+
+    <script>
+    function show_external_dns() {
+      $('#external_dns_settings tbody').html("<tr><td colspan='2' class='text-muted'>Loading...</td></tr>")
+      api(
+        "/dns/dump",
+        "GET",
+        { },
+        function(zones) {
+          $('#external_dns_settings tbody').html("");
+          for (var j = 0; j < zones.length; j++) {
+            var h = $("<tr class='heading'><td colspan='3'></td></tr>");
+            h.find("td").text(zones[j][0]);
+            $('#external_dns_settings tbody').append(h);
+
+            var r = zones[j][1];
+            for (var i = 0; i < r.length; i++) {
+              var n = $("<tr class='values'><td class='qname'/><td class='rtype'/><td class='value'/></tr>");
+              n.find('.qname').text(r[i].qname);
+              n.find('.rtype').text(r[i].rtype);
+              n.find('.value').text(r[i].value);
+              $('#external_dns_settings tbody').append(n);
+
+              var n = $("<tr class='explanation'><td colspan='3'/></tr>");
+              n.find('td').text(r[i].explanation);
+              $('#external_dns_settings tbody').append(n);
+            }
+          }
+        })
+    }
+    </script>
+
+</div>
