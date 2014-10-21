@@ -2,7 +2,7 @@
 # domains for which a mail account has been set up.
 ########################################################################
 
-import os, os.path, re, rtyaml
+import os, os.path, shutil, re, rtyaml
 
 from mailconfig import get_mail_domains
 from dns_update import get_custom_dns_config
@@ -233,7 +233,7 @@ def install_cert(domain, ssl_cert, ssl_chain, env):
 
 	# Copy the certificate to its expected location.
 	os.makedirs(os.path.dirname(ssl_certificate), exist_ok=True)
-	os.rename(fn, ssl_certificate)
+	shutil.move(fn, ssl_certificate)
 
 	# Kick nginx so it sees the cert.
 	return do_web_update(env, ok_status="")
