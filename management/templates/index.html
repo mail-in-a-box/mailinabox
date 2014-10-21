@@ -53,7 +53,7 @@
               margin-top: 18px;
             }
 
-            .panel {
+            .admin_panel {
               display: none;
             }
 
@@ -116,47 +116,47 @@
     </div>
 
     <div class="container">
-      <div id="panel_system_status" class="panel">
+      <div id="panel_system_status" class="admin_panel">
       {% include "system-status.html" %}
       </div>
 
-      <div id="panel_system_backup" class="panel">
+      <div id="panel_system_backup" class="admin_panel">
       {% include "system-backup.html" %}
       </div>
 
-      <div id="panel_external_dns" class="panel">
+      <div id="panel_external_dns" class="admin_panel">
       {% include "external-dns.html" %}
       </div>
 
-      <div id="panel_custom_dns" class="panel">
+      <div id="panel_custom_dns" class="admin_panel">
       {% include "custom-dns.html" %}
       </div>
 
-      <div id="panel_login" class="panel">
+      <div id="panel_login" class="admin_panel">
       {% include "login.html" %}
       </div>
 
-      <div id="panel_mail-guide" class="panel">
+      <div id="panel_mail-guide" class="admin_panel">
       {% include "mail-guide.html" %}
       </div>
 
-      <div id="panel_users" class="panel">
+      <div id="panel_users" class="admin_panel">
       {% include "users.html" %}
       </div>
 
-      <div id="panel_aliases" class="panel">
+      <div id="panel_aliases" class="admin_panel">
       {% include "aliases.html" %}
       </div>
 
-      <div id="panel_sync_guide" class="panel">
+      <div id="panel_sync_guide" class="admin_panel">
       {% include "sync-guide.html" %}
       </div>
 
-      <div id="panel_web" class="panel">
+      <div id="panel_web" class="admin_panel">
       {% include "web.html" %}
       </div>
 
-      <div id="panel_ssl" class="panel">
+      <div id="panel_ssl" class="admin_panel">
       {% include "ssl.html" %}
       </div>
 
@@ -349,7 +349,7 @@ function show_panel(panelid) {
     // we might be passed an HTMLElement <a>.
     panelid = panelid.getAttribute('href').substring(1);
 
-  $('.panel').hide();
+  $('.admin_panel').hide();
   $('#panel_' + panelid).show();
   if (typeof localStorage != 'undefined')
     localStorage.setItem("miab-cp-lastpanel", panelid);
