@@ -83,7 +83,7 @@ function ssl_install(elem) {
   $('#csr_info').slideDown();
   $('#ssl_csr').text('Loading...');
   show_csr();
-  $('html, body').animate({ scrollTop: $('#ssl_install_header').offset().top })
+  $('html, body').animate({ scrollTop: $('#ssl_install_header').offset().top - $('.navbar-fixed-top').height() - 20 })
   return false;
 }
 
