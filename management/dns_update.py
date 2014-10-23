@@ -511,7 +511,7 @@ zone:
 ########################################################################
 
 def dnssec_choose_algo(domain, env):
-	if domain.endswith(".email"):
+	if domain.endswith(".email") or domain.endswith(".guide"):
 		# At least at GoDaddy, this is the only algorithm supported.
 		return "RSASHA256"
 
