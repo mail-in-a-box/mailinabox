@@ -229,6 +229,8 @@ def install_cert(domain, ssl_cert, ssl_chain, env):
 		if cert_status == "SELF-SIGNED":
 			cert_status = "This is a self-signed certificate. I can't install that."
 		os.unlink(fn)
+		if cert_status_details is not None:
+			cert_status += " " + cert_status_details
 		return cert_status
 
 	# Copy the certificate to its expected location.
