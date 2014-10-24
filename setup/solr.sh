@@ -34,6 +34,7 @@ tools/editconf.py /etc/dovecot/conf.d/10-mail.conf \
 cat > /etc/dovecot/conf.d/90-plugin.conf << EOF;
 plugin {
   fts = solr
+  fts_autoindex = yes
   fts_solr = break-imap-search url=http://127.0.0.1:8080/solr/
 }
 EOF
