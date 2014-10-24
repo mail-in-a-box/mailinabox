@@ -94,9 +94,10 @@ EOF
 ?>
 EOF
 
-	# Create user data directory and set permissions
+	# Create user data directory, log directory and set permissions
 	mkdir -p $STORAGE_ROOT/owncloud
-	chown -R www-data.www-data $STORAGE_ROOT/owncloud /usr/local/lib/owncloud
+	mkdir -p /var/log/owncloud
+	chown -R www-data.www-data $STORAGE_ROOT/owncloud /usr/local/lib/owncloud /var/log/owncloud
 
 	# Execute ownCloud's setup step, which creates the ownCloud sqlite database.
 	# It also wipes it if it exists. And it deletes the autoconfig.php file.
