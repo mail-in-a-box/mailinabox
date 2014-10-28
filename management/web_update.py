@@ -5,7 +5,7 @@
 import os, os.path, shutil, re, rtyaml
 
 from mailconfig import get_mail_domains
-from dns_update import get_custom_dns_config
+from dns_update import get_custom_dns_config, do_dns_update
 from utils import shell, safe_domain_name, sort_domains
 
 def get_web_domains(env):
@@ -237,8 +237,21 @@ def install_cert(domain, ssl_cert, ssl_chain, env):
 	os.makedirs(os.path.dirname(ssl_certificate), exist_ok=True)
 	shutil.move(fn, ssl_certificate)
 
+	ret = []
+
+	# When updating the cert for PRIMARY_HOSTNAME, also update DNS because it is
+	# used in the DANE TLSA record and restart postfix and dovecot which use
+	# that certificate.
+	if domain == env['PRIMARY_HOSTNAME']:
+		ret.append( do_dns_update(env) )
+
+		shell('check_call', ["/usr/sbin/service", "postfix", "restart"])
+		shell('check_call', ["/usr/sbin/service", "dovecot", "restart"])
+		ret.append("mail services restarted")
+
 	# Kick nginx so it sees the cert.
-	return do_web_update(env, ok_status="")
+	ret.append( do_web_update(env, ok_status="") )
+	return "\n".join(r for r in ret if r.strip() != "")
 
 def get_web_domains_info(env):
 	def check_cert(domain):

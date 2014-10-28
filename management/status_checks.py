@@ -179,9 +179,8 @@ def check_primary_hostname_dns(domain, env, dns_domains, dns_zonefiles):
 	elif tlsa25 is None:
 		env['out'].print_error("""The DANE TLSA record for incoming mail is not set. This is optional.""")
 	else:
-		env['out'].print_error("""The DANE TLSA record for incoming mail (%s) is not correct. It is '%s' but it should be '%s'. Try running tools/dns_update to
-			regenerate the record. It may take several hours for
-                        public DNS to update after a change."""
+		env['out'].print_error("""The DANE TLSA record for incoming mail (%s) is not correct. It is '%s' but it should be '%s'.
+			It may take several hours for public DNS to update after a change."""
                         % (tlsa_qname, tlsa25, tlsa25_expected))
 
 	# Check that the hostmaster@ email address exists.
