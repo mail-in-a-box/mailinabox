@@ -30,6 +30,20 @@ hide_output pyzor discover
 # We've already configured Dovecot to listen on this port.
 tools/editconf.py /etc/default/spampd DESTPORT=10026
 
+# Spamassassin normally wraps spam as an attachment inside a fresh
+# email with a report about the message. This also protects the user
+# from accidentally openening a message with embedded malware.
+#
+# It's nice to see what rules caused the message to be marked as spam,
+# but it's also annoying to get to the original message when it is an
+# attachment, modern mail clients are safer now and don't load remote
+# content or execute scripts, and it is probably confusing to most users.
+#
+# Tell Spamassassin not to modify the original message except for adding
+# the X-Spam-Status mail header and related headers.
+tools/editconf.py /etc/spamassassin/local.cf -s \
+	report_safe=0
+
 # Bayesean learning
 # -----------------
 #
