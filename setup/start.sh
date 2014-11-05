@@ -125,6 +125,7 @@ source setup/webmail.sh
 source setup/owncloud.sh
 source setup/zpush.sh
 source setup/management.sh
+source setup/mobileconfig.sh
 
 # Write the DNS and nginx configuration files.
 sleep 5 # wait for the daemon to start
@@ -160,4 +161,3 @@ openssl x509 -in $STORAGE_ROOT/ssl/ssl_certificate.pem -noout -fingerprint \
 echo
 echo Then you can confirm the security exception and continue.
 echo
-
