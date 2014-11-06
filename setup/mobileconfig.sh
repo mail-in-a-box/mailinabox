@@ -20,7 +20,7 @@ echo "<?xml version="1.0" encoding="UTF-8"?>
   <array>
     <dict>
       <key>CalDAVAccountDescription</key>
-      <string>Mail-in-a-Box Calendar</string>
+      <string>$PRIMARY_HOSTNAME calendar</string>
       <key>CalDAVHostName</key>
       <string>$PRIMARY_HOSTNAME</string>
       <key>CalDAVPort</key>
@@ -46,7 +46,7 @@ echo "<?xml version="1.0" encoding="UTF-8"?>
     </dict>
     <dict>
       <key>EmailAccountDescription</key>
-      <string>Mail-in-a-Box Mail</string>
+      <string>$PRIMARY_HOSTNAME mail</string>
       <key>EmailAccountType</key>
       <string>EmailTypeIMAP</string>
       <key>IncomingMailServerAuthentication</key>
@@ -90,7 +90,7 @@ echo "<?xml version="1.0" encoding="UTF-8"?>
     </dict>
     <dict>
       <key>CardDAVAccountDescription</key>
-      <string>Mail-in-a-Box Contacts</string>
+      <string>$PRIMARY_HOSTNAME contacts</string>
       <key>CardDAVHostName</key>
       <string>$PRIMARY_HOSTNAME</string>
       <key>CardDAVPort</key>
