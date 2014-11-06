@@ -20,7 +20,7 @@ echo "<?xml version="1.0" encoding="UTF-8"?>
   <array>
     <dict>
       <key>CalDAVAccountDescription</key>
-      <string>Mail-in-a-box Calendar</string>
+      <string>Mail-in-a-Box Calendar</string>
       <key>CalDAVHostName</key>
       <string>$PRIMARY_HOSTNAME</string>
       <key>CalDAVPort</key>
@@ -30,11 +30,11 @@ echo "<?xml version="1.0" encoding="UTF-8"?>
       <key>CalDAVUseSSL</key>
       <true/>
       <key>PayloadDescription</key>
-      <string>CalDAV-Account</string>
+      <string>$PRIMARY_HOSTNAME (Mail-in-a-Box)</string>
       <key>PayloadDisplayName</key>
-      <string>CalDAV (Mail-in-a-box Calendar)</string>
+      <string>$PRIMARY_HOSTNAME calendar</string>
       <key>PayloadIdentifier</key>
-      <string>com.mailinabox.setup.CalDAV</string>
+      <string>email.mailinabox.mobileconfig.$PRIMARY_HOSTNAME.CalDAV</string>
       <key>PayloadOrganization</key>
       <string></string>
       <key>PayloadType</key>
@@ -46,7 +46,7 @@ echo "<?xml version="1.0" encoding="UTF-8"?>
     </dict>
     <dict>
       <key>EmailAccountDescription</key>
-      <string>Mail-in-a-box Mail</string>
+      <string>Mail-in-a-Box Mail</string>
       <key>EmailAccountType</key>
       <string>EmailTypeIMAP</string>
       <key>IncomingMailServerAuthentication</key>
@@ -68,11 +68,11 @@ echo "<?xml version="1.0" encoding="UTF-8"?>
       <key>OutgoingPasswordSameAsIncomingPassword</key>
       <true/>
       <key>PayloadDescription</key>
-      <string>E-Mail-Account</string>
+      <string>$PRIMARY_HOSTNAME (Mail-in-a-Box)</string>
       <key>PayloadDisplayName</key>
-      <string>IMAP-Account</string>
+      <string>$PRIMARY_HOSTNAME mail</string>
       <key>PayloadIdentifier</key>
-      <string>com.mailinabox.setup.E-Mail</string>
+      <string>email.mailinabox.mobileconfig.$PRIMARY_HOSTNAME.E-Mail</string>
       <key>PayloadOrganization</key>
       <string></string>
       <key>PayloadType</key>
@@ -90,7 +90,7 @@ echo "<?xml version="1.0" encoding="UTF-8"?>
     </dict>
     <dict>
       <key>CardDAVAccountDescription</key>
-      <string>Mail-in-a-box Contacts</string>
+      <string>Mail-in-a-Box Contacts</string>
       <key>CardDAVHostName</key>
       <string>$PRIMARY_HOSTNAME</string>
       <key>CardDAVPort</key>
@@ -100,11 +100,11 @@ echo "<?xml version="1.0" encoding="UTF-8"?>
       <key>CardDAVUseSSL</key>
       <true/>
       <key>PayloadDescription</key>
-      <string>CardDAV-Accounts</string>
+      <string>$PRIMARY_HOSTNAME (Mail-in-a-Box)</string>
       <key>PayloadDisplayName</key>
-      <string>CardDAV</string>
+      <string>$PRIMARY_HOSTNAME contacts</string>
       <key>PayloadIdentifier</key>
-      <string>com.mailinabox.setup.carddav</string>
+      <string>email.mailinabox.mobileconfig.$PRIMARY_HOSTNAME.carddav</string>
       <key>PayloadOrganization</key>
       <string></string>
       <key>PayloadType</key>
@@ -116,11 +116,11 @@ echo "<?xml version="1.0" encoding="UTF-8"?>
     </dict>
   </array>
   <key>PayloadDescription</key>
-  <string>Mail, Contacts &amp; Calendar</string>
+  <string>$PRIMARY_HOSTNAME (Mail-in-a-Box)</string>
   <key>PayloadDisplayName</key>
-  <string>Mail-in-a-box</string>
+  <string>$PRIMARY_HOSTNAME</string>
   <key>PayloadIdentifier</key>
-  <string>com.mailinabox.setup</string>
+  <string>email.mailinabox.mobileconfig.$PRIMARY_HOSTNAME</string>
   <key>PayloadOrganization</key>
   <string></string>
   <key>PayloadRemovalDisallowed</key>
@@ -132,4 +132,4 @@ echo "<?xml version="1.0" encoding="UTF-8"?>
   <key>PayloadVersion</key>
   <integer>1</integer>
 </dict>
-</plist>" > "$STORAGE_ROOT/www/default/mailinabox.mobileconfig";
+</plist>" > "/var/lib/mailinabox/mobileconfig.xml";
