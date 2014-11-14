@@ -1,6 +1,32 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+Mail:
+
+* The maximum size of outbound mail sent via webmail and Exchange/ActiveSync has been increased to 128 MB, the same as when using SMTP.
+* Spam is no longer wrapped as an attachment inside a scary Spamassassin explanation. The original message is simply moved straight to the Spam folder unchanged.
+* There is a new iOS Configuration Profile link in the control panel which makes it easier to configure IMAP/SMTP/CalDAV/CardDAV on iOS devices.
+* "Domain aliases" can now be configured in the control panel.
+* Updated to [Roundcube 1.0.3](http://trac.roundcube.net/wiki/Changelog).
+
+Control panel:
+
+* Installing an SSL certificate for the primary hostname would cause problems until a restart (services needed to be restarted).
+* Installing SSL certificates would fail if /tmp was on a different filesystem.
+* Better error messages when installing a SSL certificate fails.
+* The local DNS cache is now cleared each time the system status checks are run.
+* Documented how to use +tag addressing.
+* Minor UI tweaks.
+
+Other:
+
+* Updated to [ownCloud 7.0.3](http://owncloud.org/changelog/).
+* The ownCloud API is now exposed properly.
+* DNSSEC now works on `.guide` domains now too (RSASHA256).
+
 v0.04 (October 15, 2014)
 ------------------------
 
