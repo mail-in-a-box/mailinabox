@@ -13,22 +13,26 @@
   <div class="form-group">
     <div class="col-sm-offset-1 col-sm-11">
       <div id="alias_type_buttons" class="btn-group btn-group-xs">
-        <button type="button" class="btn btn-default active">Regular</button>
-        <button type="button" class="btn btn-default">Catch-All</button>
+        <button type="button" class="btn btn-default active" data-mode="regular">Regular</button>
+        <button type="button" class="btn btn-default" data-mode="catchall">Catch-All</button>
+        <button type="button" class="btn btn-default" data-mode="domainalias">Domain Alias</button>
       </div>
-      <div id="alias_catchall_info" class="text-info small" style="display: none; margin: .5em 0 0 0;">A catch-all alias captures all otherwise unmatched email to a domain. Enter just a part of an email address starting with the @-sign.</div>
+      <div id="alias_mode_info" class="text-info small" style="display: none; margin: .5em 0 0 0;">
+        <span class="catchall hidden">A catch-all alias captures all otherwise unmatched email to a domain. Enter just a part of an email address starting with the @-sign.</span>
+        <span class="domainalias hidden">A domain alias forwards all otherwise unmatched mail from one domain to another domain, preserving the part before the @-sign.</span>
+      </div>
     </div>
   </div>
   <div class="form-group">
     <label for="addaliasEmail" class="col-sm-1 control-label">Alias</label>
     <div class="col-sm-10">
-      <input type="email" class="form-control" id="addaliasEmail" placeholder="incoming email address (you@yourdomain.com)">
+      <input type="email" class="form-control" id="addaliasEmail">
     </div>
   </div>
   <div class="form-group">
     <label for="addaliasTargets" class="col-sm-1 control-label">Forward To</label>
     <div class="col-sm-10">
-      <textarea class="form-control" rows="3" id="addaliasTargets" placeholder="forward to these email addresses (one per line or separated by commas)"></textarea>
+      <textarea class="form-control" rows="3" id="addaliasTargets"></textarea>
     </div>
   </div>
   <div class="form-group">
@@ -106,16 +110,28 @@ function show_aliases() {
     $('#alias_type_buttons button').off('click').click(function() {
       $('#alias_type_buttons button').removeClass('active');
       $(this).addClass('active');
-      if ($(this).text() == "Regular") {
+      if ($(this).attr('data-mode') == "regular") {
         $('#addaliasEmail').attr('type', 'email');
-        $('#addaliasEmail').attr('placeholder', 'incoming email address (you@yourdomain.com)');
-        $('#alias_catchall_info').slideUp();
-      } else {
+        $('#addaliasEmail').attr('placeholder', 'incoming email address (e.g. you@yourdomain.com)');
+	$('#addaliasTargets').attr('placeholder', 'forward to these email addresses (one per line or separated by commas)');
+        $('#alias_mode_info').slideUp();
+      } else if ($(this).attr('data-mode') == "catchall") {
         $('#addaliasEmail').attr('type', 'text');
-        $('#addaliasEmail').attr('placeholder', 'incoming catch-all address (@yourdomain.com)');
-        $('#alias_catchall_info').slideDown();
+        $('#addaliasEmail').attr('placeholder', 'incoming catch-all address (e.g. @yourdomain.com)');
+	$('#addaliasTargets').attr('placeholder', 'forward to these email addresses (one per line or separated by commas)');
+        $('#alias_mode_info').slideDown();
+        $('#alias_mode_info span').addClass('hidden');
+        $('#alias_mode_info span.catchall').removeClass('hidden');
+      } else if ($(this).attr('data-mode') == "domainalias") {
+        $('#addaliasEmail').attr('type', 'text');
+        $('#addaliasEmail').attr('placeholder', 'incoming domain (@yourdomain.com)');
+        $('#addaliasTargets').attr('placeholder', 'forward to domain (@yourdomain.com)');
+        $('#alias_mode_info').slideDown();
+        $('#alias_mode_info span').addClass('hidden');
+        $('#alias_mode_info span.domainalias').removeClass('hidden');
       }
     })
+    $('#alias_type_buttons button[data-mode="regular"]').click(); // init
   })
 }
 
@@ -166,6 +182,12 @@ function aliases_edit(elem) {
   $("#addaliasEmail").val(email);
   $("#addaliasTargets").val(targets);
   $('#add-alias-button').text('Update');
+  if (email.charAt(0) == '@' && targets.charAt(0) == '@')
+    $('#alias_type_buttons button[data-mode="domainalias"]').click();
+  else if (email.charAt(0) == '@')
+    $('#alias_type_buttons button[data-mode="catchall"]').click();
+  else
+    $('#alias_type_buttons button[data-mode="regular"]').click();
   $('body').animate({ scrollTop: 0 })
 }
 

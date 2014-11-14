@@ -15,7 +15,7 @@ def validate_email(email, mode=None):
 	if mode == 'user':
 		# For Dovecot's benefit, only allow basic characters.
 		ATEXT = r'[\w\-]'
-	elif mode == 'alias':
+	elif mode in (None, 'alias'):
 		# For aliases, we can allow any valid email address.
 		# Based on RFC 2822 and https://github.com/SyrusAkbary/validate_email/blob/master/validate_email.py,
 		# these characters are permitted in email addresses.
@@ -27,7 +27,8 @@ def validate_email(email, mode=None):
 	DOT_ATOM_TEXT_LOCAL = ATEXT + r'+(?:\.' + ATEXT + r'+)*'
 	if mode == 'alias':
 		# For aliases, Postfix accepts '@domain.tld' format for
-		# catch-all addresses. Make the local part optional.
+		# catch-all addresses on the source side and domain aliases
+		# on the destination side. Make the local part optional.
 		DOT_ATOM_TEXT_LOCAL = '(?:' + DOT_ATOM_TEXT_LOCAL + ')?'
 
 	# as above, but we can require that the host part have at least
@@ -356,19 +357,28 @@ def add_mail_alias(source, destination, env, update_if_exists=False, do_kick=Tru
 	if not validate_email(source, mode='alias'):
 		return ("Invalid incoming email address (%s)." % source, 400)
 
-	# parse comma and \n-separated destination emails & validate
+	# validate destination
 	dests = []
-	for line in destination.split("\n"):
-		for email in line.split(","):
-			email = email.strip()
-			if email == "": continue
-			if not validate_email(email, mode='alias'):
-				return ("Invalid destination email address (%s)." % email, 400)
-			dests.append(email)
+	destination = destination.strip()
+	if validate_email(destination, mode='alias'):
+		# Oostfix allows a single @domain.tld as the destination, which means
+		# the local part on the address is preserved in the rewrite.
+		dests.append(destination)
+	else:
+		# Parse comma and \n-separated destination emails & validate. In this
+		# case, the recipients must be complete email addresses.
+		for line in destination.split("\n"):
+			for email in line.split(","):
+				email = email.strip()
+				if email == "": continue
+				if not validate_email(email):
+					return ("Invalid destination email address (%s)." % email, 400)
+				dests.append(email)
 	if len(destination) == 0:
 		return ("No destination email address(es) provided.", 400)
 	destination = ",".join(dests)
 
+	# save to db
 	conn, c = open_database(env, with_connection=True)
 	try:
 		c.execute("INSERT INTO aliases (source, destination) VALUES (?, ?)", (source, destination))
