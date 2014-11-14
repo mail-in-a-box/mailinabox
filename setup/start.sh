@@ -160,4 +160,3 @@ openssl x509 -in $STORAGE_ROOT/ssl/ssl_certificate.pem -noout -fingerprint \
 echo
 echo Then you can confirm the security exception and continue.
 echo
-
