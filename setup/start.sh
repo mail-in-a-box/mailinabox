@@ -125,7 +125,6 @@ source setup/webmail.sh
 source setup/owncloud.sh
 source setup/zpush.sh
 source setup/management.sh
-source setup/mobileconfig.sh
 
 # Write the DNS and nginx configuration files.
 sleep 5 # wait for the daemon to start
