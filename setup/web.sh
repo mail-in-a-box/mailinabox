@@ -40,7 +40,7 @@ tools/editconf.py /etc/php5/fpm/pool.d/www.conf -c ';' \
 # since it depends on what domains we're serving, which we don't know
 # until mail accounts have been created.
 
-# Create the iOS Mobile Configuration file which is exposed via the
+# Create the iOS/OS X Mobile Configuration file which is exposed via the
 # nginx configuration at /mailinabox-mobileconfig.
 mkdir -p /var/lib/mailinabox
 chmod a+rx /var/lib/mailinabox

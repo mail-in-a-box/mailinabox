@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
- iOS Configuration Profile
+ iOS/OS X Configuration Profile
 
- Mobileconfig for iOS users to setup IMAP, Contacts & Calendars
+ Mobileconfig for iOS/OS X users to setup IMAP, SMTP, Contacts & Calendar
 
  https://developer.apple.com/library/ios/featuredarticles/iPhoneConfigurationProfileRef/Introduction/Introduction.html
 -->

@@ -8,7 +8,7 @@ Mail:
 
 * The maximum size of outbound mail sent via webmail and Exchange/ActiveSync has been increased to 128 MB, the same as when using SMTP.
 * Spam is no longer wrapped as an attachment inside a scary Spamassassin explanation. The original message is simply moved straight to the Spam folder unchanged.
-* There is a new iOS Configuration Profile link in the control panel which makes it easier to configure IMAP/SMTP/CalDAV/CardDAV on iOS devices.
+* There is a new iOS/Mac OS X Configuration Profile link in the control panel which makes it easier to configure IMAP/SMTP/CalDAV/CardDAV on iOS devices and Macs.
 * "Domain aliases" can now be configured in the control panel.
 * Updated to [Roundcube 1.0.3](http://trac.roundcube.net/wiki/Changelog).
 
