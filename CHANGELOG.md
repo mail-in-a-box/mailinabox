@@ -11,6 +11,7 @@ Mail:
 * There is a new iOS/Mac OS X Configuration Profile link in the control panel which makes it easier to configure IMAP/SMTP/CalDAV/CardDAV on iOS devices and Macs.
 * "Domain aliases" can now be configured in the control panel.
 * Updated to [Roundcube 1.0.3](http://trac.roundcube.net/wiki/Changelog).
+* IMAP/SMTP is now recommended even on iOS devices as Exchange/ActiveSync is terribly buggy.
 
 Control panel:
 

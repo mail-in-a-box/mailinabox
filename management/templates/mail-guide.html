@@ -5,52 +5,42 @@
 
 	<div class="row">
 		<div class="col-sm-7">
-			<h3>How to log in</h3>
-
-			<p>Your username and password are the same no matter how you check your mail:</p>
-
-			<table class="table" style="max-width: 30em">
-			<tr><th>Username:</th> <td>Your whole email address.</td></tr>
-			<tr><th>Password:</th> <td>Your mail password.</td></tr>
-			</table>
-
 			<h3>Webmail</h3>
 
 			<p>Webmail lets you check your email from any web browser. Your webmail site is:</p>
 			<p style="margin-left: 2em"><strong><a href="https://{{hostname}}/mail">https://{{hostname}}/mail</a></strong></p>
+			<p>Your username is your whole email address.</p>
+
 
 			<h3>Mobile/desktop apps</h3>
 
-			<p>When you set up your email on your phone, desktop, or other device, you will be asked to choose a protocol.</p>
+				<h4>Automatic configuration</h4>
 
-			<ul>
-				<li>On Android devices, look for IMAP and SMTP.</li>
-				<li>On iOS devices, look for Exchange or ActiveSync.</li>
-			</ul>
+					<p>iOS and OS X only: Open <a style="font-weight: bold" href="https://{{hostname}}/mailinabox.mobileconfig">this configuration link</a> on your iOS device or on your Mac desktop to easily set up mail (IMAP/SMTP), Contacts, and Calendar. Your username is your whole email address.</p>
+	
+				<h4>Manual configuration</h4>
 
-			<div class="row">
-				<div class="col-lg-6">
-					<h4>IMAP/SMTP settings</h4>
-
-					<p>This method is preferred on Android devices but is not available on iOS devices.</p>
-
-					<p>Your mail server is <strong>{{hostname}}</strong>. Use the following settings when prompted:</p>
+					<p>Use the following settings when you set up your email on your phone, desktop, or other device:</p>
 
 					<table class="table">
 					<thead>
-						<tr><th>Protocol</th> <th>Port</th> <th>Options</th></tr>
+						<tr><th>Option</th> <th>Value</th></tr>
 					</thead>
-					<tr><th>IMAP</th> <td>993</td> <td>SSL</td></tr>
-					<tr><th>SMTP</th> <td>587</td> <td>STARTTLS <span>(&ldquo;always&rdquo; or &ldquo;required&rdquo;, if prompted)</span></td></tr>
+					<tr><th>Protocol/Method</th> <td>IMAP</td></tr>
+					<tr><th>Mail server</th> <td>{{hostname}}</td>
+					<tr><th>IMAP Port</th> <td>993</td></tr>
+					<tr><th>IMAP Sercurity</th> <td>SSL</td></tr>
+					<tr><th>SMTP Port</th> <td>587</td></tr>
+					<tr><th>SMTP Security</td> <td>STARTTLS <small>(&ldquo;always&rdquo; or &ldquo;required&rdquo;, if prompted)</small></td></tr>
+					<tr><th>Username:</th> <td>Your whole email address.</td></tr>
+					<tr><th>Password:</th> <td>Your mail password.</td></tr>
 					</table>
 
 					<p>In addition to setting up your email, you&rsquo;ll also need to set up <a href="#sync_guide" onclick="return show_panel(this);">contacts and calendar synchronization</a> separately.</p>
-				</div>
 
-				<div class="col-lg-6">
-					<h4>Exchange/ActiveSync settings</h4>
+				<h4>Exchange/ActiveSync settings</h4>
 
-					<p>On iOS devices and devices on this <a href="http://z-push.org/compatibility/">compatibility list</a>, set up your mail as an Exchange or ActiveSync server. Use these settings when prompted:</p>
+					<p>On iOS devices and devices on this <a href="http://z-push.org/compatibility/">compatibility list</a>, you may set up your mail as an Exchange or ActiveSync server. However, we&rsquo;ve found this to be more buggy than using IMAP. If you encounter any problems, please use the manual settings above.</p>
 
 					<table class="table">
 					<tr><th>Server</th> <td>{{hostname}}</td></tr>
@@ -58,25 +48,6 @@
 					</table>
 
 					<p>Your device should also provide a contacts list and calendar that syncs to this box when you use this method.</p>
-				</div>
-
-				<div class="col-lg-6">
-					<h4>iOS/Mac OS X Mobileconfig</h4>
-
-					<p>Open the following configuration on your iOS device or on your Mac desktop to easily set up IMAP/SMTP, Contacts, and Calendar:</p>
-
-					<p><strong><a href="https://{{hostname}}/mailinabox.mobileconfig">https://{{hostname}}/mailinabox.mobileconfig</a></strong></p>
-
-					<p>Use these settings when prompted:</p>
-
-					<table class="table">
-					<tr><th>Username:</th> <td>Your whole email address.</td></tr>
-					<tr><th>Password:</th> <td>Your mail password.</td></tr>
-					</table>
-
-					<p>Your device should also provide a contacts list and calendar that syncs to this box when you use this method.</p>
-				</div>
-			</div>
 		</div>
 
 		<div class="col-sm-5">
