@@ -347,7 +347,15 @@ def check_web_domain(domain, env):
 	check_ssl_cert(domain, env)
 
 def query_dns(qname, rtype, nxdomain='[Not Set]'):
-	resolver = dns.resolver.get_default_resolver()
+	# Make the qname absolute by appending a period. Without this, dns.resolver.query
+	# will fall back a failed lookup to a second query with this machine's hostname
+	# appended. This has been causing some false-positive Spamhaus reports. The
+	# reverse DNS lookup will pass a dns.name.Name instance which is already
+	# absolute so we should not modify that.
+	if isinstance(qname, str):
+		qname += "."
+
+	# Do the query.
 	try:
 		response = dns.resolver.query(qname, rtype)
 	except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):

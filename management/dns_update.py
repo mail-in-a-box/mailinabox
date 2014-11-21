@@ -490,7 +490,7 @@ zone:
 			# Get the IP address of the nameserver by resolving it.
 			hostname = additional_records.get("_secondary_nameserver")
 			resolver = dns.resolver.get_default_resolver()
-			response = dns.resolver.query(hostname, "A")
+			response = dns.resolver.query(hostname+'.', "A")
 			ipaddr = str(response[0])
 			nsdconf += """\tnotify: %s NOKEY
 	provide-xfr: %s NOKEY
