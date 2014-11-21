@@ -96,6 +96,21 @@ def scan_postfix_smtpd_line(date, log, collector):
 		message, sender, recipient = m.groups()
 		if recipient in collector["real_mail_addresses"]:
 			# only log mail to real recipients
+
+			# skip this, is reported in the greylisting report
+			if "Recipient address rejected: Greylisted" in message:
+				return
+
+			# simplify this one
+			m = re.search(r"Client host \[(.*?)\] blocked using zen.spamhaus.org; (.*)", message)
+			if m:
+				message = "ip blocked: " + m.group(2)
+
+			# simplify this one too
+			m = re.search(r"Sender address \[.*@(.*)\] blocked using dbl.spamhaus.org; (.*)", message)
+			if m:
+				message = "domain blocked: " + m.group(2)
+
 			collector["rejected-mail"].setdefault(recipient, []).append( (date, sender, message) )
 
 
