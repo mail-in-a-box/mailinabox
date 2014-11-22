@@ -17,11 +17,13 @@ hide_output apt-get -y upgrade
 #	         when generating random numbers for private keys (e.g. during
 #	         ldns-keygen).
 # * unattended-upgrades: Apt tool to install security updates automatically.
+# * software-properties-common: Provides apt-add-repository.
 # * ntp: keeps the system time correct
 # * fail2ban: scans log files for repeated failed login attempts and blocks the remote IP at the firewall
 
 apt_install python3 python3-dev python3-pip \
 	wget curl \
+	software-properties-common \
 	haveged unattended-upgrades ntp fail2ban
 
 # Allow apt to install system updates automatically every day.

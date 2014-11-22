@@ -13,11 +13,26 @@ if [ -f /usr/sbin/apache2 ]; then
 	hide_output apt-get -y --purge autoremove
 fi
 
+# Ubuntu 14.04 comes with nginx 1.4.6, but we want 1.6.x to have SPDY support
+# which is the more modern best practice. We'll get nginx from the nginx PPA.
+# An update from stock nginx to the nginx ppa causes trouble, so we'll purge
+# first.
+if nginx -v 2>&1 | grep 1.4; then
+	apt-get purge -y nginx
+fi
+
+# Then add the PPA. Test first so we don't have to run apt-get update if the
+# PPA was already present.
+if [ ! -f /etc/apt/sources.list.d/nginx-stable-trusty.list ]; then
+	hide_output add-apt-repository -y ppa:nginx/stable
+	hide_output apt-get update
+fi
+
 # Install nginx and a PHP FastCGI daemon.
-#
-# Turn off nginx's default website.
 
 apt_install nginx php5-fpm
+
+# Turn off nginx's default website.
 
 rm -f /etc/nginx/sites-enabled/default
 
