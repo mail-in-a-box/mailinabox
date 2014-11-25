@@ -19,9 +19,10 @@ hide_output apt-get -y upgrade
 # * unattended-upgrades: Apt tool to install security updates automatically.
 # * ntp: keeps the system time correct
 # * fail2ban: scans log files for repeated failed login attempts and blocks the remote IP at the firewall
+# * sudo: allows privileged users to execute commands as root without being root
 
 apt_install python3 python3-dev python3-pip \
-	wget curl \
+	wget curl sudo \
 	haveged unattended-upgrades ntp fail2ban
 
 # Allow apt to install system updates automatically every day.
