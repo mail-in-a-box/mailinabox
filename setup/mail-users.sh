@@ -26,31 +26,55 @@ fi
 
 # ### User Authentication
 
-# Have Dovecot query our database, and not system users, for authentication.
-sed -i "s/#*\(\!include auth-system.conf.ext\)/#\1/"  /etc/dovecot/conf.d/10-auth.conf
-sed -i "s/#\(\!include auth-sql.conf.ext\)/\1/"  /etc/dovecot/conf.d/10-auth.conf
+# Disable all of the built-in authentication mechanisms. (We formerly uncommented
+# a line to include auth-sql.conf.ext but we no longer use that.)
+sed -i "s/#*\(\!include auth-.*.conf.ext\)/#\1/"  /etc/dovecot/conf.d/10-auth.conf
 
-# Specify how the database is to be queried for user authentication (passdb)
-# and where user mailboxes are stored (userdb).
-cat > /etc/dovecot/conf.d/auth-sql.conf.ext << EOF;
+# Legacy: Delete our old sql conf files.
+rm -f /etc/dovecot/conf.d/auth-sql.conf.ext /etc/dovecot/dovecot-sql.conf.ext
+
+# Specify how Dovecot should perform user authentication (passdb) and how it knows
+# where user mailboxes are stored (userdb).
+#
+# For passwords, we would normally have Dovecot query our mail user database
+# directly. The way to do that is commented out below. Instead, in order to
+# provide our own authentication framework so we can handle two-factor auth,
+# we will use a custom system that hooks into the Mail-in-a-Box management daemon.
+#
+# The user part of this is standard. The mailbox path and Unix system user are the
+# same for all mail users, modulo string substitution for the mailbox path that
+# Dovecot handles.
+cat > /etc/dovecot/conf.d/10-auth-mailinabox.conf << EOF;
 passdb {
-  driver = sql
-  args = /etc/dovecot/dovecot-sql.conf.ext
+  driver = checkpassword
+  args = /usr/local/bin/dovecot-checkpassword
 }
 userdb {
   driver = static
   args = uid=mail gid=mail home=$STORAGE_ROOT/mail/mailboxes/%d/%n
 }
 EOF
+chmod 0600 /etc/dovecot/conf.d/10-auth-mailinabox.conf
 
-# Configure the SQL to query for a user's password.
-cat > /etc/dovecot/dovecot-sql.conf.ext << EOF;
-driver = sqlite
-connect = $db_path
-default_pass_scheme = SHA512-CRYPT
-password_query = SELECT email as user, password FROM users WHERE email='%u';
-EOF
-chmod 0600 /etc/dovecot/dovecot-sql.conf.ext # per Dovecot instructions
+# Copy dovecot-checkpassword into place.
+cp conf/dovecot-checkpassword.py /usr/local/bin/dovecot-checkpassword
+chown dovecot.dovecot /usr/local/bin/dovecot-checkpassword
+chmod 700 /usr/local/bin/dovecot-checkpassword
+
+# If we were having Dovecot query our database directly, which we did
+# originally, `/etc/dovecot/conf.d/10-auth-mailinabox.conf` would say:
+#
+#     passdb {
+#       driver = sql
+#       args = /etc/dovecot/dovecot-sql.conf.ext
+#     }
+#
+# and then `/etc/dovecot/dovecot-sql.conf.ext` (chmod 0600) would contain:
+#
+#    driver = sqlite
+#    connect = $db_path
+#    default_pass_scheme = SHA512-CRYPT
+#    password_query = SELECT email as user, password FROM users WHERE email='%u';
 
 # Have Dovecot provide an authorization service that Postfix can access & use.
 cat > /etc/dovecot/conf.d/99-local-auth.conf << EOF;
