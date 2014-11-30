@@ -74,6 +74,13 @@ function do_login() {
       // Reset any saved credentials.
       do_logout();
 
+    } else if (!("api_key" in response)) {
+      // Login succeeded but user might not be authorized!
+      show_modal_error("Login Failed", "You are not an administrator on this system.")
+
+      // Reset any saved credentials.
+      do_logout();
+
     } else {
       // Login succeeded.
 

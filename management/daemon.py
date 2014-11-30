@@ -29,7 +29,7 @@ def authorized_personnel_only(viewfunc):
 	@wraps(viewfunc)
 	def newview(*args, **kwargs):
 		# Check if the user is authorized.
-		authorized_status = auth_service.is_authenticated(request, env)
+		authorized_status = auth_service.authorize_admin(request, env)
 		if authorized_status == "OK":
 			# Authorized. Call view func.	
 			return viewfunc(*args, **kwargs)
@@ -81,16 +81,26 @@ def index():
 @app.route('/me')
 def me():
 	# Is the caller authorized?
-	authorized_status = auth_service.is_authenticated(request, env)
-	if authorized_status != "OK":
+	try:
+		privs = auth_service.authenticate(request, env)
+	except ValueError as e:
+		# Don't reveal whether the email address was valid on failure.
 		return json_response({
 			"status": "not-authorized",
-			"reason": authorized_status,
+			"reason": "Invalid email address or password.",
 			})
-	return json_response({
+
+	resp = {
 		"status": "authorized",
-		"api_key": auth_service.key,
-		})
+		"privileges": privs,
+	}
+
+	# Is authorized as admin?
+	if "admin" in privs:
+		resp["api_key"] = auth_service.key
+
+	# Return.
+	return json_response(resp)
 
 # MAIL
 
