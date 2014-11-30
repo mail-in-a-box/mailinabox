@@ -279,7 +279,7 @@ def add_mail_user(email, pw, privs, env):
 	conn, c = open_database(env, with_connection=True)
 
 	# hash the password
-	pw = utils.shell('check_output', ["/usr/bin/doveadm", "pw", "-s", "SHA512-CRYPT", "-p", pw]).strip()
+	pw = hash_password(pw)
 
 	# add the user to the database
 	try:
@@ -319,7 +319,7 @@ def set_mail_password(email, pw, env):
 	validate_password(pw)
 	
 	# hash the password
-	pw = utils.shell('check_output', ["/usr/bin/doveadm", "pw", "-s", "SHA512-CRYPT", "-p", pw]).strip()
+	pw = hash_password(pw)
 
 	# update the database
 	conn, c = open_database(env, with_connection=True)
@@ -328,6 +328,24 @@ def set_mail_password(email, pw, env):
 		return ("That's not a user (%s)." % email, 400)
 	conn.commit()
 	return "OK"
+
+def hash_password(pw):
+	# Turn the plain password into a Dovecot-format hashed password, meaning
+	# something like "{SCHEME}hashedpassworddata".
+	# http://wiki2.dovecot.org/Authentication/PasswordSchemes
+	return utils.shell('check_output', ["/usr/bin/doveadm", "pw", "-s", "SHA512-CRYPT", "-p", pw]).strip()
+
+def get_mail_password(email, env):
+	# Gets the hashed password for a user. Passwords are stored in Dovecot's
+	# password format, with a prefixed scheme.
+	# http://wiki2.dovecot.org/Authentication/PasswordSchemes
+	# update the database
+	c = open_database(env)
+	c.execute('SELECT password FROM users WHERE email=?', (email,))
+	rows = c.fetchall()
+	if len(rows) != 1:
+		raise ValueError("That's not a user (%s)." % email)
+	return rows[0][0]
 
 def remove_mail_user(email, env):
 	# accept IDNA domain names but normalize to Unicode before going into database

@@ -24,19 +24,32 @@ except OSError:
 
 app = Flask(__name__, template_folder=os.path.abspath(os.path.join(os.path.dirname(me), "templates")))
 
-# Decorator to protect views that require authentication.
+# Decorator to protect views that require a user with 'admin' privileges.
 def authorized_personnel_only(viewfunc):
 	@wraps(viewfunc)
 	def newview(*args, **kwargs):
-		# Check if the user is authorized.
-		authorized_status = auth_service.is_authenticated(request, env)
-		if authorized_status == "OK":
-			# Authorized. Call view func.	
+		# Authenticate the passed credentials, which is either the API key or a username:password pair.
+		error = None
+		try:
+			privs = auth_service.authenticate(request, env)
+		except ValueError as e:
+			# Authentication failed.
+			privs = []
+			error = str(e)
+
+		# Authorized to access an API view?
+		if "admin" in privs:
+			# Call view func.	
 			return viewfunc(*args, **kwargs)
+		elif not error:
+			error = "You are not an administrator."
 
 		# Not authorized. Return a 401 (send auth) and a prompt to authorize by default.
 		status = 401
-		headers = { 'WWW-Authenticate': 'Basic realm="{0}"'.format(auth_service.auth_realm) }
+		headers = {
+			'WWW-Authenticate': 'Basic realm="{0}"'.format(auth_service.auth_realm),
+			'X-Reason': error,
+		}
 
 		if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
 			# Don't issue a 401 to an AJAX request because the user will
@@ -46,13 +59,13 @@ def authorized_personnel_only(viewfunc):
 
 		if request.headers.get('Accept') in (None, "", "*/*"):
 			# Return plain text output.
-			return Response(authorized_status+"\n", status=status, mimetype='text/plain', headers=headers)
+			return Response(error+"\n", status=status, mimetype='text/plain', headers=headers)
 		else:
 			# Return JSON output.
 			return Response(json.dumps({
 				"status": "error",
-				"reason": authorized_status
-				}+"\n"), status=status, mimetype='application/json', headers=headers)
+				"reason": error,
+				})+"\n", status=status, mimetype='application/json', headers=headers)
 
 	return newview
 
@@ -81,16 +94,25 @@ def index():
 @app.route('/me')
 def me():
 	# Is the caller authorized?
-	authorized_status = auth_service.is_authenticated(request, env)
-	if authorized_status != "OK":
+	try:
+		privs = auth_service.authenticate(request, env)
+	except ValueError as e:
 		return json_response({
-			"status": "not-authorized",
-			"reason": authorized_status,
+			"status": "invalid",
+			"reason": str(e),
 			})
-	return json_response({
-		"status": "authorized",
-		"api_key": auth_service.key,
-		})
+
+	resp = {
+		"status": "ok",
+		"privileges": privs,
+	}
+
+	# Is authorized as admin?
+	if "admin" in privs:
+		resp["api_key"] = auth_service.key
+
+	# Return.
+	return json_response(resp)
 
 # MAIL
 

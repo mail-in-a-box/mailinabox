@@ -67,9 +67,16 @@ function do_login() {
   function(response){ 
     // This API call always succeeds. It returns a JSON object indicating
     // whether the request was authenticated or not.
-    if (response.status != "authorized") {
+    if (response.status != "ok") {
       // Show why the login failed.
       show_modal_error("Login Failed", response.reason)
+
+      // Reset any saved credentials.
+      do_logout();
+
+    } else if (!("api_key" in response)) {
+      // Login succeeded but user might not be authorized!
+      show_modal_error("Login Failed", "You are not an administrator on this system.")
 
       // Reset any saved credentials.
       do_logout();
