@@ -4,11 +4,17 @@
 import sys, imaplib, smtplib, uuid, time
 import socket, dns.reversename, dns.resolver
 
-if len(sys.argv) < 3:
-	print("Usage: tests/mail.py hostname emailaddress password")
-	sys.exit(1)
+args = sys.argv[1:]
 
-host, emailaddress, pw = sys.argv[1:4]
+imap_only = False
+if len(args) > 0 and args[0] == "--imap-only":
+	imap_only = True
+	args.pop(0)
+
+if len(args) < 3:
+	print("Usage: tests/mail.py [--imap-only] hostname emailaddress password")
+	sys.exit(1)
+host, emailaddress, pw = args[:3]
 
 # Attempt to login with IMAP. Our setup uses email addresses
 # as IMAP/SMTP usernames.
@@ -26,6 +32,9 @@ except imaplib.IMAP4.error as e:
 
 M.select()
 print("IMAP login is OK.")
+
+if imap_only:
+	sys.exit(0)
 
 # Attempt to send a mail to ourself.
 mailsubject = "Mail-in-a-Box Automated Test Message " + uuid.uuid4().hex
