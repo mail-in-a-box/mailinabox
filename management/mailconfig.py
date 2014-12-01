@@ -283,11 +283,12 @@ def add_mail_user(email, pw, privs, env):
 	# Update things in case any new domains are added.
 	return kick(env, "mail user added")
 
-def set_mail_password(email, pw, env):
-	validate_password(pw)
-	
-	# hash the password
-	pw = hash_password(pw)
+def set_mail_password(email, pw, env, already_hashed=False):
+	if not already_hashed:
+		# Validate and hash the password. Skip if we're providing
+		# a raw hashed password value.
+		validate_password(pw)
+		pw = hash_password(pw)
 
 	# update the database
 	conn, c = open_database(env, with_connection=True)

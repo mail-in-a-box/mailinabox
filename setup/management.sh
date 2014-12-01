@@ -3,7 +3,10 @@
 source setup/functions.sh
 
 apt_install python3-flask links duplicity libyaml-dev python3-dnspython python3-dateutil
-hide_output pip3 install rtyaml
+hide_output pip3 install rtyaml 
+
+# For two-factor authentication, the management server uses:
+hide_output pip3 install git+https://github.com/mail-in-a-box/python-oath qrcode pillow
 
 # Create a backup directory and a random key for encrypting backups.
 mkdir -p $STORAGE_ROOT/backup
