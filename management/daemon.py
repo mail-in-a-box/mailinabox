@@ -31,7 +31,7 @@ def authorized_personnel_only(viewfunc):
 		# Authenticate the passed credentials, which is either the API key or a username:password pair.
 		error = None
 		try:
-			privs = auth_service.authenticate(request, env)
+			email, privs = auth_service.authenticate(request, env)
 		except ValueError as e:
 			# Authentication failed.
 			privs = []
@@ -95,7 +95,7 @@ def index():
 def me():
 	# Is the caller authorized?
 	try:
-		privs = auth_service.authenticate(request, env)
+		email, privs = auth_service.authenticate(request, env)
 	except ValueError as e:
 		return json_response({
 			"status": "invalid",
@@ -104,12 +104,13 @@ def me():
 
 	resp = {
 		"status": "ok",
+		"email": email,
 		"privileges": privs,
 	}
 
-	# Is authorized as admin?
+	# Is authorized as admin? Return an API key for future use.
 	if "admin" in privs:
-		resp["api_key"] = auth_service.key
+		resp["api_key"] = auth_service.create_user_key(email)
 
 	# Return.
 	return json_response(resp)

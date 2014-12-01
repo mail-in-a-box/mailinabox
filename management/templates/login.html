@@ -85,7 +85,7 @@ function do_login() {
       // Login succeeded.
 
       // Save the new credentials.
-      api_credentials = [response.api_key, ""];
+      api_credentials = [response.email, response.api_key];
 
       // Try to wipe the username/password information.
       $('#loginEmail').val('');
