@@ -82,7 +82,7 @@ def index():
 def me():
 	# Is the caller authorized?
 	try:
-		privs = auth_service.authenticate(request, env)
+		email, privs = auth_service.authenticate(request, env)
 	except ValueError as e:
 		# Don't reveal whether the email address was valid on failure.
 		return json_response({
@@ -92,12 +92,13 @@ def me():
 
 	resp = {
 		"status": "authorized",
+		"email": email,
 		"privileges": privs,
 	}
 
-	# Is authorized as admin?
+	# Is authorized as admin? Return an API key for future use.
 	if "admin" in privs:
-		resp["api_key"] = auth_service.key
+		resp["api_key"] = auth_service.create_user_key(email)
 
 	# Return.
 	return json_response(resp)

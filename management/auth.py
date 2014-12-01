@@ -1,4 +1,4 @@
-import base64, os, os.path
+import base64, os, os.path, hmac
 
 from flask import make_response
 
@@ -45,7 +45,7 @@ class KeyAuthService:
 		or if the or username/password passed in the header matches an administrator user.
 		Returns OK on success or another string with an error message."""
 		try:
-			privs = self.authenticate(request, env)
+			email, privs = self.authenticate(request, env)
 		except ValueError as e:
 			# Don't reveal whether the email address was valid on failure.
 			return "Invalid email address or password."
@@ -57,8 +57,9 @@ class KeyAuthService:
 	def authenticate(self, request, env):
 		"""Test if the client key passed in HTTP Authorization header matches the service key
 		or if the or username/password passed in the header matches an administrator user.
-		Returns a list of user privileges (e.g. [] or ['admin']) raise a ValueError on
-		login failure."""
+		Returns a tuple of the user's email address and list of user privileges (e.g.
+		('my@email', []) or ('my@email', ['admin']); raises a ValueError on login failure.
+		If the user used an API key, the user's email is returned as None."""
 
 		def decode(s):
 			return base64.b64decode(s.encode('ascii')).decode('ascii')
@@ -86,11 +87,11 @@ class KeyAuthService:
 			raise ValueError("Authorization header invalid.")
 		elif username == self.key:
 			# The user passed the API key which grants administrative privs.
-			return ["admin"]
+			return (None, ["admin"])
 		else:
-			# The user is trying to log in with a username and password.
-			# Raises or returns privs.
-			return self.get_user_credentials(username, password, env)
+			# The user is trying to log in with a username and user-specific
+			# API key or password. Raises or returns privs.
+			return (username, self.get_user_credentials(username, password, env))
 
 	def get_user_credentials(self, email, pw, env):
 		# Validate a user's credentials. On success returns a list of
@@ -101,23 +102,28 @@ class KeyAuthService:
 		if email == "" or pw == "":
 			raise ValueError("Enter an email address and password.")
 
-		# Get the hashed password of the user. Raise a ValueError if the
-		# email address does not correspond to a user.
-		pw_hash = get_mail_password(email, env)
+		# The password might be a user-specific API key.
+		if hmac.compare_digest(self.create_user_key(email), pw):
+			# OK.
+			pass
+		else:
+			# Get the hashed password of the user. Raise a ValueError if the
+			# email address does not correspond to a user.
+			pw_hash = get_mail_password(email, env)
 
-		# Authenticate.
-		try:
-			# Use 'doveadm pw' to check credentials. doveadm will return
-			# a non-zero exit status if the credentials are no good,
-			# and check_call will raise an exception in that case.
-			utils.shell('check_call', [
-				"/usr/bin/doveadm", "pw",
-				"-p", pw,
-				"-t", pw_hash,
-				])
-		except:
-			# Login failed.
-			raise ValueError("Invalid password.")
+			# Authenticate.
+			try:
+				# Use 'doveadm pw' to check credentials. doveadm will return
+				# a non-zero exit status if the credentials are no good,
+				# and check_call will raise an exception in that case.
+				utils.shell('check_call', [
+					"/usr/bin/doveadm", "pw",
+					"-p", pw,
+					"-t", pw_hash,
+					])
+			except:
+				# Login failed.
+				raise ValueError("Invalid password.")
 
 		# Get privileges for authorization.
 
@@ -128,6 +134,9 @@ class KeyAuthService:
 
 		# Return a list of privileges.
 		return privs
+
+	def create_user_key(self, email):
+		return hmac.new(self.key.encode('ascii'), b"AUTH:" + email.encode("utf8"), digestmod="sha1").hexdigest()
 
 	def _generate_key(self):
 		raw_key = os.urandom(32)
