@@ -7,7 +7,7 @@ from functools import wraps
 from flask import Flask, request, render_template, abort, Response
 
 import auth, utils
-from mailconfig import get_mail_users, get_mail_users_ex, get_admins, add_mail_user, set_mail_password, remove_mail_user
+from mailconfig import get_mail_users, get_mail_users_ex, get_admins, add_mail_user, set_mail_password, remove_mail_user, get_mail_password
 from mailconfig import get_mail_user_privileges, add_remove_mail_user_privilege
 from mailconfig import get_mail_aliases, get_mail_aliases_ex, get_mail_domains, add_mail_alias, remove_mail_alias
 
@@ -40,6 +40,7 @@ def authorized_personnel_only(viewfunc):
 		# Authorized to access an API view?
 		if "admin" in privs:
 			# Call view func.	
+			request.user_email = email
 			return viewfunc(*args, **kwargs)
 		elif not error:
 			error = "You are not an administrator."
@@ -114,6 +115,81 @@ def me():
 
 	# Return.
 	return json_response(resp)
+
+# ME
+
+@app.route('/me/2fa')
+@authorized_personnel_only
+def twofa_status():
+	pw = get_mail_password(request.user_email, env)
+	if pw.startswith("{SHA512-CRYPT}"):
+		method = "password-only"
+	elif pw.startswith("{TOTP}"):
+		method = "TOTP 2FA"
+	else:
+		method = "unknown"
+
+	return json_response({
+		"method": method
+		})
+
+@app.route('/me/2fa/totp/initialize', methods=['POST'])
+@authorized_personnel_only
+def twofa_initialize():
+	# Generate a Google Authenticator URI that encodes TOTP info.
+	import urllib.parse, base64, qrcode, io, binascii
+
+	secret = os.urandom(32)
+	uri = "otpauth://totp/%s:%s?secret=%s&issuer=%s&digits=%d&algorithm=%s" % (
+		urllib.parse.quote(env['PRIMARY_HOSTNAME']),
+		urllib.parse.quote(request.user_email),
+		base64.b32encode(secret).decode("ascii").lower().replace("=", ""),
+		urllib.parse.quote(env['PRIMARY_HOSTNAME']),
+		6,
+		"sha1"
+		)
+
+	image_buffer = io.BytesIO()
+	im = qrcode.make(uri)
+	im.save(image_buffer, 'png')
+
+	return json_response({
+		"uri": uri,
+		"secret": binascii.hexlify(secret).decode('ascii'),
+		"qr": base64.b64encode(image_buffer.getvalue()).decode('ascii')
+		})
+
+@app.route('/me/2fa/totp/activate', methods=['POST'])
+@authorized_personnel_only
+def twofa_activate():
+	import oath
+	ok, drift = oath.accept_totp(request.form['secret'], request.form['code'])
+	if ok:
+		# use the user's current plain password as the first_factor
+		# of 2FA.
+		existing_pw = get_mail_password(request.user_email, env)
+		if existing_pw.startswith("{TOTP}"):
+			existing_pw = json.loads(existing_pw)["first_factor"]
+
+		pw = "{TOTP}" + json.dumps({
+			"secret": request.form['secret'],
+			"drift": drift,
+			"first_factor": existing_pw,
+		})
+
+		set_mail_password(request.user_email, pw, env, already_hashed=True)
+
+		return json_response({
+			"status": "ok",
+			"message": "TOTP 2FA installed."
+		})
+
+	else:
+		return json_response({
+			"status": "fail",
+			"message": "The activation code was not right. Try again?"
+		})
+
 
 # MAIL
 

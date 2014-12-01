@@ -1,4 +1,4 @@
-import base64, os, os.path, hmac
+import base64, os, os.path, hmac, json
 
 from flask import make_response
 
@@ -97,6 +97,17 @@ class KeyAuthService:
 			# email address does not correspond to a user.
 			pw_hash = get_mail_password(email, env)
 
+			# If 2FA is set up, get the first factor and authenticate against
+			# that first.
+			twofa = None
+			if pw_hash.startswith("{TOTP}"):
+				twofa = json.loads(pw_hash[6:])
+				pw_hash = twofa["first_factor"]
+				try:
+					pw, twofa_code = pw.split(" ", 1)
+				except:
+					twofa_code = ""
+
 			# Authenticate.
 			try:
 				# Use 'doveadm pw' to check credentials. doveadm will return
@@ -110,6 +121,14 @@ class KeyAuthService:
 			except:
 				# Login failed.
 				raise ValueError("Invalid password.")
+
+			# Check second factor.
+			if twofa:
+				import oath
+				ok, drift = oath.accept_totp(twofa["secret"], twofa_code, drift=twofa["drift"])
+				if not ok:
+					raise ValueError("Invalid 2FA code.")
+
 
 		# Get privileges for authorization.
 

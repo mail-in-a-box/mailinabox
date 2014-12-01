@@ -311,15 +311,16 @@ def add_mail_user(email, pw, privs, env):
 	# Update things in case any new domains are added.
 	return kick(env, "mail user added")
 
-def set_mail_password(email, pw, env):
+def set_mail_password(email, pw, env, already_hashed=False):
 	# accept IDNA domain names but normalize to Unicode before going into database
 	email = sanitize_idn_email_address(email)
 
 	# validate that password is acceptable
-	validate_password(pw)
-	
-	# hash the password
-	pw = hash_password(pw)
+	if not already_hashed:
+		# Validate and hash the password. Skip if we're providing
+		# a raw hashed password value.
+		validate_password(pw)
+		pw = hash_password(pw)
 
 	# update the database
 	conn, c = open_database(env, with_connection=True)

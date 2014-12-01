@@ -115,6 +115,12 @@
             </li>
             <li><a href="#sync_guide" onclick="return show_panel(this);">Contacts/Calendar</a></li>
             <li><a href="#web" onclick="return show_panel(this);">Web</a></li>
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">You <b class="caret"></b></a>
+              <ul class="dropdown-menu">
+                <li><a href="#2fa" onclick="return show_panel(this);">Two-Factor Authentication</a></li>
+              </ul>
+            </li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
             <li><a href="#" onclick="do_logout(); return false;" style="color: white">Log out?</a></li>
@@ -166,6 +172,10 @@
 
       <div id="panel_ssl" class="admin_panel">
       {% include "ssl.html" %}
+      </div>
+
+      <div id="panel_2fa" class="admin_panel">
+      {% include "2fa.html" %}
       </div>
 
       <hr>
