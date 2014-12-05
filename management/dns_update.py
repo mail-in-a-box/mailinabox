@@ -511,8 +511,12 @@ zone:
 ########################################################################
 
 def dnssec_choose_algo(domain, env):
-	if domain.endswith(".email") or domain.endswith(".guide"):
-		# At least at GoDaddy, this is the only algorithm supported.
+	if '.' in domain and domain.rsplit('.')[-1] in \
+		("email", "guide", "fund"):
+		# At GoDaddy, RSASHA256 is the only algorithm supported
+		# for .email and .guide.
+		# A variety of algorithms are supported for .fund. This
+		# is preferred.
 		return "RSASHA256"
 
 	# For any domain we were able to sign before, don't change the algorithm

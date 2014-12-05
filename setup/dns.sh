@@ -52,6 +52,10 @@ mkdir -p "$STORAGE_ROOT/dns/dnssec";
 #
 #  * .email
 #  * .guide
+#
+# Supports `RSASHA256` (and defaulting to this)
+#
+#  * .fund
 
 FIRST=1 #NODOC
 for algo in RSASHA1-NSEC3-SHA1 RSASHA256; do
