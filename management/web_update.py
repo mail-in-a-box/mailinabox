@@ -135,7 +135,7 @@ def get_web_root(domain, env, test_exists=True):
 		if os.path.exists(root) or not test_exists: break
 	return root
 
-def get_domain_ssl_files(domain, env):
+def get_domain_ssl_files(domain, env, allow_shared_cert=True):
 	# What SSL private key will we use? Allow the user to override this, but
 	# in many cases using the same private key for all domains would be fine.
 	# Don't allow the user to override the key for PRIMARY_HOSTNAME because
@@ -159,7 +159,7 @@ def get_domain_ssl_files(domain, env):
 		# But we can be smart and reuse the main SSL certificate if is has
 		# a Subject Alternative Name matching this domain. Don't do this if
 		# the user has uploaded a different private key for this domain.
-		if not ssl_key_is_alt:
+		if not ssl_key_is_alt and allow_shared_cert:
 			from status_checks import check_certificate
 			if check_certificate(domain, ssl_certificate_primary, None)[0] == "OK":
 				ssl_certificate = ssl_certificate_primary
@@ -225,7 +225,7 @@ def install_cert(domain, ssl_cert, ssl_chain, env):
 
 	# Do validation on the certificate before installing it.
 	from status_checks import check_certificate
-	ssl_key, ssl_certificate, ssl_csr_path = get_domain_ssl_files(domain, env)
+	ssl_key, ssl_certificate, ssl_csr_path = get_domain_ssl_files(domain, env, allow_shared_cert=False)
 	cert_status, cert_status_details = check_certificate(domain, fn, ssl_key)
 	if cert_status != "OK":
 		if cert_status == "SELF-SIGNED":
