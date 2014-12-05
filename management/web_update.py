@@ -263,7 +263,11 @@ def get_web_domains_info(env):
 			return ("danger", "No Certificate Installed")
 		cert_status, cert_status_details = check_certificate(domain, ssl_certificate, ssl_key)
 		if cert_status == "OK":
-			return ("success", "Signed & valid. " + cert_status_details)
+			if domain == env['PRIMARY_HOSTNAME'] or ssl_certificate != get_domain_ssl_files(env['PRIMARY_HOSTNAME'], env)[1]:
+				return ("success", "Signed & valid. " + cert_status_details)
+			else:
+				# This is an alternate domain but using the same cert as the primary domain.
+				return ("success", "Signed & valid. Using multi/wildcard certificate of %s." % env['PRIMARY_HOSTNAME'])
 		elif cert_status == "SELF-SIGNED":
 			return ("warning", "Self-signed. Get a signed certificate to stop warnings.")
 		else:
