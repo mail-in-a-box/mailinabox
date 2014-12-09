@@ -207,10 +207,10 @@ def check_dns_zone(domain, env, dns_zonefiles):
 	# to do a DNS trace.
 	custom_dns = get_custom_dns_config(env)
 	existing_ns = query_dns(domain, "NS")
-	correct_ns = "; ".join([
+	correct_ns = "; ".join(sorted([
 		"ns1." + env['PRIMARY_HOSTNAME'],
 		custom_dns.get("_secondary_nameserver", "ns2." + env['PRIMARY_HOSTNAME']),
-		])
+		]))
 	if existing_ns.lower() == correct_ns.lower():
 		env['out'].print_ok("Nameservers are set correctly at registrar. [%s]" % correct_ns)
 	else:
