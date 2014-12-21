@@ -264,12 +264,13 @@ function show_modal_confirm(title, question, verb, yes_callback, cancel_callback
   $('#global_modal').modal({});
 }
 
-var is_ajax_loading = false;
+var ajax_num_executing_requests = 0;
 function ajax(options) {
-  setTimeout("if (is_ajax_loading) $('#ajax_loading_indicator').fadeIn()", 100);
+  setTimeout("if (ajax_num_executing_requests > 0) $('#ajax_loading_indicator').fadeIn()", 100);
   function hide_loading_indicator() {
-    is_ajax_loading = false;
-    $('#ajax_loading_indicator').hide();
+    ajax_num_executing_requests--;
+    if (ajax_num_executing_requests == 0)
+      $('#ajax_loading_indicator').stop().hide(); // stop() prevents an ongoing fade from causing the thing to be shown again after this call
   }
   var old_success = options.success;
   var old_error = options.error;
@@ -287,7 +288,7 @@ function ajax(options) {
     else
       old_error(jqxhr.responseText, jqxhr);
   };
-  is_ajax_loading = true;
+  ajax_num_executing_requests++;
   $.ajax(options);
 }
 
