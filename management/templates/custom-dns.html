@@ -1,4 +1,7 @@
 <style>
+#custom-dns-current td.long {
+  word-break: break-all;
+}
 </style>
 
 <h2>Custom DNS</h2>
@@ -6,6 +9,60 @@
 <p class="text-warning">This is an advanced configuration page.</p>
 
 <p>It is possible to set custom DNS records on domains hosted here.</p>
+
+<h3>Set Custom DNS Records</h3>
+
+<p>You can set additional DNS records, such as if you have a website running on another server, to add DKIM records for external mail providers, or for various confirmation-of-ownership tests.</p>
+
+<form class="form-horizontal" role="form" onsubmit="do_set_custom_dns(); return false;">
+  <div class="form-group">
+    <label for="customdnsQname" class="col-sm-1 control-label">Name</label>
+    <div class="col-sm-10">
+      <table style="max-width: 400px">
+      <tr><td>
+        <input type="text" class="form-control" id="customdnsQname" placeholder="subdomain">
+      </td><td style="padding: 0 1em; font-weight: bold;">.</td><td>
+        <select id="customdnsZone" class="form-control"> </select>
+      </td></tr></table>
+      <div class="text-info" style="margin-top: .5em">Leave the left field blank to set a record on the chosen domain name, or enter a subdomain.</div>
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="customdnsType" class="col-sm-1 control-label">Type</label>
+    <div class="col-sm-10">
+      <select id="customdnsType" class="form-control" style="max-width: 400px" onchange="show_customdns_rtype_hint()">
+        <option value="A" data-hint="Enter an IPv4 address (i.e. a dotted quad, such as 123.456.789.012).">A (IPv4 address)</option>
+        <option value="AAAA" data-hint="Enter an IPv6 address.">AAAA (IPv6 address)</option>
+        <option value="CNAME" data-hint="Enter another domain name followed by a period at the end (e.g. mypage.github.io.).">CNAME (DNS forwarding)</option>
+        <option value="TXT" data-hint="Enter arbitrary text.">TXT (text record)</option>
+      </select>
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="customdnsValue" class="col-sm-1 control-label">Value</label>
+    <div class="col-sm-10">
+      <input type="text" class="form-control" id="customdnsValue" placeholder="">
+      <div id="customdnsTypeHint" class="text-info" style="margin-top: .5em"></div>
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="col-sm-offset-1 col-sm-11">
+      <button type="submit" class="btn btn-primary">Set Record</button>
+    </div>
+  </div>
+</form>
+
+<table id="custom-dns-current" class="table" style="width: auto; display: none">
+  <thead>
+    <th>Domain Name</th>
+    <th>Record Type</th>
+    <th>Value</th>
+    <th></th>
+  </thead>
+  <tbody>
+    <tr><td colspan="4">Loading...</td></tr>
+  </tbody>
+</table>
 
 <h3>Using a Secondary Nameserver</h3>
 
@@ -29,6 +86,7 @@
     </div>
   </div>
 </form>
+
 
 <h3>Custom DNS API</h3>
 
@@ -70,7 +128,7 @@ curl -d "value=something%20here" --user me@mydomain.com:###### https://{{hostnam
 
 <script>
 function show_custom_dns() {
- api(
+  api(
     "/dns/secondary-nameserver",
     "GET",
     { },
@@ -78,6 +136,52 @@ function show_custom_dns() {
       $('#secondarydnsHostname').val(data.hostname ? data.hostname : '');
       $('#secondarydns-clear-instructions').toggle(data.hostname != null);
     });
+
+  api(
+    "/dns/zones",
+    "GET",
+    { },
+    function(data) {
+      $('#customdnsZone').text('');
+      for (var i = 0; i < data.length; i++) {
+        $('#customdnsZone').append($('<option/>').text(data[i]));
+      }
+    });
+
+  show_current_custom_dns();
+  show_customdns_rtype_hint();
+}
+
+function show_current_custom_dns() {
+  api(
+    "/dns/set",
+    "GET",
+    { },
+    function(data) {
+      if (data.length > 0)
+        $('#custom-dns-current').fadeIn();
+      else
+        $('#custom-dns-current').fadeOut();
+      
+      $('#custom-dns-current').find("tbody").text('');
+      for (var i = 0; i < data.length; i++) {
+        var tr = $("<tr/>");
+        $('#custom-dns-current').find("tbody").append(tr);
+        tr.attr('data-qname', data[i].qname);
+        tr.attr('data-rtype', data[i].rtype);
+        tr.append($('<td class="long"/>').text(data[i].qname));
+        tr.append($('<td/>').text(data[i].rtype));
+        tr.append($('<td class="long"/>').text(data[i].value));
+        tr.append($('<td>[<a href="#" onclick="return delete_custom_dns_record(this)">delete</a>]</td>'));
+      }
+    });
+}
+
+function delete_custom_dns_record(elem) {
+  var qname = $(elem).parents('tr').attr('data-qname');
+  var rtype = $(elem).parents('tr').attr('data-rtype');
+  do_set_custom_dns(qname, rtype, "__delete__");
+  return false;
 }
 
 function do_set_secondary_dns() {
@@ -95,5 +199,35 @@ function do_set_secondary_dns() {
     function(err) {
       show_modal_error("Secondary DNS", $("<pre/>").text(err));
     });
+}
+
+function do_set_custom_dns(qname, rtype, value) {
+  if (!qname) {
+    if ($('#customdnsQname').val() != '')
+      qname = $('#customdnsQname').val() + '.' + $('#customdnsZone').val();
+    else
+      qname = $('#customdnsZone').val();
+    rtype = $('#customdnsType').val();
+    value = $('#customdnsValue').val();
+  }
+
+  api(
+    "/dns/set/" + qname + "/" + rtype,
+    "POST",
+    {
+      value: value
+    },
+    function(data) {
+      if (data == "") return; // nothing updated
+      show_modal_error("Custom DNS", $("<pre/>").text(data));
+      show_current_custom_dns();
+    },
+    function(err) {
+      show_modal_error("Custom DNS", $("<pre/>").text(err));
+    });
+}
+
+function show_customdns_rtype_hint() {
+  $('#customdnsTypeHint').text($("#customdnsType").find('option:selected').attr('data-hint'));
 }
 </script>

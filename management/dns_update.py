@@ -254,14 +254,17 @@ def build_zone(domain, all_domains, additional_records, env, is_zone=True):
 def get_custom_records(domain, additional_records, env):
 	for qname, value in additional_records.items():
 		# Is this record for the domain or one of its subdomains?
-		if qname != domain and not qname.endswith("." + domain): continue
+		# If `domain` is None, return records for all domains.
+		if domain is not None and qname != domain and not qname.endswith("." + domain): continue
 
 		# Turn the fully qualified domain name in the YAML file into
-		# our short form (None => domain, or a relative QNAME).
-		if qname == domain:
-			qname = None
-		else:
-			qname = qname[0:len(qname)-len("." + domain)]
+		# our short form (None => domain, or a relative QNAME) if
+		# domain is not None.
+		if domain is not None:
+			if qname == domain:
+				qname = None
+			else:
+				qname = qname[0:len(qname)-len("." + domain)]
 
 		# Short form. Mapping a domain name to a string is short-hand
 		# for creating A records.

@@ -172,6 +172,12 @@ def mail_domains():
 
 # DNS
 
+@app.route('/dns/zones')
+@authorized_personnel_only
+def dns_zones():
+	from dns_update import get_dns_zones
+	return json_response([z[0] for z in get_dns_zones(env)])
+
 @app.route('/dns/update', methods=['POST'])
 @authorized_personnel_only
 def dns_update():
@@ -196,6 +202,17 @@ def dns_set_secondary_nameserver():
 	except ValueError as e:
 		return (str(e), 400)
 
+@app.route('/dns/set')
+@authorized_personnel_only
+def dns_get_records():
+	from dns_update import get_custom_dns_config, get_custom_records
+	additional_records = get_custom_dns_config(env)
+	records = get_custom_records(None, additional_records, env)
+	return json_response([{
+		"qname": r[0],
+		"rtype": r[1],
+		"value": r[2],
+		} for r in records])
 
 @app.route('/dns/set/<qname>', methods=['POST'])
 @app.route('/dns/set/<qname>/<rtype>', methods=['POST'])
