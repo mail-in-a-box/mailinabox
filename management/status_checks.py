@@ -18,8 +18,8 @@ from mailconfig import get_mail_domains, get_mail_aliases
 from utils import shell, sort_domains, load_env_vars_from_file
 
 def run_checks(env, output):
-	# clear the DNS cache so our DNS checks are most up to date
-	shell('check_call', ["/usr/sbin/service", "bind9", "restart"])
+	# clear bind9's DNS cache so our DNS checks are up to date
+	shell('check_call', ["/usr/sbin/rndc", "flush"])
 	
 	# perform checks
 	env["out"] = output
