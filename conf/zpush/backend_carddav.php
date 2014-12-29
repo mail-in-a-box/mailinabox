@@ -14,7 +14,7 @@ define('CARDDAV_DEFAULT_PATH', '/carddav/addressbooks/%u/contacts/'); /* subdire
 define('CARDDAV_GAL_PATH', ''); /* readonly, searchable, not syncd */
 define('CARDDAV_GAL_MIN_LENGTH', 5);
 define('CARDDAV_CONTACTS_FOLDER_NAME', '%u Addressbook');
-define('CARDDAV_SUPPORTS_SYNC', true);
+define('CARDDAV_SUPPORTS_SYNC', false);
 
 // If the CardDAV server supports the FN attribute for searches
 // DAViCal supports it, but SabreDav, Owncloud and SOGo don't
