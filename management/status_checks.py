@@ -29,8 +29,17 @@ def run_checks(env, output):
 
 def run_system_checks(env):
 	env["out"].add_heading("System")
+	check_ssh_password(env)
+	check_software_updates(env)
+	check_system_aliases(env)
+	check_free_disk_space(env)
 
-	# Check that SSH login with password is disabled.
+def check_ssh_password(env):
+	# Check that SSH login with password is disabled. The openssh-server
+	# package may not be installed so check that before trying to access
+	# the configuration file.
+	if not os.path.exists("/etc/ssh/sshd_config"):
+		return
 	sshd = open("/etc/ssh/sshd_config").read()
 	if re.search("\nPasswordAuthentication\s+yes", sshd) \
 		or not re.search("\nPasswordAuthentication\s+no", sshd):
@@ -41,6 +50,7 @@ def run_system_checks(env):
 	else:
 		env['out'].print_ok("SSH disallows password-based login.")
 
+def check_software_updates(env):
 	# Check for any software package updates.
 	pkgs = list_apt_updates(apt_update=False)
 	if os.path.exists("/var/run/reboot-required"):
@@ -52,10 +62,12 @@ def run_system_checks(env):
 		for p in pkgs:
 			env['out'].print_line("%s (%s)" % (p["package"], p["version"]))
 
+def check_system_aliases(env):
 	# Check that the administrator alias exists since that's where all
 	# admin email is automatically directed.
 	check_alias_exists("administrator@" + env['PRIMARY_HOSTNAME'], env)
 
+def check_free_disk_space(env):
 	# Check free disk space.
 	st = os.statvfs(env['STORAGE_ROOT'])
 	bytes_total = st.f_blocks * st.f_frsize

@@ -6,6 +6,7 @@ in development
 
 Control panel:
 
+* Status checks would fail to load if openssh-sever was not pre-installed, but openssh-server is not required.
 * The local DNS cache is cleared before running the status checks using 'rncd' now rather than restarting 'bind9', which should be faster and wont interrupt other services.
 
 v0.05 (November 18, 2014)
