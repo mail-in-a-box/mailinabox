@@ -18,8 +18,9 @@ def scan_mail_log(logger, env):
 
 	for fn in ('/var/log/mail.log.1', '/var/log/mail.log'):
 		if not os.path.exists(fn): continue
-		with open(fn) as log:
+		with open(fn, 'rb') as log:
 			for line in log:
+				line = line.decode("utf8", errors='replace')
 				scan_mail_log_line(line.strip(), collector)
 
 	if collector["imap-logins"]:
