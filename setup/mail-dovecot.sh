@@ -26,6 +26,23 @@ apt_install \
 
 # The `dovecot-imapd` and `dovecot-lmtpd` packages automatically enable IMAP and LMTP protocols.
 
+# Set basic daemon options.
+
+# The `default_process_limit` is 100, which constrains the total number
+# of active IMAP connections (at, say, 5 open connections per user that
+# would be 20 users). Set it to 250 times the number of cores this
+# machine has, so on a two-core machine that's 500 processes/100 users).
+tools/editconf.py /etc/dovecot/conf.d/10-master.conf \
+	default_process_limit=$(echo "`nproc` * 250" | bc)
+
+# The inotify `max_user_instances` default is 128, which constrains
+# the total number of watched (IMAP IDLE push) folders by open connections.
+# See http://www.dovecot.org/pipermail/dovecot/2013-March/088834.html.
+# A reboot is required for this to take effect (which we don't do as
+# as a part of setup). Test with `cat /proc/sys/fs/inotify/max_user_instances`.
+tools/editconf.py /etc/sysctl.conf \
+	fs.inotify.max_user_instances=1024
+
 # Set the location where we'll store user mailboxes. '%d' is the domain name and '%n' is the
 # username part of the user's email address. We'll ensure that no bad domains or email addresses
 # are created within the management daemon.

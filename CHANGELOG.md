@@ -4,6 +4,10 @@ CHANGELOG
 in development
 --------------
 
+Mail:
+
+* Set better default syste limits to accommodate boxes handling mail for 20+ users.
+
 Control panel:
 
 * Status checks would fail to load if openssh-sever was not pre-installed, but openssh-server is not required.
