@@ -160,6 +160,11 @@ tools/editconf.py /etc/postfix/main.cf \
 	smtpd_sender_restrictions="reject_non_fqdn_sender,reject_unknown_sender_domain,reject_rhsbl_sender dbl.spamhaus.org" \
 	smtpd_recipient_restrictions=permit_sasl_authenticated,permit_mynetworks,"reject_rbl_client zen.spamhaus.org",reject_unlisted_recipient,"check_policy_service inet:127.0.0.1:10023"
 
+# Postfix connects to Postgrey on the 127.0.0.1 interface specifically. Ensure that
+# Postgrey listens on the same interface (and not IPv6, for instance).
+tools/editconf.py /etc/default/postgrey \
+	POSTGREY_OPTS=\"--inet=127.0.0.1:10023\"
+
 # Increase the message size limit from 10MB to 128MB.
 # The same limit is specified in nginx.conf for mail submitted via webmail and Z-Push.
 tools/editconf.py /etc/postfix/main.cf \
