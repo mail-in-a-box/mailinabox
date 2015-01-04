@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-in development
---------------
+v0.06 (January 4, 2015)
+-----------------------
 
 Mail:
 
