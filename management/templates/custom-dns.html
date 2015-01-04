@@ -124,6 +124,12 @@ curl -d "" --user me@mydomain.com:###### https://{{hostname}}/admin/dns/set/bar.
 
 # sets a TXT record using the alternate value syntax
 curl -d "value=something%20here" --user me@mydomain.com:###### https://{{hostname}}/admin/dns/set/foo.mydomain.com/txt
+
+# sets a <a href="http://en.wikipedia.org/wiki/SRV_record">SRV record</a> for the "service" and "protocol" hosted on "target" server
+curl -d "" --user me@mydomain.com:###### https://{{hostname}}/admin/dns/set/_service._protocol.{{hostname}}/srv/"priority weight port target"
+
+# sets a SRV record using the value syntax
+curl -d "value=priority weight port target" --user me@mydomain.com:###### https://{{hostname}}/admin/dns/set/_service._protocol.host/srv
 </pre>
 
 <script>
@@ -162,7 +168,7 @@ function show_current_custom_dns() {
         $('#custom-dns-current').fadeIn();
       else
         $('#custom-dns-current').fadeOut();
-      
+
       $('#custom-dns-current').find("tbody").text('');
       for (var i = 0; i < data.length; i++) {
         var tr = $("<tr/>");
