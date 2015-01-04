@@ -8,6 +8,11 @@ Mail:
 
 * Set better default system limits to accommodate boxes handling mail for 20+ users.
 
+Contacts/calendar:
+
+* Update to ownCloud to 7.0.4.
+* Contacts syncing via ActiveSync wasn't working.
+
 Control panel:
 
 * New control panel for setting custom DNS settings (without having to use the API).
@@ -19,7 +24,6 @@ Control panel:
 
 Misc:
 
-* Update to ownCloud to 7.0.4.
 * IPv6 configuration error in postgrey, nginx.
 * Missing dependency on sudo.
 
