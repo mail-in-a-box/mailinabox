@@ -18,17 +18,82 @@ from mailconfig import get_mail_domains, get_mail_aliases
 from utils import shell, sort_domains, load_env_vars_from_file
 
 def run_checks(env, output):
-	# clear bind9's DNS cache so our DNS checks are up to date
-	shell('check_call', ["/usr/sbin/rndc", "flush"])
-	
-	# perform checks
 	env["out"] = output
+
+	# run systems checks
+	env["out"].add_heading("System")
+
+	# check that services are running
+	if not run_services_checks(env):
+		# If critical services are not running, stop. If bind9 isn't running,
+		# all later DNS checks will timeout and that will take forever to
+		# go through, and if running over the web will cause a fastcgi timeout.
+		return
+
+	# clear bind9's DNS cache so our DNS checks are up to date
+	# (ignore errors; if bind9/rndc isn't running we'd already report
+	# that in run_services checks.)
+	shell('check_call', ["/usr/sbin/rndc", "flush"], trap=True)
+	
 	run_system_checks(env)
+
+	# perform other checks
 	run_network_checks(env)
 	run_domain_checks(env)
 
+def run_services_checks(env):
+	# Check that system services are running.
+
+	import socket
+
+	services = [
+		{ "name": "Local DNS (bind9)", "port": 53, "public": False, },
+		#{ "name": "NSD Control", "port": 8952, "public": False, },
+		{ "name": "Local DNS Control (bind9/rndc)", "port": 953, "public": False, },
+		{ "name": "Dovecot LMTP LDA", "port": 10026, "public": False, },
+		{ "name": "Postgrey", "port": 10023, "public": False, },
+		{ "name": "Spamassassin", "port": 10025, "public": False, },
+		{ "name": "OpenDKIM", "port": 8891, "public": False, },
+		{ "name": "Memcached", "port": 11211, "public": False, },
+		{ "name": "Sieve (dovecot)", "port": 4190, "public": True, },
+		{ "name": "Mail-in-a-Box Management Daemon", "port": 10222, "public": False, },
+
+		{ "name": "SSH Login (ssh)", "port": 22, "public": True, },
+		{ "name": "Public DNS (nsd4)", "port": 53, "public": True, },
+		{ "name": "Incoming Mail (SMTP/postfix)", "port": 25, "public": True, },
+		{ "name": "Outgoing Mail (SMTP 587/postfix)", "port": 587, "public": True, },
+		#{ "name": "Postfix/master", "port": 10587, "public": True, },
+		{ "name": "IMAPS (dovecot)", "port": 993, "public": True, },
+		{ "name": "HTTP Web (nginx)", "port": 80, "public": True, },
+		{ "name": "HTTPS Web (nginx)", "port": 443, "public": True, },
+	]
+
+	ok = True
+	
+	for service in services:
+		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		s.settimeout(.1)
+		try:
+			s.connect((
+				"127.0.0.1" if not service["public"] else env['PUBLIC_IP'],
+				service["port"]))
+		except OSError as e:
+			env['out'].print_error("%s is not running (%s)." % (service['name'], str(e)))
+
+			# Why is nginx not running?
+			if service["port"] in (80, 443):
+				env['out'].print_line(shell('check_output', ['nginx', '-t'], capture_stderr=True, trap=True)[1].strip())
+
+			# Flag if local DNS is not running.
+			if service["port"] == 53 and service["public"] == False:
+				ok = False
+
+		finally:
+			s.close()
+
+	return ok
+
 def run_system_checks(env):
-	env["out"].add_heading("System")
 	check_ssh_password(env)
 	check_software_updates(env)
 	check_system_aliases(env)
@@ -374,6 +439,8 @@ def query_dns(qname, rtype, nxdomain='[Not Set]'):
 		# Host did not have an answer for this query; not sure what the
 		# difference is between the two exceptions.
 		return nxdomain
+	except dns.exception.Timeout:
+		return "[timeout]"
 
 	# There may be multiple answers; concatenate the response. Remove trailing
 	# periods from responses since that's how qnames are encoded in DNS but is
