@@ -91,6 +91,9 @@ def run_services_checks(env):
 		finally:
 			s.close()
 
+	if ok:
+		env['out'].print_ok("All system services are running.")
+
 	return ok
 
 def run_system_checks(env):
