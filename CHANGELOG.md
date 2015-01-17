@@ -8,6 +8,15 @@ DNS:
 
 * If a custom CNAME record is set, don't add a default A/AAAA record, e.g. for 'www', which end up preventing the CNAME record from working.
 
+Control panel:
+
+* Status checks now check that system services are actually running by pinging each port that should have something running on it.
+
+Setup:
+
+* Install cron if it isn't already installed.
+* Fix a units problem in the minimum memory check.
+
 v0.06 (January 4, 2015)
 -----------------------
 
