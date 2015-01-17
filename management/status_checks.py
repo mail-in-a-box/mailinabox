@@ -68,7 +68,8 @@ def run_services_checks(env):
 		{ "name": "HTTPS Web (nginx)", "port": 443, "public": True, },
 	]
 
-	ok = True
+	error = False
+	fatal = False
 	
 	for service in services:
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -78,6 +79,7 @@ def run_services_checks(env):
 				"127.0.0.1" if not service["public"] else env['PUBLIC_IP'],
 				service["port"]))
 		except OSError as e:
+			error = True
 			env['out'].print_error("%s is not running (%s)." % (service['name'], str(e)))
 
 			# Why is nginx not running?
@@ -86,12 +88,15 @@ def run_services_checks(env):
 
 			# Flag if local DNS is not running.
 			if service["port"] == 53 and service["public"] == False:
-				ok = False
+				fatal = True
 
 		finally:
 			s.close()
 
-	return ok
+	if not error:
+		env['out'].print_ok("All system services are running.")
+
+	return not fatal
 
 def run_system_checks(env):
 	check_ssh_password(env)
