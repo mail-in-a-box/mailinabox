@@ -55,7 +55,6 @@ def run_services_checks(env):
 		{ "name": "Spamassassin", "port": 10025, "public": False, },
 		{ "name": "OpenDKIM", "port": 8891, "public": False, },
 		{ "name": "Memcached", "port": 11211, "public": False, },
-		{ "name": "Sieve (dovecot)", "port": 4190, "public": True, },
 		{ "name": "Mail-in-a-Box Management Daemon", "port": 10222, "public": False, },
 
 		{ "name": "SSH Login (ssh)", "port": 22, "public": True, },
@@ -63,6 +62,7 @@ def run_services_checks(env):
 		{ "name": "Incoming Mail (SMTP/postfix)", "port": 25, "public": True, },
 		{ "name": "Outgoing Mail (SMTP 587/postfix)", "port": 587, "public": True, },
 		#{ "name": "Postfix/master", "port": 10587, "public": True, },
+		{ "name": "Sieve (dovecot)", "port": 4190, "public": False, }, # it binds to public IP but we'll fix that later
 		{ "name": "IMAPS (dovecot)", "port": 993, "public": True, },
 		{ "name": "HTTP Web (nginx)", "port": 80, "public": True, },
 		{ "name": "HTTPS Web (nginx)", "port": 443, "public": True, },
@@ -72,15 +72,34 @@ def run_services_checks(env):
 	fatal = False
 	
 	for service in services:
+		host = "127.0.0.1" if not service["public"] else env['PUBLIC_IP']
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		s.settimeout(.1)
 		try:
-			s.connect((
-				"127.0.0.1" if not service["public"] else env['PUBLIC_IP'],
-				service["port"]))
+			s.connect((host, service["port"]))
 		except OSError as e:
+			# Connection to service failed.
+
+			# For public services, except DNS (because a different service runs
+			# locally), try a local connection too. If a localhost connection
+			# succeeds, show a different error.
+			if service["public"] and service["port"] != 53:
+				try:
+					s1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+					s1.settimeout(.1)
+					s1.connect(("127.0.0.1", service["port"]))
+					env['out'].print_error("%s is running but is not publicly accessible (%s:%d %s)." % (service['name'], host, service["port"], str(e)))
+					error = True
+					continue # skip error below
+				except Exception as e1:
+					# Report error as below.
+					pass
+				finally:
+					s1.close()
+
+			# Service appears to not be running.
 			error = True
-			env['out'].print_error("%s is not running (%s)." % (service['name'], str(e)))
+			env['out'].print_error("%s is not running (%s:%d %s)." % (service['name'], host, service["port"], str(e)))
 
 			# Why is nginx not running?
 			if service["port"] in (80, 443):
