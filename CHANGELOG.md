@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+Development
+-----------
+
+DNS:
+
+* If a custom CNAME record is set, don't add a default A/AAAA record, e.g. for 'www', which end up preventing the CNAME record from working.
+
 v0.06 (January 4, 2015)
 -----------------------
 
