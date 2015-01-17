@@ -15,7 +15,7 @@ from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config
 from web_update import get_web_domains, get_domain_ssl_files
 from mailconfig import get_mail_domains, get_mail_aliases
 
-from utils import shell, sort_domains, load_env_vars_from_file
+from utils import shell, sort_domains, load_env_vars_from_file, from_idna
 
 def run_checks(env, output):
 	env["out"] = output
@@ -189,7 +189,7 @@ def run_domain_checks(env):
 
 	# Check the domains.
 	for domain in sort_domains(mail_domains | dns_domains | web_domains, env):
-		env["out"].add_heading(domain)
+		env["out"].add_heading(from_idna(domain))
 
 		if domain == env["PRIMARY_HOSTNAME"]:
 			check_primary_hostname_dns(domain, env, dns_domains, dns_zonefiles)

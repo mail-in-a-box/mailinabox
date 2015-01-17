@@ -6,7 +6,7 @@ import os, os.path, shutil, re, rtyaml
 
 from mailconfig import get_mail_domains
 from dns_update import get_custom_dns_config, do_dns_update
-from utils import shell, safe_domain_name, sort_domains
+from utils import shell, safe_domain_name, sort_domains, from_idna
 
 def get_web_domains(env):
 	# What domains should we serve websites for?
@@ -276,6 +276,7 @@ def get_web_domains_info(env):
 	return [
 		{
 			"domain": domain,
+			"pretty": from_idna(domain),
 			"root": get_web_root(domain, env),
 			"custom_root": get_web_root(domain, env, test_exists=False),
 			"ssl_certificate": check_cert(domain),

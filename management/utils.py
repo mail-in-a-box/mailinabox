@@ -23,9 +23,19 @@ def safe_domain_name(name):
     import urllib.parse
     return urllib.parse.quote(name, safe='')
 
+def from_idna(domain):
+    # Turn IDNA into Unicode, but on error just return the original string.
+    try:
+        return domain.encode("ascii").decode("idna")
+    except:
+        return domain
+
 def sort_domains(domain_names, env):
     # Put domain names in a nice sorted order. For web_update, PRIMARY_HOSTNAME
     # must appear first so it becomes the nginx default server.
+    #
+    # Sort according to Unicode lexicographic order, which means decoding IDNA
+    # domains.
     
     # First group PRIMARY_HOSTNAME and its subdomains, then parent domains of PRIMARY_HOSTNAME, then other domains.
     groups = ( [], [], [] )
@@ -40,7 +50,7 @@ def sort_domains(domain_names, env):
     # Within each group, sort parent domains before subdomains and after that sort lexicographically.
     def sort_group(group):
         # Find the top-most domains.
-        top_domains = sorted(d for d in group if len([s for s in group if d.endswith("." + s)]) == 0)
+        top_domains = sorted([d for d in group if len([s for s in group if d.endswith("." + s)]) == 0], key = lambda d : from_idna(d))
         ret = []
         for d in top_domains:
             ret.append(d)

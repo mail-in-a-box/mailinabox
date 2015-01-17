@@ -66,8 +66,8 @@ function show_web() {
 	for (var i = 0; i < domains.length; i++) {
 		var row = $("<tr><th class='domain'><a href=''></a></th><td class='directory'><tt/></td></tr>");
 		tb.append(row);
-		row.find('.domain a').text('https://' + domains[i].domain);
-		row.find('.domain a').attr('href', 'https://' + domains[i].domain);
+		row.find('.domain a').text('https://' + domains[i].pretty);
+		row.find('.domain a').attr('href', 'https://' + domains[i].pretty);
 		row.find('.directory tt').text(domains[i].root);
 	}
 
@@ -77,8 +77,8 @@ function show_web() {
 		if (domains[i].root != domains[i].custom_root) {
 			var row = $("<tr><th class='domain'><a href=''></a></th><td class='directory'><tt></td></tr>");
 			tb.append(row);
-			row.find('.domain a').text('https://' + domains[i].domain);
-			row.find('.domain a').attr('href', 'https://' + domains[i].domain);
+			row.find('.domain a').text('https://' + domains[i].pretty);
+			row.find('.domain a').attr('href', 'https://' + domains[i].pretty);
 			row.find('.directory tt').text(domains[i].custom_root);
 		}
 	}

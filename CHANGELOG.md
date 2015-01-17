@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+Development
+-----------
+
+Misc:
+
+* Support for internationalized domain names is added, but not well tested. Email login is with the IDNA (xn--) form of the domain.
+
 v0.06 (January 4, 2015)
 -----------------------
 
