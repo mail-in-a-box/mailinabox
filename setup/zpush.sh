@@ -14,8 +14,12 @@ source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
 # Prereqs.
+# (git is just required to clone the fmbiete/Z-Push-contrib repo, which
+# may not be installed in testing, e.g. with Vagrant, when our own
+# sources were not gotten with git.)
 
 apt_install \
+	git \
 	php-soap php5-imap libawl-php php5-xsl
 
 php5enmod imap
