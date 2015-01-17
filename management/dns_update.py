@@ -382,17 +382,26 @@ $TTL 1800           ; default time to live
 """
 
 	# Replace replacement strings.
-	zone = zone.format(domain=domain, primary_domain=env["PRIMARY_HOSTNAME"])
+	zone = zone.format(domain=domain.encode("idna").decode("ascii"), primary_domain=env["PRIMARY_HOSTNAME"].encode("idna").decode("ascii"))
 
 	# Add records.
 	for subdomain, querytype, value, explanation in records:
 		if subdomain:
-			zone += subdomain
+			zone += subdomain.encode("idna").decode("ascii")
 		zone += "\tIN\t" + querytype + "\t"
 		if querytype == "TXT":
+			# Quote and escape.
 			value = value.replace('\\', '\\\\') # escape backslashes
 			value = value.replace('"', '\\"') # escape quotes
 			value = '"' + value + '"' # wrap in quotes
+		elif querytype in ("NS", "CNAME"):
+			# These records must be IDNA-encoded.
+			value = value.encode("idna").decode("ascii")
+		elif querytype == "MX":
+			# Also IDNA-encoded, but must parse first.
+			priority, host = value.split(" ", 1)
+			host = host.encode("idna").decode("ascii")
+			value = priority + " " + host
 		zone += value + "\n"
 
 	# DNSSEC requires re-signing a zone periodically. That requires
@@ -486,7 +495,7 @@ server:
 zone:
 	name: %s
 	zonefile: %s
-""" % (domain, zonefile)
+""" % (domain.encode("idna").decode("ascii"), zonefile)
 
 		# If a custom secondary nameserver has been set, allow zone transfers
 		# and notifies to that nameserver.
@@ -530,6 +539,9 @@ def dnssec_choose_algo(domain, env):
 def sign_zone(domain, zonefile, env):
 	algo = dnssec_choose_algo(domain, env)
 	dnssec_keys = load_env_vars_from_file(os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/%s.conf' % algo))
+
+	# From here, use the IDNA encoding of the domain name.
+	domain = domain.encode("idna").decode("ascii")
 
 	# In order to use the same keys for all domains, we have to generate
 	# a new .key file with a DNSSEC record for the specific domain. We

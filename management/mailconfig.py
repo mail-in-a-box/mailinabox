@@ -14,7 +14,7 @@ def validate_email(email, mode=None):
 
 	if mode == 'user':
 		# For Dovecot's benefit, only allow basic characters.
-		ATEXT = r'[\w\-]'
+		ATEXT = r'[a-zA-Z0-9_\-]'
 	elif mode in (None, 'alias'):
 		# For aliases, we can allow any valid email address.
 		# Based on RFC 2822 and https://github.com/SyrusAkbary/validate_email/blob/master/validate_email.py,
@@ -36,9 +36,34 @@ def validate_email(email, mode=None):
 	DOT_ATOM_TEXT_HOST = ATEXT + r'+(?:\.' + ATEXT + r'+)+'
 
 	# per RFC 2822 3.4.1
-	ADDR_SPEC = '^%s@%s$' % (DOT_ATOM_TEXT_LOCAL, DOT_ATOM_TEXT_HOST)
+	ADDR_SPEC = '^(%s)@(%s)$' % (DOT_ATOM_TEXT_LOCAL, DOT_ATOM_TEXT_HOST)
 
-	return re.match(ADDR_SPEC, email)
+	# Check the regular expression.
+	m = re.match(ADDR_SPEC, email)
+	if not m: return False
+
+	# Check that the domain part is IDNA-encodable.
+	localpart, domainpart = m.groups()
+	try:
+		domainpart.encode("idna")
+	except:
+		return False
+
+	return True
+
+def sanitize_idn_email_address(email):
+	# Convert an IDNA-encoded email address (domain part) into Unicode
+	# before storing in our database. Chrome may IDNA-ize <input type="email">
+	# values before POSTing, so we want to normalize before putting
+	# values into the database.
+	try:
+		localpart, domainpart = email.split("@")
+		domainpart = domainpart.encode("ascii").decode("idna")
+		return localpart + "@" + domainpart
+	except:
+		# Domain part is already Unicode or not IDNA-valid, so
+		# leave unchanged.
+		return email
 
 def open_database(env, with_connection=False):
 	conn = sqlite3.connect(env["STORAGE_ROOT"] + "/mail/users.sqlite")
@@ -230,6 +255,9 @@ def get_mail_domains(env, filter_aliases=lambda alias : True):
 		 )
 
 def add_mail_user(email, pw, privs, env):
+	# accept IDNA domain names but normalize to Unicode before going into database
+	email = sanitize_idn_email_address(email)
+
 	# validate email
 	if email.strip() == "":
 		return ("No email address provided.", 400)
@@ -284,6 +312,10 @@ def add_mail_user(email, pw, privs, env):
 	return kick(env, "mail user added")
 
 def set_mail_password(email, pw, env):
+	# accept IDNA domain names but normalize to Unicode before going into database
+	email = sanitize_idn_email_address(email)
+
+	# validate that password is acceptable
 	validate_password(pw)
 	
 	# hash the password
@@ -298,6 +330,10 @@ def set_mail_password(email, pw, env):
 	return "OK"
 
 def remove_mail_user(email, env):
+	# accept IDNA domain names but normalize to Unicode before going into database
+	email = sanitize_idn_email_address(email)
+
+	# remove
 	conn, c = open_database(env, with_connection=True)
 	c.execute("DELETE FROM users WHERE email=?", (email,))
 	if c.rowcount != 1:
@@ -311,6 +347,10 @@ def parse_privs(value):
 	return [p for p in value.split("\n") if p.strip() != ""]
 
 def get_mail_user_privileges(email, env):
+	# accept IDNA domain names but normalize to Unicode before going into database
+	email = sanitize_idn_email_address(email)
+
+	# get privs
 	c = open_database(env)
 	c.execute('SELECT privileges FROM users WHERE email=?', (email,))
 	rows = c.fetchall()
@@ -324,6 +364,9 @@ def validate_privilege(priv):
 	return None
 
 def add_remove_mail_user_privilege(email, priv, action, env):
+	# accept IDNA domain names but normalize to Unicode before going into database
+	email = sanitize_idn_email_address(email)
+
 	# validate
 	validation = validate_privilege(priv)
 	if validation: return validation
@@ -351,6 +394,9 @@ def add_remove_mail_user_privilege(email, priv, action, env):
 	return "OK"
 
 def add_mail_alias(source, destination, env, update_if_exists=False, do_kick=True):
+	# accept IDNA domain names but normalize to Unicode before going into database
+	source = sanitize_idn_email_address(source)
+
 	# validate source
 	if source.strip() == "":
 		return ("No incoming email address provided.", 400)
@@ -363,13 +409,14 @@ def add_mail_alias(source, destination, env, update_if_exists=False, do_kick=Tru
 	if validate_email(destination, mode='alias'):
 		# Oostfix allows a single @domain.tld as the destination, which means
 		# the local part on the address is preserved in the rewrite.
-		dests.append(destination)
+		dests.append(sanitize_idn_email_address(destination))
 	else:
 		# Parse comma and \n-separated destination emails & validate. In this
 		# case, the recipients must be complete email addresses.
 		for line in destination.split("\n"):
 			for email in line.split(","):
 				email = email.strip()
+				email = sanitize_idn_email_address(email) # Unicode => IDNA
 				if email == "": continue
 				if not validate_email(email):
 					return ("Invalid destination email address (%s)." % email, 400)
@@ -397,6 +444,10 @@ def add_mail_alias(source, destination, env, update_if_exists=False, do_kick=Tru
 		return kick(env, return_status)
 
 def remove_mail_alias(source, env, do_kick=True):
+	# accept IDNA domain names but normalize to Unicode before going into database
+	source = sanitize_idn_email_address(source)
+
+	# remove
 	conn, c = open_database(env, with_connection=True)
 	c.execute("DELETE FROM aliases WHERE source=?", (source,))
 	if c.rowcount != 1:

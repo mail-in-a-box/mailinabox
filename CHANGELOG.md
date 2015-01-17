@@ -4,18 +4,20 @@ CHANGELOG
 Development
 -----------
 
-DNS:
-
-* If a custom CNAME record is set, don't add a default A/AAAA record, e.g. for 'www', which end up preventing the CNAME record from working.
-
 Control panel:
 
 * Status checks now check that system services are actually running by pinging each port that should have something running on it.
+* If a custom CNAME record is set on a 'www' subdomain, the default A/AAAA records were preventing the CNAME from working.
 
 Setup:
 
 * Install cron if it isn't already installed.
 * Fix a units problem in the minimum memory check.
+
+Miscellaneous:
+
+* Internationalized domain names (IDNs) are now supported for DNS and web, but email is not yet tested.
+
 
 v0.06 (January 4, 2015)
 -----------------------

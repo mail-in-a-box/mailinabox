@@ -12,7 +12,7 @@
 
 <h3>Add a mail user</h3>
 
-<p>Add an email address to this system. This will create a new login username/password. (Use <a href="javascript:show_panel('aliases')">aliases</a> to create email addresses that forward to existing accounts.)</p>
+<p>Add an email address to this system. This will create a new login username/password.</p>
 
 <form class="form-inline" role="form" onsubmit="return do_add_user(); return false;">
   <div class="form-group">
@@ -31,10 +31,12 @@
   </div>
   <button type="submit" class="btn btn-primary">Add User</button>
 </form>
-<p style="margin-top: .5em"><small>
-  Passwords must be at least four characters and may not contain spaces.
-  Administrators get access to this control panel.
-</small></p>
+<ul style="margin-top: 1em; padding-left: 1.5em; font-size: 90%;">
+  <li>Passwords must be at least four characters and may not contain spaces.</li>
+  <li>Use <a href="javascript:show_panel('aliases')">aliases</a> to create email addresses that forward to existing accounts.</li>
+  <li>Administrators get access to this control panel.</li>
+  <li>User accounts cannot contain any international (non-ASCII) characters, but <a href="javascript:show_panel('aliases')">aliases</a> can.</li>
+</ul>
 
 <h3>Existing mail users</h3>
 <table id="user_table" class="table" style="width: auto">

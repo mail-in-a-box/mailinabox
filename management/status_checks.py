@@ -552,6 +552,7 @@ def check_certificate(domain, ssl_certificate, ssl_private_key):
 		if m:
 			cert_expiration_date = dateutil.parser.parse(m.group(1))
 
+	domain = domain.encode("idna").decode("ascii")
 	wildcard_domain = re.sub("^[^\.]+", "*", domain)
 	if domain is not None and domain not in certificate_names and wildcard_domain not in certificate_names:
 		return ("The certificate is for the wrong domain name. It is for %s."
