@@ -4,8 +4,9 @@ CHANGELOG
 Development
 -----------
 
-Misc:
+DNS:
 
+* If a custom CNAME record is set, don't add a default A/AAAA record, e.g. for 'www', which end up preventing the CNAME record from working.
 * Support for internationalized domain names is added, but not well tested. Email login is with the IDNA (xn--) form of the domain.
 
 v0.06 (January 4, 2015)
