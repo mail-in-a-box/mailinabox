@@ -469,12 +469,12 @@ def get_required_aliases(env):
 	aliases.add("hostmaster@" + env['PRIMARY_HOSTNAME'])
 
 	# Get a list of domains we serve mail for, except ones for which the only
-	# email on that domain is a postmaster/admin alias to the administrator.
+	# email on that domain is a postmaster/admin alias to the administrator
+	# or a wildcard alias (since it will forward postmaster/admin).
 	real_mail_domains = get_mail_domains(env,
-		filter_aliases = lambda alias : \
-			(not alias[0].startswith("postmaster@") \
-			 and not alias[0].startswith("admin@")) \
-			or alias[1] != get_system_administrator(env) \
+		filter_aliases = lambda alias :
+			((not alias[0].startswith("postmaster@") and not alias[0].startswith("admin@"))	or alias[1] != get_system_administrator(env))
+			and not alias[0].startswith("@")
 			)
 
 	# Create postmaster@ and admin@ for all domains we serve mail on.

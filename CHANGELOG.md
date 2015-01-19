@@ -17,6 +17,7 @@ Setup:
 Miscellaneous:
 
 * Internationalized domain names (IDNs) are now supported for DNS and web, but email is not yet tested.
+* Domains that only have a catch-all alias or domain alias no longer automatically create/require admin@ and postmaster@ addresses since they'll forward anyway.
 
 
 v0.06 (January 4, 2015)
