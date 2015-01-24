@@ -99,7 +99,7 @@ if [ -z "$STORAGE_ROOT" ]; then
 	STORAGE_ROOT=/home/$STORAGE_USER
 	mkdir -p $STORAGE_ROOT
 	echo $(setup/migrate.py --current) > $STORAGE_ROOT/mailinabox.version
-	chown $STORAGE_USER.$STORAGE_USER $STORAGE_ROOT/mailinabox.version
+	chown $STORAGE_USER:$STORAGE_USER $STORAGE_ROOT/mailinabox.version
 fi
 
 # Save the global options in /etc/mailinabox.conf so that standalone
@@ -130,8 +130,11 @@ source setup/owncloud.sh
 source setup/zpush.sh
 source setup/management.sh
 
+# We need to start daemon manually when inside docker
+if [ ! "$IS_DOCKER" ]; then
 # Write the DNS and nginx configuration files.
 sleep 5 # wait for the daemon to start
+
 curl -s -d POSTDATA --user $(</var/lib/mailinabox/api.key): http://127.0.0.1:10222/dns/update
 curl -s -d POSTDATA --user $(</var/lib/mailinabox/api.key): http://127.0.0.1:10222/web/update
 
@@ -164,3 +167,5 @@ openssl x509 -in $STORAGE_ROOT/ssl/ssl_certificate.pem -noout -fingerprint \
 echo
 echo Then you can confirm the security exception and continue.
 echo
+
+fi

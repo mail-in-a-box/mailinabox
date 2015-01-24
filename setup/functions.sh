@@ -23,6 +23,7 @@ function hide_output {
 }
 
 function apt_install {
+  if [ ! "$IS_DOCKER" ];then
 	# Report any packages already installed.
 	PACKAGES=$@
 	TO_INSTALL=""
@@ -58,6 +59,7 @@ function apt_install {
 	DEBIAN_FRONTEND=noninteractive \
 	hide_output \
 	apt-get -y install $PACKAGES
+  fi
 }
 
 function get_default_hostname {
@@ -157,20 +159,6 @@ function restart_service {
 	if [ ! "$IS_DOCKER" ]; then
 		# The normal way to restart a service.
 		hide_output service $1 restart
-	else
- 		# On docker, sysvinit is not present. Our base image provides
- 		# a weird way to manage running services. But we're not going
- 		# to use it. Just execute the init.d script directly.
-
-	 	if [ "$1" == "dovecot" ]; then
-			# Dovecot does not provide an init.d script. It just provides
-			# an upstart init configuration. But Docker doesn't provide
-			# upstart. Start Dovecot specially.
-			killall dovecot
-			dovecot -c /etc/dovecot/dovecot.conf
-		else
-	 		hide_output /etc/init.d/$1 restart
-	 	fi
 	fi
 }
 
