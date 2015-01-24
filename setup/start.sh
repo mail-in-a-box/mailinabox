@@ -69,7 +69,7 @@ if [ ! -d $STORAGE_ROOT ]; then
 fi
 if [ ! -f $STORAGE_ROOT/mailinabox.version ]; then
 	echo $(setup/migrate.py --current) > $STORAGE_ROOT/mailinabox.version
-	chown $STORAGE_USER.$STORAGE_USER $STORAGE_ROOT/mailinabox.version
+	chown $STORAGE_USER:$STORAGE_USER $STORAGE_ROOT/mailinabox.version
 fi
 
 
@@ -140,3 +140,4 @@ openssl x509 -in $STORAGE_ROOT/ssl/ssl_certificate.pem -noout -fingerprint \
 echo
 echo Then you can confirm the security exception and continue.
 echo
+

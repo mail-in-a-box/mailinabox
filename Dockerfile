@@ -15,11 +15,12 @@
 # base image doesn't provide enough to run most Ubuntu services. See
 # http://phusion.github.io/baseimage-docker/ for an explanation.
 
-FROM phusion/baseimage:0.9.15
+FROM phusion/baseimage:0.9.16
 
 # Dockerfile metadata.
 MAINTAINER Joshua Tauberer (http://razor.occams.info)
-EXPOSE 22 25 53 80 443 587 993
+EXPOSE 25 53/udp 53/tcp 80 443 587 993
+VOLUME /data
 
 # Docker has a beautiful way to cache images after each step. The next few
 # steps of installing system packages are very intensive, so we take care
@@ -35,13 +36,17 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get upgrade -y
 ADD containers/docker/apt_package_list.txt /tmp/mailinabox_apt_package_list.txt
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y $(cat /tmp/mailinabox_apt_package_list.txt)
 RUN rm -f /tmp/mailinabox_apt_package_list.txt
+RUN useradd -m user-data
+RUN rm -rf /etc/service/syslog-ng
 
 # Now add Mail-in-a-Box to the system.
 ADD . /usr/local/mailinabox
+
+#RUN /usr/local/mailinabox/containers/docker/setup.sh 
 
 # We can't know things like the IP address where the container will eventually
 # be deployed until the container is started. We also don't want to create any
 # private keys during the creation of the image --- that should wait until the
 # container is started too. So our whole setup process is deferred until the
 # container is started.
-ENTRYPOINT ["/usr/local/mailinabox/containers/docker/container_start.sh"]
+ENTRYPOINT /usr/local/mailinabox/containers/docker/init.sh
