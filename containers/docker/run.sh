@@ -17,21 +17,18 @@
 # volume if the volume is new.
 
 
-DOCKER=docker.io
+DOCKER=docker
 
 # Build or rebuild the image.
 # Rebuilds are very fast.
 $DOCKER build -q -t mailinabox .
 
-# Start the user-data containerw which is merely to create
-# a container that maintains a reference to a volume so that
-# we can destroy the main container without losing user data.
 if ! $DOCKER ps -a | grep mailinabox-userdata > /dev/null; then
 	echo Starting user-data volume container...
 	$DOCKER run -d \
 		--name mailinabox-userdata \
 		-v /home/user-data \
-		scratch bash
+		scratch /bin/bash
 fi
 
 # End a running container.
@@ -43,8 +40,9 @@ fi
 # Start container.
 echo Starting new container...
 $DOCKER run \
-	-p 25 -p 53 -p 80 -p 443 -p 587 -p 993 \
-	--volumes-from mailinabox-userdata \
+	--privileged \
+	-v /dev/urandom:/dev/random \
+	-p 25 -p 53/udp -p 53/tcp -p 80 -p 443 -p 587 -p 993 \
 	--name mailinabox-services \
-	-t -i \
+	--volumes-from mailinabox-userdata \
 	mailinabox
