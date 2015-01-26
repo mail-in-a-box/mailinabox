@@ -21,7 +21,7 @@ source /etc/mailinabox.conf # load global vars
 # Install packages...
 
 apt_install \
-	dovecot-core dovecot-imapd dovecot-lmtpd dovecot-sqlite sqlite3 \
+	dovecot-core dovecot-imapd dovecot-pop3d dovecot-lmtpd dovecot-sqlite sqlite3 \
 	dovecot-sieve dovecot-managesieved
 
 # The `dovecot-imapd` and `dovecot-lmtpd` packages automatically enable IMAP and LMTP protocols.
@@ -83,6 +83,10 @@ sed -i "s/#port = 110/port = 0/" /etc/dovecot/conf.d/10-master.conf
 # by a peer. See #129 and http://razor.occams.info/blog/2014/08/09/how-bad-is-imap-idle/.
 tools/editconf.py /etc/dovecot/conf.d/20-imap.conf \
 	imap_idle_notify_interval="4 mins"
+
+# Set POP3 UIDL
+tools/editconf.py /etc/dovecot/conf.d/20-pop3.conf \
+	pop3_uidl_format = %08Xu%08Xv
 
 # ### LDA (LMTP)
 
