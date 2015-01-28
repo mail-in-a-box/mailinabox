@@ -125,6 +125,7 @@ source setup/webmail.sh
 source setup/owncloud.sh
 source setup/zpush.sh
 source setup/management.sh
+source setup/munin.sh
 
 # Write the DNS and nginx configuration files.
 sleep 5 # wait for the daemon to start
@@ -133,6 +134,9 @@ curl -s -d POSTDATA --user $(</var/lib/mailinabox/api.key): http://127.0.0.1:102
 
 # If there aren't any mail users yet, create one.
 source setup/firstuser.sh
+
+# Grant admins access to Munin
+source tools/munin_update.sh
 
 # Done.
 echo
