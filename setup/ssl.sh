@@ -45,7 +45,7 @@ fi
 
 # For nginx and postfix, pre-generate some Diffie-Hellman cipher bits which is
 # used when a Diffie-Hellman cipher is selected during TLS negotiation. Diffie-Hellman
-# provides Perfect Forward Security. openssl's default is 1024 bits, but we'll
+# provides Perfect Forward Secrecy. openssl's default is 1024 bits, but we'll
 # create 2048.
 if [ ! -f $STORAGE_ROOT/ssl/dh2048.pem ]; then
 	openssl dhparam -out $STORAGE_ROOT/ssl/dh2048.pem 2048
