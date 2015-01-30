@@ -2,6 +2,9 @@
 # Use this script to launch Mail-in-a-Box within a docker container.
 # ==================================================================
 #
+# Run this script from the base directory of the Mail-in-a-Box
+# repository (i.e. run as 'containers/docker/run').
+#
 # A base image is created first. The base image installs Ubuntu
 # packages and pulls in the Mail-in-a-Box source code. This is
 # defined in Dockerfile at the root of this repository.
@@ -16,33 +19,59 @@
 # initialize itself and will initialize the mailinabox-userdata
 # volume if the volume is new.
 
-
-DOCKER=docker
-
 # Build or rebuild the image.
 # Rebuilds are very fast.
-$DOCKER build -q -t mailinabox .
 
-if ! $DOCKER ps -a | grep mailinabox-userdata > /dev/null; then
-	echo Starting user-data volume container...
-	$DOCKER run -d \
+tput setaf 2
+echo "Building/updating base image (mailinabox)..."
+tput setaf 7
+
+docker build -q -t mailinabox .
+
+if ! docker ps -a | grep mailinabox-userdata > /dev/null; then
+	tput setaf 2
+	echo
+	echo "Creating a new container for your data (mailinabox-userdata)..."
+	tput setaf 7
+
+	docker run -d \
 		--name mailinabox-userdata \
 		-v /home/user-data \
-		scratch /bin/bash
+		scratch /bin/does-not-exist-but-thats-ok
+else
+	tput setaf 2
+	echo
+	echo "Using existing container mailinabox-userdata for your data."
+	tput setaf 7
 fi
 
 # End a running container.
-if $DOCKER ps -a | grep mailinabox-services > /dev/null; then
-	echo Deleting container...
-	$DOCKER rm mailinabox-services
+
+if docker ps -a | grep mailinabox-services > /dev/null; then
+	tput setaf 2
+	echo
+	echo "Destroying mailinabox-services container..."
+	tput setaf 7
+
+	docker rm -f mailinabox-services
 fi
 
 # Start container.
-echo Starting new container...
-$DOCKER run \
+
+tput setaf 2
+echo
+echo "Starting new container (mailinabox-services)..."
+tput setaf 7
+
+# Notes:
+# * Passing through SKIP_NETWORK_CHECKS makes it easier to do testing
+#   on a residential network.
+
+docker run \
 	--privileged \
 	-v /dev/urandom:/dev/random \
 	-p 25 -p 53/udp -p 53/tcp -p 80 -p 443 -p 587 -p 993 \
 	--name mailinabox-services \
 	--volumes-from mailinabox-userdata \
+	-e "SKIP_NETWORK_CHECKS=$SKIP_NETWORK_CHECKS" \
 	mailinabox

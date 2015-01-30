@@ -17,51 +17,63 @@ if [ ! -t 0 ]; then
 	export NONINTERACTIVE=1
 fi
 
-# Start configuration.
+# The phusion/baseimage base image we use for a working Ubuntu
+# replaces the normal Upstart system service management with
+# a ligher-weight service management system called runit that
+# requires a different configuration. We need to create service
+# run files that do not daemonize.
+
+# For most of the services, there is a common pattern we can use:
+# execute the init.d script that the Ubuntu package installs, and
+# then poll for the termination of the daemon.
+function make_runit_service {
+	INITD_NAME=$1
+	WAIT_ON_PROCESS_NAME=$2
+	mkdir -p /etc/service/$INITD_NAME
+	cat > /etc/service/$INITD_NAME/run <<EOF;
+#!/bin/bash
+source /usr/local/mailinabox/setup/functions.sh
+hide_output /etc/init.d/$INITD_NAME restart
+while [ \`ps a -C $WAIT_ON_PROCESS_NAME -o pid= | wc -l\` -gt 0 ]; do
+	sleep 30
+done
+echo $WAIT_ON_PROCESS_NAME died.
+sleep 20
+EOF
+	chmod +x /etc/service/$INITD_NAME/run
+}
+#make_runit_service bind9 named
+#make_runit_service fail2ban fail2ban
+#make_runit_service mailinabox mailinabox-daemon
+#make_runit_service memcached memcached
+#make_runit_service nginx nginx
+#make_runit_service nsd nsd
+#make_runit_service opendkim opendkim
+#make_runit_service php5-fpm php5-fpm
+#make_runit_service postfix postfix
+#make_runit_service postgrey postgrey
+#make_runit_service spampd spampd
+
+# Dovecot doesn't provide an init.d script, but it does provide
+# a way to launch without daemonization. We wrote a script for
+# that specifically.
+#
+# We also want to use Ubuntu's stock rsyslog rather than syslog-ng
+# that the base image provides. Our Dockerfile installs rsyslog.
+rm -rf /etc/service/syslog-ng
+for service in dovecot; do
+	mkdir -p /etc/service/$service
+	cp /usr/local/mailinabox/containers/docker/runit/$service.sh /etc/service/$service/run
+	chmod +x /etc/service/$service/run
+done
+
+# Rsyslog isn't starting automatically but we need it during setup.
+service rsyslog start
+
+# Start configuration. Using 'source' means an exit from inside
+# also exits this script and terminates the container.
 cd /usr/local/mailinabox
 export IS_DOCKER=1
-export STORAGE_ROOT=/data
-export STORAGE_USER=user-data
 export DISABLE_FIREWALL=1
-
-mkdir /etc/service/rsyslogd
-mkdir /etc/service/bind9
-mkdir /etc/service/dovecot
-mkdir /etc/service/fail2ban
-mkdir /etc/service/mailinabox
-mkdir /etc/service/memcached
-mkdir /etc/service/nginx
-mkdir /etc/service/nsd
-mkdir /etc/service/opendkim
-mkdir /etc/service/php5-fpm
-mkdir /etc/service/postfix
-mkdir /etc/service/postgrey
-mkdir /etc/service/spampd
-cp services/rsyslogd.sh /etc/service/rsyslogd/run
-cp services/bind9.sh /etc/service/bind9/run
-cp services/dovecot.sh /etc/service/dovecot/run
-cp services/fail2ban.sh /etc/service/fail2ban/run
-cp services/mailinabox.sh /etc/service/mailinabox/run
-cp services/memcached.sh /etc/service/memcached/run
-cp services/nginx.sh /etc/service/nginx/run
-cp services/nsd.sh /etc/service/nsd/run
-cp services/opendkim.sh /etc/service/opendkim/run
-cp services/php5-fpm.sh /etc/service/php5-fpm/run
-cp services/postfix.sh /etc/service/postfix/run
-cp services/postgrey.sh /etc/service/postgrey/run
-cp services/spampd.sh /etc/service/spampd/run
-
-rsyslogd
 source setup/start.sh
-/etc/init.d/mailinabox start
-/usr/sbin/dovecot -c /etc/dovecot/dovecot.conf
-sleep 5
-curl -s -d POSTDATA --user $(</var/lib/mailinabox/api.key): http://127.0.0.1:10222/dns/update
-curl -s -d POSTDATA --user $(</var/lib/mailinabox/api.key): http://127.0.0.1:10222/web/update
-source setup/firstuser.sh
-/etc/init.d/mailinabox stop
-kill $(pidof dovecot)
-/etc/init.d/resolvconf start
-killall rsyslogd
-my_init
 
