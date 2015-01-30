@@ -72,7 +72,6 @@ python3-pip
 pyzor
 razor
 resolvconf
-rsyslog
 spampd
 sqlite3
 sudo
