@@ -39,9 +39,14 @@ function apt_get_quiet {
 }
 
 function apt_install {
-  if [ ! "$IS_DOCKER" ];then
-	# Report any packages already installed.
 	PACKAGES=$@
+
+	if [ ! -z "$IS_DOCKER" ]; then
+		# Speed things up because packages are already installed by the image.
+		PACKAGES=""
+	fi
+			
+	# Report any packages already installed.
 	TO_INSTALL=""
 	ALREADY_INSTALLED=""
 	for pkg in $PACKAGES; do
@@ -163,10 +168,18 @@ function ufw_allow {
 
 function restart_service {
 	# Restart a service quietly.
-	if [ ! "$IS_DOCKER" ]; then
-		# The normal way to restart a service.
-		hide_output service $1 restart
+
+	if [[ ! -z "$IS_DOCKER" && "$1" == "dovecot" ]]; then
+		# In Docker, sysvinit takes care of any services with an init.d
+		# script. The dovecot package provides an Upstart config only,
+		# and so it won't work this way. We make a new script for it
+		# elsewhere. We also cant do `sv restart dovecot` because runit
+		# is not running until after the setup scripts are run. So we
+		# will have to skip starting dovecot for now.
+		return 0
 	fi
+
+	hide_output service $1 restart
 }
 
 ## Dialog Functions ##

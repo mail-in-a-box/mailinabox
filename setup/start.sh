@@ -102,6 +102,14 @@ source setup/zpush.sh
 source setup/management.sh
 source setup/munin.sh
 
+# In Docker, sysvinit services are started automatically. Runit services
+# aren't started until after this setup script finishes. But we need
+# Dovecot (which is Upstart-only) running in order to create the first
+# mail user. So start dovecot now.
+if [ ! -z "$IS_DOCKER" ]; then
+	/usr/sbin/dovecot -c /etc/dovecot/dovecot.conf
+fi
+
 # Ping the management daemon to write the DNS and nginx configuration files.
 until nc -z -w 4 localhost 10222
 do
@@ -140,4 +148,3 @@ openssl x509 -in $STORAGE_ROOT/ssl/ssl_certificate.pem -noout -fingerprint \
 echo
 echo Then you can confirm the security exception and continue.
 echo
-
