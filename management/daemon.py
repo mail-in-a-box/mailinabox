@@ -249,7 +249,7 @@ def dns_get_dump():
 @authorized_personnel_only
 def ssl_get_csr(domain):
 	from web_update import get_domain_ssl_files, create_csr
-	ssl_key, ssl_certificate, csr_path = get_domain_ssl_files(domain, env)
+	ssl_key, ssl_certificate = get_domain_ssl_files(domain, env)
 	return create_csr(domain, ssl_key, env)
 
 @app.route('/ssl/install', methods=['POST'])

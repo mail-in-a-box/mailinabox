@@ -2,7 +2,7 @@
 # domains for which a mail account has been set up.
 ########################################################################
 
-import os, os.path, shutil, re, rtyaml
+import os, os.path, shutil, re, tempfile, rtyaml
 
 from mailconfig import get_mail_domains
 from dns_update import get_custom_dns_config, do_dns_update
@@ -75,11 +75,11 @@ def make_domain_config(domain, template, template_for_primaryhost, env):
 	root = get_web_root(domain, env)
 
 	# What private key and SSL certificate will we use for this domain?
-	ssl_key, ssl_certificate, csr_path = get_domain_ssl_files(domain, env)
+	ssl_key, ssl_certificate = get_domain_ssl_files(domain, env)
 
 	# For hostnames created after the initial setup, ensure we have an SSL certificate
 	# available. Make a self-signed one now if one doesn't exist.
-	ensure_ssl_certificate_exists(domain, ssl_key, ssl_certificate, csr_path, env)
+	ensure_ssl_certificate_exists(domain, ssl_key, ssl_certificate, env)
 
 	# Put pieces together.
 	nginx_conf_parts = re.split("\s*# ADDITIONAL DIRECTIVES HERE\s*", template)
@@ -164,16 +164,9 @@ def get_domain_ssl_files(domain, env, allow_shared_cert=True):
 			if check_certificate(domain, ssl_certificate_primary, None)[0] == "OK":
 				ssl_certificate = ssl_certificate_primary
 
-	# Where would the CSR go? As with the SSL cert itself, the CSR must be
-	# different for each domain name.
-	if domain == env['PRIMARY_HOSTNAME']:
-		csr_path = os.path.join(env["STORAGE_ROOT"], 'ssl/ssl_cert_sign_req.csr')
-	else:
-		csr_path = os.path.join(env["STORAGE_ROOT"], 'ssl/%s/certificate_signing_request.csr' % safe_domain_name(domain))
+	return ssl_key, ssl_certificate
 
-	return ssl_key, ssl_certificate, csr_path
-
-def ensure_ssl_certificate_exists(domain, ssl_key, ssl_certificate, csr_path, env):
+def ensure_ssl_certificate_exists(domain, ssl_key, ssl_certificate, env):
 	# For domains besides PRIMARY_HOSTNAME, generate a self-signed certificate if
 	# a certificate doesn't already exist. See setup/mail.sh for documentation.
 
@@ -192,17 +185,18 @@ def ensure_ssl_certificate_exists(domain, ssl_key, ssl_certificate, csr_path, en
 
 	# Generate a new self-signed certificate using the same private key that we already have.
 
-	# Start with a CSR.
-	with open(csr_path, "w") as f:
-		f.write(create_csr(domain, ssl_key, env))
+	# Start with a CSR written to a temporary file.
+	with tempfile.NamedTemporaryFile(mode="w") as csr_fp:
+		csr_fp.write(create_csr(domain, ssl_key, env))
+		csr_fp.flush() # since we won't close until after running 'openssl x509', since close triggers delete.
 
-	# And then make the certificate.
-	shell("check_call", [
-		"openssl", "x509", "-req",
-		"-days", "365",
-		"-in", csr_path,
-		"-signkey", ssl_key,
-		"-out", ssl_certificate])
+		# And then make the certificate.
+		shell("check_call", [
+			"openssl", "x509", "-req",
+			"-days", "365",
+			"-in", csr_fp.name,
+			"-signkey", ssl_key,
+			"-out", ssl_certificate])
 
 def create_csr(domain, ssl_key, env):
 	return shell("check_output", [
@@ -225,7 +219,7 @@ def install_cert(domain, ssl_cert, ssl_chain, env):
 
 	# Do validation on the certificate before installing it.
 	from status_checks import check_certificate
-	ssl_key, ssl_certificate, ssl_csr_path = get_domain_ssl_files(domain, env, allow_shared_cert=False)
+	ssl_key, ssl_certificate = get_domain_ssl_files(domain, env, allow_shared_cert=False)
 	cert_status, cert_status_details = check_certificate(domain, fn, ssl_key)
 	if cert_status != "OK":
 		if cert_status == "SELF-SIGNED":
@@ -258,7 +252,7 @@ def install_cert(domain, ssl_cert, ssl_chain, env):
 def get_web_domains_info(env):
 	def check_cert(domain):
 		from status_checks import check_certificate
-		ssl_key, ssl_certificate, ssl_csr_path = get_domain_ssl_files(domain, env)
+		ssl_key, ssl_certificate = get_domain_ssl_files(domain, env)
 		if not os.path.exists(ssl_certificate):
 			return ("danger", "No Certificate Installed")
 		cert_status, cert_status_details = check_certificate(domain, ssl_certificate, ssl_key)

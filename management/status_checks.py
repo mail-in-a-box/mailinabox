@@ -458,7 +458,7 @@ def check_ssl_cert(domain, env):
 	if query_dns(domain, "A", None) not in (env['PUBLIC_IP'], None): return
 
 	# Where is the SSL stored?
-	ssl_key, ssl_certificate, ssl_csr_path = get_domain_ssl_files(domain, env)
+	ssl_key, ssl_certificate = get_domain_ssl_files(domain, env)
 
 	if not os.path.exists(ssl_certificate):
 		env['out'].print_error("The SSL certificate file for this domain is missing.")
@@ -707,7 +707,7 @@ if __name__ == "__main__":
 		domain = env['PRIMARY_HOSTNAME']
 		if query_dns(domain, "A") != env['PUBLIC_IP']:
 			sys.exit(1)
-		ssl_key, ssl_certificate, ssl_csr_path = get_domain_ssl_files(domain, env)
+		ssl_key, ssl_certificate = get_domain_ssl_files(domain, env)
 		if not os.path.exists(ssl_certificate):
 			sys.exit(1)
 		cert_status, cert_status_details = check_certificate(domain, ssl_certificate, ssl_key)

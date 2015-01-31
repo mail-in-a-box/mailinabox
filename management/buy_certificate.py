@@ -36,7 +36,7 @@ def buy_ssl_certificate(api_key, domain, command, env):
 
 	# Where is the SSL cert stored?
 
-	ssl_key, ssl_certificate, ssl_csr_path = get_domain_ssl_files(domain, env)	
+	ssl_key, ssl_certificate = get_domain_ssl_files(domain, env)
 
 	# Have we already created a cert for this domain?
 
