@@ -4,10 +4,15 @@ CHANGELOG
 Development
 -----------
 
+Mail:
+
+* Auto-configuration for Mozilla Thunderbird, Evolution, KMail, and Kontact is now available.
+
 Control panel:
 
 * Status checks now check that system services are actually running by pinging each port that should have something running on it.
 * If a custom CNAME record is set on a 'www' subdomain, the default A/AAAA records were preventing the CNAME from working.
+* The status checks are now parallelized so they may be a little faster.
 
 Setup:
 
