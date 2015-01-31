@@ -53,6 +53,16 @@ cat conf/ios-profile.xml \
 	 > /var/lib/mailinabox/mobileconfig.xml
 chmod a+r /var/lib/mailinabox/mobileconfig.xml
 
+# Create the Mozilla Auto-configuration file which is exposed via the
+# nginx configuration at /.well-known/autoconfig/mail/config-v1.1.xml.
+# The format of the file is documented at:
+# https://wiki.mozilla.org/Thunderbird:Autoconfiguration:ConfigFileFormat
+# and https://developer.mozilla.org/en-US/docs/Mozilla/Thunderbird/Autoconfiguration/FileFormat/HowTo.
+cat conf/mozilla-autoconfig.xml \
+	| sed "s/PRIMARY_HOSTNAME/$PRIMARY_HOSTNAME/" \
+	 > /var/lib/mailinabox/mozilla-autoconfig.xml
+chmod a+r /var/lib/mailinabox/mozilla-autoconfig.xml
+
 # make a default homepage
 if [ -d $STORAGE_ROOT/www/static ]; then mv $STORAGE_ROOT/www/static $STORAGE_ROOT/www/default; fi # migration #NODOC
 mkdir -p $STORAGE_ROOT/www/default

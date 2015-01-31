@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<clientConfig version="1.1">
+    <emailProvider id="PRIMARY_HOSTNAME">
+      <domain>PRIMARY_HOSTNAME</domain>
+
+      <displayName>PRIMARY_HOSTNAME (Mail-in-a-Box)</displayName>
+      <displayShortName>PRIMARY_HOSTNAME</displayShortName>
+
+      <incomingServer type="imap">
+         <hostname>PRIMARY_HOSTNAME</hostname>
+         <port>993</port>
+         <socketType>SSL</socketType>
+         <username>%EMAILADDRESS%</username>
+         <authentication>password-cleartext</authentication>
+      </incomingServer>
+
+      <outgoingServer type="smtp">
+         <hostname>PRIMARY_HOSTNAME</hostname>
+         <port>587</port>
+         <socketType>STARTTLS</socketType>
+         <username>%EMAILADDRESS%</username>
+         <authentication>password-cleartext</authentication>
+         <addThisServer>true</addThisServer>
+         <useGlobalPreferredServer>true</useGlobalPreferredServer>
+      </outgoingServer>
+
+      <documentation url="https://PRIMARY_HOSTNAME/">
+         <descr lang="en">PRIMARY_HOSTNAME website.</descr>
+      </documentation>
+    </emailProvider>
+
+    <webMail>
+      <loginPage url="https://PRIMARY_HOSTNAME/mail/" />
+      <loginPageInfo url="https://PRIMARY_HOSTNAME/mail/" >
+        <username>%EMAILADDRESS%</username>
+        <usernameField id="rcmloginuser" name="_user" />
+        <passwordField id="rcmloginpwd" name="_pass" />
+        <loginButton id="rcmloginsubmit" />
+      </loginPageInfo>
+    </webMail>
+
+    <clientConfigUpdate url="https://PRIMARY_HOSTNAME/.well-known/autoconfig/mail/config-v1.1.xml" />
+
+</clientConfig>
