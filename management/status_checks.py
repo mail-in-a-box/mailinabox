@@ -43,6 +43,17 @@ def run_checks(env, output):
 	r1.get().playback(output)
 	r2.playback(output)
 
+def get_ssh_port():
+    # Returns ssh port
+    output = shell('check_output', ['sshd', '-T'])
+    returnNext = False
+
+    for e in output.split():
+        if returnNext:
+            return int(e)
+        if e == "port":
+            returnNext = True
+
 def run_services_checks(env, output):
 	# Check that system services are running.
 
@@ -58,7 +69,7 @@ def run_services_checks(env, output):
 		{ "name": "Sieve (dovecot)", "port": 4190, "public": True, },
 		{ "name": "Mail-in-a-Box Management Daemon", "port": 10222, "public": False, },
 
-		{ "name": "SSH Login (ssh)", "port": 22, "public": True, },
+		{ "name": "SSH Login (ssh)", "port": get_ssh_port(), "public": True, },
 		{ "name": "Public DNS (nsd4)", "port": 53, "public": True, },
 		{ "name": "Incoming Mail (SMTP/postfix)", "port": 25, "public": True, },
 		{ "name": "Outgoing Mail (SMTP 587/postfix)", "port": 587, "public": True, },
@@ -94,9 +105,12 @@ def check_service(i, service, env):
 			"127.0.0.1" if not service["public"] else env['PUBLIC_IP'],
 			service["port"]))
 		running = True
-	
+
 	except OSError as e:
-		output.print_error("%s is not running (%s)." % (service['name'], str(e)))
+		if service['name'] == 'SSH Login (ssh)':
+			output.print_error("%s is not running (%s). (Should be running on port %s)" % (service['name'], str(e), str(get_ssh_port())))
+		else:
+			output.print_error("%s is not running (%s)." % (service['name'], str(e)))
 
 		# Why is nginx not running?
 		if service["port"] in (80, 443):
