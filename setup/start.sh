@@ -93,8 +93,13 @@ fi
 #
 # If the config file exists:
 # Apply the existing configuration options for STORAGE_USER/ROOT
-STORAGE_USER=$([[ -z "$DEFAULT_STORAGE_USER" ]] && echo "user-data" || echo "$DEFAULT_STORAGE_USER")
-STORAGE_ROOT=$([[ -z "$DEFAULT_STORAGE_ROOT" ]] && echo "/home/$STORAGE_USER" || echo "$DEFAULT_STORAGE_ROOT")
+if [ -z "$STORAGE_USER" ]; then
+	STORAGE_USER=$([[ -z "$DEFAULT_STORAGE_USER" ]] && echo "user-data" || echo "$DEFAULT_STORAGE_USER")
+fi
+
+if [ -z "$STORAGE_ROOT" ]; then
+	STORAGE_ROOT=$([[ -z "$DEFAULT_STORAGE_ROOT" ]] && echo "/home/$STORAGE_USER" || echo "$DEFAULT_STORAGE_ROOT")
+fi
 
 # Create the STORAGE_USER if it not exists
 if [ ! $(id -u $STORAGE_USER >/dev/null 2>&1;) ]; then
@@ -104,10 +109,10 @@ fi
 # Create the STORAGE_ROOT if it not exists
 if [ ! -d $STORAGE_ROOT ]; then
 	mkdir -p $STORAGE_ROOT
+	echo $(setup/migrate.py --current) > $STORAGE_ROOT/mailinabox.version
+	chown $STORAGE_USER.$STORAGE_USER $STORAGE_ROOT/mailinabox.version
 fi
 
-echo $(setup/migrate.py --current) > $STORAGE_ROOT/mailinabox.version
-chown $STORAGE_USER.$STORAGE_USER $STORAGE_ROOT/mailinabox.version
 
 # Save the global options in /etc/mailinabox.conf so that standalone
 # tools know where to look for data.
