@@ -107,7 +107,7 @@ def check_service(i, service, env):
 		running = True
 
 	except OSError as e:
-		if service['name'] == 'ssh':
+		if service['name'] == 'SSH Login (ssh)':
 			output.print_error("%s is not running (%s). (Should be running on port %s)" % (service['name'], str(e), str(get_ssh_port())))
 		else:
 			output.print_error("%s is not running (%s)." % (service['name'], str(e)))
