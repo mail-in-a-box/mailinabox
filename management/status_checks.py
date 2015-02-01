@@ -32,7 +32,7 @@ def run_checks(env, output):
 	# (ignore errors; if bind9/rndc isn't running we'd already report
 	# that in run_services checks.)
 	shell('check_call', ["/usr/sbin/rndc", "flush"], trap=True)
-	
+
 	run_system_checks(env, output)
 
 	# perform other checks asynchronously
@@ -244,10 +244,10 @@ def run_domain_checks_on_domain(domain, env, dns_domains, dns_zonefiles, mail_do
 
 	if domain == env["PRIMARY_HOSTNAME"]:
 		check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles)
-		
+
 	if domain in dns_domains:
 		check_dns_zone(domain, env, output, dns_zonefiles)
-		
+
 	if domain in mail_domains:
 		check_mail_domain(domain, env, output)
 
@@ -587,7 +587,7 @@ def check_certificate(domain, ssl_certificate, ssl_private_key):
 		m = re.match("        Subject: CN=([^,]+)", line)
 		if m:
 			certificate_names.add(m.group(1))
-	
+
 		# Grab from the Subject Alternative Name, which is a comma-delim
 		# list of names, like DNS:mydomain.com, DNS:otherdomain.com.
 		m = re.match("            X509v3 Subject Alternative Name:", line)
