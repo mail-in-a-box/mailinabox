@@ -32,7 +32,7 @@ def run_checks(env, output):
 	# (ignore errors; if bind9/rndc isn't running we'd already report
 	# that in run_services checks.)
 	shell('check_call', ["/usr/sbin/rndc", "flush"], trap=True)
-	
+
 	run_system_checks(env, output)
 
 	# perform other checks asynchronously
@@ -42,6 +42,17 @@ def run_checks(env, output):
 	r2 = run_domain_checks(env)
 	r1.get().playback(output)
 	r2.playback(output)
+
+def get_ssh_port():
+    # Returns ssh port
+    output = shell('check_output', ['sshd', '-T'])
+    returnNext = False
+
+    for e in output.split():
+        if returnNext:
+            return int(e)
+        if e == "port":
+            returnNext = True
 
 def run_services_checks(env, output):
 	# Check that system services are running.
@@ -58,7 +69,7 @@ def run_services_checks(env, output):
 		{ "name": "Sieve (dovecot)", "port": 4190, "public": True, },
 		{ "name": "Mail-in-a-Box Management Daemon", "port": 10222, "public": False, },
 
-		{ "name": "SSH Login (ssh)", "port": int(env['SSH_PORT']), "public": True, },
+		{ "name": "SSH Login (ssh)", "port": get_ssh_port(), "public": True, },
 		{ "name": "Public DNS (nsd4)", "port": 53, "public": True, },
 		{ "name": "Incoming Mail (SMTP/postfix)", "port": 25, "public": True, },
 		{ "name": "Outgoing Mail (SMTP 587/postfix)", "port": 587, "public": True, },
@@ -94,9 +105,12 @@ def check_service(i, service, env):
 			"127.0.0.1" if not service["public"] else env['PUBLIC_IP'],
 			service["port"]))
 		running = True
-	
+
 	except OSError as e:
-		output.print_error("%s is not running (%s)." % (service['name'], str(e)))
+		if service['name'] == 'ssh':
+			output.print_error("%s is not running (%s). (Should be running on port %s)" % (service['name'], str(e), str(get_ssh_port())))
+		else:
+			output.print_error("%s is not running (%s)." % (service['name'], str(e)))
 
 		# Why is nginx not running?
 		if service["port"] in (80, 443):
@@ -230,10 +244,10 @@ def run_domain_checks_on_domain(domain, env, dns_domains, dns_zonefiles, mail_do
 
 	if domain == env["PRIMARY_HOSTNAME"]:
 		check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles)
-		
+
 	if domain in dns_domains:
 		check_dns_zone(domain, env, output, dns_zonefiles)
-		
+
 	if domain in mail_domains:
 		check_mail_domain(domain, env, output)
 
@@ -573,7 +587,7 @@ def check_certificate(domain, ssl_certificate, ssl_private_key):
 		m = re.match("        Subject: CN=([^,]+)", line)
 		if m:
 			certificate_names.add(m.group(1))
-	
+
 		# Grab from the Subject Alternative Name, which is a comma-delim
 		# list of names, like DNS:mydomain.com, DNS:otherdomain.com.
 		m = re.match("            X509v3 Subject Alternative Name:", line)

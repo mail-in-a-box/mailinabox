@@ -109,7 +109,6 @@ PUBLIC_IPV6=$PUBLIC_IPV6
 PRIVATE_IP=$PRIVATE_IP
 PRIVATE_IPV6=$PRIVATE_IPV6
 CSR_COUNTRY=$CSR_COUNTRY
-SSH_PORT=$(sshd -T 2>/dev/null | grep "^port " | sed "s/port //")
 EOF
 
 # Start service configuration.
