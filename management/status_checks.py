@@ -58,7 +58,7 @@ def run_services_checks(env, output):
 		{ "name": "Sieve (dovecot)", "port": 4190, "public": True, },
 		{ "name": "Mail-in-a-Box Management Daemon", "port": 10222, "public": False, },
 
-		{ "name": "SSH Login (ssh)", "port": 22, "public": True, },
+		{ "name": "SSH Login (ssh)", "port": int(env['SSH_PORT']), "public": True, },
 		{ "name": "Public DNS (nsd4)", "port": 53, "public": True, },
 		{ "name": "Incoming Mail (SMTP/postfix)", "port": 25, "public": True, },
 		{ "name": "Outgoing Mail (SMTP 587/postfix)", "port": 587, "public": True, },
