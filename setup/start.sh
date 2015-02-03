@@ -102,7 +102,7 @@ if [ -z "$STORAGE_ROOT" ]; then
 fi
 
 # Create the STORAGE_USER if it not exists
-if [ ! $(id -u $STORAGE_USER >/dev/null 2>&1;) ]; then
+if ! id -u $STORAGE_USER >/dev/null 2>&1; then
 	useradd -m $STORAGE_USER
 fi
 
