@@ -64,6 +64,7 @@ function show_web() {
 	var tb = $('#web_domains_existing tbody');
 	tb.text('');
 	for (var i = 0; i < domains.length; i++) {
+		if (!domains[i].static_enabled) continue;
 		var row = $("<tr><th class='domain'><a href=''></a></th><td class='directory'><tt/></td></tr>");
 		tb.append(row);
 		row.find('.domain a').text('https://' + domains[i].domain);
@@ -74,6 +75,7 @@ function show_web() {
 	tb = $('#web_domains_custom tbody');
 	tb.text('');
 	for (var i = 0; i < domains.length; i++) {
+		if (!domains[i].static_enabled) continue;
 		if (domains[i].root != domains[i].custom_root) {
 			var row = $("<tr><th class='domain'><a href=''></a></th><td class='directory'><tt></td></tr>");
 			tb.append(row);

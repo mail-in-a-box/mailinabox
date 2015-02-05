@@ -250,6 +250,16 @@ def install_cert(domain, ssl_cert, ssl_chain, env):
 	return "\n".join(r for r in ret if r.strip() != "")
 
 def get_web_domains_info(env):
+	# load custom settings so we can tell what domains have a redirect or proxy set up on '/',
+	# which means static hosting is not happening
+	custom_settings = { }
+	nginx_conf_custom_fn = os.path.join(env["STORAGE_ROOT"], "www/custom.yaml")
+	if os.path.exists(nginx_conf_custom_fn):
+		custom_settings = rtyaml.load(open(nginx_conf_custom_fn))
+	def has_root_proxy_or_redirect(domain):
+		return custom_settings.get(domain, {}).get('redirects', {}).get('/') or custom_settings.get(domain, {}).get('proxies', {}).get('/')
+
+	# for the SSL config panel, get cert status
 	def check_cert(domain):
 		from status_checks import check_certificate
 		ssl_key, ssl_certificate = get_domain_ssl_files(domain, env)
@@ -273,6 +283,7 @@ def get_web_domains_info(env):
 			"root": get_web_root(domain, env),
 			"custom_root": get_web_root(domain, env, test_exists=False),
 			"ssl_certificate": check_cert(domain),
+			"static_enabled": not has_root_proxy_or_redirect(domain),
 		}
 		for domain in get_web_domains(env)
 	]
