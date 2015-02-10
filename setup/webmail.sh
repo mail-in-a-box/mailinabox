@@ -40,7 +40,7 @@ elif [[ $VERSION != `cat /usr/local/lib/roundcubemail/version` ]]; then
 	needs_update=1 #NODOC
 fi
 if [ $needs_update == 1 ]; then
-	echo installing roudcube webmail $VERSION...
+	echo installing roundcube webmail $VERSION...
 	rm -f /tmp/roundcube.tgz
 	wget -qO /tmp/roundcube.tgz http://downloads.sourceforge.net/project/roundcubemail/roundcubemail/$VERSION/roundcubemail-$VERSION.tar.gz
 	tar -C /usr/local/lib -zxf /tmp/roundcube.tgz
