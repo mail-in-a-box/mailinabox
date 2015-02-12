@@ -12,6 +12,7 @@ Mail:
 
 System:
 
+* ownCloud updated to version 8.0.2.
 * Brute-force SSH and IMAP login attempts are now prevented by properly configuring fail2ban.
 * Status checks are run each night and any changes from night to night are emailed to the box administrator (the first user account).
 

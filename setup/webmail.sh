@@ -20,7 +20,7 @@ source /etc/mailinabox.conf # load global vars
 
 # These dependencies are from `apt-cache showpkg roundcube-core`.
 apt_install \
-	dbconfig-common git \
+	dbconfig-common \
 	php5 php5-sqlite php5-mcrypt php5-intl php5-json php5-common php-auth php-net-smtp php-net-socket php-net-sieve php-mail-mime php-crypt-gpg php5-gd php5-pspell \
 	tinymce libjs-jquery libjs-jquery-mousewheel libmagic1
 
@@ -53,11 +53,7 @@ if [ $needs_update == 1 ]; then
 	rm -f /tmp/roundcube.tgz
 
 	# install roundcube autoreply/vacation plugin
-	rm -rf /tmp/Roundcube-Plugins /usr/local/lib/roundcubemail/plugins/vacation_sieve
-	git clone -q https://github.com/arodier/Roundcube-Plugins.git /tmp/Roundcube-Plugins
-	GIT_DIR=/tmp/Roundcube-Plugins/.git git checkout -q $VACATION_SIEVE_VERSION || exit 1
-	mv /tmp/Roundcube-Plugins/plugins/vacation_sieve /usr/local/lib/roundcubemail/plugins/vacation_sieve
-	rm -rf /tmp/Roundcube-Plugins
+	git_clone https://github.com/arodier/Roundcube-Plugins.git $VACATION_SIEVE_VERSION plugins/vacation_sieve /usr/local/lib/roundcubemail/plugins/vacation_sieve
 
 	# record the version we've installed
 	echo $VERSION:$VACATION_SIEVE_VERSION > /usr/local/lib/roundcubemail/version

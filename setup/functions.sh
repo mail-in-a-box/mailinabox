@@ -179,3 +179,21 @@ function input_menu {
 	result=$(dialog --stdout --title "$1" --menu "$2" 0 0 0 $3)
 	result_code=$?
 }
+
+function git_clone {
+	# Clones a git repository, checks out a particular commit or tag,
+	# and moves the repository (or a subdirectory in it) to some path.
+	# We use separate clone and checkout because -b only supports tags
+	# and branches, but we sometimes want to reference a commit hash
+	# directly when the repo doesn't provide a tag.
+	REPO=$1
+	TREEISH=$2
+	SUBDIR=$3
+	TARGETPATH=$4
+	TMPPATH=/tmp/git-clone-$$
+	rm -rf $TMPPATH $TARGETPATH
+	git clone -q $REPO $TMPPATH || exit 1
+	(cd $TMPPATH; git checkout -q $TREEISH;) || exit 1
+	mv $TMPPATH/$SUBDIR $TARGETPATH
+	rm -rf $TMPPATH
+}

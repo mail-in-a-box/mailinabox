@@ -20,12 +20,13 @@ apt_get_quiet upgrade
 # * cron: Runs background processes periodically.
 # * ntp: keeps the system time correct
 # * fail2ban: scans log files for repeated failed login attempts and blocks the remote IP at the firewall
+# * git: we install some things directly from github
 # * sudo: allows privileged users to execute commands as root without being root
 # * coreutils: includes `nproc` tool to report number of processors
 # * bc: allows us to do math to compute sane defaults
 
 apt_install python3 python3-dev python3-pip \
-	wget curl sudo coreutils bc \
+	wget curl git sudo coreutils bc \
 	haveged unattended-upgrades cron ntp fail2ban
 
 # Allow apt to install system updates automatically every day.
