@@ -1,6 +1,6 @@
 # Install the 'host', 'sed', and and 'nc' tools. This script is run before
 # the rest of the system setup so we may not yet have things installed.
-hide_output apt-get -y install bind9-host sed netcat-openbsd
+apt_get_quiet install bind9-host sed netcat-openbsd
 
 # Stop if the PRIMARY_HOSTNAME is listed in the Spamhaus Domain Block List.
 # The user might have chosen a name that was previously in use by a spammer

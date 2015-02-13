@@ -34,6 +34,7 @@ Setup:
 * Install cron if it isn't already installed.
 * Fix a units problem in the minimum memory check.
 * If you override the STORAGE_ROOT, your setting will now persist if you re-run setup.
+* Hangs due to apt wanting the user to resolve a conflict should now be fixed (apt will just clobber the problematic file now).
 
 v0.06 (January 4, 2015)
 -----------------------

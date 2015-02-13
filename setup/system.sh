@@ -9,7 +9,7 @@ source setup/functions.sh # load our functions
 
 echo Updating system packages...
 hide_output apt-get update
-hide_output apt-get -y upgrade
+apt_get_quiet upgrade
 
 # Install basic utilities.
 #
