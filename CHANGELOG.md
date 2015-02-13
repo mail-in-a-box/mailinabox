@@ -27,6 +27,7 @@ Control panel:
 * Status checks now check that system services are actually running by pinging each port that should have something running on it.
 * The status checks are now parallelized so they may be a little faster.
 * The interface for setting website domain-specific directories is simplified.
+* The mail guide now says that to use Outlook, Outlook 2007 or later on Windows 7 and later is required.
 
 Setup:
 
