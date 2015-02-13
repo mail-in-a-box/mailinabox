@@ -7,23 +7,31 @@ Development
 Mail:
 
 * Auto-configuration for Mozilla Thunderbird, Evolution, KMail, and Kontact is now available.
+* Domains that only have a catch-all alias or domain alias no longer automatically create/require admin@ and postmaster@ addresses since they'll forward anyway.
+
+DNS:
+
+* If a custom CNAME record is set on a 'www' subdomain, the default A/AAAA records were preventing the CNAME from working.
+* If a custom DNS A record overrides one provided by the box, the a corresponding default IPv6 record by the box is removed since it will probably be incorrect.
+* Internationalized domain names (IDNs) are now supported for DNS and web, but email is not yet tested.
+
+Web:
+
+* Static websites now deny access to certain dot (.) files and directories which typically have sensitive info: .ht*, .svn*, .git*, .hg*, .bzr*.
+* The nginx server no longer reports its version and OS for better privacy.
+* The HTTP->HTTPS redirect is now more efficient.
 
 Control panel:
 
 * Status checks now check that system services are actually running by pinging each port that should have something running on it.
-* If a custom CNAME record is set on a 'www' subdomain, the default A/AAAA records were preventing the CNAME from working.
 * The status checks are now parallelized so they may be a little faster.
+* The interface for setting website domain-specific directories is simplified.
 
 Setup:
 
 * Install cron if it isn't already installed.
 * Fix a units problem in the minimum memory check.
-
-Miscellaneous:
-
-* Internationalized domain names (IDNs) are now supported for DNS and web, but email is not yet tested.
-* Domains that only have a catch-all alias or domain alias no longer automatically create/require admin@ and postmaster@ addresses since they'll forward anyway.
-
+* If you override the STORAGE_ROOT, your setting will now persist if you re-run setup.
 
 v0.06 (January 4, 2015)
 -----------------------
