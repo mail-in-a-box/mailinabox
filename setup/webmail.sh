@@ -30,7 +30,7 @@ apt_install \
 apt-get purge -qq -y roundcube* #NODOC
 
 # Install Roundcube from source if it is not already present or if it is out of date.
-VERSION=1.0.3
+VERSION=1.1.0
 needs_update=0 #NODOC
 if [ ! -f /usr/local/lib/roundcubemail/version ]; then
 	# not installed yet #NODOC

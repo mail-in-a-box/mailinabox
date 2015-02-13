@@ -8,6 +8,7 @@ Mail:
 
 * Auto-configuration for Mozilla Thunderbird, Evolution, KMail, and Kontact is now available.
 * Domains that only have a catch-all alias or domain alias no longer automatically create/require admin@ and postmaster@ addresses since they'll forward anyway.
+* Roundcube is updated to version 1.1.0.
 
 DNS:
 
