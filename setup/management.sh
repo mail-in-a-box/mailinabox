@@ -30,5 +30,8 @@ $(pwd)/management/backup.py
 EOF
 chmod +x /etc/cron.daily/mailinabox-backup
 
-# Start it.
+# Start it. Remove the api key file first so that start.sh
+# can wait for it to be created to know that the management
+# server is ready.
+rm -f /var/lib/mailinabox/api.key
 restart_service mailinabox
