@@ -101,16 +101,28 @@ def check_service(i, service, env):
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	s.settimeout(1)
 	try:
-		s.connect((
-			"127.0.0.1" if not service["public"] else env['PUBLIC_IP'],
-			service["port"]))
-		running = True
+		try:
+			s.connect((
+				"127.0.0.1" if not service["public"] else env['PUBLIC_IP'],
+				service["port"]))
+			running = True
+		except OSError as e1:
+			if service["public"] and service["port"] != 53:
+				# For public services (except DNS), try the private IP as a fallback.
+				s1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+				s1.settimeout(1)
+				try:
+					s1.connect(("127.0.0.1", service["port"]))
+					output.print_error("%s is running but is not publicly accessible at %s:%d (%s)." % (service['name'], env['PUBLIC_IP'], service['port'], str(e1)))
+				except:
+					raise e1
+				finally:
+					s1.close()
+			else:
+				raise
 
 	except OSError as e:
-		if service['name'] == 'SSH Login (ssh)':
-			output.print_error("%s is not running (%s). (Should be running on port %s)" % (service['name'], str(e), str(get_ssh_port())))
-		else:
-			output.print_error("%s is not running (%s)." % (service['name'], str(e)))
+		output.print_error("%s is not running (%s; port %d)." % (service['name'], str(e), service['port']))
 
 		# Why is nginx not running?
 		if service["port"] in (80, 443):
