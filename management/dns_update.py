@@ -122,7 +122,7 @@ def do_dns_update(env, force=False):
 		shell('check_call', ["/usr/sbin/service", "nsd", "restart"])
 
 	# Write the OpenDKIM configuration tables.
-	if write_opendkim_tables(zonefiles, env):
+	if write_opendkim_tables(domains, env):
 		# Settings changed. Kick opendkim.
 		shell('check_call', ["/usr/sbin/service", "opendkim", "restart"])
 		if len(updated_domains) == 0:
@@ -616,8 +616,9 @@ def sign_zone(domain, zonefile, env):
 
 ########################################################################
 
-def write_opendkim_tables(zonefiles, env):
-	# Append a record to OpenDKIM's KeyTable and SigningTable for each domain.
+def write_opendkim_tables(domains, env):
+	# Append a record to OpenDKIM's KeyTable and SigningTable for each domain
+	# that we send mail from (zones and all subdomains).
 
 	opendkim_key_file = os.path.join(env['STORAGE_ROOT'], 'mail/dkim/mail.private')
 
@@ -636,7 +637,7 @@ def write_opendkim_tables(zonefiles, env):
 		"SigningTable":
 			"".join(
 				"*@{domain} {domain}\n".format(domain=domain)
-				for domain, zonefile in zonefiles
+				for domain in domains
 			),
 
 		# The KeyTable specifies the signing domain, the DKIM selector, and the
@@ -645,7 +646,7 @@ def write_opendkim_tables(zonefiles, env):
 		"KeyTable":
 			"".join(
 				"{domain} {domain}:mail:{key_file}\n".format(domain=domain, key_file=opendkim_key_file)
-				for domain, zonefile in zonefiles
+				for domain in domains
 			),
 	}
 
