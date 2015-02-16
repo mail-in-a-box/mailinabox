@@ -6,9 +6,11 @@ Development
 
 Mail:
 
+* If the box manages mail for a domain and a subdomain of that domain, outbound mail from the subdomain was not DKIM-signed and would therefore fail DMARC tests on the receiving end, possibly result in the mail heading into spam folders.
 * Auto-configuration for Mozilla Thunderbird, Evolution, KMail, and Kontact is now available.
 * Domains that only have a catch-all alias or domain alias no longer automatically create/require admin@ and postmaster@ addresses since they'll forward anyway.
 * Roundcube is updated to version 1.1.0.
+* Authentication-Results headers for DMARC are now added to incoming mail.
 
 DNS:
 
