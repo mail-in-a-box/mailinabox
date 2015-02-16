@@ -10,7 +10,7 @@ source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
 # Install DKIM...
-apt_install opendkim opendkim-tools
+apt_install opendkim opendkim-tools opendmarc
 
 # Make sure configuration directories exist.
 mkdir -p /etc/opendkim;
@@ -48,15 +48,25 @@ fi
 chown -R opendkim:opendkim $STORAGE_ROOT/mail/dkim
 chmod go-rwx $STORAGE_ROOT/mail/dkim
 
-# Add OpenDKIM as a milter to postfix, which is how it intercepts outgoing
-# mail to perform the signing (by adding a mail header).
-# Be careful. If we add other milters later, it needs to be concatenated on the smtpd_milters line. #NODOC
+tools/editconf.py /etc/opendmarc.conf -s \
+	"Syslog=true" \
+	"Socket=inet:8893@[127.0.0.1]"
+
+# Add OpenDKIM and OpenDMARC as milters to postfix, which is how OpenDKIM
+# intercepts outgoing mail to perform the signing (by adding a mail header)
+# and how they both intercept incoming mail to add Authentication-Results
+# headers. The order possibly/probably matters: OpenDMARC relies on the
+# OpenDKIM Authentication-Results header already being present.
+#
+# Be careful. If we add other milters later, this needs to be concatenated
+# on the smtpd_milters line.
 tools/editconf.py /etc/postfix/main.cf \
-	smtpd_milters=inet:127.0.0.1:8891 \
+	"smtpd_milters=inet:127.0.0.1:8891 inet:127.0.0.1:8893"\
 	non_smtpd_milters=\$smtpd_milters \
 	milter_default_action=accept
 
 # Restart services.
 restart_service opendkim
+restart_service opendmarc
 restart_service postfix
 

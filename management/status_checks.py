@@ -65,6 +65,7 @@ def run_services_checks(env, output):
 		{ "name": "Postgrey", "port": 10023, "public": False, },
 		{ "name": "Spamassassin", "port": 10025, "public": False, },
 		{ "name": "OpenDKIM", "port": 8891, "public": False, },
+		{ "name": "OpenDMARC", "port": 8893, "public": False, },
 		{ "name": "Memcached", "port": 11211, "public": False, },
 		{ "name": "Sieve (dovecot)", "port": 4190, "public": True, },
 		{ "name": "Mail-in-a-Box Management Daemon", "port": 10222, "public": False, },
