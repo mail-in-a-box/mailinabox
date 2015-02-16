@@ -456,8 +456,10 @@ def check_mail_domain(domain, env, output):
 			be delivered to this box. It may take several hours for public DNS to update after a change. This problem may result from
 			other issues listed here.""" % (mx, expected_mx))
 
-	# Check that the postmaster@ email address exists.
-	check_alias_exists("postmaster@" + domain, env, output)
+	# Check that the postmaster@ email address exists. Not required if the domain has a
+	# catch-all address or domain alias.
+	if "@" + domain not in dict(get_mail_aliases(env)):
+		check_alias_exists("postmaster@" + domain, env, output)
 
 	# Stop if the domain is listed in the Spamhaus Domain Block List.
 	# The user might have chosen a domain that was previously in use by a spammer
