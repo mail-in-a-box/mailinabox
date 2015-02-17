@@ -23,6 +23,7 @@ Web:
 * Static websites now deny access to certain dot (.) files and directories which typically have sensitive info: .ht*, .svn*, .git*, .hg*, .bzr*.
 * The nginx server no longer reports its version and OS for better privacy.
 * The HTTP->HTTPS redirect is now more efficient.
+* When serving a 'www.' domain, reuse the SSL certificate for the parent domain if it covers the 'www' subdomain too
 
 Control panel:
 

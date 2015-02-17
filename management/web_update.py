@@ -74,7 +74,7 @@ def make_domain_config(domain, template, template_for_primaryhost, env):
 	root = get_web_root(domain, env)
 
 	# What private key and SSL certificate will we use for this domain?
-	ssl_key, ssl_certificate = get_domain_ssl_files(domain, env)
+	ssl_key, ssl_certificate, ssl_via = get_domain_ssl_files(domain, env)
 
 	# For hostnames created after the initial setup, ensure we have an SSL certificate
 	# available. Make a self-signed one now if one doesn't exist.
@@ -148,6 +148,7 @@ def get_domain_ssl_files(domain, env, allow_shared_cert=True):
 
 	# What SSL certificate will we use?
 	ssl_certificate_primary = os.path.join(env["STORAGE_ROOT"], 'ssl/ssl_certificate.pem')
+	ssl_via = None
 	if domain == env['PRIMARY_HOSTNAME']:
 		# For PRIMARY_HOSTNAME, use the one we generated at set-up time.
 		ssl_certificate = ssl_certificate_primary
@@ -162,8 +163,16 @@ def get_domain_ssl_files(domain, env, allow_shared_cert=True):
 			from status_checks import check_certificate
 			if check_certificate(domain, ssl_certificate_primary, None)[0] == "OK":
 				ssl_certificate = ssl_certificate_primary
+				ssl_via = "Using multi/wildcard certificate of %s." % env['PRIMARY_HOSTNAME']
 
-	return ssl_key, ssl_certificate
+			# For a 'www.' domain, see if we can reuse the cert of the parent.
+			elif domain.startswith('www.'):
+				ssl_certificate_parent = os.path.join(env["STORAGE_ROOT"], 'ssl/%s/ssl_certificate.pem' % safe_domain_name(domain[4:]))
+				if os.path.exists(ssl_certificate_parent) and check_certificate(domain, ssl_certificate_parent, None)[0] == "OK":
+					ssl_certificate = ssl_certificate_parent
+					ssl_via = "Using multi/wildcard certificate of %s." % domain[4:]
+
+	return ssl_key, ssl_certificate, ssl_via
 
 def ensure_ssl_certificate_exists(domain, ssl_key, ssl_certificate, env):
 	# For domains besides PRIMARY_HOSTNAME, generate a self-signed certificate if
@@ -218,7 +227,7 @@ def install_cert(domain, ssl_cert, ssl_chain, env):
 
 	# Do validation on the certificate before installing it.
 	from status_checks import check_certificate
-	ssl_key, ssl_certificate = get_domain_ssl_files(domain, env, allow_shared_cert=False)
+	ssl_key, ssl_certificate, ssl_via = get_domain_ssl_files(domain, env, allow_shared_cert=False)
 	cert_status, cert_status_details = check_certificate(domain, fn, ssl_key)
 	if cert_status != "OK":
 		if cert_status == "SELF-SIGNED":
@@ -261,16 +270,16 @@ def get_web_domains_info(env):
 	# for the SSL config panel, get cert status
 	def check_cert(domain):
 		from status_checks import check_certificate
-		ssl_key, ssl_certificate = get_domain_ssl_files(domain, env)
+		ssl_key, ssl_certificate, ssl_via = get_domain_ssl_files(domain, env)
 		if not os.path.exists(ssl_certificate):
 			return ("danger", "No Certificate Installed")
 		cert_status, cert_status_details = check_certificate(domain, ssl_certificate, ssl_key)
 		if cert_status == "OK":
-			if domain == env['PRIMARY_HOSTNAME'] or ssl_certificate != get_domain_ssl_files(env['PRIMARY_HOSTNAME'], env)[1]:
+			if not ssl_via:
 				return ("success", "Signed & valid. " + cert_status_details)
 			else:
 				# This is an alternate domain but using the same cert as the primary domain.
-				return ("success", "Signed & valid. Using multi/wildcard certificate of %s." % env['PRIMARY_HOSTNAME'])
+				return ("success", "Signed & valid. " + ssl_via)
 		elif cert_status == "SELF-SIGNED":
 			return ("warning", "Self-signed. Get a signed certificate to stop warnings.")
 		else:
