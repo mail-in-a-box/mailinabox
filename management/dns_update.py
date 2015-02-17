@@ -258,6 +258,10 @@ def build_zone(domain, all_domains, additional_records, env, is_zone=True):
 
 def get_custom_records(domain, additional_records, env):
 	for qname, value in additional_records.items():
+		# We don't count the secondary nameserver config (if present) as a record - that would just be
+		# confusing to users. Instead it is accessed/manipulated directly via (get/set)_custom_dns_config.
+		if qname == "_secondary_nameserver": continue
+
 		# Is this record for the domain or one of its subdomains?
 		# If `domain` is None, return records for all domains.
 		if domain is not None and qname != domain and not qname.endswith("." + domain): continue
