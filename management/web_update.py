@@ -17,9 +17,8 @@ def get_web_domains(env):
 	domains.add(env['PRIMARY_HOSTNAME'])
 
 	# Also serve web for all mail domains so that we might at least
-	# provide Webfinger and ActiveSync auto-discover of email settings
-	# (though the latter isn't really working). These will require that
-	# an SSL cert be installed.
+	# provide auto-discover of email settings, and also a static website
+	# if the user wants to make one. These will require an SSL cert.
 	domains |= get_mail_domains(env)
 
 	# ...Unless the domain has an A/AAAA record that maps it to a different
