@@ -27,6 +27,7 @@ def get_web_domains(env):
 	for domain, value in dns.items():
 		if domain not in domains: continue
 		if (isinstance(value, str) and (value != "local")) \
+		  or (isinstance(value, dict) and ("CNAME" in value)) \
 		  or (isinstance(value, dict) and ("A" in value) and (value["A"] != "local")) \
 		  or (isinstance(value, dict) and ("AAAA" in value) and (value["AAAA"] != "local")):
 			domains.remove(domain)

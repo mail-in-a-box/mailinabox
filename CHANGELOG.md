@@ -24,6 +24,7 @@ Web:
 * The nginx server no longer reports its version and OS for better privacy.
 * The HTTP->HTTPS redirect is now more efficient.
 * When serving a 'www.' domain, reuse the SSL certificate for the parent domain if it covers the 'www' subdomain too
+* If a custom DNS CNAME record is set on a domain, don't offer to put a website on that domain. (Same logic already applies to custom A/AAAA records.)
 
 Control panel:
 
