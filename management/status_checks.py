@@ -17,12 +17,12 @@ from mailconfig import get_mail_domains, get_mail_aliases
 
 from utils import shell, sort_domains, load_env_vars_from_file
 
-def run_checks(env, output):
+def run_checks(env, output, pool):
 	# run systems checks
 	output.add_heading("System")
 
 	# check that services are running
-	if not run_services_checks(env, output):
+	if not run_services_checks(env, output, pool):
 		# If critical services are not running, stop. If bind9 isn't running,
 		# all later DNS checks will timeout and that will take forever to
 		# go through, and if running over the web will cause a fastcgi timeout.
@@ -37,11 +37,8 @@ def run_checks(env, output):
 
 	# perform other checks asynchronously
 
-	pool = multiprocessing.pool.Pool(processes=1)
-	r1 = pool.apply_async(run_network_checks, [env])
-	r2 = run_domain_checks(env)
-	r1.get().playback(output)
-	r2.playback(output)
+	run_network_checks(env, output)
+	run_domain_checks(env, output, pool)
 
 def get_ssh_port():
     # Returns ssh port
@@ -54,7 +51,7 @@ def get_ssh_port():
         if e == "port":
             returnNext = True
 
-def run_services_checks(env, output):
+def run_services_checks(env, output, pool):
 	# Check that system services are running.
 
 	services = [
@@ -82,7 +79,6 @@ def run_services_checks(env, output):
 
 	all_running = True
 	fatal = False
-	pool = multiprocessing.pool.Pool(processes=10)
 	ret = pool.starmap(check_service, ((i, service, env) for i, service in enumerate(services)), chunksize=1)
 	for i, running, fatal2, output2 in sorted(ret):
 		all_running = all_running and running
@@ -189,10 +185,9 @@ def check_free_disk_space(env, output):
 	else:
 		output.print_error(disk_msg)
 
-def run_network_checks(env):
+def run_network_checks(env, output):
 	# Also see setup/network-checks.sh.
 
-	output = BufferedOutput()
 	output.add_heading("Network")
 
 	# Stop if we cannot make an outbound connection on port 25. Many residential
@@ -220,9 +215,7 @@ def run_network_checks(env):
 			which may prevent recipients from receiving your email. See http://www.spamhaus.org/query/ip/%s."""
 			% (env['PUBLIC_IP'], zen, env['PUBLIC_IP']))
 
-	return output
-
-def run_domain_checks(env):
+def run_domain_checks(env, output, pool):
 	# Get the list of domains we handle mail for.
 	mail_domains = get_mail_domains(env)
 
@@ -242,13 +235,10 @@ def run_domain_checks(env):
 	# Parallelize the checks across a worker pool.
 	args = ((domain, env, dns_domains, dns_zonefiles, mail_domains, web_domains)
 		for domain in domains_to_check)
-	pool = multiprocessing.pool.Pool(processes=10)
 	ret = pool.starmap(run_domain_checks_on_domain, args, chunksize=1)
 	ret = dict(ret) # (domain, output) => { domain: output }
-	output = BufferedOutput()
 	for domain in sort_domains(ret, env):
 		ret[domain].playback(output)
-	return output
 
 def run_domain_checks_on_domain(domain, env, dns_domains, dns_zonefiles, mail_domains, web_domains):
 	output = BufferedOutput()
@@ -777,12 +767,14 @@ class BufferedOutput:
 		for attr, args, kwargs in self.buf:
 			getattr(output, attr)(*args, **kwargs)
 
+
 if __name__ == "__main__":
 	import sys
 	from utils import load_environment
 	env = load_environment()
 	if len(sys.argv) == 1:
-		run_checks(env, ConsoleOutput())
+		pool = multiprocessing.pool.Pool(processes=10)
+		run_checks(env, ConsoleOutput(), pool)
 	elif sys.argv[1] == "--check-primary-hostname":
 		# See if the primary hostname appears resolvable and has a signed certificate.
 		domain = env['PRIMARY_HOSTNAME']
@@ -795,3 +787,5 @@ if __name__ == "__main__":
 		if cert_status != "OK":
 			sys.exit(1)
 		sys.exit(0)
+
+

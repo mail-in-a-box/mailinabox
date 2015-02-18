@@ -11,6 +11,12 @@ from mailconfig import get_mail_users, get_mail_users_ex, get_admins, add_mail_u
 from mailconfig import get_mail_user_privileges, add_remove_mail_user_privilege
 from mailconfig import get_mail_aliases, get_mail_aliases_ex, get_mail_domains, add_mail_alias, remove_mail_alias
 
+# Create a worker pool for the status checks. The pool should
+# live across http requests so we don't baloon the system with
+# processes.
+import multiprocessing.pool
+pool = multiprocessing.pool.Pool(processes=10)
+
 env = utils.load_environment()
 
 auth_service = auth.KeyAuthService()
@@ -318,7 +324,7 @@ def system_status():
 		def print_line(self, message, monospace=False):
 			self.items[-1]["extra"].append({ "text": message, "monospace": monospace })
 	output = WebOutput()
-	run_checks(env, output)
+	run_checks(env, output, pool)
 	return json_response(output.items)
 
 @app.route('/system/updates')
