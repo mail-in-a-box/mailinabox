@@ -16,7 +16,7 @@ source /etc/mailinabox.conf # load global vars
 # Prereqs.
 
 apt_install \
-	php-soap php5-imap libawl-php php5-xsl
+	php-soap php5-imap libawl-php php5-xsl git
 
 php5enmod imap
 
@@ -26,7 +26,7 @@ needs_update=0 #NODOC
 if [ ! -f /usr/local/lib/z-push/version ]; then
 	needs_update=1 #NODOC
 elif [[ $TARGETHASH != `cat /usr/local/lib/z-push/version` ]]; then
-	# checks if the version 
+	# checks if the version
 	needs_update=1 #NODOC
 fi
 if [ $needs_update == 1 ]; then
