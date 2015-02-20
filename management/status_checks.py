@@ -417,12 +417,9 @@ def check_mail_domain(domain, env, output):
 	# Check the MX record.
 
 	mx = query_dns(domain, "MX", nxdomain=None)
-	expected_mx = "10 " + env['PRIMARY_HOSTNAME']
+	recommended_mx = "10 " + env['PRIMARY_HOSTNAME']
 
-	if mx == expected_mx:
-		output.print_ok("Domain's email is directed to this domain. [%s => %s]" % (domain, mx))
-
-	elif mx == None:
+	if mx == None:
 		# A missing MX record is okay on the primary hostname because
 		# the primary hostname's A record (the MX fallback) is... itself,
 		# which is what we want the MX to be.
@@ -440,12 +437,17 @@ def check_mail_domain(domain, env, output):
 			else:
 				output.print_error("""This domain's DNS MX record is not set. It should be '%s'. Mail will not
 					be delivered to this box. It may take several hours for public DNS to update after a
-					change. This problem may result from other issues listed here.""" % (expected_mx,))
+					change. This problem may result from other issues listed here.""" % (recommended_mx,))
 
-	else:
+        elif mx.split(' ')[1] == recommended_mx.split(' ')[1]:
+                good_news = "Domain's email is directed to this domain. [%s => %s]" % (domain, mx)
+                if mx != recommended_mx:
+                        good_news += "  However, the usage of a non-standard priority value ('%s') is not recommended." % mx.split(' ')[0]
+                output.print_ok(good_news)
+        else:
 		output.print_error("""This domain's DNS MX record is incorrect. It is currently set to '%s' but should be '%s'. Mail will not
 			be delivered to this box. It may take several hours for public DNS to update after a change. This problem may result from
-			other issues listed here.""" % (mx, expected_mx))
+			other issues listed here.""" % (mx, recommended_mx))
 
 	# Check that the postmaster@ email address exists. Not required if the domain has a
 	# catch-all address or domain alias.
