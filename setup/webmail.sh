@@ -50,6 +50,12 @@ if [ $needs_update == 1 ]; then
 	echo $VERSION > /usr/local/lib/roundcubemail/version
 fi
 
+echo "installing roundcube autoreply/vacation plugin.."
+rm -rf /tmp/Roundcube-Plugins
+git clone https://github.com/arodier/Roundcube-Plugins.git /tmp/Roundcube-Plugins
+mv /tmp/Roundcube-Plugins/plugins/vacation_sieve /usr/local/lib/roundcubemail/plugins/vacation_sieve
+
+
 # ### Configuring Roundcube
 
 # Generate a safe 24-character secret key of safe characters.
@@ -79,12 +85,35 @@ cat > /usr/local/lib/roundcubemail/config/config.inc.php <<EOF;
 \$config['support_url'] = 'https://mailinabox.email/';
 \$config['product_name'] = 'Mail-in-a-Box/Roundcube Webmail';
 \$config['des_key'] = '$SECRET_KEY';
-\$config['plugins'] = array('archive', 'zipdownload', 'password', 'managesieve');
+\$config['plugins'] = array('archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'vacation_sieve');
 \$config['skin'] = 'classic';
 \$config['login_autocomplete'] = 2;
 \$config['password_charset'] = 'UTF-8';
 \$config['junk_mbox'] = 'Spam';
 ?>
+EOF
+
+cat > /usr/local/lib/roundcubemail/plugins/vacation_sieve/config.inc.php <<EOF;
+<?php
+/*
+ * Do not edit. Written by Mail-in-a-Box. Regenerated on updates.
+ */
+
+\$rcmail_config['vacation_sieve'] = array(
+    'date_format' => 'd/m/Y',
+    'working_hours' => array(8,18),
+    'msg_format' => 'text',
+    'logon_transform' => array('#([a-z])[a-z]+(\.|\s)([a-z])#i', '\$1\$3'),
+    'transfer' => array(
+        'mode' =>  'managesieve',
+        'ms_activate_script' => true,
+        'host'   => 'localhost',
+        'port'   => '4190',
+        'usetls' => false,
+        'path' => 'vacation',
+    )
+);
+
 EOF
 
 # Create writable directories.
