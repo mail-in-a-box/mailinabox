@@ -48,11 +48,12 @@ if [ $needs_update == 1 ]; then
 	mv /usr/local/lib/roundcubemail-$VERSION/ /usr/local/lib/roundcubemail
 	rm -f /tmp/roundcube.tgz
 	echo $VERSION > /usr/local/lib/roundcubemail/version
+
 fi
 
 echo "installing roundcube autoreply/vacation plugin.."
-rm -rf /tmp/Roundcube-Plugins
-git clone https://github.com/arodier/Roundcube-Plugins.git /tmp/Roundcube-Plugins
+rm -rf /tmp/Roundcube-Plugins /usr/local/lib/roundcubemail/plugins/vacation_sieve
+git clone -q https://github.com/arodier/Roundcube-Plugins.git /tmp/Roundcube-Plugins
 mv /tmp/Roundcube-Plugins/plugins/vacation_sieve /usr/local/lib/roundcubemail/plugins/vacation_sieve
 
 
