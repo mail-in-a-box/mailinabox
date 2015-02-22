@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-import smtplib, sys
+import smtplib
+import sys
 
 if len(sys.argv) < 3:
         print("Usage: tests/smtp_server.py host email.to email.from")
@@ -16,4 +17,3 @@ server = smtplib.SMTP(host, 25)
 server.set_debuglevel(1)
 server.sendmail(fromaddr, [toaddr], msg)
 server.quit()
-

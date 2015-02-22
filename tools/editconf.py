@@ -18,14 +18,15 @@
 # lines while the lines start with whitespace, e.g.:
 #
 # NAME VAL
-#   UE 
+#   UE
 
-import sys, re
+import sys
+import re
 
 # sanity check
 if len(sys.argv) < 3:
-	print("usage: python3 editconf.py /etc/file.conf [-s] [-w] [-t] NAME=VAL [NAME=VAL ...]")
-	sys.exit(1)
+    print("usage: python3 editconf.py /etc/file.conf [-s] [-w] [-t] NAME=VAL [NAME=VAL ...]")
+    sys.exit(1)
 
 # parse command line arguments
 filename = sys.argv[1]
@@ -37,22 +38,22 @@ comment_char = "#"
 folded_lines = False
 testing = False
 while settings[0][0] == "-" and settings[0] != "--":
-	opt = settings.pop(0)
-	if opt == "-s":
-		# Space is the delimiter
-		delimiter = " "
-		delimiter_re = r"\s+"
-	elif opt == "-w":
-		# Line folding is possible in this file.
-		folded_lines = True
-	elif opt == "-c":
-		# Specifies a different comment character.
-		comment_char = settings.pop(0)
-	elif opt == "-t":
-		testing = True
-	else:
-		print("Invalid option.")
-		sys.exit(1)
+    opt = settings.pop(0)
+    if opt == "-s":
+        # Space is the delimiter
+        delimiter = " "
+        delimiter_re = r"\s+"
+    elif opt == "-w":
+        # Line folding is possible in this file.
+        folded_lines = True
+    elif opt == "-c":
+        # Specifies a different comment character.
+        comment_char = settings.pop(0)
+    elif opt == "-t":
+        testing = True
+    else:
+        print("Invalid option.")
+        sys.exit(1)
 
 # create the new config file in memory
 
@@ -61,67 +62,69 @@ buf = ""
 input_lines = list(open(filename))
 
 while len(input_lines) > 0:
-	line = input_lines.pop(0)
+    line = input_lines.pop(0)
 
-	# If this configuration file uses folded lines, append any folded lines
-	# into our input buffer.
-	if folded_lines and line[0] not in (comment_char, " ", ""):
-		while len(input_lines) > 0 and input_lines[0][0] in " \t":
-			line += input_lines.pop(0)
+    # If this configuration file uses folded lines, append any folded lines
+    # into our input buffer.
+    if folded_lines and line[0] not in (comment_char, " ", ""):
+        while len(input_lines) > 0 and input_lines[0][0] in " \t":
+            line += input_lines.pop(0)
 
-	# See if this line is for any settings passed on the command line.
-	for i in range(len(settings)):
-		# Check that this line contain this setting from the command-line arguments.
-		name, val = settings[i].split("=", 1)
-		m = re.match(
-			   "(\s*)"
-			 + "(" + re.escape(comment_char) + "\s*)?"
-			 + re.escape(name) + delimiter_re + "(.*?)\s*$",
-			 line, re.S)
-		if not m: continue
-		indent, is_comment, existing_val = m.groups()
+    # See if this line is for any settings passed on the command line.
+    for i in range(len(settings)):
+        # Check that this line contain this setting from the command-line arguments.
+        name, val = settings[i].split("=", 1)
+        m = re.match(
+            "(\s*)" +
+            "(" + re.escape(comment_char) + "\s*)?" +
+            re.escape(name) + delimiter_re + "(.*?)\s*$",
+            line, re.S)
+        if not m:
+            continue
+        indent, is_comment, existing_val = m.groups()
 
-		# If this is already the setting, do nothing.
-		if is_comment is None and existing_val == val:
-			# It may be that we've already inserted this setting higher
-			# in the file so check for that first.
-			if i in found: break
-			buf += line
-			found.add(i)
-			break
-		
-		# comment-out the existing line (also comment any folded lines)
-		if is_comment is None:
-			buf += comment_char + line.rstrip().replace("\n", "\n" + comment_char) + "\n"
-		else:
-			# the line is already commented, pass it through
-			buf += line
-		
-		# if this option oddly appears more than once, don't add the setting again
-		if i in found:
-			break
-		
-		# add the new setting
-		buf += indent + name + delimiter + val + "\n"
-		
-		# note that we've applied this option
-		found.add(i)
-		
-		break
-	else:
-		# If did not match any setting names, pass this line through.
-		buf += line
-		
+        # If this is already the setting, do nothing.
+        if is_comment is None and existing_val == val:
+            # It may be that we've already inserted this setting higher
+            # in the file so check for that first.
+            if i in found:
+                break
+            buf += line
+            found.add(i)
+            break
+
+        # comment-out the existing line (also comment any folded lines)
+        if is_comment is None:
+            buf += comment_char + line.rstrip().replace("\n", "\n" + comment_char) + "\n"
+        else:
+            # the line is already commented, pass it through
+            buf += line
+
+        # if this option oddly appears more than once, don't add the setting again
+        if i in found:
+            break
+
+        # add the new setting
+        buf += indent + name + delimiter + val + "\n"
+
+        # note that we've applied this option
+        found.add(i)
+
+        break
+    else:
+        # If did not match any setting names, pass this line through.
+        buf += line
+
 # Put any settings we didn't see at the end of the file.
 for i in range(len(settings)):
-	if i not in found:
-		name, val = settings[i].split("=", 1)
-		buf += name + delimiter + val + "\n"
+    if i not in found:
+        name, val = settings[i].split("=", 1)
+        buf += name + delimiter + val + "\n"
 
 if not testing:
-	# Write out the new file.
-	with open(filename, "w") as f:
-		f.write(buf)
+    # Write out the new file.
+    with open(filename, "w") as f:
+        f.write(buf)
 else:
-	# Just print the new file to stdout.
-	print(buf)
+    # Just print the new file to stdout.
+    print(buf)
