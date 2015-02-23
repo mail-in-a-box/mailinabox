@@ -416,10 +416,17 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 def check_mail_domain(domain, env, output):
 	# Check the MX record.
 
-	mx = query_dns(domain, "MX", nxdomain=None)
 	recommended_mx = "10 " + env['PRIMARY_HOSTNAME']
+	mx = query_dns(domain, "MX", nxdomain=None)
 
-	if mx == None:
+	if mx is None:
+		mxhost = None
+	else:
+		# query_dns returns a semicolon-delimited list
+		# of priority-host pairs.
+		mxhost = mx.split('; ')[0].split(' ')[1]
+
+	if mxhost == None:
 		# A missing MX record is okay on the primary hostname because
 		# the primary hostname's A record (the MX fallback) is... itself,
 		# which is what we want the MX to be.
@@ -439,12 +446,12 @@ def check_mail_domain(domain, env, output):
 					be delivered to this box. It may take several hours for public DNS to update after a
 					change. This problem may result from other issues listed here.""" % (recommended_mx,))
 
-        elif mx.split(' ')[1] == recommended_mx.split(' ')[1]:
-                good_news = "Domain's email is directed to this domain. [%s => %s]" % (domain, mx)
-                if mx != recommended_mx:
-                        good_news += "  However, the usage of a non-standard priority value ('%s') is not recommended." % mx.split(' ')[0]
-                output.print_ok(good_news)
-        else:
+	elif mxhost == env['PRIMARY_HOSTNAME']:
+		good_news = "Domain's email is directed to this domain. [%s => %s]" % (domain, mx)
+		if mx != recommended_mx:
+			good_news += "  This configuration is non-standard.  The recommended configuration is '%s'." % (recommended_mx,)
+		output.print_ok(good_news)
+	else:
 		output.print_error("""This domain's DNS MX record is incorrect. It is currently set to '%s' but should be '%s'. Mail will not
 			be delivered to this box. It may take several hours for public DNS to update after a change. This problem may result from
 			other issues listed here.""" % (mx, recommended_mx))
