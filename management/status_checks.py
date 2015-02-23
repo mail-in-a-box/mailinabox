@@ -416,13 +416,17 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 def check_mail_domain(domain, env, output):
 	# Check the MX record.
 
+	recommended_mx = "10 " + env['PRIMARY_HOSTNAME']
 	mx = query_dns(domain, "MX", nxdomain=None)
-	expected_mx = "10 " + env['PRIMARY_HOSTNAME']
 
-	if mx == expected_mx:
-		output.print_ok("Domain's email is directed to this domain. [%s => %s]" % (domain, mx))
+	if mx is None:
+		mxhost = None
+	else:
+		# query_dns returns a semicolon-delimited list
+		# of priority-host pairs.
+		mxhost = mx.split('; ')[0].split(' ')[1]
 
-	elif mx == None:
+	if mxhost == None:
 		# A missing MX record is okay on the primary hostname because
 		# the primary hostname's A record (the MX fallback) is... itself,
 		# which is what we want the MX to be.
@@ -440,12 +444,17 @@ def check_mail_domain(domain, env, output):
 			else:
 				output.print_error("""This domain's DNS MX record is not set. It should be '%s'. Mail will not
 					be delivered to this box. It may take several hours for public DNS to update after a
-					change. This problem may result from other issues listed here.""" % (expected_mx,))
+					change. This problem may result from other issues listed here.""" % (recommended_mx,))
 
+	elif mxhost == env['PRIMARY_HOSTNAME']:
+		good_news = "Domain's email is directed to this domain. [%s => %s]" % (domain, mx)
+		if mx != recommended_mx:
+			good_news += "  This configuration is non-standard.  The recommended configuration is '%s'." % (recommended_mx,)
+		output.print_ok(good_news)
 	else:
 		output.print_error("""This domain's DNS MX record is incorrect. It is currently set to '%s' but should be '%s'. Mail will not
 			be delivered to this box. It may take several hours for public DNS to update after a change. This problem may result from
-			other issues listed here.""" % (mx, expected_mx))
+			other issues listed here.""" % (mx, recommended_mx))
 
 	# Check that the postmaster@ email address exists. Not required if the domain has a
 	# catch-all address or domain alias.
