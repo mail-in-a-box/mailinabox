@@ -17,9 +17,22 @@ ln -s `pwd`/management/daemon.py /usr/local/bin/mailinabox-daemon
 
 # Create an init script to start the management daemon and keep it
 # running after a reboot.
-rm -f /etc/init.d/mailinabox
-ln -s $(pwd)/conf/management-initscript /etc/init.d/mailinabox
-hide_output update-rc.d mailinabox defaults
+if [ ! -z "$IS_DOCKER" ]; then
+	# Use runit for docker
+	mkdir -p /etc/service/mailinabox
+	cp /usr/local/mailinabox/containers/docker/runit/mailinabox.sh /etc/service/mailinabox/run
+	chmod +x /etc/service/mailinabox/run
+
+	# runit -> LSB compatibility
+	# see http://smarden.org/runit/faq.html#lsb
+	mv /etc/init.d/mailinabox /etc/init.d/mailinabox.lsb
+	chmod -x /etc/init.d/mailinabox.lsb
+	ln -s /usr/bin/sv /etc/init.d/mailinabox
+else
+	rm -f /etc/init.d/mailinabox
+	ln -s $(pwd)/conf/management-initscript /etc/init.d/mailinabox
+	hide_output update-rc.d mailinabox defaults
+fi
 
 # Perform a daily backup.
 cat > /etc/cron.daily/mailinabox-backup << EOF;

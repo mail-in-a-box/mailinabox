@@ -22,6 +22,10 @@
 # Build or rebuild the image.
 # Rebuilds are very fast.
 
+HOST_HTTP_PORT=${HOST_HTTP_PORT:-80}
+HOST_HTTPS_PORT=${HOST_HTTPS_PORT:-443}
+HOST_USERDATA_VOLUME=${HOST_USERDATA_VOLUME:-/home/user-data}
+
 tput setaf 2
 echo "Building/updating base image (mailinabox)..."
 tput setaf 7
@@ -36,8 +40,8 @@ if ! docker ps -a | grep mailinabox-userdata > /dev/null; then
 
 	docker run -d \
 		--name mailinabox-userdata \
-		-v /home/user-data \
-		scratch /bin/does-not-exist-but-thats-ok
+		-v $HOST_USERDATA_VOLUME:/home/user-data \
+		phusion/baseimage:0.9.16
 else
 	tput setaf 2
 	echo
@@ -63,15 +67,43 @@ echo
 echo "Starting new container (mailinabox-services)..."
 tput setaf 7
 
+# Run the services container detached.
 # Notes:
 # * Passing through SKIP_NETWORK_CHECKS makes it easier to do testing
 #   on a residential network.
-
+# * --privileged flag cause an issue with bind9/named failing to start in this case
+#   see docker/docker#7318
 docker run \
-	--privileged \
 	-v /dev/urandom:/dev/random \
-	-p 25 -p 53/udp -p 53/tcp -p 80 -p 443 -p 587 -p 993 \
+	-p 25:25 \
+	-p 53:53/udp \
+	-p 53:53/tcp \
+	-p $HOST_HTTP_PORT:80 \
+	-p $HOST_HTTPS_PORT:443 \
+	-p 587:587 \
+	-p 993:993 \
+	-p 4190:4190 \
 	--name mailinabox-services \
 	--volumes-from mailinabox-userdata \
 	-e "SKIP_NETWORK_CHECKS=$SKIP_NETWORK_CHECKS" \
+	-d \
+	-t \
 	mailinabox
+
+tput setaf 2
+echo
+echo "Initializing container (mailinabox-services)..."
+tput setaf 7
+
+# run init.sh
+docker exec \
+	-it \
+	mailinabox-services \
+	/usr/local/mailinabox/containers/docker/init.sh
+
+tput setaf 2
+echo
+echo "Restarting container..."
+tput setaf 7
+
+docker restart mailinabox-services

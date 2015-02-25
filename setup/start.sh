@@ -39,7 +39,7 @@ fi
 # Put a start script in a global location. We tell the user to run 'mailinabox'
 # in the first dialog prompt, so we should do this before that starts.
 cat > /usr/local/bin/mailinabox << EOF;
-#!/bin/bash
+
 cd `pwd`
 source setup/start.sh
 EOF
@@ -146,13 +146,6 @@ source setup/owncloud.sh
 source setup/zpush.sh
 source setup/management.sh
 
-# In Docker, sysvinit services are started automatically. Runit services
-# aren't started until after this setup script finishes. But we need
-# Dovecot (which is Upstart-only) running in order to create the first
-# mail user. So start dovecot now.
-if [ ! -z "$IS_DOCKER" ]; then
-	/usr/sbin/dovecot -c /etc/dovecot/dovecot.conf
-fi
 
 # Ping the management daemon to write the DNS and nginx configuration files.
 while [ ! -f /var/lib/mailinabox/api.key ]; do

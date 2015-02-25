@@ -162,6 +162,8 @@ def shell(method, cmd_args, env={}, capture_stderr=False, return_bytes=False, tr
 
 def create_syslog_handler():
     import logging.handlers
+    # This requires rsyslog to be started.
+    # Could be enhanced for docker logging with phusion/baseimage.
     handler = logging.handlers.SysLogHandler(address='/dev/log')
     handler.setLevel(logging.WARNING)
     return handler

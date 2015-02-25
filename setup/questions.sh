@@ -4,6 +4,7 @@ if [ -z "$NONINTERACTIVE" ]; then
 	# e.g. if we piped a bootstrapping install script to bash to get started. In that
 	# case, the nifty '[ -t 0 ]' test won't work. But with Vagrant we must suppress so we
 	# use a shell flag instead. Really supress any output from installing dialog.
+	apt_get_quiet update
 	apt_get_quiet install dialog
 	message_box "Mail-in-a-Box Installation" \
 		"Hello and thanks for deploying a Mail-in-a-Box!
