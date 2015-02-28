@@ -30,8 +30,10 @@ Control panel:
 
 * Status checks now check that system services are actually running by pinging each port that should have something running on it.
 * The status checks are now parallelized so they may be a little faster.
+* The status check for MX records now allow any priority, in case an unusual setup is required.
 * The interface for setting website domain-specific directories is simplified.
 * The mail guide now says that to use Outlook, Outlook 2007 or later on Windows 7 and later is required.
+* External DNS settings now skip the special "_secondary_nameserver" key which is used for storing secondary NS information.
 
 Setup:
 
