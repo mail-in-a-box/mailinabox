@@ -109,6 +109,10 @@ fi
 # Create the STORAGE_ROOT if it not exists
 if [ ! -d $STORAGE_ROOT ]; then
 	mkdir -p $STORAGE_ROOT
+fi
+
+# Create mailinabox.version file if not exists
+if [ ! -f $STORAGE_ROOT/mailinabox.version ]; then
 	echo $(setup/migrate.py --current) > $STORAGE_ROOT/mailinabox.version
 	chown $STORAGE_USER.$STORAGE_USER $STORAGE_ROOT/mailinabox.version
 fi
