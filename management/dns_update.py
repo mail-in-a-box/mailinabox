@@ -691,7 +691,7 @@ def set_custom_dns_record(qname, rtype, value, env):
 			v = ipaddress.ip_address(value)
 			if rtype == "A" and not isinstance(v, ipaddress.IPv4Address): raise ValueError("That's an IPv6 address.")
 			if rtype == "AAAA" and not isinstance(v, ipaddress.IPv6Address): raise ValueError("That's an IPv4 address.")
-		elif rtype in ("CNAME", "TXT", "SRV"):
+		elif rtype in ("CNAME", "TXT", "SRV", "MX"):
 			# anything goes
 			pass
 		else:
