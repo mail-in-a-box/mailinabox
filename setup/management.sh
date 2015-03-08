@@ -30,6 +30,17 @@ $(pwd)/management/backup.py
 EOF
 chmod +x /etc/cron.daily/mailinabox-backup
 
+# Perform daily status checks. Compare each day to the previous
+# for changes and mail the changes to the administrator.
+cat > /etc/cron.daily/mailinabox-statuschecks << EOF;
+#!/bin/bash
+# Mail-in-a-Box --- Do not edit / will be overwritten on update.
+# Run status checks.
+$(pwd)/management/status_checks.py --show-changes --smtp
+EOF
+chmod +x /etc/cron.daily/mailinabox-statuschecks
+
+
 # Start it. Remove the api key file first so that start.sh
 # can wait for it to be created to know that the management
 # server is ready.

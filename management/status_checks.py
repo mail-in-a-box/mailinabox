@@ -6,7 +6,7 @@
 
 __ALL__ = ['check_certificate']
 
-import os, os.path, re, subprocess, datetime, multiprocessing.pool
+import sys, os, os.path, re, subprocess, datetime, multiprocessing.pool
 
 import dns.reversename, dns.resolver
 import dateutil.parser, dateutil.tz
@@ -17,7 +17,7 @@ from mailconfig import get_mail_domains, get_mail_aliases
 
 from utils import shell, sort_domains, load_env_vars_from_file
 
-def run_checks(env, output, pool):
+def run_checks(rounded_values, env, output, pool):
 	# run systems checks
 	output.add_heading("System")
 
@@ -33,12 +33,12 @@ def run_checks(env, output, pool):
 	# that in run_services checks.)
 	shell('check_call', ["/usr/sbin/rndc", "flush"], trap=True)
 	
-	run_system_checks(env, output)
+	run_system_checks(rounded_values, env, output)
 
 	# perform other checks asynchronously
 
 	run_network_checks(env, output)
-	run_domain_checks(env, output, pool)
+	run_domain_checks(rounded_values, env, output, pool)
 
 def get_ssh_port():
     # Returns ssh port
@@ -133,11 +133,11 @@ def check_service(i, service, env):
 
 	return (i, running, fatal, output)
 
-def run_system_checks(env, output):
+def run_system_checks(rounded_values, env, output):
 	check_ssh_password(env, output)
 	check_software_updates(env, output)
 	check_system_aliases(env, output)
-	check_free_disk_space(env, output)
+	check_free_disk_space(rounded_values, env, output)
 
 def check_ssh_password(env, output):
 	# Check that SSH login with password is disabled. The openssh-server
@@ -172,12 +172,15 @@ def check_system_aliases(env, output):
 	# admin email is automatically directed.
 	check_alias_exists("administrator@" + env['PRIMARY_HOSTNAME'], env, output)
 
-def check_free_disk_space(env, output):
+def check_free_disk_space(rounded_values, env, output):
 	# Check free disk space.
 	st = os.statvfs(env['STORAGE_ROOT'])
 	bytes_total = st.f_blocks * st.f_frsize
 	bytes_free = st.f_bavail * st.f_frsize
-	disk_msg = "The disk has %s GB space remaining." % str(round(bytes_free/1024.0/1024.0/1024.0*10.0)/10.0)
+	if not rounded_values:
+		disk_msg = "The disk has %s GB space remaining." % str(round(bytes_free/1024.0/1024.0/1024.0*10.0)/10)
+	else:
+		disk_msg = "The disk has less than %s%% space left." % str(round(bytes_free/bytes_total/10 + .5)*10)
 	if bytes_free > .3 * bytes_total:
 		output.print_ok(disk_msg)
 	elif bytes_free > .15 * bytes_total:
@@ -215,7 +218,7 @@ def run_network_checks(env, output):
 			which may prevent recipients from receiving your email. See http://www.spamhaus.org/query/ip/%s."""
 			% (env['PUBLIC_IP'], zen, env['PUBLIC_IP']))
 
-def run_domain_checks(env, output, pool):
+def run_domain_checks(rounded_time, env, output, pool):
 	# Get the list of domains we handle mail for.
 	mail_domains = get_mail_domains(env)
 
@@ -230,17 +233,17 @@ def run_domain_checks(env, output, pool):
 
 	# Serial version:
 	#for domain in sort_domains(domains_to_check, env):
-	#	run_domain_checks_on_domain(domain, env, dns_domains, dns_zonefiles, mail_domains, web_domains)
+	#	run_domain_checks_on_domain(domain, rounded_time, env, dns_domains, dns_zonefiles, mail_domains, web_domains)
 
 	# Parallelize the checks across a worker pool.
-	args = ((domain, env, dns_domains, dns_zonefiles, mail_domains, web_domains)
+	args = ((domain, rounded_time, env, dns_domains, dns_zonefiles, mail_domains, web_domains)
 		for domain in domains_to_check)
 	ret = pool.starmap(run_domain_checks_on_domain, args, chunksize=1)
 	ret = dict(ret) # (domain, output) => { domain: output }
 	for domain in sort_domains(ret, env):
 		ret[domain].playback(output)
 
-def run_domain_checks_on_domain(domain, env, dns_domains, dns_zonefiles, mail_domains, web_domains):
+def run_domain_checks_on_domain(domain, rounded_time, env, dns_domains, dns_zonefiles, mail_domains, web_domains):
 	output = BufferedOutput()
 
 	output.add_heading(domain)
@@ -255,7 +258,7 @@ def run_domain_checks_on_domain(domain, env, dns_domains, dns_zonefiles, mail_do
 		check_mail_domain(domain, env, output)
 
 	if domain in web_domains:
-		check_web_domain(domain, env, output)
+		check_web_domain(domain, rounded_time, env, output)
 
 	if domain in dns_domains:
 		check_dns_zone_suggestions(domain, env, output, dns_zonefiles)
@@ -472,7 +475,7 @@ def check_mail_domain(domain, env, output):
 			which may prevent recipients from receiving your mail.
 			See http://www.spamhaus.org/dbl/ and http://www.spamhaus.org/query/domain/%s.""" % (dbl, domain))
 
-def check_web_domain(domain, env, output):
+def check_web_domain(domain, rounded_time, env, output):
 	# See if the domain's A record resolves to our PUBLIC_IP. This is already checked
 	# for PRIMARY_HOSTNAME, for which it is required for mail specifically. For it and
 	# other domains, it is required to access its website.
@@ -488,7 +491,7 @@ def check_web_domain(domain, env, output):
 	# We need a SSL certificate for PRIMARY_HOSTNAME because that's where the
 	# user will log in with IMAP or webmail. Any other domain we serve a
 	# website for also needs a signed certificate.
-	check_ssl_cert(domain, env, output)
+	check_ssl_cert(domain, rounded_time, env, output)
 
 def query_dns(qname, rtype, nxdomain='[Not Set]'):
 	# Make the qname absolute by appending a period. Without this, dns.resolver.query
@@ -515,7 +518,7 @@ def query_dns(qname, rtype, nxdomain='[Not Set]'):
 	# can compare to a well known order.
 	return "; ".join(sorted(str(r).rstrip('.') for r in response))
 
-def check_ssl_cert(domain, env, output):
+def check_ssl_cert(domain, rounded_time, env, output):
 	# Check that SSL certificate is signed.
 
 	# Skip the check if the A record is not pointed here.
@@ -530,7 +533,7 @@ def check_ssl_cert(domain, env, output):
 
 	# Check that the certificate is good.
 
-	cert_status, cert_status_details = check_certificate(domain, ssl_certificate, ssl_key)
+	cert_status, cert_status_details = check_certificate(domain, ssl_certificate, ssl_key, rounded_time=rounded_time)
 
 	if cert_status == "OK":
 		# The certificate is ok. The details has expiry info.
@@ -569,7 +572,7 @@ def check_ssl_cert(domain, env, output):
 			output.print_line(cert_status_details)
 			output.print_line("")
 
-def check_certificate(domain, ssl_certificate, ssl_private_key):
+def check_certificate(domain, ssl_certificate, ssl_private_key, rounded_time=False):
 	# Use openssl verify to check the status of a certificate.
 
 	# First check that the certificate is for the right domain. The domain
@@ -680,7 +683,15 @@ def check_certificate(domain, ssl_certificate, ssl_private_key):
 		# But is it expiring soon?
 		now = datetime.datetime.now(dateutil.tz.tzlocal())
 		ndays = (cert_expiration_date-now).days
-		expiry_info = "The certificate expires in %d days on %s." % (ndays, cert_expiration_date.strftime("%x"))
+		if not rounded_time or ndays < 7:
+			expiry_info = "The certificate expires in %d days on %s." % (ndays, cert_expiration_date.strftime("%x"))
+		elif ndays <= 14:
+			expiry_info = "The certificate expires in less than two weeks, on %s." % cert_expiration_date.strftime("%x")
+		elif ndays <= 31:
+			expiry_info = "The certificate expires in less than a month, on %s." % cert_expiration_date.strftime("%x")
+		else:
+			expiry_info = "The certificate expires on %s." % cert_expiration_date.strftime("%x")
+
 		if ndays <= 31:
 			return ("The certificate is expiring soon: " + expiry_info, None)
 
@@ -721,17 +732,109 @@ def list_apt_updates(apt_update=True):
 
 	return pkgs
 
+def run_and_output_changes(env, pool, send_via_email):
+	import json
+	from difflib import SequenceMatcher
 
-class ConsoleOutput:
-	try:
-		terminal_columns = int(shell('check_output', ['stty', 'size']).split()[1])
-	except:
-		terminal_columns = 76
+	if not send_via_email:
+		out = ConsoleOutput()
+	else:
+		import io
+		out = FileOutput(io.StringIO(""), 70)
+
+	# Run status checks.
+	cur = BufferedOutput()
+	run_checks(True, env, cur, pool)
+
+	# Load previously saved status checks.
+	cache_fn = "/var/cache/mailinabox/status_checks.json"
+	if os.path.exists(cache_fn):
+		prev = json.load(open(cache_fn))
+
+		# Group the serial output into categories by the headings.
+		def group_by_heading(lines):
+			from collections import OrderedDict
+			ret = OrderedDict()
+			k = []
+			ret["No Category"] = k
+			for line_type, line_args, line_kwargs in lines:
+				if line_type == "add_heading":
+					k = []
+					ret[line_args[0]] = k
+				else:
+					k.append((line_type, line_args, line_kwargs))
+			return ret
+		prev_status = group_by_heading(prev)
+		cur_status = group_by_heading(cur.buf)
+
+		# Compare the previous to the current status checks
+		# category by category.
+		for category, cur_lines in cur_status.items():
+			if category not in prev_status:
+				out.add_heading(category + " -- Added")
+				BufferedOutput(with_lines=cur_lines).playback(out)
+			else:
+				# Actual comparison starts here...
+				prev_lines = prev_status[category]
+				def stringify(lines):
+					return [json.dumps(line) for line in lines]
+				diff = SequenceMatcher(None, stringify(prev_lines), stringify(cur_lines)).get_opcodes()
+				for op, i1, i2, j1, j2 in diff:
+					if op == "replace":
+						out.add_heading(category + " -- Previously:")
+					elif op == "delete":
+						out.add_heading(category + " -- Removed")
+					if op in ("replace", "delete"):
+						BufferedOutput(with_lines=prev_lines[i1:i2]).playback(out)
+
+					if op == "replace":
+						out.add_heading(category + " -- Currently:")
+					elif op == "insert":
+						out.add_heading(category + " -- Added")
+					if op in ("replace", "insert"):
+						BufferedOutput(with_lines=cur_lines[j1:j2]).playback(out)
+
+		for category, prev_lines in prev_status.items():
+			if category not in cur_status:
+				out.add_heading(category)
+				out.add_warning("Removed.")
+	
+	if send_via_email:
+		# If there were changes, send off an email.
+		buf = out.buf.getvalue()
+		if len(buf) > 0:
+			# create MIME message
+			from email.message import Message
+			msg = Message()
+			msg['From'] = "\"%s\" <administrator@%s>" % (env['PRIMARY_HOSTNAME'], env['PRIMARY_HOSTNAME'])
+			msg['To'] = "administrator@%s" % env['PRIMARY_HOSTNAME']
+			msg['Subject'] = "[%s] Status Checks Change Notice" % env['PRIMARY_HOSTNAME']
+			msg.set_payload(buf, "UTF-8")
+	
+			# send to administrator@
+			import smtplib
+			mailserver = smtplib.SMTP('localhost', 25)
+			mailserver.ehlo()
+			mailserver.sendmail(
+				"administrator@%s" % env['PRIMARY_HOSTNAME'], # MAIL FROM
+				"administrator@%s" % env['PRIMARY_HOSTNAME'], # RCPT TO
+				msg.as_string())
+			mailserver.quit()
+		
+	# Store the current status checks output for next time.
+	os.makedirs(os.path.dirname(cache_fn), exist_ok=True)
+	with open(cache_fn, "w") as f:
+		json.dump(cur.buf, f, indent=True)
+
+class FileOutput:
+	def __init__(self, buf, width):
+		self.buf = buf
+		self.width = width
 
 	def add_heading(self, heading):
-		print()
-		print(heading)
-		print("=" * len(heading))
+		print(file=self.buf)
+		print(heading, file=self.buf)
+		print("=" * len(heading), file=self.buf)
 
 	def print_ok(self, message):
 		self.print_block(message, first_line="✓  ")
@@ -743,28 +846,36 @@ class ConsoleOutput:
 		self.print_block(message, first_line="?  ")
 
 	def print_block(self, message, first_line="   "):
-		print(first_line, end='')
+		print(first_line, end='', file=self.buf)
 		message = re.sub("\n\s*", " ", message)
 		words = re.split("(\s+)", message)
 		linelen = 0
 		for w in words:
-			if linelen + len(w) > self.terminal_columns-1-len(first_line):
-				print()
-				print("   ", end="")
+			if linelen + len(w) > self.width-1-len(first_line):
+				print(file=self.buf)
+				print("   ", end="", file=self.buf)
 				linelen = 0
 			if linelen == 0 and w.strip() == "": continue
-			print(w, end="")
+			print(w, end="", file=self.buf)
 			linelen += len(w)
-		print()
+		print(file=self.buf)
 
 	def print_line(self, message, monospace=False):
 		for line in message.split("\n"):
 			self.print_block(line)
 
+class ConsoleOutput(FileOutput):
+	def __init__(self):
+		self.buf = sys.stdout
+		try:
+			self.width = int(shell('check_output', ['stty', 'size']).split()[1])
+		except:
+			self.width = 76
+
 class BufferedOutput:
 	# Record all of the instance method calls so we can play them back later.
-	def __init__(self):
-		self.buf = []
+	def __init__(self, with_lines=None):
+		self.buf = [] if not with_lines else with_lines
 	def __getattr__(self, attr):
 		if attr not in ("add_heading", "print_ok", "print_error", "print_warning", "print_block", "print_line"):
 			raise AttributeError
@@ -778,12 +889,17 @@ class BufferedOutput:
 
 
 if __name__ == "__main__":
-	import sys
 	from utils import load_environment
+
 	env = load_environment()
+	pool = multiprocessing.pool.Pool(processes=10)
+
 	if len(sys.argv) == 1:
-		pool = multiprocessing.pool.Pool(processes=10)
-		run_checks(env, ConsoleOutput(), pool)
+		run_checks(False, env, ConsoleOutput(), pool)
+
+	elif sys.argv[1] == "--show-changes":
+		run_and_output_changes(env, pool, sys.argv[-1] == "--smtp")
+
 	elif sys.argv[1] == "--check-primary-hostname":
 		# See if the primary hostname appears resolvable and has a signed certificate.
 		domain = env['PRIMARY_HOSTNAME']
@@ -796,5 +912,3 @@ if __name__ == "__main__":
 		if cert_status != "OK":
 			sys.exit(1)
 		sys.exit(0)
-
-

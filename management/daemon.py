@@ -324,7 +324,7 @@ def system_status():
 		def print_line(self, message, monospace=False):
 			self.items[-1]["extra"].append({ "text": message, "monospace": monospace })
 	output = WebOutput()
-	run_checks(env, output, pool)
+	run_checks(False, env, output, pool)
 	return json_response(output.items)
 
 @app.route('/system/updates')
