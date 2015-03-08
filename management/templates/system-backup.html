@@ -15,7 +15,7 @@
 
 <h3>Current Backups</h3>
 
-<p>The backup directory currently contains the backups listed below. The total size on disk of the backups is <span id="backup-total-size"></span>.</p>
+<p>The backup directory currently contains the backups listed below. The total size on disk of the backups is currently <span id="backup-total-size"></span>.</p>
 
 <table id="backup-status" class="table" style="width: auto">
   <thead>
@@ -76,7 +76,7 @@ function show_system_backup() {
         if (b.deleted_in)
           tr.append( $('<td/>').text(b.deleted_in) );
         else
-          tr.append( $('<td class="text-muted">n/a</td>') );
+          tr.append( $('<td class="text-muted">unknown</td>') );
         $('#backup-status tbody').append(tr);
 
         total_disk_size += b.size;

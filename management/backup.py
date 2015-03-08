@@ -67,9 +67,29 @@ def backup_status(env):
 	# This is relied on by should_force_full() and the next step.
 	backups = sorted(backups.values(), key = lambda b : b["date"], reverse=True)
 
+	# Get the average size of incremental backups and the size of the
+	# most recent full backup.
+	incremental_count = 0
+	incremental_size = 0
+	first_full_size = None
+	for bak in backups:
+		if bak["full"]:
+			first_full_size = bak["size"]
+			break
+		incremental_count += 1
+		incremental_size += bak["size"]
+	
+	# Predict how many more increments until the next full backup,
+	# and add to that the time we hold onto backups, to predict
+	# how long the most recent full backup+increments will be held
+	# onto. Round up since the backup occurs on the night following
+	# when the threshold is met.
+	deleted_in = None
+	if incremental_count > 0 and first_full_size is not None:
+		deleted_in = "approx. %d days" % round(keep_backups_for_days + (.5 * first_full_size - incremental_size) / (incremental_size/incremental_count) + .5)
+
 	# When will a backup be deleted?
 	saw_full = False
-	deleted_in = None
 	days_ago = now - datetime.timedelta(days=keep_backups_for_days)
 	for bak in backups:
 		if deleted_in:
