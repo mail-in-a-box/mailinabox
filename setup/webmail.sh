@@ -30,24 +30,37 @@ apt_install \
 apt-get purge -qq -y roundcube* #NODOC
 
 # Install Roundcube from source if it is not already present or if it is out of date.
+# Combine the Roundcube version number with the commit hash of vacation_sieve to track
+# whether we have the latest version.
 VERSION=1.1.0
+VACATION_SIEVE_VERSION=06a20e9d44db62259ae41fd8451f3c937d3ab4f3
 needs_update=0 #NODOC
 if [ ! -f /usr/local/lib/roundcubemail/version ]; then
 	# not installed yet #NODOC
 	needs_update=1 #NODOC
-elif [[ $VERSION != `cat /usr/local/lib/roundcubemail/version` ]]; then
+elif [[ "$VERSION:$VACATION_SIEVE_VERSION" != `cat /usr/local/lib/roundcubemail/version` ]]; then
 	# checks if the version is what we want
 	needs_update=1 #NODOC
 fi
 if [ $needs_update == 1 ]; then
-	echo installing roundcube webmail $VERSION...
+	# install roundcube
+	echo installing Roundcube webmail $VERSION...
 	rm -f /tmp/roundcube.tgz
 	wget -qO /tmp/roundcube.tgz http://downloads.sourceforge.net/project/roundcubemail/roundcubemail/$VERSION/roundcubemail-$VERSION.tar.gz
 	tar -C /usr/local/lib -zxf /tmp/roundcube.tgz
 	rm -rf /usr/local/lib/roundcubemail
 	mv /usr/local/lib/roundcubemail-$VERSION/ /usr/local/lib/roundcubemail
 	rm -f /tmp/roundcube.tgz
-	echo $VERSION > /usr/local/lib/roundcubemail/version
+
+	# install roundcube autoreply/vacation plugin
+	rm -rf /tmp/Roundcube-Plugins /usr/local/lib/roundcubemail/plugins/vacation_sieve
+	git clone -q https://github.com/arodier/Roundcube-Plugins.git /tmp/Roundcube-Plugins
+	GIT_DIR=/tmp/Roundcube-Plugins/.git git checkout -q $VACATION_SIEVE_VERSION || exit 1
+	mv /tmp/Roundcube-Plugins/plugins/vacation_sieve /usr/local/lib/roundcubemail/plugins/vacation_sieve
+	rm -rf /tmp/Roundcube-Plugins
+
+	# record the version we've installed
+	echo $VERSION:$VACATION_SIEVE_VERSION > /usr/local/lib/roundcubemail/version
 fi
 
 # ### Configuring Roundcube
@@ -79,12 +92,32 @@ cat > /usr/local/lib/roundcubemail/config/config.inc.php <<EOF;
 \$config['support_url'] = 'https://mailinabox.email/';
 \$config['product_name'] = 'Mail-in-a-Box/Roundcube Webmail';
 \$config['des_key'] = '$SECRET_KEY';
-\$config['plugins'] = array('archive', 'zipdownload', 'password', 'managesieve');
+\$config['plugins'] = array('archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'vacation_sieve');
 \$config['skin'] = 'classic';
 \$config['login_autocomplete'] = 2;
 \$config['password_charset'] = 'UTF-8';
 \$config['junk_mbox'] = 'Spam';
 ?>
+EOF
+
+# Configure vaction_sieve.
+cat > /usr/local/lib/roundcubemail/plugins/vacation_sieve/config.inc.php <<EOF;
+<?php
+/* Do not edit. Written by Mail-in-a-Box. Regenerated on updates. */
+\$rcmail_config['vacation_sieve'] = array(
+    'date_format' => 'd/m/Y',
+    'working_hours' => array(8,18),
+    'msg_format' => 'text',
+    'logon_transform' => array('#([a-z])[a-z]+(\.|\s)([a-z])#i', '\$1\$3'),
+    'transfer' => array(
+        'mode' =>  'managesieve',
+        'ms_activate_script' => true,
+        'host'   => 'localhost',
+        'port'   => '4190',
+        'usetls' => false,
+        'path' => 'vacation',
+    )
+);
 EOF
 
 # Create writable directories.

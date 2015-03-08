@@ -4,6 +4,10 @@ CHANGELOG
 In Development...
 -----------------
 
+Mail:
+
+* The Roundcube vacation_sieve plugin by @arodier is now installed to make it easier to set vacation auto-reply messages from within Roundcube.
+
 System:
 
 * Brute-force SSH and IMAP login attempts are now prevented by properly configuring fail2ban.
