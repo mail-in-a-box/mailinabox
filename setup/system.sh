@@ -106,3 +106,11 @@ fi
 
 restart_service bind9
 restart_service resolvconf
+
+# ### Fail2Ban Service
+
+# Configure the Fail2Ban installation to prevent dumb bruce-force attacks against dovecot, postfix and ssh
+cp conf/fail2ban/jail.local /etc/fail2ban/jail.local
+cp conf/fail2ban/dovecotimap.conf /etc/fail2ban/filter.d/dovecotimap.conf
+
+restart_service fail2ban

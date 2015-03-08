@@ -4,6 +4,10 @@ CHANGELOG
 In Development...
 -----------------
 
+System:
+
+* Brute-force SSH and IMAP login attempts are now prevented by properly configuring fail2ban.
+
 Control panel:
 
 * The new check that system services are running mistakenly checked that the Dovecot Managesieve service is publicly accessible. Although the service binds to the public network interface we don't open the port in ufw. On some machines it seems that ufw blocks the connection from the status checks (which seems correct) and on some machines (mine) it doesn't, which is why I didn't notice the problem.
