@@ -84,13 +84,22 @@ def run_migrations():
 	env = load_environment()
 
 	migration_id_file = os.path.join(env['STORAGE_ROOT'], 'mailinabox.version')
+	migration_id = None
 	if os.path.exists(migration_id_file):
 		with open(migration_id_file) as f:
-			ourver = int(f.read().strip())
-	else:
+			migration_id = f.read().strip();
+
+	if migration_id is None:
 		# Load the legacy location of the migration ID. We'll drop support
 		# for this eventually.
-		ourver = int(env.get("MIGRATIONID", "0"))
+		migration_id = env.get("MIGRATIONID")
+
+	if migration_id is None:
+		print()
+		print("%s file doesn't exists. Skipping migration..." % (migration_id_file,))
+		return
+
+	ourver = int(migration_id)
 
 	while True:
 		next_ver = (ourver + 1)
