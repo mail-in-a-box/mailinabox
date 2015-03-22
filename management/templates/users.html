@@ -1,13 +1,12 @@
 <h2>Users</h2>
 
 <style>
+#user_table h4 { margin: 1em 0 0 0; }
 #user_table tr.account_inactive td.address { color: #888; text-decoration: line-through; }
-#user_table .aliases { font-size: 90%; }
-#user_table .aliases div:before { content: "⇖ "; }
-#user_table .aliases div {  }
 #user_table .actions { margin-top: .33em; font-size: 95%; }
 #user_table .account_inactive .if_active { display: none; }
 #user_table .account_active .if_inactive { display: none; }
+#user_table .account_active.if_inactive { display: none; }
 </style>
 
 <h3>Add a mail user</h3>
@@ -77,11 +76,9 @@
     <td class='mailboxsize'>
     </td>
   </tr>
-  <tr id="user-extra-template">
-    <td colspan="3" style="border-top: 0; padding-top: 0">
-      <div class='if_inactive restore_info' style='color: #888; font-size: 90%'>To restore account, create a new account with this email address. Or to permanently delete the mailbox, delete the directory <tt></tt> on the machine.</div>
-
-      <div class='aliases' style='display: none'> </div>
+  <tr id="user-extra-template" class="if_inactive">
+    <td colspan="3" style="border: 0; padding-top: 0">
+      <div class='restore_info' style='color: #888; font-size: 90%'>To restore account, create a new account with this email address. Or to permanently delete the mailbox, delete the directory <tt></tt> on the machine.</div>
     </td>
   </tr>
   </table>
@@ -98,7 +95,7 @@ function show_users() {
     function(r) {
       $('#user_table tbody').html("");
       for (var i = 0; i < r.length; i++) {
-        var hdr = $("<tr><td><h4/></td></tr>");
+        var hdr = $("<tr><td colspan='3'><h4/></td></tr>");
         hdr.find('h4').text(r[i].domain);
         $('#user_table tbody').append(hdr);
 
@@ -136,16 +133,6 @@ function show_users() {
             var p = $("<span><a href='#' onclick='mod_priv(this, \"add\"); return false;' title='Add Privilege'>make <span class='name'></span></a> | </span>");
             p.find('span.name').text(add_privs[j]);
             n.find('.add-privs').append(p);
-          }
-
-          if (user.aliases && user.aliases.length > 0) {
-            n2.find('.aliases').show();
-            for (var j = 0; j < user.aliases.length; j++) {
-              n2.find('.aliases').append($("<div/>").text(
-                user.aliases[j][0]
-                + (user.aliases[j][1].length > 0 ? " ⇐ " + user.aliases[j][1].join(", ") : "")
-                ))
-            }
           }
         }
       }

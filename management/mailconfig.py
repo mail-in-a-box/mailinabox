@@ -91,19 +91,12 @@ def get_mail_users_ex(env, with_archived=False, with_slow_info=False):
 	#         email: "name@domain.tld",
 	#         privileges: [ "priv1", "priv2", ... ],
 	#         status: "active",
-	#         aliases: [
-	#           ("alias@domain.tld", ["indirect.alias@domain.tld", ...]),
-	#           ...
-	#         ]
 	#       },
 	#       ...
 	#     ]
 	#   },
 	#   ...
 	# ]
-
-	# Pre-load all aliases.
-	aliases = get_mail_alias_map(env)
 
 	# Get users and their privileges.
 	users = []
@@ -121,10 +114,6 @@ def get_mail_users_ex(env, with_archived=False, with_slow_info=False):
 		users.append(user)
 
 		if with_slow_info:
-			user["aliases"] = [
-				(alias, sorted(evaluate_mail_alias_map(alias, aliases, env)))
-				for alias in aliases.get(email.lower(), [])
-				]
 			user["mailbox_size"] = utils.du(os.path.join(env['STORAGE_ROOT'], 'mail/mailboxes', *reversed(email.split("@"))))
 
 	# Add in archived accounts.
@@ -229,21 +218,6 @@ def get_mail_aliases_ex(env):
 	for domain in domains:
 		domain["aliases"].sort(key = lambda alias : (alias["required"], alias["source"]))
 	return domains
-
-def get_mail_alias_map(env):
-	aliases = { }
-	for alias, targets in get_mail_aliases(env):
-		for em in targets.split(","):
-			em = em.strip().lower()
-			aliases.setdefault(em, []).append(alias)
-	return aliases
-
-def evaluate_mail_alias_map(email, aliases,  env):
-	ret = set()
-	for alias in aliases.get(email.lower(), []):
-		ret.add(alias)
-		ret |= evaluate_mail_alias_map(alias, aliases, env)
-	return ret
 
 def get_domain(emailaddr):
 	return emailaddr.split('@', 1)[1]

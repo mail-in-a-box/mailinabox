@@ -19,6 +19,7 @@ Control panel:
 
 * The new check that system services are running mistakenly checked that the Dovecot Managesieve service is publicly accessible. Although the service binds to the public network interface we don't open the port in ufw. On some machines it seems that ufw blocks the connection from the status checks (which seems correct) and on some machines (mine) it doesn't, which is why I didn't notice the problem.
 * The current backup chain will now try to predict how many days until it is deleted (always at least 3 days after the next full backup).
+* The list of aliases that forward to a user are removed from the Mail Users page because when there are many alises it is slow and times-out.
 
 v0.07 (February 28, 2015)
 -------------------------
