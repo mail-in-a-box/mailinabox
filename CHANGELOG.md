@@ -7,10 +7,13 @@ In Development...
 Mail:
 
 * The Roundcube vacation_sieve plugin by @arodier is now installed to make it easier to set vacation auto-reply messages from within Roundcube.
+* Authentication-Results headers for DMARC, added in v0.07, were mistakenly added for outbound mail --- that's now removed.
+* The Trash folder is now created automatically for new mail accounts, addressing a Roundcube error.
 
 System:
 
 * Brute-force SSH and IMAP login attempts are now prevented by properly configuring fail2ban.
+* Status checks are run each night and any changes from night to night are emailed to the box administrator (the first user account).
 
 Control panel:
 
