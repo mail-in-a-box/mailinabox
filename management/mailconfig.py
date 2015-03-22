@@ -261,8 +261,10 @@ def add_mail_user(email, pw, privs, env):
 	# validate email
 	if email.strip() == "":
 		return ("No email address provided.", 400)
-	if not validate_email(email, mode='user'):
+	elif not validate_email(email):
 		return ("Invalid email address.", 400)
+	elif not validate_email(email, mode='user'):
+		return ("User account email addresses may only use the ASCII letters A-Z, the digits 0-9, underscore (_), hyphen (-), and period (.).", 400)
 
 	validate_password(pw)
 
