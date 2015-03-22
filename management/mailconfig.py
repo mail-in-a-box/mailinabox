@@ -293,9 +293,11 @@ def add_mail_user(email, pw, privs, env):
 	# write databasebefore next step
 	conn.commit()
 
-	# Create the user's INBOX, Spam, and Drafts folders, and subscribe them.
-	# K-9 mail will poll every 90 seconds if a Drafts folder does not exist, so create it
-	# to avoid unnecessary polling.
+	# Create & subscribe the user's INBOX, Trash, Spam, and Drafts folders.
+	# * Our sieve rule for spam expects that the Spam folder exists.
+	# * Roundcube will show an error if the user tries to delete a message before the Trash folder exists (#359).
+	# * K-9 mail will poll every 90 seconds if a Drafts folder does not exist, so create it
+	#   to avoid unnecessary polling.
 
 	# Check if the mailboxes exist before creating them. When creating a user that had previously
 	# been deleted, the mailboxes will still exist because they are still on disk.
@@ -306,7 +308,7 @@ def add_mail_user(email, pw, privs, env):
 		conn.commit()
 		return ("Failed to initialize the user: " + e.output.decode("utf8"), 400)
 
-	for folder in ("INBOX", "Spam", "Drafts"):
+	for folder in ("INBOX", "Trash", "Spam", "Drafts"):
 		if folder not in existing_mboxes:
 			utils.shell('check_call', ["doveadm", "mailbox", "create", "-u", email, "-s", folder])
 
