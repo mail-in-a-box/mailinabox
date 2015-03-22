@@ -797,7 +797,7 @@ def run_and_output_changes(env, pool, send_via_email):
 		for category, prev_lines in prev_status.items():
 			if category not in cur_status:
 				out.add_heading(category)
-				out.add_warning("Removed.")
+				out.print_warning("This section was removed.")
 	
 	if send_via_email:
 		# If there were changes, send off an email.
