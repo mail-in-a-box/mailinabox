@@ -183,8 +183,8 @@ def perform_backup(full_backup):
 	backup_duplicity_dir = os.path.join(backup_dir, 'duplicity')
 	migrated_unencrypted_backup_dir = os.path.join(env["STORAGE_ROOT"], "migrated_unencrypted_backup")
 	if os.path.isdir(backup_duplicity_dir):
-		shutil.move(backup_duplicity_dir, migrated_unencrypted_backup_dir)
 		shutil.rmtree(backup_encrypted_dir)
+		shutil.move(backup_duplicity_dir, migrated_unencrypted_backup_dir)
 
 	# On the first run, always do a full backup. Incremental
 	# will fail. Otherwise do a full backup when the size of
