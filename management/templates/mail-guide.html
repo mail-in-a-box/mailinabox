@@ -4,7 +4,7 @@
 	<h2 style="margin-bottom: 0">Checking and Sending Mail</h2>
 
 	<div class="row">
-		<div class="col-sm-7">
+		<div class="col-sm-6">
 			<h3>Webmail</h3>
 
 			<p>Webmail lets you check your email from any web browser. Your webmail site is:</p>
@@ -50,7 +50,7 @@
 					<p>Your device should also provide a contacts list and calendar that syncs to this box when you use this method.</p>
 		</div>
 
-		<div class="col-sm-5">
+		<div class="col-sm-6">
 		<div class="panel panel-default">
 		<div class="panel-heading">
 			<h3>Other information about mail on your box</h3>
@@ -64,6 +64,30 @@
 
 			<h4>Use only this box to send as you</h4>
 			<p>Your box sets strict email sending policies for your domain names to make it harder for spam and other fraudulent mail to claim to be you. Only this machine is authorized to send email on behalf of your domain names. If you use any other service to send email as you, it will likely get spam filtered by recipients.</p>
+
+			<h4>Relaying for other machines</h4>
+			<p>If you have other machines on domains that are under the jurisdiction of your Mail-in-a-Box and they need to send mail (e.g. a webserver, or any machine that has cron jobs you want to see the output of) it is recommended that you configure those machines to relay via the Mail-in-a-Box.</p>
+			<p>If the remote machine is running Ubuntu 14.04 this can be done by applying the following steps to it:
+			<ol>
+				<li>Run <code>sudo apt-get install postfix</code> and choose &ldquo;Satellite system&rdquo; when prompted.</li>
+				<li>
+					Append the following seven lines to <code>/etc/postfix/main.cf</code>:
+					<pre><code>mydestination = 
+smtp_use_tls = yes
+smtp_tls_security_level = verify
+smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt
+smtp_sasl_auth_enable = yes
+smtp_sasl_password_maps = hash:/etc/postfix/relay_password
+smtp_sasl_tls_security_options = </code></pre>
+				</li>
+				<li>
+					Write credentials in the following form to <code>/etc/postfix/relay_password</code> (substitute the second and third values with credentials for a freshly created account on the Mail-in-a-Box):
+					<pre><code>{{hostname}} username:password</code></pre>
+					The account that you create on Mail-in-a-Box for this purpose can be on any of the domains that your Mail-in-a-Box manages, as the only requirement on mail sent by the remote machine is that it is from <em>a</em> domain that the Mail-in-a-Box manages. You may wish to create aliases on Mail-in-a-Box so that any replies sent to automatically generated messages do get routed to your own inbox; otherwise they will accumulate in the inbox of the relay account.
+				</li>
+				<li>Finally, chmod it to 600 (<code>sudo chmod 600 /etc/postfix/relay_password</code>), run <code>sudo postmap /etc/postfix/relay_password</code> and then reload postfix (<code>sudo service postfix reload</code>).</li>
+			</ol>
+			That's it! Mail created and dispatched on the remote machine will now be routed via your Mail-in-a-Box.
 		</div>
 		</div>
 		</div>
