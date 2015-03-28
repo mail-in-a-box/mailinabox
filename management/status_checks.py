@@ -267,9 +267,11 @@ def run_domain_checks_on_domain(domain, rounded_time, env, dns_domains, dns_zone
 
 def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 	# If a DS record is set on the zone containing this domain, check DNSSEC now.
+	has_dnssec = False
 	for zone in dns_domains:
 		if zone == domain or domain.endswith("." + zone):
 			if query_dns(zone, "DS", nxdomain=None) is not None:
+				has_dnssec = True
 				check_dnssec(zone, env, output, dns_zonefiles, is_checking_primary=True)
 
 	ip = query_dns(domain, "A")
@@ -322,7 +324,10 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 	if tlsa25 == tlsa25_expected:
 		output.print_ok("""The DANE TLSA record for incoming mail is correct (%s).""" % tlsa_qname,)
 	elif tlsa25 is None:
-		output.print_error("""The DANE TLSA record for incoming mail is not set. This is optional.""")
+		if has_dnssec:
+			# Omit a warning about it not being set if DNSSEC isn't enabled,
+			# since TLSA shouldn't be used without DNSSEC.
+			output.print_warning("""The DANE TLSA record for incoming mail is not set. This is optional.""")
 	else:
 		output.print_error("""The DANE TLSA record for incoming mail (%s) is not correct. It is '%s' but it should be '%s'.
 			It may take several hours for public DNS to update after a change."""
@@ -402,7 +407,7 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 	else:
 		if ds == None:
 			if is_checking_primary: return
-			output.print_error("""This domain's DNSSEC DS record is not set. The DS record is optional. The DS record activates DNSSEC.
+			output.print_warning("""This domain's DNSSEC DS record is not set. The DS record is optional. The DS record activates DNSSEC.
 				To set a DS record, you must follow the instructions provided by your domain name registrar and provide to them this information:""")
 		else:
 			if is_checking_primary:
