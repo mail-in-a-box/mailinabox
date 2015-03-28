@@ -2,11 +2,10 @@
 
 # This script performs a backup of all user data:
 # 1) System services are stopped while a copy of user data is made.
-# 2) An incremental backup is made using duplicity into the
-#    directory STORAGE_ROOT/backup/duplicity.
+# 2) An incremental encrypted backup is made using duplicity into the
+#    directory STORAGE_ROOT/backup/encrypted. The password used for
+#    encryption is stored in backup/secret_key.txt.
 # 3) The stopped services are restarted.
-# 4) The backup files are encrypted with a long password (stored in
-#    backup/secret_key.txt) to STORAGE_ROOT/backup/encrypted.
 # 5) STORAGE_ROOT/backup/after-backup is executd if it exists.
 
 import os, os.path, shutil, glob, re, datetime
@@ -14,13 +13,13 @@ import dateutil.parser, dateutil.relativedelta, dateutil.tz
 
 from utils import exclusive_process, load_environment, shell
 
-# destroy backups when the most recent increment in the chain
+# Destroy backups when the most recent increment in the chain
 # that depends on it is this many days old.
 keep_backups_for_days = 3
 
 def backup_status(env):
 	# What is the current status of backups?
-	# Loop through all of the files in STORAGE_ROOT/backup/duplicity to
+	# Loop through all of the files in STORAGE_ROOT/backup/encrypted to
 	# get a list of all of the backups taken and sum up file sizes to
 	# see how large the storage is.
 
@@ -202,10 +201,8 @@ def perform_backup(full_backup):
 		shell('check_call', [
 			"/usr/bin/duplicity",
 			"full" if full_backup else "incr",
-			"--archive-dir", "/tmp/duplicity-archive-dir",
 			"--exclude", backup_dir,
-			"--volsize", "100",
-			"--verbosity", "warning",
+			"--volsize", "250",
 			env["STORAGE_ROOT"],
 			"file://" + backup_encrypted_dir
 			],
@@ -222,20 +219,20 @@ def perform_backup(full_backup):
 		shutil.rmtree(migrated_unencrypted_backup_dir)
 
 	# Remove old backups. This deletes all backup data no longer needed
-	# from more than 3 days ago. Must do this before destroying the
-	# cache directory or else this command will re-create it.
+	# from more than 3 days ago.
 	shell('check_call', [
 		"/usr/bin/duplicity",
 		"remove-older-than",
 		"%dD" % keep_backups_for_days,
-		"--archive-dir", "/tmp/duplicity-archive-dir",
 		"--force",
-		"--verbosity", "warning",
 		"file://" + backup_encrypted_dir
 		])
-
-	# Remove duplicity's cache directory because it's redundant with our backup directory.
-	shutil.rmtree("/tmp/duplicity-archive-dir")
+	shell('check_call', [
+		"/usr/bin/duplicity",
+		"cleanup",
+		"--force",
+		"file://" + backup_encrypted_dir
+		])
 
 	# Execute a post-backup script that does the copying to a remote server.
 	# Run as the STORAGE_USER user, not as root. Pass our settings in
