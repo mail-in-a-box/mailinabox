@@ -272,22 +272,31 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 			if query_dns(zone, "DS", nxdomain=None) is not None:
 				check_dnssec(zone, env, output, dns_zonefiles, is_checking_primary=True)
 
+	ip = query_dns(domain, "A")
+	ns_ips = query_dns("ns1." + domain, "A") + '/' + query_dns("ns2." + domain, "A")
+
 	# Check that the ns1/ns2 hostnames resolve to A records. This information probably
 	# comes from the TLD since the information is set at the registrar as glue records.
 	# We're probably not actually checking that here but instead checking that we, as
 	# the nameserver, are reporting the right info --- but if the glue is incorrect this
 	# will probably fail.
-	ip = query_dns("ns1." + domain, "A") + '/' + query_dns("ns2." + domain, "A")
-	if ip == env['PUBLIC_IP'] + '/' + env['PUBLIC_IP']:
+	if ns_ips == env['PUBLIC_IP'] + '/' + env['PUBLIC_IP']:
 		output.print_ok("Nameserver glue records are correct at registrar. [ns1/ns2.%s => %s]" % (env['PRIMARY_HOSTNAME'], env['PUBLIC_IP']))
+
+	elif ip == env['PUBLIC_IP']:
+		# The NS records are not what we expect, but the domain resolves correctly, so
+		# the user may have set up external DNS. List this discrepancy as a warning.
+		output.print_warning("""Nameserver glue records (ns1.%s and ns2.%s) should be configured at your domain name
+			registrar as having the IP address of this box (%s). They currently report addresses of %s. If you have set up External DNS, this may be OK."""
+			% (env['PRIMARY_HOSTNAME'], env['PRIMARY_HOSTNAME'], env['PUBLIC_IP'], ns_ips))
+
 	else:
 		output.print_error("""Nameserver glue records are incorrect. The ns1.%s and ns2.%s nameservers must be configured at your domain name
 			registrar as having the IP address %s. They currently report addresses of %s. It may take several hours for
 			public DNS to update after a change."""
-			% (env['PRIMARY_HOSTNAME'], env['PRIMARY_HOSTNAME'], env['PUBLIC_IP'], ip))
+			% (env['PRIMARY_HOSTNAME'], env['PRIMARY_HOSTNAME'], env['PUBLIC_IP'], ns_ips))
 
 	# Check that PRIMARY_HOSTNAME resolves to PUBLIC_IP in public DNS.
-	ip = query_dns(domain, "A")
 	if ip == env['PUBLIC_IP']:
 		output.print_ok("Domain resolves to box's IP address. [%s => %s]" % (env['PRIMARY_HOSTNAME'], env['PUBLIC_IP']))
 	else:
@@ -341,6 +350,7 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 	# whois information -- we may be getting the NS records from us rather than
 	# the TLD, and so we're not actually checking the TLD. For that we'd need
 	# to do a DNS trace.
+	ip = query_dns(domain, "A")
 	custom_dns = get_custom_dns_config(env)
 	existing_ns = query_dns(domain, "NS")
 	correct_ns = "; ".join(sorted([
@@ -349,6 +359,11 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 		]))
 	if existing_ns.lower() == correct_ns.lower():
 		output.print_ok("Nameservers are set correctly at registrar. [%s]" % correct_ns)
+	elif ip == env['PUBLIC_IP']:
+		# The domain resolves correctly, so maybe the user is using External DNS.
+		output.print_warning("""The nameservers set on this domain at your domain name registrar should be %s. They are currently %s.
+			If you are using External DNS, this may be OK."""
+				% (correct_ns, existing_ns) )
 	else:
 		output.print_error("""The nameservers set on this domain are incorrect. They are currently %s. Use your domain name registrar's
 			control panel to set the nameservers to %s."""
