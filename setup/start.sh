@@ -27,7 +27,7 @@ export LC_TYPE=en_US.UTF-8
 if [ -f /etc/mailinabox.conf ]; then
 	# Run any system migrations before proceeding. Since this is a second run,
 	# we assume we have Python already installed.
-	setup/migrate.py --migrate
+	setup/migrate.py --migrate || exit 1
 
 	# Load the old .conf file to get existing configuration options loaded
 	# into variables with a DEFAULT_ prefix.
