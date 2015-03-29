@@ -89,7 +89,7 @@ def make_domain_config(domain, template, template_for_primaryhost, env):
 
 	# Replace substitution strings in the template & return.
 	nginx_conf = nginx_conf.replace("$STORAGE_ROOT", env['STORAGE_ROOT'])
-	nginx_conf = nginx_conf.replace("$HOSTNAME", domain.encode("idna").decode("ascii"))
+	nginx_conf = nginx_conf.replace("$HOSTNAME", domain)
 	nginx_conf = nginx_conf.replace("$ROOT", root)
 	nginx_conf = nginx_conf.replace("$SSL_KEY", ssl_key)
 	nginx_conf = nginx_conf.replace("$SSL_CERTIFICATE", ssl_certificate)
@@ -213,7 +213,7 @@ def create_csr(domain, ssl_key, env):
                 "-key", ssl_key,
                 "-out",  "/dev/stdout",
                 "-sha256",
-                "-subj", "/C=%s/ST=/L=/O=/CN=%s" % (env["CSR_COUNTRY"], domain.encode("idna").decode("ascii"))])
+                "-subj", "/C=%s/ST=/L=/O=/CN=%s" % (env["CSR_COUNTRY"], domain)])
 
 def install_cert(domain, ssl_cert, ssl_chain, env):
 	if domain not in get_web_domains(env):

@@ -246,7 +246,8 @@ def run_domain_checks(rounded_time, env, output, pool):
 def run_domain_checks_on_domain(domain, rounded_time, env, dns_domains, dns_zonefiles, mail_domains, web_domains):
 	output = BufferedOutput()
 
-	output.add_heading(domain)
+	# The domain is IDNA-encoded, but for display use Unicode.
+	output.add_heading(domain.encode('ascii').decode('idna'))
 
 	if domain == env["PRIMARY_HOSTNAME"]:
 		check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles)
@@ -639,7 +640,6 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, rounded_time=Fal
 		if m:
 			cert_expiration_date = dateutil.parser.parse(m.group(1))
 
-	domain = domain.encode("idna").decode("ascii")
 	wildcard_domain = re.sub("^[^\.]+", "*", domain)
 	if domain is not None and domain not in certificate_names and wildcard_domain not in certificate_names:
 		return ("The certificate is for the wrong domain name. It is for %s."

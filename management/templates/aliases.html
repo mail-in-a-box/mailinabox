@@ -27,7 +27,7 @@
     <label for="addaliasEmail" class="col-sm-1 control-label">Alias</label>
     <div class="col-sm-10">
       <input type="email" class="form-control" id="addaliasEmail">
-      <div style="margin-top: 3px; padding-left: 3px; font-size: 90%" class="text-muted">You may use international (non-ASCII) characters, but this has not yet been well tested.</div>
+      <div style="margin-top: 3px; padding-left: 3px; font-size: 90%" class="text-muted">You may use international (non-ASCII) characters for the domain part of the email address only.</div>
     </div>
   </div>
   <div class="form-group">
@@ -98,8 +98,8 @@ function show_aliases() {
           n.attr('id', '');
 
           if (alias.required) n.addClass('alias-required');
-          n.attr('data-email', alias.source);
-          n.find('td.email').text(alias.source)
+          n.attr('data-email', alias.source_display); // this is decoded from IDNA, but will get re-coded to IDNA on the backend
+          n.find('td.email').text(alias.source_display)
           for (var j = 0; j < alias.destination.length; j++)
             n.find('td.target').append($("<div></div>").text(alias.destination[j]))
           $('#alias_table tbody').append(n);

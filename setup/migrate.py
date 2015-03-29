@@ -67,6 +67,35 @@ def migration_6(env):
 	basepath = os.path.join(env["STORAGE_ROOT"], 'dns/dnssec')
 	shutil.move(os.path.join(basepath, 'keys.conf'), os.path.join(basepath, 'RSASHA1-NSEC3-SHA1.conf'))
 
+def migration_7(env):
+	# I previously wanted domain names to be stored in Unicode in the database. Now I want them
+	# to be in IDNA. Affects aliases only.
+	import sqlite3
+	conn = sqlite3.connect(os.path.join(env["STORAGE_ROOT"], "mail/users.sqlite"))
+
+	# Get existing alias source addresses.
+	c = conn.cursor()
+	c.execute('SELECT source FROM aliases')
+	aliases = [ row[0] for row in c.fetchall() ]
+
+	# Update to IDNA-encoded domains.
+	for email in aliases:
+		try:
+			localpart, domainpart = email.split("@")
+			domainpart = domainpart.encode("idna").decode("ascii")
+			newemail = localpart + "@" + domainpart
+			if newemail != email:
+				c = conn.cursor()
+				c.execute("UPDATE aliases SET source=? WHERE source=?", (newemail, email))
+				if c.rowcount != 1: raise ValueError("Alias not found.")
+				print("Updated alias", email, "to", newemail)
+		except Exception as e:
+			print("Error updating IDNA alias", email, e)
+
+	# Save.
+	conn.commit()
+
+
 def get_current_migration():
 	ver = 0
 	while True:

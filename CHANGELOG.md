@@ -8,6 +8,11 @@ Mail:
 
 * POP3S is now enabled (port 995).
 
+System:
+
+* Internationalized Domain Names (IDNs) should now work in email. If you had custom DNS or custom web settings for internationalized domains, check that they are still working.
+
+
 v0.08 (April 1, 2015)
 ---------------------
 
