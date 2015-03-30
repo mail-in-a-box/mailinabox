@@ -205,7 +205,17 @@ def build_zone(domain, all_domains, additional_records, env, is_zone=True):
 	# The user may set other records that don't conflict with our settings.
 	# Don't put any TXT records above this line, or it'll prevent any custom TXT records.
 	for qname, rtype, value in get_custom_records(domain, additional_records, env):
-		if has_rec(qname, rtype): continue
+		if has_rec(qname, rtype):
+			txt_type = value.split(' ')[0].split('\;')[0].split(';')[0].split('v=')[-1]
+			if rtype == 'TXT' and txt_type in ('spf1', 'DKIM1'):
+				if txt_type == 'spf1' and value != 'v=spf1 mx -all':
+					for ind in range(len(records)):
+						rec = records[ind]
+						if rec[0] == qname and rec[1] == rtype and rec[2] == 'v=spf1 mx -all':
+							del records[ind]
+							break
+			else:
+				continue
 		records.append((qname, rtype, value, "(Set by user.)"))
 
 	# Add defaults if not overridden by the user's custom settings (and not otherwise configured).
