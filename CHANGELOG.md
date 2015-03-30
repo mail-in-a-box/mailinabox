@@ -10,6 +10,10 @@ Mail:
 * Authentication-Results headers for DMARC, added in v0.07, were mistakenly added for outbound mail --- that's now removed.
 * The Trash folder is now created automatically for new mail accounts, addressing a Roundcube error.
 
+DNS:
+
+* Custom DNS TXT records were not always working and they can now override the default SPF, DKIM, and DMARC records.
+
 System:
 
 * ownCloud updated to version 8.0.2.
