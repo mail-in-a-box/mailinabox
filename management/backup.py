@@ -195,6 +195,9 @@ def perform_backup(full_backup):
 	shell('check_call', ["/usr/sbin/service", "dovecot", "stop"])
 	shell('check_call', ["/usr/sbin/service", "postfix", "stop"])
 
+	env_with_passphrase = { "PASSPHRASE" :
+		open(os.path.join(backup_dir, 'secret_key.txt')).read()
+	}
 	# Update the backup mirror directory which mirrors the current
 	# STORAGE_ROOT (but excluding the backups themselves!).
 	try:
@@ -206,10 +209,7 @@ def perform_backup(full_backup):
 			env["STORAGE_ROOT"],
 			"file://" + backup_encrypted_dir
 			],
-			env={ "PASSPHRASE" : open(
-					os.path.join(backup_dir, 'secret_key.txt')
-				).read() }
-			)
+			env_with_passphrase)
 	finally:
 		# Start services again.
 		shell('check_call', ["/usr/sbin/service", "dovecot", "start"])
@@ -226,13 +226,21 @@ def perform_backup(full_backup):
 		"%dD" % keep_backups_for_days,
 		"--force",
 		"file://" + backup_encrypted_dir
-		])
+		],
+		env_with_passphrase)
+
+	# From duplicity's manual:
+	# "This should only be necessary after a duplicity session fails or is
+	# aborted prematurely."
+	# That may be unlikely here but we may as well ensure we tidy up if
+	# that does happen - it might just have been a poorly timed reboot.
 	shell('check_call', [
 		"/usr/bin/duplicity",
 		"cleanup",
 		"--force",
 		"file://" + backup_encrypted_dir
-		])
+		],
+		env_with_passphrase)
 
 	# Execute a post-backup script that does the copying to a remote server.
 	# Run as the STORAGE_USER user, not as root. Pass our settings in
