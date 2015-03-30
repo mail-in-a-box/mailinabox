@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import sys, getpass, urllib.request, urllib.error, json
+import sys, getpass, urllib.request, urllib.error, json, re
 
 def mgmt(cmd, data=None, is_json=False):
 	# The base URL for the management daemon. (Listens on IPv4 only.)
@@ -31,11 +31,14 @@ def read_password():
     while True:
         first = getpass.getpass('password: ')
         if len(first) < 4:
-            print('Passwords must be at least four characters.')
+            print("Passwords must be at least four characters.")
+            continue
+        if re.search(r'[\s]', first):
+            print("Passwords cannot contain spaces.")
             continue
         second = getpass.getpass(' (again): ')
         if first != second:
-            print('Passwords not the same. Try again.')
+            print("Passwords not the same. Try again.")
             continue
         break
     return first
