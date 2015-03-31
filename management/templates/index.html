@@ -329,6 +329,7 @@ function api(url, method, data, callback, callback_error) {
   ajax({
     url: "/admin" + url,
     method: method,
+    cache: false,
     data: data,
     beforeSend: function(xhr) {
       // We don't store user credentials in a cookie to avoid the hassle of CSRF
