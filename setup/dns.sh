@@ -127,6 +127,8 @@ EOF
 chmod +x /etc/cron.daily/mailinabox-dnssec
 
 # Permit DNS queries on TCP/UDP in the firewall.
-
 ufw_allow domain
 
+# Start nsd. None of the zones are configured until the management daemon is
+# run later, though.
+restart_service nsd

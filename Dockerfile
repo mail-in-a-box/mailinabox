@@ -19,8 +19,15 @@ FROM phusion/baseimage:0.9.16
 
 # Dockerfile metadata.
 MAINTAINER Joshua Tauberer (http://razor.occams.info)
-EXPOSE 25 53/udp 53/tcp 80 443 587 993
-VOLUME /data
+EXPOSE 25 53/udp 53/tcp 80 443 587 993 4190
+VOLUME /home/user-data
+
+# Use baseimage's init system. A correct init process is required for
+# process #1 in order to have a functioning Linux system.
+CMD ["/sbin/my_init"]
+
+# Create the user-data user, so the start script doesn't have to.
+RUN useradd -m user-data
 
 # Docker has a beautiful way to cache images after each step. The next few
 # steps of installing system packages are very intensive, so we take care
@@ -35,20 +42,16 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get upgrade -y
 # Install packages needed by Mail-in-a-Box.
 ADD containers/docker/apt_package_list.txt /tmp/mailinabox_apt_package_list.txt
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y $(cat /tmp/mailinabox_apt_package_list.txt)
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y rsyslog
-RUN rm -f /tmp/mailinabox_apt_package_list.txt
-RUN apt-get clean
 
-# Create the user-data user, so the start script doesn't have to.
-RUN useradd -m user-data
+# from questions.sh -- needs merging into the above line
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y dialog python3 python3-pip
+RUN pip3 install "email_validator==0.1.0-rc4"
 
 # Now add Mail-in-a-Box to the system.
 ADD . /usr/local/mailinabox
 
-# We can't know things like the IP address where the container will eventually
-# be deployed until the container is started. We also don't want to create any
-# private keys during the creation of the image --- that should wait until the
-# container is started too. So our whole setup process is deferred until the
-# container is started.
-RUN mkdir -p /etc/my_init.d
-RUN ln -s /usr/local/mailinabox/containers/docker/init.sh /etc/my_init.d/20-mailinabox.sh
+# Configure runit services.
+RUN /usr/local/mailinabox/containers/docker/tools/configure_services.sh
+
+# Add my_init scripts
+ADD containers/docker/my_init.d/* /etc/my_init.d/
