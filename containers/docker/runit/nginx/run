@@ -1,0 +1,24 @@
+#!/bin/bash
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/usr/sbin/nginx
+NAME=nginx
+DESC=nginx
+
+# Include nginx defaults if available
+if [ -r /etc/default/nginx ]; then
+	. /etc/default/nginx
+fi
+
+test -x $DAEMON || exit 0
+
+. /lib/init/vars.sh
+. /lib/lsb/init-functions
+
+# Check if the ULIMIT is set in /etc/default/nginx
+if [ -n "$ULIMIT" ]; then
+	# Set the ulimits
+	ulimit $ULIMIT
+fi
+
+exec $DAEMON $DAEMON_OPTS -g "daemon off;"

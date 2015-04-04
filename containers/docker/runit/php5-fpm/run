@@ -1,0 +1,42 @@
+#!/bin/bash
+
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+DESC="PHP5 FastCGI Process Manager"
+NAME=php5-fpm
+DAEMON=/usr/sbin/$NAME
+DAEMON_ARGS="-F --fpm-config /etc/php5/fpm/php-fpm.conf"
+PIDFILE=/var/run/php5-fpm.pid
+SCRIPTNAME=/etc/init.d/$NAME
+
+# Exit if the package is not installed
+[ -x "$DAEMON" ] || exit 0
+
+# Read configuration variable file if it is present
+[ -r /etc/default/$NAME ] && . /etc/default/$NAME
+
+# Load the VERBOSE setting and other rcS variables
+. /lib/init/vars.sh
+
+# Define LSB log_* functions.
+# Depend on lsb-base (>= 3.0-6) to ensure that this file is present.
+. /lib/lsb/init-functions
+
+# Don't run if we are running upstart
+if init_is_upstart; then
+    exit 1
+fi
+
+#
+# Function to check the correctness of the config file
+#
+do_check()
+{
+    /usr/lib/php5/php5-fpm-checkconf || return 1
+    return 0
+}
+
+# Read configuration variable file if it is present
+[ -r /etc/default/$NAME ] && . /etc/default/$NAME
+
+do_check
+exec $DAEMON $DAEMON_ARGS

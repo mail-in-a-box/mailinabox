@@ -16,10 +16,12 @@ rm -f /usr/local/bin/mailinabox-daemon
 ln -s `pwd`/management/daemon.py /usr/local/bin/mailinabox-daemon
 
 # Create an init script to start the management daemon and keep it
-# running after a reboot.
-rm -f /etc/init.d/mailinabox
-ln -s $(pwd)/conf/management-initscript /etc/init.d/mailinabox
-hide_output update-rc.d mailinabox defaults
+# running after a reboot, if not runit service exists.
+if [ ! -d /etc/service/mailinabox ]; then
+	rm -f /etc/init.d/mailinabox
+	ln -s $(pwd)/conf/management-initscript /etc/init.d/mailinabox
+	hide_output update-rc.d mailinabox defaults
+fi
 
 # Perform a daily backup.
 cat > /etc/cron.daily/mailinabox-backup << EOF;

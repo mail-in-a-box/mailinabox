@@ -1,0 +1,30 @@
+#!/bin/bash
+set -e
+
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+NAME=nsd                  # Introduce the short server's name here
+DAEMON=/usr/sbin/$NAME    # Introduce the server's location here
+CONFFILE=/etc/nsd/nsd.conf
+DAEMON_ARGS="-d -c $CONFFILE"
+
+NSDC=/usr/sbin/nsd-control
+
+# Exit if the package is not installed
+[ -x $DAEMON ] || exit 0
+
+PIDFILE=$(nsd-checkconf -o pidfile $CONFFILE)
+
+prepare_environment() {
+    mkdir -p "$(dirname "$(/usr/sbin/nsd-checkconf -o pidfile $CONFFILE)")"
+    chown "$(/usr/sbin/nsd-checkconf -o username $CONFFILE)" "$(dirname "$(/usr/sbin/nsd-checkconf -o pidfile $CONFFILE)")"
+    mkdir -p "$(dirname "$(/usr/sbin/nsd-checkconf -o database $CONFFILE)")"
+    chown "$(/usr/sbin/nsd-checkconf -o username $CONFFILE)" "$(dirname "$(/usr/sbin/nsd-checkconf -o database $CONFFILE)")"
+}
+
+prepare_environment
+
+# Check if daemon is running
+nc -z -w 4 localhost 10222
+/usr/local/mailinabox/tools/dns_update
+
+exec $DAEMON $DAEMON_ARGS

@@ -1,0 +1,29 @@
+#!/bin/bash
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/usr/sbin/postgrey
+NAME=postgrey
+DESC="postfix greylisting daemon"
+
+PIDFILE=/var/run/$NAME.pid
+SCRIPTNAME=/etc/init.d/$NAME
+
+# Gracefully exit if the package has been removed.
+test -x $DAEMON || exit 0
+
+. /lib/lsb/init-functions
+
+# Read config file if it is present.
+if [ -r /etc/default/$NAME ]
+then
+    . /etc/default/$NAME
+fi
+
+POSTGREY_OPTS="--pidfile=$PIDFILE $POSTGREY_OPTS"
+if [ -z "$POSTGREY_TEXT" ]; then
+    POSTGREY_TEXT_OPT=""
+else
+    POSTGREY_TEXT_OPT="--greylist-text=$POSTGREY_TEXT"
+fi
+
+exec $DAEMON $POSTGREY_OPTS "$POSTGREY_TEXT_OPT"

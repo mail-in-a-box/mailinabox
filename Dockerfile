@@ -19,8 +19,14 @@ FROM phusion/baseimage:0.9.16
 
 # Dockerfile metadata.
 MAINTAINER Joshua Tauberer (http://razor.occams.info)
-EXPOSE 25 53/udp 53/tcp 80 443 587 993
-VOLUME /data
+EXPOSE 25 53/udp 53/tcp 80 443 587 993 4190
+VOLUME /home/user-data
+
+# Use baseimage init system
+CMD ["/sbin/my_init"]
+
+# Create the user-data user, so the start script doesn't have to.
+RUN useradd -m user-data
 
 # Docker has a beautiful way to cache images after each step. The next few
 # steps of installing system packages are very intensive, so we take care
@@ -35,20 +41,28 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get upgrade -y
 # Install packages needed by Mail-in-a-Box.
 ADD containers/docker/apt_package_list.txt /tmp/mailinabox_apt_package_list.txt
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y $(cat /tmp/mailinabox_apt_package_list.txt)
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y rsyslog
-RUN rm -f /tmp/mailinabox_apt_package_list.txt
-RUN apt-get clean
-
-# Create the user-data user, so the start script doesn't have to.
-RUN useradd -m user-data
 
 # Now add Mail-in-a-Box to the system.
 ADD . /usr/local/mailinabox
 
-# We can't know things like the IP address where the container will eventually
-# be deployed until the container is started. We also don't want to create any
-# private keys during the creation of the image --- that should wait until the
-# container is started too. So our whole setup process is deferred until the
-# container is started.
-RUN mkdir -p /etc/my_init.d
-RUN ln -s /usr/local/mailinabox/containers/docker/init.sh /etc/my_init.d/20-mailinabox.sh
+# Patch setup/functions.sh
+RUN cp /usr/local/mailinabox/setup/functions.sh /usr/local/mailinabox/setup/functions.orig.sh
+RUN echo "# Docker patches" >> /usr/local/mailinabox/setup/functions.sh && \
+	echo "source containers/docker/patch/setup/functions_docker.sh" >> /usr/local/mailinabox/setup/functions.sh
+# Skip apt-get install
+RUN sed 's/PACKAGES=$@/PACKAGES=""/g' -i /usr/local/mailinabox/setup/functions.sh
+
+# Install runit services
+ADD containers/docker/runit/ /etc/service/
+
+# LSB Compatibility
+RUN /usr/local/mailinabox/containers/docker/tools/lsb_compat.sh
+
+# Configure service logs
+RUN /usr/local/mailinabox/containers/docker/tools/runit_logs.sh
+
+# Disable services
+RUN /usr/local/mailinabox/containers/docker/tools/disable_services.sh
+
+# Add my_init scripts
+ADD containers/docker/my_init.d/* /etc/my_init.d/

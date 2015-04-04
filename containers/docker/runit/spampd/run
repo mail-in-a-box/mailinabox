@@ -1,0 +1,98 @@
+#!/bin/bash
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+DESC='spam checking proxy daemon'
+NAME='spampd'
+PROGRAM=/usr/sbin/spampd
+#EXECUTABLE=`head -n 1 $PROGRAM | sed -e 's,^#![ 	]*/,/,;s,[ 	].*$,,'`
+EXECUTABLE=/usr/bin/perl
+PIDFILE=/var/run/spampd.pid
+
+if [ -f $PIDFILE ]; then
+	# If can't delete pidfile, this means process is running ...
+	rm $PIDFILE || exit 0
+fi
+
+. /lib/lsb/init-functions
+
+# set some important defaults (overridable via /etc/default/spampd)
+USERID=spampd
+GRPID=spampd
+
+if [ -f /etc/default/$NAME ]; then
+	. /etc/default/$NAME
+fi
+
+istrue () {
+    ANS=$(echo $1 | tr A-Z a-z)
+    [ "$ANS" = 'yes' -o "$ANS" = 'true' -o "$ANS" = 'enable' -o "$ANS" = '1' ]
+}
+
+#
+# find out wether to start spampd or not
+#
+istrue ${STARTSPAMPD} && STARTSPAMPD='true'
+
+#
+# Check wether the program is actually there
+#
+# return 5 as demanded by LSB 2.1 when program isn't installed.
+[  -x $PROGRAM ] || exit 5
+
+#
+# Calculate final commandline
+#
+S_TAGALL=''
+S_AWL=''
+S_LOCALONLY=''
+
+istrue "$TAGALL" \
+&& S_TAGALL='--tagall'
+
+istrue "$AUTOWHITELIST" \
+&& S_AWL='--auto-whitelist'
+
+istrue "$LOCALONLY" \
+&& S_LOCALONLY='--L'
+
+istrue "$LOGINET" \
+&& LOGTARGET="inet" \
+|| LOGTARGET="unix"
+
+ARGS="${S_LOCALONLY} ${S_AWL} ${S_TAGALL} "
+
+[ -n "${LISTENPORT}" ] && ARGS="${ARGS} --port=${LISTENPORT}"
+
+[ -n "${LISTENHOST}" ] && ARGS="${ARGS} --host=${LISTENHOST}"
+
+[ -n "${DESTPORT}" ] && ARGS="${ARGS} --relayport=${DESTPORT}"
+
+[ -n "${DESTHOST}" ] && ARGS="${ARGS} --relayhost=${DESTHOST}"
+
+[ -n "${PIDFILE}" ] && ARGS="${ARGS} --pid=${PIDFILE}"
+
+[ -n "${CHILDREN}" ] && ARGS="${ARGS} --children=${CHILDREN}"
+
+[ -n "${USERID}" ] && ARGS="${ARGS} --user=${USERID}"
+
+[ -n "${GRPID}" ] && ARGS="${ARGS} --group=${GRPID}"
+
+[ -n "${LOGTARGET}" ] && ARGS="${ARGS} --logsock=${LOGTARGET}"
+
+[ -n "${ADDOPTS}" ] && ARGS="${ARGS} ${ADDOPTS}"
+
+# Don't daemonize
+ARGS="${ARGS} --nodetach"
+
+if ! istrue "${STARTSPAMPD}"; then
+	log_warning_msg "Starting $DESC: $NAME (disabled in /etc/default/$NAME)."
+	# LSB 2.1: 6 mean unconfigured. This seems appropriate here.
+	exit 6
+fi
+log_daemon_msg "Starting $DESC" "$NAME"
+# if spampd is not installed, return 5 as demanded by LSB 2.1
+if [ ! -x $EXECUTABLE ]; then
+	log_error_msg "failed! - executable not found"
+	exit 5
+fi
+# start daemon
+exec $PROGRAM $ARGS

@@ -75,7 +75,7 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
 
   'instanceid' => '$instanceid',
 
-  'trusted_domains' => 
+  'trusted_domains' =>
     array (
       0 => '$PRIMARY_HOSTNAME',
     ),
@@ -172,4 +172,5 @@ chmod +x /etc/cron.hourly/mailinabox-owncloud
 
 # Enable PHP modules and restart PHP.
 php5enmod imap
+restart_service memcached
 restart_service php5-fpm
