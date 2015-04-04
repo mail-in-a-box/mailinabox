@@ -103,7 +103,8 @@ source setup/management.sh
 source setup/munin.sh
 
 # Ping the management daemon to write the DNS and nginx configuration files.
-while [ ! -f /var/lib/mailinabox/api.key ]; do
+until nc -z -w 4 localhost 10222
+do
 	echo Waiting for the Mail-in-a-Box management daemon to start...
 	sleep 2
 done

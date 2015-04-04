@@ -42,8 +42,5 @@ EOF
 chmod +x /etc/cron.daily/mailinabox-statuschecks
 
 
-# Start it. Remove the api key file first so that start.sh
-# can wait for it to be created to know that the management
-# server is ready.
-rm -f /var/lib/mailinabox/api.key
+# Start it.
 restart_service mailinabox
