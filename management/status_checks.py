@@ -170,7 +170,7 @@ def check_software_updates(env, output):
 def check_system_aliases(env, output):
 	# Check that the administrator alias exists since that's where all
 	# admin email is automatically directed.
-	check_alias_exists("administrator@" + env['PRIMARY_HOSTNAME'], env, output)
+	check_alias_exists("System administrator address", "administrator@" + env['PRIMARY_HOSTNAME'], env, output)
 
 def check_free_disk_space(rounded_values, env, output):
 	# Check free disk space.
@@ -284,7 +284,7 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 	# the nameserver, are reporting the right info --- but if the glue is incorrect this
 	# will probably fail.
 	if ns_ips == env['PUBLIC_IP'] + '/' + env['PUBLIC_IP']:
-		output.print_ok("Nameserver glue records are correct at registrar. [ns1/ns2.%s => %s]" % (env['PRIMARY_HOSTNAME'], env['PUBLIC_IP']))
+		output.print_ok("Nameserver glue records are correct at registrar. [ns1/ns2.%s ↦ %s]" % (env['PRIMARY_HOSTNAME'], env['PUBLIC_IP']))
 
 	elif ip == env['PUBLIC_IP']:
 		# The NS records are not what we expect, but the domain resolves correctly, so
@@ -301,7 +301,7 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 
 	# Check that PRIMARY_HOSTNAME resolves to PUBLIC_IP in public DNS.
 	if ip == env['PUBLIC_IP']:
-		output.print_ok("Domain resolves to box's IP address. [%s => %s]" % (env['PRIMARY_HOSTNAME'], env['PUBLIC_IP']))
+		output.print_ok("Domain resolves to box's IP address. [%s ↦ %s]" % (env['PRIMARY_HOSTNAME'], env['PUBLIC_IP']))
 	else:
 		output.print_error("""This domain must resolve to your box's IP address (%s) in public DNS but it currently resolves
 			to %s. It may take several hours for public DNS to update after a change. This problem may result from other
@@ -313,7 +313,7 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 	ipaddr_rev = dns.reversename.from_address(env['PUBLIC_IP'])
 	existing_rdns = query_dns(ipaddr_rev, "PTR")
 	if existing_rdns == domain:
-		output.print_ok("Reverse DNS is set correctly at ISP. [%s => %s]" % (env['PUBLIC_IP'], env['PRIMARY_HOSTNAME']))
+		output.print_ok("Reverse DNS is set correctly at ISP. [%s ↦ %s]" % (env['PUBLIC_IP'], env['PRIMARY_HOSTNAME']))
 	else:
 		output.print_error("""Your box's reverse DNS is currently %s, but it should be %s. Your ISP or cloud provider will have instructions
 			on setting up reverse DNS for your box at %s.""" % (existing_rdns, domain, env['PUBLIC_IP']) )
@@ -335,12 +335,12 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
                         % (tlsa_qname, tlsa25, tlsa25_expected))
 
 	# Check that the hostmaster@ email address exists.
-	check_alias_exists("hostmaster@" + domain, env, output)
+	check_alias_exists("Hostmaster contact address", "hostmaster@" + domain, env, output)
 
-def check_alias_exists(alias, env, output):
+def check_alias_exists(alias_name, alias, env, output):
 	mail_alises = dict(get_mail_aliases(env))
 	if alias in mail_alises:
-		output.print_ok("%s exists as a mail alias [=> %s]" % (alias, mail_alises[alias]))
+		output.print_ok("%s exists as a mail alias. [%s ↦ %s]" % (alias_name, alias, mail_alises[alias]))
 	else:
 		output.print_error("""You must add a mail alias for %s and direct email to you or another administrator.""" % alias)
 
@@ -471,7 +471,7 @@ def check_mail_domain(domain, env, output):
 					change. This problem may result from other issues listed here.""" % (recommended_mx,))
 
 	elif mxhost == env['PRIMARY_HOSTNAME']:
-		good_news = "Domain's email is directed to this domain. [%s => %s]" % (domain, mx)
+		good_news = "Domain's email is directed to this domain. [%s ↦ %s]" % (domain, mx)
 		if mx != recommended_mx:
 			good_news += "  This configuration is non-standard.  The recommended configuration is '%s'." % (recommended_mx,)
 		output.print_ok(good_news)
@@ -483,7 +483,7 @@ def check_mail_domain(domain, env, output):
 	# Check that the postmaster@ email address exists. Not required if the domain has a
 	# catch-all address or domain alias.
 	if "@" + domain not in dict(get_mail_aliases(env)):
-		check_alias_exists("postmaster@" + domain, env, output)
+		check_alias_exists("Postmaster contact address", "postmaster@" + domain, env, output)
 
 	# Stop if the domain is listed in the Spamhaus Domain Block List.
 	# The user might have chosen a domain that was previously in use by a spammer
@@ -503,7 +503,7 @@ def check_web_domain(domain, rounded_time, env, output):
 	if domain != env['PRIMARY_HOSTNAME']:
 		ip = query_dns(domain, "A")
 		if ip == env['PUBLIC_IP']:
-			output.print_ok("Domain resolves to this box's IP address. [%s => %s]" % (domain, env['PUBLIC_IP']))
+			output.print_ok("Domain resolves to this box's IP address. [%s ↦ %s]" % (domain, env['PUBLIC_IP']))
 		else:
 			output.print_error("""This domain should resolve to your box's IP address (%s) if you would like the box to serve
 				webmail or a website on this domain. The domain currently resolves to %s in public DNS. It may take several hours for
