@@ -92,6 +92,13 @@ def prettify_idn_email_address(email):
 		# Failed to decode IDNA. Should never happen.
 		return email
 
+def is_dcv_address(email):
+	email = email.lower()
+	for localpart in ("admin", "administrator", "postmaster", "hostmaster", "webmaster"):
+		if email.startswith(localpart+"@") or email.startswith(localpart+"+"):
+			return True
+	return False
+
 def open_database(env, with_connection=False):
 	conn = sqlite3.connect(env["STORAGE_ROOT"] + "/mail/users.sqlite")
 	if not with_connection:
@@ -271,6 +278,10 @@ def add_mail_user(email, pw, privs, env):
 		return ("Invalid email address.", 400)
 	elif not validate_email(email, mode='user'):
 		return ("User account email addresses may only use the ASCII letters A-Z, the digits 0-9, underscore (_), hyphen (-), and period (.).", 400)
+	elif is_dcv_address(email):
+		# Make domain control validation hijacking a little harder to mess up by preventing the usual
+		# addresses used for DCV from being user accounts.
+		return ("You may not make a user account for that address because it is frequently used for domain control validation. Use an alias instead if necessary.", 400)
 
 	# validate password
 	validate_password(pw)
@@ -369,12 +380,13 @@ def remove_mail_user(email, env):
 def parse_privs(value):
 	return [p for p in value.split("\n") if p.strip() != ""]
 
-def get_mail_user_privileges(email, env):
+def get_mail_user_privileges(email, env, empty_on_error=False):
 	# get privs
 	c = open_database(env)
 	c.execute('SELECT privileges FROM users WHERE email=?', (email,))
 	rows = c.fetchall()
 	if len(rows) != 1:
+		if empty_on_error: return []
 		return ("That's not a user (%s)." % email, 400)
 	return parse_privs(rows[0][0])
 
@@ -415,10 +427,14 @@ def add_mail_alias(source, destination, env, update_if_exists=False, do_kick=Tru
 	source = sanitize_idn_email_address(source)
 
 	# validate source
-	if source.strip() == "":
+	source = source.strip()
+	if source == "":
 		return ("No incoming email address provided.", 400)
 	if not validate_email(source, mode='alias'):
 		return ("Invalid incoming email address (%s)." % source, 400)
+
+	# extra checks for email addresses used in domain control validation
+	is_dcv_source = is_dcv_address(source)
 
 	# validate destination
 	dests = []
@@ -427,9 +443,10 @@ def add_mail_alias(source, destination, env, update_if_exists=False, do_kick=Tru
 	# Postfix allows a single @domain.tld as the destination, which means
 	# the local part on the address is preserved in the rewrite. We must
 	# try to convert Unicode to IDNA first before validating that it's a
-	# legitimate alias address.
+	# legitimate alias address. Don't allow this sort of rewriting for
+	# DCV source addresses.
 	d1 = sanitize_idn_email_address(destination)
-	if validate_email(d1, mode='alias'):
+	if validate_email(d1, mode='alias') and not is_dcv_source:
 		dests.append(d1)
 
 	else:
@@ -442,6 +459,11 @@ def add_mail_alias(source, destination, env, update_if_exists=False, do_kick=Tru
 				email = sanitize_idn_email_address(email) # Unicode => IDNA
 				if not validate_email(email):
 					return ("Invalid destination email address (%s)." % email, 400)
+				if is_dcv_source and not is_dcv_address(email) and "admin" not in get_mail_user_privileges(email, env, empty_on_error=True):
+					# Make domain control validation hijacking a little harder to mess up by
+					# requiring aliases for email addresses typically used in DCV to forward
+					# only to accounts that are administrators on this system.
+					return ("This alias can only have administrators of this system as destinations because the address is frequently used for domain control validation.", 400)
 				dests.append(email)
 	if len(destination) == 0:
 		return ("No destination email address(es) provided.", 400)
