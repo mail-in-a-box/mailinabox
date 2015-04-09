@@ -2,11 +2,10 @@
 
 # This script performs a backup of all user data:
 # 1) System services are stopped while a copy of user data is made.
-# 2) An incremental backup is made using duplicity into the
-#    directory STORAGE_ROOT/backup/duplicity.
+# 2) An incremental encrypted backup is made using duplicity into the
+#    directory STORAGE_ROOT/backup/encrypted. The password used for
+#    encryption is stored in backup/secret_key.txt.
 # 3) The stopped services are restarted.
-# 4) The backup files are encrypted with a long password (stored in
-#    backup/secret_key.txt) to STORAGE_ROOT/backup/encrypted.
 # 5) STORAGE_ROOT/backup/after-backup is executd if it exists.
 
 import os, os.path, shutil, glob, re, datetime
@@ -14,13 +13,13 @@ import dateutil.parser, dateutil.relativedelta, dateutil.tz
 
 from utils import exclusive_process, load_environment, shell
 
-# destroy backups when the most recent increment in the chain
+# Destroy backups when the most recent increment in the chain
 # that depends on it is this many days old.
 keep_backups_for_days = 3
 
 def backup_status(env):
 	# What is the current status of backups?
-	# Loop through all of the files in STORAGE_ROOT/backup/duplicity to
+	# Loop through all of the files in STORAGE_ROOT/backup/encrypted to
 	# get a list of all of the backups taken and sum up file sizes to
 	# see how large the storage is.
 
@@ -36,10 +35,10 @@ def backup_status(env):
 		return "%d hours, %d minutes" % (rd.hours, rd.minutes)
 
 	backups = { }
-	basedir = os.path.join(env['STORAGE_ROOT'], 'backup/duplicity/')
-	encdir = os.path.join(env['STORAGE_ROOT'], 'backup/encrypted/')
-	os.makedirs(basedir, exist_ok=True) # os.listdir fails if directory does not exist
-	for fn in os.listdir(basedir):
+	backup_dir = os.path.join(env["STORAGE_ROOT"], 'backup')
+	backup_encrypted_dir = os.path.join(backup_dir, 'encrypted')
+	os.makedirs(backup_encrypted_dir, exist_ok=True) # os.listdir fails if directory does not exist
+	for fn in os.listdir(backup_encrypted_dir):
 		m = re.match(r"duplicity-(full|full-signatures|(inc|new-signatures)\.(?P<incbase>\d+T\d+Z)\.to)\.(?P<date>\d+T\d+Z)\.", fn)
 		if not m: raise ValueError(fn)
 
@@ -53,15 +52,9 @@ def backup_status(env):
 				"full": m.group("incbase") is None,
 				"previous": m.group("incbase"),
 				"size": 0,
-				"encsize": 0,
 			}
 
-		backups[key]["size"] += os.path.getsize(os.path.join(basedir, fn))
-
-		# Also check encrypted size.
-		encfn = os.path.join(encdir, fn + ".enc")
-		if os.path.exists(encfn):
-			backups[key]["encsize"] += os.path.getsize(encfn)
+		backups[key]["size"] += os.path.getsize(os.path.join(backup_encrypted_dir, fn))
 
 	# Ensure the rows are sorted reverse chronologically.
 	# This is relied on by should_force_full() and the next step.
@@ -78,7 +71,7 @@ def backup_status(env):
 			break
 		incremental_count += 1
 		incremental_size += bak["size"]
-	
+
 	# Predict how many more increments until the next full backup,
 	# and add to that the time we hold onto backups, to predict
 	# how long the most recent full backup+increments will be held
@@ -106,9 +99,8 @@ def backup_status(env):
 			bak["deleted_in"] = deleted_in
 
 	return {
-		"directory": basedir,
-		"encpwfile": os.path.join(env['STORAGE_ROOT'], 'backup/secret_key.txt'),
-		"encdirectory": encdir,
+		"directory": backup_encrypted_dir,
+		"encpwfile": os.path.join(backup_dir, 'secret_key.txt'),
 		"tz": now.tzname(),
 		"backups": backups,
 	}
@@ -137,10 +129,62 @@ def perform_backup(full_backup):
 
 	exclusive_process("backup")
 
-	# Ensure the backup directory exists.
 	backup_dir = os.path.join(env["STORAGE_ROOT"], 'backup')
+	backup_cache_dir = os.path.join(backup_dir, 'cache')
+	backup_encrypted_dir = os.path.join(backup_dir, 'encrypted')
+
+	# In an older version of this script, duplicity was called
+	# such that it did not encrypt the backups it created (in
+	# backup/duplicity), and instead openssl was called separately
+	# after each backup run, creating AES256 encrypted copies of
+	# each file created by duplicity in backup/encrypted.
+	#
+	# We detect the transition by the presence of backup/duplicity
+	# and handle it by 'dupliception': we move all the old *un*encrypted
+	# duplicity files up out of the backup/duplicity directory (as
+	# backup/ is excluded from duplicity runs) in order that it is
+	# included in the next run, and we delete backup/encrypted (which
+	# duplicity will output files directly to, post-transition).
+	#
+	# This achieves two things:
+	# 1. It preserves the pre-transition unencrypted backup files
+	# within the encrypted backups we will immediately create, so
+	# that they are kept until the next full backup is triggered.
+	# (it is because those backups will be encrypted that we take
+	# the old *un*encrypted backups, not the duplicates encrypted
+	# with openssl).
+	# 2. It results in backup_status() being called on a non-existant
+	# backup/encrypted directory, which will trigger a full backup
+	# (though duplicity ought to do one anyway as it ought not
+	# recognise the old openssl encrypted .enc files, if we *had*
+	# left them there). More to the point it clears out those .enc
+	# files which are now redundant, thereby gaining disk space and
+	# preventing backup_status() getting terribly confused by their
+	# presence.
+	#
+	# A note about disk use:
+	# At no point in the transition will we use more disk space than
+	# was used pre-transition, because by deleting the openssl
+	# encrypted duplicates we decrease by more* than half the disk
+	# space used, while the addition by 'dupliception' of the old
+	# *un*encrypted backups takes less space than we gained from
+	# dropping the openssl encrypted duplicates.
+	#
+	# A note about the status page post-upgrade but pre-transition:
+	# Between the point that the new code is deployed and when the first
+	# daily backup is run, there will be a subtle change in the
+	# behaviour of the web control panel's backup status page, in that
+	# it will only sum the size of the encrypted backups when reporting
+	# the total size on disk i.e. it will not consider the unencrypted
+	# originals.
+	#
+	# *the openssl encrypted duplicates were base64 encrypted, hence
+	# accounting for more than half of the space used.
 	backup_duplicity_dir = os.path.join(backup_dir, 'duplicity')
-	os.makedirs(backup_duplicity_dir, exist_ok=True)
+	migrated_unencrypted_backup_dir = os.path.join(env["STORAGE_ROOT"], "migrated_unencrypted_backup")
+	if os.path.isdir(backup_duplicity_dir):
+		shutil.rmtree(backup_encrypted_dir)
+		shutil.move(backup_duplicity_dir, migrated_unencrypted_backup_dir)
 
 	# On the first run, always do a full backup. Incremental
 	# will fail. Otherwise do a full backup when the size of
@@ -152,70 +196,55 @@ def perform_backup(full_backup):
 	shell('check_call', ["/usr/sbin/service", "dovecot", "stop"])
 	shell('check_call', ["/usr/sbin/service", "postfix", "stop"])
 
+	env_with_passphrase = { "PASSPHRASE" :
+		open(os.path.join(backup_dir, 'secret_key.txt')).read()
+	}
 	# Update the backup mirror directory which mirrors the current
 	# STORAGE_ROOT (but excluding the backups themselves!).
 	try:
 		shell('check_call', [
 			"/usr/bin/duplicity",
 			"full" if full_backup else "incr",
-			"--no-encryption",
-			"--archive-dir", "/tmp/duplicity-archive-dir",
-			"--name", "mailinabox",
+			"--archive-dir", backup_cache_dir,
 			"--exclude", backup_dir,
-			"--volsize", "100",
-			"--verbosity", "warning",
+			"--volsize", "250",
 			env["STORAGE_ROOT"],
-			"file://" + backup_duplicity_dir
-			])
+			"file://" + backup_encrypted_dir
+			],
+			env_with_passphrase)
 	finally:
 		# Start services again.
 		shell('check_call', ["/usr/sbin/service", "dovecot", "start"])
 		shell('check_call', ["/usr/sbin/service", "postfix", "start"])
 
+	if os.path.isdir(migrated_unencrypted_backup_dir):
+		shutil.rmtree(migrated_unencrypted_backup_dir)
+
 	# Remove old backups. This deletes all backup data no longer needed
-	# from more than 31 days ago. Must do this before destroying the
-	# cache directory or else this command will re-create it.
+	# from more than 3 days ago.
 	shell('check_call', [
 		"/usr/bin/duplicity",
 		"remove-older-than",
 		"%dD" % keep_backups_for_days,
-		"--archive-dir", "/tmp/duplicity-archive-dir",
-		"--name", "mailinabox",
+		"--archive-dir", backup_cache_dir,
 		"--force",
-		"--verbosity", "warning",
-		"file://" + backup_duplicity_dir
-		])
+		"file://" + backup_encrypted_dir
+		],
+		env_with_passphrase)
 
-	# Remove duplicity's cache directory because it's redundant with our backup directory.
-	shutil.rmtree("/tmp/duplicity-archive-dir")
-
-	# Encrypt all of the new files.
-	backup_encrypted_dir = os.path.join(backup_dir, 'encrypted')
-	os.makedirs(backup_encrypted_dir, exist_ok=True)
-	for fn in os.listdir(backup_duplicity_dir):
-		fn2 = os.path.join(backup_encrypted_dir, fn) + ".enc"
-		if os.path.exists(fn2): continue
-
-		# Encrypt the backup using the backup private key.
-		shell('check_call', [
-			"/usr/bin/openssl",
-			"enc",
-			"-aes-256-cbc",
-			"-a",
-			"-salt",
-			"-in", os.path.join(backup_duplicity_dir, fn),
-			"-out", fn2,
-			"-pass", "file:%s" % os.path.join(backup_dir, "secret_key.txt"),
-			])
-
-		# The backup can be decrypted with:
-		# openssl enc -d -aes-256-cbc -a -in latest.tgz.enc -out /dev/stdout -pass file:secret_key.txt | tar -z
-
-	# Remove encrypted backups that are no longer needed.
-	for fn in os.listdir(backup_encrypted_dir):
-		fn2 = os.path.join(backup_duplicity_dir, fn.replace(".enc", ""))
-		if os.path.exists(fn2): continue
-		os.unlink(os.path.join(backup_encrypted_dir, fn))
+	# From duplicity's manual:
+	# "This should only be necessary after a duplicity session fails or is
+	# aborted prematurely."
+	# That may be unlikely here but we may as well ensure we tidy up if
+	# that does happen - it might just have been a poorly timed reboot.
+	shell('check_call', [
+		"/usr/bin/duplicity",
+		"cleanup",
+		"--archive-dir", backup_cache_dir,
+		"--force",
+		"file://" + backup_encrypted_dir
+		],
+		env_with_passphrase)
 
 	# Execute a post-backup script that does the copying to a remote server.
 	# Run as the STORAGE_USER user, not as root. Pass our settings in
