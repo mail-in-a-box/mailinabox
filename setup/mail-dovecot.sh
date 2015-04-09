@@ -85,6 +85,9 @@ tools/editconf.py /etc/dovecot/conf.d/20-imap.conf \
 	imap_idle_notify_interval="4 mins"
 
 # Set POP3 UIDL
+# UIDLs are used by POP3 clients to keep track of what messages they've downloaded. 
+# For new POP3 servers, the easiest way to set up UIDLs is to use IMAP's UIDVALIDITY
+# and UID values, the default in Dovecot.
 tools/editconf.py /etc/dovecot/conf.d/20-pop3.conf \
 	pop3_uidl_format = %08Xu%08Xv
 
