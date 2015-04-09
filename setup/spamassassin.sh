@@ -25,10 +25,14 @@ tools/editconf.py /etc/default/spamassassin \
 # Configure pyzor.
 hide_output pyzor discover
 
-# Pass messages on to docevot on port 10026.
-# This is actually the default setting but we don't want to lose track of it.
-# We've already configured Dovecot to listen on this port.
-tools/editconf.py /etc/default/spampd DESTPORT=10026
+# Configure spampd:
+# * Pass messages on to docevot on port 10026. This is actually the default setting but we don't
+#   want to lose track of it. (We've configured Dovecot to listen on this port elsewhere.)
+# * Increase the maximum message size of scanned messages from the default of 64KB to 500KB, which
+#   is Spamassassin (spamc)'s own default. Specified in KBytes.
+tools/editconf.py /etc/default/spampd \
+	DESTPORT=10026 \
+	ADDOPTS="\"--maxsize=500\""
 
 # Spamassassin normally wraps spam as an attachment inside a fresh
 # email with a report about the message. This also protects the user
