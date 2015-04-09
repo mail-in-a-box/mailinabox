@@ -1,9 +1,9 @@
 #!/bin/bash
 #
-# Dovecot (IMAP and LDA)
+# Dovecot (IMAP/POP and LDA)
 # ----------------------
 #
-# Dovecot is *both* the IMAP server (the protocol that email applications
+# Dovecot is *both* the IMAP/POP server (the protocol that email applications
 # use to query a mailbox) as well as the local delivery agent (LDA),
 # meaning it is responsible for writing emails to mailbox storage on disk.
 # You could imagine why these things would be bundled together.
@@ -21,10 +21,11 @@ source /etc/mailinabox.conf # load global vars
 # Install packages...
 
 apt_install \
-	dovecot-core dovecot-imapd dovecot-lmtpd dovecot-sqlite sqlite3 \
+	dovecot-core dovecot-imapd dovecot-pop3d dovecot-lmtpd dovecot-sqlite sqlite3 \
 	dovecot-sieve dovecot-managesieved
 
-# The `dovecot-imapd` and `dovecot-lmtpd` packages automatically enable IMAP and LMTP protocols.
+# The `dovecot-imapd`, `dovecot-pop3d`, and `dovecot-lmtpd` packages automatically
+# enable IMAP, POP and LMTP protocols.
 
 # Set basic daemon options.
 
@@ -51,7 +52,7 @@ tools/editconf.py /etc/dovecot/conf.d/10-mail.conf \
 	mail_privileged_group=mail \
 	first_valid_uid=0
 
-# ### IMAP
+# ### IMAP/POP
 
 # Require that passwords are sent over SSL only, and allow the usual IMAP authentication mechanisms.
 # The LOGIN mechanism is supposedly for Microsoft products like Outlook to do SMTP login (I guess
@@ -69,9 +70,9 @@ tools/editconf.py /etc/dovecot/conf.d/10-ssl.conf \
 	"ssl_protocols=!SSLv3 !SSLv2" \
 	"ssl_cipher_list=TLSv1+HIGH !SSLv2 !RC4 !aNULL !eNULL !3DES @STRENGTH"
 
-# Disable in-the-clear IMAP because there is no reason for a user to transmit
-# login credentials outside of an encrypted connection. Although we haven't
-# even installed the POP server, ensure it is disabled too.
+# Disable in-the-clear IMAP/POP because there is no reason for a user to transmit
+# login credentials outside of an encrypted connection. Only the over-TLS versions
+# are made available (IMAPS on port 993; POP3S on port 995).
 sed -i "s/#port = 143/port = 0/" /etc/dovecot/conf.d/10-master.conf
 sed -i "s/#port = 110/port = 0/" /etc/dovecot/conf.d/10-master.conf
 
@@ -83,6 +84,13 @@ sed -i "s/#port = 110/port = 0/" /etc/dovecot/conf.d/10-master.conf
 # by a peer. See #129 and http://razor.occams.info/blog/2014/08/09/how-bad-is-imap-idle/.
 tools/editconf.py /etc/dovecot/conf.d/20-imap.conf \
 	imap_idle_notify_interval="4 mins"
+
+# Set POP3 UIDL
+# UIDLs are used by POP3 clients to keep track of what messages they've downloaded. 
+# For new POP3 servers, the easiest way to set up UIDLs is to use IMAP's UIDVALIDITY
+# and UID values, the default in Dovecot.
+tools/editconf.py /etc/dovecot/conf.d/20-pop3.conf \
+	pop3_uidl_format = %08Xu%08Xv
 
 # ### LDA (LMTP)
 
@@ -162,8 +170,9 @@ chown -R mail.mail $STORAGE_ROOT/mail/mailboxes
 mkdir -p $STORAGE_ROOT/mail/sieve
 chown -R mail.mail $STORAGE_ROOT/mail/sieve
 
-# Allow the IMAP port in the firewall.
+# Allow the IMAP/POP ports in the firewall.
 ufw_allow imaps
+ufw_allow pop3s
 
 # Restart services.
 restart_service dovecot

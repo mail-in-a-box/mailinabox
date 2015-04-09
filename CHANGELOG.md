@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+Mail:
+
+* POP3S is now enabled (port 995).
+
 v0.08 (April 1, 2015)
 ---------------------
 
