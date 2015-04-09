@@ -130,6 +130,7 @@ def perform_backup(full_backup):
 	exclusive_process("backup")
 
 	backup_dir = os.path.join(env["STORAGE_ROOT"], 'backup')
+	backup_cache_dir = os.path.join(backup_dir, 'cache')
 	backup_encrypted_dir = os.path.join(backup_dir, 'encrypted')
 
 	# In an older version of this script, duplicity was called
@@ -204,6 +205,7 @@ def perform_backup(full_backup):
 		shell('check_call', [
 			"/usr/bin/duplicity",
 			"full" if full_backup else "incr",
+			"--archive-dir", backup_cache_dir,
 			"--exclude", backup_dir,
 			"--volsize", "250",
 			env["STORAGE_ROOT"],
@@ -224,6 +226,7 @@ def perform_backup(full_backup):
 		"/usr/bin/duplicity",
 		"remove-older-than",
 		"%dD" % keep_backups_for_days,
+		"--archive-dir", backup_cache_dir,
 		"--force",
 		"file://" + backup_encrypted_dir
 		],
@@ -237,6 +240,7 @@ def perform_backup(full_backup):
 	shell('check_call', [
 		"/usr/bin/duplicity",
 		"cleanup",
+		"--archive-dir", backup_cache_dir,
 		"--force",
 		"file://" + backup_encrypted_dir
 		],
