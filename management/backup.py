@@ -35,10 +35,10 @@ def backup_status(env):
 		return "%d hours, %d minutes" % (rd.hours, rd.minutes)
 
 	backups = { }
-	backup_dir = os.path.join(env["STORAGE_ROOT"], 'backup')
-	backup_encrypted_dir = os.path.join(backup_dir, 'encrypted')
-	os.makedirs(backup_encrypted_dir, exist_ok=True) # os.listdir fails if directory does not exist
-	for fn in os.listdir(backup_encrypted_dir):
+	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
+	backup_dir = os.path.join(backup_root, 'encrypted')
+	os.makedirs(backup_dir, exist_ok=True) # os.listdir fails if directory does not exist
+	for fn in os.listdir(backup_dir):
 		m = re.match(r"duplicity-(full|full-signatures|(inc|new-signatures)\.(?P<incbase>\d+T\d+Z)\.to)\.(?P<date>\d+T\d+Z)\.", fn)
 		if not m: raise ValueError(fn)
 
@@ -54,7 +54,7 @@ def backup_status(env):
 				"size": 0,
 			}
 
-		backups[key]["size"] += os.path.getsize(os.path.join(backup_encrypted_dir, fn))
+		backups[key]["size"] += os.path.getsize(os.path.join(backup_dir, fn))
 
 	# Ensure the rows are sorted reverse chronologically.
 	# This is relied on by should_force_full() and the next step.
@@ -99,8 +99,8 @@ def backup_status(env):
 			bak["deleted_in"] = deleted_in
 
 	return {
-		"directory": backup_encrypted_dir,
-		"encpwfile": os.path.join(backup_dir, 'secret_key.txt'),
+		"directory": backup_dir,
+		"encpwfile": os.path.join(backup_root, 'secret_key.txt'),
 		"tz": now.tzname(),
 		"backups": backups,
 	}
@@ -129,9 +129,9 @@ def perform_backup(full_backup):
 
 	exclusive_process("backup")
 
-	backup_dir = os.path.join(env["STORAGE_ROOT"], 'backup')
-	backup_cache_dir = os.path.join(backup_dir, 'cache')
-	backup_encrypted_dir = os.path.join(backup_dir, 'encrypted')
+	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
+	backup_cache_dir = os.path.join(backup_root, 'cache')
+	backup_dir = os.path.join(backup_root, 'encrypted')
 
 	# In an older version of this script, duplicity was called
 	# such that it did not encrypt the backups it created (in
@@ -145,46 +145,19 @@ def perform_backup(full_backup):
 	# backup/ is excluded from duplicity runs) in order that it is
 	# included in the next run, and we delete backup/encrypted (which
 	# duplicity will output files directly to, post-transition).
-	#
-	# This achieves two things:
-	# 1. It preserves the pre-transition unencrypted backup files
-	# within the encrypted backups we will immediately create, so
-	# that they are kept until the next full backup is triggered.
-	# (it is because those backups will be encrypted that we take
-	# the old *un*encrypted backups, not the duplicates encrypted
-	# with openssl).
-	# 2. It results in backup_status() being called on a non-existant
-	# backup/encrypted directory, which will trigger a full backup
-	# (though duplicity ought to do one anyway as it ought not
-	# recognise the old openssl encrypted .enc files, if we *had*
-	# left them there). More to the point it clears out those .enc
-	# files which are now redundant, thereby gaining disk space and
-	# preventing backup_status() getting terribly confused by their
-	# presence.
-	#
-	# A note about disk use:
-	# At no point in the transition will we use more disk space than
-	# was used pre-transition, because by deleting the openssl
-	# encrypted duplicates we decrease by more* than half the disk
-	# space used, while the addition by 'dupliception' of the old
-	# *un*encrypted backups takes less space than we gained from
-	# dropping the openssl encrypted duplicates.
-	#
-	# A note about the status page post-upgrade but pre-transition:
-	# Between the point that the new code is deployed and when the first
-	# daily backup is run, there will be a subtle change in the
-	# behaviour of the web control panel's backup status page, in that
-	# it will only sum the size of the encrypted backups when reporting
-	# the total size on disk i.e. it will not consider the unencrypted
-	# originals.
-	#
-	# *the openssl encrypted duplicates were base64 encrypted, hence
-	# accounting for more than half of the space used.
-	backup_duplicity_dir = os.path.join(backup_dir, 'duplicity')
+	old_backup_dir = os.path.join(backup_root, 'duplicity')
 	migrated_unencrypted_backup_dir = os.path.join(env["STORAGE_ROOT"], "migrated_unencrypted_backup")
-	if os.path.isdir(backup_duplicity_dir):
-		shutil.rmtree(backup_encrypted_dir)
-		shutil.move(backup_duplicity_dir, migrated_unencrypted_backup_dir)
+	if os.path.isdir(old_backup_dir):
+		# Move the old unencrpyted files to a new location outside of
+		# the backup root so they get included in the next (new) backup.
+		# Then we'll delete them. Also so that they do not get in the
+		# way of duplicity doing a full backup on the first run after
+		# we take care of this.
+		shutil.move(old_backup_dir, migrated_unencrypted_backup_dir)
+
+		# The backup_dir (backup/encrypted) now has a new purpose.
+		# Clear it out.
+		shutil.rmtree(backup_dir)
 
 	# On the first run, always do a full backup. Incremental
 	# will fail. Otherwise do a full backup when the size of
@@ -196,9 +169,17 @@ def perform_backup(full_backup):
 	shell('check_call', ["/usr/sbin/service", "dovecot", "stop"])
 	shell('check_call', ["/usr/sbin/service", "postfix", "stop"])
 
-	env_with_passphrase = { "PASSPHRASE" :
-		open(os.path.join(backup_dir, 'secret_key.txt')).read()
-	}
+	# Get the encryption passphrase. secret_key.txt is 2048 random
+	# bits base64-encoded and with line breaks every 65 characters.
+	# gpg will only take the first line of text, so sanity check that
+	# that line is long enough to be a reasonable passphrase. It
+	# only needs to be 43 base64-characters to match AES256's key
+	# length of 32 bytes.
+	with open(os.path.join(backup_root, 'secret_key.txt')) as f:
+		passphrase = f.readline().strip()
+	if len(passphrase) < 43: raise Exception("secret_key.txt's first line is too short!")
+	env_with_passphrase = { "PASSPHRASE" : passphrase }
+
 	# Update the backup mirror directory which mirrors the current
 	# STORAGE_ROOT (but excluding the backups themselves!).
 	try:
@@ -206,10 +187,11 @@ def perform_backup(full_backup):
 			"/usr/bin/duplicity",
 			"full" if full_backup else "incr",
 			"--archive-dir", backup_cache_dir,
-			"--exclude", backup_dir,
+			"--exclude", backup_root,
 			"--volsize", "250",
+			"--gpg-options", "--cipher-algo=AES256",
 			env["STORAGE_ROOT"],
-			"file://" + backup_encrypted_dir
+			"file://" + backup_dir
 			],
 			env_with_passphrase)
 	finally:
@@ -217,6 +199,7 @@ def perform_backup(full_backup):
 		shell('check_call', ["/usr/sbin/service", "dovecot", "start"])
 		shell('check_call', ["/usr/sbin/service", "postfix", "start"])
 
+	# Once the migrated backup is included in a new backup, it can be deleted.
 	if os.path.isdir(migrated_unencrypted_backup_dir):
 		shutil.rmtree(migrated_unencrypted_backup_dir)
 
@@ -228,7 +211,7 @@ def perform_backup(full_backup):
 		"%dD" % keep_backups_for_days,
 		"--archive-dir", backup_cache_dir,
 		"--force",
-		"file://" + backup_encrypted_dir
+		"file://" + backup_dir
 		],
 		env_with_passphrase)
 
@@ -242,14 +225,18 @@ def perform_backup(full_backup):
 		"cleanup",
 		"--archive-dir", backup_cache_dir,
 		"--force",
-		"file://" + backup_encrypted_dir
+		"file://" + backup_dir
 		],
 		env_with_passphrase)
+
+	# Change ownership of backups to the user-data user, so that the after-bcakup
+	# script can access them.
+	shell('check_call', ["/bin/chown", "-R", env["STORAGE_USER"], backup_dir])
 
 	# Execute a post-backup script that does the copying to a remote server.
 	# Run as the STORAGE_USER user, not as root. Pass our settings in
 	# environment variables so the script has access to STORAGE_ROOT.
-	post_script = os.path.join(backup_dir, 'after-backup')
+	post_script = os.path.join(backup_root, 'after-backup')
 	if os.path.exists(post_script):
 		shell('check_call',
 			['su', env['STORAGE_USER'], '-c', post_script],

@@ -1,6 +1,8 @@
 CHANGELOG
 =========
 
+* Backups now use duplicity's built-in gpg symmetric AES256 encryption rather than my home-brewed encryption. Old backups will be incorporated inside the first backup after this update but then deleted from disk (i.e. your backups from the previous few days will be backed up).
+
 In Development...
 -----------------
 
