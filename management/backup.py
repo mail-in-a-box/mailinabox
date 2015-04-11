@@ -242,7 +242,31 @@ def perform_backup(full_backup):
 			['su', env['STORAGE_USER'], '-c', post_script],
 			env=env)
 
+def run_duplicity_verification():
+	env = load_environment()
+	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
+	backup_cache_dir = os.path.join(backup_root, 'cache')
+	backup_dir = os.path.join(backup_root, 'encrypted')
+	env_with_passphrase = { "PASSPHRASE" : open(os.path.join(backup_root, 'secret_key.txt')).read() }
+	shell('check_call', [
+		"/usr/bin/duplicity",
+		"--verbosity", "info",
+		"verify",
+		"--compare-data",
+		"--archive-dir", backup_cache_dir,
+		"--exclude", backup_root,
+		"file://" + backup_dir,
+		env["STORAGE_ROOT"],
+	], env_with_passphrase)
+
 if __name__ == "__main__":
 	import sys
-	full_backup = "--full" in sys.argv
-	perform_backup(full_backup)
+	if sys.argv[-1] == "--verify":
+		# Run duplicity's verification command to check a) the backup files
+		# are readable, and b) report if they are up to date.
+		run_duplicity_verification()
+	else:
+		# Perform a backup. Add --full to force a full backup rather than
+		# possibly performing an incremental backup.
+		full_backup = "--full" in sys.argv
+		perform_backup(full_backup)
