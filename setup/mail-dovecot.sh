@@ -90,7 +90,7 @@ tools/editconf.py /etc/dovecot/conf.d/20-imap.conf \
 # For new POP3 servers, the easiest way to set up UIDLs is to use IMAP's UIDVALIDITY
 # and UID values, the default in Dovecot.
 tools/editconf.py /etc/dovecot/conf.d/20-pop3.conf \
-	pop3_uidl_format = %08Xu%08Xv
+	pop3_uidl_format="%08Xu%08Xv"
 
 # ### LDA (LMTP)
 
