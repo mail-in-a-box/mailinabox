@@ -33,6 +33,7 @@ apt-get purge -qq -y roundcube* #NODOC
 # Combine the Roundcube version number with the commit hash of vacation_sieve to track
 # whether we have the latest version.
 VERSION=1.1.0
+HASH=22e994db05a743ab49d47f1092b79f04ddb6dffd
 VACATION_SIEVE_VERSION=06a20e9d44db62259ae41fd8451f3c937d3ab4f3
 needs_update=0 #NODOC
 if [ ! -f /usr/local/lib/roundcubemail/version ]; then
@@ -45,8 +46,10 @@ fi
 if [ $needs_update == 1 ]; then
 	# install roundcube
 	echo installing Roundcube webmail $VERSION...
-	rm -f /tmp/roundcube.tgz
-	wget -qO /tmp/roundcube.tgz http://downloads.sourceforge.net/project/roundcubemail/roundcubemail/$VERSION/roundcubemail-$VERSION.tar.gz
+	wget_verify \
+		http://downloads.sourceforge.net/project/roundcubemail/roundcubemail/$VERSION/roundcubemail-$VERSION.tar.gz \
+		$HASH \
+		/tmp/roundcube.tgz
 	tar -C /usr/local/lib -zxf /tmp/roundcube.tgz
 	rm -rf /usr/local/lib/roundcubemail
 	mv /usr/local/lib/roundcubemail-$VERSION/ /usr/local/lib/roundcubemail

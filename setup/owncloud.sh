@@ -16,6 +16,7 @@ apt-get purge -qq -y owncloud*
 
 # Install ownCloud from source of this version:
 owncloud_ver=8.0.2
+owncloud_hash=a4d1fc44bc40af87948458ae8f60ee427ecd9560
 
 # Check if ownCloud dir exist, and check if version matches owncloud_ver (if either doesn't - install/upgrade)
 if [ ! -d /usr/local/lib/owncloud/ ] \
@@ -32,8 +33,7 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 	fi
 
 	# Download and extract ownCloud.
-	rm -f /tmp/owncloud.zip
-	wget -qO /tmp/owncloud.zip https://download.owncloud.org/community/owncloud-$owncloud_ver.zip
+	wget_verify https://download.owncloud.org/community/owncloud-$owncloud_ver.zip $owncloud_hash /tmp/owncloud.zip
 	unzip -u -o -q /tmp/owncloud.zip -d /usr/local/lib #either extracts new or replaces current files
 	rm -f /tmp/owncloud.zip
 

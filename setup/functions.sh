@@ -180,6 +180,28 @@ function input_menu {
 	result_code=$?
 }
 
+function wget_verify {
+	# Downloads a file from the web and checks that it matches
+	# a provided hash. If the comparison fails, exit immediately.
+	URL=$1
+	HASH=$2
+	DEST=$3
+	CHECKSUM="$HASH  $DEST"
+	rm -f $DEST
+	wget -q -O $DEST $URL || exit 1
+	if ! echo "$CHECKSUM" | sha1sum --check --strict > /dev/null; then
+		echo "------------------------------------------------------------"
+		echo "Download of $URL did not match expected checksum."
+		echo "Found:"
+		sha1sum $DEST
+		echo
+		echo "Expected:"
+		echo "$CHECKSUM"
+		rm -f $DEST
+		exit 1
+	fi
+}
+
 function git_clone {
 	# Clones a git repository, checks out a particular commit or tag,
 	# and moves the repository (or a subdirectory in it) to some path.
