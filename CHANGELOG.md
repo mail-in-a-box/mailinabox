@@ -15,6 +15,7 @@ System:
 
 * Backups now use duplicity's built-in gpg symmetric AES256 encryption rather than my home-brewed encryption. Old backups will be incorporated inside the first backup after this update but then deleted from disk (i.e. your backups from the previous few days will be backed up).
 * Internationalized Domain Names (IDNs) should now work in email. If you had custom DNS or custom web settings for internationalized domains, check that they are still working.
+* All Mail-in-a-Box release tags are now signed on github, instructions for verifying the signature are added to the README, and the integrity of all non-Ubuntu packages downloaded during setup is now verified against a SHA1 hash stored in the tag itself.
 
 v0.08 (April 1, 2015)
 ---------------------
