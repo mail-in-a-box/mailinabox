@@ -9,6 +9,7 @@ Mail:
 * Spam checking is now performed on messages larger than the previous limit of 64KB.
 * POP3S is now enabled (port 995).
 * In order to guard against misconfiguration that can lead to domain control validation hijacking, email addresses that begin with admin, administrator, postmaster, hostmaster, and webmaster can no longer be used for (new) mail user accounts, and aliases for these addresses may direct mail only to the box's administrator(s).
+* Roundcube updated to version 1.1.1.
 
 System:
 
