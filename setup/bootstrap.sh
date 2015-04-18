@@ -1,11 +1,14 @@
 #!/bin/bash
-#########################################################
-# This script is intended to be run like this:
+################################################################
+#
+# This script is posted on HTTPS to make first-time installation
+# super simple. Download and pipe to bash, e.g.:
 #
 #   curl https://.../bootstrap.sh | sudo bash
 #
-#########################################################
+################################################################
 
+# What is the current version?
 if [ -z "$TAG" ]; then
 	TAG=v0.08
 fi
@@ -35,17 +38,6 @@ fi
 # Change directory to it.
 cd $HOME/mailinabox
 
-# Update it.
-if [ "$TAG" != `git describe` ]; then
-	echo Updating Mail-in-a-Box to $TAG . . .
-	git fetch --depth 1 --force --prune origin tag $TAG
-	if ! git checkout -q $TAG; then
-		echo "Update failed. Did you modify something in `pwd`?"
-		exit
-	fi
-	echo
-fi
-
-# Start setup script.
-setup/start.sh
+# Run the upgrade script, which in turn runs the setup script.
+setup/upgrade.sh $TAG
 
