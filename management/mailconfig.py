@@ -24,26 +24,36 @@ def validate_email(email, mode=None):
 		# unusual characters in the address. Bah. Also note that since
 		# the mailbox path name is based on the email address, the address
 		# shouldn't be absurdly long and must not have a forward slash.
-		ATEXT = r'[a-zA-Z0-9_\-]'
+		ATEXT = r'[a-zA-Z0-9_\-]+'
 	elif mode in (None, 'alias'):
 		# For aliases, we can allow any valid email address.
 		# Based on RFC 2822 and https://github.com/SyrusAkbary/validate_email/blob/master/validate_email.py,
 		# these characters are permitted in email addresses.
-		ATEXT = r'[a-zA-Z0-9_!#$%&\'\*\+\-/=\?\^`\{\|\}~]' # see 3.2.4
+		ATEXT = r'[a-zA-Z0-9_!#$%&\'\*\+\-/=\?\^`\{\|\}~]+' # see 3.2.4
 	else:
 		raise ValueError(mode)
 
 	# per RFC 2822 3.2.4
-	DOT_ATOM_TEXT_LOCAL = ATEXT + r'+(?:\.' + ATEXT + r'+)*'
+	DOT_ATOM_TEXT_LOCAL = ATEXT + r'(?:\.' + ATEXT + r')*'
 	if mode == 'alias':
 		# For aliases, Postfix accepts '@domain.tld' format for
 		# catch-all addresses on the source side and domain aliases
 		# on the destination side. Make the local part optional.
 		DOT_ATOM_TEXT_LOCAL = '(?:' + DOT_ATOM_TEXT_LOCAL + ')?'
 
-	# We can require that the host part have at least one period in it,
-	# so use a "+" rather than a "*" at the end.
-	DOT_ATOM_TEXT_HOST = ATEXT + r'+(?:\.' + ATEXT + r'+)+'
+	# The domain part of the email address has a few more restrictions.
+
+	# In addition to the characters allowed by RFC 2822, the domain part
+	# must also satisfy the requirements of RFC 952/RFC 1123 which restrict
+	# the allowed characters of hostnames further. These are a subset of
+	# the Dovecot-allowed characters, fortunately. The hyphen cannot be at
+	# the beginning or end of a component of a hostname either, but we aren't
+	# testing that.
+	ATEXT2 = r'[a-zA-Z0-9\-]+'
+
+	# We can require that the host part have at least one period in it.
+	# We also know that all TLDs are at least two characters and end with a letter.
+	DOT_ATOM_TEXT_HOST = ATEXT2 + r'(?:\.' + ATEXT2 + r')*' + r'(?:\.' + ATEXT2 + r'[A-Za-z])'
 
 	# per RFC 2822 3.4.1
 	ADDR_SPEC = '^(%s)@(%s)$' % (DOT_ATOM_TEXT_LOCAL, DOT_ATOM_TEXT_HOST)
