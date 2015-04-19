@@ -223,7 +223,7 @@ function mod_priv(elem, add_remove) {
   var add_remove1 = add_remove.charAt(0).toUpperCase() + add_remove.substring(1);
   show_modal_confirm(
     "Modify Privileges",
-    "Are you sure you want to " + add_remove + " the " + priv + " privilege for <b>" + email + "</b>?",
+    $("<p>Are you sure you want to " + add_remove + " the " + priv + " privilege for <b>" + email + "</b>?</p>"),
     add_remove1,
     function() {
       api(

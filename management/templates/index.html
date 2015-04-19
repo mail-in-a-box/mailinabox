@@ -230,7 +230,7 @@ $(function() {
 function show_modal_error(title, message, callback) {
   $('#global_modal h4').text(title);
   $('#global_modal .modal-body').html("<p/>");
-  if (typeof question == String) {
+  if (typeof question == 'string') {
     $('#global_modal p').text(message);
     $('#global_modal .modal-dialog').addClass("modal-sm");
   } else {
@@ -247,7 +247,7 @@ function show_modal_error(title, message, callback) {
 
 function show_modal_confirm(title, question, verb, yes_callback, cancel_callback) {
   $('#global_modal h4').text(title);
-  if (typeof question == String) {
+  if (typeof question == 'string') {
     $('#global_modal .modal-dialog').addClass("modal-sm");
     $('#global_modal .modal-body').html("<p/>");
     $('#global_modal p').text(question);
@@ -255,7 +255,7 @@ function show_modal_confirm(title, question, verb, yes_callback, cancel_callback
     $('#global_modal .modal-dialog').removeClass("modal-sm");
     $('#global_modal .modal-body').html("").append(question);
   }
-  if (typeof verb == String) {
+  if (typeof verb == 'string') {
     $('#global_modal .btn-default').show().text("Cancel");
     $('#global_modal .btn-danger').show().text(verb);
   } else {

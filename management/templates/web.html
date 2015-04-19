@@ -82,7 +82,7 @@ function show_change_web_root(elem) {
   var root = $(elem).parents('tr').attr('data-custom-web-root');
   show_modal_confirm(
     'Change Root Directory for ' + domain,
-    '<p>You can change the static directory for <tt>' + domain + '</tt> to:</p> <p><tt>' + root + '</tt></p> <p>First create this directory on the server. Then click Update to scan for the directory and update web settings.',
+    $('<p>You can change the static directory for <tt>' + domain + '</tt> to:</p> <p><tt>' + root + '</tt></p> <p>First create this directory on the server. Then click Update to scan for the directory and update web settings.'),
     'Update',
     function() { do_web_update(); });
 }
