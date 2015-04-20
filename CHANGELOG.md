@@ -11,6 +11,10 @@ Mail:
 * In order to guard against misconfiguration that can lead to domain control validation hijacking, email addresses that begin with admin, administrator, postmaster, hostmaster, and webmaster can no longer be used for (new) mail user accounts, and aliases for these addresses may direct mail only to the box's administrator(s).
 * Roundcube updated to version 1.1.1.
 
+ownCloud:
+
+* Downloading files you uploaded to ownCloud broke because of a change in ownCloud 8.
+
 System:
 
 * Backups now use duplicity's built-in gpg symmetric AES256 encryption rather than my home-brewed encryption. Old backups will be incorporated inside the first backup after this update but then deleted from disk (i.e. your backups from the previous few days will be backed up).
