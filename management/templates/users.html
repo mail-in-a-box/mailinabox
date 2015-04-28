@@ -188,6 +188,13 @@ function users_set_password(elem) {
 
 function users_remove(elem) {
   var email = $(elem).parents('tr').attr('data-email');
+
+  // can't remove yourself
+  if (api_credentials != null && email == api_credentials[0]) {
+    show_modal_error("Archive User", "You cannot archive your own account.");
+    return;
+  }
+
   show_modal_confirm(
     "Archive User",
     $("<p>Are you sure you want to archive <b>" + email + "</b>?</p> <p>The user's mailboxes will not be deleted (you can do that later), but the user will no longer be able to log into any services on this machine.</p>"),
