@@ -11,7 +11,7 @@
 import os, os.path, shutil, glob, re, datetime
 import dateutil.parser, dateutil.relativedelta, dateutil.tz
 
-from utils import exclusive_process, load_environment, shell
+from utils import exclusive_process, load_environment, shell, wait_for_service
 
 # Destroy backups when the most recent increment in the chain
 # that depends on it is this many days old.
@@ -241,6 +241,13 @@ def perform_backup(full_backup):
 		shell('check_call',
 			['su', env['STORAGE_USER'], '-c', post_script],
 			env=env)
+
+	# Our nightly cron job executes system status checks immediately after this
+	# backup. Since it checks that dovecot and postfix are running, block for a
+	# bit (maximum of 10 seconds each) to give each a chance to finish restarting
+	# before the status checks might catch them down. See #381.
+	wait_for_service(25, True, env, 10)
+	wait_for_service(993, True, env, 10)
 
 def run_duplicity_verification():
 	env = load_environment()

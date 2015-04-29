@@ -184,3 +184,19 @@ def du(path):
             seen.add(stat.st_ino)
             total_size += stat.st_size
     return total_size
+
+def wait_for_service(port, public, env, timeout):
+	# Block until a service on a given port (bound privately or publicly)
+	# is taking connections, with a maximum timeout.
+	import socket, time
+	start = time.perf_counter()
+	while True:
+		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		s.settimeout(timeout/3)
+		try:
+			s.connect(("127.0.0.1" if not public else env['PUBLIC_IP'], port))
+			return True
+		except OSError:
+			if time.perf_counter() > start+timeout:
+				return False
+		time.sleep(min(timeout/4, 1))
