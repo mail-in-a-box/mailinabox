@@ -16,10 +16,12 @@ rm -f /usr/local/bin/mailinabox-daemon
 ln -s `pwd`/management/daemon.py /usr/local/bin/mailinabox-daemon
 
 # Create an init script to start the management daemon and keep it
-# running after a reboot.
-rm -f /etc/init.d/mailinabox
-ln -s $(pwd)/conf/management-initscript /etc/init.d/mailinabox
-hide_output update-rc.d mailinabox defaults
+# running after a reboot, if not runit service exists.
+if [ ! -d /etc/service/mailinabox ]; then
+	rm -f /etc/init.d/mailinabox
+	ln -s $(pwd)/conf/management-initscript /etc/init.d/mailinabox
+	hide_output update-rc.d mailinabox defaults
+fi
 
 # Perform a daily backup.
 cat > /etc/cron.daily/mailinabox-backup << EOF;
@@ -41,8 +43,5 @@ EOF
 chmod +x /etc/cron.daily/mailinabox-statuschecks
 
 
-# Start it. Remove the api key file first so that start.sh
-# can wait for it to be created to know that the management
-# server is ready.
-rm -f /var/lib/mailinabox/api.key
+# Start it.
 restart_service mailinabox

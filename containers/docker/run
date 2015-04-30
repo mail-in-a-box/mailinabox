@@ -1,0 +1,102 @@
+#!/bin/bash
+# Use this script to launch Mail-in-a-Box within a docker container.
+# ==================================================================
+#
+# Run this script from the base directory of the Mail-in-a-Box
+# repository (i.e. run as 'containers/docker/run').
+#
+# A base image is created first. The base image installs Ubuntu
+# packages and pulls in the Mail-in-a-Box source code. This is
+# defined in Dockerfile at the root of this repository.
+#
+# A mailinabox-data container is created next. This container
+# contains nothing but a shared volume for storing user data.
+# It is segregated from the rest of the live system to make backups
+# easier.
+#
+# The mailinabox container is started last. It is the
+# real thing: it runs the mailinabox image. This container will
+# initialize itself and will initialize the mailinabox-data
+# volume if the volume is new.
+
+# Build or rebuild the image.
+# Rebuilds are very fast.
+
+HOST_HTTP_PORT=${HOST_HTTP_PORT:-80}
+HOST_HTTPS_PORT=${HOST_HTTPS_PORT:-443}
+CONTAINER_NAME=${CONTAINER_NAME:-mailinabox}
+CONTAINER_DATA_NAME=${CONTAINER_DATA_NAME:-${CONTAINER_NAME}-data}
+
+if [ -z "$SKIP_BUILD" ]; then
+	tput setaf 2
+	echo "Building/updating base image (mailinabox)..."
+	tput setaf 7
+
+	docker build -q -t mailinabox .
+fi;
+
+if ! docker inspect ${CONTAINER_DATA_NAME} > /dev/null; then
+	tput setaf 2
+	echo
+	echo "Creating a new container for your data (${CONTAINER_DATA_NAME})..."
+	tput setaf 7
+
+	docker create \
+		--name ${CONTAINER_DATA_NAME} \
+		$([ -z "$HOST_USERDATA_VOLUME" ] && echo "-v $HOST_USERDATA_VOLUME:/home/user-data" || echo "-v /home/user-data") \
+		phusion/baseimage:0.9.16
+else
+	tput setaf 2
+	echo
+	echo "Using existing container ${CONTAINER_DATA_NAME} for your data."
+	tput setaf 7
+fi
+
+# End a running container.
+if docker inspect ${CONTAINER_NAME} > /dev/null; then
+	tput setaf 2
+	echo
+	echo "Destroying ${CONTAINER_NAME} container..."
+	tput setaf 7
+
+	docker rm -f ${CONTAINER_NAME}
+fi
+
+# Start container.
+tput setaf 2
+echo
+echo "Starting new container (${CONTAINER_NAME})..."
+tput setaf 7
+
+# Run the services container
+# detached if NONINTERACTIVE is set,
+# interactively if NONINTERACTIVE is not set,
+# Notes:
+# * Passing through SKIP_NETWORK_CHECKS makes it easier to do testing
+#   on a residential network.
+# * --privileged flag cause an issue with bind9/named failing to start in this case
+#   see docker/docker#7318
+docker run \
+	-v /dev/urandom:/dev/random \
+	-p 25:25 \
+	$([ -z "$NODNS" ] && echo "-p 53:53/udp -p 53:53/tcp") \
+	-p $HOST_HTTP_PORT:80 \
+	-p $HOST_HTTPS_PORT:443 \
+	-p 587:587 \
+	-p 993:993 \
+	-p 4190:4190 \
+	--name ${CONTAINER_NAME} \
+	--volumes-from ${CONTAINER_DATA_NAME} \
+	--restart always \
+	$([ ! -z "$NONINTERACTIVE" ] && echo "-d") \
+	-it \
+	mailinabox
+
+if [ -z "$NONINTERACTIVE" ]; then
+	tput setaf 2
+	echo
+	echo "Restarting container ${CONTAINER_NAME}..."
+	tput setaf 7
+
+	docker restart ${CONTAINER_NAME}
+fi

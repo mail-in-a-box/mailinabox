@@ -121,7 +121,7 @@ EOF
 
 # Create writable directories.
 mkdir -p /var/log/roundcubemail /tmp/roundcubemail $STORAGE_ROOT/mail/roundcube
-chown -R www-data.www-data /var/log/roundcubemail /tmp/roundcubemail $STORAGE_ROOT/mail/roundcube
+chown -R www-data:www-data /var/log/roundcubemail /tmp/roundcubemail $STORAGE_ROOT/mail/roundcube
 
 # Password changing plugin settings
 # The config comes empty by default, so we need the settings 
@@ -142,9 +142,9 @@ usermod -a -G dovecot www-data
 
 # set permissions so that PHP can use users.sqlite
 # could use dovecot instead of www-data, but not sure it matters
-chown root.www-data $STORAGE_ROOT/mail
+chown root:www-data $STORAGE_ROOT/mail
 chmod 775 $STORAGE_ROOT/mail
-chown root.www-data $STORAGE_ROOT/mail/users.sqlite 
+chown root:www-data $STORAGE_ROOT/mail/users.sqlite
 chmod 664 $STORAGE_ROOT/mail/users.sqlite 
 
 # Enable PHP modules.

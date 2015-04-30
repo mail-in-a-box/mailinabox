@@ -113,3 +113,4 @@ chmod +x /etc/cron.daily/mailinabox-dnssec
 
 ufw_allow domain
 
+restart_service nsd

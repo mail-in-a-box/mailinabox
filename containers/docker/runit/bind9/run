@@ -1,0 +1,52 @@
+#!/bin/bash
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+# for a chrooted server: "-u bind -t /var/lib/named"
+# Don't modify this line, change or create /etc/default/bind9.
+OPTIONS=""
+RESOLVCONF=no
+
+test -f /etc/default/bind9 && . /etc/default/bind9
+
+test -x /usr/sbin/rndc || exit 0
+
+. /lib/lsb/init-functions
+
+check_network() {
+    if [ -x /usr/bin/uname ] && [ "X$(/usr/bin/uname -o)" = XSolaris ]; then
+	IFCONFIG_OPTS="-au"
+    else
+	IFCONFIG_OPTS=""
+    fi
+    if [ -z "$(/sbin/ifconfig $IFCONFIG_OPTS)" ]; then
+       #log_action_msg "No networks configured."
+       return 1
+    fi
+    return 0
+}
+
+log_daemon_msg "Starting domain name service..." "bind9"
+
+modprobe capability >/dev/null 2>&1 || true
+
+# dirs under /var/run can go away on reboots.
+mkdir -p /var/run/named
+chmod 775 /var/run/named
+chown root:bind /var/run/named >/dev/null 2>&1 || true
+
+if [ ! -x /usr/sbin/named ]; then
+	log_action_msg "named binary missing - not starting"
+	log_end_msg 1
+fi
+
+if ! check_network; then
+	log_action_msg "no networks configured"
+	log_end_msg 1
+fi
+
+if [ "X$RESOLVCONF" != "Xno" ] && [ -x /sbin/resolvconf ] ; then
+	echo "nameserver 127.0.0.1" | /sbin/resolvconf -a lo.named
+fi
+
+exec /usr/sbin/named -f $OPTIONS

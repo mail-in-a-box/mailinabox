@@ -1,0 +1,71 @@
+#!/bin/bash
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/usr/sbin/opendkim
+NAME=opendkim
+DESC="OpenDKIM"
+RUNDIR=/var/run/$NAME
+USER=opendkim
+GROUP=opendkim
+SOCKET=local:$RUNDIR/$NAME.sock
+PIDFILE=$RUNDIR/$NAME.pid
+CONFFILE=/etc/$NAME.conf
+
+test -x $DAEMON || exit 0
+test -f $CONFFILE || exit 0
+
+# Check if mailinabox configuration files are there
+test -f /etc/opendkim/SigningTable || exit 0
+
+# Include LSB provided init functions
+. /lib/lsb/init-functions
+
+# Include opendkim defaults if available
+if [ -f /etc/default/opendkim ] ; then
+	. /etc/default/opendkim
+fi
+
+if [ -f /etc/opendkim.conf ]; then
+	CONFIG_SOCKET=`awk '$1 == "Socket" { print $2 }' /etc/opendkim.conf`
+fi
+
+# This can be set via Socket option in config file, so it's not required
+if [ -n "$SOCKET" -a -z "$CONFIG_SOCKET" ]; then
+	DAEMON_OPTS="-p $SOCKET $DAEMON_OPTS"
+fi
+
+DAEMON_OPTS="-f -x $CONFFILE -u $USER -P $PIDFILE $DAEMON_OPTS"
+
+
+# Create the run directory if it doesn't exist
+if [ ! -d "$RUNDIR" ]; then
+	install -o "$USER" -g "$GROUP" -m 755 -d "$RUNDIR" || return 2
+	[ -x /sbin/restorecon ] && /sbin/restorecon "$RUNDIR"
+fi
+
+# Clean up stale sockets
+if [ -f "$PIDFILE" ]; then
+	pid=`cat $PIDFILE`
+	if ! ps -C "$DAEMON" -s "$pid" >/dev/null; then
+		rm "$PIDFILE"
+		TMPSOCKET=""
+		if [ -n "$SOCKET" ]; then
+			TMPSOCKET="$SOCKET"
+		elif [ -n "$CONFIG_SOCKET" ]; then
+			TMPSOCKET="$CONFIG_SOCKET"
+		fi
+		if [ -n "$TMPSOCKET" ]; then
+			# UNIX sockets may be specified with or without the
+			# local: prefix; handle both
+			t=`echo $SOCKET | cut -d: -f1`
+			s=`echo $SOCKET | cut -d: -f2`
+			if [ -e "$s" -a -S "$s" ]; then
+				if [ "$t" = "$s" -o "$t" = "local" ]; then
+					rm "$s"
+				fi
+			fi
+		fi
+	fi
+fi
+
+exec $DAEMON $DAEMON_OPTS

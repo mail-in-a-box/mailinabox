@@ -1,0 +1,18 @@
+#!/bin/sh
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/usr/bin/memcached
+
+test -x $DAEMON || exit 0
+set -e
+
+# Edit /etc/default/memcached to change this.
+ENABLE_MEMCACHED=no
+test -r /etc/default/memcached && . /etc/default/memcached
+
+echo -n "Starting $DESC: "
+if [ $ENABLE_MEMCACHED = yes ]; then
+	exec /sbin/setuser memcache $DAEMON
+else
+	exit 1
+fi
