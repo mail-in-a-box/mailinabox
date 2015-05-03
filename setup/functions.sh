@@ -9,13 +9,15 @@ function hide_output {
 	$@ &> $OUTPUT
 
 	# If the command failed, show the output that was captured in the temporary file.
-	if [ $? != 0 ]; then
+	E=$?
+	if [ $E != 0 ]; then
 		# Something failed.
 		echo
 		echo FAILED: $@
 		echo -----------------------------------------
 		cat $OUTPUT
 		echo -----------------------------------------
+		exit $E
 	fi
 
 	# Remove temporary file.
