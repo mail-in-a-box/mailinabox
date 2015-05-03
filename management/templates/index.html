@@ -274,7 +274,7 @@ function ajax(options) {
   function hide_loading_indicator() {
     ajax_num_executing_requests--;
     if (ajax_num_executing_requests == 0)
-      $('#ajax_loading_indicator').stop().hide(); // stop() prevents an ongoing fade from causing the thing to be shown again after this call
+      $('#ajax_loading_indicator').stop(true).hide(); // stop() prevents an ongoing fade from causing the thing to be shown again after this call
   }
   var old_success = options.success;
   var old_error = options.error;
