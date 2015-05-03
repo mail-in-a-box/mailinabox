@@ -80,7 +80,7 @@ def unauthorized(error):
 	return auth_service.make_unauthorized_response()
 
 def json_response(data):
-	return Response(json.dumps(data), status=200, mimetype='application/json')
+	return Response(json.dumps(data, indent=2, sort_keys=True)+'\n', status=200, mimetype='application/json')
 
 ###################################
 
