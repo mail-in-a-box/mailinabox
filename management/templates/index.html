@@ -337,6 +337,11 @@ function api(url, method, data, callback, callback_error) {
     method: method,
     cache: false,
     data: data,
+
+    // the custom DNS api sends raw POST/PUT bodies --- prevent URL-encoding
+    processData: typeof data != "string",
+    mimeType: typeof data == "string" ? "text/plain; charset=ascii" : null,
+
     beforeSend: function(xhr) {
       // We don't store user credentials in a cookie to avoid the hassle of CSRF
       // attacks. The Authorization header only gets set in our AJAX calls triggered
