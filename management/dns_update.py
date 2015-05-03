@@ -4,7 +4,7 @@
 # and mail aliases and restarts nsd.
 ########################################################################
 
-import os, os.path, urllib.parse, datetime, re, hashlib, base64
+import sys, os, os.path, urllib.parse, datetime, re, hashlib, base64
 import ipaddress
 import rtyaml
 import dns.resolver
@@ -50,24 +50,13 @@ def get_dns_zones(env):
 
 	return zonefiles
 	
-def get_custom_dns_config(env):
-	try:
-		return rtyaml.load(open(os.path.join(env['STORAGE_ROOT'], 'dns/custom.yaml')))
-	except:
-		return { }
-
-def write_custom_dns_config(config, env):
-	config_yaml = rtyaml.dump(config)
-	with open(os.path.join(env['STORAGE_ROOT'], 'dns/custom.yaml'), "w") as f:
-		f.write(config_yaml)
-
 def do_dns_update(env, force=False):
 	# What domains (and their zone filenames) should we build?
 	domains = get_dns_domains(env)
 	zonefiles = get_dns_zones(env)
 
 	# Custom records to add to zones.
-	additional_records = get_custom_dns_config(env)
+	additional_records = list(get_custom_dns_config(env))
 
 	# Write zone files.
 	os.makedirs('/etc/nsd/zones', exist_ok=True)
@@ -153,7 +142,7 @@ def build_zone(domain, all_domains, additional_records, env, is_zone=True):
 		records.append((None,  "NS",  "ns1.%s." % env["PRIMARY_HOSTNAME"], False))
 
 		# Define ns2.PRIMARY_HOSTNAME or whatever the user overrides.
-		secondary_ns = additional_records.get("_secondary_nameserver", "ns2." + env["PRIMARY_HOSTNAME"])
+		secondary_ns = get_secondary_dns(additional_records) or ("ns2." + env["PRIMARY_HOSTNAME"])
 		records.append((None,  "NS", secondary_ns+'.', False))
 
 
@@ -196,20 +185,34 @@ def build_zone(domain, all_domains, additional_records, env, is_zone=True):
 				child_qname += "." + subdomain_qname
 			records.append((child_qname, child_rtype, child_value, child_explanation))
 
+	has_rec_base = list(records) # clone current state
 	def has_rec(qname, rtype, prefix=None):
-		for rec in records:
+		for rec in has_rec_base:
 			if rec[0] == qname and rec[1] == rtype and (prefix is None or rec[2].startswith(prefix)):
 				return True
 		return False
 
 	# The user may set other records that don't conflict with our settings.
 	# Don't put any TXT records above this line, or it'll prevent any custom TXT records.
-	for qname, rtype, value in get_custom_records(domain, additional_records, env):
+	for qname, rtype, value in filter_custom_records(domain, additional_records):
+		# Don't allow custom records for record types that override anything above.
+		# But allow multiple custom records for the same rtype --- see how has_rec_base is used.
 		if has_rec(qname, rtype): continue
+
+		# The "local" keyword on A/AAAA records are short-hand for our own IP.
+		# This also flags for web configuration that the user wants a website here.
+		if rtype == "A" and value == "local":
+			value = env["PUBLIC_IP"]
+		if rtype == "AAAA" and value == "local":
+			if "PUBLIC_IPV6" in env:
+				value = env["PUBLIC_IPV6"]
+			else:
+				continue
 		records.append((qname, rtype, value, "(Set by user.)"))
 
 	# Add defaults if not overridden by the user's custom settings (and not otherwise configured).
 	# Any "CNAME" record on the qname overrides A and AAAA.
+	has_rec_base = records
 	defaults = [
 		(None,  "A",    env["PUBLIC_IP"],       "Required. May have a different value. Sets the IP address that %s resolves to for web hosting and other services besides mail. The A record must be present but its value does not affect mail delivery." % domain),
 		("www", "A",    env["PUBLIC_IP"],       "Optional. Sets the IP address that www.%s resolves to, e.g. for web hosting." % domain),
@@ -260,52 +263,6 @@ def build_zone(domain, all_domains, additional_records, env, is_zone=True):
 	records.sort(key = lambda rec : list(reversed(rec[0].split(".")) if rec[0] is not None else ""))
 
 	return records
-
-########################################################################
-
-def get_custom_records(domain, additional_records, env):
-	for qname, value in additional_records.items():
-		# We don't count the secondary nameserver config (if present) as a record - that would just be
-		# confusing to users. Instead it is accessed/manipulated directly via (get/set)_custom_dns_config.
-		if qname == "_secondary_nameserver": continue
-
-		# Is this record for the domain or one of its subdomains?
-		# If `domain` is None, return records for all domains.
-		if domain is not None and qname != domain and not qname.endswith("." + domain): continue
-
-		# Turn the fully qualified domain name in the YAML file into
-		# our short form (None => domain, or a relative QNAME) if
-		# domain is not None.
-		if domain is not None:
-			if qname == domain:
-				qname = None
-			else:
-				qname = qname[0:len(qname)-len("." + domain)]
-
-		# Short form. Mapping a domain name to a string is short-hand
-		# for creating A records.
-		if isinstance(value, str):
-			values = [("A", value)]
-			if value == "local" and env.get("PUBLIC_IPV6"):
-				values.append( ("AAAA", value) )
-
-		# A mapping creates multiple records.
-		elif isinstance(value, dict):
-			values = value.items()
-
-		# No other type of data is allowed.
-		else:
-			raise ValueError()
-
-		for rtype, value2 in values:
-			# The "local" keyword on A/AAAA records are short-hand for our own IP.
-			# This also flags for web configuration that the user wants a website here.
-			if rtype == "A" and value2 == "local":
-				value2 = env["PUBLIC_IP"]
-			if rtype == "AAAA" and value2 == "local":
-				if "PUBLIC_IPV6" not in env: continue # no IPv6 address is available so don't set anything
-				value2 = env["PUBLIC_IPV6"]
-			yield (qname, rtype, value2)
 
 ########################################################################
 
@@ -505,9 +462,9 @@ zone:
 
 		# If a custom secondary nameserver has been set, allow zone transfers
 		# and notifies to that nameserver.
-		if additional_records.get("_secondary_nameserver"):
+		if get_secondary_dns(additional_records):
 			# Get the IP address of the nameserver by resolving it.
-			hostname = additional_records.get("_secondary_nameserver")
+			hostname = get_secondary_dns(additional_records)
 			resolver = dns.resolver.get_default_resolver()
 			response = dns.resolver.query(hostname+'.', "A")
 			ipaddr = str(response[0])
@@ -668,7 +625,94 @@ def write_opendkim_tables(domains, env):
 
 ########################################################################
 
-def set_custom_dns_record(qname, rtype, value, env):
+def get_custom_dns_config(env):
+	try:
+		custom_dns = rtyaml.load(open(os.path.join(env['STORAGE_ROOT'], 'dns/custom.yaml')))
+		if not isinstance(custom_dns, dict): raise ValueError() # caught below
+	except:
+		return [ ]
+
+	for qname, value in custom_dns.items():
+		# Short form. Mapping a domain name to a string is short-hand
+		# for creating A records.
+		if isinstance(value, str):
+			values = [("A", value)]
+
+		# A mapping creates multiple records.
+		elif isinstance(value, dict):
+			values = value.items()
+
+		# No other type of data is allowed.
+		else:
+			raise ValueError()
+
+		for rtype, value2 in values:
+			if isinstance(value2, str):
+				yield (qname, rtype, value2)
+			elif isinstance(value2, list):
+				for value3 in value2:
+					yield (qname, rtype, value3)
+			# No other type of data is allowed.
+			else:
+				raise ValueError()
+
+def filter_custom_records(domain, custom_dns_iter):
+	for qname, rtype, value in custom_dns_iter:
+		# We don't count the secondary nameserver config (if present) as a record - that would just be
+		# confusing to users. Instead it is accessed/manipulated directly via (get/set)_custom_dns_config.
+		if qname == "_secondary_nameserver": continue
+
+		# Is this record for the domain or one of its subdomains?
+		# If `domain` is None, return records for all domains.
+		if domain is not None and qname != domain and not qname.endswith("." + domain): continue
+
+		# Turn the fully qualified domain name in the YAML file into
+		# our short form (None => domain, or a relative QNAME) if
+		# domain is not None.
+		if domain is not None:
+			if qname == domain:
+				qname = None
+			else:
+				qname = qname[0:len(qname)-len("." + domain)]
+
+		yield (qname, rtype, value)
+
+def write_custom_dns_config(config, env):
+	# We get a list of (qname, rtype, value) triples. Convert this into a
+	# nice dictionary format for storage on disk.
+	from collections import OrderedDict
+	config = list(config)
+	dns = OrderedDict()
+	seen_qnames = set()
+
+	# Process the qnames in the order we see them.
+	for qname in [rec[0] for rec in config]:
+		if qname in seen_qnames: continue
+		seen_qnames.add(qname)
+
+		records = [(rec[1], rec[2]) for rec in config if rec[0] == qname]
+		if len(records) == 1 and records[0][0] == "A":
+			dns[qname] = records[0][1]
+		else:
+			dns[qname] = OrderedDict()
+			seen_rtypes = set()
+
+			# Process the rtypes in the order we see them.
+			for rtype in [rec[0] for rec in records]:
+				if rtype in seen_rtypes: continue
+				seen_rtypes.add(rtype)
+
+				values = [rec[1] for rec in records if rec[0] == rtype]
+				if len(values) == 1:
+					values = values[0]
+				dns[qname][rtype] = values
+	
+	# Write.	
+	config_yaml = rtyaml.dump(dns)
+	with open(os.path.join(env['STORAGE_ROOT'], 'dns/custom.yaml'), "w") as f:
+		f.write(config_yaml)
+
+def set_custom_dns_record(qname, rtype, value, action, env):
 	# validate qname
 	for zone, fn in get_dns_zones(env):
 		# It must match a zone apex or be a subdomain of a zone
@@ -677,15 +721,17 @@ def set_custom_dns_record(qname, rtype, value, env):
 			break
 	else:
 		# No match.
-		raise ValueError("%s is not a domain name or a subdomain of a domain name managed by this box." % qname)
+		if qname != "_secondary_nameserver":
+			raise ValueError("%s is not a domain name or a subdomain of a domain name managed by this box." % qname)
 
 	# validate rtype
 	rtype = rtype.upper()
-	if value is not None:
+	if value is not None and qname != "_secondary_nameserver":
 		if rtype in ("A", "AAAA"):
-			v = ipaddress.ip_address(value)
-			if rtype == "A" and not isinstance(v, ipaddress.IPv4Address): raise ValueError("That's an IPv6 address.")
-			if rtype == "AAAA" and not isinstance(v, ipaddress.IPv6Address): raise ValueError("That's an IPv4 address.")
+			if value != "local": # "local" is a special flag for us
+				v = ipaddress.ip_address(value) # raises a ValueError if there's a problem
+				if rtype == "A" and not isinstance(v, ipaddress.IPv4Address): raise ValueError("That's an IPv6 address.")
+				if rtype == "AAAA" and not isinstance(v, ipaddress.IPv6Address): raise ValueError("That's an IPv4 address.")
 		elif rtype in ("CNAME", "TXT", "SRV", "MX"):
 			# anything goes
 			pass
@@ -693,69 +739,65 @@ def set_custom_dns_record(qname, rtype, value, env):
 			raise ValueError("Unknown record type '%s'." % rtype)
 
 	# load existing config
-	config = get_custom_dns_config(env)
+	config = list(get_custom_dns_config(env))
 
 	# update
-	if qname not in config:
-		if value is None:
-			# Is asking to delete a record that does not exist.
-			return False
-		elif rtype == "A":
-			# Add this record using the short form 'qname: value'.
-			config[qname] = value
-		else:
-			# Add this record. This is the qname's first record.
-			config[qname] = { rtype: value }
-	else:
-		if isinstance(config[qname], str):
-			# This is a short-form 'qname: value' implicit-A record.
-			if value is None and rtype != "A":
-				# Is asking to delete a record that doesn't exist.
+	newconfig = []
+	made_change = False
+	needs_add = True
+	for _qname, _rtype, _value in config:
+		if action == "add":
+			if (_qname, _rtype, _value) == (qname, rtype, value):
+				# Record already exists. Bail.
 				return False
-			elif value is None and rtype == "A":
-				# Delete record.
-				del config[qname]
-			elif rtype == "A":
-				# Update, keeping short form.
-				if config[qname] == "value":
-					# No change.
-					return False
-				config[qname] = value
-			else:
-				# Expand short form so we can add a new record type.
-				config[qname] = { "A": config[qname], rtype: value }
-		else:
-			# This is the qname: { ... } (dict) format.
-			if value is None:
-				if rtype not in config[qname]:
-					# Is asking to delete a record that doesn't exist.
-					return False
+		elif action == "set":
+			if (_qname, _rtype) == (qname, rtype):
+				if _value == value:
+					# Flag that the record already exists, don't
+					# need to add it.
+					needs_add = False
 				else:
-					# Delete the record. If it's the last record, delete the domain.
-					del config[qname][rtype]
-					if len(config[qname]) == 0:
-						del config[qname]
-			else:
-				# Update the record.
-				if config[qname].get(rtype) == "value":
-					# No change.
-					return False
-				config[qname][rtype] = value
+					# Drop any other values for this (qname, rtype).
+					made_change = True
+					continue
+		elif action == "remove":
+			if (_qname, _rtype, _value) == (qname, rtype, value):
+				# Drop this record.
+				made_change = True
+				continue
+			if value == None and (_qname, _rtype) == (qname, rtype):
+				# Drop all qname-rtype records.
+				made_change = True
+				continue
+		else:
+			raise ValueError("Invalid action: " + action)
 
-	# serialize & save
-	write_custom_dns_config(config, env)
+		# Preserve this record.
+		newconfig.append((_qname, _rtype, _value))
 
-	return True
+	if action in ("add", "set") and needs_add and value is not None:
+		newconfig.append((qname, rtype, value))
+		made_change = True
+
+	if made_change:
+		# serialize & save
+		write_custom_dns_config(newconfig, env)
+
+	return made_change
 
 ########################################################################
 
+def get_secondary_dns(custom_dns):
+	for qname, rtype, value in custom_dns:
+		if qname == "_secondary_nameserver":
+			return value
+	return None
+
 def set_secondary_dns(hostname, env):
-	config = get_custom_dns_config(env)
 
 	if hostname in (None, ""):
 		# Clear.
-		if "_secondary_nameserver" in config:
-			del config["_secondary_nameserver"]
+		set_custom_dns_record("_secondary_nameserver", "A", None, "set", env)
 	else:
 		# Validate.
 		hostname = hostname.strip().lower()
@@ -766,10 +808,9 @@ def set_secondary_dns(hostname, env):
 			raise ValueError("Could not resolve the IP address of %s." % hostname)
 
 		# Set.
-		config["_secondary_nameserver"] = hostname
+		set_custom_dns_record("_secondary_nameserver", "A", hostname, "set", env)
 
-	# Save and apply.
-	write_custom_dns_config(config, env)
+	# Apply.
 	return do_dns_update(env)
 
 
@@ -820,7 +861,7 @@ def build_recommended_dns(env):
 	ret = []
 	domains = get_dns_domains(env)
 	zonefiles = get_dns_zones(env)
-	additional_records = get_custom_dns_config(env)
+	additional_records = list(get_custom_dns_config(env))
 	for domain, zonefile in zonefiles:
 		records = build_zone(domain, domains, additional_records, env)
 
@@ -851,8 +892,11 @@ def build_recommended_dns(env):
 if __name__ == "__main__":
 	from utils import load_environment
 	env = load_environment()
-	for zone, records in build_recommended_dns(env):
-		for record in records:
-			print("; " + record['explanation'])
-			print(record['qname'], record['rtype'], record['value'], sep="\t")
-			print()
+	if sys.argv[-1] == "--lint":
+		write_custom_dns_config(get_custom_dns_config(env), env)
+	else:
+		for zone, records in build_recommended_dns(env):
+			for record in records:
+				print("; " + record['explanation'])
+				print(record['qname'], record['rtype'], record['value'], sep="\t")
+				print()

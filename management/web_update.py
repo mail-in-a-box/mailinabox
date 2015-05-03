@@ -24,12 +24,9 @@ def get_web_domains(env):
 	# ...Unless the domain has an A/AAAA record that maps it to a different
 	# IP address than this box. Remove those domains from our list.
 	dns = get_custom_dns_config(env)
-	for domain, value in dns.items():
+	for domain, rtype, value in dns:
 		if domain not in domains: continue
-		if (isinstance(value, str) and (value != "local")) \
-		  or (isinstance(value, dict) and ("CNAME" in value)) \
-		  or (isinstance(value, dict) and ("A" in value) and (value["A"] != "local")) \
-		  or (isinstance(value, dict) and ("AAAA" in value) and (value["AAAA"] != "local")):
+		if rtype == "CNAME" or (rtype in ("A", "AAAA") and value != "local"):
 			domains.remove(domain)
 
 	# Sort the list. Put PRIMARY_HOSTNAME first so it becomes the

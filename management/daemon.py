@@ -221,8 +221,8 @@ def dns_update():
 @app.route('/dns/secondary-nameserver')
 @authorized_personnel_only
 def dns_get_secondary_nameserver():
-	from dns_update import get_custom_dns_config
-	return json_response({ "hostname": get_custom_dns_config(env).get("_secondary_nameserver") })
+	from dns_update import get_custom_dns_config, get_secondary_dns
+	return json_response({ "hostname": get_secondary_dns(get_custom_dns_config(env)) })
 
 @app.route('/dns/secondary-nameserver', methods=['POST'])
 @authorized_personnel_only
@@ -236,14 +236,12 @@ def dns_set_secondary_nameserver():
 @app.route('/dns/set')
 @authorized_personnel_only
 def dns_get_records():
-	from dns_update import get_custom_dns_config, get_custom_records
-	additional_records = get_custom_dns_config(env)
-	records = get_custom_records(None, additional_records, env)
+	from dns_update import get_custom_dns_config
 	return json_response([{
 		"qname": r[0],
 		"rtype": r[1],
 		"value": r[2],
-		} for r in records])
+		} for r in get_custom_dns_config(env) if r[0] != "_secondary_nameserver"])
 
 @app.route('/dns/set/<qname>', methods=['POST'])
 @app.route('/dns/set/<qname>/<rtype>', methods=['POST'])
@@ -262,8 +260,8 @@ def dns_set_record(qname, rtype="A", value=None):
 		if value == '' or value == '__delete__':
 			# request deletion
 			value = None
-		if set_custom_dns_record(qname, rtype, value, env):
-			return do_dns_update(env)
+		if set_custom_dns_record(qname, rtype, value, "set", env):
+			return do_dns_update(env) or "No Change"
 		return "OK"
 	except ValueError as e:
 		return (str(e), 400)
