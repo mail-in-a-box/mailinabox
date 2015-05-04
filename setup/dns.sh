@@ -32,6 +32,13 @@ server:
 
   # The directory for zonefile: files.
   zonesdir: "/etc/nsd/zones"
+
+  # Allows NSD to bind to IP addresses that are not (yet) added to the
+  # network interface. This allows nsd to start even if the network stack
+  # isn't fully ready, which apparently happens in some cases.
+  # See https://www.nlnetlabs.nl/projects/nsd/nsd.conf.5.html.
+  ip-transparent: yes
+
 EOF
 
 # Since we have bind9 listening on localhost for locally-generated
