@@ -10,19 +10,7 @@
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
-# Install `nsd`, our DNS server software, and `ldnsutils` which helps
-# us sign zones for DNSSEC.
-
-# ...but first, we have to create the user because the 
-# current Ubuntu forgets to do so in the .deb
-# (see issue #25 and https://bugs.launchpad.net/ubuntu/+source/nsd/+bug/1311886)
-if id nsd > /dev/null 2>&1; then
-	true #echo "nsd user exists... good"; #NODOC
-else
-	useradd nsd;
-fi
-
-# Okay now install the packages.
+# Install the packages.
 #
 # * nsd: The non-recursive nameserver that publishes our DNS records.
 # * ldnsutils: Helper utilities for signing DNSSEC zones.
