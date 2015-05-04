@@ -22,6 +22,28 @@ apt_install nsd ldnsutils openssh-client
 
 mkdir -p /var/run/nsd
 
+cat > /etc/nsd/nsd.conf << EOF;
+# No not edit. Overwritten by Mail-in-a-Box setup.
+server:
+  hide-version: yes
+
+  # identify the server (CH TXT ID.SERVER entry).
+  identity: ""
+
+  # The directory for zonefile: files.
+  zonesdir: "/etc/nsd/zones"
+EOF
+
+# Since we have bind9 listening on localhost for locally-generated
+# DNS queries that require a recursive nameserver, and the system
+# might have other network interfaces for e.g. tunnelling, we have
+# to be specific about the network interfaces that nsd binds to.
+for ip in $PRIVATE_IP $PRIVATE_IPV6; do
+	echo "  ip-address: $ip" >> /etc/nsd/nsd.conf;
+done
+
+echo "include: /etc/nsd/zones.conf" >> /etc/nsd/nsd.conf;
+
 # Create DNSSEC signing keys.
 
 mkdir -p "$STORAGE_ROOT/dns/dnssec";

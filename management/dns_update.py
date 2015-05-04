@@ -432,26 +432,10 @@ $TTL 1800           ; default time to live
 ########################################################################
 
 def write_nsd_conf(zonefiles, additional_records, env):
-	# Basic header.
-	nsdconf = """
-server:
-  hide-version: yes
-
-  # identify the server (CH TXT ID.SERVER entry).
-  identity: ""
-
-  # The directory for zonefile: files.
-  zonesdir: "/etc/nsd/zones"
-"""
+	# Write the list of zones to a configuration file.
+	nsd_conf_file = "/etc/nsd/zones.conf"
+	nsdconf = ""
 	
-	# Since we have bind9 listening on localhost for locally-generated
-	# DNS queries that require a recursive nameserver, and the system
-	# might have other network interfaces for e.g. tunnelling, we have
-	# to be specific about the network interfaces that nsd binds to.
-	for ipaddr in (env.get("PRIVATE_IP", "") + " " + env.get("PRIVATE_IPV6", "")).split(" "):
-		if ipaddr == "": continue
-		nsdconf += "  ip-address: %s\n" % ipaddr
-
 	# Append the zones.
 	for domain, zonefile in zonefiles:
 		nsdconf += """
@@ -472,16 +456,17 @@ zone:
 	provide-xfr: %s NOKEY
 """ % (ipaddr, ipaddr)
 
-
-	# Check if the nsd.conf is changing. If it isn't changing,
+	# Check if the file is changing. If it isn't changing,
 	# return False to flag that no change was made.
-	with open("/etc/nsd/nsd.conf") as f:
-		if f.read() == nsdconf:
-			return False
+	if os.path.exists(nsd_conf_file):
+		with open(nsd_conf_file) as f:
+			if f.read() == nsdconf:
+				return False
 
-	with open("/etc/nsd/nsd.conf", "w") as f:
+	# Write out new contents and return True to signal that
+	# configuration changed.
+	with open(nsd_conf_file, "w") as f:
 		f.write(nsdconf)
-
 	return True
 
 ########################################################################
