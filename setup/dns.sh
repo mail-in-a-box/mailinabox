@@ -10,19 +10,7 @@
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
-# Install `nsd`, our DNS server software, and `ldnsutils` which helps
-# us sign zones for DNSSEC.
-
-# ...but first, we have to create the user because the 
-# current Ubuntu forgets to do so in the .deb
-# (see issue #25 and https://bugs.launchpad.net/ubuntu/+source/nsd/+bug/1311886)
-if id nsd > /dev/null 2>&1; then
-	true #echo "nsd user exists... good"; #NODOC
-else
-	useradd nsd;
-fi
-
-# Okay now install the packages.
+# Install the packages.
 #
 # * nsd: The non-recursive nameserver that publishes our DNS records.
 # * ldnsutils: Helper utilities for signing DNSSEC zones.
@@ -33,6 +21,35 @@ apt_install nsd ldnsutils openssh-client
 # Prepare nsd's configuration.
 
 mkdir -p /var/run/nsd
+
+cat > /etc/nsd/nsd.conf << EOF;
+# No not edit. Overwritten by Mail-in-a-Box setup.
+server:
+  hide-version: yes
+
+  # identify the server (CH TXT ID.SERVER entry).
+  identity: ""
+
+  # The directory for zonefile: files.
+  zonesdir: "/etc/nsd/zones"
+
+  # Allows NSD to bind to IP addresses that are not (yet) added to the
+  # network interface. This allows nsd to start even if the network stack
+  # isn't fully ready, which apparently happens in some cases.
+  # See https://www.nlnetlabs.nl/projects/nsd/nsd.conf.5.html.
+  ip-transparent: yes
+
+EOF
+
+# Since we have bind9 listening on localhost for locally-generated
+# DNS queries that require a recursive nameserver, and the system
+# might have other network interfaces for e.g. tunnelling, we have
+# to be specific about the network interfaces that nsd binds to.
+for ip in $PRIVATE_IP $PRIVATE_IPV6; do
+	echo "  ip-address: $ip" >> /etc/nsd/nsd.conf;
+done
+
+echo "include: /etc/nsd/zones.conf" >> /etc/nsd/nsd.conf;
 
 # Create DNSSEC signing keys.
 

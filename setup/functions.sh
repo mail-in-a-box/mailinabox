@@ -9,13 +9,15 @@ function hide_output {
 	$@ &> $OUTPUT
 
 	# If the command failed, show the output that was captured in the temporary file.
-	if [ $? != 0 ]; then
+	E=$?
+	if [ $E != 0 ]; then
 		# Something failed.
 		echo
 		echo FAILED: $@
 		echo -----------------------------------------
 		cat $OUTPUT
 		echo -----------------------------------------
+		exit $E
 	fi
 
 	# Remove temporary file.
@@ -178,6 +180,28 @@ function input_menu {
 	local IFS=^$'\n'
 	result=$(dialog --stdout --title "$1" --menu "$2" 0 0 0 $3)
 	result_code=$?
+}
+
+function wget_verify {
+	# Downloads a file from the web and checks that it matches
+	# a provided hash. If the comparison fails, exit immediately.
+	URL=$1
+	HASH=$2
+	DEST=$3
+	CHECKSUM="$HASH  $DEST"
+	rm -f $DEST
+	wget -q -O $DEST $URL || exit 1
+	if ! echo "$CHECKSUM" | sha1sum --check --strict > /dev/null; then
+		echo "------------------------------------------------------------"
+		echo "Download of $URL did not match expected checksum."
+		echo "Found:"
+		sha1sum $DEST
+		echo
+		echo "Expected:"
+		echo "$CHECKSUM"
+		rm -f $DEST
+		exit 1
+	fi
 }
 
 function git_clone {

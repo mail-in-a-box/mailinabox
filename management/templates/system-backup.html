@@ -28,8 +28,6 @@
   </tbody>
 </table>
 
-<p style="margin-top: 2em"><small>The size column in the table indicates the size of the encrypted backup, but the total size on disk shown above includes storage for unencrypted intermediate files.</small></p>
-
 <script>
 function nice_size(bytes) {
   var powers = ['bytes', 'KB', 'MB', 'GB', 'TB'];
@@ -54,7 +52,7 @@ function show_system_backup() {
     "GET",
     { },
     function(r) {
-      $('#backup-location').text(r.encdirectory);
+      $('#backup-location').text(r.directory);
       $('#backup-encpassword-file').text(r.encpwfile);
 
       $('#backup-status tbody').html("");
@@ -72,7 +70,7 @@ function show_system_backup() {
         tr.append( $('<td/>').text(b.date_str + " " + r.tz) );
         tr.append( $('<td/>').text(b.date_delta + " ago") );
         tr.append( $('<td/>').text(b.full ? "full" : "increment") );
-        tr.append( $('<td style="text-align: right"/>').text( nice_size(b.encsize)) );
+        tr.append( $('<td style="text-align: right"/>').text( nice_size(b.size)) );
         if (b.deleted_in)
           tr.append( $('<td/>').text(b.deleted_in) );
         else
@@ -80,7 +78,6 @@ function show_system_backup() {
         $('#backup-status tbody').append(tr);
 
         total_disk_size += b.size;
-        total_disk_size += b.encsize;
       }
 
       $('#backup-total-size').text(nice_size(total_disk_size));

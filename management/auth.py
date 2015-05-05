@@ -111,12 +111,12 @@ class KeyAuthService:
 				# Login failed.
 				raise ValueError("Invalid password.")
 
-		# Get privileges for authorization.
-
-		# (This call should never fail on a valid user. But if it did fail, it would
-		# return a tuple of an error message and an HTTP status code.)
+		# Get privileges for authorization. This call should never fail on a valid user,
+		# but if the caller passed a user-specific API key then the user may no longer
+		# exist --- in that case, get_mail_user_privileges will return a tuple of an
+		# error message and an HTTP status code.
 		privs = get_mail_user_privileges(email, env)
-		if isinstance(privs, tuple): raise Exception("Error getting privileges.")
+		if isinstance(privs, tuple): raise ValueError(privs[0])
 
 		# Return a list of privileges.
 		return privs

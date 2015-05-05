@@ -11,7 +11,7 @@ import sys, os, os.path, re, subprocess, datetime, multiprocessing.pool
 import dns.reversename, dns.resolver
 import dateutil.parser, dateutil.tz
 
-from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config
+from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, get_secondary_dns
 from web_update import get_web_domains, get_domain_ssl_files
 from mailconfig import get_mail_domains, get_mail_aliases
 
@@ -357,11 +357,11 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 	# the TLD, and so we're not actually checking the TLD. For that we'd need
 	# to do a DNS trace.
 	ip = query_dns(domain, "A")
-	custom_dns = get_custom_dns_config(env)
+	secondary_ns = get_secondary_dns(get_custom_dns_config(env)) or "ns2." + env['PRIMARY_HOSTNAME']
 	existing_ns = query_dns(domain, "NS")
 	correct_ns = "; ".join(sorted([
 		"ns1." + env['PRIMARY_HOSTNAME'],
-		custom_dns.get("_secondary_nameserver", "ns2." + env['PRIMARY_HOSTNAME']),
+		secondary_ns,
 		]))
 	if existing_ns.lower() == correct_ns.lower():
 		output.print_ok("Nameservers are set correctly at registrar. [%s]" % correct_ns)

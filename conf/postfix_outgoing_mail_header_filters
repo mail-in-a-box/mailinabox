@@ -8,3 +8,7 @@
 /^\s*X-Enigmail:/        IGNORE
 /^\s*X-Mailer:/          IGNORE
 /^\s*X-Originating-IP:/  IGNORE
+/^\s*X-Pgp-Agent:/       IGNORE
+
+# The Mime-Version header can leak the user agent too, e.g. in Mime-Version: 1.0 (Mac OS X Mail 8.1 \(2010.6\)).
+/^\s*(Mime-Version:\s*[0-9\.]+)\s.+/  REPLACE $1

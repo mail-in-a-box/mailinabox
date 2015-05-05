@@ -54,6 +54,14 @@ while settings[0][0] == "-" and settings[0] != "--":
 		print("Invalid option.")
 		sys.exit(1)
 
+# sanity check command line
+for setting in settings:
+	try:
+		name, value = setting.split("=", 1)
+	except:
+		import subprocess
+		print("Invalid command line: ", subprocess.list2cmdline(sys.argv))
+
 # create the new config file in memory
 
 found = set()

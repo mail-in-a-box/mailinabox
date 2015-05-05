@@ -8,12 +8,31 @@ Mail:
 
 * Spam checking is now performed on messages larger than the previous limit of 64KB.
 * POP3S is now enabled (port 995).
-* In order to guard against misconfiguration that can lead to domain control validation hijacking, email addresses that begin with admin, administrator, postmaster, hostmaster, and webmaster can no longer be used for (new) mail user accounts, and aliases for these addresses may direct mail only to the box's administrator(s).
+* Roundcube updated to version 1.1.1.
+* More mail headers with user agent info are anonymized.
 
-System:
+ownCloud:
+
+* Downloading files you uploaded to ownCloud broke because of a change in ownCloud 8.
+
+DNS:
 
 * Internationalized Domain Names (IDNs) should now work in email. If you had custom DNS or custom web settings for internationalized domains, check that they are still working.
+* It is now possible to set multiple TXT and other types of records on the same domain in the control panel.
+* The custom DNS API was completely rewritten to support setting multiple records of the same type on a domain. Any existing client code using the DNS API will have to be rewritten. (Existing code will just get 404s back.)
 
+System / Control Panel:
+
+* In order to guard against misconfiguration that can lead to domain control validation hijacking, email addresses that begin with admin, administrator, postmaster, hostmaster, and webmaster can no longer be used for (new) mail user accounts, and aliases for these addresses may direct mail only to the box's administrator(s).
+* Backups now use duplicity's built-in gpg symmetric AES256 encryption rather than my home-brewed encryption. Old backups will be incorporated inside the first backup after this update but then deleted from disk (i.e. your backups from the previous few days will be backed up).
+* There was a race condition between backups and the new nightly status checks.
+* The control panel would sometimes lock up with an unnecessary loading indicator.
+* You can no longer delete your own account from the control panel.
+
+Setup:
+
+* All Mail-in-a-Box release tags are now signed on github, instructions for verifying the signature are added to the README, and the integrity of some packages downloaded during setup is now verified against a SHA1 hash stored in the tag itself.
+* Bugs in first user account creation were fixed.
 
 v0.08 (April 1, 2015)
 ---------------------

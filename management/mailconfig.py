@@ -2,6 +2,7 @@
 
 import subprocess, shutil, os, sqlite3, re
 import utils
+from email_validator import validate_email as validate_email_, EmailNotValidError
 
 def validate_email(email, mode=None):
 	# Checks that an email address is syntactically valid. Returns True/False.
@@ -15,50 +16,25 @@ def validate_email(email, mode=None):
 	# When mode=="alias", we're allowing anything that can be in a Postfix
 	# alias table, i.e. omitting the local part ("@domain.tld") is OK.
 
-	# Check that the address isn't absurdly long.
-	if len(email) > 255: return False
+	# Check the syntax of the address.
+	try:
+		validate_email_(email,
+			allow_smtputf8=False,
+			check_deliverability=False,
+			allow_empty_local=(mode=="alias")
+			)
+	except EmailNotValidError:
+		return False
 
 	if mode == 'user':
 		# There are a lot of characters permitted in email addresses, but
-		# Dovecot's sqlite driver seems to get confused if there are any
+		# Dovecot's sqlite auth driver seems to get confused if there are any
 		# unusual characters in the address. Bah. Also note that since
 		# the mailbox path name is based on the email address, the address
 		# shouldn't be absurdly long and must not have a forward slash.
-		ATEXT = r'[a-zA-Z0-9_\-]'
-	elif mode in (None, 'alias'):
-		# For aliases, we can allow any valid email address.
-		# Based on RFC 2822 and https://github.com/SyrusAkbary/validate_email/blob/master/validate_email.py,
-		# these characters are permitted in email addresses.
-		ATEXT = r'[a-zA-Z0-9_!#$%&\'\*\+\-/=\?\^`\{\|\}~]' # see 3.2.4
-	else:
-		raise ValueError(mode)
-
-	# per RFC 2822 3.2.4
-	DOT_ATOM_TEXT_LOCAL = ATEXT + r'+(?:\.' + ATEXT + r'+)*'
-	if mode == 'alias':
-		# For aliases, Postfix accepts '@domain.tld' format for
-		# catch-all addresses on the source side and domain aliases
-		# on the destination side. Make the local part optional.
-		DOT_ATOM_TEXT_LOCAL = '(?:' + DOT_ATOM_TEXT_LOCAL + ')?'
-
-	# We can require that the host part have at least one period in it,
-	# so use a "+" rather than a "*" at the end.
-	DOT_ATOM_TEXT_HOST = ATEXT + r'+(?:\.' + ATEXT + r'+)+'
-
-	# per RFC 2822 3.4.1
-	ADDR_SPEC = '^(%s)@(%s)$' % (DOT_ATOM_TEXT_LOCAL, DOT_ATOM_TEXT_HOST)
-
-	# Check the regular expression.
-	m = re.match(ADDR_SPEC, email)
-	if not m: return False
-
-	# Check that the domain part is valid IDNA.
-	localpart, domainpart = m.groups()
-	try:
-		domainpart.encode('ascii').decode("idna")
-	except:
-		# Domain is not valid IDNA.
-		return False
+		if len(email) > 255: return False
+		if re.search(r'[^\@\.a-zA-Z0-9_\-]+', email):
+			return False
 
 	# Everything looks good.
 	return True
@@ -278,9 +254,10 @@ def add_mail_user(email, pw, privs, env):
 		return ("Invalid email address.", 400)
 	elif not validate_email(email, mode='user'):
 		return ("User account email addresses may only use the ASCII letters A-Z, the digits 0-9, underscore (_), hyphen (-), and period (.).", 400)
-	elif is_dcv_address(email):
+	elif is_dcv_address(email) and len(get_mail_users(env)) > 0:
 		# Make domain control validation hijacking a little harder to mess up by preventing the usual
-		# addresses used for DCV from being user accounts.
+		# addresses used for DCV from being user accounts. Except let it be the first account because
+		# during box setup the user won't know the rules.
 		return ("You may not make a user account for that address because it is frequently used for domain control validation. Use an alias instead if necessary.", 400)
 
 	# validate password

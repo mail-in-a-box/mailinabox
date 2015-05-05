@@ -1,12 +1,20 @@
 <h1 style="margin: 1em; text-align: center">{{hostname}}</h1>
 
-{% if no_admins_exist %}
+{% if no_users_exist or no_admins_exist %}
 <div class="row">
 <div class="col-md-offset-2 col-md-8">
+  {% if no_users_exist %}
+  <p class="text-danger">There are no users on this system! To make an administrative user,
+  log into this machine using SSH (like when you first set it up) and run:</p>
+  <pre>cd mailinabox
+sudo tools/mail.py user add me@{{hostname}}
+sudo tools/mail.py user make-admin me@{{hostname}}</pre>
+  {% else %}
   <p class="text-danger">There are no administrative users on this system! To make an administrative user,
   log into this machine using SSH (like when you first set it up) and run:</p>
   <pre>cd mailinabox
-sudo tools/mail.py user make-admin your@emailaddress.com</pre>
+sudo tools/mail.py user make-admin me@{{hostname}}</pre>
+  {% endif %}
   <hr>
 </div>
 </div>  

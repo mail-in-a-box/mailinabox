@@ -1,18 +1,15 @@
 <!DOCTYPE html>
-<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
-<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
-<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+<html lang="en">
     <head>
-        <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-        <meta name="viewport" content="width=device-width">
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
 
         <title>{{hostname}} - Mail-in-a-Box Control Panel</title>
 
         <meta name="robots" content="noindex, nofollow">
 
-        <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css">
         <style>
             @import url(https://fonts.googleapis.com/css?family=Raleway:400,700);
             @import url(https://fonts.googleapis.com/css?family=Ubuntu:300);
@@ -73,18 +70,19 @@
 	       margin-bottom: 1em;
 	    }
         </style>
-        <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
-        <style>
-        </style>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap-theme.min.css">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
     </head>
     <body>
-        <!--[if lt IE 7]>
-            <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
-        <![endif]-->
-    <div class="navbar navbar-inverse navbar-fixed-top">
+
+    <!--[if lt IE 8]><p>Internet Explorer version 8 or any modern web browser is required to use this website, sorry.<![endif]-->
+    <!--[if gt IE 7]><!-->
+
+    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
       <div class="container">
         <div class="navbar-header">
-          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
@@ -175,9 +173,9 @@
       </footer>
     </div> <!-- /container -->
 
-        <div id="ajax_loading_indicator" style="display: none; position: fixed; left: 0; top: 0; width: 100%; height: 100%; text-align: center; background-color: rgba(255,255,255,.75)">
+        <div id="ajax_loading_indicator" style="display: none; position: fixed; left: 0; top: 0; width: 100%; height: 100%; z-index: 100000; text-align: center; background-color: rgba(255,255,255,.75)">
           <div style="margin: 20% auto">
-            <div><span class="glyphicon glyphicon-time"></span></div>
+            <div><span class="fa fa-spinner fa-pulse"></span></div>
             <div>Loading...</div>
           </div>
         </div>
@@ -200,8 +198,8 @@
           </div>
         </div>
 
-        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
-        <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
 
         <script>
 var global_modal_state = null;
@@ -233,7 +231,7 @@ $(function() {
 function show_modal_error(title, message, callback) {
   $('#global_modal h4').text(title);
   $('#global_modal .modal-body').html("<p/>");
-  if (typeof question == String) {
+  if (typeof question == 'string') {
     $('#global_modal p').text(message);
     $('#global_modal .modal-dialog').addClass("modal-sm");
   } else {
@@ -245,11 +243,12 @@ function show_modal_error(title, message, callback) {
   global_modal_funcs = [callback, callback];
   global_modal_state = null;
   $('#global_modal').modal({});
+  return false; // handy when called from onclick
 }
 
 function show_modal_confirm(title, question, verb, yes_callback, cancel_callback) {
   $('#global_modal h4').text(title);
-  if (typeof question == String) {
+  if (typeof question == 'string') {
     $('#global_modal .modal-dialog').addClass("modal-sm");
     $('#global_modal .modal-body').html("<p/>");
     $('#global_modal p').text(question);
@@ -257,11 +256,17 @@ function show_modal_confirm(title, question, verb, yes_callback, cancel_callback
     $('#global_modal .modal-dialog').removeClass("modal-sm");
     $('#global_modal .modal-body').html("").append(question);
   }
-  $('#global_modal .btn-default').show().text("Cancel");
-  $('#global_modal .btn-danger').show().text(verb);
+  if (typeof verb == 'string') {
+    $('#global_modal .btn-default').show().text("Cancel");
+    $('#global_modal .btn-danger').show().text(verb);
+  } else {
+    $('#global_modal .btn-default').show().text(verb[1]);
+    $('#global_modal .btn-danger').show().text(verb[0]);
+  }
   global_modal_funcs = [yes_callback, cancel_callback];
   global_modal_state = null;
   $('#global_modal').modal({});
+  return false; // handy when called from onclick
 }
 
 var ajax_num_executing_requests = 0;
@@ -270,7 +275,7 @@ function ajax(options) {
   function hide_loading_indicator() {
     ajax_num_executing_requests--;
     if (ajax_num_executing_requests == 0)
-      $('#ajax_loading_indicator').stop().hide(); // stop() prevents an ongoing fade from causing the thing to be shown again after this call
+      $('#ajax_loading_indicator').stop(true).hide(); // stop() prevents an ongoing fade from causing the thing to be shown again after this call
   }
   var old_success = options.success;
   var old_error = options.error;
@@ -290,6 +295,7 @@ function ajax(options) {
   };
   ajax_num_executing_requests++;
   $.ajax(options);
+  return false; // handy when called from onclick
 }
 
 var api_credentials = ["", ""];
@@ -331,6 +337,11 @@ function api(url, method, data, callback, callback_error) {
     method: method,
     cache: false,
     data: data,
+
+    // the custom DNS api sends raw POST/PUT bodies --- prevent URL-encoding
+    processData: typeof data != "string",
+    mimeType: typeof data == "string" ? "text/plain; charset=ascii" : null,
+
     beforeSend: function(xhr) {
       // We don't store user credentials in a cookie to avoid the hassle of CSRF
       // attacks. The Authorization header only gets set in our AJAX calls triggered

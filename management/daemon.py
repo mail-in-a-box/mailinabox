@@ -80,7 +80,7 @@ def unauthorized(error):
 	return auth_service.make_unauthorized_response()
 
 def json_response(data):
-	return Response(json.dumps(data), status=200, mimetype='application/json')
+	return Response(json.dumps(data, indent=2, sort_keys=True)+'\n', status=200, mimetype='application/json')
 
 ###################################
 
@@ -90,10 +90,12 @@ def json_response(data):
 def index():
 	# Render the control panel. This route does not require user authentication
 	# so it must be safe!
+	no_users_exist = (len(get_mail_users(env)) == 0)
 	no_admins_exist = (len(get_admins(env)) == 0)
 	return render_template('index.html',
 		hostname=env['PRIMARY_HOSTNAME'],
 		storage_root=env['STORAGE_ROOT'],
+		no_users_exist=no_users_exist,
 		no_admins_exist=no_admins_exist,
 	)
 
@@ -219,8 +221,8 @@ def dns_update():
 @app.route('/dns/secondary-nameserver')
 @authorized_personnel_only
 def dns_get_secondary_nameserver():
-	from dns_update import get_custom_dns_config
-	return json_response({ "hostname": get_custom_dns_config(env).get("_secondary_nameserver") })
+	from dns_update import get_custom_dns_config, get_secondary_dns
+	return json_response({ "hostname": get_secondary_dns(get_custom_dns_config(env)) })
 
 @app.route('/dns/secondary-nameserver', methods=['POST'])
 @authorized_personnel_only
@@ -231,38 +233,70 @@ def dns_set_secondary_nameserver():
 	except ValueError as e:
 		return (str(e), 400)
 
-@app.route('/dns/set')
+@app.route('/dns/custom')
 @authorized_personnel_only
-def dns_get_records():
-	from dns_update import get_custom_dns_config, get_custom_records
-	additional_records = get_custom_dns_config(env)
-	records = get_custom_records(None, additional_records, env)
-	return json_response([{
+def dns_get_records(qname=None, rtype=None):
+	from dns_update import get_custom_dns_config
+	return json_response([
+	{
 		"qname": r[0],
 		"rtype": r[1],
 		"value": r[2],
-		} for r in records])
+	}
+	for r in get_custom_dns_config(env)
+	if r[0] != "_secondary_nameserver"
+		and (not qname or r[0] == qname)
+		and (not rtype or r[1] == rtype) ])
 
-@app.route('/dns/set/<qname>', methods=['POST'])
-@app.route('/dns/set/<qname>/<rtype>', methods=['POST'])
-@app.route('/dns/set/<qname>/<rtype>/<value>', methods=['POST'])
+@app.route('/dns/custom/<qname>', methods=['GET', 'POST', 'PUT', 'DELETE'])
+@app.route('/dns/custom/<qname>/<rtype>', methods=['GET', 'POST', 'PUT', 'DELETE'])
 @authorized_personnel_only
-def dns_set_record(qname, rtype="A", value=None):
+def dns_set_record(qname, rtype="A"):
 	from dns_update import do_dns_update, set_custom_dns_record
 	try:
-		# Get the value from the URL, then the POST parameters, or if it is not set then
-		# use the remote IP address of the request --- makes dynamic DNS easy. To clear a
-		# value, '' must be explicitly passed.
-		if value is None:
-			value = request.form.get("value")
-		if value is None:
-			value = request.environ.get("HTTP_X_FORWARDED_FOR") # normally REMOTE_ADDR but we're behind nginx as a reverse proxy
-		if value == '' or value == '__delete__':
-			# request deletion
-			value = None
-		if set_custom_dns_record(qname, rtype, value, env):
-			return do_dns_update(env)
+		# Normalize.
+		rtype = rtype.upper()
+
+		# Read the record value from the request BODY, which must be
+		# ASCII-only. Not used with GET.
+		value = request.stream.read().decode("ascii", "ignore").strip()
+
+		if request.method == "GET":
+			# Get the existing records matching the qname and rtype.
+			return dns_get_records(qname, rtype)
+
+		elif request.method in ("POST", "PUT"):
+			# There is a default value for A/AAAA records.
+			if rtype in ("A", "AAAA") and value == "":
+				value = request.environ.get("HTTP_X_FORWARDED_FOR") # normally REMOTE_ADDR but we're behind nginx as a reverse proxy
+
+			# Cannot add empty records.
+			if value == '':
+				return ("No value for the record provided.", 400)
+
+			if request.method == "POST":
+				# Add a new record (in addition to any existing records
+				# for this qname-rtype pair).
+				action = "add"
+			elif request.method == "PUT":
+				# In REST, PUT is supposed to be idempotent, so we'll
+				# make this action set (replace all records for this
+				# qname-rtype pair) rather than add (add a new record).
+				action = "set"
+		
+		elif request.method == "DELETE":
+			if value == '':
+				# Delete all records for this qname-type pair.
+				value = None
+			else:
+				# Delete just the qname-rtype-value record exactly.
+				pass
+			action = "remove"
+
+		if set_custom_dns_record(qname, rtype, value, action, env):
+			return do_dns_update(env) or "Something isn't right."
 		return "OK"
+
 	except ValueError as e:
 		return (str(e), 400)
 

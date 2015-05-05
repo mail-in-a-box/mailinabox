@@ -93,44 +93,56 @@
 
 <p>Use your box&rsquo;s DNS API to set custom DNS records on domains hosted here. For instance, you can create your own dynamic DNS service.</p>
 
-<p>Send a POST request like this:</p>
+<p>Usage:</p>
 
-<pre>curl -d "" --user {email}:{password} https://{{hostname}}/admin/dns/set/<b>qname</b>[/<b>rtype</b>[/<b>value</b>]]</pre>
+<pre>curl -X <b>VERB</b> [-d "<b>value</b>"] --user {email}:{password} https://{{hostname}}/admin/dns/custom[/<b>qname</b>[/<b>rtype</b>]]</pre>
 
-<h4>HTTP POST parameters</h4>
+<p>(Brackets denote an optional argument.)</p>
+
+<h4>Verbs</h4>
+
+<table class="table">
+<thead><th>Verb</th> <th>Usage</th></thead>
+<tr><td>GET</td> <td>Returns matching custom DNS records as a JSON array of objects. Each object has the keys <code>qname</code>, <code>rtype</code>, and <code>value</code>. The optional <code>qname</code> and <code>rtype</code> parameters in the request URL filter the records returned in the response. The request body (<code>-d "..."</code>) must be omitted.</td></tr>
+<tr><td>PUT</td> <td>Sets a custom DNS record replacing any existing records with the same <code>qname</code> and <code>rtype</code>. Use PUT (instead of POST) when you only have one value for a <code>qname</code> and <code>rtype</code>, such as typical <code>A</code> records (without round-robin).</td></tr>
+<tr><td>POST</td> <td>Adds a new custom DNS record. Use POST when you have multiple <code>TXT</code> records or round-robin <code>A</code> records. (PUT would delete previously added records.)</td></tr>
+<tr><td>DELETE</td> <td>Deletes custom DNS records. If the request body (<code>-d "..."</code>) is empty or omitted, deletes all records matching the <code>qname</code> and <code>rtype</code>. If the request body is present, deletes only the record matching the <code>qname</code>, <code>rtype</code> and value.</td></tr>
+</table>
+
+<h4>Parameters</h4>
 
 <table class="table">
 <thead><th>Parameter</th> <th>Value</th></thead>
 <tr><td>email</td> <td>The email address of any administrative user here.</td></tr>
 <tr><td>password</td> <td>That user&rsquo;s password.</td></tr>
-<tr><td>qname</td> <td>The fully qualified domain name for the record you are trying to set.</td></tr>
-<tr><td>rtype</td> <td>The resource type. <code>A</code> if omitted. Possible values: <code>A</code> (an IPv4 address), <code>AAAA</code> (an IPv6 address), <code>TXT</code> (a text string), or <code>CNAME</code> (an alias, which is a fully qualified domain name).</td></tr>
-<tr><td>value</td> <td>The new record&rsquo;s value. If omitted, the IPv4 address of the remote host is used. This is handy for dynamic DNS! To delete a record, use &ldquo;__delete__&rdquo;.</td></tr>
+<tr><td>qname</td> <td>The fully qualified domain name for the record you are trying to set. It must be one of the domain names or a subdomain of one of the domain names hosted on this box. (Add mail users or aliases to add new domains.)</td></tr>
+<tr><td>rtype</td> <td>The resource type. Defaults to <code>A</code> if omitted. Possible values: <code>A</code> (an IPv4 address), <code>AAAA</code> (an IPv6 address), <code>TXT</code> (a text string), <code>CNAME</code> (an alias, which is a fully qualified domain name &mdash; don&rsquo;t forget the final period), <code>MX</code>, or <code>SRV</code>.</td></tr>
+<tr><td>value</td> <td>For PUT, POST, and DELETE, the record&rsquo;s value. If the <code>rtype</code> is <code>A</code> or <code>AAAA</code> and <code>value</code> is empty or omitted, the IPv4 or IPv6 address of the remote host is used (be sure to use the <code>-4</code> or <code>-6</code> options to curl). This is handy for dynamic DNS!</td></tr>
 </table>
-
-<p style="margin-top: 1em">Note that <code>-d ""</code> is merely to ensure curl sends a POST request. You do not need to put anything inside the quotes. You can also pass the value using typical form encoding in the POST body.</p>
 
 <p>Strict <a href="http://tools.ietf.org/html/rfc4408">SPF</a> and <a href="https://datatracker.ietf.org/doc/draft-kucherawy-dmarc-base/?include_text=1">DMARC</a> records will be added to all custom domains unless you override them.</p>
 
 <h4>Examples:</h4>
 
+<p>Try these examples. For simplicity the examples omit the <code>--user me@mydomain.com:yourpassword</code> command line argument which you must fill in with your email address and password.</p>
+
 <pre># sets laptop.mydomain.com to point to the IP address of the machine you are executing curl on
-curl -d "" --user me@mydomain.com:###### https://{{hostname}}/admin/dns/set/laptop.mydomain.com
+curl -X PUT https://{{hostname}}/admin/dns/custom/laptop.mydomain.com
 
-# sets an alias
-curl -d "" --user me@mydomain.com:###### https://{{hostname}}/admin/dns/set/foo.mydomain.com/cname/bar.mydomain.com
+# deletes that record and all A records for that domain name
+curl -X DELETE https://{{hostname}}/admin/dns/custom/laptop.mydomain.com
 
-# clears the alias
-curl -d "" --user me@mydomain.com:###### https://{{hostname}}/admin/dns/set/bar.mydomain.com/cname/__delete__
+# sets a CNAME alias
+curl -X PUT -d "bar.mydomain.com." https://{{hostname}}/admin/dns/custom/foo.mydomain.com/cname
 
-# sets a TXT record using the alternate value syntax
-curl -d "value=something%20here" --user me@mydomain.com:###### https://{{hostname}}/admin/dns/set/foo.mydomain.com/txt
+# deletes that CNAME and all CNAME records for that domain name
+curl -X DELETE https://{{hostname}}/admin/dns/custom/foo.mydomain.com/cname
 
-# sets a <a href="http://en.wikipedia.org/wiki/SRV_record">SRV record</a> for the "service" and "protocol" hosted on "target" server
-curl -d "" --user me@mydomain.com:###### https://{{hostname}}/admin/dns/set/_service._protocol.{{hostname}}/srv/"priority weight port target"
+# adds a TXT record using POST to preserve any previous TXT records
+curl -X POST -d "some text here" https://{{hostname}}/admin/dns/custom/foo.mydomain.com/txt
 
-# sets a SRV record using the value syntax
-curl -d "value=priority weight port target" --user me@mydomain.com:###### https://{{hostname}}/admin/dns/set/_service._protocol.host/srv
+# deletes that one TXT record while preserving other TXT records
+curl -X DELETE -d "some text here" https://{{hostname}}/admin/dns/custom/foo.mydomain.com/txt
 </pre>
 
 <script>
@@ -161,7 +173,7 @@ function show_custom_dns() {
 
 function show_current_custom_dns() {
   api(
-    "/dns/set",
+    "/dns/custom",
     "GET",
     { },
     function(data) {
@@ -176,6 +188,7 @@ function show_current_custom_dns() {
         $('#custom-dns-current').find("tbody").append(tr);
         tr.attr('data-qname', data[i].qname);
         tr.attr('data-rtype', data[i].rtype);
+        tr.attr('data-value', data[i].value);
         tr.append($('<td class="long"/>').text(data[i].qname));
         tr.append($('<td/>').text(data[i].rtype));
         tr.append($('<td class="long"/>').text(data[i].value));
@@ -187,7 +200,8 @@ function show_current_custom_dns() {
 function delete_custom_dns_record(elem) {
   var qname = $(elem).parents('tr').attr('data-qname');
   var rtype = $(elem).parents('tr').attr('data-rtype');
-  do_set_custom_dns(qname, rtype, "__delete__");
+  var value = $(elem).parents('tr').attr('data-value');
+  do_set_custom_dns(qname, rtype, value, "DELETE");
   return false;
 }
 
@@ -208,7 +222,7 @@ function do_set_secondary_dns() {
     });
 }
 
-function do_set_custom_dns(qname, rtype, value) {
+function do_set_custom_dns(qname, rtype, value, method) {
   if (!qname) {
     if ($('#customdnsQname').val() != '')
       qname = $('#customdnsQname').val() + '.' + $('#customdnsZone').val();
@@ -216,21 +230,20 @@ function do_set_custom_dns(qname, rtype, value) {
       qname = $('#customdnsZone').val();
     rtype = $('#customdnsType').val();
     value = $('#customdnsValue').val();
+    method = 'POST';
   }
 
   api(
-    "/dns/set/" + qname + "/" + rtype,
-    "POST",
-    {
-      value: value
-    },
+    "/dns/custom/" + qname + "/" + rtype,
+    method,
+    value,
     function(data) {
       if (data == "") return; // nothing updated
       show_modal_error("Custom DNS", $("<pre/>").text(data));
       show_current_custom_dns();
     },
     function(err) {
-      show_modal_error("Custom DNS", $("<pre/>").text(err));
+      show_modal_error("Custom DNS (Error)", $("<pre/>").text(err));
     });
 }
 
