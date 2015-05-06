@@ -65,6 +65,8 @@ tools/editconf.py /etc/postfix/main.cf \
 # * Do not add the OpenDMAC Authentication-Results header. That should only be added
 #   on incoming mail. Omit the OpenDMARC milter by re-setting smtpd_milters to the
 #   OpenDKIM milter only. See dkim.sh.
+# * Even though we dont allow auth over non-TLS connections (smtpd_tls_auth_only below, and without auth the client cant
+#   send outbound mail), don't allow non-TLS mail submission on this port anyway to prevent accidental misconfiguration.
 # * Require the best ciphers for incoming connections per http://baldric.net/2013/12/07/tls-ciphers-in-postfix-and-dovecot/.
 #   By putting this setting here we leave opportunistic TLS on incoming mail at default cipher settings (any cipher is better than none).
 # * Give it a different name in syslog to distinguish it from the port 25 smtpd server.
@@ -75,6 +77,7 @@ tools/editconf.py /etc/postfix/master.cf -s -w \
 	"submission=inet n       -       -       -       -       smtpd
 	  -o syslog_name=postfix/submission
 	  -o smtpd_milters=inet:127.0.0.1:8891
+	  -o smtpd_tls_security_level=encrypt
 	  -o smtpd_tls_ciphers=high -o smtpd_tls_exclude_ciphers=aNULL,DES,3DES,MD5,DES+MD5,RC4 -o smtpd_tls_protocols=!SSLv2,!SSLv3
 	  -o cleanup_service_name=authclean" \
 	"authclean=unix  n       -       -       -       0       cleanup
