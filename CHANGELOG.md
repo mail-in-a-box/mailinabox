@@ -1,15 +1,15 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.09 (May 8, 2015)
+-------------------
 
 Mail:
 
 * Spam checking is now performed on messages larger than the previous limit of 64KB.
 * POP3S is now enabled (port 995).
-* Roundcube updated to version 1.1.1.
-* More mail headers with user agent info are anonymized.
+* Roundcube is updated to version 1.1.1.
+* Minor security improvements (more mail headers with user agent info are anonymized; crypto settings were tightened).
 
 ownCloud:
 
@@ -20,6 +20,7 @@ DNS:
 * Internationalized Domain Names (IDNs) should now work in email. If you had custom DNS or custom web settings for internationalized domains, check that they are still working.
 * It is now possible to set multiple TXT and other types of records on the same domain in the control panel.
 * The custom DNS API was completely rewritten to support setting multiple records of the same type on a domain. Any existing client code using the DNS API will have to be rewritten. (Existing code will just get 404s back.)
+* On some systems the `nsd` service failed to start if network inferfaces were not ready.
 
 System / Control Panel:
 
