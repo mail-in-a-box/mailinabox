@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+* ownCloud updated to version 8.0.3.
+
+
 v0.09 (May 8, 2015)
 -------------------
 

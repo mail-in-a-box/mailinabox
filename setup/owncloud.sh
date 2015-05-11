@@ -15,8 +15,8 @@ apt_install \
 apt-get purge -qq -y owncloud*
 
 # Install ownCloud from source of this version:
-owncloud_ver=8.0.2
-owncloud_hash=a4d1fc44bc40af87948458ae8f60ee427ecd9560
+owncloud_ver=8.0.3
+owncloud_hash=3192f3d783f81247eaf2914df63afdd593def4e5
 
 # Check if ownCloud dir exist, and check if version matches owncloud_ver (if either doesn't - install/upgrade)
 if [ ! -d /usr/local/lib/owncloud/ ] \
