@@ -191,7 +191,8 @@ def perform_backup(full_backup):
 			"--volsize", "250",
 			"--gpg-options", "--cipher-algo=AES256",
 			env["STORAGE_ROOT"],
-			"file://" + backup_dir
+			"file://" + backup_dir,
+                        "--allow-source-mismatch"
 			],
 			env_with_passphrase)
 	finally:
