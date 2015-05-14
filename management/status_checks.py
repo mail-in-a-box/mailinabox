@@ -593,7 +593,7 @@ def check_ssl_cert(domain, rounded_time, env, output):
 			output.print_line(cert_status_details)
 			output.print_line("")
 
-def check_certificate(domain, ssl_certificate, ssl_private_key, rounded_time=False):
+def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring_soon=True, rounded_time=False):
 	# Use openssl verify to check the status of a certificate.
 
 	# First check that the certificate is for the right domain. The domain
@@ -636,6 +636,7 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, rounded_time=Fal
 				if m:
 					certificate_names.add(m.group(1))
 
+		# Grab the expiration date for testing later.
 		m = re.match("            Not After : (.*)", line)
 		if m:
 			cert_expiration_date = dateutil.parser.parse(m.group(1))
@@ -690,12 +691,14 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, rounded_time=Fal
 	if "self signed" in verifyoutput:
 		# Certificate is self-signed.
 		return ("SELF-SIGNED", None)
+
 	elif retcode != 0:
 		if "unable to get local issuer certificate" in verifyoutput:
 			return ("The certificate is missing an intermediate chain or the intermediate chain is incorrect or incomplete. (%s)" % verifyoutput, None)
 
 		# There is some unknown problem. Return the `openssl verify` raw output.
 		return ("There is a problem with the SSL certificate.", verifyoutput.strip())
+
 	else:
 		# `openssl verify` returned a zero exit status so the cert is currently
 		# good.
@@ -712,7 +715,7 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, rounded_time=Fal
 		else:
 			expiry_info = "The certificate expires on %s." % cert_expiration_date.strftime("%x")
 
-		if ndays <= 31:
+		if ndays <= 31 and warn_if_expiring_soon:
 			return ("The certificate is expiring soon: " + expiry_info, None)
 
 		# Return the special OK code.
@@ -928,7 +931,7 @@ if __name__ == "__main__":
 		ssl_key, ssl_certificate, ssl_via = get_domain_ssl_files(domain, env)
 		if not os.path.exists(ssl_certificate):
 			sys.exit(1)
-		cert_status, cert_status_details = check_certificate(domain, ssl_certificate, ssl_key)
+		cert_status, cert_status_details = check_certificate(domain, ssl_certificate, ssl_key, warn_if_expiring_soon=False)
 		if cert_status != "OK":
 			sys.exit(1)
 		sys.exit(0)
