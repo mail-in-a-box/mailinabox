@@ -36,6 +36,12 @@ tools/editconf.py /etc/nginx/nginx.conf -s \
 tools/editconf.py /etc/php5/fpm/pool.d/www.conf -c ';' \
 	pm.max_children=8
 
+# Enable PHP's slowlog to better diagnose slow running scripts
+tools/editconf.py /etc/php5/fpm/pool.d/www.conf -c ';' \
+	slowlog=/var/log/php5-fpm.log.slow
+tools/editconf.py /etc/php5/fpm/pool.d/www.conf -c ';' \
+	request_slowlog_timeout=600
+
 # Other nginx settings will be configured by the management service
 # since it depends on what domains we're serving, which we don't know
 # until mail accounts have been created.
