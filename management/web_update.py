@@ -208,7 +208,6 @@ def create_csr(domain, ssl_key, env):
 	return shell("check_output", [
                 "openssl", "req", "-new",
                 "-key", ssl_key,
-                "-out",  "/dev/stdout",
                 "-sha256",
                 "-subj", "/C=%s/ST=/L=/O=/CN=%s" % (env["CSR_COUNTRY"], domain)])
 
