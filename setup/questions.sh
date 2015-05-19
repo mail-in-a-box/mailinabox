@@ -10,7 +10,7 @@ if [ -z "$NONINTERACTIVE" ]; then
 	apt_get_quiet install dialog python3 python3-pip  || exit 1
 
 	# email_validator is repeated in setup/management.sh
-	hide_output pip3 install "email_validator==0.1.0-rc4" || exit 1
+	hide_output pip3 install "email_validator==0.1.0-rc5" || exit 1
 
 	message_box "Mail-in-a-Box Installation" \
 		"Hello and thanks for deploying a Mail-in-a-Box!
