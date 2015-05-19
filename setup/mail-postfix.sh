@@ -172,7 +172,7 @@ tools/editconf.py /etc/postfix/main.cf \
 # Postfix connects to Postgrey on the 127.0.0.1 interface specifically. Ensure that
 # Postgrey listens on the same interface (and not IPv6, for instance).
 tools/editconf.py /etc/default/postgrey \
-	POSTGREY_OPTS=\"--inet=127.0.0.1:10023\"
+	POSTGREY_OPTS=\"--inet=127.0.0.1:10023 --delay=180\"
 
 # Increase the message size limit from 10MB to 128MB.
 # The same limit is specified in nginx.conf for mail submitted via webmail and Z-Push.
