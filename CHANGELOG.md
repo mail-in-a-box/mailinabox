@@ -5,7 +5,7 @@ In Development
 --------------
 
 * ownCloud updated to version 8.0.3.
-
+* SMTP Submission (port 587) began offering the insecure SSLv3 protocol due to a misconfiguration in the previous version.
 
 v0.09 (May 8, 2015)
 -------------------
