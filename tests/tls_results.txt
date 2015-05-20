@@ -1,0 +1,411 @@
+PORT 25
+-------
+
+  * Deflate Compression:
+      OK - Compression disabled          
+
+  * Session Renegotiation:
+      Client-initiated Renegotiations:   VULNERABLE - Server honors client-initiated renegotiations
+      Secure Renegotiation:              OK - Supported
+
+  * OpenSSL Heartbleed:
+      OK - Not vulnerable to Heartbleed  
+
+  * Session Resumption:
+      With Session IDs:                  OK - Supported (5 successful, 0 failed, 0 errors, 5 total attempts).
+      With TLS Session Tickets:          NOT SUPPORTED - TLS ticket not assigned.
+
+  * SSLV2 Cipher Suites:
+      Server rejected all cipher suites.
+
+  * TLSV1_2 Cipher Suites:
+      Preferred:                       
+                 ECDHE-RSA-AES256-GCM-SHA384   ECDH-256 bits  256 bits      250 2.0.0 Ok                       
+      Accepted:                        
+                 ECDHE-RSA-AES256-SHA384       ECDH-256 bits  256 bits      250 2.0.0 Ok                       
+                 ECDHE-RSA-AES256-SHA          ECDH-256 bits  256 bits      250 2.0.0 Ok                       
+                 ECDHE-RSA-AES256-GCM-SHA384   ECDH-256 bits  256 bits      250 2.0.0 Ok                       
+                 DHE-RSA-CAMELLIA256-SHA       DH-2048 bits   256 bits      250 2.0.0 Ok                       
+                 DHE-RSA-AES256-SHA256         DH-2048 bits   256 bits      250 2.0.0 Ok                       
+                 DHE-RSA-AES256-SHA            DH-2048 bits   256 bits      250 2.0.0 Ok                       
+                 DHE-RSA-AES256-GCM-SHA384     DH-2048 bits   256 bits      250 2.0.0 Ok                       
+                 CAMELLIA256-SHA               -              256 bits      250 2.0.0 Ok                       
+                 AES256-SHA256                 -              256 bits      250 2.0.0 Ok                       
+                 AES256-SHA                    -              256 bits      250 2.0.0 Ok                       
+                 AES256-GCM-SHA384             -              256 bits      250 2.0.0 Ok                       
+                 ECDHE-RSA-RC4-SHA             ECDH-256 bits  128 bits      250 2.0.0 Ok                       
+                 ECDHE-RSA-AES128-SHA256       ECDH-256 bits  128 bits      250 2.0.0 Ok                       
+                 ECDHE-RSA-AES128-SHA          ECDH-256 bits  128 bits      250 2.0.0 Ok                       
+                 ECDHE-RSA-AES128-GCM-SHA256   ECDH-256 bits  128 bits      250 2.0.0 Ok                       
+                 DHE-RSA-SEED-SHA              DH-2048 bits   128 bits      250 2.0.0 Ok                       
+                 DHE-RSA-CAMELLIA128-SHA       DH-2048 bits   128 bits      250 2.0.0 Ok                       
+                 DHE-RSA-AES128-SHA256         DH-2048 bits   128 bits      250 2.0.0 Ok                       
+                 DHE-RSA-AES128-SHA            DH-2048 bits   128 bits      250 2.0.0 Ok                       
+                 DHE-RSA-AES128-GCM-SHA256     DH-2048 bits   128 bits      250 2.0.0 Ok                       
+                 SEED-SHA                      -              128 bits      250 2.0.0 Ok                       
+                 RC4-SHA                       -              128 bits      250 2.0.0 Ok                       
+                 RC4-MD5                       -              128 bits      250 2.0.0 Ok                       
+                 CAMELLIA128-SHA               -              128 bits      250 2.0.0 Ok                       
+                 AES128-SHA256                 -              128 bits      250 2.0.0 Ok                       
+                 AES128-SHA                    -              128 bits      250 2.0.0 Ok                       
+                 AES128-GCM-SHA256             -              128 bits      250 2.0.0 Ok                       
+                 ECDHE-RSA-DES-CBC3-SHA        ECDH-256 bits  112 bits      250 2.0.0 Ok                       
+                 EDH-RSA-DES-CBC3-SHA          DH-2048 bits   112 bits      250 2.0.0 Ok                       
+                 DES-CBC3-SHA                  -              112 bits      250 2.0.0 Ok                       
+
+  * TLSV1_1 Cipher Suites:
+      Preferred:                       
+                 ECDHE-RSA-AES256-SHA          ECDH-256 bits  256 bits      250 2.0.0 Ok                       
+      Accepted:                        
+                 ECDHE-RSA-AES256-SHA          ECDH-256 bits  256 bits      250 2.0.0 Ok                       
+                 DHE-RSA-CAMELLIA256-SHA       DH-2048 bits   256 bits      250 2.0.0 Ok                       
+                 DHE-RSA-AES256-SHA            DH-2048 bits   256 bits      250 2.0.0 Ok                       
+                 CAMELLIA256-SHA               -              256 bits      250 2.0.0 Ok                       
+                 AES256-SHA                    -              256 bits      250 2.0.0 Ok                       
+                 ECDHE-RSA-RC4-SHA             ECDH-256 bits  128 bits      250 2.0.0 Ok                       
+                 ECDHE-RSA-AES128-SHA          ECDH-256 bits  128 bits      250 2.0.0 Ok                       
+                 DHE-RSA-SEED-SHA              DH-2048 bits   128 bits      250 2.0.0 Ok                       
+                 DHE-RSA-CAMELLIA128-SHA       DH-2048 bits   128 bits      250 2.0.0 Ok                       
+                 DHE-RSA-AES128-SHA            DH-2048 bits   128 bits      250 2.0.0 Ok                       
+                 SEED-SHA                      -              128 bits      250 2.0.0 Ok                       
+                 RC4-SHA                       -              128 bits      250 2.0.0 Ok                       
+                 RC4-MD5                       -              128 bits      250 2.0.0 Ok                       
+                 CAMELLIA128-SHA               -              128 bits      250 2.0.0 Ok                       
+                 AES128-SHA                    -              128 bits      250 2.0.0 Ok                       
+                 ECDHE-RSA-DES-CBC3-SHA        ECDH-256 bits  112 bits      250 2.0.0 Ok                       
+                 EDH-RSA-DES-CBC3-SHA          DH-2048 bits   112 bits      250 2.0.0 Ok                       
+                 DES-CBC3-SHA                  -              112 bits      250 2.0.0 Ok                       
+
+  * SSLV3 Cipher Suites:
+      Preferred:                       
+                 ECDHE-RSA-AES256-SHA          ECDH-256 bits  256 bits      250 2.0.0 Ok                       
+      Accepted:                        
+                 ECDHE-RSA-AES256-SHA          ECDH-256 bits  256 bits      250 2.0.0 Ok                       
+                 DHE-RSA-CAMELLIA256-SHA       DH-2048 bits   256 bits      250 2.0.0 Ok                       
+                 DHE-RSA-AES256-SHA            DH-2048 bits   256 bits      250 2.0.0 Ok                       
+                 CAMELLIA256-SHA               -              256 bits      250 2.0.0 Ok                       
+                 AES256-SHA                    -              256 bits      250 2.0.0 Ok                       
+                 ECDHE-RSA-RC4-SHA             ECDH-256 bits  128 bits      250 2.0.0 Ok                       
+                 ECDHE-RSA-AES128-SHA          ECDH-256 bits  128 bits      250 2.0.0 Ok                       
+                 DHE-RSA-SEED-SHA              DH-2048 bits   128 bits      250 2.0.0 Ok                       
+                 DHE-RSA-CAMELLIA128-SHA       DH-2048 bits   128 bits      250 2.0.0 Ok                       
+                 DHE-RSA-AES128-SHA            DH-2048 bits   128 bits      250 2.0.0 Ok                       
+                 SEED-SHA                      -              128 bits      250 2.0.0 Ok                       
+                 RC4-SHA                       -              128 bits      250 2.0.0 Ok                       
+                 RC4-MD5                       -              128 bits      250 2.0.0 Ok                       
+                 CAMELLIA128-SHA               -              128 bits      250 2.0.0 Ok                       
+                 AES128-SHA                    -              128 bits      250 2.0.0 Ok                       
+                 ECDHE-RSA-DES-CBC3-SHA        ECDH-256 bits  112 bits      250 2.0.0 Ok                       
+                 EDH-RSA-DES-CBC3-SHA          DH-2048 bits   112 bits      250 2.0.0 Ok                       
+                 DES-CBC3-SHA                  -              112 bits      250 2.0.0 Ok                       
+
+  * TLSV1 Cipher Suites:
+      Preferred:                       
+                 ECDHE-RSA-AES256-SHA          ECDH-256 bits  256 bits      250 2.0.0 Ok                       
+      Accepted:                        
+                 ECDHE-RSA-AES256-SHA          ECDH-256 bits  256 bits      250 2.0.0 Ok                       
+                 DHE-RSA-CAMELLIA256-SHA       DH-2048 bits   256 bits      250 2.0.0 Ok                       
+                 DHE-RSA-AES256-SHA            DH-2048 bits   256 bits      250 2.0.0 Ok                       
+                 CAMELLIA256-SHA               -              256 bits      250 2.0.0 Ok                       
+                 AES256-SHA                    -              256 bits      250 2.0.0 Ok                       
+                 ECDHE-RSA-RC4-SHA             ECDH-256 bits  128 bits      250 2.0.0 Ok                       
+                 ECDHE-RSA-AES128-SHA          ECDH-256 bits  128 bits      250 2.0.0 Ok                       
+                 DHE-RSA-SEED-SHA              DH-2048 bits   128 bits      250 2.0.0 Ok                       
+                 DHE-RSA-CAMELLIA128-SHA       DH-2048 bits   128 bits      250 2.0.0 Ok                       
+                 DHE-RSA-AES128-SHA            DH-2048 bits   128 bits      250 2.0.0 Ok                       
+                 SEED-SHA                      -              128 bits      250 2.0.0 Ok                       
+                 RC4-SHA                       -              128 bits      250 2.0.0 Ok                       
+                 RC4-MD5                       -              128 bits      250 2.0.0 Ok                       
+                 CAMELLIA128-SHA               -              128 bits      250 2.0.0 Ok                       
+                 AES128-SHA                    -              128 bits      250 2.0.0 Ok                       
+                 ECDHE-RSA-DES-CBC3-SHA        ECDH-256 bits  112 bits      250 2.0.0 Ok                       
+                 EDH-RSA-DES-CBC3-SHA          DH-2048 bits   112 bits      250 2.0.0 Ok                       
+                 DES-CBC3-SHA                  -              112 bits      250 2.0.0 Ok
+
+PORT 587
+--------
+
+  * Deflate Compression:
+      OK - Compression disabled          
+
+  * Session Renegotiation:
+      Client-initiated Renegotiations:   VULNERABLE - Server honors client-initiated renegotiations
+      Secure Renegotiation:              OK - Supported
+
+  * OpenSSL Heartbleed:
+      OK - Not vulnerable to Heartbleed  
+
+  * Session Resumption:
+      With Session IDs:                  OK - Supported (5 successful, 0 failed, 0 errors, 5 total attempts).
+      With TLS Session Tickets:          NOT SUPPORTED - TLS ticket not assigned.
+
+  * SSLV2 Cipher Suites:
+      Server rejected all cipher suites.
+
+  * TLSV1_2 Cipher Suites:
+      Preferred:                       
+                 ECDHE-RSA-AES256-GCM-SHA384   ECDH-256 bits  256 bits      250 2.0.0 Ok                       
+      Accepted:                        
+                 ECDHE-RSA-AES256-SHA384       ECDH-256 bits  256 bits      250 2.0.0 Ok                       
+                 ECDHE-RSA-AES256-SHA          ECDH-256 bits  256 bits      250 2.0.0 Ok                       
+                 ECDHE-RSA-AES256-GCM-SHA384   ECDH-256 bits  256 bits      250 2.0.0 Ok                       
+                 DHE-RSA-CAMELLIA256-SHA       DH-2048 bits   256 bits      250 2.0.0 Ok                       
+                 DHE-RSA-AES256-SHA256         DH-2048 bits   256 bits      250 2.0.0 Ok                       
+                 DHE-RSA-AES256-SHA            DH-2048 bits   256 bits      250 2.0.0 Ok                       
+                 DHE-RSA-AES256-GCM-SHA384     DH-2048 bits   256 bits      250 2.0.0 Ok                       
+                 CAMELLIA256-SHA               -              256 bits      250 2.0.0 Ok                       
+                 AES256-SHA256                 -              256 bits      250 2.0.0 Ok                       
+                 AES256-SHA                    -              256 bits      250 2.0.0 Ok                       
+                 AES256-GCM-SHA384             -              256 bits      250 2.0.0 Ok                       
+                 ECDHE-RSA-AES128-SHA256       ECDH-256 bits  128 bits      250 2.0.0 Ok                       
+                 ECDHE-RSA-AES128-SHA          ECDH-256 bits  128 bits      250 2.0.0 Ok                       
+                 ECDHE-RSA-AES128-GCM-SHA256   ECDH-256 bits  128 bits      250 2.0.0 Ok                       
+                 DHE-RSA-SEED-SHA              DH-2048 bits   128 bits      250 2.0.0 Ok                       
+                 DHE-RSA-CAMELLIA128-SHA       DH-2048 bits   128 bits      250 2.0.0 Ok                       
+                 DHE-RSA-AES128-SHA256         DH-2048 bits   128 bits      250 2.0.0 Ok                       
+                 DHE-RSA-AES128-SHA            DH-2048 bits   128 bits      250 2.0.0 Ok                       
+                 DHE-RSA-AES128-GCM-SHA256     DH-2048 bits   128 bits      250 2.0.0 Ok                       
+                 SEED-SHA                      -              128 bits      250 2.0.0 Ok                       
+                 CAMELLIA128-SHA               -              128 bits      250 2.0.0 Ok                       
+                 AES128-SHA256                 -              128 bits      250 2.0.0 Ok                       
+                 AES128-SHA                    -              128 bits      250 2.0.0 Ok                       
+                 AES128-GCM-SHA256             -              128 bits      250 2.0.0 Ok                       
+
+  * TLSV1_1 Cipher Suites:
+      Preferred:                       
+                 ECDHE-RSA-AES256-SHA          ECDH-256 bits  256 bits      250 2.0.0 Ok                       
+      Accepted:                        
+                 ECDHE-RSA-AES256-SHA          ECDH-256 bits  256 bits      250 2.0.0 Ok                       
+                 DHE-RSA-CAMELLIA256-SHA       DH-2048 bits   256 bits      250 2.0.0 Ok                       
+                 DHE-RSA-AES256-SHA            DH-2048 bits   256 bits      250 2.0.0 Ok                       
+                 CAMELLIA256-SHA               -              256 bits      250 2.0.0 Ok                       
+                 AES256-SHA                    -              256 bits      250 2.0.0 Ok                       
+                 ECDHE-RSA-AES128-SHA          ECDH-256 bits  128 bits      250 2.0.0 Ok                       
+                 DHE-RSA-SEED-SHA              DH-2048 bits   128 bits      250 2.0.0 Ok                       
+                 DHE-RSA-CAMELLIA128-SHA       DH-2048 bits   128 bits      250 2.0.0 Ok                       
+                 DHE-RSA-AES128-SHA            DH-2048 bits   128 bits      250 2.0.0 Ok                       
+                 SEED-SHA                      -              128 bits      250 2.0.0 Ok                       
+                 CAMELLIA128-SHA               -              128 bits      250 2.0.0 Ok                       
+                 AES128-SHA                    -              128 bits      250 2.0.0 Ok                       
+
+  * SSLV3 Cipher Suites:
+      Server rejected all cipher suites.
+
+  * TLSV1 Cipher Suites:
+      Preferred:                       
+                 ECDHE-RSA-AES256-SHA          ECDH-256 bits  256 bits      250 2.0.0 Ok                       
+      Accepted:                        
+                 ECDHE-RSA-AES256-SHA          ECDH-256 bits  256 bits      250 2.0.0 Ok                       
+                 DHE-RSA-CAMELLIA256-SHA       DH-2048 bits   256 bits      250 2.0.0 Ok                       
+                 DHE-RSA-AES256-SHA            DH-2048 bits   256 bits      250 2.0.0 Ok                       
+                 CAMELLIA256-SHA               -              256 bits      250 2.0.0 Ok                       
+                 AES256-SHA                    -              256 bits      250 2.0.0 Ok                       
+                 ECDHE-RSA-AES128-SHA          ECDH-256 bits  128 bits      250 2.0.0 Ok                       
+                 DHE-RSA-SEED-SHA              DH-2048 bits   128 bits      250 2.0.0 Ok                       
+                 DHE-RSA-CAMELLIA128-SHA       DH-2048 bits   128 bits      250 2.0.0 Ok                       
+                 DHE-RSA-AES128-SHA            DH-2048 bits   128 bits      250 2.0.0 Ok                       
+                 SEED-SHA                      -              128 bits      250 2.0.0 Ok                       
+                 CAMELLIA128-SHA               -              128 bits      250 2.0.0 Ok                       
+                 AES128-SHA                    -              128 bits      250 2.0.0 Ok
+
+PORT 443
+--------
+
+  * Deflate Compression:
+      OK - Compression disabled          
+
+  * Session Renegotiation:
+      Client-initiated Renegotiations:   OK - Rejected
+      Secure Renegotiation:              OK - Supported
+
+  * HTTP Strict Transport Security:
+      OK - HSTS header received:         max-age=31536000
+
+  * OpenSSL Heartbleed:
+      OK - Not vulnerable to Heartbleed  
+
+  * Session Resumption:
+      With Session IDs:                  OK - Supported (5 successful, 0 failed, 0 errors, 5 total attempts).
+      With TLS Session Tickets:          OK - Supported
+
+  * Google Chrome SHA-1 Deprecation Status:
+      OK - Leaf certificate expires before 2016.
+
+  * SSLV2 Cipher Suites:
+      Server rejected all cipher suites.
+
+  * TLSV1_2 Cipher Suites:
+      Preferred:                       
+                 ECDHE-RSA-AES128-GCM-SHA256   ECDH-256 bits  128 bits      HTTP 200 OK                        
+      Accepted:                        
+                 ECDHE-RSA-AES256-SHA384       ECDH-256 bits  256 bits      HTTP 200 OK                        
+                 ECDHE-RSA-AES256-SHA          ECDH-256 bits  256 bits      HTTP 200 OK                        
+                 ECDHE-RSA-AES256-GCM-SHA384   ECDH-256 bits  256 bits      HTTP 200 OK                        
+                 DHE-RSA-AES256-SHA256         DH-2048 bits   256 bits      HTTP 200 OK                        
+                 DHE-RSA-AES256-SHA            DH-2048 bits   256 bits      HTTP 200 OK                        
+                 DHE-RSA-AES256-GCM-SHA384     DH-2048 bits   256 bits      HTTP 200 OK                        
+                 ECDHE-RSA-AES128-SHA256       ECDH-256 bits  128 bits      HTTP 200 OK                        
+                 ECDHE-RSA-AES128-SHA          ECDH-256 bits  128 bits      HTTP 200 OK                        
+                 ECDHE-RSA-AES128-GCM-SHA256   ECDH-256 bits  128 bits      HTTP 200 OK                        
+                 DHE-RSA-AES128-SHA256         DH-2048 bits   128 bits      HTTP 200 OK                        
+                 DHE-RSA-AES128-SHA            DH-2048 bits   128 bits      HTTP 200 OK                        
+                 DHE-RSA-AES128-GCM-SHA256     DH-2048 bits   128 bits      HTTP 200 OK                        
+                 DES-CBC3-SHA                  -              112 bits      HTTP 200 OK                        
+
+  * TLSV1_1 Cipher Suites:
+      Preferred:                       
+                 ECDHE-RSA-AES128-SHA          ECDH-256 bits  128 bits      HTTP 200 OK                        
+      Accepted:                        
+                 ECDHE-RSA-AES256-SHA          ECDH-256 bits  256 bits      HTTP 200 OK                        
+                 DHE-RSA-AES256-SHA            DH-2048 bits   256 bits      HTTP 200 OK                        
+                 ECDHE-RSA-AES128-SHA          ECDH-256 bits  128 bits      HTTP 200 OK                        
+                 DHE-RSA-AES128-SHA            DH-2048 bits   128 bits      HTTP 200 OK                        
+                 DES-CBC3-SHA                  -              112 bits      HTTP 200 OK                        
+
+  * SSLV3 Cipher Suites:
+      Server rejected all cipher suites.
+
+  * TLSV1 Cipher Suites:
+      Preferred:                       
+                 ECDHE-RSA-AES128-SHA          ECDH-256 bits  128 bits      HTTP 200 OK                        
+      Accepted:                        
+                 ECDHE-RSA-AES256-SHA          ECDH-256 bits  256 bits      HTTP 200 OK                        
+                 DHE-RSA-AES256-SHA            DH-2048 bits   256 bits      HTTP 200 OK                        
+                 ECDHE-RSA-AES128-SHA          ECDH-256 bits  128 bits      HTTP 200 OK                        
+                 DHE-RSA-AES128-SHA            DH-2048 bits   128 bits      HTTP 200 OK                        
+                 DES-CBC3-SHA                  -              112 bits      HTTP 200 OK
+
+PORT 993
+--------
+
+  * Deflate Compression:
+      OK - Compression disabled          
+
+Unhandled exception when processing --reneg: 
+_nassl.OpenSSLError - error:140940F5:SSL routines:ssl3_read_bytes:unexpected record
+
+  * OpenSSL Heartbleed:
+      OK - Not vulnerable to Heartbleed  
+
+  * SSLV2 Cipher Suites:
+      Server rejected all cipher suites.
+
+  * Session Resumption:
+      With Session IDs:                  NOT SUPPORTED (0 successful, 5 failed, 0 errors, 5 total attempts).
+      With TLS Session Tickets:          NOT SUPPORTED - TLS ticket assigned but not accepted.
+
+  * TLSV1_2 Cipher Suites:
+      Preferred:                       
+                 ECDHE-RSA-AES256-SHA          ECDH-384 bits  256 bits                                         
+      Accepted:                        
+                 ECDHE-RSA-AES256-SHA          ECDH-384 bits  256 bits                                         
+                 DHE-RSA-CAMELLIA256-SHA       DH-1024 bits   256 bits                                         
+                 DHE-RSA-AES256-SHA            DH-1024 bits   256 bits                                         
+                 CAMELLIA256-SHA               -              256 bits                                         
+                 AES256-SHA                    -              256 bits                                         
+                 ECDHE-RSA-AES128-SHA          ECDH-384 bits  128 bits                                         
+                 DHE-RSA-CAMELLIA128-SHA       DH-1024 bits   128 bits                                         
+                 DHE-RSA-AES128-SHA            DH-1024 bits   128 bits                                         
+                 CAMELLIA128-SHA               -              128 bits                                         
+                 AES128-SHA                    -              128 bits                                         
+
+  * TLSV1_1 Cipher Suites:
+      Preferred:                       
+                 ECDHE-RSA-AES256-SHA          ECDH-384 bits  256 bits                                         
+      Accepted:                        
+                 ECDHE-RSA-AES256-SHA          ECDH-384 bits  256 bits                                         
+                 DHE-RSA-CAMELLIA256-SHA       DH-1024 bits   256 bits                                         
+                 DHE-RSA-AES256-SHA            DH-1024 bits   256 bits                                         
+                 CAMELLIA256-SHA               -              256 bits                                         
+                 AES256-SHA                    -              256 bits                                         
+                 ECDHE-RSA-AES128-SHA          ECDH-384 bits  128 bits                                         
+                 DHE-RSA-CAMELLIA128-SHA       DH-1024 bits   128 bits                                         
+                 DHE-RSA-AES128-SHA            DH-1024 bits   128 bits                                         
+                 CAMELLIA128-SHA               -              128 bits                                         
+                 AES128-SHA                    -              128 bits                                         
+
+  * SSLV3 Cipher Suites:
+      Server rejected all cipher suites.
+
+  * TLSV1 Cipher Suites:
+      Preferred:                       
+                 ECDHE-RSA-AES256-SHA          ECDH-384 bits  256 bits                                         
+      Accepted:                        
+                 ECDHE-RSA-AES256-SHA          ECDH-384 bits  256 bits                                         
+                 DHE-RSA-CAMELLIA256-SHA       DH-1024 bits   256 bits                                         
+                 DHE-RSA-AES256-SHA            DH-1024 bits   256 bits                                         
+                 CAMELLIA256-SHA               -              256 bits                                         
+                 AES256-SHA                    -              256 bits                                         
+                 ECDHE-RSA-AES128-SHA          ECDH-384 bits  128 bits                                         
+                 DHE-RSA-CAMELLIA128-SHA       DH-1024 bits   128 bits                                         
+                 DHE-RSA-AES128-SHA            DH-1024 bits   128 bits                                         
+                 CAMELLIA128-SHA               -              128 bits                                         
+                 AES128-SHA                    -              128 bits
+
+PORT 995
+--------
+
+  * Deflate Compression:
+      OK - Compression disabled          
+
+Unhandled exception when processing --reneg: 
+_nassl.OpenSSLError - error:140940F5:SSL routines:ssl3_read_bytes:unexpected record
+
+  * OpenSSL Heartbleed:
+      OK - Not vulnerable to Heartbleed  
+
+  * SSLV2 Cipher Suites:
+      Server rejected all cipher suites.
+
+  * Session Resumption:
+      With Session IDs:                  NOT SUPPORTED (0 successful, 5 failed, 0 errors, 5 total attempts).
+      With TLS Session Tickets:          NOT SUPPORTED - TLS ticket assigned but not accepted.
+
+  * TLSV1_2 Cipher Suites:
+      Preferred:                       
+                 ECDHE-RSA-AES256-SHA          ECDH-384 bits  256 bits                                         
+      Accepted:                        
+                 ECDHE-RSA-AES256-SHA          ECDH-384 bits  256 bits                                         
+                 DHE-RSA-CAMELLIA256-SHA       DH-1024 bits   256 bits                                         
+                 DHE-RSA-AES256-SHA            DH-1024 bits   256 bits                                         
+                 CAMELLIA256-SHA               -              256 bits                                         
+                 AES256-SHA                    -              256 bits                                         
+                 ECDHE-RSA-AES128-SHA          ECDH-384 bits  128 bits                                         
+                 DHE-RSA-CAMELLIA128-SHA       DH-1024 bits   128 bits                                         
+                 DHE-RSA-AES128-SHA            DH-1024 bits   128 bits                                         
+                 CAMELLIA128-SHA               -              128 bits                                         
+                 AES128-SHA                    -              128 bits                                         
+
+  * TLSV1_1 Cipher Suites:
+      Preferred:                       
+                 ECDHE-RSA-AES256-SHA          ECDH-384 bits  256 bits                                         
+      Accepted:                        
+                 ECDHE-RSA-AES256-SHA          ECDH-384 bits  256 bits                                         
+                 DHE-RSA-CAMELLIA256-SHA       DH-1024 bits   256 bits                                         
+                 DHE-RSA-AES256-SHA            DH-1024 bits   256 bits                                         
+                 CAMELLIA256-SHA               -              256 bits                                         
+                 AES256-SHA                    -              256 bits                                         
+                 ECDHE-RSA-AES128-SHA          ECDH-384 bits  128 bits                                         
+                 DHE-RSA-CAMELLIA128-SHA       DH-1024 bits   128 bits                                         
+                 DHE-RSA-AES128-SHA            DH-1024 bits   128 bits                                         
+                 CAMELLIA128-SHA               -              128 bits                                         
+                 AES128-SHA                    -              128 bits                                         
+
+  * SSLV3 Cipher Suites:
+      Server rejected all cipher suites.
+
+  * TLSV1 Cipher Suites:
+      Preferred:                       
+                 ECDHE-RSA-AES256-SHA          ECDH-384 bits  256 bits                                         
+      Accepted:                        
+                 ECDHE-RSA-AES256-SHA          ECDH-384 bits  256 bits                                         
+                 DHE-RSA-CAMELLIA256-SHA       DH-1024 bits   256 bits                                         
+                 DHE-RSA-AES256-SHA            DH-1024 bits   256 bits                                         
+                 CAMELLIA256-SHA               -              256 bits                                         
+                 AES256-SHA                    -              256 bits                                         
+                 ECDHE-RSA-AES128-SHA          ECDH-384 bits  128 bits                                         
+                 DHE-RSA-CAMELLIA128-SHA       DH-1024 bits   128 bits                                         
+                 DHE-RSA-AES128-SHA            DH-1024 bits   128 bits                                         
+                 CAMELLIA128-SHA               -              128 bits                                         
+                 AES128-SHA                    -              128 bits
+
