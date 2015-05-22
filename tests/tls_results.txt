@@ -124,6 +124,7 @@ PORT 25
 
   Should Not Offer: DHE-RSA-SEED-SHA, ECDHE-RSA-RC4-SHA, EDH-RSA-DES-CBC3-SHA, RC4-MD5, RC4-SHA, SEED-SHA
   Could Also Offer: DHE-DSS-AES128-GCM-SHA256, DHE-DSS-AES128-SHA, DHE-DSS-AES128-SHA256, DHE-DSS-AES256-GCM-SHA384, DHE-DSS-AES256-SHA, DHE-DSS-AES256-SHA256, DHE-DSS-CAMELLIA128-SHA, DHE-DSS-CAMELLIA256-SHA, ECDHE-ECDSA-AES128-GCM-SHA256, ECDHE-ECDSA-AES128-SHA, ECDHE-ECDSA-AES128-SHA256, ECDHE-ECDSA-AES256-GCM-SHA384, ECDHE-ECDSA-AES256-SHA, ECDHE-ECDSA-AES256-SHA384, ECDHE-ECDSA-DES-CBC3-SHA, SRP-3DES-EDE-CBC-SHA, SRP-AES-128-CBC-SHA, SRP-AES-256-CBC-SHA, SRP-DSS-3DES-EDE-CBC-SHA, SRP-DSS-AES-128-CBC-SHA, SRP-DSS-AES-256-CBC-SHA, SRP-RSA-3DES-EDE-CBC-SHA, SRP-RSA-AES-128-CBC-SHA, SRP-RSA-AES-256-CBC-SHA
+  Supported Clients: OpenSSL/1.0.2, Yahoo Slurp/Jan 2015, BingPreview/Jan 2015, OpenSSL/1.0.1l, YandexBot/Jan 2015, Android/4.4.2, Safari/8/iOS 8.1.2, Safari/7/OS X 10.9, Safari/8/OS X 10.10, Safari/7/iOS 7.1, Safari/6/iOS 6.0.1, Baidu/Jan 2015, Firefox/31.3.0 ESR/Win 7, Android/5.0.0, IE/11/Win 7, Java/8u31, Googlebot/Feb 2015, Chrome/42/OS X, IE Mobile/11/Win Phone 8.1, IE/11/Win 8.1, Android/4.0.4, Android/4.1.1, Safari/6.0.4/OS X 10.8.4, Android/4.3, Android/4.2.2, Safari/5.1.9/OS X 10.6.8, Java/7u25, OpenSSL/0.9.8y, Firefox/37/OS X, IE/7/Vista, IE/8-10/Win 7, IE Mobile/10/Win Phone 8.0, Java/6u45, Android/2.3.7, IE/8/XP
 
 PORT 587
 --------
@@ -213,6 +214,7 @@ PORT 587
 
   Should Not Offer: AES128-GCM-SHA256, AES128-SHA, AES128-SHA256, AES256-GCM-SHA384, AES256-SHA, AES256-SHA256, CAMELLIA128-SHA, CAMELLIA256-SHA, DHE-RSA-CAMELLIA128-SHA, DHE-RSA-CAMELLIA256-SHA, DHE-RSA-SEED-SHA, SEED-SHA
   Could Also Offer: DHE-DSS-AES128-GCM-SHA256, DHE-DSS-AES128-SHA256, DHE-DSS-AES256-GCM-SHA384, DHE-DSS-AES256-SHA, ECDHE-ECDSA-AES128-GCM-SHA256, ECDHE-ECDSA-AES128-SHA, ECDHE-ECDSA-AES128-SHA256, ECDHE-ECDSA-AES256-GCM-SHA384, ECDHE-ECDSA-AES256-SHA, ECDHE-ECDSA-AES256-SHA384
+  Supported Clients: OpenSSL/1.0.2, Yahoo Slurp/Jan 2015, BingPreview/Jan 2015, OpenSSL/1.0.1l, YandexBot/Jan 2015, Android/4.4.2, Safari/8/iOS 8.1.2, Safari/7/OS X 10.9, Safari/8/OS X 10.10, Safari/7/iOS 7.1, IE Mobile/11/Win Phone 8.1, IE/11/Win 8.1, IE/11/Win 7, Safari/6/iOS 6.0.1, Firefox/31.3.0 ESR/Win 7, Baidu/Jan 2015, Android/5.0.0, Chrome/42/OS X, Java/8u31, Googlebot/Feb 2015, Firefox/37/OS X, Android/4.0.4, Android/4.1.1, Safari/6.0.4/OS X 10.8.4, Android/4.3, Android/4.2.2, Safari/5.1.9/OS X 10.6.8, OpenSSL/0.9.8y, IE/7/Vista, IE/8-10/Win 7, IE Mobile/10/Win Phone 8.0, Java/7u25, Java/6u45, Android/2.3.7
 
 PORT 443
 --------
@@ -227,18 +229,18 @@ PORT 443
   * HTTP Strict Transport Security:
       OK - HSTS header received:         max-age=31536000
 
-  * OpenSSL Heartbleed:
-      OK - Not vulnerable to Heartbleed  
-
   * Session Resumption:
       With Session IDs:                  OK - Supported (5 successful, 0 failed, 0 errors, 5 total attempts).
       With TLS Session Tickets:          OK - Supported
 
-  * Google Chrome SHA-1 Deprecation Status:
-      OK - Leaf certificate expires before 2016.
+  * OpenSSL Heartbleed:
+      OK - Not vulnerable to Heartbleed  
 
   * SSLV2 Cipher Suites:
       Server rejected all cipher suites.
+
+  * Google Chrome SHA-1 Deprecation Status:
+      OK - Leaf certificate expires before 2016.
 
   * TLSV1_2 Cipher Suites:
       Preferred:                       
@@ -283,6 +285,7 @@ PORT 443
 
   Should Not Offer: (none -- good)
   Could Also Offer: AES128-GCM-SHA256, AES128-SHA, AES128-SHA256, AES256-GCM-SHA384, AES256-SHA, AES256-SHA256, CAMELLIA128-SHA, CAMELLIA256-SHA, DHE-DSS-AES128-GCM-SHA256, DHE-DSS-AES128-SHA, DHE-DSS-AES128-SHA256, DHE-DSS-AES256-GCM-SHA384, DHE-DSS-AES256-SHA, DHE-DSS-AES256-SHA256, DHE-DSS-CAMELLIA128-SHA, DHE-DSS-CAMELLIA256-SHA, DHE-RSA-CAMELLIA128-SHA, DHE-RSA-CAMELLIA256-SHA, ECDHE-ECDSA-AES128-GCM-SHA256, ECDHE-ECDSA-AES128-SHA, ECDHE-ECDSA-AES128-SHA256, ECDHE-ECDSA-AES256-GCM-SHA384, ECDHE-ECDSA-AES256-SHA, ECDHE-ECDSA-AES256-SHA384, SRP-AES-128-CBC-SHA, SRP-AES-256-CBC-SHA, SRP-DSS-AES-128-CBC-SHA, SRP-DSS-AES-256-CBC-SHA, SRP-RSA-AES-128-CBC-SHA, SRP-RSA-AES-256-CBC-SHA
+  Supported Clients: YandexBot/Jan 2015, OpenSSL/1.0.2, Yahoo Slurp/Jan 2015, BingPreview/Jan 2015, OpenSSL/1.0.1l, Android/4.4.2, Safari/8/iOS 8.1.2, Safari/8/OS X 10.10, Safari/7/OS X 10.9, Safari/7/iOS 7.1, Safari/6/iOS 6.0.1, Android/5.0.0, Chrome/42/OS X, IE/11/Win 8.1, IE/11/Win 7, Java/8u31, IE Mobile/11/Win Phone 8.1, Googlebot/Feb 2015, Firefox/37/OS X, Firefox/31.3.0 ESR/Win 7, Android/4.2.2, Android/4.0.4, Baidu/Jan 2015, Safari/5.1.9/OS X 10.6.8, Android/4.1.1, Safari/6.0.4/OS X 10.8.4, Android/4.3, OpenSSL/0.9.8y, IE/7/Vista, IE/8-10/Win 7, IE Mobile/10/Win Phone 8.0, Java/7u25, Java/6u45, Android/2.3.7, IE/8/XP
 
 PORT 993
 --------
@@ -353,6 +356,7 @@ _nassl.OpenSSLError - error:140940F5:SSL routines:ssl3_read_bytes:unexpected rec
 
   Should Not Offer: AES128-SHA, AES256-SHA, CAMELLIA128-SHA, CAMELLIA256-SHA, DHE-RSA-CAMELLIA128-SHA, DHE-RSA-CAMELLIA256-SHA
   Could Also Offer: DHE-DSS-AES128-GCM-SHA256, DHE-DSS-AES128-SHA256, DHE-DSS-AES256-GCM-SHA384, DHE-DSS-AES256-SHA, DHE-RSA-AES128-GCM-SHA256, DHE-RSA-AES128-SHA256, DHE-RSA-AES256-GCM-SHA384, DHE-RSA-AES256-SHA256, ECDHE-ECDSA-AES128-GCM-SHA256, ECDHE-ECDSA-AES128-SHA, ECDHE-ECDSA-AES128-SHA256, ECDHE-ECDSA-AES256-GCM-SHA384, ECDHE-ECDSA-AES256-SHA, ECDHE-ECDSA-AES256-SHA384, ECDHE-RSA-AES128-GCM-SHA256, ECDHE-RSA-AES128-SHA256, ECDHE-RSA-AES256-GCM-SHA384, ECDHE-RSA-AES256-SHA384
+  Supported Clients: OpenSSL/1.0.2, Baidu/Jan 2015, Yahoo Slurp/Jan 2015, BingPreview/Jan 2015, OpenSSL/1.0.1l, Firefox/31.3.0 ESR/Win 7, Googlebot/Feb 2015, Android/4.2.2, Android/5.0.0, Android/4.0.4, Safari/8/iOS 8.1.2, Safari/7/OS X 10.9, YandexBot/Jan 2015, Safari/8/OS X 10.10, Safari/7/iOS 7.1, Chrome/42/OS X, Safari/5.1.9/OS X 10.6.8, Android/4.1.1, Firefox/37/OS X, Safari/6.0.4/OS X 10.8.4, Android/4.3, Safari/6/iOS 6.0.1, Android/4.4.2, OpenSSL/0.9.8y, IE Mobile/11/Win Phone 8.1, IE/7/Vista, IE/11/Win 8.1, IE/11/Win 7, IE/8-10/Win 7, IE Mobile/10/Win Phone 8.0, Java/8u31, Java/7u25, Java/6u45, Android/2.3.7
 
 PORT 995
 --------
@@ -423,4 +427,5 @@ _nassl.OpenSSLError - error:140940F5:SSL routines:ssl3_read_bytes:unexpected rec
 
   Should Not Offer: AES128-SHA, AES256-SHA, CAMELLIA128-SHA, CAMELLIA256-SHA, DHE-RSA-CAMELLIA128-SHA, DHE-RSA-CAMELLIA256-SHA
   Could Also Offer: DHE-DSS-AES128-GCM-SHA256, DHE-DSS-AES128-SHA256, DHE-DSS-AES256-GCM-SHA384, DHE-DSS-AES256-SHA, DHE-RSA-AES128-GCM-SHA256, DHE-RSA-AES128-SHA256, DHE-RSA-AES256-GCM-SHA384, DHE-RSA-AES256-SHA256, ECDHE-ECDSA-AES128-GCM-SHA256, ECDHE-ECDSA-AES128-SHA, ECDHE-ECDSA-AES128-SHA256, ECDHE-ECDSA-AES256-GCM-SHA384, ECDHE-ECDSA-AES256-SHA, ECDHE-ECDSA-AES256-SHA384, ECDHE-RSA-AES128-GCM-SHA256, ECDHE-RSA-AES128-SHA256, ECDHE-RSA-AES256-GCM-SHA384, ECDHE-RSA-AES256-SHA384
+  Supported Clients: OpenSSL/1.0.2, Baidu/Jan 2015, Yahoo Slurp/Jan 2015, BingPreview/Jan 2015, OpenSSL/1.0.1l, Firefox/31.3.0 ESR/Win 7, Googlebot/Feb 2015, Android/4.2.2, Android/5.0.0, Android/4.0.4, Safari/8/iOS 8.1.2, Safari/7/OS X 10.9, YandexBot/Jan 2015, Safari/8/OS X 10.10, Safari/7/iOS 7.1, Chrome/42/OS X, Safari/5.1.9/OS X 10.6.8, Android/4.1.1, Firefox/37/OS X, Safari/6.0.4/OS X 10.8.4, Android/4.3, Safari/6/iOS 6.0.1, Android/4.4.2, OpenSSL/0.9.8y, IE Mobile/11/Win Phone 8.1, IE/7/Vista, IE/11/Win 8.1, IE/11/Win 7, IE/8-10/Win 7, IE Mobile/10/Win Phone 8.0, Java/8u31, Java/7u25, Java/6u45, Android/2.3.7
 

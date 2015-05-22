@@ -22,7 +22,7 @@
 # (This will launch "ssh -N -L10023:yourservername:testport user@ssh_host"
 # to create a tunnel.)
 
-import sys, subprocess, re, time
+import sys, subprocess, re, time, json, csv, io, urllib.request
 
 ######################################################################
 
@@ -107,8 +107,20 @@ def sslyze(opts, port, ok_ciphers):
 		accepted_ciphers = set()
 		for ciphers in re.findall(" Accepted:([\w\W]*?)\n *\n", out):
 			accepted_ciphers |= set(re.findall("\n\s*(\S*)", ciphers))
+
+		# Compare to what Mozilla recommends, for a given modernness-level.
 		print("  Should Not Offer: " + (", ".join(sorted(accepted_ciphers-set(ok_ciphers))) or "(none -- good)"))
 		print("  Could Also Offer: " + (", ".join(sorted(set(ok_ciphers)-accepted_ciphers)) or "(none -- good)"))
+
+		# What clients does that mean we support on this protocol?
+		supported_clients = { }
+		for cipher in accepted_ciphers:
+			if cipher in cipher_clients:
+				for client in cipher_clients[cipher]:
+					supported_clients[client] = supported_clients.get(client, 0) + 1
+		print("  Supported Clients: " + (", ".join(sorted(supported_clients.keys(), key = lambda client : -supported_clients[client]))))
+
+		# Blank line.
 		print()
 
 	finally:
@@ -118,6 +130,21 @@ def sslyze(opts, port, ok_ciphers):
 				proxy_proc.wait(5)
 			except TimeoutExpired:
 				proxy_proc.kill()
+
+# Get a list of OpenSSL cipher names.
+cipher_names = { }
+for cipher in csv.DictReader(io.StringIO(urllib.request.urlopen("https://raw.githubusercontent.com/mail-in-a-box/user-agent-tls-capabilities/master/cipher_names.csv").read().decode("utf8"))):
+	# not sure why there are some multi-line values, use first line:
+	cipher["OpenSSL"] = cipher["OpenSSL"].split("\n")[0]
+	cipher_names[cipher["IANA"]] = cipher["OpenSSL"]
+
+# Get a list of what clients support what ciphers, using OpenSSL cipher names.
+client_compatibility = json.loads(urllib.request.urlopen("https://raw.githubusercontent.com/mail-in-a-box/user-agent-tls-capabilities/master/clients.json").read().decode("utf8"))
+cipher_clients = { }
+for client in client_compatibility:
+	if len(set(client['protocols']) & set(["TLS 1.0", "TLS 1.1", "TLS 1.2"])) == 0: continue # does not support TLS
+	for cipher in client['ciphers']:
+		cipher_clients.setdefault(cipher_names.get(cipher), set()).add("/".join(x for x in [client['client']['name'], client['client']['version'], client['client']['platform']] if x))
 
 # Run SSLyze on various ports.
 
