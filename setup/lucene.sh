@@ -18,6 +18,9 @@ source /etc/mailinabox.conf # load global vars
 # Add official ppa
 hide_output add-apt-repository -y ppa:brock/mailinabox-brocktice
 
+# Update apt
+hide_output apt-get update
+
 # Install packages
 apt_install dovecot-lucene
 
