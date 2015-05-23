@@ -41,10 +41,10 @@ build_dovecot_lucene:
 	(cd /tmp/build/dovecot-2.2.9; dpkg-buildpackage -S -us -uc -nc)
 
 	# Sign the packages.
-	#debsign /tmp/build/dovecot_2.2.9-1ubuntu2.1_amd64.changes
+	debsign /tmp/build/dovecot_2.2.9-1ubuntu2.2~ppa0~trusty0_source.changes
 
 	# Upload it.
-	#dput ppa:mail-in-a-box/ppa /tmp/build/dovecot_2.2.9-1ubuntu2.1_amd64.changes
+	dput ppa:mail-in-a-box/ppa /tmp/build/dovecot_2.2.9-1ubuntu2.2~ppa0~trusty0_source.changes
 
 	# TESTING BINARY PACKAGE
 	# Install build dependencies and build dependencies we've added in our patch,
