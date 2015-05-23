@@ -1,0 +1,62 @@
+--- a/debian/control
++++ b/debian/control
+@@ -4,7 +4,7 @@
+ Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+ XSBC-Original-Maintainer: Dovecot Maintainers <jaldhar-dovecot@debian.org>
+ Uploaders: Jaldhar H. Vyas <jaldhar@debian.org>, Fabio Tranchitella <kobold@debian.org>, Joel Johnson <mrjoel@lixil.net>, Marco Nenciarini <mnencia@debian.org>
+-Build-Depends: debhelper (>= 7.2.3~), dpkg-dev (>= 1.16.1), pkg-config, libssl-dev, libpam0g-dev, libldap2-dev, libpq-dev, libmysqlclient-dev, libsqlite3-dev, libsasl2-dev, zlib1g-dev, libkrb5-dev, drac-dev (>= 1.12-5), libbz2-dev, libdb-dev, libcurl4-gnutls-dev, libexpat-dev, libwrap0-dev, dh-systemd, po-debconf, lsb-release, hardening-wrapper, dh-autoreconf, autotools-dev
++Build-Depends: debhelper (>= 7.2.3~), dpkg-dev (>= 1.16.1), pkg-config, libssl-dev, libpam0g-dev, libldap2-dev, libpq-dev, libmysqlclient-dev, libsqlite3-dev, libsasl2-dev, zlib1g-dev, libkrb5-dev, drac-dev (>= 1.12-5), libbz2-dev, libdb-dev, libcurl4-gnutls-dev, libexpat-dev, libwrap0-dev, dh-systemd, po-debconf, lsb-release, libclucene-dev (>= 2.3), liblzma-dev, libexttextcat-dev, libstemmer-dev, hardening-wrapper, dh-autoreconf, autotools-dev
+ Standards-Version: 3.9.4
+ Homepage: http://dovecot.org/
+ Vcs-Git: git://git.debian.org/git/collab-maint/dovecot.git
+@@ -13,7 +13,7 @@
+ Package: dovecot-core
+ Architecture: any
+ Depends: ${shlibs:Depends}, ${misc:Depends}, libpam-runtime (>= 0.76-13.1), openssl, adduser, ucf (>= 2.0020), ssl-cert (>= 1.0-11ubuntu1), lsb-base (>= 3.2-12ubuntu3)
+-Suggests: ntp, dovecot-gssapi, dovecot-sieve, dovecot-pgsql, dovecot-mysql, dovecot-sqlite, dovecot-ldap, dovecot-imapd, dovecot-pop3d, dovecot-lmtpd, dovecot-managesieved, dovecot-solr, ufw
++Suggests: ntp, dovecot-gssapi, dovecot-sieve, dovecot-pgsql, dovecot-mysql, dovecot-sqlite, dovecot-ldap, dovecot-imapd, dovecot-pop3d, dovecot-lmtpd, dovecot-managesieved, dovecot-solr, dovecot-lucene, ufw
+ Recommends: ntpdate
+ Provides: dovecot-common
+ Replaces: dovecot-common (<< 1:2.0.14-2~), mailavenger (<< 0.8.1-4)
+@@ -180,6 +180,18 @@
+  .
+  This package provides Solr full text search support for Dovecot.
+
++Package: dovecot-lucene
++Architecture: any
++Depends: ${shlibs:Depends}, ${misc:Depends}, dovecot-core (= ${binary:Version})
++Description: secure POP3/IMAP server - Lucene support
++ Dovecot is a mail server whose major goals are security and extreme
++ reliability. It tries very hard to handle all error conditions and verify
++ that all data is valid, making it nearly impossible to crash. It supports
++ mbox/Maildir and its own dbox/mdbox formats, and should also be pretty
++ fast, extensible, and portable.
++ .
++ This package provides Lucene full text search support for Dovecot.
++
+ Package: dovecot-dbg
+ Section: debug
+ Priority: extra
+--- /dev/null
++++ b/debian/dovecot-lucene.links
+@@ -0,0 +1 @@
++/usr/share/bug/dovecot-core /usr/share/bug/dovecot-lucene
+--- /dev/null
++++ b/debian/dovecot-lucene.lintian-overrides
+@@ -0,0 +1,2 @@
++dovecot-lucene: hardening-no-fortify-functions usr/lib/dovecot/modules/lib21_fts_lucene_plugin.so
++
+--- /dev/null
++++ b/debian/dovecot-lucene.triggers
+@@ -0,0 +1 @@
++activate register-dovecot-plugin
+--- a/debian/rules
++++ b/debian/rules
+@@ -40,6 +40,7 @@
+ 		        --with-solr \
+ 	            --with-ioloop=best \
+ 	            --with-libwrap \
++	            --with-lucene \
+ 	            --host=$(DEB_HOST_GNU_TYPE) \
+ 	            --build=$(DEB_BUILD_GNU_TYPE) \
+ 	            --prefix=/usr \
