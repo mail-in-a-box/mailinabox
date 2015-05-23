@@ -16,7 +16,7 @@ source /etc/mailinabox.conf # load global vars
 # ---------------------------------------
 
 # Add official ppa
-hide_output add-apt-repository -y ppa:brock/mailinabox-brocktice
+hide_output add-apt-repository -y ppa:mail-in-a-box/ppa
 
 # Update apt
 hide_output apt-get update
