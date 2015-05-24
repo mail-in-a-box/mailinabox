@@ -158,6 +158,9 @@ tools/web_update
 # If there aren't any mail users yet, create one.
 source setup/firstuser.sh
 
+# Post-setup rcmcarddav db init
+source setup/rcmcarddav_dbinit.sh
+
 # Done.
 echo
 echo "-----------------------------------------------"
