@@ -4,7 +4,7 @@ import os, os.path, re, json
 
 from functools import wraps
 
-from flask import Flask, request, render_template, abort, Response
+from flask import Flask, request, render_template, abort, Response, send_from_directory
 
 import auth, utils
 from mailconfig import get_mail_users, get_mail_users_ex, get_admins, add_mail_user, set_mail_password, remove_mail_user
@@ -383,6 +383,17 @@ def do_updates():
 def backup_status():
 	from backup import backup_status
 	return json_response(backup_status(env))
+
+# MUNIN
+
+@app.route('/munin/')
+@app.route('/munin/<path:filename>')
+@authorized_personnel_only
+def munin(filename=""):
+	# Checks administrative access (@authorized_personnel_only) and then just proxies
+	# the request to static files.
+	if filename == "": filename = "index.html"
+	return send_from_directory("/var/cache/munin/www", filename)
 
 # APP
 
