@@ -145,6 +145,7 @@ source setup/webmail.sh
 source setup/owncloud.sh
 source setup/zpush.sh
 source setup/management.sh
+source setup/munin.sh
 
 # Ping the management daemon to write the DNS and nginx configuration files.
 while [ ! -f /var/lib/mailinabox/api.key ]; do
@@ -156,6 +157,9 @@ tools/web_update
 
 # If there aren't any mail users yet, create one.
 source setup/firstuser.sh
+
+# Grant admins access to Munin
+source tools/munin_update.sh
 
 # Done.
 echo
