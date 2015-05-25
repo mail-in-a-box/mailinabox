@@ -148,7 +148,7 @@ def perform_backup(full_backup):
 	old_backup_dir = os.path.join(backup_root, 'duplicity')
 	migrated_unencrypted_backup_dir = os.path.join(env["STORAGE_ROOT"], "migrated_unencrypted_backup")
 	if os.path.isdir(old_backup_dir):
-		# Move the old unencrpyted files to a new location outside of
+		# Move the old unencrypted files to a new location outside of
 		# the backup root so they get included in the next (new) backup.
 		# Then we'll delete them. Also so that they do not get in the
 		# way of duplicity doing a full backup on the first run after
