@@ -177,7 +177,7 @@ tools/editconf.py /etc/postfix/main.cf \
 # e-mails really latter, delay of greylisting has been set to
 # 180 seconds (default is 300 seconds).
 tools/editconf.py /etc/default/postgrey \
-	POSTGREY_OPTS=\"--inet=127.0.0.1:10023 --delay=180\"
+	POSTGREY_OPTS=\"'--inet=127.0.0.1:10023 --delay=180'\"
 
 # Increase the message size limit from 10MB to 128MB.
 # The same limit is specified in nginx.conf for mail submitted via webmail and Z-Push.
