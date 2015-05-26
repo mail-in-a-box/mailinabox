@@ -158,9 +158,6 @@ tools/web_update
 # If there aren't any mail users yet, create one.
 source setup/firstuser.sh
 
-# Grant admins access to Munin
-source tools/munin_update.sh
-
 # Done.
 echo
 echo "-----------------------------------------------"
