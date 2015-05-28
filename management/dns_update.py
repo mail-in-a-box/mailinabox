@@ -253,10 +253,10 @@ def build_zone(domain, all_domains, additional_records, env, is_zone=True):
 	all_resolvable_qnames = set(r[0] for r in records if r[1] in ("A", "AAAA"))
 	for qname in all_resolvable_qnames:
 		if not has_rec(qname, "TXT", prefix="v=spf1 "):
-			records.append((qname,  "TXT", 'v=spf1 a mx -all', "Recommended. Prevents unauthorized use of this domain name for outbound mail by specifying that only servers pointed to by a parallel A or MX record are valid sources for mail from @%s." % (qname + "." + domain)))
+			records.append((qname,  "TXT", 'v=spf1 -all', "Recommended. Prevents use of this domain name for outbound mail by specifying that no servers are valid sources for mail from @%s. If you do send email from this domain name you should either override this record such that the SPF rule does allow the originating server, or, take the recommended approach and have the box handle mail for this domain (simply add any receiving alias at this domain name to make this machine treat the domain name as one of its mail domains)." % (qname + "." + domain)))
 		dmarc_qname = "_dmarc" + ("" if qname is None else "." + qname)
 		if not has_rec(dmarc_qname, "TXT", prefix="v=DMARC1; "):
-			records.append((dmarc_qname, "TXT", 'v=DMARC1; p=reject', "Recommended. Prevents unauthorized use of this domain name for outbound mail by specifying that the SPF rule should be honoured for mail from @%s." % (qname + "." + domain)))
+			records.append((dmarc_qname, "TXT", 'v=DMARC1; p=reject', "Recommended. Prevents use of this domain name for outbound mail by specifying that the SPF rule should be honoured for mail from @%s." % (qname + "." + domain)))
 
 
 	# Sort the records. The None records *must* go first in the nsd zone file. Otherwise it doesn't matter.
