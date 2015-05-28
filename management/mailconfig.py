@@ -32,8 +32,11 @@ def validate_email(email, mode=None):
 		# unusual characters in the address. Bah. Also note that since
 		# the mailbox path name is based on the email address, the address
 		# shouldn't be absurdly long and must not have a forward slash.
+		# Our database is case sensitive (oops), which affects mail delivery
+		# (Postfix always queries in lowercase?), so also only permit lowercase
+		# letters.
 		if len(email) > 255: return False
-		if re.search(r'[^\@\.a-zA-Z0-9_\-]+', email):
+		if re.search(r'[^\@\.a-z0-9_\-]+', email):
 			return False
 
 	# Everything looks good.
@@ -253,7 +256,7 @@ def add_mail_user(email, pw, privs, env):
 	elif not validate_email(email):
 		return ("Invalid email address.", 400)
 	elif not validate_email(email, mode='user'):
-		return ("User account email addresses may only use the ASCII letters A-Z, the digits 0-9, underscore (_), hyphen (-), and period (.).", 400)
+		return ("User account email addresses may only use the lowercase ASCII letters a-z, the digits 0-9, underscore (_), hyphen (-), and period (.).", 400)
 	elif is_dcv_address(email) and len(get_mail_users(env)) > 0:
 		# Make domain control validation hijacking a little harder to mess up by preventing the usual
 		# addresses used for DCV from being user accounts. Except let it be the first account because
@@ -402,6 +405,10 @@ def add_remove_mail_user_privilege(email, priv, action, env):
 def add_mail_alias(source, destination, env, update_if_exists=False, do_kick=True):
 	# convert Unicode domain to IDNA
 	source = sanitize_idn_email_address(source)
+
+	# Our database is case sensitive (oops), which affects mail delivery
+	# (Postfix always queries in lowercase?), so force lowercase.
+	source = source.lower()
 
 	# validate source
 	source = source.strip()
