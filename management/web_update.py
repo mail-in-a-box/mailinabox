@@ -35,7 +35,7 @@ def get_web_domains(env):
 
 	return domains
 	
-def do_web_update(env, ok_status="web updated\n"):
+def do_web_update(env):
 	# Build an nginx configuration file.
 	nginx_conf = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-top.conf")).read()
 
@@ -62,7 +62,7 @@ def do_web_update(env, ok_status="web updated\n"):
 	# enough and doesn't break any open connections.
 	shell('check_call', ["/usr/sbin/service", "nginx", "reload"])
 
-	return ok_status
+	return "web updated\n"
 
 def make_domain_config(domain, template, template_for_primaryhost, env):
 	# How will we configure this domain.
@@ -238,7 +238,7 @@ def install_cert(domain, ssl_cert, ssl_chain, env):
 	os.makedirs(os.path.dirname(ssl_certificate), exist_ok=True)
 	shutil.move(fn, ssl_certificate)
 
-	ret = []
+	ret = ["OK"]
 
 	# When updating the cert for PRIMARY_HOSTNAME, also update DNS because it is
 	# used in the DANE TLSA record and restart postfix and dovecot which use
@@ -251,8 +251,8 @@ def install_cert(domain, ssl_cert, ssl_chain, env):
 		ret.append("mail services restarted")
 
 	# Kick nginx so it sees the cert.
-	ret.append( do_web_update(env, ok_status="") )
-	return "\n".join(r for r in ret if r.strip() != "")
+	ret.append( do_web_update(env) )
+	return "\n".join(ret)
 
 def get_web_domains_info(env):
 	# load custom settings so we can tell what domains have a redirect or proxy set up on '/',

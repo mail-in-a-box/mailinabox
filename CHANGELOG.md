@@ -8,6 +8,7 @@ In Development
 * SMTP Submission (port 587) began offering the insecure SSLv3 protocol due to a misconfiguration in the previous version.
 * Users and aliases weren't working if they were entered with any uppercase letters. Now only lowercase is allowed.
 * Fix broken install on OVH VPS's.
+* After installing an SSL certificate from the control panel, the page wasn't being refreshed.
 
 v0.09 (May 8, 2015)
 -------------------

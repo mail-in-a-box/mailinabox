@@ -110,7 +110,8 @@ function install_cert() {
       chain: $('#ssl_paste_chain').val()
     },
     function(status) {
-      if (status == "") {
+      if (/^OK($|\n)/.test(status)) {
+        console.log(status)
         show_modal_error("SSL Certificate Installation", "Certificate has been installed. Check that you have no connection problems to the domain.", function() { show_ssl(); $('#csr_info').slideUp(); });
       } else {
         show_modal_error("SSL Certificate Installation", status);
