@@ -24,7 +24,7 @@ def get_dns_zones(env):
 	# What domains should we create DNS zones for? Never create a zone for
 	# a domain & a subdomain of that domain.
 	domains = get_dns_domains(env)
-	
+
 	# Exclude domains that are subdomains of other domains we know. Proceed
 	# by looking at shorter domains first.
 	zone_domains = set()
@@ -49,7 +49,7 @@ def get_dns_zones(env):
 	zonefiles.sort(key = lambda zone : zone_order.index(zone[0]) )
 
 	return zonefiles
-	
+
 def do_dns_update(env, force=False):
 	# What domains (and their zone filenames) should we build?
 	domains = get_dns_domains(env)
@@ -247,17 +247,17 @@ def build_zone(domain, all_domains, additional_records, env, is_zone=True):
 	# Append a DMARC record.
 	# Skip if the user has set a DMARC record already.
 	if not has_rec("_dmarc", "TXT", prefix="v=DMARC1; "):
-		records.append(("_dmarc", "TXT", 'v=DMARC1; p=quarantine', "Optional. Specifies that mail that does not originate from the box but claims to be from @%s is suspect and should be quarantined by the recipient's mail system." % domain))
+		records.append(("_dmarc", "TXT", 'v=DMARC1; p=quarantine', "Recommended. Specifies that mail that does not originate from the box but claims to be from @%s or which does not have a valid DKIM signature is suspect and should be quarantined by the recipient's mail system." % domain))
 
 	# For any subdomain with an A record but no SPF or DMARC record, add strict policy records.
 	all_resolvable_qnames = set(r[0] for r in records if r[1] in ("A", "AAAA"))
 	for qname in all_resolvable_qnames:
 		if not has_rec(qname, "TXT", prefix="v=spf1 "):
-			records.append((qname,  "TXT", 'v=spf1 a mx -all', "Prevents unauthorized use of this domain name for outbound mail by requiring outbound mail to originate from the indicated host(s)."))
+			records.append((qname,  "TXT", 'v=spf1 a mx -all', "Recommended. Prevents unauthorized use of this domain name for outbound mail by specifying that only servers pointed to by a parallel A or MX record are valid sources for mail from @%s." % (qname + "." + domain)))
 		dmarc_qname = "_dmarc" + ("" if qname is None else "." + qname)
 		if not has_rec(dmarc_qname, "TXT", prefix="v=DMARC1; "):
-			records.append((dmarc_qname, "TXT", 'v=DMARC1; p=reject', "Prevents unauthorized use of this domain name for outbound mail by requiring a valid DKIM signature."))
-		
+			records.append((dmarc_qname, "TXT", 'v=DMARC1; p=reject', "Recommended. Prevents unauthorized use of this domain name for outbound mail by specifying that the SPF rule should be honoured for mail from @%s." % (qname + "." + domain)))
+
 
 	# Sort the records. The None records *must* go first in the nsd zone file. Otherwise it doesn't matter.
 	records.sort(key = lambda rec : list(reversed(rec[0].split(".")) if rec[0] is not None else ""))
@@ -325,7 +325,7 @@ def build_sshfp_records():
 			# Lots of things can go wrong. Don't let it disturb the DNS
 			# zone.
 			pass
-	
+
 ########################################################################
 
 def write_nsd_zone(domain, zonefile, records, env, force):
@@ -435,7 +435,7 @@ def write_nsd_conf(zonefiles, additional_records, env):
 	# Write the list of zones to a configuration file.
 	nsd_conf_file = "/etc/nsd/zones.conf"
 	nsdconf = ""
-	
+
 	# Append the zones.
 	for domain, zonefile in zonefiles:
 		nsdconf += """
@@ -492,7 +492,7 @@ def sign_zone(domain, zonefile, env):
 	# a new .key file with a DNSSEC record for the specific domain. We
 	# can reuse the same key, but it won't validate without a DNSSEC
 	# record specifically for the domain.
-	# 
+	#
 	# Copy the .key and .private files to /tmp to patch them up.
 	#
 	# Use os.umask and open().write() to securely create a copy that only
@@ -691,8 +691,8 @@ def write_custom_dns_config(config, env):
 				if len(values) == 1:
 					values = values[0]
 				dns[qname][rtype] = values
-	
-	# Write.	
+
+	# Write.
 	config_yaml = rtyaml.dump(dns)
 	with open(os.path.join(env['STORAGE_ROOT'], 'dns/custom.yaml'), "w") as f:
 		f.write(config_yaml)
