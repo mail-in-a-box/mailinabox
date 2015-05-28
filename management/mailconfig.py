@@ -135,7 +135,7 @@ def get_mail_users_ex(env, with_archived=False, with_slow_info=False):
 				mbox = os.path.join(root, domain, user)
 				if email in active_accounts: continue
 				user = {
-					"email": email, 
+					"email": email,
 					"privileges": "",
 					"status": "inactive",
 					"mailbox": mbox,
@@ -313,7 +313,7 @@ def add_mail_user(email, pw, privs, env):
 def set_mail_password(email, pw, env):
 	# validate that password is acceptable
 	validate_password(pw)
-	
+
 	# hash the password
 	pw = hash_password(pw)
 
@@ -416,7 +416,7 @@ def add_mail_alias(source, destination, env, update_if_exists=False, do_kick=Tru
 	# validate destination
 	dests = []
 	destination = destination.strip()
-	
+
 	# Postfix allows a single @domain.tld as the destination, which means
 	# the local part on the address is preserved in the rewrite. We must
 	# try to convert Unicode to IDNA first before validating that it's a
@@ -511,7 +511,7 @@ def get_required_aliases(env):
 def kick(env, mail_result=None):
 	results = []
 
-	# Inclde the current operation's result in output.
+	# Include the current operation's result in output.
 
 	if mail_result is not None:
 		results.append(mail_result + "\n")
