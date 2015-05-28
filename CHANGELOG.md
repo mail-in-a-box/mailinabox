@@ -7,6 +7,7 @@ In Development
 * ownCloud updated to version 8.0.3.
 * SMTP Submission (port 587) began offering the insecure SSLv3 protocol due to a misconfiguration in the previous version.
 * Users and aliases weren't working if they were entered with any uppercase letters. Now only lowercase is allowed.
+* Fix broken install on OVH VPS's.
 
 v0.09 (May 8, 2015)
 -------------------
