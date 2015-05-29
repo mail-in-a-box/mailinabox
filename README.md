@@ -37,10 +37,12 @@ The components installed are:
 
 For more information on how Mail-in-a-Box handles your privacy, see the [security details page](security.md).
 
-Authenticity
+The Security
 ------------
 
-I sign the release tags. To verify that a tag is signed by me, you can perform the following steps:
+See the [security guide](security.md) for more information about the box's security configuration (TLS, password storage, etc).
+
+I sign the release tags on git. To verify that a tag is signed by me, you can perform the following steps:
 
 	# Download my PGP key.
 	$ curl -s https://keybase.io/joshdata/key.asc | gpg --import
