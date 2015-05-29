@@ -35,11 +35,12 @@ apt-get purge -qq -y roundcube* #NODOC
 VERSION=1.1.1
 HASH=08222f382a8dd89bba7dbbad595f48443bec0aa2
 VACATION_SIEVE_VERSION=91ea6f52216390073d1f5b70b5f6bea0bfaee7e5
+PERSISTENT_LOGIN_VERSION=9a0bc59493beb573d515f82aec443e2098365d11
 needs_update=0 #NODOC
 if [ ! -f /usr/local/lib/roundcubemail/version ]; then
 	# not installed yet #NODOC
 	needs_update=1 #NODOC
-elif [[ "$VERSION:$VACATION_SIEVE_VERSION" != `cat /usr/local/lib/roundcubemail/version` ]]; then
+elif [[ "$VERSION:$VACATION_SIEVE_VERSION:$PERSISTENT_LOGIN_VERSION" != `cat /usr/local/lib/roundcubemail/version` ]]; then
 	# checks if the version is what we want
 	needs_update=1 #NODOC
 fi
@@ -58,8 +59,11 @@ if [ $needs_update == 1 ]; then
 	# install roundcube autoreply/vacation plugin
 	git_clone https://github.com/arodier/Roundcube-Plugins.git $VACATION_SIEVE_VERSION plugins/vacation_sieve /usr/local/lib/roundcubemail/plugins/vacation_sieve
 
+	# install roundcube persistent_login plugin
+	git_clone https://github.com/mfreiholz/Roundcube-Persistent-Login-Plugin.git $PERSISTENT_LOGIN_VERSION '' /usr/local/lib/roundcubemail/plugins/persistent_login
+
 	# record the version we've installed
-	echo $VERSION:$VACATION_SIEVE_VERSION > /usr/local/lib/roundcubemail/version
+	echo $VERSION:$VACATION_SIEVE_VERSION:$PERSISTENT_LOGIN_VERSION > /usr/local/lib/roundcubemail/version
 fi
 
 # ### Configuring Roundcube
@@ -91,7 +95,7 @@ cat > /usr/local/lib/roundcubemail/config/config.inc.php <<EOF;
 \$config['support_url'] = 'https://mailinabox.email/';
 \$config['product_name'] = 'Mail-in-a-Box/Roundcube Webmail';
 \$config['des_key'] = '$SECRET_KEY';
-\$config['plugins'] = array('archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'vacation_sieve');
+\$config['plugins'] = array('archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'vacation_sieve', 'persistent_login');
 \$config['skin'] = 'classic';
 \$config['login_autocomplete'] = 2;
 \$config['password_charset'] = 'UTF-8';
