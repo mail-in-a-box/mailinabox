@@ -9,6 +9,7 @@ In Development
 * Users and aliases weren't working if they were entered with any uppercase letters. Now only lowercase is allowed.
 * Fix broken install on OVH VPS's.
 * After installing an SSL certificate from the control panel, the page wasn't being refreshed.
+* The minimum greylisting delay has been reduced from 5 minutes to 3 minutes.
 
 v0.09 (May 8, 2015)
 -------------------
