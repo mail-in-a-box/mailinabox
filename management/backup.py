@@ -180,8 +180,9 @@ def perform_backup(full_backup):
 	if len(passphrase) < 43: raise Exception("secret_key.txt's first line is too short!")
 	env_with_passphrase = { "PASSPHRASE" : passphrase }
 
-	# Update the backup mirror directory which mirrors the current
-	# STORAGE_ROOT (but excluding the backups themselves!).
+	# Run a backup of STORAGE_ROOT (but excluding the backups themselves!).
+	# --allow-source-mismatch is needed in case the box's hostname is changed
+	# after the first backup. See #396.
 	try:
 		shell('check_call', [
 			"/usr/bin/duplicity",

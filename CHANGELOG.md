@@ -5,7 +5,7 @@ In Development
 --------------
 
 * ownCloud updated to version 8.0.3.
-
+* Backups broke if the box's hostname was changed after installation.
 
 v0.09 (May 8, 2015)
 -------------------
