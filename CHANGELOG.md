@@ -4,6 +4,7 @@ CHANGELOG
 In Development
 --------------
 
+* Roundcube now allows persistent logins using Roundcube-Persistent-Login-Plugin.
 * ownCloud updated to version 8.0.3.
 * SMTP Submission (port 587) began offering the insecure SSLv3 protocol due to a misconfiguration in the previous version.
 * Users and aliases weren't working if they were entered with any uppercase letters. Now only lowercase is allowed.
