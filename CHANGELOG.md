@@ -10,6 +10,7 @@ In Development
 * Fix broken install on OVH VPS's.
 * After installing an SSL certificate from the control panel, the page wasn't being refreshed.
 * The minimum greylisting delay has been reduced from 5 minutes to 3 minutes.
+* Backups broke if the box's hostname was changed after installation.
 
 v0.09 (May 8, 2015)
 -------------------
