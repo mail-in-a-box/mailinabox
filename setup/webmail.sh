@@ -36,11 +36,12 @@ VERSION=1.1.1
 HASH=08222f382a8dd89bba7dbbad595f48443bec0aa2
 VACATION_SIEVE_VERSION=91ea6f52216390073d1f5b70b5f6bea0bfaee7e5
 PERSISTENT_LOGIN_VERSION=9a0bc59493beb573d515f82aec443e2098365d11
+UPDATE_KEY=$VERSION:$VACATION_SIEVE_VERSION:$PERSISTENT_LOGIN_VERSION
 needs_update=0 #NODOC
 if [ ! -f /usr/local/lib/roundcubemail/version ]; then
 	# not installed yet #NODOC
 	needs_update=1 #NODOC
-elif [[ "$VERSION:$VACATION_SIEVE_VERSION:$PERSISTENT_LOGIN_VERSION" != `cat /usr/local/lib/roundcubemail/version` ]]; then
+elif [[ "$UPDATE_KEY" != `cat /usr/local/lib/roundcubemail/version` ]]; then
 	# checks if the version is what we want
 	needs_update=1 #NODOC
 fi
@@ -63,7 +64,7 @@ if [ $needs_update == 1 ]; then
 	git_clone https://github.com/mfreiholz/Roundcube-Persistent-Login-Plugin.git $PERSISTENT_LOGIN_VERSION '' /usr/local/lib/roundcubemail/plugins/persistent_login
 
 	# record the version we've installed
-	echo $VERSION:$VACATION_SIEVE_VERSION:$PERSISTENT_LOGIN_VERSION > /usr/local/lib/roundcubemail/version
+	echo $UPDATE_KEY > /usr/local/lib/roundcubemail/version
 fi
 
 # ### Configuring Roundcube
