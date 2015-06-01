@@ -1,17 +1,20 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.10 (June 1, 2015)
+--------------------
 
-* Roundcube now allows persistent logins using Roundcube-Persistent-Login-Plugin.
-* ownCloud updated to version 8.0.3.
 * SMTP Submission (port 587) began offering the insecure SSLv3 protocol due to a misconfiguration in the previous version.
-* Users and aliases weren't working if they were entered with any uppercase letters. Now only lowercase is allowed.
-* Fix broken install on OVH VPS's.
-* After installing an SSL certificate from the control panel, the page wasn't being refreshed.
+* Roundcube now allows persistent logins using Roundcube-Persistent-Login-Plugin.
+* ownCloud is updated to version 8.0.3.
+* SPF records for non-mail domains were tightened.
 * The minimum greylisting delay has been reduced from 5 minutes to 3 minutes.
+* Users and aliases weren't working if they were entered with any uppercase letters. Now only lowercase is allowed.
+* After installing an SSL certificate from the control panel, the page wasn't being refreshed.
 * Backups broke if the box's hostname was changed after installation.
+* Dotfiles (i.e. .svn) stored in ownCloud Files were not accessible from ownCloud's mobile/desktop clients.
+* Fix broken install on OVH VPS's.
+
 
 v0.09 (May 8, 2015)
 -------------------

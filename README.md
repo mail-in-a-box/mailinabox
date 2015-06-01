@@ -53,7 +53,7 @@ I sign the release tags on git. To verify that a tag is signed by me, you can pe
 	$ cd mailinabox
 
 	# Verify the tag.
-	$ git verify-tag v0.08
+	$ git verify-tag v0.10
 	gpg: Signature made ..... using RSA key ID C10BDD81
 	gpg: Good signature from "Joshua Tauberer <jt@occams.info>"
 	gpg: WARNING: This key is not certified with a trusted signature!
