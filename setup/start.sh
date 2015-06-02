@@ -139,7 +139,6 @@ source setup/mail-postfix.sh
 source setup/mail-dovecot.sh
 source setup/mail-users.sh
 source setup/dkim.sh
-source setup/lucene.sh
 source setup/spamassassin.sh
 source setup/web.sh
 source setup/webmail.sh

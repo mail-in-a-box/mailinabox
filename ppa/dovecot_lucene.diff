@@ -267,7 +267,7 @@ index 0000000..3d933a5
  	dh_clean -k
  	dh_installdirs
 +	mkdir -p $(CURDIR)/debian/dovecot-lucene/usr/lib/dovecot/modules
-+	        mv $(CURDIR)/src/plugins/fts-lucene/.libs/* $(CURDIR)/debian/dovecot-lucene/usr/lib/dovecot/modules/
++	mv $(CURDIR)/src/plugins/fts-lucene/.libs/* $(CURDIR)/debian/dovecot-lucene/usr/lib/dovecot/modules/
 +
 +rest_disabled_by_miab:
  	$(MAKE) install DESTDIR=$(CURDIR)/debian/dovecot-core
@@ -298,7 +298,7 @@ index 0000000..3d933a5
 --- a/debian/changelog
 +++ a/debian/changelog
 @@ -1,3 +1,9 @@
-+dovecot (1:2.2.9-1ubuntu2.2~ppa0~trusty0) trusty; urgency=low
++dovecot (1:2.2.9-1ubuntu2.1+miab1) trusty; urgency=low
 +
 +  * Changed to just build dovecot-lucene for Mail-in-a-box PPA
 +

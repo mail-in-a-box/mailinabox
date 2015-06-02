@@ -1,13 +1,15 @@
+DOVECOT_VERSION=2.2.9-1ubuntu2.1+miab1
+
 all: clean build_postgrey build_dovecot_lucene
 
 clean:
 	# Clean.
 	rm -rf /tmp/build
 
+build_postgrey:
 	# Prepare to build source packages.
 	mkdir -p /tmp/build
 
-build_postgrey:
 	# Download our fork of the Debian postgrey package.
 	git clone https://github.com/mail-in-a-box/postgrey /tmp/build/postgrey
 
@@ -31,6 +33,9 @@ build_postgrey:
 	#(cd /tmp/build/postgrey; dpkg-buildpackage -us -uc -nc)
 
 build_dovecot_lucene:
+	# Prepare to build source packages.
+	mkdir -p /tmp/build
+
 	# Get the upstream source.
 	(cd /tmp/build; apt-get source dovecot)
 
@@ -41,10 +46,10 @@ build_dovecot_lucene:
 	(cd /tmp/build/dovecot-2.2.9; dpkg-buildpackage -S -us -uc -nc)
 
 	# Sign the packages.
-	debsign /tmp/build/dovecot_2.2.9-1ubuntu2.2~ppa0~trusty0_source.changes
+	debsign /tmp/build/dovecot_$(DOVECOT_VERSION)_source.changes
 
 	# Upload it.
-	dput ppa:mail-in-a-box/ppa /tmp/build/dovecot_2.2.9-1ubuntu2.2~ppa0~trusty0_source.changes
+	dput ppa:mail-in-a-box/ppa /tmp/build/dovecot_$(DOVECOT_VERSION)_source.changes
 
 	# TESTING BINARY PACKAGE
 	# Install build dependencies and build dependencies we've added in our patch,
