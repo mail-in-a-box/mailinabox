@@ -1,0 +1,100 @@
+Description: whitelist whatever dnswl.org whitelists
+ .
+ postgrey (1.35-1+miab1) unstable; urgency=low
+ .
+   * Added DNSWL.org whitelisting.
+Author: Joshua Tauberer <jt@occams.info>
+
+--- postgrey-1.35.orig/README
++++ postgrey-1.35/README
+@@ -13,7 +13,7 @@ Requirements
+ - BerkeleyDB (Perl Module)
+ - Berkeley DB >= 4.1 (Library)
+ - Digest::SHA (Perl Module, only for --privacy option)
+-
++- Net::DNS (Perl Module)
+ 
+ Documentation
+ -------------
+--- postgrey-1.35.orig/postgrey
++++ postgrey-1.35/postgrey
+@@ -18,6 +18,7 @@ use Fcntl ':flock'; # import LOCK_* cons
+ use Sys::Hostname;
+ use Sys::Syslog; # used only to find out which version we use
+ use POSIX qw(strftime setlocale LC_ALL);
++use Net::DNS; # for DNSWL.org whitelisting
+ 
+ use vars qw(@ISA);
+ @ISA = qw(Net::Server::Multiplex);
+@@ -26,6 +27,8 @@ my $VERSION = '1.35';
+ my $DEFAULT_DBDIR = '/var/lib/postgrey';
+ my $CONFIG_DIR = '/etc/postgrey';
+ 
++my $dns_resolver = Net::DNS::Resolver->new;
++
+ sub cidr_parse($)
+ {
+     defined $_[0] or return undef;
+@@ -48,6 +51,36 @@ sub cidr_match($$$)
+     return ($addr & $mask) == $net;
+ }
+ 
++sub reverseDottedQuad {
++    # This is the sub _chkValidPublicIP from Net::DNSBL by PJ Goodwin
++    # at http://www.the42.net/net-dnsbl.
++    my ($quad) = @_;
++    if ($quad =~ /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/) {
++        my ($ip1,$ip2,$ip3,$ip4) = ($1, $2, $3, $4);
++        if (
++           $ip1 == 10 ||                               #10.0.0.0/8 (10/8)
++          ($ip1 == 172 && $ip2 >= 16 && $ip2 <= 31) || #172.16.0.0/12 (172.16/12)
++          ($ip1 == 192 && $ip2 == 168) ||              #192.168.0.0/16 (192.168/16)
++           $quad eq '127.0.0.1'                        # localhost
++           ) {
++            # toss the RFC1918 specified privates
++            return undef;
++        } elsif (
++          ($ip1 <= 1 || $ip1 > 254) ||
++          ($ip2 < 0  || $ip2 > 255) ||
++          ($ip3 < 0  || $ip3 > 255) ||
++          ($ip4 < 0  || $ip4 > 255)
++           ) {
++            #invalid oct, toss it;
++            return undef;
++        }
++        my $revquad = $ip4 . "." . $ip3 . "." . $ip2 . "." . $ip1;
++        return $revquad;
++    } else { # invalid quad
++        return undef;
++    }
++}
++
+ sub read_clients_whitelists($)
+ {
+     my ($self) = @_;
+@@ -361,6 +394,25 @@ sub smtpd_access_policy($$)
+         }
+     }
+ 
++    # whitelist clients in dnswl.org
++    my $revip = reverseDottedQuad($attr->{client_address});
++    if ($revip) { # valid IP / plausibly in DNSWL
++        my $answer = $dns_resolver->send($revip . '.list.dnswl.org');
++        if ($answer && scalar($answer->answer) > 0) {
++            my @rrs = $answer->answer;
++            if ($rrs[0]->type eq 'A' && $rrs[0]->address ne '127.0.0.255') {
++                # Address appears in DNSWL. (127.0.0.255 means we were rate-limited.)
++                my $code = $rrs[0]->address;
++		if ($code =~ /^127.0.(\d+)\.([0-3])$/) {
++                    my %dnswltrust = (0 => 'legitimate', 1 => 'occasional spam', 2 => 'rare spam', 3 => 'highly unlikely to send spam');
++                    $code = $2 . '/' . $dnswltrust{$2};
++                }
++                $self->mylog_action($attr, 'pass', 'client whitelisted by dnswl.org (' . $code . ')');
++                return 'DUNNO';
++            }
++        }
++    }
++
+     # auto whitelist clients (see below for explanation)
+     my ($cawl_db, $cawl_key, $cawl_count, $cawl_last);
+     if($self->{postgrey}{awl_clients}) {

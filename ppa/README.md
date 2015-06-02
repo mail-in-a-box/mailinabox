@@ -6,7 +6,7 @@ Mail-in-a-Box maintains a Launchpad.net PPA ([Mail-in-a-Box PPA](https://launchp
 Packages
 --------
 
-* [postgrey](https://github.com/mail-in-a-box/postgrey), with a modification to whitelist senders that are whitelisted by [dnswl.org](https://www.dnswl.org/) (i.e. don't greylist mail from them).
+* postgrey, a fork of [postgrey](http://postgrey.schweikert.ch/) based on the [latest Debian package](http://git.debian.org/?p=collab-maint/postgrey.git), with a modification to whitelist senders that are whitelisted by [dnswl.org](https://www.dnswl.org/) (i.e. don't greylist mail from known good senders).
 
 Building
 --------
