@@ -41,6 +41,13 @@ source /etc/mailinabox.conf # load global vars
 #   always will.
 # * `ca-certificates`: A trust store used to squelch postfix warnings about
 #   untrusted opportunistically-encrypted connections.
+#
+# postgrey is going to come in via the Mail-in-a-Box PPA, which publishes
+# a modified version of postgrey that lets senders whitelisted by dnswl.org
+# pass through without being greylisted. So please note [dnswl's license terms](https://www.dnswl.org/?page_id=9):
+# > Every user with more than 100’000 queries per day on the public nameserver
+# > infrastructure and every commercial vendor of dnswl.org data (eg through
+# > anti-spam solutions) must register with dnswl.org and purchase a subscription.
 
 apt_install postfix postfix-pcre postgrey ca-certificates
 
