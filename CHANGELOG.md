@@ -1,6 +1,25 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+Mail:
+* Greylisting will now let some reputable senders pass through immediately.
+* Searching mail (via IMAP) will now be much faster using the dovecot lucene full text search plugin.
+* Fix for deleting admin@ and postmaster@ addresses.
+
+Web:
+* 'www' subdomains now automatically redirect to their parent domain (but you'll need to install an SSL certificate).
+* OCSP no longer uses Google Public DNS.
+
+Control panel:
+* Resetting a user's password now forces them to log in again everywhere.
+
+System:
+* The munin system monitoring tool is now installed and accessible at /admin/munin.
+
+
 v0.10 (June 1, 2015)
 --------------------
 
