@@ -18,11 +18,14 @@
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
-# Install packages...
+
+# Install packages for dovecot. These are all core dovecot plugins,
+# but dovecot-lucene is packaged by *us* in the Mail-in-a-Box PPA,
+# not by Ubuntu.
 
 apt_install \
 	dovecot-core dovecot-imapd dovecot-pop3d dovecot-lmtpd dovecot-sqlite sqlite3 \
-	dovecot-sieve dovecot-managesieved
+	dovecot-sieve dovecot-managesieved dovecot-lucene
 
 # The `dovecot-imapd`, `dovecot-pop3d`, and `dovecot-lmtpd` packages automatically
 # enable IMAP, POP and LMTP protocols.
@@ -91,6 +94,17 @@ tools/editconf.py /etc/dovecot/conf.d/20-imap.conf \
 # and UID values, the default in Dovecot.
 tools/editconf.py /etc/dovecot/conf.d/20-pop3.conf \
 	pop3_uidl_format="%08Xu%08Xv"
+
+# Full Text Search - Enable full text search of mail using dovecot's lucene plugin, 
+# which *we* package and distribute (dovecot-lucene package).
+tools/editconf.py /etc/dovecot/conf.d/10-mail.conf \
+	mail_plugins="\$mail_plugins fts fts_lucene"
+cat > /etc/dovecot/conf.d/90-plugin-fts.conf << EOF;
+plugin {
+  fts = lucene
+  fts_lucene = whitespace_chars=@.
+}
+EOF
 
 # ### LDA (LMTP)
 

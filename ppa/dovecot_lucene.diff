@@ -1,6 +1,6 @@
 --- a/debian/control
 +++ b/debian/control
-@@ -1,210 +1,22 @@
+@@ -1,210 +1,23 @@
  Source: dovecot
  Section: mail
  Priority: optional
@@ -13,11 +13,14 @@
 +Build-Depends: debhelper (>= 7.2.3~), dpkg-dev (>= 1.16.1), pkg-config, libssl-dev, libpam0g-dev, libldap2-dev, libpq-dev, libmysqlclient-dev, libsqlite3-dev, libsasl2-dev, zlib1g-dev, libkrb5-dev, drac-dev (>= 1.12-5), libbz2-dev, libdb-dev, libcurl4-gnutls-dev, libexpat-dev, libwrap0-dev, dh-systemd, po-debconf, lsb-release, libclucene-dev (>= 2.3), liblzma-dev, libexttextcat-dev, libstemmer-dev, hardening-wrapper, dh-autoreconf, autotools-dev
  Standards-Version: 3.9.4
  Homepage: http://dovecot.org/
- Vcs-Git: git://git.debian.org/git/collab-maint/dovecot.git
- Vcs-Browser: http://git.debian.org/?p=collab-maint/dovecot.git
+-Vcs-Git: git://git.debian.org/git/collab-maint/dovecot.git
+-Vcs-Browser: http://git.debian.org/?p=collab-maint/dovecot.git
++Vcs-Git: https://github.com/mail-in-a-box/mailinabox
++Vcs-Browser: https://github.com/mail-in-a-box/mailinabox
  
 -Package: dovecot-core
--Architecture: any
++Package: dovecot-lucene
+ Architecture: any
 -Depends: ${shlibs:Depends}, ${misc:Depends}, libpam-runtime (>= 0.76-13.1), openssl, adduser, ucf (>= 2.0020), ssl-cert (>= 1.0-11ubuntu1), lsb-base (>= 3.2-12ubuntu3)
 -Suggests: ntp, dovecot-gssapi, dovecot-sieve, dovecot-pgsql, dovecot-mysql, dovecot-sqlite, dovecot-ldap, dovecot-imapd, dovecot-pop3d, dovecot-lmtpd, dovecot-managesieved, dovecot-solr, ufw
 -Recommends: ntpdate
@@ -25,12 +28,14 @@
 -Replaces: dovecot-common (<< 1:2.0.14-2~), mailavenger (<< 0.8.1-4)
 -Breaks: dovecot-common (<< 1:2.0.14-2~), mailavenger (<< 0.8.1-4)
 -Description: secure POP3/IMAP server - core files
-- Dovecot is a mail server whose major goals are security and extreme
-- reliability. It tries very hard to handle all error conditions and verify
-- that all data is valid, making it nearly impossible to crash. It supports
-- mbox/Maildir and its own dbox/mdbox formats, and should also be pretty
-- fast, extensible, and portable.
-- .
++Depends: ${shlibs:Depends}, ${misc:Depends}, dovecot-core (>= 1:2.2.9-1ubuntu2.1)
++Description: secure POP3/IMAP server - Lucene support
+  Dovecot is a mail server whose major goals are security and extreme
+  reliability. It tries very hard to handle all error conditions and verify
+  that all data is valid, making it nearly impossible to crash. It supports
+  mbox/Maildir and its own dbox/mdbox formats, and should also be pretty
+  fast, extensible, and portable.
+  .
 - This package contains the Dovecot main server and its command line utility.
 -
 -Package: dovecot-dev
@@ -151,17 +156,15 @@
 - This package provides LDAP support for Dovecot.
 -
 -Package: dovecot-gssapi
-+Package: dovecot-lucene
- Architecture: any
- Depends: ${shlibs:Depends}, ${misc:Depends}, dovecot-core (= ${binary:Version})
+-Architecture: any
+-Depends: ${shlibs:Depends}, ${misc:Depends}, dovecot-core (= ${binary:Version})
 -Description: secure POP3/IMAP server - GSSAPI support
-+Description: secure POP3/IMAP server - Lucene support
-  Dovecot is a mail server whose major goals are security and extreme
-  reliability. It tries very hard to handle all error conditions and verify
-  that all data is valid, making it nearly impossible to crash. It supports
-  mbox/Maildir and its own dbox/mdbox formats, and should also be pretty
-  fast, extensible, and portable.
-  .
+- Dovecot is a mail server whose major goals are security and extreme
+- reliability. It tries very hard to handle all error conditions and verify
+- that all data is valid, making it nearly impossible to crash. It supports
+- mbox/Maildir and its own dbox/mdbox formats, and should also be pretty
+- fast, extensible, and portable.
+- .
 - This package provides GSSAPI authentication support for Dovecot.
 -
 -Package: dovecot-sieve
@@ -216,7 +219,9 @@
 - This package contains configuration files for dovecot.
 - .
 - This package modifies postfix's configuration to integrate with dovecot
-+ This package provides Lucene full text search support for Dovecot.
++ This package provides Lucene full text search support for Dovecot. It has been modified by Mail-in-a-Box
++ to supply a dovecot-lucene package compatible with the official ubuntu trusty dovecot-core.
+
 diff --git a/debian/dovecot-lucene.links b/debian/dovecot-lucene.links
 new file mode 100644
 index 0000000..6ffcbeb
@@ -247,11 +252,9 @@ index 0000000..3d933a5
 +++ b/debian/dovecot-lucene.triggers
 @@ -0,0 +1 @@
 +activate register-dovecot-plugin
-diff --git a/debian/rules b/debian/rules
-index dcee2f6..9533a4a 100755
 --- a/debian/rules
 +++ b/debian/rules
-@@ -40,6 +40,7 @@ config-stamp: configure
+@@ -40,6 +40,7 @@
  		        --with-solr \
  	            --with-ioloop=best \
  	            --with-libwrap \
@@ -259,18 +262,18 @@ index dcee2f6..9533a4a 100755
  	            --host=$(DEB_HOST_GNU_TYPE) \
  	            --build=$(DEB_BUILD_GNU_TYPE) \
  	            --prefix=/usr \
-@@ -95,6 +96,10 @@ install: build
+@@ -95,6 +96,10 @@
  	dh_testroot
  	dh_clean -k
  	dh_installdirs
 +	mkdir -p $(CURDIR)/debian/dovecot-lucene/usr/lib/dovecot/modules
-+	        mv $(CURDIR)/src/plugins/fts-lucene/.libs/* $(CURDIR)/debian/dovecot-lucene/usr/lib/dovecot/modules/
++	mv $(CURDIR)/src/plugins/fts-lucene/.libs/* $(CURDIR)/debian/dovecot-lucene/usr/lib/dovecot/modules/
 +
 +rest_disabled_by_miab:
  	$(MAKE) install DESTDIR=$(CURDIR)/debian/dovecot-core
  	$(MAKE) -C $(PIGEONHOLE_DIR) install DESTDIR=$(CURDIR)/debian/dovecot-core
  	rm `find $(CURDIR)/debian -name '*.la'`
-@@ -209,7 +214,7 @@ binary-arch: build install
+@@ -209,7 +214,7 @@
  	dh_installdocs -a
  	dh_installexamples -a
  	dh_installpam -a
@@ -279,7 +282,7 @@ index dcee2f6..9533a4a 100755
  	dh_systemd_enable
  	dh_installinit -pdovecot-core --name=dovecot
  	dh_systemd_start
-@@ -220,10 +225,10 @@ binary-arch: build install
+@@ -220,10 +225,10 @@
  	dh_lintian -a
  	dh_installchangelogs -a ChangeLog
  	dh_link -a
@@ -292,3 +295,25 @@ index dcee2f6..9533a4a 100755
  	dh_makeshlibs -a -n
  	dh_installdeb -a
  	dh_shlibdeps -a
+--- a/debian/changelog
++++ a/debian/changelog
+@@ -1,3 +1,9 @@
++dovecot (1:2.2.9-1ubuntu2.1+miab1) trusty; urgency=low
++
++  * Changed to just build dovecot-lucene for Mail-in-a-box PPA
++
++ -- Joshua Tauberer <jt@occams.info>  Sat, 14 May 2015 16:13:00 -0400
++
+ dovecot (1:2.2.9-1ubuntu2.1) trusty-security; urgency=medium
+ 
+   * SECURITY UPDATE: denial of service via SSL connection exhaustion
+--- a/debian/copyright	2014-03-07 07:26:37.000000000 -0500
++++ b/debian/copyright	2015-05-23 18:17:42.668005535 -0400
+@@ -1,3 +1,7 @@
++This package is a fork by Mail-in-a-box (https://mailinabox.email). Original 
++copyright statement follows:
++----------------------------------------------------------------------------
++
+ This package was debianized by Jaldhar H. Vyas <jaldhar@debian.org> on
+ Tue,  3 Dec 2002 01:10:07 -0500.
+ 

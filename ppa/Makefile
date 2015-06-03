@@ -1,12 +1,11 @@
 POSTGREY_VERSION=1.35-1+miab1
+DOVECOT_VERSION=2.2.9-1ubuntu2.1+miab1
 
 all: clean build_postgrey build_dovecot_lucene
 
 clean:
 	# Clean.
 	rm -rf /tmp/build
-
-	# Prepare to build source packages.
 	mkdir -p /tmp/build
 
 build_postgrey: clean
@@ -50,10 +49,10 @@ build_dovecot_lucene: clean
 	(cd /tmp/build/dovecot-2.2.9; dpkg-buildpackage -S -us -uc -nc)
 
 	# Sign the packages.
-	#debsign /tmp/build/dovecot_2.2.9-1ubuntu2.1_amd64.changes
+	debsign /tmp/build/dovecot_$(DOVECOT_VERSION)_source.changes
 
 	# Upload it.
-	#dput ppa:mail-in-a-box/ppa /tmp/build/dovecot_2.2.9-1ubuntu2.1_amd64.changes
+	dput ppa:mail-in-a-box/ppa /tmp/build/dovecot_$(DOVECOT_VERSION)_source.changes
 
 	# TESTING BINARY PACKAGE
 	# Install build dependencies and build dependencies we've added in our patch,

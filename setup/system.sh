@@ -3,13 +3,29 @@ source setup/functions.sh # load our functions
 # Basic System Configuration
 # -------------------------
 
-# ### Install Packages
+# ### Add Mail-in-a-Box's PPA.
+
+# We've built several .deb packages on our own that we want to include.
+# One is a replacement for Ubuntu's stock postgrey package that makes
+# some enhancements. The other is dovecot-lucene, a Lucene-based full
+# text search plugin for (and by) dovecot, which is not available in
+# Ubuntu currently.
+#
+# Add that to the system's list of repositories:
+
+hide_output add-apt-repository -y ppa:mail-in-a-box/ppa
+
+# The apt-get update in the next step will pull in the PPA's index.
+
+# ### Update Packages
 
 # Update system packages to make sure we have the latest upstream versions of things from Ubuntu.
 
 echo Updating system packages...
 hide_output apt-get update
 apt_get_quiet upgrade
+
+# ### Install System Packages
 
 # Install basic utilities.
 #

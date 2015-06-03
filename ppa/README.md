@@ -8,6 +8,8 @@ Packages
 
 * postgrey, a fork of [postgrey](http://postgrey.schweikert.ch/) based on the [latest Debian package](http://git.debian.org/?p=collab-maint/postgrey.git), with a modification to whitelist senders that are whitelisted by [dnswl.org](https://www.dnswl.org/) (i.e. don't greylist mail from known good senders).
 
+* dovecot-lucene, [dovecot's lucene full text search plugin](http://wiki2.dovecot.org/Plugins/FTS/Lucene), which isn't built by Ubuntu's dovecot package maintainer unfortunately.
+
 Building
 --------
 
@@ -30,9 +32,9 @@ To build:
 	# Build & upload to launchpad.
 	vagrant ssh -- "cd /vagrant && make"
 
-To use on a Mail-in-a-Box box, add the PPA and then upgrade packages:
+Mail-in-a-Box adds our PPA during setup, but if you need to do that yourself for testing:
 
 	apt-add-repository ppa:mail-in-a-box/ppa
 	apt-get update
-	apt-get upgrade
+	apt-get install postgrey dovecot-lucene
 
