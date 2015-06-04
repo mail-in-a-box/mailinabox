@@ -57,13 +57,15 @@ def do_dns_update(env, force=False):
 
 	# Custom records to add to zones.
 	additional_records = list(get_custom_dns_config(env))
+	from web_update import get_default_www_redirects
+	www_redirect_domains = get_default_www_redirects(env)
 
 	# Write zone files.
 	os.makedirs('/etc/nsd/zones', exist_ok=True)
 	updated_domains = []
 	for i, (domain, zonefile) in enumerate(zonefiles):
 		# Build the records to put in the zone.
-		records = build_zone(domain, domains, additional_records, env)
+		records = build_zone(domain, domains, additional_records, www_redirect_domains, env)
 
 		# See if the zone has changed, and if so update the serial number
 		# and write the zone file.
@@ -126,7 +128,7 @@ def do_dns_update(env, force=False):
 
 ########################################################################
 
-def build_zone(domain, all_domains, additional_records, env, is_zone=True):
+def build_zone(domain, all_domains, additional_records, www_redirect_domains, env, is_zone=True):
 	records = []
 
 	# For top-level zones, define the authoritative name servers.
@@ -177,7 +179,7 @@ def build_zone(domain, all_domains, additional_records, env, is_zone=True):
 	subdomains = [d for d in all_domains if d.endswith("." + domain)]
 	for subdomain in subdomains:
 		subdomain_qname = subdomain[0:-len("." + domain)]
-		subzone = build_zone(subdomain, [], additional_records, env, is_zone=False)
+		subzone = build_zone(subdomain, [], additional_records, www_redirect_domains, env, is_zone=False)
 		for child_qname, child_rtype, child_value, child_explanation in subzone:
 			if child_qname == None:
 				child_qname = subdomain_qname
@@ -215,10 +217,13 @@ def build_zone(domain, all_domains, additional_records, env, is_zone=True):
 	has_rec_base = records
 	defaults = [
 		(None,  "A",    env["PUBLIC_IP"],       "Required. May have a different value. Sets the IP address that %s resolves to for web hosting and other services besides mail. The A record must be present but its value does not affect mail delivery." % domain),
-		("www", "A",    env["PUBLIC_IP"],       "Optional. Sets the IP address that www.%s resolves to, e.g. for web hosting." % domain),
 		(None,  "AAAA", env.get('PUBLIC_IPV6'), "Optional. Sets the IPv6 address that %s resolves to, e.g. for web hosting. (It is not necessary for receiving mail on this domain.)" % domain),
-		("www", "AAAA", env.get('PUBLIC_IPV6'), "Optional. Sets the IPv6 address that www.%s resolves to, e.g. for web hosting." % domain),
 	]
+	if "www." + domain in www_redirect_domains:
+		defaults += [
+			("www", "A",    env["PUBLIC_IP"],       "Optional. Sets the IP address that www.%s resolves to so that the box can provide a redirect to the parent domain." % domain),
+			("www", "AAAA", env.get('PUBLIC_IPV6'), "Optional. Sets the IPv6 address that www.%s resolves to so that the box can provide a redirect to the parent domain." % domain),
+		]
 	for qname, rtype, value, explanation in defaults:
 		if value is None or value.strip() == "": continue # skip IPV6 if not set
 		if not is_zone and qname == "www": continue # don't create any default 'www' subdomains on what are themselves subdomains
@@ -847,8 +852,10 @@ def build_recommended_dns(env):
 	domains = get_dns_domains(env)
 	zonefiles = get_dns_zones(env)
 	additional_records = list(get_custom_dns_config(env))
+	from web_update import get_default_www_redirects
+	www_redirect_domains = get_default_www_redirects(env)
 	for domain, zonefile in zonefiles:
-		records = build_zone(domain, domains, additional_records, env)
+		records = build_zone(domain, domains, additional_records, www_redirect_domains, env)
 
 		# remove records that we don't dislay
 		records = [r for r in records if r[3] is not False]

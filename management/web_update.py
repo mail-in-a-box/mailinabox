@@ -5,7 +5,7 @@
 import os, os.path, shutil, re, tempfile, rtyaml
 
 from mailconfig import get_mail_domains
-from dns_update import get_custom_dns_config, do_dns_update
+from dns_update import get_custom_dns_config, do_dns_update, get_dns_zones
 from utils import shell, safe_domain_name, sort_domains
 
 def get_web_domains(env):
@@ -36,21 +36,35 @@ def get_domains_with_a_records(env):
 			domains.add(domain)
 	return domains
 
+def get_default_www_redirects(env):
+	# Returns a list of www subdomains that we want to provide default redirects
+	# for, i.e. any www's that aren't domains the user has actually configured
+	# to serve for real. Which would be unusual.
+	web_domains = set(get_web_domains(env))
+	www_domains = set('www.' + zone for zone, zonefile in get_dns_zones(env))
+	return sort_domains(www_domains - web_domains - get_domains_with_a_records(env), env)
+
 def do_web_update(env):
 	# Build an nginx configuration file.
 	nginx_conf = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-top.conf")).read()
 
 	# Load the templates.
-	template1 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx.conf")).read()
+	template0 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx.conf")).read()
+	template1 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-alldomains.conf")).read()
 	template2 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-primaryonly.conf")).read()
+	template3 = "\trewrite / https://$REDIRECT_DOMAIN permanent;\n"
 
 	# Add the PRIMARY_HOST configuration first so it becomes nginx's default server.
-	nginx_conf += make_domain_config(env['PRIMARY_HOSTNAME'], [template1, template2], env)
+	nginx_conf += make_domain_config(env['PRIMARY_HOSTNAME'], [template0, template1, template2], env)
 
 	# Add configuration all other web domains.
 	for domain in get_web_domains(env):
 		if domain == env['PRIMARY_HOSTNAME']: continue # handled above
-		nginx_conf += make_domain_config(domain, [template1], env)
+		nginx_conf += make_domain_config(domain, [template0, template1], env)
+
+	# Add default www redirects.
+	for domain in get_default_www_redirects(env):
+		nginx_conf += make_domain_config(domain, [template0, template3], env)
 
 	# Did the file change? If not, don't bother writing & restarting nginx.
 	nginx_conf_fn = "/etc/nginx/conf.d/local.conf"
@@ -300,4 +314,12 @@ def get_web_domains_info(env):
 			"static_enabled": not has_root_proxy_or_redirect(domain),
 		}
 		for domain in get_web_domains(env)
+	] + \
+	[
+		{
+			"domain": domain,
+			"ssl_certificate": check_cert(domain),
+			"static_enabled": False,
+		}
+		for domain in get_default_www_redirects(env)
 	]
