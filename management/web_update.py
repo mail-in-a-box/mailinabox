@@ -19,22 +19,24 @@ def get_web_domains(env):
 	# Also serve web for all mail domains so that we might at least
 	# provide auto-discover of email settings, and also a static website
 	# if the user wants to make one. These will require an SSL cert.
-	domains |= get_mail_domains(env)
-
 	# ...Unless the domain has an A/AAAA record that maps it to a different
 	# IP address than this box. Remove those domains from our list.
-	dns = get_custom_dns_config(env)
-	for domain, rtype, value in dns:
-		if domain not in domains: continue
-		if rtype == "CNAME" or (rtype in ("A", "AAAA") and value != "local"):
-			domains.remove(domain)
+	domains |= (get_mail_domains(env) - get_domains_with_a_records(env))
 
 	# Sort the list. Put PRIMARY_HOSTNAME first so it becomes the
 	# default server (nginx's default_server).
 	domains = sort_domains(domains, env)
 
 	return domains
-	
+
+def get_domains_with_a_records(env):
+	domains = set()
+	dns = get_custom_dns_config(env)
+	for domain, rtype, value in dns:
+		if rtype == "CNAME" or (rtype in ("A", "AAAA") and value != "local"):
+			domains.add(domain)
+	return domains
+
 def do_web_update(env):
 	# Build an nginx configuration file.
 	nginx_conf = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-top.conf")).read()
