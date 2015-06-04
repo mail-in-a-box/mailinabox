@@ -23,8 +23,7 @@ def get_web_domains(env):
 	# IP address than this box. Remove those domains from our list.
 	domains |= (get_mail_domains(env) - get_domains_with_a_records(env))
 
-	# Sort the list. Put PRIMARY_HOSTNAME first so it becomes the
-	# default server (nginx's default_server).
+	# Sort the list so the nginx conf gets written in a stable order.
 	domains = sort_domains(domains, env)
 
 	return domains
@@ -41,11 +40,17 @@ def do_web_update(env):
 	# Build an nginx configuration file.
 	nginx_conf = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-top.conf")).read()
 
-	# Add configuration for each web domain.
+	# Load the templates.
 	template1 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx.conf")).read()
 	template2 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-primaryonly.conf")).read()
+
+	# Add the PRIMARY_HOST configuration first so it becomes nginx's default server.
+	nginx_conf += make_domain_config(env['PRIMARY_HOSTNAME'], [template1, template2], env)
+
+	# Add configuration all other web domains.
 	for domain in get_web_domains(env):
-		nginx_conf += make_domain_config(domain, template1, template2, env)
+		if domain == env['PRIMARY_HOSTNAME']: continue # handled above
+		nginx_conf += make_domain_config(domain, [template1], env)
 
 	# Did the file change? If not, don't bother writing & restarting nginx.
 	nginx_conf_fn = "/etc/nginx/conf.d/local.conf"
@@ -66,11 +71,10 @@ def do_web_update(env):
 
 	return "web updated\n"
 
-def make_domain_config(domain, template, template_for_primaryhost, env):
-	# How will we configure this domain.
+def make_domain_config(domain, templates, env):
+	# GET SOME VARIABLES
 
 	# Where will its root directory be for static files?
-
 	root = get_web_root(domain, env)
 
 	# What private key and SSL certificate will we use for this domain?
@@ -80,18 +84,9 @@ def make_domain_config(domain, template, template_for_primaryhost, env):
 	# available. Make a self-signed one now if one doesn't exist.
 	ensure_ssl_certificate_exists(domain, ssl_key, ssl_certificate, env)
 
-	# Put pieces together.
-	nginx_conf_parts = re.split("\s*# ADDITIONAL DIRECTIVES HERE\s*", template)
-	nginx_conf = nginx_conf_parts[0] + "\n"
-	if domain == env['PRIMARY_HOSTNAME']:
-		nginx_conf += template_for_primaryhost + "\n"
+	# ADDITIONAL DIRECTIVES.
 
-	# Replace substitution strings in the template & return.
-	nginx_conf = nginx_conf.replace("$STORAGE_ROOT", env['STORAGE_ROOT'])
-	nginx_conf = nginx_conf.replace("$HOSTNAME", domain)
-	nginx_conf = nginx_conf.replace("$ROOT", root)
-	nginx_conf = nginx_conf.replace("$SSL_KEY", ssl_key)
-	nginx_conf = nginx_conf.replace("$SSL_CERTIFICATE", ssl_certificate)
+	nginx_conf_extra = ""
 
 	# Because the certificate may change, we should recognize this so we
 	# can trigger an nginx update.
@@ -104,7 +99,7 @@ def make_domain_config(domain, template, template_for_primaryhost, env):
 		finally:
 			f.close()
 		return sha1.hexdigest()
-	nginx_conf += "# ssl files sha1: %s / %s\n" % (hashfile(ssl_key), hashfile(ssl_certificate))
+	nginx_conf_extra += "# ssl files sha1: %s / %s\n" % (hashfile(ssl_key), hashfile(ssl_certificate))
 
 	# Add in any user customizations in YAML format.
 	nginx_conf_custom_fn = os.path.join(env["STORAGE_ROOT"], "www/custom.yaml")
@@ -113,17 +108,29 @@ def make_domain_config(domain, template, template_for_primaryhost, env):
 		if domain in yaml:
 			yaml = yaml[domain]
 			for path, url in yaml.get("proxies", {}).items():
-				nginx_conf += "\tlocation %s {\n\t\tproxy_pass %s;\n\t}\n" % (path, url)
+				nginx_conf_extra += "\tlocation %s {\n\t\tproxy_pass %s;\n\t}\n" % (path, url)
 			for path, url in yaml.get("redirects", {}).items():
-				nginx_conf += "\trewrite %s %s permanent;\n" % (path, url)
+				nginx_conf_extra += "\trewrite %s %s permanent;\n" % (path, url)
 
 	# Add in any user customizations in the includes/ folder.
 	nginx_conf_custom_include = os.path.join(env["STORAGE_ROOT"], "www", safe_domain_name(domain) + ".conf")
 	if os.path.exists(nginx_conf_custom_include):
-		nginx_conf += "\tinclude %s;\n" % (nginx_conf_custom_include)
+		nginx_conf_extra += "\tinclude %s;\n" % (nginx_conf_custom_include)
+	# PUT IT ALL TOGETHER
 
-	# Ending.
-	nginx_conf += nginx_conf_parts[1]
+	# Combine the pieces. Iteratively place each template into the "# ADDITIONAL DIRECTIVES HERE" placeholder
+	# of the previous template.
+	nginx_conf = "# ADDITIONAL DIRECTIVES HERE\n"
+	for t in templates + [nginx_conf_extra]:
+		nginx_conf = re.sub("[ \t]*# ADDITIONAL DIRECTIVES HERE *\n", t, nginx_conf)
+
+	# Replace substitution strings in the template & return.
+	nginx_conf = nginx_conf.replace("$STORAGE_ROOT", env['STORAGE_ROOT'])
+	nginx_conf = nginx_conf.replace("$HOSTNAME", domain)
+	nginx_conf = nginx_conf.replace("$ROOT", root)
+	nginx_conf = nginx_conf.replace("$SSL_KEY", ssl_key)
+	nginx_conf = nginx_conf.replace("$SSL_CERTIFICATE", ssl_certificate)
+	nginx_conf = nginx_conf.replace("$REDIRECT_DOMAIN", re.sub(r"^www\.", "", domain)) # for default www redirects to parent domain
 
 	return nginx_conf
 
