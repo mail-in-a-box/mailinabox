@@ -36,6 +36,21 @@ def get_domains_with_a_records(env):
 			domains.add(domain)
 	return domains
 
+def get_web_domains_with_root_overrides(env):
+	# Load custom settings so we can tell what domains have a redirect or proxy set up on '/',
+	# which means static hosting is not happening.
+	root_overrides = { }
+	nginx_conf_custom_fn = os.path.join(env["STORAGE_ROOT"], "www/custom.yaml")
+	if os.path.exists(nginx_conf_custom_fn):
+		custom_settings = rtyaml.load(open(nginx_conf_custom_fn))
+		for domain, settings in custom_settings.items():
+			for type, value in [('redirect', settings.get('redirects', {}).get('/')),
+				('proxy', settings.get('proxies', {}).get('/'))]:
+				if value:
+					root_overrides[domain] = (type, value)
+	return root_overrides
+
+
 def get_default_www_redirects(env):
 	# Returns a list of www subdomains that we want to provide default redirects
 	# for, i.e. any www's that aren't domains the user has actually configured
@@ -58,9 +73,13 @@ def do_web_update(env):
 	nginx_conf += make_domain_config(env['PRIMARY_HOSTNAME'], [template0, template1, template2], env)
 
 	# Add configuration all other web domains.
+	has_root_proxy_or_redirect = get_web_domains_with_root_overrides(env)
 	for domain in get_web_domains(env):
 		if domain == env['PRIMARY_HOSTNAME']: continue # handled above
-		nginx_conf += make_domain_config(domain, [template0, template1], env)
+		if domain not in has_root_proxy_or_redirect:
+			nginx_conf += make_domain_config(domain, [template0, template1], env)
+		else:
+			nginx_conf += make_domain_config(domain, [template0], env)
 
 	# Add default www redirects.
 	for domain in get_default_www_redirects(env):
@@ -278,14 +297,7 @@ def install_cert(domain, ssl_cert, ssl_chain, env):
 	return "\n".join(ret)
 
 def get_web_domains_info(env):
-	# load custom settings so we can tell what domains have a redirect or proxy set up on '/',
-	# which means static hosting is not happening
-	custom_settings = { }
-	nginx_conf_custom_fn = os.path.join(env["STORAGE_ROOT"], "www/custom.yaml")
-	if os.path.exists(nginx_conf_custom_fn):
-		custom_settings = rtyaml.load(open(nginx_conf_custom_fn))
-	def has_root_proxy_or_redirect(domain):
-		return custom_settings.get(domain, {}).get('redirects', {}).get('/') or custom_settings.get(domain, {}).get('proxies', {}).get('/')
+	has_root_proxy_or_redirect = get_web_domains_with_root_overrides(env)
 
 	# for the SSL config panel, get cert status
 	def check_cert(domain):
@@ -311,7 +323,7 @@ def get_web_domains_info(env):
 			"root": get_web_root(domain, env),
 			"custom_root": get_web_root(domain, env, test_exists=False),
 			"ssl_certificate": check_cert(domain),
-			"static_enabled": not has_root_proxy_or_redirect(domain),
+			"static_enabled": domain not in has_root_proxy_or_redirect,
 		}
 		for domain in get_web_domains(env)
 	] + \
