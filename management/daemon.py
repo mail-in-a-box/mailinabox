@@ -118,7 +118,7 @@ def me():
 
 	# Is authorized as admin? Return an API key for future use.
 	if "admin" in privs:
-		resp["api_key"] = auth_service.create_user_key(email)
+		resp["api_key"] = auth_service.create_user_key(email, env)
 
 	# Return.
 	return json_response(resp)
