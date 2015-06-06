@@ -17,7 +17,6 @@ apt-get purge -qq -y owncloud*
 # Install ownCloud from source of this version:
 owncloud_ver=8.0.3
 owncloud_hash=3192f3d783f81247eaf2914df63afdd593def4e5
-ownnote_ver=1.0
 
 # Check if ownCloud dir exist, and check if version matches owncloud_ver (if either doesn't - install/upgrade)
 if [ ! -d /usr/local/lib/owncloud/ ] \
@@ -61,11 +60,6 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 	hide_output sudo -u www-data php /usr/local/lib/owncloud/occ upgrade
 fi
 
-# Update OwnNote
-if [ ! grep -q $ownnote_ver /usr/local/lib/owncloud/apps/ownnote/appinfo/info.xml ]; then
-	git_clone https://github.com/owncloud/contacts $ownnote_ver '' /usr/local/lib/owncloud/apps/ownnote
-fi
-
 # ### Configuring ownCloud
 
 # Setup ownCloud if the ownCloud database does not yet exist. Running setup when
@@ -81,7 +75,7 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
 
   'instanceid' => '$instanceid',
 
-  'trusted_domains' =>
+  'trusted_domains' => 
     array (
       0 => '$PRIMARY_HOSTNAME',
     ),
