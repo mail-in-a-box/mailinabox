@@ -211,7 +211,7 @@ def get_mail_aliases_ex(env):
 	for source, destination in get_mail_aliases(env):
 		# get alias info
 		domain = get_domain(source)
-		required = ((source in required_aliases) or (source == get_system_administrator(env)))
+		required = (source in required_aliases)
 
 		# add to list
 		if not domain in domains:
@@ -493,15 +493,17 @@ def get_required_aliases(env):
 	# These are the aliases that must exist.
 	aliases = set()
 
+	# The system administrator alias is required.
+	aliases.add(get_system_administrator(env))
+
 	# The hostmaster alias is exposed in the DNS SOA for each zone.
 	aliases.add("hostmaster@" + env['PRIMARY_HOSTNAME'])
 
 	# Get a list of domains we serve mail for, except ones for which the only
-	# email on that domain is a postmaster/admin alias to the administrator
-	# or a wildcard alias (since it will forward postmaster/admin).
+	# email on that domain are the required aliases or a catch-all/domain-forwarder.
 	real_mail_domains = get_mail_domains(env,
 		filter_aliases = lambda alias :
-			((not alias[0].startswith("postmaster@") and not alias[0].startswith("admin@"))	or alias[1] != get_system_administrator(env))
+			not alias[0].startswith("postmaster@") and not alias[0].startswith("admin@")
 			and not alias[0].startswith("@")
 			)
 
@@ -538,11 +540,11 @@ def kick(env, mail_result=None):
 		for s, t in existing_aliases:
 			if s == source:
 				return
+
 		# Doesn't exist.
 		administrator = get_system_administrator(env)
 		add_mail_alias(source, administrator, env, do_kick=False)
 		results.append("added alias %s (=> %s)\n" % (source, administrator))
-
 
 	for alias in required_aliases:
 		ensure_admin_alias_exists(alias)

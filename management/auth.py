@@ -88,8 +88,9 @@ class KeyAuthService:
 		if email == "" or pw == "":
 			raise ValueError("Enter an email address and password.")
 
-		# The password might be a user-specific API key.
-		if hmac.compare_digest(self.create_user_key(email), pw):
+		# The password might be a user-specific API key. create_user_key raises
+		# a ValueError if the user does not exist.
+		if hmac.compare_digest(self.create_user_key(email, env), pw):
 			# OK.
 			pass
 		else:
@@ -111,18 +112,26 @@ class KeyAuthService:
 				# Login failed.
 				raise ValueError("Invalid password.")
 
-		# Get privileges for authorization. This call should never fail on a valid user,
-		# but if the caller passed a user-specific API key then the user may no longer
-		# exist --- in that case, get_mail_user_privileges will return a tuple of an
-		# error message and an HTTP status code.
+		# Get privileges for authorization. This call should never fail because by this
+		# point we know the email address is a valid user. But on error the call will
+		# return a tuple of an error message and an HTTP status code.
 		privs = get_mail_user_privileges(email, env)
 		if isinstance(privs, tuple): raise ValueError(privs[0])
 
 		# Return a list of privileges.
 		return privs
 
-	def create_user_key(self, email):
-		return hmac.new(self.key.encode('ascii'), b"AUTH:" + email.encode("utf8"), digestmod="sha1").hexdigest()
+	def create_user_key(self, email, env):
+		# Store an HMAC with the client. The hashed message of the HMAC will be the user's
+		# email address & hashed password and the key will be the master API key. The user of
+		# course has their own email address and password. We assume they do not have the master
+		# API key (unless they are trusted anyway). The HMAC proves that they authenticated
+		# with us in some other way to get the HMAC. Including the password means that when
+		# a user's password is reset, the HMAC changes and they will correctly need to log
+		# in to the control panel again. This method raises a ValueError if the user does
+		# not exist, due to get_mail_password.
+		msg = b"AUTH:" + email.encode("utf8") + b" " + get_mail_password(email, env).encode("utf8")
+		return hmac.new(self.key.encode('ascii'), msg, digestmod="sha256").hexdigest()
 
 	def _generate_key(self):
 		raw_key = os.urandom(32)

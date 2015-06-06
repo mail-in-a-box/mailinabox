@@ -164,9 +164,14 @@ function do_add_user() {
 
 function users_set_password(elem) {
   var email = $(elem).parents('tr').attr('data-email');
+
+  var yourpw = "";
+  if (api_credentials != null && email == api_credentials[0])
+    yourpw = "<p class='text-danger'>If you change your own password, you will be logged out of this control panel and will need to log in again.</p>";
+
   show_modal_confirm(
     "Archive User",
-    $("<p>Set a new password for <b>" + email + "</b>?</p> <p><label for='users_set_password_pw' style='display: block; font-weight: normal'>New Password:</label><input type='password' id='users_set_password_pw'></p><p><small>Passwords must be at least four characters and may not contain spaces.</small></p>"),
+    $("<p>Set a new password for <b>" + email + "</b>?</p> <p><label for='users_set_password_pw' style='display: block; font-weight: normal'>New Password:</label><input type='password' id='users_set_password_pw'></p><p><small>Passwords must be at least four characters and may not contain spaces.</small>" + yourpw + "</p>"),
     "Set Password",
     function() {
       api(

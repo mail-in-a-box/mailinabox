@@ -56,6 +56,8 @@ The cipher and protocol selection are chosen to support the following clients:
 
 The passwords for mail users are stored on disk using the [SHA512-CRYPT](http://man7.org/linux/man-pages/man3/crypt.3.html) hashing scheme. ([source](management/mailconfig.py))
 
+When using the web-based administrative control panel, after logging in an API key is placed in the browser's local storage (rather than, say, the user's actual password). The API key is an HMAC based on the user's email address and current password, and it is keyed by a secret known only to the control panel service. By resetting an administrator's password, any HMACs previously generated for that user will expire.
+
 ### Console access
 
 Console access (e.g. via SSH) is configured by the system image used to create the box, typically from by a cloud virtual machine provider (e.g. Digital Ocean). Mail-in-a-Box does not set any console access settings, although it will warn the administrator in the System Status Checks if password-based login is turned on.

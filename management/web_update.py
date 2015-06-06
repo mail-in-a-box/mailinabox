@@ -5,7 +5,7 @@
 import os, os.path, shutil, re, tempfile, rtyaml
 
 from mailconfig import get_mail_domains
-from dns_update import get_custom_dns_config, do_dns_update
+from dns_update import get_custom_dns_config, do_dns_update, get_dns_zones
 from utils import shell, safe_domain_name, sort_domains
 
 def get_web_domains(env):
@@ -19,31 +19,71 @@ def get_web_domains(env):
 	# Also serve web for all mail domains so that we might at least
 	# provide auto-discover of email settings, and also a static website
 	# if the user wants to make one. These will require an SSL cert.
-	domains |= get_mail_domains(env)
-
 	# ...Unless the domain has an A/AAAA record that maps it to a different
 	# IP address than this box. Remove those domains from our list.
-	dns = get_custom_dns_config(env)
-	for domain, rtype, value in dns:
-		if domain not in domains: continue
-		if rtype == "CNAME" or (rtype in ("A", "AAAA") and value != "local"):
-			domains.remove(domain)
+	domains |= (get_mail_domains(env) - get_domains_with_a_records(env))
 
-	# Sort the list. Put PRIMARY_HOSTNAME first so it becomes the
-	# default server (nginx's default_server).
+	# Sort the list so the nginx conf gets written in a stable order.
 	domains = sort_domains(domains, env)
 
 	return domains
-	
+
+def get_domains_with_a_records(env):
+	domains = set()
+	dns = get_custom_dns_config(env)
+	for domain, rtype, value in dns:
+		if rtype == "CNAME" or (rtype in ("A", "AAAA") and value != "local"):
+			domains.add(domain)
+	return domains
+
+def get_web_domains_with_root_overrides(env):
+	# Load custom settings so we can tell what domains have a redirect or proxy set up on '/',
+	# which means static hosting is not happening.
+	root_overrides = { }
+	nginx_conf_custom_fn = os.path.join(env["STORAGE_ROOT"], "www/custom.yaml")
+	if os.path.exists(nginx_conf_custom_fn):
+		custom_settings = rtyaml.load(open(nginx_conf_custom_fn))
+		for domain, settings in custom_settings.items():
+			for type, value in [('redirect', settings.get('redirects', {}).get('/')),
+				('proxy', settings.get('proxies', {}).get('/'))]:
+				if value:
+					root_overrides[domain] = (type, value)
+	return root_overrides
+
+
+def get_default_www_redirects(env):
+	# Returns a list of www subdomains that we want to provide default redirects
+	# for, i.e. any www's that aren't domains the user has actually configured
+	# to serve for real. Which would be unusual.
+	web_domains = set(get_web_domains(env))
+	www_domains = set('www.' + zone for zone, zonefile in get_dns_zones(env))
+	return sort_domains(www_domains - web_domains - get_domains_with_a_records(env), env)
+
 def do_web_update(env):
 	# Build an nginx configuration file.
 	nginx_conf = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-top.conf")).read()
 
-	# Add configuration for each web domain.
-	template1 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx.conf")).read()
+	# Load the templates.
+	template0 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx.conf")).read()
+	template1 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-alldomains.conf")).read()
 	template2 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-primaryonly.conf")).read()
+	template3 = "\trewrite / https://$REDIRECT_DOMAIN permanent;\n"
+
+	# Add the PRIMARY_HOST configuration first so it becomes nginx's default server.
+	nginx_conf += make_domain_config(env['PRIMARY_HOSTNAME'], [template0, template1, template2], env)
+
+	# Add configuration all other web domains.
+	has_root_proxy_or_redirect = get_web_domains_with_root_overrides(env)
 	for domain in get_web_domains(env):
-		nginx_conf += make_domain_config(domain, template1, template2, env)
+		if domain == env['PRIMARY_HOSTNAME']: continue # handled above
+		if domain not in has_root_proxy_or_redirect:
+			nginx_conf += make_domain_config(domain, [template0, template1], env)
+		else:
+			nginx_conf += make_domain_config(domain, [template0], env)
+
+	# Add default www redirects.
+	for domain in get_default_www_redirects(env):
+		nginx_conf += make_domain_config(domain, [template0, template3], env)
 
 	# Did the file change? If not, don't bother writing & restarting nginx.
 	nginx_conf_fn = "/etc/nginx/conf.d/local.conf"
@@ -64,11 +104,10 @@ def do_web_update(env):
 
 	return "web updated\n"
 
-def make_domain_config(domain, template, template_for_primaryhost, env):
-	# How will we configure this domain.
+def make_domain_config(domain, templates, env):
+	# GET SOME VARIABLES
 
 	# Where will its root directory be for static files?
-
 	root = get_web_root(domain, env)
 
 	# What private key and SSL certificate will we use for this domain?
@@ -78,18 +117,9 @@ def make_domain_config(domain, template, template_for_primaryhost, env):
 	# available. Make a self-signed one now if one doesn't exist.
 	ensure_ssl_certificate_exists(domain, ssl_key, ssl_certificate, env)
 
-	# Put pieces together.
-	nginx_conf_parts = re.split("\s*# ADDITIONAL DIRECTIVES HERE\s*", template)
-	nginx_conf = nginx_conf_parts[0] + "\n"
-	if domain == env['PRIMARY_HOSTNAME']:
-		nginx_conf += template_for_primaryhost + "\n"
+	# ADDITIONAL DIRECTIVES.
 
-	# Replace substitution strings in the template & return.
-	nginx_conf = nginx_conf.replace("$STORAGE_ROOT", env['STORAGE_ROOT'])
-	nginx_conf = nginx_conf.replace("$HOSTNAME", domain)
-	nginx_conf = nginx_conf.replace("$ROOT", root)
-	nginx_conf = nginx_conf.replace("$SSL_KEY", ssl_key)
-	nginx_conf = nginx_conf.replace("$SSL_CERTIFICATE", ssl_certificate)
+	nginx_conf_extra = ""
 
 	# Because the certificate may change, we should recognize this so we
 	# can trigger an nginx update.
@@ -102,7 +132,7 @@ def make_domain_config(domain, template, template_for_primaryhost, env):
 		finally:
 			f.close()
 		return sha1.hexdigest()
-	nginx_conf += "# ssl files sha1: %s / %s\n" % (hashfile(ssl_key), hashfile(ssl_certificate))
+	nginx_conf_extra += "# ssl files sha1: %s / %s\n" % (hashfile(ssl_key), hashfile(ssl_certificate))
 
 	# Add in any user customizations in YAML format.
 	nginx_conf_custom_fn = os.path.join(env["STORAGE_ROOT"], "www/custom.yaml")
@@ -111,17 +141,29 @@ def make_domain_config(domain, template, template_for_primaryhost, env):
 		if domain in yaml:
 			yaml = yaml[domain]
 			for path, url in yaml.get("proxies", {}).items():
-				nginx_conf += "\tlocation %s {\n\t\tproxy_pass %s;\n\t}\n" % (path, url)
+				nginx_conf_extra += "\tlocation %s {\n\t\tproxy_pass %s;\n\t}\n" % (path, url)
 			for path, url in yaml.get("redirects", {}).items():
-				nginx_conf += "\trewrite %s %s permanent;\n" % (path, url)
+				nginx_conf_extra += "\trewrite %s %s permanent;\n" % (path, url)
 
 	# Add in any user customizations in the includes/ folder.
 	nginx_conf_custom_include = os.path.join(env["STORAGE_ROOT"], "www", safe_domain_name(domain) + ".conf")
 	if os.path.exists(nginx_conf_custom_include):
-		nginx_conf += "\tinclude %s;\n" % (nginx_conf_custom_include)
+		nginx_conf_extra += "\tinclude %s;\n" % (nginx_conf_custom_include)
+	# PUT IT ALL TOGETHER
 
-	# Ending.
-	nginx_conf += nginx_conf_parts[1]
+	# Combine the pieces. Iteratively place each template into the "# ADDITIONAL DIRECTIVES HERE" placeholder
+	# of the previous template.
+	nginx_conf = "# ADDITIONAL DIRECTIVES HERE\n"
+	for t in templates + [nginx_conf_extra]:
+		nginx_conf = re.sub("[ \t]*# ADDITIONAL DIRECTIVES HERE *\n", t, nginx_conf)
+
+	# Replace substitution strings in the template & return.
+	nginx_conf = nginx_conf.replace("$STORAGE_ROOT", env['STORAGE_ROOT'])
+	nginx_conf = nginx_conf.replace("$HOSTNAME", domain)
+	nginx_conf = nginx_conf.replace("$ROOT", root)
+	nginx_conf = nginx_conf.replace("$SSL_KEY", ssl_key)
+	nginx_conf = nginx_conf.replace("$SSL_CERTIFICATE", ssl_certificate)
+	nginx_conf = nginx_conf.replace("$REDIRECT_DOMAIN", re.sub(r"^www\.", "", domain)) # for default www redirects to parent domain
 
 	return nginx_conf
 
@@ -255,14 +297,7 @@ def install_cert(domain, ssl_cert, ssl_chain, env):
 	return "\n".join(ret)
 
 def get_web_domains_info(env):
-	# load custom settings so we can tell what domains have a redirect or proxy set up on '/',
-	# which means static hosting is not happening
-	custom_settings = { }
-	nginx_conf_custom_fn = os.path.join(env["STORAGE_ROOT"], "www/custom.yaml")
-	if os.path.exists(nginx_conf_custom_fn):
-		custom_settings = rtyaml.load(open(nginx_conf_custom_fn))
-	def has_root_proxy_or_redirect(domain):
-		return custom_settings.get(domain, {}).get('redirects', {}).get('/') or custom_settings.get(domain, {}).get('proxies', {}).get('/')
+	has_root_proxy_or_redirect = get_web_domains_with_root_overrides(env)
 
 	# for the SSL config panel, get cert status
 	def check_cert(domain):
@@ -288,7 +323,15 @@ def get_web_domains_info(env):
 			"root": get_web_root(domain, env),
 			"custom_root": get_web_root(domain, env, test_exists=False),
 			"ssl_certificate": check_cert(domain),
-			"static_enabled": not has_root_proxy_or_redirect(domain),
+			"static_enabled": domain not in has_root_proxy_or_redirect,
 		}
 		for domain in get_web_domains(env)
+	] + \
+	[
+		{
+			"domain": domain,
+			"ssl_certificate": check_cert(domain),
+			"static_enabled": False,
+		}
+		for domain in get_default_www_redirects(env)
 	]
