@@ -2,7 +2,7 @@
 # domains for which a mail account has been set up.
 ########################################################################
 
-import os, os.path, shutil, re, tempfile, rtyaml
+import os, os.path, shutil, re, tempfile
 
 from mailconfig import get_mail_domains
 from dns_update import get_custom_dns_config, do_dns_update, get_dns_zones
@@ -42,6 +42,7 @@ def get_web_domains_with_root_overrides(env):
 	root_overrides = { }
 	nginx_conf_custom_fn = os.path.join(env["STORAGE_ROOT"], "www/custom.yaml")
 	if os.path.exists(nginx_conf_custom_fn):
+		import rtyaml
 		custom_settings = rtyaml.load(open(nginx_conf_custom_fn))
 		for domain, settings in custom_settings.items():
 			for type, value in [('redirect', settings.get('redirects', {}).get('/')),
@@ -50,6 +51,22 @@ def get_web_domains_with_root_overrides(env):
 					root_overrides[domain] = (type, value)
 	return root_overrides
 
+def get_custom_setting(domain, env, setting):
+	custom_fn = os.path.join(env["STORAGE_ROOT"], "www/custom.yaml")
+#	custom_fn = os.path.join(env["STORAGE_ROOT"], "www", safe_domain_name(domain) + ".yaml")
+	if os.path.exists(custom_fn):
+		import rtyaml
+		try:
+			custom_settings = rtyaml.load(open(custom_fn))
+			if not isinstance(custom_settings, dict): raise ValueError() # caught below
+		except:
+			return [ ]
+
+		if domain in custom_settings:
+			settings = custom_settings[domain]
+			for key, value in settings.items():
+				if key == setting:
+					return value
 
 def get_default_www_redirects(env):
 	# Returns a list of www subdomains that we want to provide default redirects
@@ -135,15 +152,14 @@ def make_domain_config(domain, templates, env):
 	nginx_conf_extra += "# ssl files sha1: %s / %s\n" % (hashfile(ssl_key), hashfile(ssl_certificate))
 
 	# Add in any user customizations in YAML format.
-	nginx_conf_custom_fn = os.path.join(env["STORAGE_ROOT"], "www/custom.yaml")
-	if os.path.exists(nginx_conf_custom_fn):
-		yaml = rtyaml.load(open(nginx_conf_custom_fn))
-		if domain in yaml:
-			yaml = yaml[domain]
-			for path, url in yaml.get("proxies", {}).items():
-				nginx_conf_extra += "\tlocation %s {\n\t\tproxy_pass %s;\n\t}\n" % (path, url)
-			for path, url in yaml.get("redirects", {}).items():
-				nginx_conf_extra += "\trewrite %s %s permanent;\n" % (path, url)
+	nginx_conf_custom_proxies = get_custom_setting(domain, env, 'proxies')
+	if nginx_conf_custom_proxies is not None:
+		for path, url in nginx_conf_custom_proxies.items():
+			nginx_conf_extra += "\tlocation %s {\n\t\tproxy_pass %s;\n\t}\n" % (path, url)
+	nginx_conf_custom_redirects = get_custom_setting(domain, env, 'redirects')
+	if nginx_conf_custom_redirects is not None:
+		for path, url in nginx_conf_custom_redirects.items():
+			nginx_conf_extra += "\trewrite %s %s permanent;\n" % (path, url)
 
 	# Add in any user customizations in the includes/ folder.
 	nginx_conf_custom_include = os.path.join(env["STORAGE_ROOT"], "www", safe_domain_name(domain) + ".conf")
@@ -171,6 +187,9 @@ def get_web_root(domain, env, test_exists=True):
 	# Try STORAGE_ROOT/web/domain_name if it exists, but fall back to STORAGE_ROOT/web/default.
 	for test_domain in (domain, 'default'):
 		root = os.path.join(env["STORAGE_ROOT"], "www", safe_domain_name(test_domain))
+		custom_root = get_custom_setting(domain, env, 'custom_root')
+		if custom_root is not None:
+			root = custom_root
 		if os.path.exists(root) or not test_exists: break
 	return root
 

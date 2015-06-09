@@ -1,0 +1,14 @@
+yourdomain.com:
+    proxies:
+        /App: http://localhost:12345
+        /CoolApp: http://localhost:54321
+    redirects:
+        /from2: /App
+        /andfrom2: /CoolApp
+    custom_root: /home/user-data/www/yourdomain.com/app/public_html
+
+yourdomain.net:
+    CNAME: other.domain.tld.
+
+#It does not work
+#yourdomain.org: 123.456.789.123
