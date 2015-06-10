@@ -18,9 +18,12 @@ fi
 
 # Clone the Mail-in-a-Box repository if it doesn't exist.
 if [ ! -d $HOME/mailinabox ]; then
-	echo Installing git . . .
-	DEBIAN_FRONTEND=noninteractive apt-get -q -q install -y git < /dev/null
-	echo
+	if [ ! -f /usr/bin/git ]; then
+		echo Installing git . . .
+		apt-get -q -q update
+		DEBIAN_FRONTEND=noninteractive apt-get -q -q install -y git < /dev/null
+		echo
+	fi
 
 	echo Downloading Mail-in-a-Box $TAG. . .
 	git clone \
