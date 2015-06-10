@@ -6,8 +6,11 @@ if [ -z "$NONINTERACTIVE" ]; then
 	# use a shell flag instead. Really supress any output from installing dialog.
 	#
 	# Also install depencies needed to validate the email address.
-	echo Installing packages needed for setup...
-	apt_get_quiet install dialog python3 python3-pip  || exit 1
+	if [ ! -f /usr/bin/dialog ] || [ ! -f /usr/bin/python3 ] || [ ! -f /usr/bin/pip3 ]; then
+		echo Installing packages needed for setup...
+		apt-get -q -q update
+		apt_get_quiet install dialog python3 python3-pip  || exit 1
+	fi
 
 	# email_validator is repeated in setup/management.sh
 	hide_output pip3 install "email_validator==0.1.0-rc5" || exit 1
