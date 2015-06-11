@@ -62,13 +62,15 @@ fi
 
 # ### Configuring ownCloud
 
+OWNCLOUD_CONFIG=/usr/local/lib/owncloud/config/config.php
+
 # Setup ownCloud if the ownCloud database does not yet exist. Running setup when
 # the database does exist wipes the database and user data.
-if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
+if [ ! -f $OWNCLOUD_CONFIG ]; then
 	# Create a configuration file.
 	TIMEZONE=$(cat /etc/timezone)
 	instanceid=oc$(echo $PRIMARY_HOSTNAME | sha1sum | fold -w 10 | head -n 1)
-	cat > /usr/local/lib/owncloud/config/config.php <<EOF;
+	cat > $OWNCLOUD_CONFIG <<EOF;
 <?php
 \$CONFIG = array (
   'datadirectory' => '$STORAGE_ROOT/owncloud',
@@ -105,7 +107,13 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
 );
 ?>
 EOF
+fi
 
+# Create user data directory and set permissions
+mkdir -p $STORAGE_ROOT/owncloud
+chown -R www-data.www-data $STORAGE_ROOT/owncloud /usr/local/lib/owncloud
+
+if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
 	# Create an auto-configuration file to fill in database settings
 	# when the install script is run. Make an administrator account
 	# here or else the install can't finish.
@@ -124,10 +132,6 @@ EOF
 );
 ?>
 EOF
-
-	# Create user data directory and set permissions
-	mkdir -p $STORAGE_ROOT/owncloud
-	chown -R www-data.www-data $STORAGE_ROOT/owncloud /usr/local/lib/owncloud
 
 	# Execute ownCloud's setup step, which creates the ownCloud sqlite database.
 	# It also wipes it if it exists. And it deletes the autoconfig.php file.
