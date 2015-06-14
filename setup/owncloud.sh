@@ -18,17 +18,27 @@ apt-get purge -qq -y owncloud*
 owncloud_ver=8.0.3
 owncloud_hash=3192f3d783f81247eaf2914df63afdd593def4e5
 
+# Migrate <= v0.10 setups that stored the ownCloud config.php in /usr/local rather than
+# in STORAGE_ROOT. Move the file to STORAGE_ROOT.
+if [ ! -f $STORAGE_ROOT/owncloud/config.php ] \
+	&& [ -f /usr/local/lib/owncloud/config/config.php ]; then
+
+	# Move config.php and symlink back into previous location.
+	echo "Migrating owncloud/config.php to new location."
+	mv /usr/local/lib/owncloud/config/config.php $STORAGE_ROOT/owncloud/config.php \
+		&& \
+	ln -sf $STORAGE_ROOT/owncloud/config.php /usr/local/lib/owncloud/config/config.php
+fi
+
 # Check if ownCloud dir exist, and check if version matches owncloud_ver (if either doesn't - install/upgrade)
 if [ ! -d /usr/local/lib/owncloud/ ] \
 	|| ! grep -q $owncloud_ver /usr/local/lib/owncloud/version.php; then
 
 	# Clear out the existing ownCloud.
-	rm -f /tmp/owncloud-config.php
 	if [ ! -d /usr/local/lib/owncloud/ ]; then
 		echo installing ownCloud...
 	else
 		echo "upgrading ownCloud to $owncloud_ver (backing up existing ownCloud directory to /tmp/owncloud-backup-$$)..."
-		cp /usr/local/lib/owncloud/config/config.php /tmp/owncloud-config.php
 		mv /usr/local/lib/owncloud /tmp/owncloud-backup-$$
 	fi
 
@@ -46,10 +56,9 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 	# Fix weird permissions.
 	chmod 750 /usr/local/lib/owncloud/{apps,config}
 
-	# Restore configuration file if we're doing an upgrade.
-	if [ -f /tmp/owncloud-config.php ]; then
-		mv /tmp/owncloud-config.php /usr/local/lib/owncloud/config/config.php
-	fi
+	# Create a symlink to the config.php in STORAGE_ROOT (for upgrades we're restoring the symlink we previously
+	# put in, and in new installs we're creating a symlink and will create the actual config later).
+	ln -sf $STORAGE_ROOT/owncloud/config.php /usr/local/lib/owncloud/config/config.php
 
 	# Make sure permissions are correct or the upgrade step won't run.
 	# $STORAGE_ROOT/owncloud may not yet exist, so use -f to suppress
@@ -65,17 +74,20 @@ fi
 # Setup ownCloud if the ownCloud database does not yet exist. Running setup when
 # the database does exist wipes the database and user data.
 if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
+	# Create user data directory
+	mkdir -p $STORAGE_ROOT/owncloud
+
 	# Create a configuration file.
 	TIMEZONE=$(cat /etc/timezone)
 	instanceid=oc$(echo $PRIMARY_HOSTNAME | sha1sum | fold -w 10 | head -n 1)
-	cat > /usr/local/lib/owncloud/config/config.php <<EOF;
+	cat > $STORAGE_ROOT/owncloud/config.php <<EOF;
 <?php
 \$CONFIG = array (
   'datadirectory' => '$STORAGE_ROOT/owncloud',
 
   'instanceid' => '$instanceid',
 
-  'trusted_domains' => 
+  'trusted_domains' =>
     array (
       0 => '$PRIMARY_HOSTNAME',
     ),
@@ -125,12 +137,12 @@ EOF
 ?>
 EOF
 
-	# Create user data directory and set permissions
-	mkdir -p $STORAGE_ROOT/owncloud
+	# Set permissions
 	chown -R www-data.www-data $STORAGE_ROOT/owncloud /usr/local/lib/owncloud
 
 	# Execute ownCloud's setup step, which creates the ownCloud sqlite database.
-	# It also wipes it if it exists. And it deletes the autoconfig.php file.
+	# It also wipes it if it exists. And it updates config.php with database
+	# settings and deletes the autoconfig.php file.
 	(cd /usr/local/lib/owncloud; sudo -u www-data php /usr/local/lib/owncloud/index.php;)
 fi
 
