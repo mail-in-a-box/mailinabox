@@ -18,6 +18,7 @@ Control panel:
 
 System:
 * The munin system monitoring tool is now installed and accessible at /admin/munin.
+* ownCloud updated to version 8.0.4.
 
 
 v0.10 (June 1, 2015)
