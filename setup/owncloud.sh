@@ -18,14 +18,15 @@ apt-get purge -qq -y owncloud*
 owncloud_ver=8.0.3
 owncloud_hash=3192f3d783f81247eaf2914df63afdd593def4e5
 
-# Migrate existing configurations
+# Migrate <= v0.10 setups that stored the ownCloud config.php in /usr/local rather than
+# in STORAGE_ROOT. Move the file to STORAGE_ROOT.
 if [ ! -f $STORAGE_ROOT/owncloud/config.php ] \
 	&& [ -f /usr/local/lib/owncloud/config/config.php ]; then
 
-	# Move config.php
-	mv /usr/local/lib/owncloud/config/config.php $STORAGE_ROOT/owncloud/config.php
-
-	# Symlink OwnCloud's config
+	# Move config.php and symlink back into previous location.
+	echo "Migrating owncloud/config.php to new location."
+	mv /usr/local/lib/owncloud/config/config.php $STORAGE_ROOT/owncloud/config.php \
+		&& \
 	ln -sf $STORAGE_ROOT/owncloud/config.php /usr/local/lib/owncloud/config/config.php
 fi
 
@@ -55,7 +56,8 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 	# Fix weird permissions.
 	chmod 750 /usr/local/lib/owncloud/{apps,config}
 
-	# Make sure our symlink exists
+	# Create a symlink to the config.php in STORAGE_ROOT (for upgrades we're restoring the symlink we previously
+	# put in, and in new installs we're creating a symlink and will create the actual config later).
 	ln -sf $STORAGE_ROOT/owncloud/config.php /usr/local/lib/owncloud/config/config.php
 
 	# Make sure permissions are correct or the upgrade step won't run.
@@ -135,14 +137,12 @@ EOF
 ?>
 EOF
 
-	# Link ownCloud's config
-	ln -sf $STORAGE_ROOT/owncloud/config.php /usr/local/lib/owncloud/config/config.php
-
 	# Set permissions
 	chown -R www-data.www-data $STORAGE_ROOT/owncloud /usr/local/lib/owncloud
 
 	# Execute ownCloud's setup step, which creates the ownCloud sqlite database.
-	# It also wipes it if it exists. And it deletes the autoconfig.php file.
+	# It also wipes it if it exists. And it updates config.php with database
+	# settings and deletes the autoconfig.php file.
 	(cd /usr/local/lib/owncloud; sudo -u www-data php /usr/local/lib/owncloud/index.php;)
 fi
 
