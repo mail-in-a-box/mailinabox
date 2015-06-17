@@ -13,6 +13,9 @@ Web:
 * 'www' subdomains now automatically redirect to their parent domain (but you'll need to install an SSL certificate).
 * OCSP no longer uses Google Public DNS.
 
+DNS:
+* Default IPv6 AAAA records were missing since version 0.09.
+
 Control panel:
 * Resetting a user's password now forces them to log in again everywhere.
 

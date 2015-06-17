@@ -213,8 +213,11 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 		records.append((qname, rtype, value, "(Set by user.)"))
 
 	# Add defaults if not overridden by the user's custom settings (and not otherwise configured).
-	# Any "CNAME" record on the qname overrides A and AAAA.
-	has_rec_base = records
+	# Any CNAME or A record on the qname overrides A and AAAA. But when we set the default A record,
+	# we should not cause the default AAAA record to be skipped because it thinks a custom A record
+	# was set. So set has_rec_base to a clone of the current set of DNS settings, and don't update
+	# during this process.
+	has_rec_base = list(records)
 	defaults = [
 		(None,  "A",    env["PUBLIC_IP"],       "Required. May have a different value. Sets the IP address that %s resolves to for web hosting and other services besides mail. The A record must be present but its value does not affect mail delivery." % domain),
 		(None,  "AAAA", env.get('PUBLIC_IPV6'), "Optional. Sets the IPv6 address that %s resolves to, e.g. for web hosting. (It is not necessary for receiving mail on this domain.)" % domain),
@@ -233,6 +236,9 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 		# (2) there is not an A record already (if this is an A record this is a dup of (1), and if this is an AAAA record then don't set a default AAAA record if the user sets a custom A record, since the default wouldn't make sense and it should not resolve if the user doesn't provide a new AAAA record)
 		if not has_rec(qname, rtype) and not has_rec(qname, "CNAME") and not has_rec(qname, "A"):
 			records.append((qname, rtype, value, explanation))
+
+	# Don't pin the list of records that has_rec checks against anymore.
+	has_rec_base = records
 
 	# SPF record: Permit the box ('mx', see above) to send mail on behalf of
 	# the domain, and no one else.
