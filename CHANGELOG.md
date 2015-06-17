@@ -8,6 +8,7 @@ Mail:
 * Greylisting will now let some reputable senders pass through immediately.
 * Searching mail (via IMAP) will now be much faster using the dovecot lucene full text search plugin.
 * Fix for deleting admin@ and postmaster@ addresses.
+* Roundcube is updated to version 1.1.2, plugins updated.
 
 Web:
 * 'www' subdomains now automatically redirect to their parent domain (but you'll need to install an SSL certificate).
