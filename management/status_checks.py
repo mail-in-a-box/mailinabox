@@ -42,15 +42,21 @@ def run_checks(rounded_values, env, output, pool):
 
 def get_ssh_port():
 	# Returns ssh port
+	try:
+		output = shell('check_output', ['sshd', '-T'])
+	except FileNotFoundError:
+		# sshd is not installed. That's ok.
+		return None
 
-	output = shell('check_output', ['sshd', '-T'])
 	returnNext = False
-
 	for e in output.split():
 		if returnNext:
 			return int(e)
 		if e == "port":
 			returnNext = True
+
+	# Did not find port!
+	return None
 
 def run_services_checks(env, output, pool):
 	# Check that system services are running.
@@ -82,6 +88,7 @@ def run_services_checks(env, output, pool):
 	fatal = False
 	ret = pool.starmap(check_service, ((i, service, env) for i, service in enumerate(services)), chunksize=1)
 	for i, running, fatal2, output2 in sorted(ret):
+		if output2 is None: continue # skip check (e.g. no port was set, e.g. no sshd)
 		all_running = all_running and running
 		fatal = fatal or fatal2
 		output2.playback(output)
@@ -92,6 +99,10 @@ def run_services_checks(env, output, pool):
 	return not fatal
 
 def check_service(i, service, env):
+	if not service["port"]:
+		# Skip check (no port, e.g. no sshd).
+		return (i, None, None, None)
+
 	import socket
 	output = BufferedOutput()
 	running = False

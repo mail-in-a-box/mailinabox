@@ -19,6 +19,7 @@ DNS:
 
 Control panel:
 * Resetting a user's password now forces them to log in again everywhere.
+* Status checks were not working if an ssh server was not installed.
 
 System:
 * The munin system monitoring tool is now installed and accessible at /admin/munin.
