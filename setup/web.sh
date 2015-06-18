@@ -32,6 +32,10 @@ sed "s#STORAGE_ROOT#$STORAGE_ROOT#" \
 tools/editconf.py /etc/nginx/nginx.conf -s \
 	server_names_hash_bucket_size="64;"
 
+# Tell PHP not to expose its version number in the X-Powered-By header.
+tools/editconf.py /etc/php5/fpm/php.ini -c ';' \
+	expose_php=Off
+
 # Bump up PHP's max_children to support more concurrent connections
 tools/editconf.py /etc/php5/fpm/pool.d/www.conf -c ';' \
 	pm.max_children=8
