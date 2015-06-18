@@ -41,15 +41,16 @@ def run_checks(rounded_values, env, output, pool):
 	run_domain_checks(rounded_values, env, output, pool)
 
 def get_ssh_port():
-    # Returns ssh port
-    output = shell('check_output', ['sshd', '-T'])
-    returnNext = False
+	# Returns ssh port
 
-    for e in output.split():
-        if returnNext:
-            return int(e)
-        if e == "port":
-            returnNext = True
+	output = shell('check_output', ['sshd', '-T'])
+	returnNext = False
+
+	for e in output.split():
+		if returnNext:
+			return int(e)
+		if e == "port":
+			returnNext = True
 
 def run_services_checks(env, output, pool):
 	# Check that system services are running.
