@@ -69,6 +69,22 @@ tools/editconf.py /etc/postfix/main.cf \
 	smtpd_sasl_path=private/auth \
 	smtpd_sasl_auth_enable=yes
 
+# ### Sender Validation
+
+# Use a Sqlite3 database to set login maps. This is used with
+# reject_authenticated_sender_login_mismatch to see if user is
+# allowed to send mail using FROM field specified in the request.
+tools/editconf.py /etc/postfix/main.cf \
+	smtpd_sender_login_maps=sqlite:/etc/postfix/sender-login-maps.cf
+
+# SQL statement to set login map which includes the case when user is
+# sending email using a valid alias.
+# This is the same as virtual-alias-maps.cf, See below
+cat > /etc/postfix/sender-login-maps.cf << EOF;
+dbpath=$db_path
+query = SELECT destination from (SELECT destination, 0 as priority FROM aliases WHERE source='%s' UNION SELECT email as destination, 1 as priority FROM users WHERE email='%s') ORDER BY priority LIMIT 1;
+EOF
+
 # ### Destination Validation
 
 # Use a Sqlite3 database to check whether a destination email address exists,
