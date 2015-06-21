@@ -92,13 +92,25 @@ query = SELECT 1 FROM users WHERE email='%s'
 EOF
 
 # SQL statement to rewrite an email address if an alias is present.
-# Aliases have precedence over users, but that's counter-intuitive for
-# catch-all aliases ("@domain.com") which should *not* catch mail users.
-# To fix this, not only query the aliases table but also the users
-# table, i.e. turn users into aliases from themselves to themselves.
+#
+# Postfix makes multiple queries for each incoming mail. It first
+# queries the whole email address, then just the user part in certain
+# locally-directed cases (but we don't use this), then just `@`+the
+# domain part. The first query that returns something wins. See
+# http://www.postfix.org/virtual.5.html.
+#
+# virtual-alias-maps has precedence over virtual-mailbox-maps, but
+# we don't want catch-alls and domain aliases to catch mail for users
+# that have been defined on those domains. To fix this, we not only
+# query the aliases table but also the users table when resolving
+# aliases, i.e. we turn users into aliases from themselves to
+# themselves. That means users will match in postfix's first query
+# before postfix gets to the third query for catch-alls/domain alises.
+#
 # If there is both an alias and a user for the same address either
 # might be returned by the UNION, so the whole query is wrapped in
-# another select that prioritizes the alias definition.
+# another select that prioritizes the alias definition to preserve
+# postfix's preference for aliases for whole email addresses.
 cat > /etc/postfix/virtual-alias-maps.cf << EOF;
 dbpath=$db_path
 query = SELECT destination from (SELECT destination, 0 as priority FROM aliases WHERE source='%s' UNION SELECT email as destination, 1 as priority FROM users WHERE email='%s') ORDER BY priority LIMIT 1;
