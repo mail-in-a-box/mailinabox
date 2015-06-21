@@ -20,6 +20,7 @@ DNS:
 Control panel:
 * Resetting a user's password now forces them to log in again everywhere.
 * Status checks were not working if an ssh server was not installed.
+* SSL certificate validation now uses the Python cryptography module in some places where openssl was used.
 
 System:
 * The munin system monitoring tool is now installed and accessible at /admin/munin.

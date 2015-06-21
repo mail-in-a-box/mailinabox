@@ -201,14 +201,14 @@ def get_domain_ssl_files(domain, env, allow_shared_cert=True):
 		# the user has uploaded a different private key for this domain.
 		if not ssl_key_is_alt and allow_shared_cert:
 			from status_checks import check_certificate
-			if check_certificate(domain, ssl_certificate_primary, None)[0] == "OK":
+			if check_certificate(domain, ssl_certificate_primary, None, just_check_domain=True)[0] == "OK":
 				ssl_certificate = ssl_certificate_primary
 				ssl_via = "Using multi/wildcard certificate of %s." % env['PRIMARY_HOSTNAME']
 
 			# For a 'www.' domain, see if we can reuse the cert of the parent.
 			elif domain.startswith('www.'):
 				ssl_certificate_parent = os.path.join(env["STORAGE_ROOT"], 'ssl/%s/ssl_certificate.pem' % safe_domain_name(domain[4:]))
-				if os.path.exists(ssl_certificate_parent) and check_certificate(domain, ssl_certificate_parent, None)[0] == "OK":
+				if os.path.exists(ssl_certificate_parent) and check_certificate(domain, ssl_certificate_parent, None, just_check_domain=True)[0] == "OK":
 					ssl_certificate = ssl_certificate_parent
 					ssl_via = "Using multi/wildcard certificate of %s." % domain[4:]
 
