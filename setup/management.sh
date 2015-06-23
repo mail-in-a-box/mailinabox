@@ -5,7 +5,7 @@ source setup/functions.sh
 # build-essential libssl-dev libffi-dev python3-dev: Required to pip install cryptography.
 apt_install python3-flask links duplicity libyaml-dev python3-dnspython python3-dateutil \
 	build-essential libssl-dev libffi-dev python3-dev
-hide_output pip3 install rtyaml "email_validator==0.1.0-rc5" cryptography
+hide_output pip3 install rtyaml email_validator cryptography
 	# email_validator is repeated in setup/questions.sh
 
 # Create a backup directory and a random key for encrypting backups.
