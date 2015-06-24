@@ -34,16 +34,17 @@ fi
 if [ ! -d /usr/local/lib/owncloud/ ] \
 	|| ! grep -q $owncloud_ver /usr/local/lib/owncloud/version.php; then
 
+	# Download and verify
+	echo "installing ownCloud..."
+	wget_verify https://download.owncloud.org/community/owncloud-$owncloud_ver.zip $owncloud_hash /tmp/owncloud.zip
+
 	# Clear out the existing ownCloud.
-	if [ ! -d /usr/local/lib/owncloud/ ]; then
-		echo installing ownCloud...
-	else
+	if [ -d /usr/local/lib/owncloud/ ]; then
 		echo "upgrading ownCloud to $owncloud_ver (backing up existing ownCloud directory to /tmp/owncloud-backup-$$)..."
 		mv /usr/local/lib/owncloud /tmp/owncloud-backup-$$
 	fi
 
-	# Download and extract ownCloud.
-	wget_verify https://download.owncloud.org/community/owncloud-$owncloud_ver.zip $owncloud_hash /tmp/owncloud.zip
+	# Extract ownCloud
 	unzip -u -o -q /tmp/owncloud.zip -d /usr/local/lib #either extracts new or replaces current files
 	rm -f /tmp/owncloud.zip
 
