@@ -160,6 +160,7 @@ tools/editconf.py /etc/postfix/main.cf virtual_transport=lmtp:[127.0.0.1]:10025
 #
 # * `reject_non_fqdn_sender`: Reject not-nice-looking return paths.
 # * `reject_unknown_sender_domain`: Reject return paths with invalid domains.
+# * `reject_authenticated_sender_login_mismatch`: Reject if mail FROM address does not match the client SASL login
 # * `reject_rhsbl_sender`: Reject return paths that use blacklisted domains.
 # * `permit_sasl_authenticated`: Authenticated users (i.e. on port 587) can skip further checks.
 # * `permit_mynetworks`: Mail that originates locally can skip further checks.
@@ -173,7 +174,7 @@ tools/editconf.py /etc/postfix/main.cf virtual_transport=lmtp:[127.0.0.1]:10025
 # whitelisted) then postfix does a DEFER_IF_REJECT, which results in all "unknown user" sorts of messages turning into #NODOC
 # "450 4.7.1 Client host rejected: Service unavailable". This is a retry code, so the mail doesn't properly bounce. #NODOC
 tools/editconf.py /etc/postfix/main.cf \
-	smtpd_sender_restrictions="reject_non_fqdn_sender,reject_unknown_sender_domain,reject_rhsbl_sender dbl.spamhaus.org" \
+	smtpd_sender_restrictions="reject_non_fqdn_sender,reject_unknown_sender_domain,reject_authenticated_sender_login_mismatch,reject_rhsbl_sender dbl.spamhaus.org" \
 	smtpd_recipient_restrictions=permit_sasl_authenticated,permit_mynetworks,"reject_rbl_client zen.spamhaus.org",reject_unlisted_recipient,"check_policy_service inet:127.0.0.1:10023"
 
 # Postfix connects to Postgrey on the 127.0.0.1 interface specifically. Ensure that
