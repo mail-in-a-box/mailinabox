@@ -14,6 +14,7 @@ Mail:
 Web:
 * 'www' subdomains now automatically redirect to their parent domain (but you'll need to install an SSL certificate).
 * OCSP no longer uses Google Public DNS.
+* The installed PHP version is no longer exposed through HTTP response headers, for better security.
 
 DNS:
 * Default IPv6 AAAA records were missing since version 0.09.
@@ -25,7 +26,8 @@ Control panel:
 
 System:
 * The munin system monitoring tool is now installed and accessible at /admin/munin.
-* ownCloud updated to version 8.0.4.
+* ownCloud updated to version 8.0.4. The ownCloud installation step now is reslient to download problems. The ownCloud configuration file is now stored in STORAGE_ROOT to fix loss of data when moving STORAGE_ROOT to a new machine.
+* The setup scripts now run `apt-get update` prior to installing anything to ensure the apt database is in sync with the packages actually available.
 
 
 v0.10 (June 1, 2015)
