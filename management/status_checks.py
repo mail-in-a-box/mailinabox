@@ -789,6 +789,20 @@ def list_apt_updates(apt_update=True):
 
 	return pkgs
 
+def what_version_is_this(env):
+	# This function runs `git describe` on the Mail-in-a-Box installation directory.
+	# Git may not be installed and Mail-in-a-Box may not have been cloned from github,
+	# so this function may raise all sorts of exceptions.
+	miab_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+	tag = shell("check_output", ["/usr/bin/git", "describe"], env={"GIT_DIR": os.path.join(miab_dir, '.git')}).strip()
+	return tag
+
+def get_latest_miab_version():
+	# This pings https://mailinabox.email/bootstrap.sh and extracts the tag named in
+	# the script to determine the current product version.
+	import urllib.request
+	return re.search(b'TAG=(.*)', urllib.request.urlopen("https://mailinabox.email/bootstrap.sh?ping=1").read()).group(1).decode("utf8")
+
 def run_and_output_changes(env, pool, send_via_email):
 	import json
 	from difflib import SequenceMatcher
@@ -969,3 +983,6 @@ if __name__ == "__main__":
 		if cert_status != "OK":
 			sys.exit(1)
 		sys.exit(0)
+
+	elif sys.argv[1] == "--version":
+		print(what_version_is_this(env))

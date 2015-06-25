@@ -25,6 +25,7 @@ for fn in glob.glob("/var/log/nginx/access.log*"):
 	with f:
 		for line in f:
 			# Find lines that are GETs on /bootstrap.sh by either curl or wget.
+			# (Note that we purposely skip ...?ping=1 requests which is the admin panel querying us for updates.)
 			m = re.match(rb"(?P<ip>\S+) - - \[(?P<date>.*?)\] \"GET /bootstrap.sh HTTP/.*\" 200 \d+ .* \"(?:curl|wget)", line, re.I)
 			if m:
 				date, time = m.group("date").decode("ascii").split(":", 1)

@@ -340,6 +340,24 @@ def web_update():
 
 # System
 
+@app.route('/system/version', methods=["GET"])
+@authorized_personnel_only
+def system_version():
+	from status_checks import what_version_is_this
+	try:
+		return what_version_is_this(env)
+	except Exception as e:
+		return (str(e), 500)
+
+@app.route('/system/latest-upstream-version', methods=["POST"])
+@authorized_personnel_only
+def system_latest_upstream_version():
+	from status_checks import get_latest_miab_version
+	try:
+		return get_latest_miab_version()
+	except Exception as e:
+		return (str(e), 500)
+
 @app.route('/system/status', methods=["POST"])
 @authorized_personnel_only
 def system_status():
