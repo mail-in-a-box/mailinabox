@@ -1,0 +1,36 @@
+<style>
+</style>
+
+<h2>Mail-in-a-Box Version</h2>
+
+<p>You are running Mail-in-a-Box version <span id="miab-version" style="font-weight: bold">...</span>.</p>
+
+<p>The latest version of Mail-in-a-Box is <button id="miab-get-latest-upstream" onclick="check_latest_version()">Check</button>.</p>
+
+<p>To find the latest version and for upgrade instructions, see <a href="https://mailinabox.email/">https://mailinabox.email/</a>, <a href="https://github.com/mail-in-a-box/mailinabox/blob/master/CHANGELOG.md">release notes</a>, and <a href="https://mailinabox.email/maintenance.html#updating-mail-in-a-box">upgrade instructions</a>.</p>
+
+<script>
+function show_version() {
+ $('#miab-version').text('loading...');
+ api(
+    "/system/version",
+    "GET",
+    {
+    },
+    function(version) {
+      $('#miab-version').text(version);
+    });
+}
+
+function check_latest_version() {
+  $('#miab-get-latest-upstream').text('loading...');
+  api(
+   "/system/latest-upstream-version",
+   "POST",
+   {
+   },
+   function(version) {
+      $('#miab-get-latest-upstream').text(version);
+   });
+}
+</script>
