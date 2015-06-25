@@ -10,6 +10,7 @@ Mail:
 * Users can no longer spoof arbitrary email addresses in outbound mail. The email address set in mail clients must be either a) the user's actual email address (login username) or b) any alias that the user sending the mail is listed as a direct recipient of.
 * Fix for deleting admin@ and postmaster@ addresses.
 * Roundcube is updated to version 1.1.2, plugins updated.
+* Exchange/ActiveSync autoconfiguration was not working on all devices (e.g. iPhone) because of a case-sensitive URL.
 
 Web:
 * 'www' subdomains now automatically redirect to their parent domain (but you'll need to install an SSL certificate).
