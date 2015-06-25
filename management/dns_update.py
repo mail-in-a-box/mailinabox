@@ -250,8 +250,8 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 	# Skip if the user has set a DKIM record already.
 	opendkim_record_file = os.path.join(env['STORAGE_ROOT'], 'mail/dkim/mail.txt')
 	with open(opendkim_record_file) as orf:
-		m = re.match(r'(\S+)\s+IN\s+TXT\s+\( "([^"]+)"\s+"([^"]+)"\s*\)', orf.read(), re.S)
-		val = m.group(2) + m.group(3)
+		m = re.match(r'(\S+)\s+IN\s+TXT\s+\( ((?:"[^"]+"\s+)+)\)', orf.read(), re.S)
+		val = "".join(re.findall(r'"([^"]+)"', m.group(2)))
 		if not has_rec(m.group(1), "TXT", prefix="v=DKIM1; "):
 			records.append((m.group(1), "TXT", val, "Recommended. Provides a way for recipients to verify that this machine sent @%s mail." % domain))
 
@@ -373,9 +373,16 @@ $TTL 1800           ; default time to live
 			zone += subdomain
 		zone += "\tIN\t" + querytype + "\t"
 		if querytype == "TXT":
-			value = value.replace('\\', '\\\\') # escape backslashes
-			value = value.replace('"', '\\"') # escape quotes
-			value = '"' + value + '"' # wrap in quotes
+			# Divide into 255-byte max substrings.
+			v2 = ""
+			while len(value) > 0:
+				s = value[0:255]
+				value = value[255:]
+				s = s.replace('\\', '\\\\') # escape backslashes
+				s = s.replace('"', '\\"') # escape quotes
+				s = '"' + s + '"' # wrap in quotes
+				v2 += s + " "
+			value = v2
 		zone += value + "\n"
 
 	# DNSSEC requires re-signing a zone periodically. That requires

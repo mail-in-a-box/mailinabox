@@ -4,6 +4,9 @@ CHANGELOG
 In Development
 --------------
 
+Advisories:
+* This update replaces your DKIM signing key with a stronger key. Because of DNS caching/propagation, mail sent within a few hours after this update could be marked as spam by recipients. If you use External DNS, you will need to update your DNS records.
+
 Mail:
 * Greylisting will now let some reputable senders pass through immediately.
 * Searching mail (via IMAP) will now be much faster using the dovecot lucene full text search plugin.
@@ -11,6 +14,7 @@ Mail:
 * Fix for deleting admin@ and postmaster@ addresses.
 * Roundcube is updated to version 1.1.2, plugins updated.
 * Exchange/ActiveSync autoconfiguration was not working on all devices (e.g. iPhone) because of a case-sensitive URL.
+* The DKIM signing key has been increased to 2048 bits, from 1024, replacing the existing key.
 
 Web:
 * 'www' subdomains now automatically redirect to their parent domain (but you'll need to install an SSL certificate).

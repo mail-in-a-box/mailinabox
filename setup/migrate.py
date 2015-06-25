@@ -95,6 +95,11 @@ def migration_7(env):
 	# Save.
 	conn.commit()
 
+def migration_8(env):
+	# Delete DKIM keys. We had generated 1024-bit DKIM keys.
+	# By deleting the key file we'll automatically generate
+	# a new key, which will be 2048 bits.
+	os.unlink(os.path.join(env['STORAGE_ROOT'], 'mail/dkim/mail.private'))
 
 def get_current_migration():
 	ver = 0
