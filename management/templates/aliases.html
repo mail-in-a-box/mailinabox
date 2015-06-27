@@ -13,7 +13,7 @@
   <div class="form-group">
     <div class="col-sm-offset-1 col-sm-11">
       <div id="alias_type_buttons" class="btn-group btn-group-xs">
-        <button type="button" class="btn btn-default active" data-mode="regular">Regular</button>
+        <button type="button" class="btn btn-default" data-mode="regular">Regular</button>
         <button type="button" class="btn btn-default" data-mode="catchall">Catch-All</button>
         <button type="button" class="btn btn-default" data-mode="domainalias">Domain Alias</button>
       </div>
@@ -28,6 +28,17 @@
     <div class="col-sm-10">
       <input type="email" class="form-control" id="addaliasEmail">
       <div style="margin-top: 3px; padding-left: 3px; font-size: 90%" class="text-muted">You may use international (non-ASCII) characters for the domain part of the email address only.</div>
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="addaliasDirection" class="col-sm-1 control-label">Direction</label>
+    <div class="col-sm-10">
+      <select class="form-control" id="addaliasDirection">
+        <option value="disabled">Disabled</option>
+        <option value="outbound">Outbound only</option>
+        <option value="inbound">Inbound only</option>
+        <option value="bidirectional">Both</option>
+      </select>
     </div>
   </div>
   <div class="form-group">
@@ -50,6 +61,7 @@
     <tr>
       <th></th>
       <th>Alias<br></th>
+      <th>Direction</th>
       <th>Forwards To</th>
     </tr>
   </thead>
@@ -71,6 +83,7 @@
         </a>
     </td>
     <td class='email'> </td>
+    <td class='direction'> </td>
     <td class='target'> </td>
   </tr>
   </table>
@@ -100,6 +113,19 @@ function show_aliases() {
           if (alias.required) n.addClass('alias-required');
           n.attr('data-email', alias.source_display); // this is decoded from IDNA, but will get re-coded to IDNA on the backend
           n.find('td.email').text(alias.source_display)
+          if (!alias.applies_inbound && !alias.applies_outbound) {
+            n.find('td.direction').text('')
+            n.attr('data-direction', 'disabled');
+          } else if (!alias.applies_inbound && alias.applies_outbound) {
+            n.find('td.direction').text('↤')
+            n.attr('data-direction', 'outbound');
+          } else if (alias.applies_inbound && !alias.applies_outbound) {
+            n.find('td.direction').text('↦')
+            n.attr('data-direction', 'inbound');
+          } else if (alias.applies_inbound && alias.applies_outbound) {
+            n.find('td.direction').text('↮')
+            n.attr('data-direction', 'bidirectional');
+          }
           for (var j = 0; j < alias.destination.length; j++)
             n.find('td.target').append($("<div></div>").text(alias.destination[j]))
           $('#alias_table tbody').append(n);
@@ -114,18 +140,21 @@ function show_aliases() {
       if ($(this).attr('data-mode') == "regular") {
         $('#addaliasEmail').attr('type', 'email');
         $('#addaliasEmail').attr('placeholder', 'incoming email address (e.g. you@yourdomain.com)');
-	$('#addaliasTargets').attr('placeholder', 'forward to these email addresses (one per line or separated by commas)');
+        $('#addaliasDirection').val('bidirectional');
+      	$('#addaliasTargets').attr('placeholder', 'forward to these email addresses (one per line or separated by commas)');
         $('#alias_mode_info').slideUp();
       } else if ($(this).attr('data-mode') == "catchall") {
         $('#addaliasEmail').attr('type', 'text');
         $('#addaliasEmail').attr('placeholder', 'incoming catch-all address (e.g. @yourdomain.com)');
-	$('#addaliasTargets').attr('placeholder', 'forward to these email addresses (one per line or separated by commas)');
+        $('#addaliasDirection').val('outbound');
+        $('#addaliasTargets').attr('placeholder', 'forward to these email addresses (one per line or separated by commas)');
         $('#alias_mode_info').slideDown();
         $('#alias_mode_info span').addClass('hidden');
         $('#alias_mode_info span.catchall').removeClass('hidden');
       } else if ($(this).attr('data-mode') == "domainalias") {
         $('#addaliasEmail').attr('type', 'text');
         $('#addaliasEmail').attr('placeholder', 'incoming domain (@yourdomain.com)');
+        $('#addaliasDirection').val('inbound');
         $('#addaliasTargets').attr('placeholder', 'forward to domain (@yourdomain.com)');
         $('#alias_mode_info').slideDown();
         $('#alias_mode_info span').addClass('hidden');
@@ -140,6 +169,7 @@ var is_alias_add_update = false;
 function do_add_alias() {
   var title = (!is_alias_add_update) ? "Add Alias" : "Update Alias";
   var email = $("#addaliasEmail").val();
+  var direction = $("#addaliasDirection").val();
   var targets = $("#addaliasTargets").val();
   api(
     "/mail/aliases/add",
@@ -147,7 +177,9 @@ function do_add_alias() {
     {
       update_if_exists: is_alias_add_update ? '1' : '0',
       source: email,
-      destination: targets
+      destination: targets,
+      applies_inbound: (direction == 'bidirectional' || direction == 'inbound') ? '1' : '0',
+      applies_outbound: (direction == 'bidirectional' || direction == 'outbound') ? '1' : '0'
     },
     function(r) {
       // Responses are multiple lines of pre-formatted text.
@@ -164,6 +196,12 @@ function do_add_alias() {
 function aliases_reset_form() {
   $("#addaliasEmail").prop('disabled', false);
   $("#addaliasEmail").val('')
+  if ($('#alias_type_buttons button').attr('data-mode') == "regular")
+    $('#addaliasDirection').val('bidirectional');
+  else if ($('#alias_type_buttons button').attr('data-mode') == "catchall")
+    $('#alias_type_buttons').val('outbound');
+  else if ($('#addaliasDirection button').attr('data-mode') == "domainalias")
+    $('#addaliasDirection').val('inbound');
   $("#addaliasTargets").val('')
   $('#alias-cancel').addClass('hidden');
   $('#add-alias-button').text('Add Alias');
@@ -176,20 +214,21 @@ function aliases_edit(elem) {
   var targets = "";
   for (var i = 0; i < targetdivs.length; i++)
     targets += $(targetdivs[i]).text() + "\n";
-
-  is_alias_add_update = true;
-  $('#alias-cancel').removeClass('hidden');
-  $("#addaliasEmail").prop('disabled', true);
-  $("#addaliasEmail").val(email);
-  $("#addaliasTargets").val(targets);
-  $('#add-alias-button').text('Update');
+  var direction = $(elem).parents('tr').attr('data-direction')
   if (email.charAt(0) == '@' && targets.charAt(0) == '@')
     $('#alias_type_buttons button[data-mode="domainalias"]').click();
   else if (email.charAt(0) == '@')
     $('#alias_type_buttons button[data-mode="catchall"]').click();
   else
     $('#alias_type_buttons button[data-mode="regular"]').click();
+  $('#alias-cancel').removeClass('hidden');
+  $("#addaliasEmail").prop('disabled', true);
+  $("#addaliasEmail").val(email);
+  $('#addaliasDirection').val(direction);
+  $("#addaliasTargets").val(targets);
+  $('#add-alias-button').text('Update');
   $('body').animate({ scrollTop: 0 })
+  is_alias_add_update = true;
 }
 
 function aliases_remove(elem) {

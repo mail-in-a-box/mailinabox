@@ -181,13 +181,13 @@ def get_admins(env):
 	return users
 
 def get_mail_aliases(env):
-	# Returns a sorted list of tuples of (alias, forward-to string).
+	# Returns a sorted list of tuples of (alias, forward-to string, applies-to-inbound-mail, applies-to-outbound-mail).
 	c = open_database(env)
-	c.execute('SELECT source, destination FROM aliases')
-	aliases = { row[0]: row[1] for row in c.fetchall() } # make dict
+	c.execute('SELECT source, destination, applies_inbound, applies_outbound FROM aliases')
+	aliases = { row[0]: row[1:4] for row in c.fetchall() } # make dict
 
 	# put in a canonical order: sort by domain, then by email address lexicographically
-	aliases = [ (source, aliases[source]) for source in utils.sort_email_addresses(aliases.keys(), env) ]
+	aliases = [ (source,) + aliases[source] for source in utils.sort_email_addresses(aliases.keys(), env) ]
 	return aliases
 
 def get_mail_aliases_ex(env):
@@ -202,6 +202,8 @@ def get_mail_aliases_ex(env):
 	#         source: "name@domain.tld", # IDNA-encoded
 	#         source_display: "name@domain.tld", # full Unicode
 	#         destination: ["target1@domain.com", "target2@domain.com", ...],
+	#         applies_inbound: True|False
+	#         applies_outbound: True|False
 	#         required: True|False
 	#       },
 	#       ...
@@ -212,7 +214,7 @@ def get_mail_aliases_ex(env):
 
 	required_aliases = get_required_aliases(env)
 	domains = {}
-	for source, destination in get_mail_aliases(env):
+	for source, destination, applies_inbound, applies_outbound in get_mail_aliases(env):
 		# get alias info
 		domain = get_domain(source)
 		required = (source in required_aliases)
@@ -227,6 +229,8 @@ def get_mail_aliases_ex(env):
 			"source": source,
 			"source_display": prettify_idn_email_address(source),
 			"destination": [prettify_idn_email_address(d.strip()) for d in destination.split(",")],
+			"applies_inbound": True if applies_inbound == 1 else False,
+			"applies_outbound": True if applies_outbound == 1 else False,
 			"required": required,
 		})
 
@@ -250,7 +254,7 @@ def get_mail_domains(env, filter_aliases=lambda alias : True):
 	# configured on the system.
 	return set(
 		   [get_domain(addr, as_unicode=False) for addr in get_mail_users(env)]
-		 + [get_domain(source, as_unicode=False) for source, target in get_mail_aliases(env) if filter_aliases((source, target)) ]
+		 + [get_domain(source, as_unicode=False) for source, *_ in get_mail_aliases(env) if filter_aliases(source) ]
 		 )
 
 def add_mail_user(email, pw, privs, env):
@@ -406,7 +410,7 @@ def add_remove_mail_user_privilege(email, priv, action, env):
 
 	return "OK"
 
-def add_mail_alias(source, destination, env, update_if_exists=False, do_kick=True):
+def add_mail_alias(source, destination, applies_inbound, applies_outbound, env, update_if_exists=False, do_kick=True):
 	# convert Unicode domain to IDNA
 	source = sanitize_idn_email_address(source)
 
@@ -460,13 +464,13 @@ def add_mail_alias(source, destination, env, update_if_exists=False, do_kick=Tru
 	# save to db
 	conn, c = open_database(env, with_connection=True)
 	try:
-		c.execute("INSERT INTO aliases (source, destination) VALUES (?, ?)", (source, destination))
+		c.execute("INSERT INTO aliases (source, destination, applies_inbound, applies_outbound) VALUES (?, ?, ?, ?)", (source, destination, 1 if applies_inbound else 0, 1 if applies_outbound else 0))
 		return_status = "alias added"
 	except sqlite3.IntegrityError:
 		if not update_if_exists:
 			return ("Alias already exists (%s)." % source, 400)
 		else:
-			c.execute("UPDATE aliases SET destination = ? WHERE source = ?", (destination, source))
+			c.execute("UPDATE aliases SET destination = ?, applies_inbound = ?, applies_outbound = ? WHERE source = ?", (destination, 1 if applies_inbound else 0, 1 if applies_outbound else 0, source))
 			return_status = "alias updated"
 
 	conn.commit()
@@ -507,8 +511,8 @@ def get_required_aliases(env):
 	# email on that domain are the required aliases or a catch-all/domain-forwarder.
 	real_mail_domains = get_mail_domains(env,
 		filter_aliases = lambda alias :
-			not alias[0].startswith("postmaster@") and not alias[0].startswith("admin@")
-			and not alias[0].startswith("@")
+			not alias.startswith("postmaster@") and not alias.startswith("admin@")
+			and not alias.startswith("@")
 			)
 
 	# Create postmaster@ and admin@ for all domains we serve mail on.
@@ -541,14 +545,14 @@ def kick(env, mail_result=None):
 			return
 
 		# Does this alias exists?
-		for s, t in existing_aliases:
+		for s, *_ in existing_aliases:
 			if s == source:
 				return
 
 		# Doesn't exist.
 		administrator = get_system_administrator(env)
 		if source == administrator: return # don't make an alias from the administrator to itself --- this alias must be created manually
-		add_mail_alias(source, administrator, env, do_kick=False)
+		add_mail_alias(source, administrator, True, True, env, do_kick=False)
 		results.append("added alias %s (=> %s)\n" % (source, administrator))
 
 	for alias in required_aliases:
@@ -556,7 +560,7 @@ def kick(env, mail_result=None):
 
 	# Remove auto-generated postmaster/admin on domains we no
 	# longer have any other email addresses for.
-	for source, target in existing_aliases:
+	for source, target, *_ in existing_aliases:
 		user, domain = source.split("@")
 		if user in ("postmaster", "admin") \
 			and source not in required_aliases \

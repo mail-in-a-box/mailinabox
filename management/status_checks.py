@@ -33,7 +33,7 @@ def run_checks(rounded_values, env, output, pool):
 	# (ignore errors; if bind9/rndc isn't running we'd already report
 	# that in run_services checks.)
 	shell('check_call', ["/usr/sbin/rndc", "flush"], trap=True)
-	
+
 	run_system_checks(rounded_values, env, output)
 
 	# perform other checks asynchronously
@@ -264,10 +264,10 @@ def run_domain_checks_on_domain(domain, rounded_time, env, dns_domains, dns_zone
 
 	if domain == env["PRIMARY_HOSTNAME"]:
 		check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles)
-		
+
 	if domain in dns_domains:
 		check_dns_zone(domain, env, output, dns_zonefiles)
-		
+
 	if domain in mail_domains:
 		check_mail_domain(domain, env, output)
 
@@ -351,11 +351,14 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 	check_alias_exists("Hostmaster contact address", "hostmaster@" + domain, env, output)
 
 def check_alias_exists(alias_name, alias, env, output):
-	mail_alises = dict(get_mail_aliases(env))
-	if alias in mail_alises:
-		output.print_ok("%s exists as a mail alias. [%s ↦ %s]" % (alias_name, alias, mail_alises[alias]))
+	mail_aliases = dict([(source, (destination, applies_inbound)) for source, destination, applies_inbound, *_ in get_mail_aliases(env)])
+	if alias in mail_aliases:
+		if mail_aliases[alias][1]:
+			output.print_ok("%s exists as an inbound mail alias. [%s ↦ %s]" % (alias_name, alias, mail_aliases[alias][0]))
+		else:
+			output.print_error("%s exists as a mail alias [%s ↦ %s] but is not enabled for inbound email." % (alias_name, alias, mail_aliases[alias][0]))
 	else:
-		output.print_error("""You must add a mail alias for %s and direct email to you or another administrator.""" % alias)
+		output.print_error("""You must add an inbound mail alias for %s which directs email to you or another administrator.""" % alias)
 
 def check_dns_zone(domain, env, output, dns_zonefiles):
 	# If a DS record is set at the registrar, check DNSSEC first because it will affect the NS query.
@@ -492,7 +495,7 @@ def check_mail_domain(domain, env, output):
 
 	# Check that the postmaster@ email address exists. Not required if the domain has a
 	# catch-all address or domain alias.
-	if "@" + domain not in dict(get_mail_aliases(env)):
+	if "@" + domain not in [source for source, *_ in get_mail_aliases(env)]:
 		check_alias_exists("Postmaster contact address", "postmaster@" + domain, env, output)
 
 	# Stop if the domain is listed in the Spamhaus Domain Block List.
@@ -884,7 +887,7 @@ def run_and_output_changes(env, pool, send_via_email):
 			if category not in cur_status:
 				out.add_heading(category)
 				out.print_warning("This section was removed.")
-	
+
 	if send_via_email:
 		# If there were changes, send off an email.
 		buf = out.buf.getvalue()
@@ -896,7 +899,7 @@ def run_and_output_changes(env, pool, send_via_email):
 			msg['To'] = "administrator@%s" % env['PRIMARY_HOSTNAME']
 			msg['Subject'] = "[%s] Status Checks Change Notice" % env['PRIMARY_HOSTNAME']
 			msg.set_payload(buf, "UTF-8")
-	
+
 			# send to administrator@
 			import smtplib
 			mailserver = smtplib.SMTP('localhost', 25)
@@ -906,7 +909,7 @@ def run_and_output_changes(env, pool, send_via_email):
 				"administrator@%s" % env['PRIMARY_HOSTNAME'], # RCPT TO
 				msg.as_string())
 			mailserver.quit()
-		
+
 	# Store the current status checks output for next time.
 	os.makedirs(os.path.dirname(cache_fn), exist_ok=True)
 	with open(cache_fn, "w") as f:

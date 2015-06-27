@@ -5,7 +5,7 @@
 #
 # This script configures user authentication for Dovecot
 # and Postfix (which relies on Dovecot) and destination
-# validation by quering an Sqlite3 database of mail users. 
+# validation by quering an Sqlite3 database of mail users.
 
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
@@ -21,7 +21,7 @@ db_path=$STORAGE_ROOT/mail/users.sqlite
 if [ ! -f $db_path ]; then
 	echo Creating new user database: $db_path;
 	echo "CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL UNIQUE, password TEXT NOT NULL, extra, privileges TEXT NOT NULL DEFAULT '');" | sqlite3 $db_path;
-	echo "CREATE TABLE aliases (id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT NOT NULL UNIQUE, destination TEXT NOT NULL);" | sqlite3 $db_path;
+	echo "CREATE TABLE aliases (id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT NOT NULL UNIQUE, destination TEXT NOT NULL, applies_inbound INTEGER NOT NULL DEFAULT 1, applies_outbound INTEGER NOT NULL DEFAULT 1);" | sqlite3 $db_path;
 fi
 
 # ### User Authentication
@@ -72,17 +72,17 @@ tools/editconf.py /etc/postfix/main.cf \
 # ### Sender Validation
 
 # Use a Sqlite3 database to set login maps. This is used with
-# reject_authenticated_sender_login_mismatch to see if user is
-# allowed to send mail using FROM field specified in the request.
+# reject_authenticated_sender_login_mismatch to see if the user is
+# allowed to send mail as the FROM address specified in the request.
 tools/editconf.py /etc/postfix/main.cf \
 	smtpd_sender_login_maps=sqlite:/etc/postfix/sender-login-maps.cf
 
-# SQL statement to set login map which includes the case when user is
-# sending email using a valid alias.
-# This is the same as virtual-alias-maps.cf, See below
+# SQL statement that returns a list of addresses/domains the logged in username
+# is allowed to send as. This is similar to virtual-alias-maps.cf (see below).
+# Matches from the users table take priority over (direct) aliases.
 cat > /etc/postfix/sender-login-maps.cf << EOF;
 dbpath=$db_path
-query = SELECT destination from (SELECT destination, 0 as priority FROM aliases WHERE source='%s' UNION SELECT email as destination, 1 as priority FROM users WHERE email='%s') ORDER BY priority LIMIT 1;
+query = SELECT destination from (SELECT destination, 0 as priority FROM aliases WHERE source='%s' AND applies_outbound=1 UNION SELECT email as destination, 1 as priority FROM users WHERE email='%s') ORDER BY priority LIMIT 1;
 EOF
 
 # ### Destination Validation
@@ -98,7 +98,7 @@ tools/editconf.py /etc/postfix/main.cf \
 # SQL statement to check if we handle mail for a domain, either for users or aliases.
 cat > /etc/postfix/virtual-mailbox-domains.cf << EOF;
 dbpath=$db_path
-query = SELECT 1 FROM users WHERE email LIKE '%%@%s' UNION SELECT 1 FROM aliases WHERE source LIKE '%%@%s'
+query = SELECT 1 FROM users WHERE email LIKE '%%@%s' UNION SELECT 1 FROM aliases WHERE source LIKE '%%@%s' AND applies_inbound=1
 EOF
 
 # SQL statement to check if we handle mail for a user.
@@ -129,7 +129,7 @@ EOF
 # postfix's preference for aliases for whole email addresses.
 cat > /etc/postfix/virtual-alias-maps.cf << EOF;
 dbpath=$db_path
-query = SELECT destination from (SELECT destination, 0 as priority FROM aliases WHERE source='%s' UNION SELECT email as destination, 1 as priority FROM users WHERE email='%s') ORDER BY priority LIMIT 1;
+query = SELECT destination from (SELECT destination, 0 as priority FROM aliases WHERE source='%s' AND applies_inbound=1 UNION SELECT email as destination, 1 as priority FROM users WHERE email='%s') ORDER BY priority LIMIT 1;
 EOF
 
 # Restart Services

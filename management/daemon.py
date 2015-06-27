@@ -45,7 +45,7 @@ def authorized_personnel_only(viewfunc):
 
 		# Authorized to access an API view?
 		if "admin" in privs:
-			# Call view func.	
+			# Call view func.
 			return viewfunc(*args, **kwargs)
 		elif not error:
 			error = "You are not an administrator."
@@ -179,7 +179,7 @@ def mail_aliases():
 	if request.args.get("format", "") == "json":
 		return json_response(get_mail_aliases_ex(env))
 	else:
-		return "".join(x+"\t"+y+"\n" for x, y in get_mail_aliases(env))
+		return "".join(source+"\t"+destination+"\t"+applies_inbound+"\t"+applies_outbound+"\n" for source, destination, applies_inbound, applies_outbound in get_mail_aliases(env))
 
 @app.route('/mail/aliases/add', methods=['POST'])
 @authorized_personnel_only
@@ -187,6 +187,8 @@ def mail_aliases_add():
 	return add_mail_alias(
 		request.form.get('source', ''),
 		request.form.get('destination', ''),
+		request.form.get('applies_inbound', '') == '1',
+		request.form.get('applies_outbound', '') == '1',
 		env,
 		update_if_exists=(request.form.get('update_if_exists', '') == '1')
 		)
@@ -283,7 +285,7 @@ def dns_set_record(qname, rtype="A"):
 				# make this action set (replace all records for this
 				# qname-rtype pair) rather than add (add a new record).
 				action = "set"
-		
+
 		elif request.method == "DELETE":
 			if value == '':
 				# Delete all records for this qname-type pair.

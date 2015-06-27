@@ -101,6 +101,11 @@ def migration_8(env):
 	# a new key, which will be 2048 bits.
 	os.unlink(os.path.join(env['STORAGE_ROOT'], 'mail/dkim/mail.private'))
 
+def migration_9(env):
+	db = os.path.join(env["STORAGE_ROOT"], 'mail/users.sqlite')
+	shell("check_call", ["sqlite3", db, "ALTER TABLE aliases ADD COLUMN applies_inbound INTEGER NOT NULL DEFAULT 1"])
+	shell("check_call", ["sqlite3", db, "ALTER TABLE aliases ADD COLUMN applies_outbound INTEGER NOT NULL DEFAULT 1"])
+
 def get_current_migration():
 	ver = 0
 	while True:
