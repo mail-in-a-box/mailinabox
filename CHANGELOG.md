@@ -1,12 +1,13 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.11 (June 29, 2015)
+---------------------
 
 Advisories:
 * Users can no longer spoof arbitrary email addresses in outbound mail. When sending mail, the email address configured in your mail client must match the SMTP login username being used, or the email address must be an alias with the SMTP login username listed as one of the alias's targets.
 * This update replaces your DKIM signing key with a stronger key. Because of DNS caching/propagation, mail sent within a few hours after this update could be marked as spam by recipients. If you use External DNS, you will need to update your DNS records.
+* The box will now install software from a new Mail-in-a-Box PPA on Launchpad.net, where we are distributing two of our own packages: a patched postgrey and dovecot-lucene.
 
 Mail:
 * Greylisting will now let some reputable senders pass through immediately.
