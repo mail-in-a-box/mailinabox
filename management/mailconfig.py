@@ -544,6 +544,7 @@ def kick(env, mail_result=None):
 
 		# Doesn't exist.
 		administrator = get_system_administrator(env)
+		if source == administrator: return # don't make an alias from the administrator to itself --- this alias must be created manually
 		add_mail_alias(source, administrator, env, do_kick=False)
 		results.append("added alias %s (=> %s)\n" % (source, administrator))
 
