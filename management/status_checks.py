@@ -612,6 +612,7 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 
 	from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 	from cryptography.x509 import Certificate, DNSName, ExtensionNotFound, OID_COMMON_NAME, OID_SUBJECT_ALTERNATIVE_NAME
+	import idna
 
 	# The ssl_certificate file may contain a chain of certificates. We'll
 	# need to split that up before we can pass anything to openssl or
@@ -626,7 +627,8 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 	# First check that the domain name is one of the names allowed by
 	# the certificate.
 	if domain is not None:
-		# The domain must be found in the Subject Common Name (CN)...
+		# The domain may be found in the Subject Common Name (CN). This comes back as an IDNA (ASCII)
+		# string, which is the format we store domains in - so good.
 		certificate_names = set()
 		try:
 			certificate_names.add(
@@ -637,11 +639,19 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 			# But we'll let it error-out when it doesn't find the domain.
 			pass
 
-		# ... or be one of the Subject Alternative Names.
+		# ... or be one of the Subject Alternative Names. The cryptography library handily IDNA-decodes
+		# the names for us. We must encode back to ASCII, but wildcard certificates can't pass through
+		# IDNA encoding/decoding so we must special-case. See https://github.com/pyca/cryptography/pull/2071.
+		def idna_decode_dns_name(dns_name):
+			if dns_name.startswith("*."):
+				return "*." + idna.encode(dns_name[2:]).decode('ascii')
+			else:
+				return idna.encode(dns_name).decode('ascii')
+				
 		try:
 			sans = cert.extensions.get_extension_for_oid(OID_SUBJECT_ALTERNATIVE_NAME).value.get_values_for_type(DNSName)
 			for san in sans:
-				certificate_names.add(san)
+				certificate_names.add(idna_decode_dns_name(san))
 		except ExtensionNotFound:
 			pass
 
