@@ -3,6 +3,7 @@
 import subprocess, shutil, os, sqlite3, re
 import utils
 from email_validator import validate_email as validate_email_, EmailNotValidError
+import idna
 
 def validate_email(email, mode=None):
 	# Checks that an email address is syntactically valid. Returns True/False.
@@ -52,9 +53,9 @@ def sanitize_idn_email_address(email):
 	# to the underlying protocols.
 	try:
 		localpart, domainpart = email.split("@")
-		domainpart = domainpart.encode("idna").decode('ascii')
+		domainpart = idna.encode(domainpart).decode('ascii')
 		return localpart + "@" + domainpart
-	except:
+	except idna.IDNAError:
 		# Domain part is not IDNA-valid, so leave unchanged. If there
 		# are non-ASCII characters it will be filtered out by
 		# validate_email.
@@ -65,9 +66,9 @@ def prettify_idn_email_address(email):
 	# names in IDNA in the database, but we want to show Unicode to the user.
 	try:
 		localpart, domainpart = email.split("@")
-		domainpart = domainpart.encode("ascii").decode('idna')
+		domainpart = idna.decode(domainpart.encode("ascii"))
 		return localpart + "@" + domainpart
-	except:
+	except (UnicodeError, idna.IDNAError):
 		# Failed to decode IDNA. Should never happen.
 		return email
 
@@ -238,7 +239,7 @@ def get_domain(emailaddr, as_unicode=True):
 	# Gets the domain part of an email address. Turns IDNA
 	# back to Unicode for display.
 	ret = emailaddr.split('@', 1)[1]
-	if as_unicode: ret = ret.encode('ascii').decode('idna')
+	if as_unicode: ret = idna.decode(ret.encode('ascii'))
 	return ret
 
 def get_mail_domains(env, filter_aliases=lambda alias : True):

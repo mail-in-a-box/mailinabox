@@ -10,6 +10,7 @@ import sys, os, os.path, re, subprocess, datetime, multiprocessing.pool
 
 import dns.reversename, dns.resolver
 import dateutil.parser, dateutil.tz
+import idna
 
 from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, get_secondary_dns
 from web_update import get_web_domains, get_default_www_redirects, get_domain_ssl_files
@@ -259,7 +260,7 @@ def run_domain_checks_on_domain(domain, rounded_time, env, dns_domains, dns_zone
 	output = BufferedOutput()
 
 	# The domain is IDNA-encoded, but for display use Unicode.
-	output.add_heading(domain.encode('ascii').decode('idna'))
+	output.add_heading(idna.decode(domain.encode('ascii')))
 
 	if domain == env["PRIMARY_HOSTNAME"]:
 		check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles)
