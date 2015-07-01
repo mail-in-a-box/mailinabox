@@ -144,8 +144,13 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 		records.append((None,  "NS",  "ns1.%s." % env["PRIMARY_HOSTNAME"], False))
 
 		# Define ns2.PRIMARY_HOSTNAME or whatever the user overrides.
-		secondary_ns = get_secondary_dns(additional_records) or ("ns2." + env["PRIMARY_HOSTNAME"])
-		records.append((None,  "NS", secondary_ns+'.', False))
+		# User may provide one or more additional nameservers
+		if get_secondary_dns(additional_records).len > 0:
+			for secondary_ns in get_secondary_dns(additional_records):
+				records.append((None,  "NS", secondary_ns+'.', False))
+		else:
+			secondary_ns = get_secondary_dns(additional_records) or ("ns2." + env["PRIMARY_HOSTNAME"])
+			records.append((None,  "NS", secondary_ns+'.', False))
 
 
 	# In PRIMARY_HOSTNAME...
@@ -462,9 +467,9 @@ zone:
 	zonefile: %s
 """ % (domain, zonefile)
 
-		# If a custom secondary nameserver has been set, allow zone transfers
-		# and notifies to that nameserver.
-		if get_secondary_dns(additional_records):
+		# If a custom secondary nameservers have been set, allow zone transfers
+		# and notifies to th.
+		for secondary_ns in get_secondary_dns(additional_records):
 			# Get the IP address of the nameserver by resolving it.
 			hostname = get_secondary_dns(additional_records)
 			resolver = dns.resolver.get_default_resolver()
@@ -793,7 +798,11 @@ def set_custom_dns_record(qname, rtype, value, action, env):
 def get_secondary_dns(custom_dns):
 	for qname, rtype, value in custom_dns:
 		if qname == "_secondary_nameserver":
-			return value
+			# always return a list so other parts of code path can iterate
+			if isinstance(value, str):
+				return [value]
+			else:
+				return value
 	return None
 
 def set_secondary_dns(hostname, env):
