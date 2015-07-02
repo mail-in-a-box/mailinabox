@@ -16,7 +16,6 @@ maxretry = 20
 [ssh]
 
 enabled  = true
-logpath  = /var/log/auth.log
 maxretry = 20
 
 [ssh-ddos]
