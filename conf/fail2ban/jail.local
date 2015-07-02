@@ -12,7 +12,6 @@ maxretry = 20
 
 [ssh]
 
-enabled  = true
 maxretry = 20
 
 [ssh-ddos]
