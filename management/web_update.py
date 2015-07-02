@@ -254,7 +254,7 @@ def create_csr(domain, ssl_key, env):
                 "-subj", "/C=%s/ST=/L=/O=/CN=%s" % (env["CSR_COUNTRY"], domain)])
 
 def install_cert(domain, ssl_cert, ssl_chain, env):
-	if domain not in get_web_domains(env):
+	if domain not in get_web_domains(env) + get_default_www_redirects(env):
 		return "Invalid domain name."
 
 	# Write the combined cert+chain to a temporary path and validate that it is OK.
