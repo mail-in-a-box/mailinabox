@@ -2,9 +2,6 @@
 # For Mail-in-a-Box
 [DEFAULT]
 
-# bantime in seconds
-bantime  = 60
-
 # This should ban dumb brute-force attacks, not oblivious users.
 findtime = 30
 maxretry = 20
