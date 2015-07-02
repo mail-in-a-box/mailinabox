@@ -1,29 +1,23 @@
-# Fail2Ban configuration file.
-# For Mail-in-a-Box
+# Fail2Ban configuration file for Mail-in-a-Box
+
 [DEFAULT]
 
 # This should ban dumb brute-force attacks, not oblivious users.
 findtime = 30
 maxretry = 20
 
-#
 # JAILS
-#
 
 [ssh]
-
 maxretry = 20
 
 [ssh-ddos]
-
 enabled  = true
 maxretry = 20
 
 [sasl]
-
 enabled  = true
 
 [dovecot]
-
 enabled = true
 filter  = dovecotimap
