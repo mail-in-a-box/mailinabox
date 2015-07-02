@@ -8,12 +8,8 @@ maxretry = 20
 
 # JAILS
 
-[ssh]
-maxretry = 20
-
 [ssh-ddos]
 enabled  = true
-maxretry = 20
 
 [sasl]
 enabled  = true
