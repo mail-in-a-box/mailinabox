@@ -145,10 +145,11 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 
 		# Define ns2.PRIMARY_HOSTNAME or whatever the user overrides.
 		# User may provide one or more additional nameservers
-		if get_secondary_dns(additional_records):
-				[records.append((None,  "NS", secondary_ns+'.', False)) for secondary_ns in get_secondary_dns(additional_records)]
+		secondary_dns_records = get_secondary_dns(additional_records)
+		if len(secondary_dns_records) > 0:
+			for secondary_ns in secondary_dns_records:
+				records.append((None,  "NS", secondary_ns+'.', False))
 		else:
-			secondary_ns = get_secondary_dns(additional_records) or ()
 			records.append((None,  "NS", "ns2." + env["PRIMARY_HOSTNAME"] + '.', False))
 
 
@@ -809,9 +810,7 @@ def get_secondary_dns(custom_dns, dns_type=['_secondary_nameserver']):
 		if qname in dns_type:
 			if isinstance(value, str):
 				values.append(value)
-	if len(values) > 0:
-		return values
-	return None
+	return values
 
 def set_secondary_dns(hostname, env):
 	hostnames = [item.strip().lower() for item in hostname]
@@ -918,5 +917,5 @@ if __name__ == "__main__":
 		for zone, records in build_recommended_dns(env):
 			for record in records:
 				print("; " + record['explanation'])
-				print(record['qname'], record['rtype'], record['value'])
+				print(record['qname'], record['rtype'], record['value'], sep="\t")
 				print()
