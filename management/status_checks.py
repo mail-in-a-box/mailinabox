@@ -760,7 +760,7 @@ def load_pem(pem):
 	from cryptography.hazmat.primitives import serialization
 	from cryptography.hazmat.backends import default_backend
 	pem_type = re.match(b"-+BEGIN (.*?)-+\n", pem).group(1)
-	if pem_type == b"RSA PRIVATE KEY":
+	if pem_type in (b"RSA PRIVATE KEY", b"PRIVATE KEY"):
 		return serialization.load_pem_private_key(pem, password=None, backend=default_backend())
 	if pem_type == b"CERTIFICATE":
 		return load_pem_x509_certificate(pem, default_backend())
