@@ -468,13 +468,21 @@ zone:
 
 		# If custom secondary nameservers have been set, allow zone transfers
 		# and notifies to them.
-		if get_secondary_dns(additional_records):
+		if get_secondary_dns(additional_records, ['_secondary_nameserver']):
 			for hostname in get_secondary_dns(additional_records):
 				# Get the IP address of the nameserver by resolving it.
 				resolver = dns.resolver.get_default_resolver()
 				response = dns.resolver.query(hostname+'.', "A")
 				ipaddr = str(response[0])
 				nsdconf += "\n\tnotify: %s NOKEY\n\tprovide-xfr: %s NOKEY" % (ipaddr, ipaddr)
+		# Some providers use different servers for zone transfers and notifies
+		# such as DNS Made Easy. This allows us to set these IP addresses as well manually
+		# in custom.yaml
+		if get_secondary_dns(additional_records, ["_secondary_notify_xfr"]):
+			for ipaddr in get_secondary_dns(additional_records, ["_secondary_notify_xfr"]):
+				nsdconf += "\n\tnotify: %s NOKEY\n\tprovide-xfr: %s NOKEY" % (ipaddr, ipaddr)
+
+
 
 	# Check if the file is changing. If it isn't changing,
 	# return False to flag that no change was made.
@@ -791,10 +799,14 @@ def set_custom_dns_record(qname, rtype, value, action, env):
 
 ########################################################################
 
-def get_secondary_dns(custom_dns):
+def get_secondary_dns(custom_dns, dns_type=['_secondary_nameserver']):
+	valid_types = set(['_secondary_nameserver', '_secondary_notify_xfr'])
+	if not valid_types.issuperset(set(dns_type)):
+		raise ValueError("Valid types are one or more of the following: %s" % ", ".join(valid_types))
+
 	values = []
 	for qname, rtype, value in custom_dns:
-		if qname == "_secondary_nameserver":
+		if qname in dns_type:
 			if isinstance(value, str):
 				values.append(value)
 	if len(values) > 0:
