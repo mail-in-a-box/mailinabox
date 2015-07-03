@@ -665,7 +665,11 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 
 	# Second, check that the certificate matches the private key.
 	if ssl_private_key is not None:
-		priv_key = load_pem(open(ssl_private_key, 'rb').read())
+		try:
+			priv_key = load_pem(open(ssl_private_key, 'rb').read())
+		except ValueError as e:
+			return ("The private key file %s is not a private key file: %s" % (ssl_private_key, str(e)), None)
+
 		if not isinstance(priv_key, RSAPrivateKey):
 			return ("The private key file %s is not a private key file." % ssl_private_key, None)
 
@@ -759,7 +763,10 @@ def load_pem(pem):
 	from cryptography.x509 import load_pem_x509_certificate
 	from cryptography.hazmat.primitives import serialization
 	from cryptography.hazmat.backends import default_backend
-	pem_type = re.match(b"-+BEGIN (.*?)-+\n", pem).group(1)
+	pem_type = re.match(b"-+BEGIN (.*?)-+\n", pem)
+	if pem_type is None:
+		raise ValueError("File is not a valid PEM-formatted file.")
+	pem_type = pem_type.group(1)
 	if pem_type in (b"RSA PRIVATE KEY", b"PRIVATE KEY"):
 		return serialization.load_pem_private_key(pem, password=None, backend=default_backend())
 	if pem_type == b"CERTIFICATE":
