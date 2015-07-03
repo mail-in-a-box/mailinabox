@@ -1,12 +1,12 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.12 (July 3, 2015)
+--------------------
 
 This is a minor update to v0.11, which was a major update. Please read v0.11's advisories.
 
-* The administrator@ alias was incorrectly created starting with v0.11.
+* The administrator@ alias was incorrectly created starting with v0.11. If your first install was v0.11, check that the administrator@ alias forwards mail to you.
 * Intrusion detection rules (fail2ban) are relaxed (i.e. less is blocked).
 * SSL certificates could not be installed for the new automatic 'www.' redirect domains.
 * PHP's default character encoding is changed from no default to UTF8. The effect of this change is unclear but should prevent possible future text conversion issues.

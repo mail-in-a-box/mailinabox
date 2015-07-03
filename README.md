@@ -57,12 +57,15 @@ I sign the release tags on git. To verify that a tag is signed by me, you can pe
 	$ cd mailinabox
 
 	# Verify the tag.
-	$ git verify-tag v0.11
+	$ git verify-tag v0.12
 	gpg: Signature made ..... using RSA key ID C10BDD81
 	gpg: Good signature from "Joshua Tauberer <jt@occams.info>"
 	gpg: WARNING: This key is not certified with a trusted signature!
 	gpg:          There is no indication that the signature belongs to the owner.
 	Primary key fingerprint: 5F4C 0E73 13CC D744 693B  2AEA B920 41F4 C10B DD81
+
+	# Check out the tag.
+	$ git checkout v0.12
 
 The key ID and fingerprint above should match my [Keybase.io key](https://keybase.io/joshdata) and the fingerprint I publish on [my homepage](https://razor.occams.info/).
 
