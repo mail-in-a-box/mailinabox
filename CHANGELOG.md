@@ -1,6 +1,20 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+This is a minor update to v0.11, which was a major update. Please read v0.11's advisories.
+
+* The administrator@ alias was incorrectly created starting with v0.11.
+* Intrusion detection rules (fail2ban) are relaxed (i.e. less is blocked).
+* SSL certificates could not be installed for the new automatic 'www.' redirect domains.
+* PHP's default character encoding is changed from no default to UTF8. The effect of this change is unclear but should prevent possible future text conversion issues.
+* User-installed SSL private keys in the BEGIN PRIVATE KEY format were not accepted.
+* SSL certificates with SAN domains with IDNA encoding were broken in v0.11.
+* Some IDNA functionality was using IDNA 2003 rather than IDNA 2008.
+
+
 v0.11 (June 29, 2015)
 ---------------------
 
@@ -8,6 +22,7 @@ Advisories:
 * Users can no longer spoof arbitrary email addresses in outbound mail. When sending mail, the email address configured in your mail client must match the SMTP login username being used, or the email address must be an alias with the SMTP login username listed as one of the alias's targets.
 * This update replaces your DKIM signing key with a stronger key. Because of DNS caching/propagation, mail sent within a few hours after this update could be marked as spam by recipients. If you use External DNS, you will need to update your DNS records.
 * The box will now install software from a new Mail-in-a-Box PPA on Launchpad.net, where we are distributing two of our own packages: a patched postgrey and dovecot-lucene.
+* v0.11b was posted shortly after the initial posting of v0.11 correcting a missing dependency for the new PPA.
 
 Mail:
 * Greylisting will now let some reputable senders pass through immediately.
