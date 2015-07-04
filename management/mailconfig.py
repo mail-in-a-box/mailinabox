@@ -55,9 +55,11 @@ def sanitize_idn_email_address(email):
 		localpart, domainpart = email.split("@")
 		domainpart = idna.encode(domainpart).decode('ascii')
 		return localpart + "@" + domainpart
-	except idna.IDNAError:
-		# Domain part is not IDNA-valid, so leave unchanged. If there
-		# are non-ASCII characters it will be filtered out by
+	except (ValueError, idna.IDNAError):
+		# ValueError: String does not have a single @-sign, so it is not
+		# a valid email address. IDNAError: Domain part is not IDNA-valid.
+		# Validation is not this function's job, so return value unchanged. 
+		# If there are non-ASCII characters it will be filtered out by
 		# validate_email.
 		return email
 
@@ -68,8 +70,9 @@ def prettify_idn_email_address(email):
 		localpart, domainpart = email.split("@")
 		domainpart = idna.decode(domainpart.encode("ascii"))
 		return localpart + "@" + domainpart
-	except (UnicodeError, idna.IDNAError):
-		# Failed to decode IDNA. Should never happen.
+	except (ValueError, UnicodeError, idna.IDNAError):
+		# Failed to decode IDNA, or the email address does not have a
+		# single @-sign. Should never happen.
 		return email
 
 def is_dcv_address(email):
