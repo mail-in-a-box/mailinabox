@@ -351,14 +351,14 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 	check_alias_exists("Hostmaster contact address", "hostmaster@" + domain, env, output)
 
 def check_alias_exists(alias_name, alias, env, output):
-	mail_aliases = dict([(source, (destination, applies_inbound)) for source, destination, applies_inbound, *_ in get_mail_aliases(env)])
+	mail_aliases = dict([(address, receivers) for address, receivers, *_ in get_mail_aliases(env)])
 	if alias in mail_aliases:
-		if mail_aliases[alias][1]:
-			output.print_ok("%s exists as an inbound mail alias. [%s ↦ %s]" % (alias_name, alias, mail_aliases[alias][0]))
+		if mail_aliases[alias]:
+			output.print_ok("%s exists as a mail alias. [%s ↦ %s]" % (alias_name, alias, mail_aliases[alias]))
 		else:
-			output.print_error("%s exists as a mail alias [%s ↦ %s] but is not enabled for inbound email." % (alias_name, alias, mail_aliases[alias][0]))
+			output.print_error("""You must set the destination of the mail alias for %s to direct email to you or another administrator.""" % alias)
 	else:
-		output.print_error("""You must add an inbound mail alias for %s which directs email to you or another administrator.""" % alias)
+		output.print_error("""You must add a mail alias for %s which directs email to you or another administrator.""" % alias)
 
 def check_dns_zone(domain, env, output, dns_zonefiles):
 	# If a DS record is set at the registrar, check DNSSEC first because it will affect the NS query.
@@ -495,7 +495,7 @@ def check_mail_domain(domain, env, output):
 
 	# Check that the postmaster@ email address exists. Not required if the domain has a
 	# catch-all address or domain alias.
-	if "@" + domain not in [source for source, *_ in get_mail_aliases(env)]:
+	if "@" + domain not in [address for address, *_ in get_mail_aliases(env)]:
 		check_alias_exists("Postmaster contact address", "postmaster@" + domain, env, output)
 
 	# Stop if the domain is listed in the Spamhaus Domain Block List.
@@ -647,7 +647,7 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 				return "*." + idna.encode(dns_name[2:]).decode('ascii')
 			else:
 				return idna.encode(dns_name).decode('ascii')
-				
+
 		try:
 			sans = cert.extensions.get_extension_for_oid(OID_SUBJECT_ALTERNATIVE_NAME).value.get_values_for_type(DNSName)
 			for san in sans:

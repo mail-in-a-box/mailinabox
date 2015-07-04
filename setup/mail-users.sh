@@ -21,7 +21,7 @@ db_path=$STORAGE_ROOT/mail/users.sqlite
 if [ ! -f $db_path ]; then
 	echo Creating new user database: $db_path;
 	echo "CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL UNIQUE, password TEXT NOT NULL, extra, privileges TEXT NOT NULL DEFAULT '');" | sqlite3 $db_path;
-	echo "CREATE TABLE aliases (id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT NOT NULL UNIQUE, destination TEXT NOT NULL, applies_inbound INTEGER NOT NULL DEFAULT 1, applies_outbound INTEGER NOT NULL DEFAULT 1);" | sqlite3 $db_path;
+	echo "CREATE TABLE aliases (id INTEGER PRIMARY KEY AUTOINCREMENT, address TEXT NOT NULL UNIQUE, receivers TEXT NOT NULL, senders TEXT NOT NULL);" | sqlite3 $db_path;
 fi
 
 # ### User Authentication
@@ -82,7 +82,7 @@ tools/editconf.py /etc/postfix/main.cf \
 # Matches from the users table take priority over (direct) aliases.
 cat > /etc/postfix/sender-login-maps.cf << EOF;
 dbpath=$db_path
-query = SELECT destination from (SELECT destination, 0 as priority FROM aliases WHERE source='%s' AND applies_outbound=1 UNION SELECT email as destination, 1 as priority FROM users WHERE email='%s') ORDER BY priority LIMIT 1;
+query = SELECT senders from (SELECT senders, 0 as priority FROM aliases WHERE address='%s' UNION SELECT email as senders, 1 as priority FROM users WHERE email='%s') ORDER BY priority LIMIT 1;
 EOF
 
 # ### Destination Validation
@@ -98,7 +98,7 @@ tools/editconf.py /etc/postfix/main.cf \
 # SQL statement to check if we handle mail for a domain, either for users or aliases.
 cat > /etc/postfix/virtual-mailbox-domains.cf << EOF;
 dbpath=$db_path
-query = SELECT 1 FROM users WHERE email LIKE '%%@%s' UNION SELECT 1 FROM aliases WHERE source LIKE '%%@%s' AND applies_inbound=1
+query = SELECT 1 FROM users WHERE email LIKE '%%@%s' UNION SELECT 1 FROM aliases WHERE address LIKE '%%@%s'
 EOF
 
 # SQL statement to check if we handle mail for a user.
@@ -129,7 +129,7 @@ EOF
 # postfix's preference for aliases for whole email addresses.
 cat > /etc/postfix/virtual-alias-maps.cf << EOF;
 dbpath=$db_path
-query = SELECT destination from (SELECT destination, 0 as priority FROM aliases WHERE source='%s' AND applies_inbound=1 UNION SELECT email as destination, 1 as priority FROM users WHERE email='%s') ORDER BY priority LIMIT 1;
+query = SELECT receivers from (SELECT receivers, 0 as priority FROM aliases WHERE address='%s' UNION SELECT email as receivers, 1 as priority FROM users WHERE email='%s') ORDER BY priority LIMIT 1;
 EOF
 
 # Restart Services

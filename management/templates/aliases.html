@@ -7,7 +7,7 @@
 
 <h3>Add a mail alias</h3>
 
-<p>Aliases are email forwarders. An alias can forward email to a <a href="javascript:show_panel('users')">mail user</a> or to any email address.</p>
+<p>An alias can forward email to a <a href="javascript:show_panel('users')">mail user</a> or to any email address. You can separately grant permission to one or more users to send as an alias.</p>
 
 <form class="form-horizontal" role="form" onsubmit="do_add_alias(); return false;">
   <div class="form-group">
@@ -31,20 +31,15 @@
     </div>
   </div>
   <div class="form-group">
-    <label for="addaliasDirection" class="col-sm-1 control-label">Direction</label>
+    <label for="addaliasReceivers" class="col-sm-1 control-label">Forwards To</label>
     <div class="col-sm-10">
-      <select class="form-control" id="addaliasDirection">
-        <option value="disabled">Disabled</option>
-        <option value="outbound">Outbound only</option>
-        <option value="inbound">Inbound only</option>
-        <option value="bidirectional">Both</option>
-      </select>
+      <textarea class="form-control" rows="3" id="addaliasReceivers"></textarea>
     </div>
   </div>
   <div class="form-group">
-    <label for="addaliasTargets" class="col-sm-1 control-label">Forward To</label>
+    <label for="addaliasSenders" class="col-sm-1 control-label">Permitted Senders</label>
     <div class="col-sm-10">
-      <textarea class="form-control" rows="3" id="addaliasTargets"></textarea>
+      <textarea class="form-control" rows="3" id="addaliasSenders"></textarea>
     </div>
   </div>
   <div class="form-group">
@@ -61,8 +56,8 @@
     <tr>
       <th></th>
       <th>Alias<br></th>
-      <th>Direction</th>
       <th>Forwards To</th>
+      <th>Permitted Senders</th>
     </tr>
   </thead>
   <tbody>
@@ -83,8 +78,8 @@
         </a>
     </td>
     <td class='email'> </td>
-    <td class='direction'> </td>
-    <td class='target'> </td>
+    <td class='receivers'> </td>
+    <td class='senders'> </td>
   </tr>
   </table>
 </div>
@@ -111,23 +106,12 @@ function show_aliases() {
           n.attr('id', '');
 
           if (alias.required) n.addClass('alias-required');
-          n.attr('data-email', alias.source_display); // this is decoded from IDNA, but will get re-coded to IDNA on the backend
-          n.find('td.email').text(alias.source_display)
-          if (!alias.applies_inbound && !alias.applies_outbound) {
-            n.find('td.direction').text('')
-            n.attr('data-direction', 'disabled');
-          } else if (!alias.applies_inbound && alias.applies_outbound) {
-            n.find('td.direction').text('↤')
-            n.attr('data-direction', 'outbound');
-          } else if (alias.applies_inbound && !alias.applies_outbound) {
-            n.find('td.direction').text('↦')
-            n.attr('data-direction', 'inbound');
-          } else if (alias.applies_inbound && alias.applies_outbound) {
-            n.find('td.direction').text('↮')
-            n.attr('data-direction', 'bidirectional');
-          }
-          for (var j = 0; j < alias.destination.length; j++)
-            n.find('td.target').append($("<div></div>").text(alias.destination[j]))
+          n.attr('data-email', alias.address_display); // this is decoded from IDNA, but will get re-coded to IDNA on the backend
+          n.find('td.email').text(alias.address_display)
+          for (var j = 0; j < alias.receivers.length; j++)
+            n.find('td.receivers').append($("<div></div>").text(alias.receivers[j]))
+          for (var j = 0; j < alias.senders.length; j++)
+            n.find('td.senders').append($("<div></div>").text(alias.senders[j]))
           $('#alias_table tbody').append(n);
         }
       }
@@ -140,22 +124,22 @@ function show_aliases() {
       if ($(this).attr('data-mode') == "regular") {
         $('#addaliasEmail').attr('type', 'email');
         $('#addaliasEmail').attr('placeholder', 'incoming email address (e.g. you@yourdomain.com)');
-        $('#addaliasDirection').val('bidirectional');
-      	$('#addaliasTargets').attr('placeholder', 'forward to these email addresses (one per line or separated by commas)');
+        $('#addaliasReceivers').attr('placeholder', 'forward to these email addresses (one per line or separated by commas)');
+        $('#addaliasSenders').attr('placeholder', 'allow these users to send as this alias (one per line or separated by commas)');
         $('#alias_mode_info').slideUp();
       } else if ($(this).attr('data-mode') == "catchall") {
         $('#addaliasEmail').attr('type', 'text');
         $('#addaliasEmail').attr('placeholder', 'incoming catch-all address (e.g. @yourdomain.com)');
-        $('#addaliasDirection').val('outbound');
-        $('#addaliasTargets').attr('placeholder', 'forward to these email addresses (one per line or separated by commas)');
+        $('#addaliasReceivers').attr('placeholder', 'forward to these email addresses (one per line or separated by commas)');
+        $('#addaliasSenders').attr('placeholder', 'allow these users to send as any address on this domain (one per line or separated by commas)');
         $('#alias_mode_info').slideDown();
         $('#alias_mode_info span').addClass('hidden');
         $('#alias_mode_info span.catchall').removeClass('hidden');
       } else if ($(this).attr('data-mode') == "domainalias") {
         $('#addaliasEmail').attr('type', 'text');
         $('#addaliasEmail').attr('placeholder', 'incoming domain (@yourdomain.com)');
-        $('#addaliasDirection').val('inbound');
-        $('#addaliasTargets').attr('placeholder', 'forward to domain (@yourdomain.com)');
+        $('#addaliasReceivers').attr('placeholder', 'forward to domain (@yourdomain.com)');
+        $('#addaliasSenders').attr('placeholder', 'allow these users to send as any address on this domain (one per line or separated by commas)');
         $('#alias_mode_info').slideDown();
         $('#alias_mode_info span').addClass('hidden');
         $('#alias_mode_info span.domainalias').removeClass('hidden');
@@ -168,18 +152,17 @@ function show_aliases() {
 var is_alias_add_update = false;
 function do_add_alias() {
   var title = (!is_alias_add_update) ? "Add Alias" : "Update Alias";
-  var email = $("#addaliasEmail").val();
-  var direction = $("#addaliasDirection").val();
-  var targets = $("#addaliasTargets").val();
+  var form_address = $("#addaliasEmail").val();
+  var form_receivers = $("#addaliasReceivers").val();
+  var form_senders = $("#addaliasSenders").val();
   api(
     "/mail/aliases/add",
     "POST",
     {
       update_if_exists: is_alias_add_update ? '1' : '0',
-      source: email,
-      destination: targets,
-      applies_inbound: (direction == 'bidirectional' || direction == 'inbound') ? '1' : '0',
-      applies_outbound: (direction == 'bidirectional' || direction == 'outbound') ? '1' : '0'
+      address: form_address,
+      receivers: form_receivers,
+      senders: form_senders
     },
     function(r) {
       // Responses are multiple lines of pre-formatted text.
@@ -196,13 +179,8 @@ function do_add_alias() {
 function aliases_reset_form() {
   $("#addaliasEmail").prop('disabled', false);
   $("#addaliasEmail").val('')
-  if ($('#alias_type_buttons button').attr('data-mode') == "regular")
-    $('#addaliasDirection').val('bidirectional');
-  else if ($('#alias_type_buttons button').attr('data-mode') == "catchall")
-    $('#alias_type_buttons').val('outbound');
-  else if ($('#addaliasDirection button').attr('data-mode') == "domainalias")
-    $('#addaliasDirection').val('inbound');
-  $("#addaliasTargets").val('')
+  $("#addaliasReceivers").val('')
+  $("#addaliasSenders").val('')
   $('#alias-cancel').addClass('hidden');
   $('#add-alias-button').text('Add Alias');
   is_alias_add_update = false;
@@ -210,12 +188,15 @@ function aliases_reset_form() {
 
 function aliases_edit(elem) {
   var email = $(elem).parents('tr').attr('data-email');
-  var targetdivs = $(elem).parents('tr').find('.target div');
-  var targets = "";
-  for (var i = 0; i < targetdivs.length; i++)
-    targets += $(targetdivs[i]).text() + "\n";
-  var direction = $(elem).parents('tr').attr('data-direction')
-  if (email.charAt(0) == '@' && targets.charAt(0) == '@')
+  var receiverdivs = $(elem).parents('tr').find('.receivers div');
+  var senderdivs = $(elem).parents('tr').find('.senders div');
+  var receivers = "";
+  for (var i = 0; i < receiverdivs.length; i++)
+    receivers += $(receiverdivs[i]).text() + "\n";
+  var senders = "";
+  for (var i = 0; i < senderdivs.length; i++)
+    senders += $(senderdivs[i]).text() + "\n";
+  if (email.charAt(0) == '@' && receivers.charAt(0) == '@')
     $('#alias_type_buttons button[data-mode="domainalias"]').click();
   else if (email.charAt(0) == '@')
     $('#alias_type_buttons button[data-mode="catchall"]').click();
@@ -224,15 +205,15 @@ function aliases_edit(elem) {
   $('#alias-cancel').removeClass('hidden');
   $("#addaliasEmail").prop('disabled', true);
   $("#addaliasEmail").val(email);
-  $('#addaliasDirection').val(direction);
-  $("#addaliasTargets").val(targets);
+  $("#addaliasReceivers").val(receivers);
+  $("#addaliasSenders").val(senders);
   $('#add-alias-button').text('Update');
   $('body').animate({ scrollTop: 0 })
   is_alias_add_update = true;
 }
 
 function aliases_remove(elem) {
-  var email = $(elem).parents('tr').attr('data-email');
+  var row_address = $(elem).parents('tr').attr('data-email');
   show_modal_confirm(
     "Remove Alias",
     "Remove " + email + "?",
@@ -242,7 +223,7 @@ function aliases_remove(elem) {
         "/mail/aliases/remove",
         "POST",
         {
-          source: email
+          address: row_address
         },
         function(r) {
           // Responses are multiple lines of pre-formatted text.
