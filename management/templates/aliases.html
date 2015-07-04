@@ -216,7 +216,7 @@ function aliases_remove(elem) {
   var row_address = $(elem).parents('tr').attr('data-email');
   show_modal_confirm(
     "Remove Alias",
-    "Remove " + email + "?",
+    "Remove " + row_address + "?",
     "Remove",
     function() {
       api(

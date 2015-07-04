@@ -195,7 +195,7 @@ def mail_aliases_add():
 @app.route('/mail/aliases/remove', methods=['POST'])
 @authorized_personnel_only
 def mail_aliases_remove():
-	return remove_mail_alias(request.form.get('source', ''), env)
+	return remove_mail_alias(request.form.get('address', ''), env)
 
 @app.route('/mail/domains')
 @authorized_personnel_only
