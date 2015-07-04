@@ -24,9 +24,9 @@
     </div>
   </div>
   <div class="form-group">
-    <label for="addaliasEmail" class="col-sm-1 control-label">Alias</label>
+    <label for="addaliasAddress" class="col-sm-1 control-label">Alias</label>
     <div class="col-sm-10">
-      <input type="email" class="form-control" id="addaliasEmail">
+      <input type="email" class="form-control" id="addaliasAddress">
       <div style="margin-top: 3px; padding-left: 3px; font-size: 90%" class="text-muted">You may use international (non-ASCII) characters for the domain part of the email address only.</div>
     </div>
   </div>
@@ -77,7 +77,7 @@
           <span class="glyphicon glyphicon-trash"></span>
         </a>
     </td>
-    <td class='email'> </td>
+    <td class='address'> </td>
     <td class='receivers'> </td>
     <td class='senders'> </td>
   </tr>
@@ -106,8 +106,8 @@ function show_aliases() {
           n.attr('id', '');
 
           if (alias.required) n.addClass('alias-required');
-          n.attr('data-email', alias.address_display); // this is decoded from IDNA, but will get re-coded to IDNA on the backend
-          n.find('td.email').text(alias.address_display)
+          n.attr('data-address', alias.address_display); // this is decoded from IDNA, but will get re-coded to IDNA on the backend
+          n.find('td.address').text(alias.address_display)
           for (var j = 0; j < alias.receivers.length; j++)
             n.find('td.receivers').append($("<div></div>").text(alias.receivers[j]))
           for (var j = 0; j < alias.senders.length; j++)
@@ -122,22 +122,22 @@ function show_aliases() {
       $('#alias_type_buttons button').removeClass('active');
       $(this).addClass('active');
       if ($(this).attr('data-mode') == "regular") {
-        $('#addaliasEmail').attr('type', 'email');
-        $('#addaliasEmail').attr('placeholder', 'incoming email address (e.g. you@yourdomain.com)');
+        $('#addaliasAddress').attr('type', 'email');
+        $('#addaliasAddress').attr('placeholder', 'incoming email address (e.g. you@yourdomain.com)');
         $('#addaliasReceivers').attr('placeholder', 'forward to these email addresses (one per line or separated by commas)');
         $('#addaliasSenders').attr('placeholder', 'allow these users to send as this alias (one per line or separated by commas)');
         $('#alias_mode_info').slideUp();
       } else if ($(this).attr('data-mode') == "catchall") {
-        $('#addaliasEmail').attr('type', 'text');
-        $('#addaliasEmail').attr('placeholder', 'incoming catch-all address (e.g. @yourdomain.com)');
+        $('#addaliasAddress').attr('type', 'text');
+        $('#addaliasAddress').attr('placeholder', 'incoming catch-all address (e.g. @yourdomain.com)');
         $('#addaliasReceivers').attr('placeholder', 'forward to these email addresses (one per line or separated by commas)');
         $('#addaliasSenders').attr('placeholder', 'allow these users to send as any address on this domain (one per line or separated by commas)');
         $('#alias_mode_info').slideDown();
         $('#alias_mode_info span').addClass('hidden');
         $('#alias_mode_info span.catchall').removeClass('hidden');
       } else if ($(this).attr('data-mode') == "domainalias") {
-        $('#addaliasEmail').attr('type', 'text');
-        $('#addaliasEmail').attr('placeholder', 'incoming domain (@yourdomain.com)');
+        $('#addaliasAddress').attr('type', 'text');
+        $('#addaliasAddress').attr('placeholder', 'incoming domain (@yourdomain.com)');
         $('#addaliasReceivers').attr('placeholder', 'forward to domain (@yourdomain.com)');
         $('#addaliasSenders').attr('placeholder', 'allow these users to send as any address on this domain (one per line or separated by commas)');
         $('#alias_mode_info').slideDown();
@@ -152,7 +152,7 @@ function show_aliases() {
 var is_alias_add_update = false;
 function do_add_alias() {
   var title = (!is_alias_add_update) ? "Add Alias" : "Update Alias";
-  var form_address = $("#addaliasEmail").val();
+  var form_address = $("#addaliasAddress").val();
   var form_receivers = $("#addaliasReceivers").val();
   var form_senders = $("#addaliasSenders").val();
   api(
@@ -177,8 +177,8 @@ function do_add_alias() {
 }
 
 function aliases_reset_form() {
-  $("#addaliasEmail").prop('disabled', false);
-  $("#addaliasEmail").val('')
+  $("#addaliasAddress").prop('disabled', false);
+  $("#addaliasAddress").val('')
   $("#addaliasReceivers").val('')
   $("#addaliasSenders").val('')
   $('#alias-cancel').addClass('hidden');
@@ -187,7 +187,7 @@ function aliases_reset_form() {
 }
 
 function aliases_edit(elem) {
-  var email = $(elem).parents('tr').attr('data-email');
+  var address = $(elem).parents('tr').attr('data-address');
   var receiverdivs = $(elem).parents('tr').find('.receivers div');
   var senderdivs = $(elem).parents('tr').find('.senders div');
   var receivers = "";
@@ -196,15 +196,15 @@ function aliases_edit(elem) {
   var senders = "";
   for (var i = 0; i < senderdivs.length; i++)
     senders += $(senderdivs[i]).text() + "\n";
-  if (email.charAt(0) == '@' && receivers.charAt(0) == '@')
+  if (address.charAt(0) == '@' && receivers.charAt(0) == '@')
     $('#alias_type_buttons button[data-mode="domainalias"]').click();
-  else if (email.charAt(0) == '@')
+  else if (address.charAt(0) == '@')
     $('#alias_type_buttons button[data-mode="catchall"]').click();
   else
     $('#alias_type_buttons button[data-mode="regular"]').click();
   $('#alias-cancel').removeClass('hidden');
-  $("#addaliasEmail").prop('disabled', true);
-  $("#addaliasEmail").val(email);
+  $("#addaliasAddress").prop('disabled', true);
+  $("#addaliasAddress").val(address);
   $("#addaliasReceivers").val(receivers);
   $("#addaliasSenders").val(senders);
   $('#add-alias-button').text('Update');
@@ -213,7 +213,7 @@ function aliases_edit(elem) {
 }
 
 function aliases_remove(elem) {
-  var row_address = $(elem).parents('tr').attr('data-email');
+  var row_address = $(elem).parents('tr').attr('data-address');
   show_modal_confirm(
     "Remove Alias",
     "Remove " + row_address + "?",
