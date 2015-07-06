@@ -11,3 +11,5 @@ enabled  = true
 [dovecot]
 enabled = true
 filter  = dovecotimap
+findtime = 30
+maxretry = 20
