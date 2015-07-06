@@ -1,11 +1,5 @@
 # Fail2Ban configuration file for Mail-in-a-Box
 
-[DEFAULT]
-
-# This should ban dumb brute-force attacks, not oblivious users.
-findtime = 30
-maxretry = 20
-
 # JAILS
 
 [ssh-ddos]
@@ -17,3 +11,9 @@ enabled  = true
 [dovecot]
 enabled = true
 filter  = dovecotimap
+findtime = 30
+maxretry = 20
+
+[recidive]
+enabled  = true
+maxretry = 10
