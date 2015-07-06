@@ -13,3 +13,7 @@ enabled = true
 filter  = dovecotimap
 findtime = 30
 maxretry = 20
+
+[recidive]
+enabled  = true
+maxretry = 10
