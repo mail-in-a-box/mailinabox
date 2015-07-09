@@ -144,8 +144,13 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 		records.append((None,  "NS",  "ns1.%s." % env["PRIMARY_HOSTNAME"], False))
 
 		# Define ns2.PRIMARY_HOSTNAME or whatever the user overrides.
-		secondary_ns = get_secondary_dns(additional_records) or ("ns2." + env["PRIMARY_HOSTNAME"])
-		records.append((None,  "NS", secondary_ns+'.', False))
+		# User may provide one or more additional nameservers
+		secondary_dns_records = get_secondary_dns(additional_records)
+		if len(secondary_dns_records) > 0:
+			for secondary_ns in secondary_dns_records:
+				records.append((None,  "NS", secondary_ns+'.', False))
+		else:
+			records.append((None,  "NS", "ns2." + env["PRIMARY_HOSTNAME"] + '.', False))
 
 
 	# In PRIMARY_HOSTNAME...
@@ -462,17 +467,23 @@ zone:
 	zonefile: %s
 """ % (domain, zonefile)
 
-		# If a custom secondary nameserver has been set, allow zone transfers
-		# and notifies to that nameserver.
-		if get_secondary_dns(additional_records):
-			# Get the IP address of the nameserver by resolving it.
-			hostname = get_secondary_dns(additional_records)
-			resolver = dns.resolver.get_default_resolver()
-			response = dns.resolver.query(hostname+'.', "A")
-			ipaddr = str(response[0])
-			nsdconf += """\tnotify: %s NOKEY
-	provide-xfr: %s NOKEY
-""" % (ipaddr, ipaddr)
+		# If custom secondary nameservers have been set, allow zone transfers
+		# and notifies to them.
+		if get_secondary_dns(additional_records, ['_secondary_nameserver']):
+			for hostname in get_secondary_dns(additional_records):
+				# Get the IP address of the nameserver by resolving it.
+				resolver = dns.resolver.get_default_resolver()
+				response = dns.resolver.query(hostname+'.', "A")
+				ipaddr = str(response[0])
+				nsdconf += "\n\tnotify: %s NOKEY\n\tprovide-xfr: %s NOKEY" % (ipaddr, ipaddr)
+		# Some providers use different servers for zone transfers and notifies
+		# such as DNS Made Easy. This allows us to set these IP addresses as well manually
+		# in custom.yaml
+		if get_secondary_dns(additional_records, ["_secondary_notify_xfr"]):
+			for ipaddr in get_secondary_dns(additional_records, ["_secondary_notify_xfr"]):
+				nsdconf += "\n\tnotify: %s NOKEY\n\tprovide-xfr: %s NOKEY" % (ipaddr, ipaddr)
+
+
 
 	# Check if the file is changing. If it isn't changing,
 	# return False to flag that no change was made.
@@ -785,33 +796,36 @@ def set_custom_dns_record(qname, rtype, value, action, env):
 	if made_change:
 		# serialize & save
 		write_custom_dns_config(newconfig, env)
-
 	return made_change
 
 ########################################################################
 
-def get_secondary_dns(custom_dns):
+def get_secondary_dns(custom_dns, dns_type=['_secondary_nameserver']):
+	valid_types = set(['_secondary_nameserver', '_secondary_notify_xfr'])
+	if not valid_types.issuperset(set(dns_type)):
+		raise ValueError("Valid types are one or more of the following: %s" % ", ".join(valid_types))
+
+	values = []
 	for qname, rtype, value in custom_dns:
-		if qname == "_secondary_nameserver":
-			return value
-	return None
+		if qname in dns_type:
+			if isinstance(value, str):
+				values.append(value)
+	return values
 
 def set_secondary_dns(hostname, env):
-
-	if hostname in (None, ""):
-		# Clear.
-		set_custom_dns_record("_secondary_nameserver", "A", None, "set", env)
-	else:
-		# Validate.
-		hostname = hostname.strip().lower()
+	hostnames = [item.strip().lower() for item in hostname]
+	if len(hostnames) > 0:
 		resolver = dns.resolver.get_default_resolver()
-		try:
-			response = dns.resolver.query(hostname, "A")
-		except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
-			raise ValueError("Could not resolve the IP address of %s." % hostname)
-
-		# Set.
-		set_custom_dns_record("_secondary_nameserver", "A", hostname, "set", env)
+		for item in hostnames:
+			try:
+				response = dns.resolver.query(item, "A")
+			except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+				raise ValueError("Could not resolve the IP address of %s." % item)
+			# Set.
+		set_custom_dns_record("_secondary_nameserver", "A", {"A":hostnames}, "set", env)
+	else:
+		# Clear.
+			set_custom_dns_record("_secondary_nameserver", "A", None, "set", env)
 
 	# Apply.
 	return do_dns_update(env)

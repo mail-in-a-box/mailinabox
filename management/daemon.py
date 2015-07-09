@@ -229,7 +229,7 @@ def dns_get_secondary_nameserver():
 def dns_set_secondary_nameserver():
 	from dns_update import set_secondary_dns
 	try:
-		return set_secondary_dns(request.form.get('hostname'), env)
+		return set_secondary_dns(request.form.get('hostname').split(","), env)
 	except ValueError as e:
 		return (str(e), 400)
 
