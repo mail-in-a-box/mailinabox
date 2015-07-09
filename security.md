@@ -17,8 +17,11 @@ The primary goal of Mail-in-a-Box is to make deploying a good mail server easy, 
 
 On the other hand, we do assume that adversaries are performing passive surveillance and, possibly, active man-in-the-middle attacks. And so:
 
-* User credentials are always sent through SSH/TLS, never in the clear.
-* Outbound mail is sent with the highest level of TLS possible (more on that below).
+* User credentials are always sent through SSH/TLS, never in the clear, with modern TLS settings.
+* Outbound mail is sent with the highest level of TLS possible.
+* The box advertises its support for [DANE TLSA](https://en.wikipedia.org/wiki/DNS-based_Authentication_of_Named_Entities), when DNSSEC is enabled at the domain name registrar, so that inbound mail is more likely to be transmitted securely.
+
+Additional details follow.
 
 User Credentials
 ----------------
