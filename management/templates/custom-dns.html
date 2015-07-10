@@ -67,7 +67,8 @@
 
 <h3>Using a Secondary Nameserver</h3>
 
-<p>If your TLD requires you to have two separate nameservers, you can either set up a secondary (aka &ldquo;slave&rdquo;) nameserver or, alternatively, set up <a href="#" onclick="return show_panel('external_dns')">external DNS</a> and ignore the DNS server on this box. If you choose to use a seconday/slave nameserver, you must find a seconday/slave nameserver service provider. Your domain name registrar or virtual cloud provider may provide this service for you. Once you set up the seconday/slave nameserver service, enter the hostname of <em>their</em> secondary nameserver:</p>
+<p>If your TLD requires you to have two separate nameservers, you can either set up <a href="#" onclick="return show_panel('external_dns')">external DNS</a> and ignore the DNS server on this box entirely, or use the DNS server on this box but add a secondary (aka &ldquo;slave&rdquo;) nameserver.</p>
+<p>If you choose to use a seconday nameserver, you must find a seconday nameserver service provider. Your domain name registrar or virtual cloud provider may provide this service for you. Once you set up the seconday nameserver service, enter the hostname (not the IP address) of <em>their</em> secondary nameserver in the box below.</p>
 
 <form class="form-horizontal" role="form" onsubmit="do_set_secondary_dns(); return false;">
   <div class="form-group">
@@ -83,7 +84,11 @@
   </div>
   <div id="secondarydns-clear-instructions" class="form-group" style="display: none">
     <div class="col-sm-offset-1 col-sm-11">
-      <p class="small">Clear the input field above and click Update to use this machine itself as secondary DNS, which is the default/normal setup.</p>
+      <p class="small">
+        Multiple secondary servers can be separated with commas or spaces (i.e., <code>ns2.hostingcompany.com ns3.hostingcompany.com</code>). 
+        To enable zone transfers to additional servers without listing them as secondary nameservers, add <code>xfr:IPADDRESS</code>.
+        Clear the input field above and click Update to use this machine itself as secondary DNS, which is the default/normal setup.
+      </p>
     </div>
   </div>
 </form>
@@ -152,8 +157,8 @@ function show_custom_dns() {
     "GET",
     { },
     function(data) {
-      $('#secondarydnsHostname').val(data.hostname ? data.hostname : '');
-      $('#secondarydns-clear-instructions').toggle(data.hostname != null);
+      $('#secondarydnsHostname').val(data.hostnames.join(' '));
+      $('#secondarydns-clear-instructions').toggle(data.hostnames.length > 0);
     });
 
   api(
@@ -210,7 +215,7 @@ function do_set_secondary_dns() {
     "/dns/secondary-nameserver",
     "POST",
     {
-      hostname: $('#secondarydnsHostname').val()
+      hostnames: $('#secondarydnsHostname').val()
     },
     function(data) {
       if (data == "") return; // nothing updated
