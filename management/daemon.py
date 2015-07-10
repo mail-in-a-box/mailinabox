@@ -222,14 +222,14 @@ def dns_update():
 @authorized_personnel_only
 def dns_get_secondary_nameserver():
 	from dns_update import get_custom_dns_config, get_secondary_dns
-	return json_response({ "hostname": get_secondary_dns(get_custom_dns_config(env)) })
+	return json_response({ "hostnames": get_secondary_dns(get_custom_dns_config(env), mode=None) })
 
 @app.route('/dns/secondary-nameserver', methods=['POST'])
 @authorized_personnel_only
 def dns_set_secondary_nameserver():
 	from dns_update import set_secondary_dns
 	try:
-		return set_secondary_dns(request.form.get('hostname').split(","), env)
+		return set_secondary_dns([ns.strip() for ns in re.split(r"[, ]+", request.form.get('hostnames') or "") if ns.strip() != ""], env)
 	except ValueError as e:
 		return (str(e), 400)
 

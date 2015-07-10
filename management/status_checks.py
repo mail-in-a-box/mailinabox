@@ -370,7 +370,7 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 	# the TLD, and so we're not actually checking the TLD. For that we'd need
 	# to do a DNS trace.
 	ip = query_dns(domain, "A")
-	secondary_ns = get_secondary_dns(get_custom_dns_config(env)) or ["ns2." + env['PRIMARY_HOSTNAME']]
+	secondary_ns = get_secondary_dns(get_custom_dns_config(env), mode="NS") or ["ns2." + env['PRIMARY_HOSTNAME']]
 	existing_ns = query_dns(domain, "NS")
 	correct_ns = "; ".join(sorted(["ns1." + env['PRIMARY_HOSTNAME']] + secondary_ns))
 	if existing_ns.lower() == correct_ns.lower():

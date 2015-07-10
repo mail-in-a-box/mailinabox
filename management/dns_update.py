@@ -145,12 +145,10 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 
 		# Define ns2.PRIMARY_HOSTNAME or whatever the user overrides.
 		# User may provide one or more additional nameservers
-		secondary_dns_records = get_secondary_dns(additional_records)
-		if len(secondary_dns_records) > 0:
-			for secondary_ns in secondary_dns_records:
-				records.append((None,  "NS", secondary_ns+'.', False))
-		else:
-			records.append((None,  "NS", "ns2." + env["PRIMARY_HOSTNAME"] + '.', False))
+		secondary_ns_list = get_secondary_dns(additional_records, mode="NS") \
+			or ["ns2." + env["PRIMARY_HOSTNAME"]] 
+		for secondary_ns in secondary_ns_list:
+			records.append((None,  "NS", secondary_ns+'.', False))
 
 
 	# In PRIMARY_HOSTNAME...
@@ -469,21 +467,8 @@ zone:
 
 		# If custom secondary nameservers have been set, allow zone transfers
 		# and notifies to them.
-		if get_secondary_dns(additional_records, ['_secondary_nameserver']):
-			for hostname in get_secondary_dns(additional_records):
-				# Get the IP address of the nameserver by resolving it.
-				resolver = dns.resolver.get_default_resolver()
-				response = dns.resolver.query(hostname+'.', "A")
-				ipaddr = str(response[0])
-				nsdconf += "\n\tnotify: %s NOKEY\n\tprovide-xfr: %s NOKEY" % (ipaddr, ipaddr)
-		# Some providers use different servers for zone transfers and notifies
-		# such as DNS Made Easy. This allows us to set these IP addresses as well manually
-		# in custom.yaml
-		if get_secondary_dns(additional_records, ["_secondary_notify_xfr"]):
-			for ipaddr in get_secondary_dns(additional_records, ["_secondary_notify_xfr"]):
-				nsdconf += "\n\tnotify: %s NOKEY\n\tprovide-xfr: %s NOKEY" % (ipaddr, ipaddr)
-
-
+		for ipaddr in get_secondary_dns(additional_records, mode="xfr"):
+			nsdconf += "\n\tnotify: %s NOKEY\n\tprovide-xfr: %s NOKEY\n" % (ipaddr, ipaddr)
 
 	# Check if the file is changing. If it isn't changing,
 	# return False to flag that no change was made.
@@ -800,32 +785,59 @@ def set_custom_dns_record(qname, rtype, value, action, env):
 
 ########################################################################
 
-def get_secondary_dns(custom_dns, dns_type=['_secondary_nameserver']):
-	valid_types = set(['_secondary_nameserver', '_secondary_notify_xfr'])
-	if not valid_types.issuperset(set(dns_type)):
-		raise ValueError("Valid types are one or more of the following: %s" % ", ".join(valid_types))
+def get_secondary_dns(custom_dns, mode=None):
+	resolver = dns.resolver.get_default_resolver()
 
 	values = []
 	for qname, rtype, value in custom_dns:
-		if qname in dns_type:
-			if isinstance(value, str):
-				values.append(value)
+		if qname != '_secondary_nameserver': continue
+		for hostname in value.split(" "):
+			hostname = hostname.strip()
+			if mode == None:
+				# Just return the setting.
+				values.append(hostname)
+
+			# This is a hostname. Before including in zone xfr lines,
+			# resolve to an IP address. Otherwise just return the hostname.
+			if not hostname.startswith("xfr:"):
+				if mode == "xfr":
+					response = dns.resolver.query(hostname+'.', "A")
+					hostname = str(response[0])
+				values.append(hostname)
+
+			# This is a zone-xfer-only IP address. Do not return if
+			# we're querying for NS record hostnames. Only return if
+			# we're querying for zone xfer IP addresses - return the
+			# IP address.
+			elif mode == "xfr":
+				values.append(hostname[4:])
+
 	return values
 
-def set_secondary_dns(hostname, env):
-	hostnames = [item.strip().lower() for item in hostname]
+def set_secondary_dns(hostnames, env):
 	if len(hostnames) > 0:
+		# Validate that all hostnames are valid and that all zone-xfer IP addresses are valid.
 		resolver = dns.resolver.get_default_resolver()
 		for item in hostnames:
-			try:
-				response = dns.resolver.query(item, "A")
-			except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
-				raise ValueError("Could not resolve the IP address of %s." % item)
-			# Set.
-		set_custom_dns_record("_secondary_nameserver", "A", {"A":hostnames}, "set", env)
+			if not item.startswith("xfr:"):
+				# Resolve hostname.
+				try:
+					response = dns.resolver.query(item, "A")
+				except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+					raise ValueError("Could not resolve the IP address of %s." % item)
+			else:
+				# Validate IP address.
+				try:
+					v = ipaddress.ip_address(item[4:]) # raises a ValueError if there's a problem
+					if not isinstance(v, ipaddress.IPv4Address): raise ValueError("That's an IPv6 address.")
+				except ValueError:
+					raise ValueError("'%s' is not an IPv4 address." % item[4:])
+
+		# Set.
+		set_custom_dns_record("_secondary_nameserver", "A", " ".join(hostnames), "set", env)
 	else:
 		# Clear.
-			set_custom_dns_record("_secondary_nameserver", "A", None, "set", env)
+		set_custom_dns_record("_secondary_nameserver", "A", None, "set", env)
 
 	# Apply.
 	return do_dns_update(env)
