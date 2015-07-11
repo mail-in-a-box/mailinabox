@@ -21,6 +21,7 @@ includedir /etc/munin/munin-conf.d
 # a simple host tree
 [$PRIMARY_HOSTNAME]
 address 127.0.0.1
+host_name `hostname`
 
 # send alerts to the following address
 contacts admin
