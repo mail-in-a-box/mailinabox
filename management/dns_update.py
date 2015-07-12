@@ -170,6 +170,9 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 		# Add a DANE TLSA record for SMTP.
 		records.append(("_25._tcp", "TLSA", build_tlsa_record(env), "Recommended when DNSSEC is enabled. Advertises to mail servers connecting to the box that mandatory encryption should be used."))
 
+		# Add a DANE TLSA record for HTTPS, which some browser extensions might make use of.
+		records.append(("_443._tcp", "TLSA", build_tlsa_record(env), "Optional. When DNSSEC is enabled, provides out-of-band HTTPS certificate validation for a few web clients that support it."))
+
 		# Add a SSHFP records to help SSH key validation. One per available SSH key on this system.
 		for value in build_sshfp_records():
 			records.append((None, "SSHFP", value, "Optional. Provides an out-of-band method for verifying an SSH key before connecting. Use 'VerifyHostKeyDNS yes' (or 'VerifyHostKeyDNS ask') when connecting with ssh."))
