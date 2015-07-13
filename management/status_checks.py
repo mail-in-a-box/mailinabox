@@ -746,7 +746,7 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 def load_cert_chain(pemfile):
 	# A certificate .pem file may contain a chain of certificates.
 	# Load the file and split them apart.
-	re_pem = rb"(-+BEGIN (?:.+)-+[\r\n](?:[A-Za-z0-9+/=]{1,64}[\r\n])+-+END (?:.+)-+[\r\n])"
+	re_pem = rb"(-+BEGIN (?:.+)-+[\r\n]+(?:[A-Za-z0-9+/=]{1,64}[\r\n]+)+-+END (?:.+)-+[\r\n]+)"
 	with open(pemfile, "rb") as f:
 		pem = f.read() + b"\n" # ensure trailing newline
 		pemblocks = re.findall(re_pem, pem)
@@ -760,7 +760,7 @@ def load_pem(pem):
 	from cryptography.x509 import load_pem_x509_certificate
 	from cryptography.hazmat.primitives import serialization
 	from cryptography.hazmat.backends import default_backend
-	pem_type = re.match(b"-+BEGIN (.*?)-+\n", pem)
+	pem_type = re.match(b"-+BEGIN (.*?)-+[\r\n]", pem)
 	if pem_type is None:
 		raise ValueError("File is not a valid PEM-formatted file.")
 	pem_type = pem_type.group(1)
