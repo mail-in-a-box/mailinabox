@@ -22,8 +22,18 @@ apt_install spampd razor pyzor dovecot-antispam
 tools/editconf.py /etc/default/spamassassin \
 	CRON=1
 
-# Configure pyzor.
-hide_output pyzor discover
+# Configure pyzor, which is a client to a live database of hashes of
+# spam emails. Set the pyzor configuration directory to something sane.
+# The default is ~/.pyzor. We used to use that, so we'll kill that old
+# directory. Then write the public pyzor server to its servers file.
+# That will prevent an automatic download on first use, and also means
+# we can skip 'pyzor discover', both of which are currently broken by
+# something happening on Sourceforge (#496).
+rm -rf ~/.pyzor
+tools/editconf.py /etc/spamassassin/local.cf -s \
+	pyzor_options="--homedir /etc/spamassassin/pyzor"
+echo "public.pyzor.org:24441" > /etc/spamassassin/pyzor/servers
+# check with: pyzor --homedir /etc/mail/spamassassin/pyzor ping
 
 # Configure spampd:
 # * Pass messages on to docevot on port 10026. This is actually the default setting but we don't
