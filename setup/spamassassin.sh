@@ -32,6 +32,7 @@ tools/editconf.py /etc/default/spamassassin \
 rm -rf ~/.pyzor
 tools/editconf.py /etc/spamassassin/local.cf -s \
 	pyzor_options="--homedir /etc/spamassassin/pyzor"
+mkdir -p /etc/spamassassin/pyzor
 echo "public.pyzor.org:24441" > /etc/spamassassin/pyzor/servers
 # check with: pyzor --homedir /etc/mail/spamassassin/pyzor ping
 
