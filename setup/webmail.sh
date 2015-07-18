@@ -49,7 +49,7 @@ if [ $needs_update == 1 ]; then
 	# install roundcube
 	echo installing Roundcube webmail $VERSION...
 	wget_verify \
-		http://downloads.sourceforge.net/project/roundcubemail/roundcubemail/$VERSION/roundcubemail-$VERSION.tar.gz \
+		https://mailinabox.email/mirror/roundcubemail-$VERSION.tar.gz \
 		$HASH \
 		/tmp/roundcube.tgz
 	tar -C /usr/local/lib -zxf /tmp/roundcube.tgz
