@@ -8,6 +8,8 @@ This is a minor update to v0.11, which was a major update. Please read v0.11's a
 
 * v0.12b was posted shortly after the initial posting of v0.12 correcting a minor regression in v0.12 related to creating aliases targetting multiple addresses.
 
+* v0.12c was posted on July 19, 2015 to work around the current Sourceforge.net outage: pyzor's remote server is now hard-coded rather than accessing a file hosted on Sourceforge, and roundcube is now downloaded from a Mail-in-a-Box mirror rather than from Sourceforge.
+
 * The administrator@ alias was incorrectly created starting with v0.11. If your first install was v0.11, check that the administrator@ alias forwards mail to you.
 * Intrusion detection rules (fail2ban) are relaxed (i.e. less is blocked).
 * SSL certificates could not be installed for the new automatic 'www.' redirect domains.
