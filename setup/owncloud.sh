@@ -31,7 +31,6 @@ if [ ! -f $STORAGE_ROOT/owncloud/config.php ] \
 fi
 
 # Check if ownCloud dir exist, and check if version matches owncloud_ver (if either doesn't - install/upgrade)
-DID_OWNCLOUD_UPGRADE=0
 if [ ! -d /usr/local/lib/owncloud/ ] \
 	|| ! grep -q $owncloud_ver /usr/local/lib/owncloud/version.php; then
 
@@ -67,9 +66,9 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 	# that error.
 	chown -f -R www-data.www-data $STORAGE_ROOT/owncloud /usr/local/lib/owncloud
 
-	# Run the upgrade script.
-	hide_output sudo -u www-data php /usr/local/lib/owncloud/occ upgrade
-	DID_OWNCLOUD_UPGRADE=1
+	# Run the upgrade script. Then check for success (0=ok, 3=no upgrade needed).
+	sudo -u www-data php /usr/local/lib/owncloud/occ upgrade
+	if [ \( $? -ne 0 \) -a \( $? -ne 3 \) ]; then exit 1; fi
 fi
 
 # ### Configuring ownCloud
@@ -158,12 +157,11 @@ hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable 
 hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable contacts
 hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable calendar
 
-if [ $DID_OWNCLOUD_UPGRADE -gt 0 ]; then
-	# When upgrading, run the upgrade script again now that apps are enabled. It seems like
-	# the first upgrade at the top won't work because apps may be disabled during upgrade?
-	# This command will fail if there's nothing to upgrade.
-	hide_output sudo -u www-data php /usr/local/lib/owncloud/occ upgrade
-fi
+# When upgrading, run the upgrade script again now that apps are enabled. It seems like
+# the first upgrade at the top won't work because apps may be disabled during upgrade?
+# Check for success (0=ok, 3=no upgrade needed).
+sudo -u www-data php /usr/local/lib/owncloud/occ upgrade
+if [ \( $? -ne 0 \) -a \( $? -ne 3 \) ]; then exit 1; fi
 
 # Set PHP FPM values to support large file uploads
 # (semicolon is the comment character in this file, hashes produce deprecation warnings)
