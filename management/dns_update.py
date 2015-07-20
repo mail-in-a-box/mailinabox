@@ -799,6 +799,7 @@ def get_secondary_dns(custom_dns, mode=None):
 			if mode == None:
 				# Just return the setting.
 				values.append(hostname)
+				continue
 
 			# This is a hostname. Before including in zone xfr lines,
 			# resolve to an IP address. Otherwise just return the hostname.
