@@ -24,32 +24,52 @@ def safe_domain_name(name):
     return urllib.parse.quote(name, safe='')
 
 def sort_domains(domain_names, env):
-    # Put domain names in a nice sorted order. For web_update, PRIMARY_HOSTNAME
-    # must appear first so it becomes the nginx default server.
-    
-    # First group PRIMARY_HOSTNAME and its subdomains, then parent domains of PRIMARY_HOSTNAME, then other domains.
-    groups = ( [], [], [] )
-    for d in domain_names:
-        if d == env['PRIMARY_HOSTNAME'] or d.endswith("." + env['PRIMARY_HOSTNAME']):
-            groups[0].append(d)
-        elif env['PRIMARY_HOSTNAME'].endswith("." + d):
-            groups[1].append(d)
+    # Put domain names in a nice sorted order.
+
+    # The nice order will group domain names by DNS zone, i.e. the top-most
+    # domain name that we serve that ecompasses a set of subdomains. Map
+    # each of the domain names to the zone that contains them. Walk the domains
+    # from shortest to longest since zones are always shorter than their
+    # subdomains.
+    zones = { }
+    for domain in sorted(domain_names, key=lambda d : len(d)):
+        for z in zones.values():
+            if domain.endswith("." + z):
+                # We found a parent domain already in the list.
+                zones[domain] = z
+                break
         else:
-            groups[2].append(d)
+            # 'break' did not occur: there is no parent domain, so it is its
+            # own zone.
+            zones[domain] = domain
 
-    # Within each group, sort parent domains before subdomains and after that sort lexicographically.
-    def sort_group(group):
-        # Find the top-most domains.
-        top_domains = sorted(d for d in group if len([s for s in group if d.endswith("." + s)]) == 0)
-        ret = []
-        for d in top_domains:
-            ret.append(d)
-            ret.extend( sort_group([s for s in group if s.endswith("." + d)]) )
-        return ret
-        
-    groups = [sort_group(g) for g in groups]
+    # Sort the zones.
+    zone_domains = sorted(zones.values(),
+      key = lambda d : (
+        # PRIMARY_HOSTNAME or the zone that contains it is always first.
+        not (d == env['PRIMARY_HOSTNAME'] or env['PRIMARY_HOSTNAME'].endswith("." + d)),
 
-    return groups[0] + groups[1] + groups[2]
+        # Then just dumb lexicographically.
+        d,
+      ))
+
+    # Now sort the domain names that fall within each zone.
+    domain_names = sorted(domain_names,
+      key = lambda d : (
+        # First by zone.
+        zone_domains.index(zones[d]),
+
+        # PRIMARY_HOSTNAME is always first within the zone that contains it.
+        d != env['PRIMARY_HOSTNAME'],
+
+        # Followed by any of its subdomains.
+        not d.endswith("." + env['PRIMARY_HOSTNAME']),
+
+        # Then in right-to-left lexicographic order of the .-separated parts of the name.
+        list(reversed(d.split("."))),
+      ))
+    
+    return domain_names
 
 def sort_email_addresses(email_addresses, env):
     email_addresses = set(email_addresses)
@@ -200,3 +220,12 @@ def wait_for_service(port, public, env, timeout):
 			if time.perf_counter() > start+timeout:
 				return False
 		time.sleep(min(timeout/4, 1))
+
+if __name__ == "__main__":
+	from dns_update import get_dns_domains
+	from web_update import get_web_domains, get_default_www_redirects
+	env = load_environment()
+	domains = get_dns_domains(env) | set(get_web_domains(env) + get_default_www_redirects(env))
+	domains = sort_domains(domains, env)
+	for domain in domains:
+		print(domain)

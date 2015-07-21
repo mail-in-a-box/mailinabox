@@ -19,6 +19,7 @@ System:
 * ownCloud updated to version 8.1.0.
 * When upgrading, network checks like blocked port 25 are now skipped.
 * Tweaks to the intrusion detection rules for IMAP.
+* Improve the sort order of the domains in the status checks.
 
 v0.12c (July 19, 2015)
 ----------------------
