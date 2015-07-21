@@ -1,14 +1,39 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+Mail:
+
+* Outbound mail headers (the Recieved: header) are tweaked to possibly improve deliverability.
+* Some MIME messages would hang Roundcube due to a missing package.
+
+DNS:
+
+* The secondary nameservers option in the control panel now accepts more than one nameserver and a special xfr:IP format to specify zone-transfer-only IP addresses.
+* A TLSA record is added for HTTPS for DNSSEC-aware clients that support it.
+
+System:
+
+* ownCloud updated to version 8.1.0.
+* When upgrading, network checks like blocked port 25 are now skipped.
+* Tweaks to the intrusion detection rules for IMAP.
+
+v0.12c (July 19, 2015)
+----------------------
+
+v0.12c was posted to work around the current Sourceforge.net outage: pyzor's remote server is now hard-coded rather than accessing a file hosted on Sourceforge, and roundcube is now downloaded from a Mail-in-a-Box mirror rather than from Sourceforge.
+
+v0.12b (July 4, 2015)
+---------------------
+
+This version corrects a minor regression in v0.12 related to creating aliases targetting multiple addresses.
+
 v0.12 (July 3, 2015)
 --------------------
 
 This is a minor update to v0.11, which was a major update. Please read v0.11's advisories.
-
-* v0.12b was posted shortly after the initial posting of v0.12 correcting a minor regression in v0.12 related to creating aliases targetting multiple addresses.
-
-* v0.12c was posted on July 19, 2015 to work around the current Sourceforge.net outage: pyzor's remote server is now hard-coded rather than accessing a file hosted on Sourceforge, and roundcube is now downloaded from a Mail-in-a-Box mirror rather than from Sourceforge.
 
 * The administrator@ alias was incorrectly created starting with v0.11. If your first install was v0.11, check that the administrator@ alias forwards mail to you.
 * Intrusion detection rules (fail2ban) are relaxed (i.e. less is blocked).
@@ -18,6 +43,10 @@ This is a minor update to v0.11, which was a major update. Please read v0.11's a
 * SSL certificates with SAN domains with IDNA encoding were broken in v0.11.
 * Some IDNA functionality was using IDNA 2003 rather than IDNA 2008.
 
+v0.11b (June 29, 2015)
+----------------------
+
+v0.11b was posted shortly after the initial posting of v0.11 to correct a missing dependency for the new PPA.
 
 v0.11 (June 29, 2015)
 ---------------------
@@ -26,7 +55,6 @@ Advisories:
 * Users can no longer spoof arbitrary email addresses in outbound mail. When sending mail, the email address configured in your mail client must match the SMTP login username being used, or the email address must be an alias with the SMTP login username listed as one of the alias's targets.
 * This update replaces your DKIM signing key with a stronger key. Because of DNS caching/propagation, mail sent within a few hours after this update could be marked as spam by recipients. If you use External DNS, you will need to update your DNS records.
 * The box will now install software from a new Mail-in-a-Box PPA on Launchpad.net, where we are distributing two of our own packages: a patched postgrey and dovecot-lucene.
-* v0.11b was posted shortly after the initial posting of v0.11 correcting a missing dependency for the new PPA.
 
 Mail:
 * Greylisting will now let some reputable senders pass through immediately.
