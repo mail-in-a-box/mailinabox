@@ -21,7 +21,7 @@ source /etc/mailinabox.conf # load global vars
 # These dependencies are from `apt-cache showpkg roundcube-core`.
 apt_install \
 	dbconfig-common \
-	php5 php5-sqlite php5-mcrypt php5-intl php5-json php5-common php-auth php-net-smtp php-net-socket php-net-sieve php-mail-mime php-crypt-gpg php5-gd php5-pspell \
+	php5 php5-sqlite php5-mcrypt php5-intl php5-json php5-common php-auth php-net-smtp php-net-socket php-net-sieve php-mail-mime php-mail-mimedecode php-crypt-gpg php5-gd php5-pspell \
 	tinymce libjs-jquery libjs-jquery-mousewheel libmagic1
 
 # We used to install Roundcube from Ubuntu, without triggering the dependencies #NODOC
