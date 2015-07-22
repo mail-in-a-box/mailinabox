@@ -28,5 +28,9 @@ contact.admin.command mail -s "Munin notification ${var:host}" administrator@$PR
 contact.admin.always_send warning critical
 EOF
 
+# ensure munin-node knows the name of this machine
+tools/editconf.py /etc/munin/munin-node.conf -s \
+	host_name=$PRIMARY_HOSTNAME
+
 # generate initial statistics so the directory isn't empty
 sudo -u munin munin-cron
