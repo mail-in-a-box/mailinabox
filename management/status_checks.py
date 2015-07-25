@@ -16,7 +16,7 @@ from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, 
 from web_update import get_web_domains, get_default_www_redirects, get_domain_ssl_files
 from mailconfig import get_mail_domains, get_mail_aliases
 
-from utils import shell, sort_domains, load_env_vars_from_file
+from utils import shell, sort_domains, load_env_vars_from_file, load_settings
 
 def run_checks(rounded_values, env, output, pool):
 	# run systems checks
@@ -149,6 +149,7 @@ def check_service(i, service, env):
 def run_system_checks(rounded_values, env, output):
 	check_ssh_password(env, output)
 	check_software_updates(env, output)
+	check_miab_version(env, output)
 	check_system_aliases(env, output)
 	check_free_disk_space(rounded_values, env, output)
 
@@ -805,11 +806,11 @@ def list_apt_updates(apt_update=True):
 	return pkgs
 
 def what_version_is_this(env):
-	# This function runs `git describe` on the Mail-in-a-Box installation directory.
+	# This function runs `git describe --abbrev=0` on the Mail-in-a-Box installation directory.
 	# Git may not be installed and Mail-in-a-Box may not have been cloned from github,
 	# so this function may raise all sorts of exceptions.
 	miab_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-	tag = shell("check_output", ["/usr/bin/git", "describe"], env={"GIT_DIR": os.path.join(miab_dir, '.git')}).strip()
+	tag = shell("check_output", ["/usr/bin/git", "describe", "--abbrev=0"], env={"GIT_DIR": os.path.join(miab_dir, '.git')}).strip()
 	return tag
 
 def get_latest_miab_version():
@@ -817,6 +818,17 @@ def get_latest_miab_version():
 	# the script to determine the current product version.
 	import urllib.request
 	return re.search(b'TAG=(.*)', urllib.request.urlopen("https://mailinabox.email/bootstrap.sh?ping=1").read()).group(1).decode("utf8")
+
+def check_miab_version(env, output):
+
+	config = load_settings()
+
+	if config['PRIVACY'] == 'True':
+		output.print_warning("Mail-in-a-Box version check disabled.")
+	elif what_version_is_this(env) != get_latest_miab_version():
+		output.print_error("Mail-in-a-Box is outdated. To find the latest version and for upgrade instructions, see https://mailinabox.email/. ")
+	else:
+		output.print_ok("Mail-in-a-Box is up to date. You are running version %s." % what_version_is_this(env))
 
 def run_and_output_changes(env, pool, send_via_email):
 	import json

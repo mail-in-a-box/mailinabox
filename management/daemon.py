@@ -402,6 +402,24 @@ def backup_status():
 	from backup import backup_status
 	return json_response(backup_status(env))
 
+@app.route('/system/privacy/enable', methods=["POST"])
+@authorized_personnel_only
+def privacy_status_enable():
+	config = utils.load_settings()
+	config["PRIVACY"] = 'True'
+	utils.write_settings(config)
+
+	return "Ok"
+
+@app.route('/system/privacy/disable', methods=["POST"])
+@authorized_personnel_only
+def privacy_status_disable():
+	config = utils.load_settings()
+	config["PRIVACY"] = 'False'
+	utils.write_settings(config)
+
+	return "Ok"
+
 # MUNIN
 
 @app.route('/munin/')

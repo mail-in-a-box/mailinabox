@@ -13,6 +13,28 @@ def load_env_vars_from_file(fn):
     for line in open(fn): env.setdefault(*line.strip().split("=", 1))
     return env
 
+# Settings
+settings_root = os.path.join(load_environment()["STORAGE_ROOT"], '/')
+default_settings = {
+	"PRIVACY": 'TRUE'
+}
+
+def write_settings(newconfig):
+	with open(os.path.join(settings_root, 'settings.yaml'), "w") as f:
+		f.write(rtyaml.dump(newconfig))
+
+def load_settings():
+    try:
+        config = rtyaml.load(open(os.path.join(settings_root, 'settings.yaml'), "w"))
+        if not isinstance(config, dict): raise ValueError() # caught below
+    except:
+        return default_settings
+
+        merged_config = default_settings.copy()
+        merged_config.update(config)
+
+        return config
+
 def save_environment(env):
     with open("/etc/mailinabox.conf", "w") as f:
         for k, v in env.items():
