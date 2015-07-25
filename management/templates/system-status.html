@@ -35,13 +35,16 @@
   white-space: pre-wrap;
 }
 </style>
-
 <table id="system-checks" class="table" style="max-width: 60em">
   <thead>
   </thead>
   <tbody>
   </tbody>
 </table>
+
+<h4>Privacy Setting</h4>
+<p>By deactivating the adavanced privacy feature your Mail-in-a-Box will contact a remote server to check if a new version got released.</p>
+<p>Advanced Privacy <a onclick="enable_privacy()" href="">On</a> | <a onclick="disable_privacy()" href="">Off</a></p>
 
 <script>
 function show_system_status() {
@@ -82,5 +85,17 @@ function show_system_status() {
         }
       }
     })
+}
+function enable_privacy() {
+  api(
+    "/system/privacy/enable",
+    "Post",
+    { });
+}
+function disable_privacy() {
+  api(
+    "/system/privacy/disable",
+    "Post",
+    { });
 }
 </script>
