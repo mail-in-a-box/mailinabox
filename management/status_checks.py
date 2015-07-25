@@ -33,7 +33,7 @@ def run_checks(rounded_values, env, output, pool):
 	# (ignore errors; if bind9/rndc isn't running we'd already report
 	# that in run_services checks.)
 	shell('check_call', ["/usr/sbin/rndc", "flush"], trap=True)
-	
+
 	run_system_checks(rounded_values, env, output)
 
 	# perform other checks asynchronously
@@ -149,6 +149,7 @@ def check_service(i, service, env):
 def run_system_checks(rounded_values, env, output):
 	check_ssh_password(env, output)
 	check_software_updates(env, output)
+	check_miab_version(env, output)
 	check_system_aliases(env, output)
 	check_free_disk_space(rounded_values, env, output)
 
@@ -264,10 +265,10 @@ def run_domain_checks_on_domain(domain, rounded_time, env, dns_domains, dns_zone
 
 	if domain == env["PRIMARY_HOSTNAME"]:
 		check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles)
-		
+
 	if domain in dns_domains:
 		check_dns_zone(domain, env, output, dns_zonefiles)
-		
+
 	if domain in mail_domains:
 		check_mail_domain(domain, env, output)
 
@@ -644,7 +645,7 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 				return "*." + idna.encode(dns_name[2:]).decode('ascii')
 			else:
 				return idna.encode(dns_name).decode('ascii')
-				
+
 		try:
 			sans = cert.extensions.get_extension_for_oid(OID_SUBJECT_ALTERNATIVE_NAME).value.get_values_for_type(DNSName)
 			for san in sans:
@@ -805,11 +806,11 @@ def list_apt_updates(apt_update=True):
 	return pkgs
 
 def what_version_is_this(env):
-	# This function runs `git describe` on the Mail-in-a-Box installation directory.
+	# This function runs `git describe --abbrev=0` on the Mail-in-a-Box installation directory.
 	# Git may not be installed and Mail-in-a-Box may not have been cloned from github,
 	# so this function may raise all sorts of exceptions.
 	miab_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-	tag = shell("check_output", ["/usr/bin/git", "describe"], env={"GIT_DIR": os.path.join(miab_dir, '.git')}).strip()
+	tag = shell("check_output", ["/usr/bin/git", "describe", "--abbrev=0"], env={"GIT_DIR": os.path.join(miab_dir, '.git')}).strip()
 	return tag
 
 def get_latest_miab_version():
@@ -817,6 +818,14 @@ def get_latest_miab_version():
 	# the script to determine the current product version.
 	import urllib.request
 	return re.search(b'TAG=(.*)', urllib.request.urlopen("https://mailinabox.email/bootstrap.sh?ping=1").read()).group(1).decode("utf8")
+
+def check_miab_version(env, output):
+	if env['PRIVACY'] == 'True':
+		output.print_warning("Mail-in-a-Box version check disabled.")
+	elif what_version_is_this(env) != get_latest_miab_version():
+		output.print_error("Mail-in-a-Box is outdated. To find the latest version and for upgrade instructions, see https://mailinabox.email/. ")
+	else:
+		output.print_ok("Mail-in-a-Box is up to date. You are running version %s." % what_version_is_this(env))
 
 def run_and_output_changes(env, pool, send_via_email):
 	import json
@@ -884,7 +893,7 @@ def run_and_output_changes(env, pool, send_via_email):
 			if category not in cur_status:
 				out.add_heading(category)
 				out.print_warning("This section was removed.")
-	
+
 	if send_via_email:
 		# If there were changes, send off an email.
 		buf = out.buf.getvalue()
@@ -896,7 +905,7 @@ def run_and_output_changes(env, pool, send_via_email):
 			msg['To'] = "administrator@%s" % env['PRIMARY_HOSTNAME']
 			msg['Subject'] = "[%s] Status Checks Change Notice" % env['PRIMARY_HOSTNAME']
 			msg.set_payload(buf, "UTF-8")
-	
+
 			# send to administrator@
 			import smtplib
 			mailserver = smtplib.SMTP('localhost', 25)
@@ -906,7 +915,7 @@ def run_and_output_changes(env, pool, send_via_email):
 				"administrator@%s" % env['PRIMARY_HOSTNAME'], # RCPT TO
 				msg.as_string())
 			mailserver.quit()
-		
+
 	# Store the current status checks output for next time.
 	os.makedirs(os.path.dirname(cache_fn), exist_ok=True)
 	with open(cache_fn, "w") as f:

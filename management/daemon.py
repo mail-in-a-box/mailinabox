@@ -45,7 +45,7 @@ def authorized_personnel_only(viewfunc):
 
 		# Authorized to access an API view?
 		if "admin" in privs:
-			# Call view func.	
+			# Call view func.
 			return viewfunc(*args, **kwargs)
 		elif not error:
 			error = "You are not an administrator."
@@ -283,7 +283,7 @@ def dns_set_record(qname, rtype="A"):
 				# make this action set (replace all records for this
 				# qname-rtype pair) rather than add (add a new record).
 				action = "set"
-		
+
 		elif request.method == "DELETE":
 			if value == '':
 				# Delete all records for this qname-type pair.
@@ -402,6 +402,20 @@ def backup_status():
 	from backup import backup_status
 	return json_response(backup_status(env))
 
+@app.route('/system/privacy/enable', methods=["POST"])
+@authorized_personnel_only
+def privacy_status_enable():
+	env.update({'PRIVACY' : 'True'})
+	utils.save_environment(env)
+	return "Ok"
+
+@app.route('/system/privacy/disable', methods=["POST"])
+@authorized_personnel_only
+def privacy_status_disable():
+	env.update({'PRIVACY' : 'False'})
+	utils.save_environment(env)
+	return "Ok"
+
 # MUNIN
 
 @app.route('/munin/')
@@ -432,4 +446,3 @@ if __name__ == '__main__':
 
 	# Start the application server. Listens on 127.0.0.1 (IPv4 only).
 	app.run(port=10222)
-

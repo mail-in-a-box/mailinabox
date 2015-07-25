@@ -114,7 +114,6 @@
             </li>
             <li><a href="#sync_guide" onclick="return show_panel(this);">Contacts/Calendar</a></li>
             <li><a href="#web" onclick="return show_panel(this);">Web</a></li>
-            <li><a href="#version" onclick="return show_panel(this);">Version</a></li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
             <li><a href="#" onclick="do_logout(); return false;" style="color: white">Log out?</a></li>
@@ -168,10 +167,6 @@
       {% include "ssl.html" %}
       </div>
 
-      <div id="panel_version" class="admin_panel">
-      {% include "version.html" %}
-      </div>
-
       <hr>
 
       <footer>
@@ -215,8 +210,8 @@ $(function() {
   $('#global_modal').on('shown.bs.modal', function (e) {
     // set focus to first input in the global modal's body
     var input = $('#global_modal .modal-body input');
-    if (input.length > 0) $(input[0]).focus();  
-  })  
+    if (input.length > 0) $(input[0]).focus();
+  })
   $('#global_modal .btn-danger').click(function() {
     // Don't take action now. Wait for the modal to be totally hidden
     // so that we don't attempt to show another modal while this one
@@ -231,7 +226,7 @@ $(function() {
     if (global_modal_state == null) global_modal_state = 1; // cancel if the user hit ESC or clicked outside of the modal
     if (global_modal_funcs && global_modal_funcs[global_modal_state])
       global_modal_funcs[global_modal_state]();
-  })  
+  })
 })
 
 function show_modal_error(title, message, callback) {
@@ -294,7 +289,7 @@ function ajax(options) {
   };
   options.error = function(jqxhr) {
     hide_loading_indicator();
-    if (!old_error) 
+    if (!old_error)
       show_modal_error("Error", "Something went wrong, sorry.")
     else
       old_error(jqxhr.responseText, jqxhr);
