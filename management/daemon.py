@@ -402,6 +402,24 @@ def backup_status():
 	from backup import backup_status
 	return json_response(backup_status(env))
 
+@app.route('/system/backup/get-custom')
+@authorized_personnel_only
+def backup_get_custom():
+	from backup import get_backup_config
+	return json_response(get_backup_config())
+
+@app.route('/system/backup/set-custom', methods=["POST"])
+@authorized_personnel_only
+def backup_set_custom():
+	from backup import backup_set_custom
+	return json_response(backup_set_custom(
+		request.form.get('target', ''),
+		request.form.get('target_user', ''),
+		request.form.get('target_pass', ''),
+		request.form.get('target_type', ''),
+		request.form.get('max_age', '')
+	))
+
 # MUNIN
 
 @app.route('/munin/')
@@ -432,4 +450,3 @@ if __name__ == '__main__':
 
 	# Start the application server. Listens on 127.0.0.1 (IPv4 only).
 	app.run(port=10222)
-
