@@ -46,7 +46,7 @@ def backup_status(env):
 		if rd.days > 1: return "%d days, %d hours" % (rd.days, rd.hours)
 		if rd.days == 1: return "%d day, %d hours" % (rd.days, rd.hours)
 		return "%d hours, %d minutes" % (rd.hours, rd.minutes)
-	
+
 	def parse_line(line):
 		keys = line.strip().split()
 		date = dateutil.parser.parse(keys[1])
@@ -57,28 +57,28 @@ def backup_status(env):
 			"full": keys[0] == "full",
 			"size": int(keys[2]) * 250 * 1000000,
 		}
-	
-	# Write duplicity status to file
-	shell('check_call', [
+
+	# Get duplicity collection status
+	collection_status = shell('check_output', [
 		"/usr/bin/duplicity",
 		"collection-status",
 		"--archive-dir", backup_cache_dir,
 		"--log-file", os.path.join(backup_root, "duplicity_status"),
 		"--gpg-options", "--cipher-algo=AES256",
+		"--log-fd", "1",
 		config["target"],
 		],
 		get_env())
 
-	# Parse backup data from status file
-	with open(os.path.join(backup_root, "duplicity_status"),'r') as status_file:
-		for line in status_file:
-			if line.startswith(" full") or line.startswith(" inc"):
-				backup = parse_line(line)
-				backups[backup["date"]] = backup
+	# Split multi line string into list
+	collection_status = collection_status.split('\n')
 
-	# Remove status file
-	os.remove(os.path.join(backup_root, "duplicity_status"))
-	
+	# Parse backup data from status file
+	for line in collection_status:
+		if line.startswith(" full") or line.startswith(" inc"):
+			backup = parse_line(line)
+			backups[backup["date"]] = backup
+
 	# Ensure the rows are sorted reverse chronologically.
 	# This is relied on by should_force_full() and the next step.
 	backups = sorted(backups.values(), key = lambda b : b["date"], reverse=True)
