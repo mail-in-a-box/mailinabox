@@ -6,8 +6,11 @@ source setup/functions.sh
 apt_install python3-flask links duplicity libyaml-dev python3-dnspython python3-dateutil \
 	build-essential libssl-dev libffi-dev python3-dev python-pip
 hide_output pip3 install --upgrade rtyaml email_validator idna cryptography boto
+
+# duplicity uses python 2 so we need to use the python 2 package of boto
 hide_output pip install --upgrade boto
-	# email_validator is repeated in setup/questions.sh
+
+# email_validator is repeated in setup/questions.sh
 
 # Create a backup directory and a random key for encrypting backups.
 mkdir -p $STORAGE_ROOT/backup
