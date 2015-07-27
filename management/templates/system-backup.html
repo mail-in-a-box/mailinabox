@@ -142,8 +142,9 @@ function show_custom_backup() {
       "GET",
       { },
       function(r) {
+        var target_type = r.target.split(':')[0]
         $("#target").val(r.target);
-        $("#target-type").val(r.target_type);
+        $("#target-type").val(target_type);
         $("#target-user").val(r.target_user);
         $("#target-pass").val(r.target_pass);
         $("#max-age").val(r.max_age_in_days);
@@ -162,7 +163,6 @@ function set_custom_backup() {
     "POST",
     {
       target: target,
-      target_type: target_type,
       target_user: target_user,
       target_pass: target_pass,
       max_age: max_age

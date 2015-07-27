@@ -22,8 +22,7 @@ backup_root = os.path.join(load_environment()["STORAGE_ROOT"], 'backup')
 # that depends on it is this many days old.
 default_config = {
 	"max_age_in_days": 3,
-	"target": "file://" + os.path.join(backup_root, 'encrypted'),
-	"target_type": "file"
+	"target": "file://" + os.path.join(backup_root, 'encrypted')
 }
 
 def backup_status(env):
@@ -164,12 +163,16 @@ def get_env():
 	
 	env = { "PASSPHRASE" : get_passphrase() }
 	
-	if config["target_type"] == 's3':
+	if get_target_type(config) == 's3':
 		env["AWS_ACCESS_KEY_ID"] = config["target_user"]
 		env["AWS_SECRET_ACCESS_KEY"] = config["target_pass"]
 	
 	return env
-
+	
+def get_target_type(config):
+	protocol = config["target"].split(":")[0]
+	return protocol
+	
 def perform_backup(full_backup):
 	env = load_environment()
 
@@ -267,7 +270,7 @@ def perform_backup(full_backup):
 
 	# Change ownership of backups to the user-data user, so that the after-bcakup
 	# script can access them.
-	if config["target_type"] == 'file':
+	if get_target_type(config) == 'file':
 		shell('check_call', ["/bin/chown", "-R", env["STORAGE_USER"], backup_dir])
 
 	# Execute a post-backup script that does the copying to a remote server.
@@ -304,7 +307,7 @@ def run_duplicity_verification():
 	], get_env())
 
 
-def backup_set_custom(target, target_user, target_pass, target_type, max_age):
+def backup_set_custom(target, target_user, target_pass, max_age):
 	config = get_backup_config()
 	
 	# max_age must be an int
@@ -314,7 +317,6 @@ def backup_set_custom(target, target_user, target_pass, target_type, max_age):
 	config["target"] = target
 	config["target_user"] = target_user
 	config["target_pass"] = target_pass
-	config["target_type"] = target_type
 	config["max_age_in_days"] = max_age
 	
 	write_backup_config(config)
