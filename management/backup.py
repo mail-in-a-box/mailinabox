@@ -18,10 +18,11 @@ from utils import exclusive_process, load_environment, shell, wait_for_service
 backup_root = os.path.join(load_environment()["STORAGE_ROOT"], 'backup')
 
 # Default settings
-# Destroy backups when the most recent increment in the chain
-# that depends on it is this many days old.
+# min_age_in_days is the minimum amount of days a backup will be kept before
+# it is eligble to be removed. Backups might be kept much longer if there's no
+# new full backup yet.
 default_config = {
-	"max_age_in_days": 3,
+	"min_age_in_days": 3,
 	"target": "file://" + os.path.join(backup_root, 'encrypted')
 }
 
@@ -101,11 +102,11 @@ def backup_status(env):
 	# when the threshold is met.
 	deleted_in = None
 	if incremental_count > 0 and first_full_size is not None:
-		deleted_in = "approx. %d days" % round(config["max_age_in_days"] + (.5 * first_full_size - incremental_size) / (incremental_size/incremental_count) + .5)
+		deleted_in = "approx. %d days" % round(config["min_age_in_days"] + (.5 * first_full_size - incremental_size) / (incremental_size/incremental_count) + .5)
 
 	# When will a backup be deleted?
 	saw_full = False
-	days_ago = now - datetime.timedelta(days=config["max_age_in_days"])
+	days_ago = now - datetime.timedelta(days=config["min_age_in_days"])
 	for bak in backups:
 		if deleted_in:
 			# Subsequent backups are deleted when the most recent increment
@@ -248,7 +249,7 @@ def perform_backup(full_backup):
 	shell('check_call', [
 		"/usr/bin/duplicity",
 		"remove-older-than",
-		"%dD" % config["max_age_in_days"],
+		"%dD" % config["min_age_in_days"],
 		"--archive-dir", backup_cache_dir,
 		"--force",
 		config["target"]
@@ -307,17 +308,17 @@ def run_duplicity_verification():
 	], get_env())
 
 
-def backup_set_custom(target, target_user, target_pass, max_age):
+def backup_set_custom(target, target_user, target_pass, min_age):
 	config = get_backup_config()
 	
-	# max_age must be an int
-	if isinstance(max_age, str):
-		max_age = int(max_age)
+	# min_age must be an int
+	if isinstance(min_age, str):
+		min_age = int(min_age)
 
 	config["target"] = target
 	config["target_user"] = target_user
 	config["target_pass"] = target_pass
-	config["max_age_in_days"] = max_age
+	config["min_age_in_days"] = min_age
 	
 	write_backup_config(config)
 
@@ -332,11 +333,7 @@ def get_backup_config():
 
 	merged_config = default_config.copy()
 	merged_config.update(config)
-	
-	# max_age must be an int
-	if isinstance(merged_config["max_age_in_days"], str):
-		merged_config["max_age_in_days"] = int(merged_config["max_age_in_days"])
-	
+
 	return config
 
 def write_backup_config(newconfig):
