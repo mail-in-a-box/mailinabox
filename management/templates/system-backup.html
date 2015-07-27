@@ -138,7 +138,7 @@ function show_system_backup() {
 
 function show_custom_backup() {
     api(
-      "/system/backup/custom",
+      "/system/backup/config",
       "GET",
       { },
       function(r) {
@@ -159,7 +159,7 @@ function set_custom_backup() {
   var target_pass = $("#target-pass").val();
   var min_age = $("#min-age").val();
   api(
-    "/system/backup/custom",
+    "/system/backup/config",
     "POST",
     {
       target: target,
