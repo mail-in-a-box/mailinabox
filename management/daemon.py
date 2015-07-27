@@ -402,13 +402,13 @@ def backup_status():
 	from backup import backup_status
 	return json_response(backup_status(env))
 
-@app.route('/system/backup/get-custom')
+@app.route('/system/backup/config', methods=["GET"])
 @authorized_personnel_only
 def backup_get_custom():
 	from backup import get_backup_config
 	return json_response(get_backup_config())
 
-@app.route('/system/backup/set-custom', methods=["POST"])
+@app.route('/system/backup/config', methods=["POST"])
 @authorized_personnel_only
 def backup_set_custom():
 	from backup import backup_set_custom
