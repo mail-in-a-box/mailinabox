@@ -293,7 +293,6 @@ def run_duplicity_verification():
 	env = load_environment()
 	config = get_backup_config()
 	backup_cache_dir = os.path.join(backup_root, 'cache')
-	backup_dir = os.path.join(backup_root, 'encrypted')
 
 	shell('check_call', [
 		"/usr/bin/duplicity",
