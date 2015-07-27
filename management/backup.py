@@ -31,7 +31,11 @@ def backup_status(env):
 	# Use the number of volumes to estimate the size.
 	config = get_backup_config()
 	now = datetime.datetime.now(dateutil.tz.tzlocal())
-	
+
+	backups = { }
+	backup_dir = os.path.join(backup_root, 'encrypted')
+	backup_cache_dir = os.path.join(backup_root, 'cache')
+
 	def reldate(date, ref, clip):
 		if ref < date: return clip
 		rd = dateutil.relativedelta.relativedelta(ref, date)
@@ -57,16 +61,13 @@ def backup_status(env):
 	shell('check_call', [
 		"/usr/bin/duplicity",
 		"collection-status",
+		"--archive-dir", backup_cache_dir,
 		"--log-file", os.path.join(backup_root, "duplicity_status"),
 		"--gpg-options", "--cipher-algo=AES256",
 		config["target"],
 		],
 		get_env())
-		
 
-	backups = { }
-	backup_dir = os.path.join(backup_root, 'encrypted')
-	
 	# Parse backup data from status file
 	with open(os.path.join(backup_root, "duplicity_status"),'r') as status_file:
 		for line in status_file:
