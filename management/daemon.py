@@ -416,7 +416,7 @@ def backup_set_custom():
 		request.form.get('target', ''),
 		request.form.get('target_user', ''),
 		request.form.get('target_pass', ''),
-		request.form.get('max_age', '')
+		request.form.get('min_age', '')
 	))
 
 # MUNIN
