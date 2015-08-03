@@ -227,6 +227,7 @@ def perform_backup(full_backup):
 			"/usr/bin/duplicity",
 			"full" if full_backup else "incr",
 			"--archive-dir", backup_cache_dir,
+			"--asynchronous-upload",
 			"--exclude", backup_root,
 			"--volsize", "250",
 			"--gpg-options", "--cipher-algo=AES256",
