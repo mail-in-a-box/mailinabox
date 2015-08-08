@@ -4,7 +4,7 @@ import os, os.path, re, json
 
 from functools import wraps
 
-from flask import Flask, request, render_template, abort, Response, send_from_directory
+from flask import Flask, request, render_template, abort, Response, send_from_directory, jsonify
 
 import auth, utils
 from mailconfig import get_mail_users, get_mail_users_ex, get_admins, add_mail_user, set_mail_password, remove_mail_user
@@ -399,8 +399,25 @@ def do_updates():
 @app.route('/system/backup/status')
 @authorized_personnel_only
 def backup_status():
-	from backup import backup_status
-	return json_response(backup_status(env))
+	from backup import backup_status, get_backup_log
+	return jsonify(backups=backup_status(env), log=get_backup_log())
+
+@app.route('/system/backup/config', methods=["GET"])
+@authorized_personnel_only
+def backup_get_custom():
+	from backup import get_backup_config
+	return jsonify(get_backup_config())
+
+@app.route('/system/backup/config', methods=["POST"])
+@authorized_personnel_only
+def backup_set_custom():
+	from backup import backup_set_custom
+	return json_response(backup_set_custom(
+		request.form.get('target', ''),
+		request.form.get('target_user', ''),
+		request.form.get('target_pass', ''),
+		request.form.get('min_age', '')
+	))
 
 # MUNIN
 
@@ -432,4 +449,3 @@ if __name__ == '__main__':
 
 	# Start the application server. Listens on 127.0.0.1 (IPv4 only).
 	app.run(port=10222)
-

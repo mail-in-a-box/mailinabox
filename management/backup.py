@@ -10,20 +10,38 @@
 
 import os, os.path, shutil, glob, re, datetime
 import dateutil.parser, dateutil.relativedelta, dateutil.tz
+import rtyaml
+import logging
 
 from utils import exclusive_process, load_environment, shell, wait_for_service
 
-# Destroy backups when the most recent increment in the chain
-# that depends on it is this many days old.
-keep_backups_for_days = 3
+# Root folder
+backup_root = os.path.join(load_environment()["STORAGE_ROOT"], 'backup')
+
+# Setup logging
+log_path = os.path.join(backup_root, 'backup.log')
+logging.basicConfig(filename=log_path, format='%(levelname)s at %(asctime)s: %(message)s')
+
+# Default settings
+# min_age_in_days is the minimum amount of days a backup will be kept before
+# it is eligble to be removed. Backups might be kept much longer if there's no
+# new full backup yet.
+default_config = {
+	"min_age_in_days": 3,
+	"target": "file://" + os.path.join(backup_root, 'encrypted')
+}
 
 def backup_status(env):
 	# What is the current status of backups?
-	# Loop through all of the files in STORAGE_ROOT/backup/encrypted to
-	# get a list of all of the backups taken and sum up file sizes to
-	# see how large the storage is.
-
+	# Query duplicity to get a list of all backups.
+	# Use the number of volumes to estimate the size.
+	config = get_backup_config()
 	now = datetime.datetime.now(dateutil.tz.tzlocal())
+
+	backups = { }
+	backup_dir = os.path.join(backup_root, 'encrypted')
+	backup_cache_dir = os.path.join(backup_root, 'cache')
+
 	def reldate(date, ref, clip):
 		if ref < date: return clip
 		rd = dateutil.relativedelta.relativedelta(ref, date)
@@ -34,27 +52,37 @@ def backup_status(env):
 		if rd.days == 1: return "%d day, %d hours" % (rd.days, rd.hours)
 		return "%d hours, %d minutes" % (rd.hours, rd.minutes)
 
-	backups = { }
-	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
-	backup_dir = os.path.join(backup_root, 'encrypted')
-	os.makedirs(backup_dir, exist_ok=True) # os.listdir fails if directory does not exist
-	for fn in os.listdir(backup_dir):
-		m = re.match(r"duplicity-(full|full-signatures|(inc|new-signatures)\.(?P<incbase>\d+T\d+Z)\.to)\.(?P<date>\d+T\d+Z)\.", fn)
-		if not m: raise ValueError(fn)
+	def parse_line(line):
+		keys = line.strip().split()
+		date = dateutil.parser.parse(keys[1])
+		return {
+			"date": keys[1],
+			"date_str": date.strftime("%x %X"),
+			"date_delta": reldate(date, now, "the future?"),
+			"full": keys[0] == "full",
+			"size": int(keys[2]) * 250 * 1000000,
+		}
 
-		key = m.group("date")
-		if key not in backups:
-			date = dateutil.parser.parse(m.group("date"))
-			backups[key] = {
-				"date": m.group("date"),
-				"date_str": date.strftime("%x %X"),
-				"date_delta": reldate(date, now, "the future?"),
-				"full": m.group("incbase") is None,
-				"previous": m.group("incbase"),
-				"size": 0,
-			}
+	# Get duplicity collection status
+	collection_status = shell('check_output', [
+		"/usr/bin/duplicity",
+		"collection-status",
+		"--archive-dir", backup_cache_dir,
+		"--log-file", os.path.join(backup_root, "duplicity_status"),
+		"--gpg-options", "--cipher-algo=AES256",
+		"--log-fd", "1",
+		config["target"],
+		],
+		get_env())
 
-		backups[key]["size"] += os.path.getsize(os.path.join(backup_dir, fn))
+	# Split multi line string into list
+	collection_status = collection_status.split('\n')
+
+	# Parse backup data from status file
+	for line in collection_status:
+		if line.startswith(" full") or line.startswith(" inc"):
+			backup = parse_line(line)
+			backups[backup["date"]] = backup
 
 	# Ensure the rows are sorted reverse chronologically.
 	# This is relied on by should_force_full() and the next step.
@@ -79,11 +107,11 @@ def backup_status(env):
 	# when the threshold is met.
 	deleted_in = None
 	if incremental_count > 0 and first_full_size is not None:
-		deleted_in = "approx. %d days" % round(keep_backups_for_days + (.5 * first_full_size - incremental_size) / (incremental_size/incremental_count) + .5)
+		deleted_in = "approx. %d days" % round(config["min_age_in_days"] + (.5 * first_full_size - incremental_size) / (incremental_size/incremental_count) + .5)
 
 	# When will a backup be deleted?
 	saw_full = False
-	days_ago = now - datetime.timedelta(days=keep_backups_for_days)
+	days_ago = now - datetime.timedelta(days=config["min_age_in_days"])
 	for bak in backups:
 		if deleted_in:
 			# Subsequent backups are deleted when the most recent increment
@@ -124,12 +152,39 @@ def should_force_full(env):
 		# (I love for/else blocks. Here it's just to show off.)
 		return True
 
+def get_passphrase():
+	# Get the encryption passphrase. secret_key.txt is 2048 random
+	# bits base64-encoded and with line breaks every 65 characters.
+	# gpg will only take the first line of text, so sanity check that
+	# that line is long enough to be a reasonable passphrase. It
+	# only needs to be 43 base64-characters to match AES256's key
+	# length of 32 bytes.
+	with open(os.path.join(backup_root, 'secret_key.txt')) as f:
+		passphrase = f.readline().strip()
+	if len(passphrase) < 43: raise Exception("secret_key.txt's first line is too short!")
+	
+	return passphrase
+
+def get_env():
+	config = get_backup_config()
+	
+	env = { "PASSPHRASE" : get_passphrase() }
+	
+	if get_target_type(config) == 's3':
+		env["AWS_ACCESS_KEY_ID"] = config["target_user"]
+		env["AWS_SECRET_ACCESS_KEY"] = config["target_pass"]
+	
+	return env
+	
+def get_target_type(config):
+	protocol = config["target"].split(":")[0]
+	return protocol
+	
 def perform_backup(full_backup):
 	env = load_environment()
 
 	exclusive_process("backup")
-
-	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
+	config = get_backup_config()
 	backup_cache_dir = os.path.join(backup_root, 'cache')
 	backup_dir = os.path.join(backup_root, 'encrypted')
 
@@ -169,17 +224,6 @@ def perform_backup(full_backup):
 	shell('check_call', ["/usr/sbin/service", "dovecot", "stop"])
 	shell('check_call', ["/usr/sbin/service", "postfix", "stop"])
 
-	# Get the encryption passphrase. secret_key.txt is 2048 random
-	# bits base64-encoded and with line breaks every 65 characters.
-	# gpg will only take the first line of text, so sanity check that
-	# that line is long enough to be a reasonable passphrase. It
-	# only needs to be 43 base64-characters to match AES256's key
-	# length of 32 bytes.
-	with open(os.path.join(backup_root, 'secret_key.txt')) as f:
-		passphrase = f.readline().strip()
-	if len(passphrase) < 43: raise Exception("secret_key.txt's first line is too short!")
-	env_with_passphrase = { "PASSPHRASE" : passphrase }
-
 	# Run a backup of STORAGE_ROOT (but excluding the backups themselves!).
 	# --allow-source-mismatch is needed in case the box's hostname is changed
 	# after the first backup. See #396.
@@ -188,14 +232,18 @@ def perform_backup(full_backup):
 			"/usr/bin/duplicity",
 			"full" if full_backup else "incr",
 			"--archive-dir", backup_cache_dir,
+			"--asynchronous-upload",
 			"--exclude", backup_root,
 			"--volsize", "250",
 			"--gpg-options", "--cipher-algo=AES256",
 			env["STORAGE_ROOT"],
-			"file://" + backup_dir,
-                        "--allow-source-mismatch"
+			config["target"],
+			"--allow-source-mismatch"
 			],
-			env_with_passphrase)
+			get_env())
+		logging.info("Backup successful")
+	except Exception as e:
+		logging.warn("Backup failed: {0}".format(e))
 	finally:
 		# Start services again.
 		shell('check_call', ["/usr/sbin/service", "dovecot", "start"])
@@ -207,33 +255,40 @@ def perform_backup(full_backup):
 
 	# Remove old backups. This deletes all backup data no longer needed
 	# from more than 3 days ago.
-	shell('check_call', [
-		"/usr/bin/duplicity",
-		"remove-older-than",
-		"%dD" % keep_backups_for_days,
-		"--archive-dir", backup_cache_dir,
-		"--force",
-		"file://" + backup_dir
-		],
-		env_with_passphrase)
+	try:
+		shell('check_call', [
+			"/usr/bin/duplicity",
+			"remove-older-than",
+			"%dD" % config["min_age_in_days"],
+			"--archive-dir", backup_cache_dir,
+			"--force",
+			config["target"]
+			],
+			get_env())
+	except Exception as e:
+		logging.warn("Removal of old backups failed: {0}".format(e))
 
 	# From duplicity's manual:
 	# "This should only be necessary after a duplicity session fails or is
 	# aborted prematurely."
 	# That may be unlikely here but we may as well ensure we tidy up if
 	# that does happen - it might just have been a poorly timed reboot.
-	shell('check_call', [
-		"/usr/bin/duplicity",
-		"cleanup",
-		"--archive-dir", backup_cache_dir,
-		"--force",
-		"file://" + backup_dir
-		],
-		env_with_passphrase)
+	try:
+		shell('check_call', [
+			"/usr/bin/duplicity",
+			"cleanup",
+			"--archive-dir", backup_cache_dir,
+			"--force",
+			config["target"]
+			],
+			get_env())
+	except Exception as e:
+		logging.warn("Cleanup of backups failed: {0}".format(e))
 
 	# Change ownership of backups to the user-data user, so that the after-bcakup
 	# script can access them.
-	shell('check_call', ["/bin/chown", "-R", env["STORAGE_USER"], backup_dir])
+	if get_target_type(config) == 'file':
+		shell('check_call', ["/bin/chown", "-R", env["STORAGE_USER"], backup_dir])
 
 	# Execute a post-backup script that does the copying to a remote server.
 	# Run as the STORAGE_USER user, not as root. Pass our settings in
@@ -241,8 +296,8 @@ def perform_backup(full_backup):
 	post_script = os.path.join(backup_root, 'after-backup')
 	if os.path.exists(post_script):
 		shell('check_call',
-			['su', env['STORAGE_USER'], '-c', post_script],
-			env=env)
+			['su', env['STORAGE_USER'], '-c', post_script, config["target"]],
+			env=get_env())
 
 	# Our nightly cron job executes system status checks immediately after this
 	# backup. Since it checks that dovecot and postfix are running, block for a
@@ -253,10 +308,9 @@ def perform_backup(full_backup):
 
 def run_duplicity_verification():
 	env = load_environment()
-	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
+	config = get_backup_config()
 	backup_cache_dir = os.path.join(backup_root, 'cache')
-	backup_dir = os.path.join(backup_root, 'encrypted')
-	env_with_passphrase = { "PASSPHRASE" : open(os.path.join(backup_root, 'secret_key.txt')).read() }
+
 	shell('check_call', [
 		"/usr/bin/duplicity",
 		"--verbosity", "info",
@@ -264,9 +318,52 @@ def run_duplicity_verification():
 		"--compare-data",
 		"--archive-dir", backup_cache_dir,
 		"--exclude", backup_root,
-		"file://" + backup_dir,
+		config["target"],
 		env["STORAGE_ROOT"],
-	], env_with_passphrase)
+	], get_env())
+
+
+def backup_set_custom(target, target_user, target_pass, min_age):
+	config = get_backup_config()
+	
+	# min_age must be an int
+	if isinstance(min_age, str):
+		min_age = int(min_age)
+
+	config["target"] = target
+	config["target_user"] = target_user
+	config["target_pass"] = target_pass
+	config["min_age_in_days"] = min_age
+	
+	write_backup_config(config)
+
+	return "Updated backup config"
+	
+def get_backup_config():
+	try:
+		config = rtyaml.load(open(os.path.join(backup_root, 'custom.yaml')))
+		if not isinstance(config, dict): raise ValueError() # caught below
+	except:
+		return default_config
+
+	merged_config = default_config.copy()
+	merged_config.update(config)
+
+	return config
+	
+def get_backup_log():
+	try:
+		fileHandle = open(log_path, 'r')
+		log = fileHandle.read()
+		fileHandle.close()
+	except:
+		log = ""
+
+	return log
+
+def write_backup_config(newconfig):
+	with open(os.path.join(backup_root, 'custom.yaml'), "w") as f:
+		f.write(rtyaml.dump(newconfig))
 
 if __name__ == "__main__":
 	import sys
@@ -274,6 +371,7 @@ if __name__ == "__main__":
 		# Run duplicity's verification command to check a) the backup files
 		# are readable, and b) report if they are up to date.
 		run_duplicity_verification()
+
 	else:
 		# Perform a backup. Add --full to force a full backup rather than
 		# possibly performing an incremental backup.
