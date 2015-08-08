@@ -11,11 +11,16 @@
 import os, os.path, shutil, glob, re, datetime
 import dateutil.parser, dateutil.relativedelta, dateutil.tz
 import rtyaml
+import logging
 
 from utils import exclusive_process, load_environment, shell, wait_for_service
 
 # Root folder
 backup_root = os.path.join(load_environment()["STORAGE_ROOT"], 'backup')
+
+# Setup logging
+log_path = os.path.join(backup_root, 'backup.log')
+logging.basicConfig(filename=log_path, format='%(levelname)s at %(asctime)s: %(message)s')
 
 # Default settings
 # min_age_in_days is the minimum amount of days a backup will be kept before
@@ -236,6 +241,9 @@ def perform_backup(full_backup):
 			"--allow-source-mismatch"
 			],
 			get_env())
+		logging.info("Backup successful")
+	except Exception as e:
+		logging.warn("Backup failed: {0}".format(e))
 	finally:
 		# Start services again.
 		shell('check_call', ["/usr/sbin/service", "dovecot", "start"])
@@ -247,29 +255,35 @@ def perform_backup(full_backup):
 
 	# Remove old backups. This deletes all backup data no longer needed
 	# from more than 3 days ago.
-	shell('check_call', [
-		"/usr/bin/duplicity",
-		"remove-older-than",
-		"%dD" % config["min_age_in_days"],
-		"--archive-dir", backup_cache_dir,
-		"--force",
-		config["target"]
-		],
-		get_env())
+	try:
+		shell('check_call', [
+			"/usr/bin/duplicity",
+			"remove-older-than",
+			"%dD" % config["min_age_in_days"],
+			"--archive-dir", backup_cache_dir,
+			"--force",
+			config["target"]
+			],
+			get_env())
+	except Exception as e:
+		logging.warn("Removal of old backups failed: {0}".format(e))
 
 	# From duplicity's manual:
 	# "This should only be necessary after a duplicity session fails or is
 	# aborted prematurely."
 	# That may be unlikely here but we may as well ensure we tidy up if
 	# that does happen - it might just have been a poorly timed reboot.
-	shell('check_call', [
-		"/usr/bin/duplicity",
-		"cleanup",
-		"--archive-dir", backup_cache_dir,
-		"--force",
-		config["target"]
-		],
-		get_env())
+	try:
+		shell('check_call', [
+			"/usr/bin/duplicity",
+			"cleanup",
+			"--archive-dir", backup_cache_dir,
+			"--force",
+			config["target"]
+			],
+			get_env())
+	except Exception as e:
+		logging.warn("Cleanup of backups failed: {0}".format(e))
 
 	# Change ownership of backups to the user-data user, so that the after-bcakup
 	# script can access them.
@@ -336,6 +350,16 @@ def get_backup_config():
 	merged_config.update(config)
 
 	return config
+	
+def get_backup_log():
+	try:
+		fileHandle = open(log_path, 'r')
+		log = fileHandle.read()
+		fileHandle.close()
+	except:
+		log = ""
+
+	return log
 
 def write_backup_config(newconfig):
 	with open(os.path.join(backup_root, 'custom.yaml'), "w") as f:

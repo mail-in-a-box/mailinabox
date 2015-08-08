@@ -68,6 +68,11 @@
   <tbody>
   </tbody>
 </table>
+
+<h3>Backup logs</h3>
+<pre id="backup-log"></pre>
+
+
 <script>
 
 function toggle_form() {
@@ -104,22 +109,24 @@ function show_system_backup() {
     "GET",
     { },
     function(r) {
-      $('#backup-location').text(r.directory);
-      $('#backup-encpassword-file').text(r.encpwfile);
+      var status = r.backups;
+      var log = r.log;
+      $('#backup-location').text(status.directory);
+      $('#backup-encpassword-file').text(status.encpwfile);
 
       $('#backup-status tbody').html("");
       var total_disk_size = 0;
 
-      if (r.backups.length == 0) {
+      if (status.backups.length == 0) {
         var tr = $('<tr><td colspan="3">No backups have been made yet.</td></tr>');
         $('#backup-status tbody').append(tr);
       }
 
-      for (var i = 0; i < r.backups.length; i++) {
-        var b = r.backups[i];
+      for (var i = 0; i < status.backups.length; i++) {
+        var b = status.backups[i];
         var tr = $('<tr/>');
         if (b.full) tr.addClass("full-backup");
-        tr.append( $('<td/>').text(b.date_str + " " + r.tz) );
+        tr.append( $('<td/>').text(b.date_str + " " + status.tz) );
         tr.append( $('<td/>').text(b.date_delta + " ago") );
         tr.append( $('<td/>').text(b.full ? "full" : "increment") );
         tr.append( $('<td style="text-align: right"/>').text( nice_size(b.size)) );
@@ -133,6 +140,8 @@ function show_system_backup() {
       }
 
       $('#backup-total-size').text(nice_size(total_disk_size));
+      
+      $('#backup-log').text(log || 'No backup logs yet');
     })
 }
 
