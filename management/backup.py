@@ -273,7 +273,7 @@ def perform_backup(full_backup):
 	if os.path.exists(post_script):
 		shell('check_call',
 			['su', env['STORAGE_USER'], '-c', post_script, config["target"]],
-			env=get_env(env))
+			env=env)
 
 	# Our nightly cron job executes system status checks immediately after this
 	# backup. Since it checks that dovecot and postfix are running, block for a
