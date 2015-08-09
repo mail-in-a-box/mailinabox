@@ -24,6 +24,10 @@ def backup_status(env):
 	config = get_backup_config(env)
 	now = datetime.datetime.now(dateutil.tz.tzlocal())
 
+	# Are backups dissbled?
+	if config["target"] == "off":
+		return { }
+
 	backups = { }
 	backup_cache_dir = os.path.join(backup_root, 'cache')
 
@@ -173,6 +177,10 @@ def perform_backup(full_backup):
 	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
 	backup_cache_dir = os.path.join(backup_root, 'cache')
 	backup_dir = os.path.join(backup_root, 'encrypted')
+
+	# Are backups dissbled?
+	if config["target"] == "off":
+		return
 
 	# In an older version of this script, duplicity was called
 	# such that it did not encrypt the backups it created (in
@@ -357,8 +365,8 @@ def backup_set_custom(env, target, target_user, target_pass, min_age):
 
 	# Validate.
 	try:
-		if config["target"] != "local":
-			# "local" isn't supported by the following function, which expects a full url in the target key,
+		if config["target"] not in ("off", "local"):
+			# these aren't supported by the following function, which expects a full url in the target key,
 			# which is what is there except when loading the config prior to saving
 			list_target_files(config)
 	except ValueError as e:

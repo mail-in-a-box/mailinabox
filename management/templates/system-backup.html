@@ -14,6 +14,7 @@
     <label for="backup-target-type" class="col-sm-2 control-label">Backup to:</label>
     <div class="col-sm-2">
       <select class="form-control" rows="1" id="backup-target-type" onchange="toggle_form()">
+        <option value="off">Nowhere (Disable Backups)</option>
         <option value="local">{{hostname}}</option>
         <option value="s3">Amazon S3</option>
       </select>
@@ -29,7 +30,7 @@
       <div>Backups are stored in an Amazon Web Services S3 bucket. You must have an AWS account already.</div>
     </div>
   </div>
-  <div class="form-group">
+  <div class="form-group backup-target-local backup-target-s3">
     <label for="min-age" class="col-sm-2 control-label">How many days should backups be kept?</label>
     <div class="col-sm-8">
       <input type="number" class="form-control" rows="1" id="min-age">
@@ -122,7 +123,11 @@ function show_system_backup() {
       $('#backup-status tbody').html("");
       var total_disk_size = 0;
 
-      if (r.backups.length == 0) {
+      if (typeof r.backups == "undefined") {
+        var tr = $('<tr><td colspan="3">Backups are turned off.</td></tr>');
+        $('#backup-status tbody').append(tr);
+        return;
+      } else if (r.backups.length == 0) {
         var tr = $('<tr><td colspan="3">No backups have been made yet.</td></tr>');
         $('#backup-status tbody').append(tr);
       }
@@ -157,6 +162,8 @@ function show_custom_backup() {
       function(r) {
         if (r.target == "file://" + r.file_target_directory) {
           $("#backup-target-type").val("local");
+        } else if (r.target == "off") {
+          $("#backup-target-type").val("off");
         } else if (r.target.substring(0, 5) == "s3://") {
           $("#backup-target-type").val("s3");
 	  var hostpath = r.target.substring(5).split('/');
@@ -179,7 +186,7 @@ function set_custom_backup() {
   var target_pass = $("#backup-target-pass").val();
   
   var target;
-  if (target_type == "local")
+  if (target_type == "local" || target_type == "off")
     target = target_type;
   else if (target_type == "s3")
     target = "s3://" + $("#backup-target-s3-host").val() + "/" + $("#backup-target-s3-path").val();
@@ -196,7 +203,7 @@ function set_custom_backup() {
     },
     function(r) {
       // Responses are multiple lines of pre-formatted text.
-      show_modal_error("Backup configuration", $("<pre/>").text(r));
+      show_modal_error("Backup configuration", $("<pre/>").text(r), function() { show_system_backup(); }); // refresh after modal
     },
     function(r) {
       show_modal_error("Backup configuration (error)", r);
