@@ -10,20 +10,27 @@
 
 import os, os.path, shutil, glob, re, datetime
 import dateutil.parser, dateutil.relativedelta, dateutil.tz
+import rtyaml
 
 from utils import exclusive_process, load_environment, shell, wait_for_service
 
-# Destroy backups when the most recent increment in the chain
-# that depends on it is this many days old.
-keep_backups_for_days = 3
-
 def backup_status(env):
-	# What is the current status of backups?
-	# Loop through all of the files in STORAGE_ROOT/backup/encrypted to
-	# get a list of all of the backups taken and sum up file sizes to
-	# see how large the storage is.
+	# Root folder
+	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
 
+	# What is the current status of backups?
+	# Query duplicity to get a list of all backups.
+	# Use the number of volumes to estimate the size.
+	config = get_backup_config(env)
 	now = datetime.datetime.now(dateutil.tz.tzlocal())
+
+	# Are backups dissbled?
+	if config["target"] == "off":
+		return { }
+
+	backups = { }
+	backup_cache_dir = os.path.join(backup_root, 'cache')
+
 	def reldate(date, ref, clip):
 		if ref < date: return clip
 		rd = dateutil.relativedelta.relativedelta(ref, date)
@@ -34,27 +41,38 @@ def backup_status(env):
 		if rd.days == 1: return "%d day, %d hours" % (rd.days, rd.hours)
 		return "%d hours, %d minutes" % (rd.hours, rd.minutes)
 
-	backups = { }
-	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
-	backup_dir = os.path.join(backup_root, 'encrypted')
-	os.makedirs(backup_dir, exist_ok=True) # os.listdir fails if directory does not exist
-	for fn in os.listdir(backup_dir):
+	# Get duplicity collection status and parse for a list of backups.
+	def parse_line(line):
+		keys = line.strip().split()
+		date = dateutil.parser.parse(keys[1])
+		return {
+			"date": keys[1],
+			"date_str": date.strftime("%x %X"),
+			"date_delta": reldate(date, now, "the future?"),
+			"full": keys[0] == "full",
+			"size": 0, # collection-status doesn't give us the size
+			"volumes": keys[2], # number of archive volumes for this backup (not really helpful)
+		}
+	collection_status = shell('check_output', [
+		"/usr/bin/duplicity",
+		"collection-status",
+		"--archive-dir", backup_cache_dir,
+		"--gpg-options", "--cipher-algo=AES256",
+		"--log-fd", "1",
+		config["target"],
+		],
+		get_env(env))
+	for line in collection_status.split('\n'):
+		if line.startswith(" full") or line.startswith(" inc"):
+			backup = parse_line(line)
+			backups[backup["date"]] = backup
+
+	# Look at the target to get the sizes of each of the backups. There is more than one file per backup.
+	for fn, size in list_target_files(config):
 		m = re.match(r"duplicity-(full|full-signatures|(inc|new-signatures)\.(?P<incbase>\d+T\d+Z)\.to)\.(?P<date>\d+T\d+Z)\.", fn)
-		if not m: raise ValueError(fn)
-
+		if not m: continue # not a part of a current backup chain
 		key = m.group("date")
-		if key not in backups:
-			date = dateutil.parser.parse(m.group("date"))
-			backups[key] = {
-				"date": m.group("date"),
-				"date_str": date.strftime("%x %X"),
-				"date_delta": reldate(date, now, "the future?"),
-				"full": m.group("incbase") is None,
-				"previous": m.group("incbase"),
-				"size": 0,
-			}
-
-		backups[key]["size"] += os.path.getsize(os.path.join(backup_dir, fn))
+		backups[key]["size"] += size
 
 	# Ensure the rows are sorted reverse chronologically.
 	# This is relied on by should_force_full() and the next step.
@@ -79,11 +97,11 @@ def backup_status(env):
 	# when the threshold is met.
 	deleted_in = None
 	if incremental_count > 0 and first_full_size is not None:
-		deleted_in = "approx. %d days" % round(keep_backups_for_days + (.5 * first_full_size - incremental_size) / (incremental_size/incremental_count) + .5)
+		deleted_in = "approx. %d days" % round(config["min_age_in_days"] + (.5 * first_full_size - incremental_size) / (incremental_size/incremental_count) + .5)
 
 	# When will a backup be deleted?
 	saw_full = False
-	days_ago = now - datetime.timedelta(days=keep_backups_for_days)
+	days_ago = now - datetime.timedelta(days=config["min_age_in_days"])
 	for bak in backups:
 		if deleted_in:
 			# Subsequent backups are deleted when the most recent increment
@@ -99,8 +117,6 @@ def backup_status(env):
 			bak["deleted_in"] = deleted_in
 
 	return {
-		"directory": backup_dir,
-		"encpwfile": os.path.join(backup_root, 'secret_key.txt'),
 		"tz": now.tzname(),
 		"backups": backups,
 	}
@@ -124,14 +140,47 @@ def should_force_full(env):
 		# (I love for/else blocks. Here it's just to show off.)
 		return True
 
+def get_passphrase(env):
+	# Get the encryption passphrase. secret_key.txt is 2048 random
+	# bits base64-encoded and with line breaks every 65 characters.
+	# gpg will only take the first line of text, so sanity check that
+	# that line is long enough to be a reasonable passphrase. It
+	# only needs to be 43 base64-characters to match AES256's key
+	# length of 32 bytes.
+	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
+	with open(os.path.join(backup_root, 'secret_key.txt')) as f:
+		passphrase = f.readline().strip()
+	if len(passphrase) < 43: raise Exception("secret_key.txt's first line is too short!")
+	
+	return passphrase
+
+def get_env(env):
+	config = get_backup_config(env)
+	
+	env = { "PASSPHRASE" : get_passphrase(env) }
+	
+	if get_target_type(config) == 's3':
+		env["AWS_ACCESS_KEY_ID"] = config["target_user"]
+		env["AWS_SECRET_ACCESS_KEY"] = config["target_pass"]
+	
+	return env
+	
+def get_target_type(config):
+	protocol = config["target"].split(":")[0]
+	return protocol
+	
 def perform_backup(full_backup):
 	env = load_environment()
 
 	exclusive_process("backup")
-
+	config = get_backup_config(env)
 	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
 	backup_cache_dir = os.path.join(backup_root, 'cache')
 	backup_dir = os.path.join(backup_root, 'encrypted')
+
+	# Are backups dissbled?
+	if config["target"] == "off":
+		return
 
 	# In an older version of this script, duplicity was called
 	# such that it did not encrypt the backups it created (in
@@ -169,17 +218,6 @@ def perform_backup(full_backup):
 	shell('check_call', ["/usr/sbin/service", "dovecot", "stop"])
 	shell('check_call', ["/usr/sbin/service", "postfix", "stop"])
 
-	# Get the encryption passphrase. secret_key.txt is 2048 random
-	# bits base64-encoded and with line breaks every 65 characters.
-	# gpg will only take the first line of text, so sanity check that
-	# that line is long enough to be a reasonable passphrase. It
-	# only needs to be 43 base64-characters to match AES256's key
-	# length of 32 bytes.
-	with open(os.path.join(backup_root, 'secret_key.txt')) as f:
-		passphrase = f.readline().strip()
-	if len(passphrase) < 43: raise Exception("secret_key.txt's first line is too short!")
-	env_with_passphrase = { "PASSPHRASE" : passphrase }
-
 	# Run a backup of STORAGE_ROOT (but excluding the backups themselves!).
 	# --allow-source-mismatch is needed in case the box's hostname is changed
 	# after the first backup. See #396.
@@ -192,10 +230,10 @@ def perform_backup(full_backup):
 			"--volsize", "250",
 			"--gpg-options", "--cipher-algo=AES256",
 			env["STORAGE_ROOT"],
-			"file://" + backup_dir,
-                        "--allow-source-mismatch"
+			config["target"],
+			"--allow-source-mismatch"
 			],
-			env_with_passphrase)
+			get_env(env))
 	finally:
 		# Start services again.
 		shell('check_call', ["/usr/sbin/service", "dovecot", "start"])
@@ -210,12 +248,12 @@ def perform_backup(full_backup):
 	shell('check_call', [
 		"/usr/bin/duplicity",
 		"remove-older-than",
-		"%dD" % keep_backups_for_days,
+		"%dD" % config["min_age_in_days"],
 		"--archive-dir", backup_cache_dir,
 		"--force",
-		"file://" + backup_dir
+		config["target"]
 		],
-		env_with_passphrase)
+		get_env(env))
 
 	# From duplicity's manual:
 	# "This should only be necessary after a duplicity session fails or is
@@ -227,13 +265,14 @@ def perform_backup(full_backup):
 		"cleanup",
 		"--archive-dir", backup_cache_dir,
 		"--force",
-		"file://" + backup_dir
+		config["target"]
 		],
-		env_with_passphrase)
+		get_env(env))
 
 	# Change ownership of backups to the user-data user, so that the after-bcakup
 	# script can access them.
-	shell('check_call', ["/bin/chown", "-R", env["STORAGE_USER"], backup_dir])
+	if get_target_type(config) == 'file':
+		shell('check_call', ["/bin/chown", "-R", env["STORAGE_USER"], backup_dir])
 
 	# Execute a post-backup script that does the copying to a remote server.
 	# Run as the STORAGE_USER user, not as root. Pass our settings in
@@ -241,7 +280,7 @@ def perform_backup(full_backup):
 	post_script = os.path.join(backup_root, 'after-backup')
 	if os.path.exists(post_script):
 		shell('check_call',
-			['su', env['STORAGE_USER'], '-c', post_script],
+			['su', env['STORAGE_USER'], '-c', post_script, config["target"]],
 			env=env)
 
 	# Our nightly cron job executes system status checks immediately after this
@@ -254,9 +293,9 @@ def perform_backup(full_backup):
 def run_duplicity_verification():
 	env = load_environment()
 	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
+	config = get_backup_config(env)
 	backup_cache_dir = os.path.join(backup_root, 'cache')
-	backup_dir = os.path.join(backup_root, 'encrypted')
-	env_with_passphrase = { "PASSPHRASE" : open(os.path.join(backup_root, 'secret_key.txt')).read() }
+
 	shell('check_call', [
 		"/usr/bin/duplicity",
 		"--verbosity", "info",
@@ -264,9 +303,113 @@ def run_duplicity_verification():
 		"--compare-data",
 		"--archive-dir", backup_cache_dir,
 		"--exclude", backup_root,
-		"file://" + backup_dir,
+		config["target"],
 		env["STORAGE_ROOT"],
-	], env_with_passphrase)
+	], get_env(env))
+
+def list_target_files(config):
+	import urllib.parse
+	try:
+		p = urllib.parse.urlparse(config["target"])
+	except ValueError:
+		return "invalid target"
+
+	if p.scheme == "file":
+		return [(fn, os.path.getsize(os.path.join(p.path, fn))) for fn in os.listdir(p.path)]
+
+	elif p.scheme == "s3":
+		# match to a Region
+		import boto.s3
+		from boto.exception import BotoServerError
+		for region in boto.s3.regions():
+			if region.endpoint == p.hostname:
+				break
+		else:
+			raise ValueError("Invalid S3 region/host.")
+
+		bucket = p.path[1:].split('/')[0]
+		path = '/'.join(p.path[1:].split('/')[1:]) + '/'
+		if bucket == "":
+			raise ValueError("Enter an S3 bucket name.")
+
+		# connect to the region & bucket
+		try:
+			conn = region.connect(aws_access_key_id=config["target_user"], aws_secret_access_key=config["target_pass"])
+			bucket = conn.get_bucket(bucket)
+		except BotoServerError as e:
+			if e.status == 403:
+				raise ValueError("Invalid S3 access key or secret access key.")
+			elif e.status == 404:
+				raise ValueError("Invalid S3 bucket name.")
+			elif e.status == 301:
+				raise ValueError("Incorrect region for this bucket.")
+			raise ValueError(e.reason)
+
+		return [(key.name[len(path):], key.size) for key in bucket.list(prefix=path)]
+
+	else:
+		raise ValueError(config["target"])
+
+
+def backup_set_custom(env, target, target_user, target_pass, min_age):
+	config = get_backup_config(env, for_save=True)
+	
+	# min_age must be an int
+	if isinstance(min_age, str):
+		min_age = int(min_age)
+
+	config["target"] = target
+	config["target_user"] = target_user
+	config["target_pass"] = target_pass
+	config["min_age_in_days"] = min_age
+
+	# Validate.
+	try:
+		if config["target"] not in ("off", "local"):
+			# these aren't supported by the following function, which expects a full url in the target key,
+			# which is what is there except when loading the config prior to saving
+			list_target_files(config)
+	except ValueError as e:
+		return str(e)
+	
+	write_backup_config(env, config)
+
+	return "Updated backup config"
+	
+def get_backup_config(env, for_save=False):
+	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
+
+	# Defaults.
+	config = {
+		"min_age_in_days": 3,
+		"target": "local",
+	}
+
+	# Merge in anything written to custom.yaml.
+	try:
+		custom_config = rtyaml.load(open(os.path.join(backup_root, 'custom.yaml')))
+		if not isinstance(custom_config, dict): raise ValueError() # caught below
+		config.update(custom_config)
+	except:
+		pass
+
+	# When updating config.yaml, don't do any further processing on what we find.
+	if for_save:
+		return config
+
+	# helper fields for the admin
+	config["file_target_directory"] = os.path.join(backup_root, 'encrypted')
+	config["enc_pw_file"] = os.path.join(backup_root, 'secret_key.txt')
+	if config["target"] == "local":
+		# Expand to the full URL.
+		config["target"] = "file://" + config["file_target_directory"]
+
+	return config
+
+def write_backup_config(env, newconfig):
+	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
+	with open(os.path.join(backup_root, 'custom.yaml'), "w") as f:
+		f.write(rtyaml.dump(newconfig))
 
 if __name__ == "__main__":
 	import sys
@@ -274,6 +417,7 @@ if __name__ == "__main__":
 		# Run duplicity's verification command to check a) the backup files
 		# are readable, and b) report if they are up to date.
 		run_duplicity_verification()
+
 	else:
 		# Perform a backup. Add --full to force a full backup rather than
 		# possibly performing an incremental backup.

@@ -5,17 +5,77 @@
 
 <h2>Backup Status</h2>
 
-<h3>Copying Backup Files</h3>
+<p>The box makes an incremental backup each night. By default the backup is stored on the machine itself, but you can also have it stored on Amazon S3</p>
 
-<p>The box makes an incremental backup each night. The backup is stored on the machine itself. You are responsible for copying the backup files off of the machine.</p>
+<h3>Configuration</h3>
 
-<p>Many cloud providers make this easy by allowing you to take snapshots of the machine's disk.</p>
+<form class="form-horizontal" role="form" onsubmit="set_custom_backup(); return false;">
+  <div class="form-group">
+    <label for="backup-target-type" class="col-sm-2 control-label">Backup to:</label>
+    <div class="col-sm-2">
+      <select class="form-control" rows="1" id="backup-target-type" onchange="toggle_form()">
+        <option value="off">Nowhere (Disable Backups)</option>
+        <option value="local">{{hostname}}</option>
+        <option value="s3">Amazon S3</option>
+      </select>
+    </div>
+  </div>
+  <div class="form-group backup-target-local">
+    <div class="col-sm-10 col-sm-offset-2">
+      <div>Backups are stored on this machine&rsquo;s own hard disk. You are responsible for periodically using SFTP (FTP over SSH) to copy the backup files from <tt id="backup-location"></tt> to a safe location. These files are encrypted, so they are safe to store anywhere.</div>
+    </div>
+  </div>
+  <div class="form-group backup-target-s3">
+    <div class="col-sm-10 col-sm-offset-2">
+      <div>Backups are stored in an Amazon Web Services S3 bucket. You must have an AWS account already.</div>
+    </div>
+  </div>
+  <div class="form-group backup-target-local backup-target-s3">
+    <label for="min-age" class="col-sm-2 control-label">How many days should backups be kept?</label>
+    <div class="col-sm-8">
+      <input type="number" class="form-control" rows="1" id="min-age">
+    </div>
+  </div>
+  <div class="form-group backup-target-s3">
+    <label for="backup-target-s3-host" class="col-sm-2 control-label">S3 Region</label>
+    <div class="col-sm-8">
+      <select class="form-control" rows="1" id="backup-target-s3-host">
+        {% for name, host in backup_s3_hosts %}
+          <option value="{{host}}">{{name}}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+  <div class="form-group backup-target-s3">
+    <label for="backup-target-s3-path" class="col-sm-2 control-label">S3 Path</label>
+    <div class="col-sm-8">
+      <input type="text" placeholder="your-bucket-name/backup-directory" class="form-control" rows="1" id="backup-target-s3-path">
+    </div>
+  </div>
+  <div class="form-group backup-target-s3">
+    <label for="backup-target-user" class="col-sm-2 control-label">S3 Access Key</label>
+    <div class="col-sm-8">
+      <input type="text" class="form-control" rows="1" id="backup-target-user">
+    </div>
+  </div>
+  <div class="form-group backup-target-s3">
+    <label for="backup-target-pass" class="col-sm-2 control-label">S3 Secret Access Key</label>
+    <div class="col-sm-8">
+      <input type="text" class="form-control" rows="1" id="backup-target-pass">
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="col-sm-offset-2 col-sm-11">
+      <button id="set-s3-backup-button" type="submit" class="btn btn-primary">Save</button>
+    </div>
+  </div>
+</form>
 
-<p>You can also use SFTP (FTP over SSH) to copy files from <tt id="backup-location"></tt>. These files are encrypted, so they are safe to store anywhere. Copy the encryption password from <tt id="backup-encpassword-file"></tt> also but keep it in a safe location.</p>
+<p> Copy the encryption password from <tt id="backup-encpassword-file"></tt> to a safe and secure location. You will need this file to decrypt backup files.</div></p>
 
-<h3>Current Backups</h3>
+<h3>Available Backups</h3>
 
-<p>The backup directory currently contains the backups listed below. The total size on disk of the backups is currently <span id="backup-total-size"></span>.</p>
+<p>The backup location currently contains the backups listed below. The total size of the backups is currently <span id="backup-total-size"></span>.</p>
 
 <table id="backup-status" class="table" style="width: auto">
   <thead>
@@ -27,8 +87,14 @@
   <tbody>
   </tbody>
 </table>
-
 <script>
+
+function toggle_form() {
+  var target_type = $("#backup-target-type").val();
+  $(".backup-target-local, .backup-target-s3").hide();
+  $(".backup-target-" + target_type).show();
+}
+
 function nice_size(bytes) {
   var powers = ['bytes', 'KB', 'MB', 'GB', 'TB'];
   while (true) {
@@ -46,19 +112,22 @@ function nice_size(bytes) {
 }
 
 function show_system_backup() {
+  show_custom_backup()
+  
   $('#backup-status tbody').html("<tr><td colspan='2' class='text-muted'>Loading...</td></tr>")
   api(
     "/system/backup/status",
     "GET",
     { },
     function(r) {
-      $('#backup-location').text(r.directory);
-      $('#backup-encpassword-file').text(r.encpwfile);
-
       $('#backup-status tbody').html("");
       var total_disk_size = 0;
 
-      if (r.backups.length == 0) {
+      if (typeof r.backups == "undefined") {
+        var tr = $('<tr><td colspan="3">Backups are turned off.</td></tr>');
+        $('#backup-status tbody').append(tr);
+        return;
+      } else if (r.backups.length == 0) {
         var tr = $('<tr><td colspan="3">No backups have been made yet.</td></tr>');
         $('#backup-status tbody').append(tr);
       }
@@ -82,5 +151,63 @@ function show_system_backup() {
 
       $('#backup-total-size').text(nice_size(total_disk_size));
     })
+}
+
+function show_custom_backup() {
+    $(".backup-target-local, .backup-target-s3").hide();
+    api(
+      "/system/backup/config",
+      "GET",
+      { },
+      function(r) {
+        if (r.target == "file://" + r.file_target_directory) {
+          $("#backup-target-type").val("local");
+        } else if (r.target == "off") {
+          $("#backup-target-type").val("off");
+        } else if (r.target.substring(0, 5) == "s3://") {
+          $("#backup-target-type").val("s3");
+	  var hostpath = r.target.substring(5).split('/');
+          var host = hostpath.shift();
+          $("#backup-target-s3-host").val(host);
+          $("#backup-target-s3-path").val(hostpath.join('/'));
+        }
+        $("#backup-target-user").val(r.target_user);
+        $("#backup-target-pass").val(r.target_pass);
+        $("#min-age").val(r.min_age_in_days);
+        $('#backup-location').text(r.file_target_directory);
+        $('#backup-encpassword-file').text(r.enc_pw_file);
+        toggle_form()
+      })
+}
+
+function set_custom_backup() {
+  var target_type = $("#backup-target-type").val();
+  var target_user = $("#backup-target-user").val();
+  var target_pass = $("#backup-target-pass").val();
+  
+  var target;
+  if (target_type == "local" || target_type == "off")
+    target = target_type;
+  else if (target_type == "s3")
+    target = "s3://" + $("#backup-target-s3-host").val() + "/" + $("#backup-target-s3-path").val();
+
+  var min_age = $("#min-age").val();
+  api(
+    "/system/backup/config",
+    "POST",
+    {
+      target: target,
+      target_user: target_user,
+      target_pass: target_pass,
+      min_age: min_age
+    },
+    function(r) {
+      // Responses are multiple lines of pre-formatted text.
+      show_modal_error("Backup configuration", $("<pre/>").text(r), function() { show_system_backup(); }); // refresh after modal
+    },
+    function(r) {
+      show_modal_error("Backup configuration (error)", r);
+    });
+  return false;
 }
 </script>

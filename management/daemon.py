@@ -90,13 +90,19 @@ def json_response(data):
 def index():
 	# Render the control panel. This route does not require user authentication
 	# so it must be safe!
+
 	no_users_exist = (len(get_mail_users(env)) == 0)
 	no_admins_exist = (len(get_admins(env)) == 0)
+
+	import boto.s3
+	backup_s3_hosts = [(r.name, r.endpoint) for r in boto.s3.regions()]
+
 	return render_template('index.html',
 		hostname=env['PRIMARY_HOSTNAME'],
 		storage_root=env['STORAGE_ROOT'],
 		no_users_exist=no_users_exist,
 		no_admins_exist=no_admins_exist,
+		backup_s3_hosts=backup_s3_hosts,
 	)
 
 @app.route('/me')
@@ -402,6 +408,23 @@ def backup_status():
 	from backup import backup_status
 	return json_response(backup_status(env))
 
+@app.route('/system/backup/config', methods=["GET"])
+@authorized_personnel_only
+def backup_get_custom():
+	from backup import get_backup_config
+	return json_response(get_backup_config(env))
+
+@app.route('/system/backup/config', methods=["POST"])
+@authorized_personnel_only
+def backup_set_custom():
+	from backup import backup_set_custom
+	return json_response(backup_set_custom(env,
+		request.form.get('target', ''),
+		request.form.get('target_user', ''),
+		request.form.get('target_pass', ''),
+		request.form.get('min_age', '')
+	))
+
 # MUNIN
 
 @app.route('/munin/')
@@ -432,4 +455,3 @@ if __name__ == '__main__':
 
 	# Start the application server. Listens on 127.0.0.1 (IPv4 only).
 	app.run(port=10222)
-
