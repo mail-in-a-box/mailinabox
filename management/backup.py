@@ -14,23 +14,14 @@ import rtyaml
 
 from utils import exclusive_process, load_environment, shell, wait_for_service
 
-# Root folder
-backup_root = os.path.join(load_environment()["STORAGE_ROOT"], 'backup')
-
-# Default settings
-# min_age_in_days is the minimum amount of days a backup will be kept before
-# it is eligble to be removed. Backups might be kept much longer if there's no
-# new full backup yet.
-default_config = {
-	"min_age_in_days": 3,
-	"target": "file://" + os.path.join(backup_root, 'encrypted')
-}
-
 def backup_status(env):
+	# Root folder
+	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
+
 	# What is the current status of backups?
 	# Query duplicity to get a list of all backups.
 	# Use the number of volumes to estimate the size.
-	config = get_backup_config()
+	config = get_backup_config(env)
 	now = datetime.datetime.now(dateutil.tz.tzlocal())
 
 	backups = { }
@@ -63,12 +54,11 @@ def backup_status(env):
 		"/usr/bin/duplicity",
 		"collection-status",
 		"--archive-dir", backup_cache_dir,
-		"--log-file", os.path.join(backup_root, "duplicity_status"),
 		"--gpg-options", "--cipher-algo=AES256",
 		"--log-fd", "1",
 		config["target"],
 		],
-		get_env())
+		get_env(env))
 
 	# Split multi line string into list
 	collection_status = collection_status.split('\n')
@@ -147,23 +137,24 @@ def should_force_full(env):
 		# (I love for/else blocks. Here it's just to show off.)
 		return True
 
-def get_passphrase():
+def get_passphrase(env):
 	# Get the encryption passphrase. secret_key.txt is 2048 random
 	# bits base64-encoded and with line breaks every 65 characters.
 	# gpg will only take the first line of text, so sanity check that
 	# that line is long enough to be a reasonable passphrase. It
 	# only needs to be 43 base64-characters to match AES256's key
 	# length of 32 bytes.
+	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
 	with open(os.path.join(backup_root, 'secret_key.txt')) as f:
 		passphrase = f.readline().strip()
 	if len(passphrase) < 43: raise Exception("secret_key.txt's first line is too short!")
 	
 	return passphrase
 
-def get_env():
-	config = get_backup_config()
+def get_env(env):
+	config = get_backup_config(env)
 	
-	env = { "PASSPHRASE" : get_passphrase() }
+	env = { "PASSPHRASE" : get_passphrase(env) }
 	
 	if get_target_type(config) == 's3':
 		env["AWS_ACCESS_KEY_ID"] = config["target_user"]
@@ -179,7 +170,8 @@ def perform_backup(full_backup):
 	env = load_environment()
 
 	exclusive_process("backup")
-	config = get_backup_config()
+	config = get_backup_config(env)
+	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
 	backup_cache_dir = os.path.join(backup_root, 'cache')
 	backup_dir = os.path.join(backup_root, 'encrypted')
 
@@ -234,7 +226,7 @@ def perform_backup(full_backup):
 			config["target"],
 			"--allow-source-mismatch"
 			],
-			get_env())
+			get_env(env))
 	finally:
 		# Start services again.
 		shell('check_call', ["/usr/sbin/service", "dovecot", "start"])
@@ -254,7 +246,7 @@ def perform_backup(full_backup):
 		"--force",
 		config["target"]
 		],
-		get_env())
+		get_env(env))
 
 	# From duplicity's manual:
 	# "This should only be necessary after a duplicity session fails or is
@@ -268,7 +260,7 @@ def perform_backup(full_backup):
 		"--force",
 		config["target"]
 		],
-		get_env())
+		get_env(env))
 
 	# Change ownership of backups to the user-data user, so that the after-bcakup
 	# script can access them.
@@ -282,7 +274,7 @@ def perform_backup(full_backup):
 	if os.path.exists(post_script):
 		shell('check_call',
 			['su', env['STORAGE_USER'], '-c', post_script, config["target"]],
-			env=get_env())
+			env=get_env(env))
 
 	# Our nightly cron job executes system status checks immediately after this
 	# backup. Since it checks that dovecot and postfix are running, block for a
@@ -293,7 +285,8 @@ def perform_backup(full_backup):
 
 def run_duplicity_verification():
 	env = load_environment()
-	config = get_backup_config()
+	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
+	config = get_backup_config(env)
 	backup_cache_dir = os.path.join(backup_root, 'cache')
 
 	shell('check_call', [
@@ -305,11 +298,11 @@ def run_duplicity_verification():
 		"--exclude", backup_root,
 		config["target"],
 		env["STORAGE_ROOT"],
-	], get_env())
+	], get_env(env))
 
 
-def backup_set_custom(target, target_user, target_pass, min_age):
-	config = get_backup_config()
+def backup_set_custom(env, target, target_user, target_pass, min_age):
+	config = get_backup_config(env)
 	
 	# min_age must be an int
 	if isinstance(min_age, str):
@@ -320,23 +313,29 @@ def backup_set_custom(target, target_user, target_pass, min_age):
 	config["target_pass"] = target_pass
 	config["min_age_in_days"] = min_age
 	
-	write_backup_config(config)
+	write_backup_config(env, config)
 
 	return "Updated backup config"
 	
-def get_backup_config():
-	try:
-		config = rtyaml.load(open(os.path.join(backup_root, 'custom.yaml')))
-		if not isinstance(config, dict): raise ValueError() # caught below
-	except:
-		return default_config
+def get_backup_config(env):
+	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
 
-	merged_config = default_config.copy()
-	merged_config.update(config)
+	config = {
+		"min_age_in_days": 3,
+		"target": "file://" + os.path.join(backup_root, 'encrypted'),
+	}
+
+	try:
+		custom_config = rtyaml.load(open(os.path.join(backup_root, 'custom.yaml')))
+		if not isinstance(custom_config, dict): raise ValueError() # caught below
+		config.update(custom_config)
+	except:
+		pass
 
 	return config
 
-def write_backup_config(newconfig):
+def write_backup_config(env, newconfig):
+	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
 	with open(os.path.join(backup_root, 'custom.yaml'), "w") as f:
 		f.write(rtyaml.dump(newconfig))
 

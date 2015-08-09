@@ -406,13 +406,13 @@ def backup_status():
 @authorized_personnel_only
 def backup_get_custom():
 	from backup import get_backup_config
-	return json_response(get_backup_config())
+	return json_response(get_backup_config(env))
 
 @app.route('/system/backup/config', methods=["POST"])
 @authorized_personnel_only
 def backup_set_custom():
 	from backup import backup_set_custom
-	return json_response(backup_set_custom(
+	return json_response(backup_set_custom(env,
 		request.form.get('target', ''),
 		request.form.get('target_user', ''),
 		request.form.get('target_pass', ''),
