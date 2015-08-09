@@ -297,6 +297,42 @@ def run_duplicity_verification():
 		env["STORAGE_ROOT"],
 	], get_env(env))
 
+def validate_target(config):
+	import urllib.parse
+	try:
+		p = urllib.parse.urlparse(config["target"])
+	except ValueError:
+		return "invalid target"
+
+	if p.scheme == "s3":
+		import boto.s3
+		from boto.exception import BotoServerError
+
+		# match to a Region
+		for region in boto.s3.regions():
+			if region.endpoint == p.hostname:
+				break
+		else:
+			raise ValueError("Invalid S3 region/host.")
+
+		bucket = p.path[1:].split('/')[0]
+		path = '/'.join(p.path[1:].split('/')[1:]) + '/'
+		if bucket == "":
+			raise ValueError("Enter an S3 bucket name.")
+
+		# connect to the region & bucket
+		try:
+			conn = region.connect(aws_access_key_id=config["target_user"], aws_secret_access_key=config["target_pass"])
+			bucket = conn.get_bucket(bucket)
+		except BotoServerError as e:
+			if e.status == 403:
+				raise ValueError("Invalid S3 access key or secret access key.")
+			elif e.status == 404:
+				raise ValueError("Invalid S3 bucket name.")
+			elif e.status == 301:
+				raise ValueError("Incorrect region for this bucket.")
+			raise ValueError(e.reason)
+
 
 def backup_set_custom(env, target, target_user, target_pass, min_age):
 	config = get_backup_config(env, for_save=True)
@@ -309,6 +345,15 @@ def backup_set_custom(env, target, target_user, target_pass, min_age):
 	config["target_user"] = target_user
 	config["target_pass"] = target_pass
 	config["min_age_in_days"] = min_age
+
+	# Validate.
+	try:
+		if config["target"] != "local":
+			# "local" isn't supported by the following function, which expects a full url in the target key,
+			# which is what is there except when loading the config prior to saving
+			validate_target(config)
+	except ValueError as e:
+		return str(e)
 	
 	write_backup_config(env, config)
 
@@ -320,7 +365,7 @@ def get_backup_config(env, for_save=False):
 	# Defaults.
 	config = {
 		"min_age_in_days": 3,
-		"target": "file://" + os.path.join(backup_root, 'encrypted'),
+		"target": "local",
 	}
 
 	# Merge in anything written to custom.yaml.
@@ -338,6 +383,9 @@ def get_backup_config(env, for_save=False):
 	# helper fields for the admin
 	config["file_target_directory"] = os.path.join(backup_root, 'encrypted')
 	config["enc_pw_file"] = os.path.join(backup_root, 'secret_key.txt')
+	if config["target"] == "local":
+		# Expand to the full URL.
+		config["target"] = "file://" + config["file_target_directory"]
 
 	return config
 

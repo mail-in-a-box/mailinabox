@@ -11,15 +11,15 @@
 
 <form class="form-horizontal" role="form" onsubmit="set_custom_backup(); return false;">
   <div class="form-group">
-    <label for="target" class="col-sm-2 control-label">Backup target</label>
+    <label for="backup-target-type" class="col-sm-2 control-label">Backup to:</label>
     <div class="col-sm-2">
-      <select class="form-control" rows="1" id="target-type" onchange="toggle_form()">
-        <option value="file">{{hostname}}</option>
+      <select class="form-control" rows="1" id="backup-target-type" onchange="toggle_form()">
+        <option value="local">{{hostname}}</option>
         <option value="s3">Amazon S3</option>
       </select>
     </div>
   </div>
-  <div class="form-group backup-target-file">
+  <div class="form-group backup-target-local">
     <div class="col-sm-10 col-sm-offset-2">
       <div>Backups are stored on this machine&rsquo;s own hard disk. You are responsible for periodically using SFTP (FTP over SSH) to copy the backup files from <tt id="backup-location"></tt> to a safe location. These files are encrypted, so they are safe to store anywhere.</div>
     </div>
@@ -30,27 +30,37 @@
     </div>
   </div>
   <div class="form-group">
-    <label for="target" class="col-sm-2 control-label">How many days should backups be kept?</label>
+    <label for="min-age" class="col-sm-2 control-label">How many days should backups be kept?</label>
     <div class="col-sm-8">
-      <input type="number" class="form-control" rows="1" id="min-age"></input>
+      <input type="number" class="form-control" rows="1" id="min-age">
     </div>
   </div>
   <div class="form-group backup-target-s3">
-    <label for="target" class="col-sm-2 control-label">S3 URL</label>
+    <label for="backup-target-s3-host" class="col-sm-2 control-label">S3 Region</label>
     <div class="col-sm-8">
-      <input type="text" placeholder="s3://s3-eu-central-1.amazonaws.com/bucket-name" class="form-control" rows="1" id="target"></textarea>
+      <select class="form-control" rows="1" id="backup-target-s3-host">
+        {% for name, host in backup_s3_hosts %}
+          <option value="{{host}}">{{name}}</option>
+        {% endfor %}
+      </select>
     </div>
   </div>
   <div class="form-group backup-target-s3">
-    <label for="target-user" class="col-sm-2 control-label">S3 Access Key</label>
+    <label for="backup-target-s3-path" class="col-sm-2 control-label">S3 Path</label>
     <div class="col-sm-8">
-      <input type="text" class="form-control" rows="1" id="target-user"></input>
+      <input type="text" placeholder="your-bucket-name/backup-directory" class="form-control" rows="1" id="backup-target-s3-path">
     </div>
   </div>
   <div class="form-group backup-target-s3">
-    <label for="target-pass" class="col-sm-2 control-label">S3 Secret Access Key</label>
+    <label for="backup-target-user" class="col-sm-2 control-label">S3 Access Key</label>
     <div class="col-sm-8">
-      <input type="text" class="form-control" rows="1" id="target-pass"></input>
+      <input type="text" class="form-control" rows="1" id="backup-target-user">
+    </div>
+  </div>
+  <div class="form-group backup-target-s3">
+    <label for="backup-target-pass" class="col-sm-2 control-label">S3 Secret Access Key</label>
+    <div class="col-sm-8">
+      <input type="text" class="form-control" rows="1" id="backup-target-pass">
     </div>
   </div>
   <div class="form-group">
@@ -79,8 +89,8 @@
 <script>
 
 function toggle_form() {
-  var target_type = $("#target-type").val();
-  $(".backup-target-file, .backup-target-s3").hide();
+  var target_type = $("#backup-target-type").val();
+  $(".backup-target-local, .backup-target-s3").hide();
   $(".backup-target-" + target_type).show();
 }
 
@@ -139,17 +149,23 @@ function show_system_backup() {
 }
 
 function show_custom_backup() {
-    $(".backup-target-file, .backup-target-s3").hide();
+    $(".backup-target-local, .backup-target-s3").hide();
     api(
       "/system/backup/config",
       "GET",
       { },
       function(r) {
-        var target_type = r.target.split(':')[0]
-        $("#target").val(r.target);
-        $("#target-type").val(target_type);
-        $("#target-user").val(r.target_user);
-        $("#target-pass").val(r.target_pass);
+        if (r.target == "file://" + r.file_target_directory) {
+          $("#backup-target-type").val("local");
+        } else if (r.target.substring(0, 5) == "s3://") {
+          $("#backup-target-type").val("s3");
+	  var hostpath = r.target.substring(5).split('/');
+          var host = hostpath.shift();
+          $("#backup-target-s3-host").val(host);
+          $("#backup-target-s3-path").val(hostpath.join('/'));
+        }
+        $("#backup-target-user").val(r.target_user);
+        $("#backup-target-pass").val(r.target_pass);
         $("#min-age").val(r.min_age_in_days);
         $('#backup-location').text(r.file_target_directory);
         $('#backup-encpassword-file').text(r.enc_pw_file);
@@ -158,10 +174,16 @@ function show_custom_backup() {
 }
 
 function set_custom_backup() {
-  var target = $("#target").val();
-  var target_type = $("#target-type").val();
-  var target_user = $("#target-user").val();
-  var target_pass = $("#target-pass").val();
+  var target_type = $("#backup-target-type").val();
+  var target_user = $("#backup-target-user").val();
+  var target_pass = $("#backup-target-pass").val();
+  
+  var target;
+  if (target_type == "local")
+    target = target_type;
+  else if (target_type == "s3")
+    target = "s3://" + $("#backup-target-s3-host").val() + "/" + $("#backup-target-s3-path").val();
+
   var min_age = $("#min-age").val();
   api(
     "/system/backup/config",

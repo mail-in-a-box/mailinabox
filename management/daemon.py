@@ -90,13 +90,19 @@ def json_response(data):
 def index():
 	# Render the control panel. This route does not require user authentication
 	# so it must be safe!
+
 	no_users_exist = (len(get_mail_users(env)) == 0)
 	no_admins_exist = (len(get_admins(env)) == 0)
+
+	import boto.s3
+	backup_s3_hosts = [(r.name, r.endpoint) for r in boto.s3.regions()]
+
 	return render_template('index.html',
 		hostname=env['PRIMARY_HOSTNAME'],
 		storage_root=env['STORAGE_ROOT'],
 		no_users_exist=no_users_exist,
 		no_admins_exist=no_admins_exist,
+		backup_s3_hosts=backup_s3_hosts,
 	)
 
 @app.route('/me')
