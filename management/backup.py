@@ -37,6 +37,7 @@ def backup_status(env):
 		if rd.days == 1: return "%d day, %d hours" % (rd.days, rd.hours)
 		return "%d hours, %d minutes" % (rd.hours, rd.minutes)
 
+	# Get duplicity collection status and parse for a list of backups.
 	def parse_line(line):
 		keys = line.strip().split()
 		date = dateutil.parser.parse(keys[1])
@@ -45,10 +46,9 @@ def backup_status(env):
 			"date_str": date.strftime("%x %X"),
 			"date_delta": reldate(date, now, "the future?"),
 			"full": keys[0] == "full",
-			"size": int(keys[2]) * 250 * 1000000,
+			"size": 0, # collection-status doesn't give us the size
+			"volumes": keys[2], # number of archive volumes for this backup (not really helpful)
 		}
-
-	# Get duplicity collection status
 	collection_status = shell('check_output', [
 		"/usr/bin/duplicity",
 		"collection-status",
@@ -58,15 +58,17 @@ def backup_status(env):
 		config["target"],
 		],
 		get_env(env))
-
-	# Split multi line string into list
-	collection_status = collection_status.split('\n')
-
-	# Parse backup data from status file
-	for line in collection_status:
+	for line in collection_status.split('\n'):
 		if line.startswith(" full") or line.startswith(" inc"):
 			backup = parse_line(line)
 			backups[backup["date"]] = backup
+
+	# Look at the target to get the sizes of each of the backups. There is more than one file per backup.
+	for fn, size in list_target_files(config):
+		m = re.match(r"duplicity-(full|full-signatures|(inc|new-signatures)\.(?P<incbase>\d+T\d+Z)\.to)\.(?P<date>\d+T\d+Z)\.", fn)
+		if not m: continue # not a part of a current backup chain
+		key = m.group("date")
+		backups[key]["size"] += size
 
 	# Ensure the rows are sorted reverse chronologically.
 	# This is relied on by should_force_full() and the next step.
@@ -297,18 +299,20 @@ def run_duplicity_verification():
 		env["STORAGE_ROOT"],
 	], get_env(env))
 
-def validate_target(config):
+def list_target_files(config):
 	import urllib.parse
 	try:
 		p = urllib.parse.urlparse(config["target"])
 	except ValueError:
 		return "invalid target"
 
-	if p.scheme == "s3":
+	if p.scheme == "file":
+		return [(fn, os.path.getsize(os.path.join(p.path, fn))) for fn in os.listdir(p.path)]
+
+	elif p.scheme == "s3":
+		# match to a Region
 		import boto.s3
 		from boto.exception import BotoServerError
-
-		# match to a Region
 		for region in boto.s3.regions():
 			if region.endpoint == p.hostname:
 				break
@@ -333,6 +337,11 @@ def validate_target(config):
 				raise ValueError("Incorrect region for this bucket.")
 			raise ValueError(e.reason)
 
+		return [(key.name[len(path):], key.size) for key in bucket.list(prefix=path)]
+
+	else:
+		raise ValueError(config["target"])
+
 
 def backup_set_custom(env, target, target_user, target_pass, min_age):
 	config = get_backup_config(env, for_save=True)
@@ -351,7 +360,7 @@ def backup_set_custom(env, target, target_user, target_pass, min_age):
 		if config["target"] != "local":
 			# "local" isn't supported by the following function, which expects a full url in the target key,
 			# which is what is there except when loading the config prior to saving
-			validate_target(config)
+			list_target_files(config)
 	except ValueError as e:
 		return str(e)
 	
