@@ -25,7 +25,6 @@ def backup_status(env):
 	now = datetime.datetime.now(dateutil.tz.tzlocal())
 
 	backups = { }
-	backup_dir = os.path.join(backup_root, 'encrypted')
 	backup_cache_dir = os.path.join(backup_root, 'cache')
 
 	def reldate(date, ref, clip):
@@ -112,8 +111,6 @@ def backup_status(env):
 			bak["deleted_in"] = deleted_in
 
 	return {
-		"directory": backup_dir,
-		"encpwfile": os.path.join(backup_root, 'secret_key.txt'),
 		"tz": now.tzname(),
 		"backups": backups,
 	}
@@ -302,7 +299,7 @@ def run_duplicity_verification():
 
 
 def backup_set_custom(env, target, target_user, target_pass, min_age):
-	config = get_backup_config(env)
+	config = get_backup_config(env, for_save=True)
 	
 	# min_age must be an int
 	if isinstance(min_age, str):
@@ -317,20 +314,30 @@ def backup_set_custom(env, target, target_user, target_pass, min_age):
 
 	return "Updated backup config"
 	
-def get_backup_config(env):
+def get_backup_config(env, for_save=False):
 	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
 
+	# Defaults.
 	config = {
 		"min_age_in_days": 3,
 		"target": "file://" + os.path.join(backup_root, 'encrypted'),
 	}
 
+	# Merge in anything written to custom.yaml.
 	try:
 		custom_config = rtyaml.load(open(os.path.join(backup_root, 'custom.yaml')))
 		if not isinstance(custom_config, dict): raise ValueError() # caught below
 		config.update(custom_config)
 	except:
 		pass
+
+	# When updating config.yaml, don't do any further processing on what we find.
+	if for_save:
+		return config
+
+	# helper fields for the admin
+	config["file_target_directory"] = os.path.join(backup_root, 'encrypted')
+	config["enc_pw_file"] = os.path.join(backup_root, 'secret_key.txt')
 
 	return config
 

@@ -5,22 +5,28 @@
 
 <h2>Backup Status</h2>
 
-<h3>Copying Backup Files</h3>
-
 <p>The box makes an incremental backup each night. By default the backup is stored on the machine itself, but you can also have it stored on Amazon S3</p>
 
-<p>You can also use SFTP (FTP over SSH) to copy files from <tt id="backup-location"></tt>. These files are encrypted, so they are safe to store anywhere. Copy the encryption password from <tt id="backup-encpassword-file"></tt> also but keep it in a safe location.</p>
-
-<h3>Backup Configuration</h3>
+<h3>Configuration</h3>
 
 <form class="form-horizontal" role="form" onsubmit="set_custom_backup(); return false;">
   <div class="form-group">
     <label for="target" class="col-sm-2 control-label">Backup target</label>
     <div class="col-sm-2">
       <select class="form-control" rows="1" id="target-type" onchange="toggle_form()">
-        <option value="file">Store locally</option>
+        <option value="file">{{hostname}}</option>
         <option value="s3">Amazon S3</option>
       </select>
+    </div>
+  </div>
+  <div class="form-group backup-target-file">
+    <div class="col-sm-10 col-sm-offset-2">
+      <div>Backups are stored on this machine&rsquo;s own hard disk. You are responsible for periodically using SFTP (FTP over SSH) to copy the backup files from <tt id="backup-location"></tt> to a safe location. These files are encrypted, so they are safe to store anywhere.</div>
+    </div>
+  </div>
+  <div class="form-group backup-target-s3">
+    <div class="col-sm-10 col-sm-offset-2">
+      <div>Backups are stored in an Amazon Web Services S3 bucket. You must have an AWS account already.</div>
     </div>
   </div>
   <div class="form-group">
@@ -29,20 +35,20 @@
       <input type="number" class="form-control" rows="1" id="min-age"></input>
     </div>
   </div>
-  <div class="form-group form-advanced">
+  <div class="form-group backup-target-s3">
     <label for="target" class="col-sm-2 control-label">S3 URL</label>
     <div class="col-sm-8">
       <input type="text" placeholder="s3://s3-eu-central-1.amazonaws.com/bucket-name" class="form-control" rows="1" id="target"></textarea>
     </div>
   </div>
-  <div class="form-group form-advanced">
-    <label for="target-user" class="col-sm-2 control-label">S3&nbsp;Key</label>
+  <div class="form-group backup-target-s3">
+    <label for="target-user" class="col-sm-2 control-label">S3 Access Key</label>
     <div class="col-sm-8">
       <input type="text" class="form-control" rows="1" id="target-user"></input>
     </div>
   </div>
-  <div class="form-group form-advanced">
-    <label for="target-pass" class="col-sm-2 control-label">S3&nbsp;Secret</label>
+  <div class="form-group backup-target-s3">
+    <label for="target-pass" class="col-sm-2 control-label">S3 Secret Access Key</label>
     <div class="col-sm-8">
       <input type="text" class="form-control" rows="1" id="target-pass"></input>
     </div>
@@ -54,9 +60,11 @@
   </div>
 </form>
 
-<h3>Current Backups</h3>
+<p> Copy the encryption password from <tt id="backup-encpassword-file"></tt> to a safe and secure location. You will need this file to decrypt backup files.</div></p>
 
-<p>The backup directory currently contains the backups listed below. The total size on disk of the backups is currently <span id="backup-total-size"></span>.</p>
+<h3>Available Backups</h3>
+
+<p>The backup location currently contains the backups listed below. The total size of the backups is currently <span id="backup-total-size"></span>.</p>
 
 <table id="backup-status" class="table" style="width: auto">
   <thead>
@@ -72,11 +80,8 @@
 
 function toggle_form() {
   var target_type = $("#target-type").val();
-  if (target_type == 'file') {
-    $(".form-advanced").hide();
-  } else {
-    $(".form-advanced").show();
-  }
+  $(".backup-target-file, .backup-target-s3").hide();
+  $(".backup-target-" + target_type).show();
 }
 
 function nice_size(bytes) {
@@ -104,9 +109,6 @@ function show_system_backup() {
     "GET",
     { },
     function(r) {
-      $('#backup-location').text(r.directory);
-      $('#backup-encpassword-file').text(r.encpwfile);
-
       $('#backup-status tbody').html("");
       var total_disk_size = 0;
 
@@ -137,6 +139,7 @@ function show_system_backup() {
 }
 
 function show_custom_backup() {
+    $(".backup-target-file, .backup-target-s3").hide();
     api(
       "/system/backup/config",
       "GET",
@@ -148,6 +151,8 @@ function show_custom_backup() {
         $("#target-user").val(r.target_user);
         $("#target-pass").val(r.target_pass);
         $("#min-age").val(r.min_age_in_days);
+        $('#backup-location').text(r.file_target_directory);
+        $('#backup-encpassword-file').text(r.enc_pw_file);
         toggle_form()
       })
 }
