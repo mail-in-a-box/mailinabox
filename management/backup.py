@@ -329,6 +329,11 @@ def list_target_files(config):
 
 		bucket = p.path[1:].split('/')[0]
 		path = '/'.join(p.path[1:].split('/')[1:]) + '/'
+
+		# If no prefix is specified, set the path to '', otherwise boto won't list the files
+		if path == '/':
+			path = ''
+
 		if bucket == "":
 			raise ValueError("Enter an S3 bucket name.")
 
