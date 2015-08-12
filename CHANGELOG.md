@@ -16,11 +16,13 @@ DNS:
 
 System:
 
+* Backups can now be turned off, or stored in Amazon S3, through new control panel options.
+* Munin was not working on machines confused about their hostname.
 * ownCloud updated to version 8.1.1.
 * When upgrading, network checks like blocked port 25 are now skipped.
 * Tweaks to the intrusion detection rules for IMAP.
 * Improve the sort order of the domains in the status checks.
-* Munin was not working on machines confused about their hostname.
+* Some links in the control panel were only working in Chrome.
 
 v0.12c (July 19, 2015)
 ----------------------
