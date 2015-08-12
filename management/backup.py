@@ -53,7 +53,7 @@ def backup_status(env):
 			"size": 0, # collection-status doesn't give us the size
 			"volumes": keys[2], # number of archive volumes for this backup (not really helpful)
 		}
-	collection_status = shell('check_output', [
+	code, collection_status = shell('check_output', [
 		"/usr/bin/duplicity",
 		"collection-status",
 		"--archive-dir", backup_cache_dir,
@@ -61,7 +61,12 @@ def backup_status(env):
 		"--log-fd", "1",
 		config["target"],
 		],
-		get_env(env))
+		get_env(env),
+		trap=True)
+	if code != 0:
+		# Command failed. This is likely due to an improperly configured remote
+		# destination for the backups.
+		return { }
 	for line in collection_status.split('\n'):
 		if line.startswith(" full") or line.startswith(" inc"):
 			backup = parse_line(line)
