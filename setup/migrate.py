@@ -101,6 +101,16 @@ def migration_8(env):
 	# a new key, which will be 2048 bits.
 	os.unlink(os.path.join(env['STORAGE_ROOT'], 'mail/dkim/mail.private'))
 
+def migration_9(env):
+	# Add a column to the aliases table to store permitted_senders,
+	# which is a list of user account email addresses that are
+	# permitted to send mail using this alias instead of their own
+	# address. This was motivated by the addition of #427 ("Reject
+	# outgoing mail if FROM does not match Login") - which introduced
+	# the notion of outbound permitted-senders.
+	db = os.path.join(env["STORAGE_ROOT"], 'mail/users.sqlite')
+	shell("check_call", ["sqlite3", db, "ALTER TABLE aliases ADD permitted_senders TEXT"])
+
 def get_current_migration():
 	ver = 0
 	while True:

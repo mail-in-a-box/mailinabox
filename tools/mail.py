@@ -120,10 +120,10 @@ elif sys.argv[1] == "alias" and len(sys.argv) == 2:
 	print(mgmt("/mail/aliases"))
 
 elif sys.argv[1] == "alias" and sys.argv[2] == "add" and len(sys.argv) == 5:
-	print(mgmt("/mail/aliases/add", { "source": sys.argv[3], "destination": sys.argv[4] }))
+	print(mgmt("/mail/aliases/add", { "address": sys.argv[3], "forwards_to": sys.argv[4] }))
 
 elif sys.argv[1] == "alias" and sys.argv[2] == "remove" and len(sys.argv) == 4:
-	print(mgmt("/mail/aliases/remove", { "source": sys.argv[3] }))
+	print(mgmt("/mail/aliases/remove", { "address": sys.argv[3] }))
 
 else:
 	print("Invalid command-line arguments.")
