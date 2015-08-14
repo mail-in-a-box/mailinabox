@@ -183,11 +183,11 @@ def get_admins(env):
 def get_mail_aliases(env):
 	# Returns a sorted list of tuples of (address, forward-tos, permitted-senders).
 	c = open_database(env)
-	c.execute('SELECT address, receivers, senders FROM aliases')
-	aliases = { row[0]: row[1:3] for row in c.fetchall() } # make dict
+	c.execute('SELECT source, destination, permitted_senders FROM aliases')
+	aliases = { row[0]: row for row in c.fetchall() } # make dict
 
 	# put in a canonical order: sort by domain, then by email address lexicographically
-	aliases = [ (address,) + aliases[address] for address in utils.sort_email_addresses(aliases.keys(), env) ]
+	aliases = [ aliases[address] for address in utils.sort_email_addresses(aliases.keys(), env) ]
 	return aliases
 
 def get_mail_aliases_ex(env):
@@ -201,8 +201,8 @@ def get_mail_aliases_ex(env):
 	#       {
 	#         address: "name@domain.tld", # IDNA-encoded
 	#         address_display: "name@domain.tld", # full Unicode
-	#         receivers: ["user1@domain.com", "receiver-only1@domain.com", ...],
-	#         senders: ["user1@domain.com", "sender-only1@domain.com", ...],
+	#         forwards_to: ["user1@domain.com", "receiver-only1@domain.com", ...],
+	#         permitted_senders: ["user1@domain.com", "sender-only1@domain.com", ...] OR null,
 	#         required: True|False
 	#       },
 	#       ...
@@ -213,7 +213,7 @@ def get_mail_aliases_ex(env):
 
 	required_aliases = get_required_aliases(env)
 	domains = {}
-	for address, receivers, senders in get_mail_aliases(env):
+	for address, forwards_to, permitted_senders in get_mail_aliases(env):
 		# get alias info
 		domain = get_domain(address)
 		required = (address in required_aliases)
@@ -227,8 +227,8 @@ def get_mail_aliases_ex(env):
 		domains[domain]["aliases"].append({
 			"address": address,
 			"address_display": prettify_idn_email_address(address),
-			"receivers": [prettify_idn_email_address(r.strip()) for r in receivers.split(",")],
-			"senders": [prettify_idn_email_address(s.strip()) for s in senders.split(",")],
+			"forwards_to": [prettify_idn_email_address(r.strip()) for r in forwards_to.split(",")],
+			"permitted_senders": [prettify_idn_email_address(s.strip()) for s in permitted_senders.split(",")] if permitted_senders is not None else None,
 			"required": required,
 		})
 
@@ -408,7 +408,7 @@ def add_remove_mail_user_privilege(email, priv, action, env):
 
 	return "OK"
 
-def add_mail_alias(address, receivers, senders, env, update_if_exists=False, do_kick=True):
+def add_mail_alias(address, forwards_to, permitted_senders, env, update_if_exists=False, do_kick=True):
 	# convert Unicode domain to IDNA
 	address = sanitize_idn_email_address(address)
 
@@ -423,9 +423,9 @@ def add_mail_alias(address, receivers, senders, env, update_if_exists=False, do_
 	if not validate_email(address, mode='alias'):
 		return ("Invalid email address (%s)." % address, 400)
 
-	# validate receivers
-	validated_receivers = []
-	receivers = receivers.strip()
+	# validate forwards_to
+	validated_forwards_to = []
+	forwards_to = forwards_to.strip()
 
 	# extra checks for email addresses used in domain control validation
 	is_dcv_source = is_dcv_address(address)
@@ -435,14 +435,14 @@ def add_mail_alias(address, receivers, senders, env, update_if_exists=False, do_
 	# try to convert Unicode to IDNA first before validating that it's a
 	# legitimate alias address. Don't allow this sort of rewriting for
 	# DCV source addresses.
-	r1 = sanitize_idn_email_address(receivers)
+	r1 = sanitize_idn_email_address(forwards_to)
 	if validate_email(r1, mode='alias') and not is_dcv_source:
-		validated_receivers.append(r1)
+		validated_forwards_to.append(r1)
 
 	else:
 		# Parse comma and \n-separated destination emails & validate. In this
-		# case, the receivers must be complete email addresses.
-		for line in receivers.split("\n"):
+		# case, the forwards_to must be complete email addresses.
+		for line in forwards_to.split("\n"):
 			for email in line.split(","):
 				email = email.strip()
 				if email == "": continue
@@ -454,36 +454,45 @@ def add_mail_alias(address, receivers, senders, env, update_if_exists=False, do_
 					# requiring aliases for email addresses typically used in DCV to forward
 					# only to accounts that are administrators on this system.
 					return ("This alias can only have administrators of this system as destinations because the address is frequently used for domain control validation.", 400)
-				validated_receivers.append(email)
-	receivers = ",".join(validated_receivers)
+				validated_forwards_to.append(email)
 
+	# validate permitted_senders
 	valid_logins = get_mail_users(env)
+	validated_permitted_senders = []
+	permitted_senders = permitted_senders.strip()
 
-	# validate senders
-	validated_senders = []
-	senders = senders.strip()
-
-	# Parse comma and \n-separated sender logins & validate. The senders must be
+	# Parse comma and \n-separated sender logins & validate. The permitted_senders must be
 	# valid usernames.
-	for line in senders.split("\n"):
+	for line in permitted_senders.split("\n"):
 		for login in line.split(","):
 			login = login.strip()
 			if login == "": continue
 			if login not in valid_logins:
-				return ("Invalid sender login (%s)." % login, 400)
-			validated_senders.append(login)
-	senders = ",".join(validated_senders)
+				return ("Invalid permitted sender: %s is not a user on this system." % login, 400)
+			validated_permitted_senders.append(login)
+
+	# Make sure the alias has either a forwards_to or a permitted_sender.
+	if len(validated_forwards_to) + len(validated_permitted_senders) == 0:
+		return ("The alias must either forward to an address or have a permitted sender.", 400)
 
 	# save to db
+
+	forwards_to = ",".join(validated_forwards_to)
+
+	if len(validated_permitted_senders) == 0:
+		permitted_senders = None
+	else:
+		permitted_senders = ",".join(validated_permitted_senders)
+
 	conn, c = open_database(env, with_connection=True)
 	try:
-		c.execute("INSERT INTO aliases (address, receivers, senders) VALUES (?, ?, ?)", (address, receivers, senders))
+		c.execute("INSERT INTO aliases (source, destination, permitted_senders) VALUES (?, ?, ?)", (address, forwards_to, permitted_senders))
 		return_status = "alias added"
 	except sqlite3.IntegrityError:
 		if not update_if_exists:
 			return ("Alias already exists (%s)." % address, 400)
 		else:
-			c.execute("UPDATE aliases SET receivers = ?, senders = ? WHERE address = ?", (receivers, senders, address))
+			c.execute("UPDATE aliases SET destination = ?, permitted_senders = ? WHERE source = ?", (forwards_to, permitted_senders, address))
 			return_status = "alias updated"
 
 	conn.commit()
@@ -498,7 +507,7 @@ def remove_mail_alias(address, env, do_kick=True):
 
 	# remove
 	conn, c = open_database(env, with_connection=True)
-	c.execute("DELETE FROM aliases WHERE address=?", (address,))
+	c.execute("DELETE FROM aliases WHERE source=?", (address,))
 	if c.rowcount != 1:
 		return ("That's not an alias (%s)." % address, 400)
 	conn.commit()
@@ -573,13 +582,13 @@ def kick(env, mail_result=None):
 
 	# Remove auto-generated postmaster/admin on domains we no
 	# longer have any other email addresses for.
-	for address, receivers, *_ in existing_aliases:
+	for address, forwards_to, *_ in existing_aliases:
 		user, domain = address.split("@")
 		if user in ("postmaster", "admin") \
 			and address not in required_aliases \
-			and receivers == get_system_administrator(env):
+			and forwards_to == get_system_administrator(env):
 			remove_mail_alias(address, env, do_kick=False)
-			results.append("removed alias %s (was to %s; domain no longer used for email)\n" % (address, receivers))
+			results.append("removed alias %s (was to %s; domain no longer used for email)\n" % (address, forwards_to))
 
 	# Update DNS and nginx in case any domains are added/removed.
 

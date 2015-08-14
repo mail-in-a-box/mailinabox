@@ -179,15 +179,15 @@ def mail_aliases():
 	if request.args.get("format", "") == "json":
 		return json_response(get_mail_aliases_ex(env))
 	else:
-		return "".join(address+"\t"+receivers+"\t"+senders+"\n" for address, receivers, senders in get_mail_aliases(env))
+		return "".join(address+"\t"+receivers+"\t"+(senders or "")+"\n" for address, receivers, senders in get_mail_aliases(env))
 
 @app.route('/mail/aliases/add', methods=['POST'])
 @authorized_personnel_only
 def mail_aliases_add():
 	return add_mail_alias(
 		request.form.get('address', ''),
-		request.form.get('receivers', ''),
-		request.form.get('senders', ''),
+		request.form.get('forwards_to', ''),
+		request.form.get('permitted_senders', ''),
 		env,
 		update_if_exists=(request.form.get('update_if_exists', '') == '1')
 		)

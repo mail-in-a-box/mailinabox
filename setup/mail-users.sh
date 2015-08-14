@@ -21,7 +21,7 @@ db_path=$STORAGE_ROOT/mail/users.sqlite
 if [ ! -f $db_path ]; then
 	echo Creating new user database: $db_path;
 	echo "CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL UNIQUE, password TEXT NOT NULL, extra, privileges TEXT NOT NULL DEFAULT '');" | sqlite3 $db_path;
-	echo "CREATE TABLE aliases (id INTEGER PRIMARY KEY AUTOINCREMENT, address TEXT NOT NULL UNIQUE, receivers TEXT NOT NULL, senders TEXT NOT NULL);" | sqlite3 $db_path;
+	echo "CREATE TABLE aliases (id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT NOT NULL UNIQUE, destination TEXT NOT NULL, permitted_senders TEXT);" | sqlite3 $db_path;
 fi
 
 # ### User Authentication
@@ -71,18 +71,23 @@ tools/editconf.py /etc/postfix/main.cf \
 
 # ### Sender Validation
 
-# Use a Sqlite3 database to set login maps. This is used with
-# reject_authenticated_sender_login_mismatch to see if the user is
-# allowed to send mail as the FROM address specified in the request.
+# We use Postfix's reject_authenticated_sender_login_mismatch filter to
+# prevent intra-domain spoofing by logged in but untrusted users in outbound
+# email. In all outbound mail (the sender has authenticated), the MAIL FROM
+# address (aka envelope or return path address) must be "owned" by the user
+# who authenticated. An SQL query will find who are the owners of any given
+# address.
 tools/editconf.py /etc/postfix/main.cf \
 	smtpd_sender_login_maps=sqlite:/etc/postfix/sender-login-maps.cf
 
-# SQL statement that returns a list of addresses/domains the logged in username
-# is allowed to send as. This is similar to virtual-alias-maps.cf (see below).
-# Matches from the users table take priority over (direct) aliases.
+# Postfix will query the exact address first, where the priority will be alias
+# records first, then user records. If there are no matches for the exact
+# address, then Postfix will query just the domain part, which we call
+# catch-alls and domain aliases. A NULL permitted_senders column means to
+# take the value from the destination column.
 cat > /etc/postfix/sender-login-maps.cf << EOF;
 dbpath=$db_path
-query = SELECT senders from (SELECT senders, 0 as priority FROM aliases WHERE address='%s' UNION SELECT email as senders, 1 as priority FROM users WHERE email='%s') ORDER BY priority LIMIT 1;
+query = SELECT permitted_senders FROM (SELECT permitted_senders, 0 AS priority FROM aliases WHERE source='%s' AND permitted_senders IS NOT NULL UNION SELECT destination AS permitted_senders, 1 AS priority FROM aliases WHERE source='%s' AND permitted_senders IS NULL UNION SELECT email as permitted_senders, 2 AS priority FROM users WHERE email='%s') ORDER BY priority LIMIT 1;
 EOF
 
 # ### Destination Validation
@@ -95,13 +100,13 @@ tools/editconf.py /etc/postfix/main.cf \
 	virtual_alias_maps=sqlite:/etc/postfix/virtual-alias-maps.cf \
 	local_recipient_maps=\$virtual_mailbox_maps
 
-# SQL statement to check if we handle mail for a domain, either for users or aliases.
+# SQL statement to check if we handle incoming mail for a domain, either for users or aliases.
 cat > /etc/postfix/virtual-mailbox-domains.cf << EOF;
 dbpath=$db_path
-query = SELECT 1 FROM users WHERE email LIKE '%%@%s' UNION SELECT 1 FROM aliases WHERE address LIKE '%%@%s'
+query = SELECT 1 FROM users WHERE email LIKE '%%@%s' UNION SELECT 1 FROM aliases WHERE source LIKE '%%@%s'
 EOF
 
-# SQL statement to check if we handle mail for a user.
+# SQL statement to check if we handle incoming mail for a user.
 cat > /etc/postfix/virtual-mailbox-maps.cf << EOF;
 dbpath=$db_path
 query = SELECT 1 FROM users WHERE email='%s'
@@ -127,9 +132,13 @@ EOF
 # might be returned by the UNION, so the whole query is wrapped in
 # another select that prioritizes the alias definition to preserve
 # postfix's preference for aliases for whole email addresses.
+#
+# Since we might have alias records with an empty destination because
+# it might have just permitted_senders, skip any records with an
+# empty destination here so that other lower priority rules might match.
 cat > /etc/postfix/virtual-alias-maps.cf << EOF;
 dbpath=$db_path
-query = SELECT receivers from (SELECT receivers, 0 as priority FROM aliases WHERE address='%s' UNION SELECT email as receivers, 1 as priority FROM users WHERE email='%s') ORDER BY priority LIMIT 1;
+query = SELECT destination from (SELECT destination, 0 as priority FROM aliases WHERE source='%s' AND destination<>'' UNION SELECT email as destination, 1 as priority FROM users WHERE email='%s') ORDER BY priority LIMIT 1;
 EOF
 
 # Restart Services

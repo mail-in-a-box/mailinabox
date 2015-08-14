@@ -102,56 +102,14 @@ def migration_8(env):
 	os.unlink(os.path.join(env['STORAGE_ROOT'], 'mail/dkim/mail.private'))
 
 def migration_9(env):
-	# Switch from storing alias ownership in one column (used for both
-	# directions) to two columns (one for determining inbound forward-tos and
-	# one for determining outbound permitted-senders). This was motivated by the
-	# addition of #427 ("Reject outgoing mail if FROM does not match Login") -
-	# which introduced the notion of outbound permitted-senders.
+	# Add a column to the aliases table to store permitted_senders,
+	# which is a list of user account email addresses that are
+	# permitted to send mail using this alias instead of their own
+	# address. This was motivated by the addition of #427 ("Reject
+	# outgoing mail if FROM does not match Login") - which introduced
+	# the notion of outbound permitted-senders.
 	db = os.path.join(env["STORAGE_ROOT"], 'mail/users.sqlite')
-	# Move the old aliases table to one side.
-	shell("check_call", ["sqlite3", db, "ALTER TABLE aliases RENAME TO aliases_8"])
-	# Create the new aliases table, initially empty.
-	shell("check_call", ["sqlite3", db, "CREATE TABLE aliases (id INTEGER PRIMARY KEY AUTOINCREMENT, address TEXT NOT NULL UNIQUE, receivers TEXT NOT NULL, senders TEXT NOT NULL)"])
-
-	import sqlite3
-	conn = sqlite3.connect(os.path.join(env["STORAGE_ROOT"], "mail/users.sqlite"))
-
-	c = conn.cursor()
-	c.execute('SELECT email FROM users')
-	valid_logins = [ row[0] for row in c.fetchall() ]
-
-	c = conn.cursor()
-	c.execute('SELECT source, destination FROM aliases_8')
-	aliases = { row[0]: row[1] for row in c.fetchall() }
-
-	# Populate the new aliases table. Forward-to addresses (receivers) is taken
-	# directly from the old destination column. Permitted-sender logins
-	# (senders) is made up of only those addresses in the old destination column
-	# that are valid logins, as other values are not relevant. Their presence
-	# would not do any harm, except that it would make the aliases UI confusing
-	# on upgraded boxes.
-	for source in aliases:
-
-		address = source
-		receivers = aliases[source]
-
-		validated_senders = []
-		for login in aliases[source].split(","):
-			login = login.strip()
-			if login == "": continue
-			if login in valid_logins:
-				validated_senders.append(login)
-
-		senders = ",".join(validated_senders)
-
-		c = conn.cursor()
-		c.execute("INSERT INTO aliases (address, receivers, senders) VALUES (?, ?, ?)", (address, receivers, senders))
-
-	# Save.
-	conn.commit()
-
-	# Delete the old aliases table.
-	shell("check_call", ["sqlite3", db, "DROP TABLE aliases_8"])
+	shell("check_call", ["sqlite3", db, "ALTER TABLE aliases ADD permitted_senders TEXT"])
 
 def get_current_migration():
 	ver = 0
