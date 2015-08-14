@@ -24,7 +24,7 @@ The Box
 
 Mail-in-a-Box turns a fresh Ubuntu 14.04 LTS 64-bit machine into a working mail server by installing and configuring various components.
 
-It is a one-click email appliance (see the [setup guide](https://mailinabox.email/guide.html)). There are no user-configurable setup options. It "just works".
+It is a one-click email appliance. There are no user-configurable setup options. It "just works".
 
 The components installed are:
 
@@ -41,22 +41,26 @@ It also includes:
 
 For more information on how Mail-in-a-Box handles your privacy, see the [security details page](security.md).
 
-The Security
+Installation
 ------------
 
-See the [security guide](security.md) for more information about the box's security configuration (TLS, password storage, etc).
+See the [setup guide](https://mailinabox.email/guide.html) for detailed, user-friendly instructions.
 
-I sign the release tags on git. To verify that a tag is signed by me, you can perform the following steps:
+For experts, start with a completely fresh (really, I mean it) Ubuntu 14.04 LTS 64-bit machine. On the machine...
 
-	# Download my PGP key.
-	$ curl -s https://keybase.io/joshdata/key.asc | gpg --import
-	gpg: key C10BDD81: public key "Joshua Tauberer <jt@occams.info>" imported
+Clone this repository:
 
-	# Clone this repository.
 	$ git clone https://github.com/mail-in-a-box/mailinabox
 	$ cd mailinabox
 
-	# Verify the tag.
+_Optional:_ Download my PGP key and then verify that the sources were signed
+by me. You'll get a lot of warnings, but the fingerprint should match the
+fingerprint in the key details at [https://keybase.io/joshdata](https://keybase.io/joshdata)
+and on my [personal homepage](https://razor.occams.info/). (Of course, if this repository has been compromised you can't trust these instructions anyway.)
+
+	$ curl -s https://keybase.io/joshdata/key.asc | gpg --import
+	gpg: key C10BDD81: public key "Joshua Tauberer <jt@occams.info>" imported
+
 	$ git verify-tag v0.12c
 	gpg: Signature made ..... using RSA key ID C10BDD81
 	gpg: Good signature from "Joshua Tauberer <jt@occams.info>"
@@ -64,10 +68,17 @@ I sign the release tags on git. To verify that a tag is signed by me, you can pe
 	gpg:          There is no indication that the signature belongs to the owner.
 	Primary key fingerprint: 5F4C 0E73 13CC D744 693B  2AEA B920 41F4 C10B DD81
 
-	# Check out the tag.
+Checkout the tag corresponding to the most recent release:
+
 	$ git checkout v0.12c
 
-The key ID and fingerprint above should match my [Keybase.io key](https://keybase.io/joshdata) and the fingerprint I publish on [my homepage](https://razor.occams.info/).
+Begin the installation.
+
+	$ sudo setup/start.sh
+
+For help, DO NOT contact me directly --- I don't do tech support by email or tweet (no exceptions).
+
+Post your question on the [discussion forum](https://discourse.mailinabox.email/) instead, where me and other Mail-in-a-Box users may be able to help you.
 
 The Acknowledgements
 --------------------
