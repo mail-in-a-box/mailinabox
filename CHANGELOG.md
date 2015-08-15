@@ -8,6 +8,7 @@ Mail:
 
 * Outbound mail headers (the Recieved: header) are tweaked to possibly improve deliverability.
 * Some MIME messages would hang Roundcube due to a missing package.
+* The users permitted to send as an alias are now configurable separately from where an alias forwards to.
 
 DNS:
 
@@ -18,6 +19,7 @@ System:
 
 * Backups can now be turned off, or stored in Amazon S3, through new control panel options.
 * Munin was not working on machines confused about their hostname.
+* SSL certificate checks were failing on OVH/OpenVZ servers due to missing /dev/stdin.
 * ownCloud updated to version 8.1.1.
 * When upgrading, network checks like blocked port 25 are now skipped.
 * Tweaks to the intrusion detection rules for IMAP.
