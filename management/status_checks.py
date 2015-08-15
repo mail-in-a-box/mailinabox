@@ -708,7 +708,7 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 		"openssl",
 		"verify", "-verbose",
 		"-purpose", "sslserver", "-policy_check",]
-		+ ([] if len(ssl_cert_chain) == 1 else ["-untrusted", "/dev/stdin"])
+		+ ([] if len(ssl_cert_chain) == 1 else ["-untrusted", "/proc/self/fd/0"])
 		+ [ssl_certificate],
 		input=b"\n\n".join(ssl_cert_chain[1:]),
 		trap=True)
