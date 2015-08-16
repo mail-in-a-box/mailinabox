@@ -96,6 +96,7 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
   'forcessl' => true, # if unset/false, ownCloud sends a HSTS=0 header, which conflicts with nginx config
 
   'overwritewebroot' => '/cloud',
+  'overwrite.cli.url' => '/cloud',
   'user_backends' => array(
     array(
       'class'=>'OC_User_IMAP',
@@ -157,6 +158,7 @@ php <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP $STORAGE_ROOT/owncloud/config.php;
 <?php
 include("$STORAGE_ROOT/owncloud/config.php");
 \$CONFIG['memcache.local'] = '\\OC\\Memcache\\Memcached';
+\$CONFIG['overwrite.cli.url'] = '/cloud';
 echo "<?php\n\\\$CONFIG = ";
 var_export(\$CONFIG);
 echo ";";
