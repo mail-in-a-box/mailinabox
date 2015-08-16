@@ -48,7 +48,7 @@ apt_get_quiet upgrade
 # * netcat-openbsd: `nc` command line networking tool
 # * git: we install some things directly from github
 # * sudo: allows privileged users to execute commands as root without being root
-# * coreutils: includes `nproc` tool to report number of processors
+# * coreutils: includes `nproc` tool to report number of processors, mktemp
 # * bc: allows us to do math to compute sane defaults
 
 apt_install python3 python3-dev python3-pip \

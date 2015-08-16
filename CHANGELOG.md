@@ -20,7 +20,7 @@ System:
 * Backups can now be turned off, or stored in Amazon S3, through new control panel options.
 * Munin was not working on machines confused about their hostname.
 * SSL certificate checks were failing on OVH/OpenVZ servers due to missing /dev/stdin.
-* ownCloud updated to version 8.1.1.
+* ownCloud updated to version 8.1.1, its memcached caching enabled.
 * When upgrading, network checks like blocked port 25 are now skipped.
 * Tweaks to the intrusion detection rules for IMAP.
 * Improve the sort order of the domains in the status checks.
