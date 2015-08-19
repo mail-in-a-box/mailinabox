@@ -4,6 +4,8 @@ CHANGELOG
 v0.13 (August 19, 2015)
 -----------------------
 
+THIS RELEASE WAS PULLED DUE TO A FATAL OWNCLOUD BUG.
+
 Mail:
 
 * Outbound mail headers (the Recieved: header) are tweaked to possibly improve deliverability.
