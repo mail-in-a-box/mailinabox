@@ -53,5 +53,5 @@ if [ -z "`tools/mail.py user`" ]; then
 	hide_output tools/mail.py user make-admin $EMAIL_ADDR
 
 	# Create an alias to which we'll direct all automatically-created administrative aliases.
-	tools/mail.py alias add administrator@$PRIMARY_HOSTNAME $EMAIL_ADDR
+	tools/mail.py alias add administrator@$PRIMARY_HOSTNAME $EMAIL_ADDR > /dev/null
 fi

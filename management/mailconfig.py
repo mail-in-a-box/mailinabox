@@ -558,7 +558,8 @@ def kick(env, mail_result=None):
 	# Ensure every required alias exists.
 
 	existing_users = get_mail_users(env)
-	existing_aliases = get_mail_aliases(env)
+	existing_alias_records = get_mail_aliases(env)
+	existing_aliases = set(a for a, *_ in existing_alias_records) # just first entry in tuple
 	required_aliases = get_required_aliases(env)
 
 	def ensure_admin_alias_exists(address):
@@ -566,15 +567,15 @@ def kick(env, mail_result=None):
 		if address in existing_users:
 			return
 
-		# Does this alias exists?
-		for a, *_ in existing_aliases:
-			if a == address:
-				return
+		# If the alias already exists, we're good.
+		if address in existing_aliases:
+			return
 
 		# Doesn't exist.
 		administrator = get_system_administrator(env)
 		if address == administrator: return # don't make an alias from the administrator to itself --- this alias must be created manually
 		add_mail_alias(address, administrator, "", env, do_kick=False)
+		if administrator not in existing_aliases: return # don't report the alias in output if the administrator alias isn't in yet -- this is a hack to supress confusing output on initial setup
 		results.append("added alias %s (=> %s)\n" % (address, administrator))
 
 	for address in required_aliases:
@@ -582,7 +583,7 @@ def kick(env, mail_result=None):
 
 	# Remove auto-generated postmaster/admin on domains we no
 	# longer have any other email addresses for.
-	for address, forwards_to, *_ in existing_aliases:
+	for address, forwards_to, *_ in existing_alias_records:
 		user, domain = address.split("@")
 		if user in ("postmaster", "admin") \
 			and address not in required_aliases \
