@@ -66,9 +66,12 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 	# that error.
 	chown -f -R www-data.www-data $STORAGE_ROOT/owncloud /usr/local/lib/owncloud
 
-	# Run the upgrade script. Then check for success (0=ok, 3=no upgrade needed).
-	sudo -u www-data php /usr/local/lib/owncloud/occ upgrade
-	if [ \( $? -ne 0 \) -a \( $? -ne 3 \) ]; then exit 1; fi
+	# If this isn't a new installation, immediately run the upgrade script.
+	# Then check for success (0=ok and 3=no upgrade needed, both are success).
+	if [ -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
+		sudo -u www-data php /usr/local/lib/owncloud/occ upgrade
+		if [ \( $? -ne 0 \) -a \( $? -ne 3 \) ]; then exit 1; fi
+	fi
 fi
 
 # ### Configuring ownCloud
