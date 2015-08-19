@@ -405,15 +405,19 @@ def backup_status():
 @app.route('/system/privacy/enable', methods=["POST"])
 @authorized_personnel_only
 def privacy_status_enable():
-	env.update({'PRIVACY' : 'True'})
-	utils.save_environment(env)
+	config = utils.load_settings()
+	config["PRIVACY"] = 'True'
+	utils.write_settings(config)
+
 	return "Ok"
 
 @app.route('/system/privacy/disable', methods=["POST"])
 @authorized_personnel_only
 def privacy_status_disable():
-	env.update({'PRIVACY' : 'False'})
-	utils.save_environment(env)
+	config = utils.load_settings()
+	config["PRIVACY"] = 'False'
+	utils.write_settings(config)
+
 	return "Ok"
 
 # MUNIN

@@ -16,7 +16,7 @@ from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, 
 from web_update import get_web_domains, get_default_www_redirects, get_domain_ssl_files
 from mailconfig import get_mail_domains, get_mail_aliases
 
-from utils import shell, sort_domains, load_env_vars_from_file
+from utils import shell, sort_domains, load_env_vars_from_file, load_settings
 
 def run_checks(rounded_values, env, output, pool):
 	# run systems checks
@@ -820,7 +820,10 @@ def get_latest_miab_version():
 	return re.search(b'TAG=(.*)', urllib.request.urlopen("https://mailinabox.email/bootstrap.sh?ping=1").read()).group(1).decode("utf8")
 
 def check_miab_version(env, output):
-	if env['PRIVACY'] == 'True':
+
+	config = load_settings()
+
+	if config['PRIVACY'] == 'True':
 		output.print_warning("Mail-in-a-Box version check disabled.")
 	elif what_version_is_this(env) != get_latest_miab_version():
 		output.print_error("Mail-in-a-Box is outdated. To find the latest version and for upgrade instructions, see https://mailinabox.email/. ")

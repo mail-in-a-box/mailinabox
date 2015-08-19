@@ -13,10 +13,36 @@ def load_env_vars_from_file(fn):
     for line in open(fn): env.setdefault(*line.strip().split("=", 1))
     return env
 
+# Settings
+settings_root = os.path.join(load_environment()["STORAGE_ROOT"], '/')
+default_settings = {
+	"PRIVACY": 'TRUE'
+}
+
+def write_settings(newconfig):
+	with open(os.path.join(settings_root, 'settings.yaml'), "w") as f:
+		f.write(rtyaml.dump(newconfig))
+
+def load_settings():
+    try:
+        config = rtyaml.load(open(os.path.join(settings_root, 'settings.yaml'), "w"))
+        if not isinstance(config, dict): raise ValueError() # caught below
+    except:
+        return default_settings
+
+        merged_config = default_settings.copy()
+        merged_config.update(config)
+
+        return config
+
 def save_environment(env):
     with open("/etc/mailinabox.conf", "w") as f:
         for k, v in env.items():
             f.write("%s=%s\n" % (k, v))
+
+def write_settings(env):
+    with open(os.path.join(settings_root, 'settings.yaml'), "w") as f:
+        f.write(rtyaml.dump(newconfig))
 
 def safe_domain_name(name):
     # Sanitize a domain name so it is safe to use as a file name on disk.
@@ -68,7 +94,7 @@ def sort_domains(domain_names, env):
         # Then in right-to-left lexicographic order of the .-separated parts of the name.
         list(reversed(d.split("."))),
       ))
-    
+
     return domain_names
 
 def sort_email_addresses(email_addresses, env):
@@ -128,7 +154,7 @@ def exclusive_process(name):
                 f.write(str(mypid))
                 f.truncate()
                 atexit.register(clear_my_pid, pidfile)
- 
+
 
 def clear_my_pid(pidfile):
     import os
