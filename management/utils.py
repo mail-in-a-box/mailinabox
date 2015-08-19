@@ -40,10 +40,6 @@ def save_environment(env):
         for k, v in env.items():
             f.write("%s=%s\n" % (k, v))
 
-def write_settings(env):
-    with open(os.path.join(settings_root, 'settings.yaml'), "w") as f:
-        f.write(rtyaml.dump(newconfig))
-
 def safe_domain_name(name):
     # Sanitize a domain name so it is safe to use as a file name on disk.
     import urllib.parse
