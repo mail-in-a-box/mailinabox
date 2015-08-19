@@ -6,6 +6,7 @@ source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
 # install Munin
+echo "Installing Munin (system monitoring)..."
 apt_install munin munin-node
 
 # edit config

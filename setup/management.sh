@@ -2,6 +2,8 @@
 
 source setup/functions.sh
 
+echo "Installing Mail-in-a-Box system management daemon..."
+
 # build-essential libssl-dev libffi-dev python3-dev: Required to pip install cryptography.
 apt_install python3-flask links duplicity libyaml-dev python3-dnspython python3-dateutil \
 	build-essential libssl-dev libffi-dev python3-dev python-pip

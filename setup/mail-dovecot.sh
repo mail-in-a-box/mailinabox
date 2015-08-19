@@ -23,6 +23,7 @@ source /etc/mailinabox.conf # load global vars
 # but dovecot-lucene is packaged by *us* in the Mail-in-a-Box PPA,
 # not by Ubuntu.
 
+echo "Installing Dovecot (IMAP server)..."
 apt_install \
 	dovecot-core dovecot-imapd dovecot-pop3d dovecot-lmtpd dovecot-sqlite sqlite3 \
 	dovecot-sieve dovecot-managesieved dovecot-lucene

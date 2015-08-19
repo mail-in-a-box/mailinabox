@@ -15,7 +15,7 @@ source /etc/mailinabox.conf # load global vars
 # * nsd: The non-recursive nameserver that publishes our DNS records.
 # * ldnsutils: Helper utilities for signing DNSSEC zones.
 # * openssh-client: Provides ssh-keyscan which we use to create SSHFP records.
-
+echo "Installing nsd (DNS server)..."
 apt_install nsd ldnsutils openssh-client
 
 # Prepare nsd's configuration.

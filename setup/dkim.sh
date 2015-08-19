@@ -10,6 +10,7 @@ source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
 # Install DKIM...
+echo Installing OpenDKIM/OpenDMARC...
 apt_install opendkim opendkim-tools opendmarc
 
 # Make sure configuration directories exist.

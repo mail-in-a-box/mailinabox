@@ -39,32 +39,12 @@ function apt_get_quiet {
 }
 
 function apt_install {
-	# Report any packages already installed.
+	# Install a bunch of packages. We used to report which packages were already
+	# installed and which needed installing, before just running an 'apt-get
+	# install' for all of the packages.  Calling `dpkg` on each package is slow,
+	# and doesn't affect what we actually do, except in the messages, so let's
+	# not do that anymore.
 	PACKAGES=$@
-	TO_INSTALL=""
-	ALREADY_INSTALLED=""
-	for pkg in $PACKAGES; do
-		if dpkg -s $pkg 2>/dev/null | grep "^Status: install ok installed" > /dev/null; then
-			if [[ ! -z "$ALREADY_INSTALLED" ]]; then ALREADY_INSTALLED="$ALREADY_INSTALLED, "; fi
-			ALREADY_INSTALLED="$ALREADY_INSTALLED$pkg (`dpkg -s $pkg | grep ^Version: | sed -e 's/.*: //'`)"
-		else
-			TO_INSTALL="$TO_INSTALL""$pkg "
-		fi
-	done
-
-	# List the packages already installed.
-	if [[ ! -z "$ALREADY_INSTALLED" ]]; then
-		echo already installed: $ALREADY_INSTALLED
-	fi
-
-	# List the packages about to be installed.
-	if [[ ! -z "$TO_INSTALL" ]]; then
-		echo installing $TO_INSTALL...
-	fi
-
-	# We still include the whole original package list in the apt-get command in
-	# case it wants to upgrade anything, I guess? Maybe we can remove it. Doesn't normally make
-	# a difference.
 	apt_get_quiet install $PACKAGES
 }
 

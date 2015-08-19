@@ -49,6 +49,7 @@ source /etc/mailinabox.conf # load global vars
 # > infrastructure and every commercial vendor of dnswl.org data (eg through
 # > anti-spam solutions) must register with dnswl.org and purchase a subscription.
 
+echo "Installing Postfix (SMTP server)..."
 apt_install postfix postfix-pcre postgrey ca-certificates
 
 # ### Basic Settings

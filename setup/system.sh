@@ -51,6 +51,7 @@ apt_get_quiet upgrade
 # * coreutils: includes `nproc` tool to report number of processors, mktemp
 # * bc: allows us to do math to compute sane defaults
 
+echo Installing system packages...
 apt_install python3 python3-dev python3-pip \
 	netcat-openbsd wget curl git sudo coreutils bc \
 	haveged unattended-upgrades cron ntp fail2ban

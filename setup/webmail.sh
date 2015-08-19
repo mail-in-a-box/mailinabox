@@ -19,6 +19,7 @@ source /etc/mailinabox.conf # load global vars
 # and then we'll manually install roundcube from source.
 
 # These dependencies are from `apt-cache showpkg roundcube-core`.
+echo "Installing Roundcube (webmail)..."
 apt_install \
 	dbconfig-common \
 	php5 php5-sqlite php5-mcrypt php5-intl php5-json php5-common php-auth php-net-smtp php-net-socket php-net-sieve php-mail-mime php-mail-mimedecode php-crypt-gpg php5-gd php5-pspell \
@@ -47,7 +48,6 @@ elif [[ "$UPDATE_KEY" != `cat /usr/local/lib/roundcubemail/version` ]]; then
 fi
 if [ $needs_update == 1 ]; then
 	# install roundcube
-	echo installing Roundcube webmail $VERSION...
 	wget_verify \
 		https://mailinabox.email/mirror/roundcubemail-$VERSION.tar.gz \
 		$HASH \

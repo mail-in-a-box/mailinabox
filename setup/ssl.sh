@@ -19,6 +19,7 @@
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
+echo "Creating initial SSL certificate and perfect forward secrecy Diffie-Hellman parameters..."
 apt_install openssl
 
 mkdir -p $STORAGE_ROOT/ssl

@@ -17,6 +17,7 @@ fi
 #
 # Turn off nginx's default website.
 
+echo "Installing Nginx (web server)..."
 apt_install nginx php5-fpm
 
 rm -f /etc/nginx/sites-enabled/default

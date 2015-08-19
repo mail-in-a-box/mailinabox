@@ -16,6 +16,7 @@ source setup/functions.sh # load our functions
 # ----------------------------------------
 
 # Install packages.
+echo "Installing SpamAssassin..."
 apt_install spampd razor pyzor dovecot-antispam
 
 # Allow spamassassin to download new rules.

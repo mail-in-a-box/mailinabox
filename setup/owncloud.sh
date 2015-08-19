@@ -7,6 +7,8 @@ source /etc/mailinabox.conf # load global vars
 
 # ### Installing ownCloud
 
+echo "Installing ownCloud (contacts/calendar)..."
+
 apt_install \
 	dbconfig-common \
 	php5-cli php5-sqlite php5-gd php5-imap php5-curl php-pear php-apc curl libapr1 libtool libcurl4-openssl-dev php-xml-parser \
@@ -35,7 +37,6 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 	|| ! grep -q $owncloud_ver /usr/local/lib/owncloud/version.php; then
 
 	# Download and verify
-	echo "installing ownCloud..."
 	wget_verify https://download.owncloud.org/community/owncloud-$owncloud_ver.zip $owncloud_hash /tmp/owncloud.zip
 
 	# Clear out the existing ownCloud.

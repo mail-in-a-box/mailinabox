@@ -15,6 +15,7 @@ source /etc/mailinabox.conf # load global vars
 
 # Prereqs.
 
+echo "Installing Z-Push (Exchange/ActiveSync server)..."
 apt_install \
 	php-soap php5-imap libawl-php php5-xsl
 
@@ -30,7 +31,6 @@ elif [[ $TARGETHASH != `cat /usr/local/lib/z-push/version` ]]; then
 	needs_update=1 #NODOC
 fi
 if [ $needs_update == 1 ]; then
-	echo installing z-push \(fmbiete fork\)...
 	git_clone https://github.com/fmbiete/Z-Push-contrib $TARGETHASH '' /usr/local/lib/z-push
 	rm -f /usr/sbin/z-push-{admin,top}
 	ln -s /usr/local/lib/z-push/z-push-admin.php /usr/sbin/z-push-admin
