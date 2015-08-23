@@ -1,10 +1,10 @@
 CHANGELOG
 =========
 
-v0.13 (August 19, 2015)
------------------------
+v0.13a (August 23, 2015)
+------------------------
 
-THIS RELEASE WAS PULLED DUE TO A FATAL OWNCLOUD BUG.
+Note: v0.13 (no 'a', August 19, 2015) was pulled immediately due to an ownCloud bug that prevented upgrades. v0.13a works around that problem.
 
 Mail:
 
@@ -20,8 +20,8 @@ DNS:
 System:
 
 * Backups can now be turned off, or stored in Amazon S3, through new control panel options.
-* Munin was not working on machines confused about their hostname.
-* ownCloud updated to version 8.1.1, its memcached caching enabled.
+* Munin was not working on machines confused about their hostname and had lots of errors related to PANGO, NTP peers and network interfaces that were not up.
+* ownCloud updated to version 8.1.1 (with upgrade work-around), its memcached caching enabled.
 * When upgrading, network checks like blocked port 25 are now skipped.
 * Tweaks to the intrusion detection rules for IMAP.
 * Mail-in-a-Box's setup is a lot quieter, hiding lots of irrelevant messages.
