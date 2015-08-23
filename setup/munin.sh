@@ -33,5 +33,27 @@ EOF
 tools/editconf.py /etc/munin/munin-node.conf -s \
 	host_name=$PRIMARY_HOSTNAME
 
+# Update the activated plugins through munin's autoconfiguration.
+munin-node-configure --shell --remove-also 2>/dev/null | sh
+
+# Deactivate monitoring of NTP peers. Not sure why anyone would want to monitor a NTP peer. The addresses seem to change
+# (which is taken care of my munin-node-configure, but only when we re-run it.)
+find /etc/munin/plugins/ -lname /usr/share/munin/plugins/ntp_ -print0 | xargs -0 /bin/rm
+
+# Deactivate monitoring of network interfaces that are not up. Otherwise we can get a lot of empty charts.
+for f in $(find /etc/munin/plugins/ \( -lname /usr/share/munin/plugins/if_ -o -lname /usr/share/munin/plugins/if_err_ -o -lname /usr/share/munin/plugins/bonding_err_ \)); do
+	IF=$(echo $f | sed s/.*_//);
+	if ! ifquery $IF >/dev/null 2>/dev/null; then
+		rm $f;
+	fi;
+done
+
+# Create a 'state' directory. Not sure why we need to do this manually.
+mkdir -p /var/lib/munin-node/plugin-state/
+
+# Restart services.
+restart_service munin
+restart_service munin-node
+
 # generate initial statistics so the directory isn't empty
 sudo -u munin munin-cron
