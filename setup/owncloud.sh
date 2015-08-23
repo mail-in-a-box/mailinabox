@@ -70,8 +70,16 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 	# If this isn't a new installation, immediately run the upgrade script.
 	# Then check for success (0=ok and 3=no upgrade needed, both are success).
 	if [ -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
+		# ownCloud 8.1.1 broke upgrades. It may fail on the first attempt, but
+		# that can be OK.
 		sudo -u www-data php /usr/local/lib/owncloud/occ upgrade
-		if [ \( $? -ne 0 \) -a \( $? -ne 3 \) ]; then exit 1; fi
+		if [ \( $? -ne 0 \) -a \( $? -ne 3 \) ]; then
+			echo "Trying ownCloud upgrade again to work around ownCloud upgrade bug..."
+			sudo -u www-data php /usr/local/lib/owncloud/occ upgrade
+			if [ \( $? -ne 0 \) -a \( $? -ne 3 \) ]; then exit 1; fi
+			sudo -u www-data php /usr/local/lib/owncloud/occ maintenance:mode --off
+			echo "...which seemed to work."
+		fi
 	fi
 fi
 
