@@ -151,6 +151,12 @@ sed -i "s/#mail_plugins = .*/mail_plugins = \$mail_plugins sieve/" /etc/dovecot/
 #
 # * `sieve_before`: The path to our global sieve which handles moving spam to the Spam folder.
 #
+# * `sieve_before2`: The path to our global sieve directory for sieve which can contain .sieve files
+# to run globally for every user before their own sieve files run.
+#
+# * `sieve_after`: The path to our global sieve directory which can contain .sieve files
+# to run globally for every user after their own sieve files run.
+#
 # * `sieve`: The path to the user's main active script. ManageSieve will create a symbolic
 # link here to the actual sieve script. It should not be in the mailbox directory
 # (because then it might appear as a folder) and it should not be in the sieve_dir
@@ -160,6 +166,8 @@ sed -i "s/#mail_plugins = .*/mail_plugins = \$mail_plugins sieve/" /etc/dovecot/
 cat > /etc/dovecot/conf.d/99-local-sieve.conf << EOF;
 plugin {
   sieve_before = /etc/dovecot/sieve-spam.sieve
+  sieve_before2 = $STORAGE_ROOT/mail/sieve/global_before
+  sieve_after = $STORAGE_ROOT/mail/sieve/global_after
   sieve = $STORAGE_ROOT/mail/sieve/%d/%n.sieve
   sieve_dir = $STORAGE_ROOT/mail/sieve/%d/%n
 }
@@ -183,6 +191,8 @@ chown -R mail.mail $STORAGE_ROOT/mail/mailboxes
 
 # Same for the sieve scripts.
 mkdir -p $STORAGE_ROOT/mail/sieve
+mkdir -p $STORAGE_ROOT/mail/sieve/global_before
+mkdir -p $STORAGE_ROOT/mail/sieve/global_after
 chown -R mail.mail $STORAGE_ROOT/mail/sieve
 
 # Allow the IMAP/POP ports in the firewall.
