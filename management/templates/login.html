@@ -57,11 +57,15 @@ sudo tools/mail.py user make-admin me@{{hostname}}</pre>
 <script>
 function do_login() {
   if ($('#loginEmail').val() == "") {
-    show_modal_error("Login Failed", "Enter your email address.")
+    show_modal_error("Login Failed", "Enter your email address.", function() {
+	$('#loginEmail').focus();
+    });
     return false;
   }
   if ($('#loginPassword').val() == "") {
-    show_modal_error("Login Failed", "Enter your email password.")
+    show_modal_error("Login Failed", "Enter your email password.", function() {
+        $('#loginPassword').focus();
+    });
     return false;
   }
 
@@ -125,5 +129,15 @@ function do_logout() {
   if (typeof sessionStorage != 'undefined')
     sessionStorage.removeItem("miab-cp-credentials");
   show_panel('login');
+}
+
+function show_login() {
+  $('#loginEmail,#loginPassword').each(function() {
+    var input = $(this);
+    if (!$.trim(input.val())) {
+      input.focus();
+      return false;
+    }
+  });
 }
 </script>
