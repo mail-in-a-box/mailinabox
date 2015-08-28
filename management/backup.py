@@ -384,7 +384,7 @@ def backup_set_custom(env, target, target_user, target_pass, min_age):
 	
 	write_backup_config(env, config)
 
-	return "Updated backup config"
+	return "OK"
 	
 def get_backup_config(env, for_save=False, for_ui=False):
 	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')

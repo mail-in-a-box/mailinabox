@@ -202,11 +202,12 @@ function set_custom_backup() {
       min_age: min_age
     },
     function(r) {
-      // Responses are multiple lines of pre-formatted text.
-      show_modal_error("Backup configuration", $("<pre/>").text(r), function() { show_system_backup(); }); // refresh after modal
+      // use .text() --- it's a text response, not html
+      show_modal_error("Backup configuration", $("<p/>").text(r), function() { if (r == "OK") show_system_backup(); }); // refresh after modal on success
     },
     function(r) {
-      show_modal_error("Backup configuration (error)", r);
+      // use .text() --- it's a text response, not html
+      show_modal_error("Backup configuration", $("<p/>").text(r));
     });
   return false;
 }
