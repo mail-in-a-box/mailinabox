@@ -386,7 +386,7 @@ def backup_set_custom(env, target, target_user, target_pass, min_age):
 
 	return "Updated backup config"
 	
-def get_backup_config(env, for_save=False):
+def get_backup_config(env, for_save=False, for_ui=False):
 	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
 
 	# Defaults.
@@ -406,6 +406,13 @@ def get_backup_config(env, for_save=False):
 	# When updating config.yaml, don't do any further processing on what we find.
 	if for_save:
 		return config
+
+	# When passing this back to the admin to show the current settings, do not include
+	# authentication details. The user will have to re-enter it.
+	if for_ui:
+		for field in ("target_user", "target_pass"):
+			if field in config:
+				del config[field]
 
 	# helper fields for the admin
 	config["file_target_directory"] = os.path.join(backup_root, 'encrypted')
