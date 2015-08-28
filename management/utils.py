@@ -1,6 +1,7 @@
 import os.path
+import rtyaml
 
-CONF_DIR = os.path.join(os.path.dirname(__file__), "../conf")
+# THE ENVIRONMENT FILE AT /etc/mailinabox.conf
 
 def load_environment():
     # Load settings from /etc/mailinabox.conf.
@@ -17,6 +18,24 @@ def save_environment(env):
     with open("/etc/mailinabox.conf", "w") as f:
         for k, v in env.items():
             f.write("%s=%s\n" % (k, v))
+
+# THE SETTINGS FILE AT STORAGE_ROOT/settings.yaml.
+
+def write_settings(config, env):
+    fn = os.path.join(env['STORAGE_ROOT'], 'settings.yaml')
+    with open(fn, "w") as f:
+        f.write(rtyaml.dump(config))
+
+def load_settings(env):
+    fn = os.path.join(env['STORAGE_ROOT'], 'settings.yaml')
+    try:
+        config = rtyaml.load(open(fn, "r"))
+        if not isinstance(config, dict): raise ValueError() # caught below
+        return config
+    except:
+        return { }
+
+# UTILITIES
 
 def safe_domain_name(name):
     # Sanitize a domain name so it is safe to use as a file name on disk.

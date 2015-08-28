@@ -426,6 +426,20 @@ def backup_set_custom():
 		request.form.get('min_age', '')
 	))
 
+@app.route('/system/privacy', methods=["GET"])
+@authorized_personnel_only
+def privacy_status_get():
+	config = utils.load_settings(env)
+	return json_response(config.get("privacy", True))
+
+@app.route('/system/privacy', methods=["POST"])
+@authorized_personnel_only
+def privacy_status_set():
+	config = utils.load_settings(env)
+	config["privacy"] = (request.form.get('value') == "private")
+	utils.write_settings(config, env)
+	return "OK"
+
 # MUNIN
 
 @app.route('/munin/')
