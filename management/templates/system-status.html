@@ -34,7 +34,19 @@
   font-family: monospace;
   white-space: pre-wrap;
 }
+
+#system-privacy-setting {
+  float: right;
+  max-width: 20em;
+  margin-bottom: 1em;
+}
 </style>
+
+<div id="system-privacy-setting" style="display: none">
+	<div><a onclick="return enable_privacy(!current_privacy_setting)" href="#"><span>Enable/Disable</span> New-Version Check</a></div>
+	<p style="line-height: 125%"><small>(When enabled, status checks phone-home to check for a new release of Mail-in-a-Box.)</small></p>
+</div>
+
 
 <table id="system-checks" class="table" style="max-width: 60em">
   <thead>
@@ -43,13 +55,21 @@
   </tbody>
 </table>
 
-<h4>Privacy Setting</h4>
-<p>By deactivating the advanced privacy feature your Mail-in-a-Box will contact a remote server to check if a new version got released.</p>
-<p>Advanced Privacy <a onclick="enable_privacy()" href="">On</a> | <a onclick="disable_privacy()" href="">Off</a></p>
-
 <script>
 function show_system_status() {
   $('#system-checks tbody').html("<tr><td colspan='2' class='text-muted'>Loading...</td></tr>")
+
+  api(
+    "/system/privacy",
+    "GET",
+    { },
+    function(r) {
+      current_privacy_setting = r;
+      $('#system-privacy-setting').show();
+      $('#system-privacy-setting a span').text(r ? "Enable" : "Disable");
+      $('#system-privacy-setting p').toggle(r);
+    });
+
   api(
     "/system/status",
     "POST",
@@ -86,17 +106,20 @@ function show_system_status() {
         }
       }
     })
+
 }
-function enable_privacy() {
+
+var current_privacy_setting = null;
+function enable_privacy(status) {
   api(
-    "/system/privacy/enable",
-    "Post",
-    { });
-}
-function disable_privacy() {
-  api(
-    "/system/privacy/disable",
-    "Post",
-    { });
+    "/system/privacy",
+    "POST",
+    {
+      value: (status ? "private" : "off")
+    },
+    function(res) {
+      show_system_status();
+    });
+  return false; // disable link
 }
 </script>

@@ -820,15 +820,18 @@ def get_latest_miab_version():
 	return re.search(b'TAG=(.*)', urllib.request.urlopen("https://mailinabox.email/bootstrap.sh?ping=1").read()).group(1).decode("utf8")
 
 def check_miab_version(env, output):
+	config = load_settings(env)
 
-	config = load_settings()
-
-	if config['PRIVACY'] == 'True':
-		output.print_warning("Mail-in-a-Box version check disabled.")
-	elif what_version_is_this(env) != get_latest_miab_version():
-		output.print_error("Mail-in-a-Box is outdated. To find the latest version and for upgrade instructions, see https://mailinabox.email/. ")
+	if config.get("privacy", True):
+		output.print_warning("Mail-in-a-Box version check disabled by privacy setting.")
 	else:
-		output.print_ok("Mail-in-a-Box is up to date. You are running version %s." % what_version_is_this(env))
+		this_ver = what_version_is_this(env)
+		latest_ver = get_latest_miab_version()
+		if this_ver == latest_ver:
+			output.print_ok("Mail-in-a-Box is up to date. You are running version %s." % this_ver)
+		else:
+			output.print_error("A new version of Mail-in-a-Box is available. You are running version %s. The latest version is %s. For upgrade instructions, see https://mailinabox.email. "
+				% (this_ver, latest_ver))
 
 def run_and_output_changes(env, pool, send_via_email):
 	import json
