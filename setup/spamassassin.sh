@@ -94,6 +94,7 @@ cat > /etc/dovecot/conf.d/99-local-spampd.conf << EOF;
 plugin {
     antispam_backend = pipe
     antispam_spam_pattern_ignorecase = SPAM
+    antispam_trash_pattern_ignorecase = trash;Deleted *
     antispam_allow_append_to_spam = yes
     antispam_pipe_program_spam_args = /usr/local/bin/sa-learn-pipe.sh;--spam
     antispam_pipe_program_notspam_args = /usr/local/bin/sa-learn-pipe.sh;--ham
