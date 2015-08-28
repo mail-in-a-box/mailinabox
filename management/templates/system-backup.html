@@ -22,12 +22,14 @@
   </div>
   <div class="form-group backup-target-local">
     <div class="col-sm-10 col-sm-offset-2">
-      <div>Backups are stored on this machine&rsquo;s own hard disk. You are responsible for periodically using SFTP (FTP over SSH) to copy the backup files from <tt id="backup-location"></tt> to a safe location. These files are encrypted, so they are safe to store anywhere.</div>
+      <p>Backups are stored on this machine&rsquo;s own hard disk. You are responsible for periodically using SFTP (FTP over SSH) to copy the backup files from <tt id="backup-location"></tt> to a safe location. These files are encrypted, so they are safe to store anywhere.</p>
+      <p>Separately copy the encryption password from <tt class="backup-encpassword-file"></tt> to a safe and secure location. You will need this file to decrypt backup files.</p>
     </div>
   </div>
   <div class="form-group backup-target-s3">
     <div class="col-sm-10 col-sm-offset-2">
-      <div>Backups are stored in an Amazon Web Services S3 bucket. You must have an AWS account already.</div>
+      <p>Backups are stored in an Amazon Web Services S3 bucket. You must have an AWS account already.</p>
+      <p>You MUST manually copy the encryption password from <tt class="backup-encpassword-file"></tt> to a safe and secure location. You will need this file to decrypt backup files. It is NOT stored in your Amazon S3 bucket.</p>
     </div>
   </div>
   <div class="form-group backup-target-local backup-target-s3">
@@ -70,8 +72,6 @@
     </div>
   </div>
 </form>
-
-<p>Copy the encryption password from <tt id="backup-encpassword-file"></tt> to a safe and secure location. You will need this file to decrypt backup files.</p>
 
 <h3>Available Backups</h3>
 
@@ -175,7 +175,7 @@ function show_custom_backup() {
         $("#backup-target-pass").val(r.target_pass);
         $("#min-age").val(r.min_age_in_days);
         $('#backup-location').text(r.file_target_directory);
-        $('#backup-encpassword-file').text(r.enc_pw_file);
+        $('.backup-encpassword-file').text(r.enc_pw_file);
         toggle_form()
       })
 }
