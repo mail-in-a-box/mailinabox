@@ -14,8 +14,8 @@ source setup/preflight.sh
 # the management daemon startup script.
 
 if [ -z `locale -a | grep en_US.utf8` ]; then
-    # Generate locale if not exists
-    hide_output locale-gen en_US.UTF-8
+	# Generate locale if not exists
+	hide_output locale-gen en_US.UTF-8
 fi
 
 export LANGUAGE=en_US.UTF-8
@@ -61,21 +61,12 @@ fi
 fi
 
 # Create the STORAGE_USER and STORAGE_ROOT directory if they don't already exist.
-# If the STORAGE_ROOT is missing the mailinabox.version file that lists a
-# migration (schema) number for the files stored there, assume this is a fresh
-# installation to that directory and write the file to contain the current
-# migration number for this version of Mail-in-a-Box.
 if ! id -u $STORAGE_USER >/dev/null 2>&1; then
 	useradd -m $STORAGE_USER
 fi
 if [ ! -d $STORAGE_ROOT ]; then
 	mkdir -p $STORAGE_ROOT
 fi
-if [ ! -f $STORAGE_ROOT/mailinabox.version ]; then
-	echo $(setup/migrate.py --current) > $STORAGE_ROOT/mailinabox.version
-	chown $STORAGE_USER.$STORAGE_USER $STORAGE_ROOT/mailinabox.version
-fi
-
 
 # Save the global options in /etc/mailinabox.conf so that standalone
 # tools know where to look for data.
@@ -105,6 +96,15 @@ source setup/owncloud.sh
 source setup/zpush.sh
 source setup/management.sh
 source setup/munin.sh
+
+# If the STORAGE_ROOT is missing the mailinabox.version file that lists a
+# migration (schema) number for the files stored there, assume this is a fresh
+# installation to that directory and write the file to contain the current
+# migration number for this version of Mail-in-a-Box.
+if [ ! -f $STORAGE_ROOT/mailinabox.version ]; then
+	echo $(setup/migrate.py --current) > $STORAGE_ROOT/mailinabox.version
+	chown $STORAGE_USER.$STORAGE_USER $STORAGE_ROOT/mailinabox.version
+fi
 
 # Ping the management daemon to write the DNS and nginx configuration files.
 until nc -z -w 4 localhost 10222
@@ -140,7 +140,7 @@ else
 	echo
 fi
 openssl x509 -in $STORAGE_ROOT/ssl/ssl_certificate.pem -noout -fingerprint \
-        | sed "s/SHA1 Fingerprint=//"
+	| sed "s/SHA1 Fingerprint=//"
 echo
 echo Then you can confirm the security exception and continue.
 echo
