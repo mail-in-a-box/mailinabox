@@ -91,7 +91,7 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
 	# Create user data directory
 	mkdir -p $STORAGE_ROOT/owncloud
 
-	# Create a configuration file.
+	# Create an initial configuration file.
 	TIMEZONE=$(cat /etc/timezone)
 	instanceid=oc$(echo $PRIMARY_HOSTNAME | sha1sum | fold -w 10 | head -n 1)
 	cat > $STORAGE_ROOT/owncloud/config.php <<EOF;
@@ -101,10 +101,6 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
 
   'instanceid' => '$instanceid',
 
-  'trusted_domains' =>
-    array (
-      0 => '$PRIMARY_HOSTNAME',
-    ),
   'forcessl' => true, # if unset/false, ownCloud sends a HSTS=0 header, which conflicts with nginx config
 
   'overwritewebroot' => '/cloud',
@@ -162,15 +158,22 @@ EOF
 	(cd /usr/local/lib/owncloud; sudo -u www-data php /usr/local/lib/owncloud/index.php;)
 fi
 
-# Update existing configuration files with changed settings that weren't included in
-# previous versions of Mail-in-a-Box. Use PHP to read the settings file, modify it,
-# and write out the new settings array.
+# Update config.php.
+# * trusted_domains is reset to localhost by autoconfig starting with ownCloud 8.1.1,
+#   so set it here. It also can change if the box's PRIMARY_HOSTNAME changes, so
+#   this will make sure it has the right value.
+# * Some settings weren't included in previous versions of Mail-in-a-Box.
+# Use PHP to read the settings file, modify it, and write out the new settings array.
 CONFIG_TEMP=$(/bin/mktemp)
 php <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP $STORAGE_ROOT/owncloud/config.php;
 <?php
 include("$STORAGE_ROOT/owncloud/config.php");
+
+\$CONFIG['trusted_domains'] = array('$PRIMARY_HOSTNAME');
+
 \$CONFIG['memcache.local'] = '\\OC\\Memcache\\Memcached';
 \$CONFIG['overwrite.cli.url'] = '/cloud';
+
 echo "<?php\n\\\$CONFIG = ";
 var_export(\$CONFIG);
 echo ";";
