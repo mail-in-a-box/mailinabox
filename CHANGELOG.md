@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+v0.13b (August 30, 2015)
+------------------------
+
+Another ownCloud 8.1.1 issue was found. New installations left ownCloud improperly setup ("You are accessing the server from an untrusted domain."). Upgrading to this version will fix that.
+
 v0.13a (August 23, 2015)
 ------------------------
 
