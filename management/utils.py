@@ -1,5 +1,8 @@
 import os.path
-import rtyaml
+
+# DO NOT import non-standard modules. This module is imported by
+# migrate.py which runs on fresh machines before anything is installed
+# besides Python.
 
 # THE ENVIRONMENT FILE AT /etc/mailinabox.conf
 
@@ -22,11 +25,13 @@ def save_environment(env):
 # THE SETTINGS FILE AT STORAGE_ROOT/settings.yaml.
 
 def write_settings(config, env):
+    import rtyaml
     fn = os.path.join(env['STORAGE_ROOT'], 'settings.yaml')
     with open(fn, "w") as f:
         f.write(rtyaml.dump(config))
 
 def load_settings(env):
+    import rtyaml
     fn = os.path.join(env['STORAGE_ROOT'], 'settings.yaml')
     try:
         config = rtyaml.load(open(fn, "r"))
