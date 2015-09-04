@@ -17,7 +17,8 @@ source setup/functions.sh # load our functions
 
 # Install packages.
 echo "Installing SpamAssassin..."
-apt_install spampd razor pyzor dovecot-antispam
+apt_install spampd razor pyzor dovecot-antispam libcrypt-openssl-bignum-perl \
+        libcrypt-openssl-rsa-perl libmail-dkim-perl libcrypt-openssl-random-perl
 
 # Allow spamassassin to download new rules.
 tools/editconf.py /etc/default/spamassassin \
