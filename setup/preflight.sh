@@ -19,7 +19,7 @@ fi
 
 # Check that we have enough memory.
 #
-# /proc/meminfo reports free memory in kibibytes. Our baseline will be 768 KB,
+# /proc/meminfo reports free memory in kibibytes. Our baseline will be 768 MB,
 # which is 750000 kibibytes.
 #
 # Skip the check if we appear to be running inside of Vagrant, because that's really just for testing.
