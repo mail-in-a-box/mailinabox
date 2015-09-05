@@ -13,7 +13,7 @@ import dateutil.parser, dateutil.tz
 import idna
 
 from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, get_secondary_dns
-from web_update import get_web_domains, get_default_www_redirects, get_domain_ssl_files
+from web_update import get_web_domains, get_default_www_redirects, get_domain_ssl_files, get_domains_with_a_records
 from mailconfig import get_mail_domains, get_mail_aliases
 
 from utils import shell, sort_domains, load_env_vars_from_file, load_settings
@@ -245,19 +245,22 @@ def run_domain_checks(rounded_time, env, output, pool):
 
 	domains_to_check = mail_domains | dns_domains | web_domains
 
+	# Get the list of domains that we don't serve web for because of a custom CNAME/A record.
+	domains_with_a_records = get_domains_with_a_records(env)
+
 	# Serial version:
 	#for domain in sort_domains(domains_to_check, env):
 	#	run_domain_checks_on_domain(domain, rounded_time, env, dns_domains, dns_zonefiles, mail_domains, web_domains)
 
 	# Parallelize the checks across a worker pool.
-	args = ((domain, rounded_time, env, dns_domains, dns_zonefiles, mail_domains, web_domains)
+	args = ((domain, rounded_time, env, dns_domains, dns_zonefiles, mail_domains, web_domains, domains_with_a_records)
 		for domain in domains_to_check)
 	ret = pool.starmap(run_domain_checks_on_domain, args, chunksize=1)
 	ret = dict(ret) # (domain, output) => { domain: output }
 	for domain in sort_domains(ret, env):
 		ret[domain].playback(output)
 
-def run_domain_checks_on_domain(domain, rounded_time, env, dns_domains, dns_zonefiles, mail_domains, web_domains):
+def run_domain_checks_on_domain(domain, rounded_time, env, dns_domains, dns_zonefiles, mail_domains, web_domains, domains_with_a_records):
 	output = BufferedOutput()
 
 	# The domain is IDNA-encoded, but for display use Unicode.
@@ -276,7 +279,7 @@ def run_domain_checks_on_domain(domain, rounded_time, env, dns_domains, dns_zone
 		check_web_domain(domain, rounded_time, env, output)
 
 	if domain in dns_domains:
-		check_dns_zone_suggestions(domain, env, output, dns_zonefiles)
+		check_dns_zone_suggestions(domain, env, output, dns_zonefiles, domains_with_a_records)
 
 	return (domain, output)
 
@@ -389,7 +392,14 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 			control panel to set the nameservers to %s."""
 				% (existing_ns, correct_ns) )
 
-def check_dns_zone_suggestions(domain, env, output, dns_zonefiles):
+def check_dns_zone_suggestions(domain, env, output, dns_zonefiles, domains_with_a_records):
+	# Warn if a custom DNS record is preventing this or the automatic www redirect from
+	# being served.
+	if domain in domains_with_a_records:
+		output.print_warning("""Web has been disabled for this domain because you have set a custom DNS record.""")
+	if "www." + domain in domains_with_a_records:
+		output.print_warning("""A redirect from 'www.%s' has been disabled for this domain because you have set a custom DNS record on the www subdomain.""" % domain)
+
 	# Since DNSSEC is optional, if a DS record is NOT set at the registrar suggest it.
 	# (If it was set, we did the check earlier.)
 	if query_dns(domain, "DS", nxdomain=None) is None:

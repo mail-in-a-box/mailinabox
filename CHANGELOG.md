@@ -24,6 +24,7 @@ Control panel:
 * When S3 backup credentials are set, the credentials are now no longer ever sent back from the box to the client, for better security.
 * Fixed the jumpiness when a modal is displayed.
 * Focus is put into the login form fields when the login form is displayed.
+* Status checks now include a warning if a custom DNS record has been set on a domain that would normally serve web and as a result that domain no longer is serving web.
 
 v0.13b (August 30, 2015)
 ------------------------
