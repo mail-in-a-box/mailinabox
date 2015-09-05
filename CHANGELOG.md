@@ -16,6 +16,7 @@ Calender/Contacts:
 Web:
 
 * If a custom DNS record is set on a domain or 'www'+domain, web would not be served for that domain. If the custom DNS record is just the box's IP address, that's a configuration mistake, but allow it and let web continue to be served.
+* Accommodate really long domain names by increasing an nginx setting.
 
 Control panel:
 
