@@ -80,7 +80,7 @@ address, so we're suggesting $DEFAULT_PRIMARY_HOSTNAME.
 	fi
 fi
 
-# If the machine is behind a NAT, inside a VM, etc., it may not know
+# If the machine is behind a NAT, inside a VM, etc, it may not know
 # its IP address on the public network / the Internet. Ask the Internet
 # and possibly confirm with user.
 if [ -z "$PUBLIC_IP" ]; then
