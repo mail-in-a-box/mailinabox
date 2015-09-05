@@ -1,6 +1,26 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+Mail:
+
+* Spamassassin's network-based tests (Pyzor, others) and DKIM tests are now enabled. (Pyzor had always been installed but was not active due to a misconfiguration.)
+* Moving spam out of the Spam folder and into Trash would incorrectly train Spamassassin that those messages were not spam.
+
+Calender/Contacts:
+
+* CalDAV/CardDAV and Exchange/ActiveSync for calendar/contacts wasn't working in some network configurations.
+
+Control panel:
+
+* Added an option to check for new Mail-in-a-Box versions within status checks. It is off by default so that boxes don't "phone home" without permission.
+* Added a random password generator on the users page to simplify creating new accounts.
+* When S3 backup credentials are set, the credentials are now no longer ever sent back from the box to the client, for better security.
+* Fixed the jumpiness when a modal is displayed.
+* Focus is put into the login form fields when the login form is displayed.
+
 v0.13b (August 30, 2015)
 ------------------------
 
