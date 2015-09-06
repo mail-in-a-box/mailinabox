@@ -416,7 +416,9 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 	# See if the domain has a DS record set at the registrar. The DS record may have
 	# several forms. We have to be prepared to check for any valid record. We've
 	# pre-generated all of the valid digests --- read them in.
-	ds_correct = open('/etc/nsd/zones/' + dns_zonefiles[domain] + '.ds').read().strip().split("\n")
+	ds_file = '/etc/nsd/zones/' + dns_zonefiles[domain] + '.ds'
+	if not os.path.exists(ds_file): return # Domain is in our database but DNS has not yet been updated.
+	ds_correct = open(ds_file).read().strip().split("\n")
 	digests = { }
 	for rr_ds in ds_correct:
 		ds_keytag, ds_alg, ds_digalg, ds_digest = rr_ds.split("\t")[4].split(" ")
