@@ -26,6 +26,7 @@ Control panel:
 * Fixed the jumpiness when a modal is displayed.
 * Focus is put into the login form fields when the login form is displayed.
 * Status checks now include a warning if a custom DNS record has been set on a domain that would normally serve web and as a result that domain no longer is serving web.
+* Some errors in the control panel when there is invalid data in the database or an improperly named archived user account have been suppressed.
 
 v0.13b (August 30, 2015)
 ------------------------

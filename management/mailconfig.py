@@ -244,7 +244,13 @@ def get_domain(emailaddr, as_unicode=True):
 	# Gets the domain part of an email address. Turns IDNA
 	# back to Unicode for display.
 	ret = emailaddr.split('@', 1)[1]
-	if as_unicode: ret = idna.decode(ret.encode('ascii'))
+	if as_unicode:
+		try:
+			ret = idna.decode(ret.encode('ascii'))
+		except (ValueError, UnicodeError, idna.IDNAError):
+			# Looks like we have an invalid email address in
+			# the database. Now is not the time to complain.
+			pass
 	return ret
 
 def get_mail_domains(env, filter_aliases=lambda alias : True):

@@ -263,8 +263,14 @@ def run_domain_checks(rounded_time, env, output, pool):
 def run_domain_checks_on_domain(domain, rounded_time, env, dns_domains, dns_zonefiles, mail_domains, web_domains, domains_with_a_records):
 	output = BufferedOutput()
 
-	# The domain is IDNA-encoded, but for display use Unicode.
-	output.add_heading(idna.decode(domain.encode('ascii')))
+	# The domain is IDNA-encoded in the database, but for display use Unicode.
+	try:
+		domain_display = idna.decode(domain.encode('ascii'))
+		output.add_heading(domain_display)
+	except (ValueError, UnicodeError, idna.IDNAError) as e:
+		# Looks like we have some invalid data in our database.
+		output.add_heading(domain)
+		output.print_error("Domain name is invalid: " + str(e))
 
 	if domain == env["PRIMARY_HOSTNAME"]:
 		check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles)
