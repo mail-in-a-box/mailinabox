@@ -4,7 +4,6 @@
 
 [ssh]
 maxretry = 7
-findtime = 120
 bantime = 3600
 
 [ssh-ddos]
