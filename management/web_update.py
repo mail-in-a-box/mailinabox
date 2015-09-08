@@ -135,15 +135,27 @@ def make_domain_config(domain, templates, env):
 	nginx_conf_extra += "# ssl files sha1: %s / %s\n" % (hashfile(ssl_key), hashfile(ssl_certificate))
 
 	# Add in any user customizations in YAML format.
+	hsts = "yes"
 	nginx_conf_custom_fn = os.path.join(env["STORAGE_ROOT"], "www/custom.yaml")
 	if os.path.exists(nginx_conf_custom_fn):
 		yaml = rtyaml.load(open(nginx_conf_custom_fn))
 		if domain in yaml:
 			yaml = yaml[domain]
+
+			# any proxy or redirect here?
 			for path, url in yaml.get("proxies", {}).items():
 				nginx_conf_extra += "\tlocation %s {\n\t\tproxy_pass %s;\n\t}\n" % (path, url)
 			for path, url in yaml.get("redirects", {}).items():
 				nginx_conf_extra += "\trewrite %s %s permanent;\n" % (path, url)
+
+			# override the HSTS directive type
+			hsts = yaml.get("hsts", hsts)
+
+	# Add the HSTS header.
+	if hsts == "yes":
+		nginx_conf_extra += "add_header Strict-Transport-Security max-age=31536000;\n"
+	elif hsts == "preload":
+		nginx_conf_extra += "add_header Strict-Transport-Security \"max-age=10886400; includeSubDomains; preload\";\n"
 
 	# Add in any user customizations in the includes/ folder.
 	nginx_conf_custom_include = os.path.join(env["STORAGE_ROOT"], "www", safe_domain_name(domain) + ".conf")
