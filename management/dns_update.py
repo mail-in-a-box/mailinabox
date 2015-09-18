@@ -120,6 +120,10 @@ def do_dns_update(env, force=False):
 			# If this is the only thing that changed?
 			updated_domains.append("OpenDKIM configuration")
 
+	# Clear bind9's DNS cache so our own DNS resolver is up to date.
+	# (ignore errors with trap=True)
+	shell('check_call', ["/usr/sbin/rndc", "flush"], trap=True)
+
 	if len(updated_domains) == 0:
 		# if nothing was updated (except maybe OpenDKIM's files), don't show any output
 		return ""
