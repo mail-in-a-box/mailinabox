@@ -13,7 +13,7 @@ import dateutil.parser, dateutil.tz
 import idna
 
 from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, get_secondary_dns
-from web_update import get_web_domains, get_default_www_redirects, get_domain_ssl_files, get_domains_with_a_records
+from web_update import get_web_domains, get_default_www_redirects, get_ssl_certificates, get_domain_ssl_files, get_domains_with_a_records
 from mailconfig import get_mail_domains, get_mail_aliases
 
 from utils import shell, sort_domains, load_env_vars_from_file, load_settings
@@ -248,19 +248,21 @@ def run_domain_checks(rounded_time, env, output, pool):
 	# Get the list of domains that we don't serve web for because of a custom CNAME/A record.
 	domains_with_a_records = get_domains_with_a_records(env)
 
+	ssl_certificates = get_ssl_certificates(env)
+
 	# Serial version:
 	#for domain in sort_domains(domains_to_check, env):
 	#	run_domain_checks_on_domain(domain, rounded_time, env, dns_domains, dns_zonefiles, mail_domains, web_domains)
 
 	# Parallelize the checks across a worker pool.
-	args = ((domain, rounded_time, env, dns_domains, dns_zonefiles, mail_domains, web_domains, domains_with_a_records)
+	args = ((domain, rounded_time, env, dns_domains, dns_zonefiles, mail_domains, web_domains, domains_with_a_records, ssl_certificates)
 		for domain in domains_to_check)
 	ret = pool.starmap(run_domain_checks_on_domain, args, chunksize=1)
 	ret = dict(ret) # (domain, output) => { domain: output }
 	for domain in sort_domains(ret, env):
 		ret[domain].playback(output)
 
-def run_domain_checks_on_domain(domain, rounded_time, env, dns_domains, dns_zonefiles, mail_domains, web_domains, domains_with_a_records):
+def run_domain_checks_on_domain(domain, rounded_time, env, dns_domains, dns_zonefiles, mail_domains, web_domains, domains_with_a_records, ssl_certificates):
 	output = BufferedOutput()
 
 	# The domain is IDNA-encoded in the database, but for display use Unicode.
@@ -282,7 +284,7 @@ def run_domain_checks_on_domain(domain, rounded_time, env, dns_domains, dns_zone
 		check_mail_domain(domain, env, output)
 
 	if domain in web_domains:
-		check_web_domain(domain, rounded_time, env, output)
+		check_web_domain(domain, rounded_time, ssl_certificates, env, output)
 
 	if domain in dns_domains:
 		check_dns_zone_suggestions(domain, env, output, dns_zonefiles, domains_with_a_records)
@@ -528,7 +530,7 @@ def check_mail_domain(domain, env, output):
 			which may prevent recipients from receiving your mail.
 			See http://www.spamhaus.org/dbl/ and http://www.spamhaus.org/query/domain/%s.""" % (dbl, domain))
 
-def check_web_domain(domain, rounded_time, env, output):
+def check_web_domain(domain, rounded_time, ssl_certificates, env, output):
 	# See if the domain's A record resolves to our PUBLIC_IP. This is already checked
 	# for PRIMARY_HOSTNAME, for which it is required for mail specifically. For it and
 	# other domains, it is required to access its website.
@@ -544,7 +546,7 @@ def check_web_domain(domain, rounded_time, env, output):
 	# We need a SSL certificate for PRIMARY_HOSTNAME because that's where the
 	# user will log in with IMAP or webmail. Any other domain we serve a
 	# website for also needs a signed certificate.
-	check_ssl_cert(domain, rounded_time, env, output)
+	check_ssl_cert(domain, rounded_time, ssl_certificates, env, output)
 
 def query_dns(qname, rtype, nxdomain='[Not Set]'):
 	# Make the qname absolute by appending a period. Without this, dns.resolver.query
@@ -571,18 +573,23 @@ def query_dns(qname, rtype, nxdomain='[Not Set]'):
 	# can compare to a well known order.
 	return "; ".join(sorted(str(r).rstrip('.') for r in response))
 
-def check_ssl_cert(domain, rounded_time, env, output):
+def check_ssl_cert(domain, rounded_time, ssl_certificates, env, output):
 	# Check that SSL certificate is signed.
 
 	# Skip the check if the A record is not pointed here.
 	if query_dns(domain, "A", None) not in (env['PUBLIC_IP'], None): return
 
 	# Where is the SSL stored?
-	ssl_key, ssl_certificate, ssl_via = get_domain_ssl_files(domain, env)
+	x = get_domain_ssl_files(domain, ssl_certificates, env, allow_missing_cert=True)
 
-	if not os.path.exists(ssl_certificate):
-		output.print_error("The SSL certificate file for this domain is missing.")
+	if x is None:
+		output.print_warning("""No SSL certificate is installed for this domain. Visitors to a website on
+			this domain will get a security warning. If you are not serving a website on this domain, you do
+			not need to take any action. Use the SSL Certificates page in the control panel to install a
+			SSL certificate.""")
 		return
+
+	ssl_key, ssl_certificate, ssl_via = x
 
 	# Check that the certificate is good.
 
@@ -607,16 +614,13 @@ def check_ssl_cert(domain, rounded_time, env, output):
 		if domain == env['PRIMARY_HOSTNAME']:
 			output.print_error("""The SSL certificate for this domain is currently self-signed. You will get a security
 			warning when you check or send email and when visiting this domain in a web browser (for webmail or
-			static site hosting). Use the SSL Certificates page in this control panel to install a signed SSL certificate.
+			static site hosting). Use the SSL Certificates page in the control panel to install a signed SSL certificate.
 			You may choose to leave the self-signed certificate in place and confirm the security exception, but check that
 			the certificate fingerprint matches the following:""")
 			output.print_line("")
 			output.print_line("   " + fingerprint, monospace=True)
 		else:
-			output.print_warning("""The SSL certificate for this domain is currently self-signed. Visitors to a website on
-			this domain will get a security warning. If you are not serving a website on this domain, then it is
-			safe to leave the self-signed certificate in place. Use the SSL Certificates page in this control panel to
-			install a signed SSL certificate.""")
+			output.print_error("""The SSL certificate for this domain is self-signed.""")
 
 	else:
 		output.print_error("The SSL certificate has a problem: " + cert_status)
@@ -630,8 +634,7 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 	# for the provided domain.
 
 	from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
-	from cryptography.x509 import Certificate, DNSName, ExtensionNotFound, OID_COMMON_NAME, OID_SUBJECT_ALTERNATIVE_NAME
-	import idna
+	from cryptography.x509 import Certificate
 
 	# The ssl_certificate file may contain a chain of certificates. We'll
 	# need to split that up before we can pass anything to openssl or
@@ -646,33 +649,7 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 	# First check that the domain name is one of the names allowed by
 	# the certificate.
 	if domain is not None:
-		# The domain may be found in the Subject Common Name (CN). This comes back as an IDNA (ASCII)
-		# string, which is the format we store domains in - so good.
-		certificate_names = set()
-		try:
-			certificate_names.add(
-				cert.subject.get_attributes_for_oid(OID_COMMON_NAME)[0].value
-				)
-		except IndexError:
-			# No common name? Certificate is probably generated incorrectly.
-			# But we'll let it error-out when it doesn't find the domain.
-			pass
-
-		# ... or be one of the Subject Alternative Names. The cryptography library handily IDNA-decodes
-		# the names for us. We must encode back to ASCII, but wildcard certificates can't pass through
-		# IDNA encoding/decoding so we must special-case. See https://github.com/pyca/cryptography/pull/2071.
-		def idna_decode_dns_name(dns_name):
-			if dns_name.startswith("*."):
-				return "*." + idna.encode(dns_name[2:]).decode('ascii')
-			else:
-				return idna.encode(dns_name).decode('ascii')
-
-		try:
-			sans = cert.extensions.get_extension_for_oid(OID_SUBJECT_ALTERNATIVE_NAME).value.get_values_for_type(DNSName)
-			for san in sans:
-				certificate_names.add(idna_decode_dns_name(san))
-		except ExtensionNotFound:
-			pass
+		certificate_names, cert_primary_name = get_certificate_domains(cert)
 
 		# Check that the domain appears among the acceptable names, or a wildcard
 		# form of the domain name (which is a stricter check than the specs but
@@ -791,6 +768,41 @@ def load_pem(pem):
 	if pem_type == b"CERTIFICATE":
 		return load_pem_x509_certificate(pem, default_backend())
 	raise ValueError("Unsupported PEM object type: " + pem_type.decode("ascii", "replace"))
+
+def get_certificate_domains(cert):
+	from cryptography.x509 import DNSName, ExtensionNotFound, OID_COMMON_NAME, OID_SUBJECT_ALTERNATIVE_NAME
+	import idna
+
+	names = set()
+	cn = None
+
+	# The domain may be found in the Subject Common Name (CN). This comes back as an IDNA (ASCII)
+	# string, which is the format we store domains in - so good.
+	try:
+		cn = cert.subject.get_attributes_for_oid(OID_COMMON_NAME)[0].value
+		names.add(cn)
+	except IndexError:
+		# No common name? Certificate is probably generated incorrectly.
+		# But we'll let it error-out when it doesn't find the domain.
+		pass
+
+	# ... or be one of the Subject Alternative Names. The cryptography library handily IDNA-decodes
+	# the names for us. We must encode back to ASCII, but wildcard certificates can't pass through
+	# IDNA encoding/decoding so we must special-case. See https://github.com/pyca/cryptography/pull/2071.
+	def idna_decode_dns_name(dns_name):
+		if dns_name.startswith("*."):
+			return "*." + idna.encode(dns_name[2:]).decode('ascii')
+		else:
+			return idna.encode(dns_name).decode('ascii')
+
+	try:
+		sans = cert.extensions.get_extension_for_oid(OID_SUBJECT_ALTERNATIVE_NAME).value.get_values_for_type(DNSName)
+		for san in sans:
+			names.add(idna_decode_dns_name(san))
+	except ExtensionNotFound:
+		pass
+
+	return names, cn
 
 _apt_updates = None
 def list_apt_updates(apt_update=True):
@@ -1027,7 +1039,8 @@ if __name__ == "__main__":
 		domain = env['PRIMARY_HOSTNAME']
 		if query_dns(domain, "A") != env['PUBLIC_IP']:
 			sys.exit(1)
-		ssl_key, ssl_certificate, ssl_via = get_domain_ssl_files(domain, env)
+		ssl_certificates = get_ssl_certificates(env)
+		ssl_key, ssl_certificate, ssl_via = get_domain_ssl_files(domain, ssl_certificates, env)
 		if not os.path.exists(ssl_certificate):
 			sys.exit(1)
 		cert_status, cert_status_details = check_certificate(domain, ssl_certificate, ssl_key, warn_if_expiring_soon=False)
