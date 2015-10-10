@@ -29,7 +29,7 @@ define('IMAP_FROM_LDAP_FROM', '#givenname #sn <#mail>');
 
 
 // copy outgoing mail to this folder. If not set z-push will try the default folders
-define('IMAP_SENTFOLDER', '');
+define('IMAP_SENTFOLDER', 'Sent Messages');
 define('IMAP_INLINE_FORWARD', true);
 define('IMAP_EXCLUDED_FOLDERS', '');
 define('IMAP_SMTP_METHOD', 'sendmail');
