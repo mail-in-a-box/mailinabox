@@ -115,6 +115,9 @@ done
 tools/dns_update
 tools/web_update
 
+# If DNS is already working, try to provision TLS certficates from Let's Encrypt.
+management/ssl_certificates.py
+
 # If there aren't any mail users yet, create one.
 source setup/firstuser.sh
 

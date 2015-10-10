@@ -11,7 +11,9 @@ if [ -f /usr/local/lib/python2.7/dist-packages/boto/__init__.py ]; then hide_out
 # build-essential libssl-dev libffi-dev python3-dev: Required to pip install cryptography.
 apt_install python3-flask links duplicity python-boto libyaml-dev python3-dnspython python3-dateutil \
 	build-essential libssl-dev libffi-dev python3-dev python-pip
-hide_output pip3 install --upgrade rtyaml "email_validator>=1.0.0" "idna>=2.0.0" "cryptography>=1.0.2" boto
+hide_output pip3 install --upgrade \
+	rtyaml "email_validator>=1.0.0" "idna>=2.0.0" "cryptography>=1.0.2" boto \
+	git+https://github.com/mail-in-a-box/free_tls_certificates
 
 # email_validator is repeated in setup/questions.sh
 
@@ -31,25 +33,18 @@ rm -f /etc/init.d/mailinabox
 ln -s $(pwd)/conf/management-initscript /etc/init.d/mailinabox
 hide_output update-rc.d mailinabox defaults
 
-# Perform a daily backup.
-cat > /etc/cron.daily/mailinabox-backup << EOF;
-#!/bin/bash
-# Mail-in-a-Box --- Do not edit / will be overwritten on update.
-# Perform a backup.
-$(pwd)/management/backup.py
-EOF
-chmod +x /etc/cron.daily/mailinabox-backup
+# remove old files.
+rm -f /etc/cron.daily/mailinabox-backup /etc/cron.daily/mailinabox-statuschecks
 
-# Perform daily status checks. Compare each day to the previous
-# for changes and mail the changes to the administrator.
-cat > /etc/cron.daily/mailinabox-statuschecks << EOF;
+# Perform daily management functions.
+cat > /etc/cron.daily/mailinabox << EOF;
 #!/bin/bash
 # Mail-in-a-Box --- Do not edit / will be overwritten on update.
-# Run status checks.
+$(pwd)/management/backup.py
+$(pwd)/management/ssl_certificates.py --headless
 $(pwd)/management/status_checks.py --show-changes --smtp
 EOF
-chmod +x /etc/cron.daily/mailinabox-statuschecks
+chmod +x /etc/cron.daily/mailinabox
 
-
-# Start it.
+# Start the management server.
 restart_service mailinabox
