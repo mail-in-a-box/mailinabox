@@ -38,7 +38,7 @@ munin-node-configure --shell --remove-also 2>/dev/null | sh
 
 # Deactivate monitoring of NTP peers. Not sure why anyone would want to monitor a NTP peer. The addresses seem to change
 # (which is taken care of my munin-node-configure, but only when we re-run it.)
-find /etc/munin/plugins/ -lname /usr/share/munin/plugins/ntp_ -print0 | xargs -0 /bin/rm
+find /etc/munin/plugins/ -lname /usr/share/munin/plugins/ntp_ -print0 | xargs -0 /bin/rm -f
 
 # Deactivate monitoring of network interfaces that are not up. Otherwise we can get a lot of empty charts.
 for f in $(find /etc/munin/plugins/ \( -lname /usr/share/munin/plugins/if_ -o -lname /usr/share/munin/plugins/if_err_ -o -lname /usr/share/munin/plugins/bonding_err_ \)); do
