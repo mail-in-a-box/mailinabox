@@ -318,7 +318,7 @@ def add_mail_user(email, pw, privs, env):
 		conn.commit()
 		return ("Failed to initialize the user: " + e.output.decode("utf8"), 400)
 
-	for folder in ("INBOX", "Trash", "Spam", "Drafts"):
+	for folder in ("INBOX", "Sent", "Trash", "Spam", "Drafts"):
 		if folder not in existing_mboxes:
 			utils.shell('check_call', ["doveadm", "mailbox", "create", "-u", email, "-s", folder])
 
