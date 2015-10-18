@@ -8,6 +8,7 @@ Mail:
 
 * Spamassassin's network-based tests (Pyzor, others) and DKIM tests are now enabled. (Pyzor had always been installed but was not active due to a misconfiguration.)
 * Moving spam out of the Spam folder and into Trash would incorrectly train Spamassassin that those messages were not spam.
+* Automatically create the Sent folder for new users.
 
 Calender/Contacts:
 
@@ -15,6 +16,7 @@ Calender/Contacts:
 
 Web:
 
+* When a new domain is added to the box, rather than applying a new self-signed certificate for that domain, the SSL certificate for the box's primary hostname will be used instead.
 * If a custom DNS record is set on a domain or 'www'+domain, web would not be served for that domain. If the custom DNS record is just the box's IP address, that's a configuration mistake, but allow it and let web continue to be served.
 * Accommodate really long domain names by increasing an nginx setting.
 
@@ -27,6 +29,12 @@ Control panel:
 * Focus is put into the login form fields when the login form is displayed.
 * Status checks now include a warning if a custom DNS record has been set on a domain that would normally serve web and as a result that domain no longer is serving web.
 * Some errors in the control panel when there is invalid data in the database or an improperly named archived user account have been suppressed.
+* Added subresource integrity attributes to all remotely-sourced resources (i.e. via CDNs) to guard against CDNs being used as an attack vector.
+
+System:
+
+* Tweaks to fail2ban settings.
+* Fixed a spurrious warning while installing munin.
 
 v0.13b (August 30, 2015)
 ------------------------
