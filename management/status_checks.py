@@ -380,12 +380,14 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 
 	# We provide a DNS zone for the domain. It should have NS records set up
 	# at the domain name's registrar pointing to this box. The secondary DNS
-	# server may be customized. Unfortunately this may not check the domain's
-	# whois information -- we may be getting the NS records from us rather than
-	# the TLD, and so we're not actually checking the TLD. For that we'd need
-	# to do a DNS trace.
+	# server may be customized.
+	# (I'm not sure whether this necessarily tests the TLD's configuration,
+	# as it should, or if one successful NS line at the TLD will result in
+	# this query being answered by the box, which would mean the test is only
+	# half working.)
 	ip = query_dns(domain, "A")
-	secondary_ns = get_secondary_dns(get_custom_dns_config(env), mode="NS") or ["ns2." + env['PRIMARY_HOSTNAME']]
+	custom_secondary_ns = get_secondary_dns(get_custom_dns_config(env), mode="NS")
+	secondary_ns = custom_secondary_ns or ["ns2." + env['PRIMARY_HOSTNAME']]
 	existing_ns = query_dns(domain, "NS")
 	correct_ns = "; ".join(sorted(["ns1." + env['PRIMARY_HOSTNAME']] + secondary_ns))
 	if existing_ns.lower() == correct_ns.lower():
@@ -399,6 +401,25 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 		output.print_error("""The nameservers set on this domain are incorrect. They are currently %s. Use your domain name registrar's
 			control panel to set the nameservers to %s."""
 				% (existing_ns, correct_ns) )
+
+	# If the user is probably not using external DNS...
+	if ip == env['PUBLIC_IP'] and custom_secondary_ns:
+		# Check that each custom secondary nameserver resolves the IP address.
+		for ns in custom_secondary_ns:
+			# We must first resolve the nameserver to an IP address so we can query it.
+			ns_ip = query_dns(ns, "A")
+			if not ns_ip:
+				output.print_error("Secondary nameserver %s is not valid (it doesn't resolve to an IP address)." % ns)
+				continue
+
+			# Now query it to see what it says about this domain.
+			ip = query_dns(domain, "A", at=ns_ip, nxdomain=None)
+			if ip == env['PUBLIC_IP']:
+				output.print_ok("Secondary nameserver %s resolved the domain correctly." % ns)
+			elif ip is None:
+				output.print_error("Secondary nameserver %s is not configured to resolve this domain." % ns)
+			else:
+				output.print_error("Secondary nameserver %s is not configured correctly. (It resolved this domain as %s. It should be %s.)" % (ns, ip, env['PUBLIC_IP']))
 
 def check_dns_zone_suggestions(domain, env, output, dns_zonefiles, domains_with_a_records):
 	# Warn if a custom DNS record is preventing this or the automatic www redirect from
@@ -548,7 +569,7 @@ def check_web_domain(domain, rounded_time, ssl_certificates, env, output):
 	# website for also needs a signed certificate.
 	check_ssl_cert(domain, rounded_time, ssl_certificates, env, output)
 
-def query_dns(qname, rtype, nxdomain='[Not Set]'):
+def query_dns(qname, rtype, nxdomain='[Not Set]', at=None):
 	# Make the qname absolute by appending a period. Without this, dns.resolver.query
 	# will fall back a failed lookup to a second query with this machine's hostname
 	# appended. This has been causing some false-positive Spamhaus reports. The
@@ -557,9 +578,17 @@ def query_dns(qname, rtype, nxdomain='[Not Set]'):
 	if isinstance(qname, str):
 		qname += "."
 
+	# Use the default nameservers (as defined by the system, which is our locally
+	# running bind server), or if the 'at' argument is specified, use that host
+	# as the nameserver.
+	resolver = dns.resolver.get_default_resolver()
+	if at:
+		resolver = dns.resolver.Resolver()
+		resolver.nameservers = [at]
+
 	# Do the query.
 	try:
-		response = dns.resolver.query(qname, rtype)
+		response = resolver.query(qname, rtype)
 	except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
 		# Host did not have an answer for this query; not sure what the
 		# difference is between the two exceptions.

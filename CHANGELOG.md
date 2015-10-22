@@ -28,6 +28,7 @@ Control panel:
 * Fixed the jumpiness when a modal is displayed.
 * Focus is put into the login form fields when the login form is displayed.
 * Status checks now include a warning if a custom DNS record has been set on a domain that would normally serve web and as a result that domain no longer is serving web.
+* Status checks now check that secondary nameservers, if specified, are actually serving the domains.
 * Some errors in the control panel when there is invalid data in the database or an improperly named archived user account have been suppressed.
 * Added subresource integrity attributes to all remotely-sourced resources (i.e. via CDNs) to guard against CDNs being used as an attack vector.
 
