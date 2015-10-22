@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+from collections import defaultdict
 import re, os.path
 import dateutil.parser
 
@@ -12,6 +13,7 @@ def scan_mail_log(logger, env):
 		"imap-logins": { },
 		"postgrey": { },
 		"rejected-mail": { },
+		"activity-by-hour": { "imap-logins": defaultdict(int), "smtp-sends": defaultdict(int) },
 	}
 
 	collector["real_mail_addresses"] = set(mailconfig.get_mail_users(env)) | set(alias[0] for alias in mailconfig.get_mail_aliases(env))
@@ -45,6 +47,10 @@ def scan_mail_log(logger, env):
 			for date, sender, message in collector["rejected-mail"][k]:
 				logger.print_line(k + "\t" + str(date) + "\t" + sender + "\t" + message)
 
+	logger.add_heading("Activity by Hour")
+	for h in range(24):
+		logger.print_line("%d\t%d\t%d" % (h, collector["activity-by-hour"]["imap-logins"][h], collector["activity-by-hour"]["smtp-sends"][h] ))
+
 	if len(collector["other-services"]) > 0:
 		logger.add_heading("Other")
 		logger.print_block("Unrecognized services in the log: " + ", ".join(collector["other-services"]))
@@ -65,6 +71,9 @@ def scan_mail_log_line(line, collector):
 	elif service == "postfix/smtpd":
 		scan_postfix_smtpd_line(date, log, collector)
 
+	elif service == "postfix/submission/smtpd":
+		scan_postfix_submission_line(date, log, collector)
+
 	elif service in ("postfix/qmgr", "postfix/pickup", "postfix/cleanup",
 			"postfix/scache", "spampd", "postfix/anvil", "postfix/master",
 			"opendkim", "postfix/lmtp", "postfix/tlsmgr"):
@@ -80,6 +89,7 @@ def scan_dovecot_line(date, log, collector):
 		login, ip = m.group(1), m.group(2)
 		if ip != "127.0.0.1": # local login from webmail/zpush
 			collector["imap-logins"].setdefault(login, {})[ip] = date
+		collector["activity-by-hour"]["imap-logins"][date.hour] += 1
 
 def scan_postgrey_line(date, log, collector):
 	m = re.match("action=(greylist|pass), reason=(.*?), (?:delay=\d+, )?client_name=(.*), client_address=(.*), sender=(.*), recipient=(.*)", log)
@@ -114,6 +124,11 @@ def scan_postfix_smtpd_line(date, log, collector):
 
 			collector["rejected-mail"].setdefault(recipient, []).append( (date, sender, message) )
 
+def scan_postfix_submission_line(date, log, collector):
+	m = re.match("([A-Z0-9]+): client=(\S+), sasl_method=PLAIN, sasl_username=(\S+)", log)
+	if m:
+		procid, client, user = m.groups()
+		collector["activity-by-hour"]["smtp-sends"][date.hour] += 1
 
 if __name__ == "__main__":
 	from status_checks import ConsoleOutput
