@@ -56,7 +56,7 @@ tools/editconf.py /etc/dovecot/conf.d/10-mail.conf \
 	mail_privileged_group=mail \
 	first_valid_uid=0
 
-# Create, subscribe, and mark as special folders: INBOX, Drafts, Sent, Trash, and Spam.
+# Create, subscribe, and mark as special folders: INBOX, Drafts, Sent, Trash, Spam and Archive.
 cp conf/dovecot-mailboxes.conf /etc/dovecot/conf.d/15-mailboxes.conf
 
 # ### IMAP/POP
