@@ -9,6 +9,7 @@ Mail:
 * Spamassassin's network-based tests (Pyzor, others) and DKIM tests are now enabled. (Pyzor had always been installed but was not active due to a misconfiguration.)
 * Moving spam out of the Spam folder and into Trash would incorrectly train Spamassassin that those messages were not spam.
 * Automatically create the Sent folder for new users.
+* The HTML5_Notifier plugin for Roundcube is now included, which when turned on in Roundcube settings provides desktop notifications for new mail.
 
 Calender/Contacts:
 
