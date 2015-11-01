@@ -15,6 +15,7 @@ define('IMAP_AUTOSEEN_ON_DELETE', false);
 define('IMAP_FOLDER_CONFIGURED', true);
 define('IMAP_FOLDER_PREFIX', '');
 define('IMAP_FOLDER_PREFIX_IN_INBOX', false);
+// see our conf/dovecot-mailboxes.conf file for IMAP special flags settings
 define('IMAP_FOLDER_INBOX', 'INBOX');
 define('IMAP_FOLDER_SENT', 'SENT');
 define('IMAP_FOLDER_DRAFT', 'DRAFTS');
