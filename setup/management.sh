@@ -7,7 +7,7 @@ echo "Installing Mail-in-a-Box system management daemon..."
 # build-essential libssl-dev libffi-dev python3-dev: Required to pip install cryptography.
 apt_install python3-flask links duplicity libyaml-dev python3-dnspython python3-dateutil \
 	build-essential libssl-dev libffi-dev python3-dev python-pip
-hide_output pip3 install --upgrade rtyaml "email_validator>=1.0.0" "idna>=2.0.0" "cryptography>=1.0.2" boto
+hide_output pip3 install --upgrade rtyaml "email_validator>=1.0.0" "idna>=2.0.0" "cryptography>=1.0.2" boto psutil
 
 # duplicity uses python 2 so we need to use the python 2 package of boto
 hide_output pip install --upgrade boto
