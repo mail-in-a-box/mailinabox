@@ -12,7 +12,7 @@ import dns.reversename, dns.resolver
 import dateutil.parser, dateutil.tz
 import idna
 
-from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, get_secondary_dns
+from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, get_secondary_dns, get_custom_dns_record
 from web_update import get_web_domains, get_default_www_redirects, get_ssl_certificates, get_domain_ssl_files, get_domains_with_a_records
 from mailconfig import get_mail_domains, get_mail_aliases
 
@@ -385,14 +385,19 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 	# as it should, or if one successful NS line at the TLD will result in
 	# this query being answered by the box, which would mean the test is only
 	# half working.)
-	ip = query_dns(domain, "A")
-	custom_secondary_ns = get_secondary_dns(get_custom_dns_config(env), mode="NS")
+
+	custom_dns_records = list(get_custom_dns_config(env)) # generator => list so we can reuse it
+	correct_ip = get_custom_dns_record(custom_dns_records, domain, "A") or env['PUBLIC_IP']
+	custom_secondary_ns = get_secondary_dns(custom_dns_records, mode="NS")
 	secondary_ns = custom_secondary_ns or ["ns2." + env['PRIMARY_HOSTNAME']]
+
 	existing_ns = query_dns(domain, "NS")
 	correct_ns = "; ".join(sorted(["ns1." + env['PRIMARY_HOSTNAME']] + secondary_ns))
+	ip = query_dns(domain, "A")
+
 	if existing_ns.lower() == correct_ns.lower():
 		output.print_ok("Nameservers are set correctly at registrar. [%s]" % correct_ns)
-	elif ip == env['PUBLIC_IP']:
+	elif ip == correct_ip:
 		# The domain resolves correctly, so maybe the user is using External DNS.
 		output.print_warning("""The nameservers set on this domain at your domain name registrar should be %s. They are currently %s.
 			If you are using External DNS, this may be OK."""
@@ -403,6 +408,7 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 				% (existing_ns, correct_ns) )
 
 	# Check that each custom secondary nameserver resolves the IP address.
+	
 	if custom_secondary_ns:
 		for ns in custom_secondary_ns:
 			# We must first resolve the nameserver to an IP address so we can query it.
@@ -413,7 +419,7 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 
 			# Now query it to see what it says about this domain.
 			ip = query_dns(domain, "A", at=ns_ip, nxdomain=None)
-			if ip == env['PUBLIC_IP']:
+			if ip == correct_ip:
 				output.print_ok("Secondary nameserver %s resolved the domain correctly." % ns)
 			elif ip is None:
 				output.print_error("Secondary nameserver %s is not configured to resolve this domain." % ns)
