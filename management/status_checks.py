@@ -402,9 +402,8 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 			control panel to set the nameservers to %s."""
 				% (existing_ns, correct_ns) )
 
-	# If the user is probably not using external DNS...
-	if ip == env['PUBLIC_IP'] and custom_secondary_ns:
-		# Check that each custom secondary nameserver resolves the IP address.
+	# Check that each custom secondary nameserver resolves the IP address.
+	if custom_secondary_ns:
 		for ns in custom_secondary_ns:
 			# We must first resolve the nameserver to an IP address so we can query it.
 			ns_ip = query_dns(ns, "A")
