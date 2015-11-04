@@ -54,23 +54,25 @@ Clone this repository:
 	$ cd mailinabox
 
 _Optional:_ Download my PGP key and then verify that the sources were signed
-by me. You'll get a lot of warnings, but the fingerprint should match the
-fingerprint in the key details at [https://keybase.io/joshdata](https://keybase.io/joshdata)
-and on my [personal homepage](https://razor.occams.info/). (Of course, if this repository has been compromised you can't trust these instructions anyway.)
+by me:
 
 	$ curl -s https://keybase.io/joshdata/key.asc | gpg --import
 	gpg: key C10BDD81: public key "Joshua Tauberer <jt@occams.info>" imported
 
-	$ git verify-tag v0.13b
+	$ git verify-tag v0.14
 	gpg: Signature made ..... using RSA key ID C10BDD81
 	gpg: Good signature from "Joshua Tauberer <jt@occams.info>"
 	gpg: WARNING: This key is not certified with a trusted signature!
 	gpg:          There is no indication that the signature belongs to the owner.
 	Primary key fingerprint: 5F4C 0E73 13CC D744 693B  2AEA B920 41F4 C10B DD81
 
+You'll get a lot of warnings, but that's OK. Check that the primary key fingerprint matchs the
+fingerprint in the key details at [https://keybase.io/joshdata](https://keybase.io/joshdata)
+and on my [personal homepage](https://razor.occams.info/). (Of course, if this repository has been compromised you can't trust these instructions.)
+
 Checkout the tag corresponding to the most recent release:
 
-	$ git checkout v0.13b
+	$ git checkout v0.14
 
 Begin the installation.
 
