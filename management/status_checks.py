@@ -395,6 +395,8 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 	correct_ns = "; ".join(sorted(["ns1." + env['PRIMARY_HOSTNAME']] + secondary_ns))
 	ip = query_dns(domain, "A")
 
+	probably_external_dns = False
+
 	if existing_ns.lower() == correct_ns.lower():
 		output.print_ok("Nameservers are set correctly at registrar. [%s]" % correct_ns)
 	elif ip == correct_ip:
@@ -402,6 +404,7 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 		output.print_warning("""The nameservers set on this domain at your domain name registrar should be %s. They are currently %s.
 			If you are using External DNS, this may be OK."""
 				% (correct_ns, existing_ns) )
+		probably_external_dns = True
 	else:
 		output.print_error("""The nameservers set on this domain are incorrect. They are currently %s. Use your domain name registrar's
 			control panel to set the nameservers to %s."""
@@ -409,7 +412,7 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 
 	# Check that each custom secondary nameserver resolves the IP address.
 	
-	if custom_secondary_ns:
+	if custom_secondary_ns and not probably_external_dns:
 		for ns in custom_secondary_ns:
 			# We must first resolve the nameserver to an IP address so we can query it.
 			ns_ip = query_dns(ns, "A")
