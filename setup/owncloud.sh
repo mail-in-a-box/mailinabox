@@ -173,6 +173,7 @@ include("$STORAGE_ROOT/owncloud/config.php");
 
 \$CONFIG['memcache.local'] = '\\OC\\Memcache\\Memcached';
 \$CONFIG['overwrite.cli.url'] = '/cloud';
+\$CONFIG['mail_from_address'] = 'administrator'; # just the local part, matches our master administrator address
 
 echo "<?php\n\\\$CONFIG = ";
 var_export(\$CONFIG);
