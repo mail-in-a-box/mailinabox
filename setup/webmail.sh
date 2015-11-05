@@ -22,8 +22,9 @@ source /etc/mailinabox.conf # load global vars
 echo "Installing Roundcube (webmail)..."
 apt_install \
 	dbconfig-common \
-	php5 php5-sqlite php5-mcrypt php5-intl php5-json php5-common php-auth php-net-smtp php-net-socket php-net-sieve php-mail-mime php-mail-mimedecode php-crypt-gpg php5-gd php5-pspell \
+	php5 php5-sqlite php5-mcrypt php5-intl php5-json php5-common php-auth php-net-smtp php-net-socket php-net-sieve php-mail-mime php-crypt-gpg php5-gd php5-pspell \
 	tinymce libjs-jquery libjs-jquery-mousewheel libmagic1
+apt_get_quiet remove php-mail-mimedecode # no longer needed since Roundcube 1.1.3
 
 # We used to install Roundcube from Ubuntu, without triggering the dependencies #NODOC
 # on Apache and MySQL, by downloading the debs and installing them manually. #NODOC
@@ -33,8 +34,8 @@ apt-get purge -qq -y roundcube* #NODOC
 # Install Roundcube from source if it is not already present or if it is out of date.
 # Combine the Roundcube version number with the commit hash of vacation_sieve to track
 # whether we have the latest version.
-VERSION=1.1.2
-HASH=df88deae691da3ecf3e9f0aee674c1f3042ea1eb
+VERSION=1.1.3
+HASH=4513227bd64eb8564f056817341b1dfe478e215e
 VACATION_SIEVE_VERSION=91ea6f52216390073d1f5b70b5f6bea0bfaee7e5
 PERSISTENT_LOGIN_VERSION=117fbd8f93b56b2bf72ad055193464803ef3bc36
 HTML5_NOTIFIER_VERSION=046eb388dd63b1ec77a3ee485757fc25ae9e684d
@@ -50,7 +51,7 @@ fi
 if [ $needs_update == 1 ]; then
 	# install roundcube
 	wget_verify \
-		https://mailinabox.email/mirror/roundcubemail-$VERSION.tar.gz \
+		https://downloads.sourceforge.net/project/roundcubemail/roundcubemail/$VERSION/roundcubemail-$VERSION.tar.gz \
 		$HASH \
 		/tmp/roundcube.tgz
 	tar -C /usr/local/lib -zxf /tmp/roundcube.tgz

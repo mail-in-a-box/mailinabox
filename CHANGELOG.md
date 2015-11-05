@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+Still In Development
+--------------------
+
+Mail:
+
+* Update Roundcube to version 1.1.3.
+
 v0.14 (November 4, 2015)
 ------------------------
 
