@@ -31,9 +31,12 @@ ln -s $(pwd)/conf/management-initscript /etc/init.d/mailinabox
 hide_output update-rc.d mailinabox defaults
 
 # Perform a daily backup.
+if [ -f /etc/cron.daily/mailinabox-backup ]; then
+  rm /etc/cron.daily/mailinabox-backup
+fi
 cat > /etc/cron.d/mailinabox-backup << EOF;
 # /etc/cron.d/mailinabox-backup: crontab fragment to run maininabox-backup
-#  This executes mailinabox-backup at 3am.
+#  This executes $(pwd)/management/backup.py at 3am.
 
 0 3 * * *	root	$(pwd)/management/backup.py
 EOF
