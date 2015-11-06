@@ -31,13 +31,12 @@ ln -s $(pwd)/conf/management-initscript /etc/init.d/mailinabox
 hide_output update-rc.d mailinabox defaults
 
 # Perform a daily backup.
-cat > /etc/cron.daily/mailinabox-backup << EOF;
-#!/bin/bash
-# Mail-in-a-Box --- Do not edit / will be overwritten on update.
-# Perform a backup.
-$(pwd)/management/backup.py
+cat > /etc/cron.d/mailinabox-backup << EOF;
+# /etc/cron.d/mailinabox-backup: crontab fragment to run maininabox-backup
+#  This executes mailinabox-backup at 3am.
+
+0 3 * * *	root	$(pwd)/management/backup.py
 EOF
-chmod +x /etc/cron.daily/mailinabox-backup
 
 # Perform daily status checks. Compare each day to the previous
 # for changes and mail the changes to the administrator.
