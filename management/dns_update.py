@@ -794,6 +794,7 @@ def set_custom_dns_record(qname, rtype, value, action, env):
 
 def get_secondary_dns(custom_dns, mode=None):
 	resolver = dns.resolver.get_default_resolver()
+	resolver.timeout = 10
 
 	values = []
 	for qname, rtype, value in custom_dns:
@@ -826,11 +827,12 @@ def set_secondary_dns(hostnames, env):
 	if len(hostnames) > 0:
 		# Validate that all hostnames are valid and that all zone-xfer IP addresses are valid.
 		resolver = dns.resolver.get_default_resolver()
+		resolver.timeout = 5
 		for item in hostnames:
 			if not item.startswith("xfr:"):
 				# Resolve hostname.
 				try:
-					response = dns.resolver.query(item, "A")
+					response = resolver.query(item, "A")
 				except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
 					raise ValueError("Could not resolve the IP address of %s." % item)
 			else:

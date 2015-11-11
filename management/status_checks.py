@@ -594,6 +594,9 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None):
 		resolver = dns.resolver.Resolver()
 		resolver.nameservers = [at]
 
+	# Set a timeout so that a non-responsive server doesn't hold us back.
+	resolver.timeout = 5
+
 	# Do the query.
 	try:
 		response = resolver.query(qname, rtype)
