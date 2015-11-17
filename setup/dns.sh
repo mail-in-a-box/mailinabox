@@ -88,6 +88,10 @@ if [ ! -f "$STORAGE_ROOT/dns/dnssec/$algo.conf" ]; then
 	#
 	# `ldns-keygen` outputs the new key's filename to stdout, which
 	# we're capturing into the `KSK` variable.
+	#
+	# ldns-keygen uses /dev/random for generating random numbers. See the
+	# notes in ssl.sh about how /dev/urandom is seeded, which probably also
+	# applies here, but also /dev/random is seeded by the haveged daemon.
 	KSK=$(umask 077; cd $STORAGE_ROOT/dns/dnssec; ldns-keygen -a $algo -b 2048 -k _domain_);
 
 	# Now create a Zone-Signing Key (ZSK) which is expected to be
