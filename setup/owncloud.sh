@@ -133,7 +133,7 @@ EOF
 	# Create an auto-configuration file to fill in database settings
 	# when the install script is run. Make an administrator account
 	# here or else the install can't finish.
-	adminpassword=$(dd if=/dev/random bs=1 count=40 2>/dev/null | sha1sum | fold -w 30 | head -n 1)
+	adminpassword=$(dd if=/dev/urandom bs=1 count=40 2>/dev/null | sha1sum | fold -w 30 | head -n 1)
 	cat > /usr/local/lib/owncloud/config/autoconfig.php <<EOF;
 <?php
 \$AUTOCONFIG = array (

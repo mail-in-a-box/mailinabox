@@ -65,6 +65,8 @@ apt_install python3 python3-dev python3-pip \
 # * TLS private key (see `ssl.sh`, which calls `openssl genrsa`)
 # * DNSSEC signing keys (see `dns.sh`)
 # * our management server's API key (via Python's os.urandom method)
+# * Roundcube's SECRET_KEY (`webmail.sh`)
+# * ownCloud's administrator account password (`owncloud.sh`)
 #
 # Why /dev/urandom? It's the same as /dev/random, except that it doesn't wait
 # for a constant new stream of entropy. In practice, we only need a little

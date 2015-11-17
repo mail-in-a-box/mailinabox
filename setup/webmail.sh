@@ -75,7 +75,7 @@ fi
 # ### Configuring Roundcube
 
 # Generate a safe 24-character secret key of safe characters.
-SECRET_KEY=$(dd if=/dev/random bs=1 count=18 2>/dev/null | base64 | fold -w 24 | head -n 1)
+SECRET_KEY=$(dd if=/dev/urandom bs=1 count=18 2>/dev/null | base64 | fold -w 24 | head -n 1)
 
 # Create a configuration file.
 #
