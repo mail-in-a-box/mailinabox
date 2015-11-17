@@ -220,9 +220,9 @@ def perform_backup(full_backup):
 	full_backup = full_backup or should_force_full(env)
 
 	# Stop services.
-	shell('check_call', ["/usr/sbin/service", "dovecot", "stop"])
-	shell('check_call', ["/usr/sbin/service", "postfix", "stop"])
 	shell('check_call', ["/usr/sbin/service", "php5-fpm", "stop"])
+	shell('check_call', ["/usr/sbin/service", "postfix", "stop"])
+	shell('check_call', ["/usr/sbin/service", "dovecot", "stop"])
 
 	# Run a backup of STORAGE_ROOT (but excluding the backups themselves!).
 	# --allow-source-mismatch is needed in case the box's hostname is changed
