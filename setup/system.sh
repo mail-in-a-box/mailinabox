@@ -54,8 +54,65 @@ apt_get_quiet upgrade
 echo Installing system packages...
 apt_install python3 python3-dev python3-pip \
 	netcat-openbsd wget curl git sudo coreutils bc \
-	haveged unattended-upgrades cron ntp fail2ban
+	haveged pollinate \
+	unattended-upgrades cron ntp fail2ban
 
+# ### Seed /dev/urandom
+#
+# /dev/urandom is used by various components for generating random bytes for
+# encryption keys and passwords:
+#
+# * TLS private key (see `ssl.sh`, which calls `openssl genrsa`)
+# * our management server's API key (via Python's os.urandom method)
+#
+# Why /dev/urandom? It's the same as /dev/random, except that it doesn't wait
+# for a constant new stream of entropy. In practice, we only need a little
+# entropy at the start to get going. After that, we can safely pull a random
+# stream from /dev/urandom and not worry about how much entropy has been
+# added to the stream. (http://www.2uo.de/myths-about-urandom/) So we need
+# to worry about /dev/urandom being seeded properly (which is also an issue
+# for /dev/random), but after that /dev/urandom is superior to /dev/random
+# because it's faster and doesn't block indefinitely to wait for hardware
+# entropy. Note that `openssl genrsa` even uses `/dev/urandom`, and if it's
+# good enough for generating an RSA private key, it's good enough for anything
+# else we may need.
+#
+# Now about that seeding issue....
+#
+# /dev/urandom is seeded from "the uninitialized contents of the pool buffers when
+# the kernel starts, the startup clock time in nanosecond resolution,...and
+# entropy saved across boots to a local file" as well as the order of
+# execution of concurrent accesses to /dev/urandom. (Heninger et al 2012,
+# https://factorable.net/weakkeys12.conference.pdf) But when memory is zeroed,
+# the system clock is reset on boot, /etc/init.d/urandom has not yet run, or
+# the machine is single CPU or has no concurrent accesses to /dev/urandom prior
+# to this point, /dev/urandom may not be seeded well. After this, /dev/urandom
+# draws from the same entropy sources as /dev/random, but it doesn't block or
+# issue any warnings if no entropy is actually available. (http://www.2uo.de/myths-about-urandom/)
+# Entropy might not be readily available because this machine has no user input
+# devices (common on servers!) and either no hard disk or not enough IO has
+# ocurred yet --- although haveged tries to mitigate this. So there's a good chance
+# that accessing /dev/urandom will not be drawing from any hardware entropy and under
+# a perfect-storm circumstance where the other seeds are meaningless, /dev/urandom
+# may not be seeded at all.
+#
+# The first thing we'll do is block until we can seed /dev/urandom with enough
+# hardware entropy to get going, by drawing from /dev/random. haveged makes this
+# less likely to stall for very long.
+
+echo Initializing system random number generator...
+dd if=/dev/random of=/dev/urandom bs=1 count=32 2> /dev/null
+
+# This is supposedly sufficient. But because we're not sure if hardware entropy
+# is really any good on virtualized systems, we'll also seed from Ubuntu's
+# pollinate servers:
+
+pollinate  -q -r
+
+# Between these two, we really ought to be all set.
+
+# ### Package maintenance
+#
 # Allow apt to install system updates automatically every day.
 
 cat > /etc/apt/apt.conf.d/02periodic <<EOF;

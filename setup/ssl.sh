@@ -37,35 +37,18 @@ mkdir -p $STORAGE_ROOT/ssl
 # the process ID, user ID, and the current time in seconds. [During key
 # generation OpenSSL] mixes into the entropy pool the current time in seconds,
 # the process ID, and the possibly uninitialized contents of a ... buffer
-# ... dozens to hundreds of times." /dev/urandom is, in turn, seeded from
-# "the uninitialized contents of the pool buffers when the kernel starts,
-# the startup clock time in nanosecond resolution, input event and disk
-# access timings, and entropy saved across boots to a local file" as well
-# as the order of execution of concurrent accesses to /dev/urandom.
-# (Heninger et al 2012, https://factorable.net/weakkeys12.conference.pdf)
-#
-# /dev/urandom draws from the same entropy sources as /dev/random, but
-# doesn't block or issue any warnings if no entropy is actually available.
-# (http://www.2uo.de/myths-about-urandom/) Thus eventually /dev/urandom
-# can be expected to have been seeded with the "input event and disk access
-# timings", but there's no guarantee that this has even ocurred.
-#
-# Some of these seeds are obviously not helpful for us: There are no input
-# events on severs (keyboard/mouse), and the user ID of this process is
-# always the same (we're root). And the seeding of /dev/urandom with the
-# time and a seed from a previous boot is handled by *during boot* by
-# /etc/init.d/urandom, which, in principle, may not have occurred yet!
+# ... dozens to hundreds of times."
 #
 # A perfect storm of issues can cause the generated key to be not very random:
 #
+#   * improperly seeded /dev/urandom, but see system.sh for how we mitigate this
+#   * the user ID of this process is always the same (we're root), so that seed is useless
 #   * zero'd memory (plausible on embedded systems, cloud VMs?)
 #   * a predictable process ID (likely on an embedded/virtualized system)
 #   * a system clock reset to a fixed time on boot
-#   * one CPU or no concurrent processes on /dev/urandom (so no concurrent accesses)
-#   * no hard disk (so no disk access timings - but is this possible for us?)
-#   * early run (no entry yet, boot not finished)
-#   * first boot (no entropy saved from previous boot)
 #
+# Since we properly seed /dev/urandom in system.sh we should be fine, but I leave
+# in the rest of the notes in case that ever changes.
 if [ ! -f $STORAGE_ROOT/ssl/ssl_private_key.pem ]; then
 	# Set the umask so the key file is never world-readable.
 	(umask 077; hide_output \
