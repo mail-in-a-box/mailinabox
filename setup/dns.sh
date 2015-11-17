@@ -78,7 +78,7 @@ FIRST=1 #NODOC
 for algo in RSASHA1-NSEC3-SHA1 RSASHA256; do
 if [ ! -f "$STORAGE_ROOT/dns/dnssec/$algo.conf" ]; then
 	if [ $FIRST == 1 ]; then
-		echo "Generating DNSSEC signing keys. This may take a few minutes..."
+		echo "Generating DNSSEC signing keys..."
 		FIRST=0 #NODOC
 	fi
 
@@ -89,16 +89,16 @@ if [ ! -f "$STORAGE_ROOT/dns/dnssec/$algo.conf" ]; then
 	# `ldns-keygen` outputs the new key's filename to stdout, which
 	# we're capturing into the `KSK` variable.
 	#
-	# ldns-keygen uses /dev/random for generating random numbers. See the
-	# notes in ssl.sh about how /dev/urandom is seeded, which probably also
-	# applies here, but also /dev/random is seeded by the haveged daemon.
-	KSK=$(umask 077; cd $STORAGE_ROOT/dns/dnssec; ldns-keygen -a $algo -b 2048 -k _domain_);
+	# ldns-keygen uses /dev/random for generating random numbers by default.
+	# This is slow and unecessary if we ensure /dev/urandom is seeded properly,
+	# so we use /dev/urandom. See system.sh for an explanation. See #596, #115.
+	KSK=$(umask 077; cd $STORAGE_ROOT/dns/dnssec; ldns-keygen -r /dev/urandom -a $algo -b 2048 -k _domain_);
 
 	# Now create a Zone-Signing Key (ZSK) which is expected to be
 	# rotated more often than a KSK, although we have no plans to
 	# rotate it (and doing so would be difficult to do without
 	# disturbing DNS availability.) Omit `-k` and use a shorter key length.
-	ZSK=$(umask 077; cd $STORAGE_ROOT/dns/dnssec; ldns-keygen -a $algo -b 1024 _domain_);
+	ZSK=$(umask 077; cd $STORAGE_ROOT/dns/dnssec; ldns-keygen -r /dev/urandom -a $algo -b 1024 _domain_);
 
 	# These generate two sets of files like:
 	#
