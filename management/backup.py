@@ -222,6 +222,7 @@ def perform_backup(full_backup):
 	# Stop services.
 	shell('check_call', ["/usr/sbin/service", "dovecot", "stop"])
 	shell('check_call', ["/usr/sbin/service", "postfix", "stop"])
+	shell('check_call', ["/usr/sbin/service", "php5-fpm", "stop"])
 
 	# Run a backup of STORAGE_ROOT (but excluding the backups themselves!).
 	# --allow-source-mismatch is needed in case the box's hostname is changed
@@ -243,6 +244,7 @@ def perform_backup(full_backup):
 		# Start services again.
 		shell('check_call', ["/usr/sbin/service", "dovecot", "start"])
 		shell('check_call', ["/usr/sbin/service", "postfix", "start"])
+		shell('check_call', ["/usr/sbin/service", "php5-fpm", "start"])
 
 	# Once the migrated backup is included in a new backup, it can be deleted.
 	if os.path.isdir(migrated_unencrypted_backup_dir):
