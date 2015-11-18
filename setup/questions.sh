@@ -13,7 +13,7 @@ if [ -z "$NONINTERACTIVE" ]; then
 	fi
 
 	# email_validator is repeated in setup/management.sh
-	hide_output pip3 install email_validator==1.0.0 || exit 1
+	hide_output pip3 install "email_validator>=1.0.0" || exit 1
 
 	message_box "Mail-in-a-Box Installation" \
 		"Hello and thanks for deploying a Mail-in-a-Box!
