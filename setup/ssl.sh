@@ -55,18 +55,23 @@ if [ ! -f $STORAGE_ROOT/ssl/ssl_private_key.pem ]; then
 		openssl genrsa -out $STORAGE_ROOT/ssl/ssl_private_key.pem 2048)
 fi
 
-# Generate a certificate signing request.
-if [ ! -f $STORAGE_ROOT/ssl/ssl_cert_sign_req.csr ]; then
-	hide_output \
-	openssl req -new -key $STORAGE_ROOT/ssl/ssl_private_key.pem -out $STORAGE_ROOT/ssl/ssl_cert_sign_req.csr \
-	  -sha256 -subj "/C=$CSR_COUNTRY/ST=/L=/O=/CN=$PRIMARY_HOSTNAME"
-fi
-
-# Generate a SSL certificate by self-signing.
+# Generate a self-signed SSL certificate because things like nginx, dovecot,
+# etc. won't even start without some certificate in place, and we need nginx
+# so we can offer the user a control panel to install a better certificate.
 if [ ! -f $STORAGE_ROOT/ssl/ssl_certificate.pem ]; then
+	# Generate a certificate signing request.
+	CSR=/tmp/ssl_cert_sign_req-$$.csr
+	hide_output \
+	openssl req -new -key $STORAGE_ROOT/ssl/ssl_private_key.pem -out $CSR \
+	  -sha256 -subj "/C=$CSR_COUNTRY/ST=/L=/O=/CN=$PRIMARY_HOSTNAME"
+
+	# Generate the self-signed certificate.
 	hide_output \
 	openssl x509 -req -days 365 \
-	  -in $STORAGE_ROOT/ssl/ssl_cert_sign_req.csr -signkey $STORAGE_ROOT/ssl/ssl_private_key.pem -out $STORAGE_ROOT/ssl/ssl_certificate.pem
+	  -in $CSR -signkey $STORAGE_ROOT/ssl/ssl_private_key.pem -out $STORAGE_ROOT/ssl/ssl_certificate.pem
+
+	 # Delete the certificate signing request because it has no other purpose.
+	 rm -f $CSR
 fi
 
 # Generate some Diffie-Hellman cipher bits.
