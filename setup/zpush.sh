@@ -75,6 +75,19 @@ chmod 750 /var/lib/z-push
 chown www-data:www-data /var/log/z-push
 chown www-data:www-data /var/lib/z-push
 
+# Add log rotation
+
+cat > /etc/logrotate.d/z-push <<EOF;
+/var/log/z-push/*.log {
+	weekly
+	missingok
+	rotate 52
+	compress
+	delaycompress
+	notifempty
+}
+EOF
+
 # Restart service.
 
 restart_service php5-fpm
