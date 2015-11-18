@@ -24,8 +24,19 @@
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
-echo "Creating initial SSL certificate and perfect forward secrecy Diffie-Hellman parameters..."
+# Show a status line if we are going to take any action in this file.
+if  [ ! -f /usr/bin/openssl ] \
+ || [ ! -f $STORAGE_ROOT/ssl/ssl_private_key.pem ] \
+ || [ ! -f $STORAGE_ROOT/ssl/ssl_certificate.pem ] \
+ || [ ! -f $STORAGE_ROOT/ssl/dh2048.pem ]; then
+	echo "Creating initial SSL certificate and perfect forward secrecy Diffie-Hellman parameters..."
+fi
+
+# Install openssl.
+
 apt_install openssl
+
+# Create a directory to store TLS-related things like "SSL" certificates.
 
 mkdir -p $STORAGE_ROOT/ssl
 
