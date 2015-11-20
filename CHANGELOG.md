@@ -12,7 +12,7 @@ Control panel:
 
 * Explanatory text for setting up secondary nameserver is added/fixed.
 * DNS checks now have a timeout in case a DNS server is not responding, so the checks don't stall indefinitely.
-* Better messages if external DNS is used and, wierdly, custom secondary nameservers are set.
+* Better messages if external DNS is used and, weirdly, custom secondary nameservers are set.
 
 System:
 
