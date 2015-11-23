@@ -7,6 +7,7 @@ Still In Development
 Mail:
 
 * Updated Roundcube to version 1.1.3.
+* Auto-create RFC2142 aliases for abuse@.
 
 Control panel:
 
@@ -392,7 +393,7 @@ v0.02 (September 21, 2014)
 * Better logic for determining when to take a full backup.
 * Reduce DNS TTL, not that it seems to really matter.
 * Add SSHFP DNS records.
-* Add an API for setting custom DNS records 
+* Add an API for setting custom DNS records
 * Update to ownCloud 7.0.2.
 * Some things were broken if the machine had an IPv6 address.
 * Use a dialogs library to ask users questions during setup.

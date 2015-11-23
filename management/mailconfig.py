@@ -77,7 +77,7 @@ def prettify_idn_email_address(email):
 
 def is_dcv_address(email):
 	email = email.lower()
-	for localpart in ("admin", "administrator", "postmaster", "hostmaster", "webmaster"):
+	for localpart in ("admin", "administrator", "postmaster", "hostmaster", "webmaster", "abuse"):
 		if email.startswith(localpart+"@") or email.startswith(localpart+"+"):
 			return True
 	return False
@@ -520,17 +520,21 @@ def get_required_aliases(env):
 	# email on that domain are the required aliases or a catch-all/domain-forwarder.
 	real_mail_domains = get_mail_domains(env,
 		filter_aliases = lambda alias :
-			not alias.startswith("postmaster@") and not alias.startswith("admin@")
+			not alias.startswith("postmaster@")
+			and not alias.startswith("admin@")
+			and not alias.startswith("abuse@")
 			and not alias.startswith("@")
 			)
 
-	# Create postmaster@ and admin@ for all domains we serve mail on.
-	# postmaster@ is assumed to exist by our Postfix configuration. admin@
-	# isn't anything, but it might save the user some trouble e.g. when
+	# Create postmaster@, admin@ and abuse@ for all domains we serve
+	# mail on. postmaster@ is assumed to exist by our Postfix configuration.
+	# admin@isn't anything, but it might save the user some trouble e.g. when
 	# buying an SSL certificate.
+	# abuse@ is part of RFC2142: https://www.ietf.org/rfc/rfc2142.txt
 	for domain in real_mail_domains:
 		aliases.add("postmaster@" + domain)
 		aliases.add("admin@" + domain)
+		aliases.add("abuse@" + domain)
 
 	return aliases
 
@@ -572,7 +576,7 @@ def kick(env, mail_result=None):
 	# longer have any other email addresses for.
 	for address, forwards_to, *_ in existing_alias_records:
 		user, domain = address.split("@")
-		if user in ("postmaster", "admin") \
+		if user in ("postmaster", "admin", "abuse") \
 			and address not in required_aliases \
 			and forwards_to == get_system_administrator(env):
 			remove_mail_alias(address, env, do_kick=False)
