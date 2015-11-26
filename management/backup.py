@@ -437,6 +437,11 @@ if __name__ == "__main__":
 		# are readable, and b) report if they are up to date.
 		run_duplicity_verification()
 
+	elif sys.argv[-1] == "--status":
+		# Show backup status.
+		ret = backup_status(load_environment())
+		print(rtyaml.dump(ret["backups"]))
+
 	else:
 		# Perform a backup. Add --full to force a full backup rather than
 		# possibly performing an incremental backup.
