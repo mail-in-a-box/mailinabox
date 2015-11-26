@@ -4,13 +4,14 @@ source setup/functions.sh
 
 echo "Installing Mail-in-a-Box system management daemon..."
 
-# build-essential libssl-dev libffi-dev python3-dev: Required to pip install cryptography.
-apt_install python3-flask links duplicity libyaml-dev python3-dnspython python3-dateutil \
-	build-essential libssl-dev libffi-dev python3-dev python-pip
-hide_output pip3 install --upgrade rtyaml "email_validator>=1.0.0" "idna>=2.0.0" "cryptography>=1.0.2" boto
+# Switching python 2 boto to package manager's, not pypi's.
+if [ -f /usr/local/lib/python2.7/dist-packages/boto/__init__.py ]; then hide_output pip uninstall -y boto; fi
 
 # duplicity uses python 2 so we need to use the python 2 package of boto
-hide_output pip install --upgrade boto
+# build-essential libssl-dev libffi-dev python3-dev: Required to pip install cryptography.
+apt_install python3-flask links duplicity python-boto libyaml-dev python3-dnspython python3-dateutil \
+	build-essential libssl-dev libffi-dev python3-dev python-pip
+hide_output pip3 install --upgrade rtyaml "email_validator>=1.0.0" "idna>=2.0.0" "cryptography>=1.0.2" boto
 
 # email_validator is repeated in setup/questions.sh
 
