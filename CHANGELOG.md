@@ -22,6 +22,7 @@ System:
 * If ownCloud sends out email, it will use the box's administrative address now (admin@yourboxname).
 * Z-Push (Exchange/ActiveSync) logs now exclude warnings and are now rotated to save disk space.
 * Fix pip command that might have not installed all necessary Python packages.
+* The control panel and backup would not work on Google Compute Engine because they install a conflicting boto package.
 
 v0.14 (November 4, 2015)
 ------------------------

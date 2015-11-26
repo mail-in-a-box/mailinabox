@@ -12,7 +12,7 @@ import os, os.path, shutil, glob, re, datetime
 import dateutil.parser, dateutil.relativedelta, dateutil.tz
 import rtyaml
 
-from utils import exclusive_process, load_environment, shell, wait_for_service
+from utils import exclusive_process, load_environment, shell, wait_for_service, fix_boto
 
 def backup_status(env):
 	# Root folder
@@ -326,6 +326,7 @@ def list_target_files(config):
 
 	elif p.scheme == "s3":
 		# match to a Region
+		fix_boto() # must call prior to importing boto
 		import boto.s3
 		from boto.exception import BotoServerError
 		for region in boto.s3.regions():
