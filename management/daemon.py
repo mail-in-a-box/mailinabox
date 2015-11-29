@@ -319,17 +319,20 @@ def dns_get_dump():
 @app.route('/ssl/csr/<domain>', methods=['POST'])
 @authorized_personnel_only
 def ssl_get_csr(domain):
-	from web_update import create_csr
+	from ssl_certificates import create_csr
 	ssl_private_key = os.path.join(os.path.join(env["STORAGE_ROOT"], 'ssl', 'ssl_private_key.pem'))
 	return create_csr(domain, ssl_private_key, env)
 
 @app.route('/ssl/install', methods=['POST'])
 @authorized_personnel_only
 def ssl_install_cert():
-	from web_update import install_cert
+	from web_update import get_web_domains, get_default_www_redirects
+	from ssl_certificates import install_cert
 	domain = request.form.get('domain')
 	ssl_cert = request.form.get('cert')
 	ssl_chain = request.form.get('chain')
+	if domain not in get_web_domains(env) + get_default_www_redirects(env):
+		return "Invalid domain name."
 	return install_cert(domain, ssl_cert, ssl_chain, env)
 
 # WEB

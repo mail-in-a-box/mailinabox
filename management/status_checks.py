@@ -4,8 +4,6 @@
 # SSL certificates have been signed, etc., and if not tells the user
 # what to do next.
 
-__ALL__ = ['check_certificate']
-
 import sys, os, os.path, re, subprocess, datetime, multiprocessing.pool
 
 import dns.reversename, dns.resolver
@@ -13,7 +11,8 @@ import dateutil.parser, dateutil.tz
 import idna
 
 from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, get_secondary_dns, get_custom_dns_record
-from web_update import get_web_domains, get_default_www_redirects, get_ssl_certificates, get_domain_ssl_files, get_domains_with_a_records
+from web_update import get_web_domains, get_default_www_redirects, get_domains_with_a_records
+from ssl_certificates import get_ssl_certificates, get_domain_ssl_files, check_certificate
 from mailconfig import get_mail_domains, get_mail_aliases
 
 from utils import shell, sort_domains, load_env_vars_from_file, load_settings
@@ -668,181 +667,6 @@ def check_ssl_cert(domain, rounded_time, ssl_certificates, env, output):
 			output.print_line("")
 			output.print_line(cert_status_details)
 			output.print_line("")
-
-def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring_soon=True, rounded_time=False, just_check_domain=False):
-	# Check that the ssl_certificate & ssl_private_key files are good
-	# for the provided domain.
-
-	from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
-	from cryptography.x509 import Certificate
-
-	# The ssl_certificate file may contain a chain of certificates. We'll
-	# need to split that up before we can pass anything to openssl or
-	# parse them in Python. Parse it with the cryptography library.
-	try:
-		ssl_cert_chain = load_cert_chain(ssl_certificate)
-		cert = load_pem(ssl_cert_chain[0])
-		if not isinstance(cert, Certificate): raise ValueError("This is not a certificate file.")
-	except ValueError as e:
-		return ("There is a problem with the certificate file: %s" % str(e), None)
-
-	# First check that the domain name is one of the names allowed by
-	# the certificate.
-	if domain is not None:
-		certificate_names, cert_primary_name = get_certificate_domains(cert)
-
-		# Check that the domain appears among the acceptable names, or a wildcard
-		# form of the domain name (which is a stricter check than the specs but
-		# should work in normal cases).
-		wildcard_domain = re.sub("^[^\.]+", "*", domain)
-		if domain not in certificate_names and wildcard_domain not in certificate_names:
-			return ("The certificate is for the wrong domain name. It is for %s."
-				% ", ".join(sorted(certificate_names)), None)
-
-	# Second, check that the certificate matches the private key.
-	if ssl_private_key is not None:
-		try:
-			priv_key = load_pem(open(ssl_private_key, 'rb').read())
-		except ValueError as e:
-			return ("The private key file %s is not a private key file: %s" % (ssl_private_key, str(e)), None)
-
-		if not isinstance(priv_key, RSAPrivateKey):
-			return ("The private key file %s is not a private key file." % ssl_private_key, None)
-
-		if priv_key.public_key().public_numbers() != cert.public_key().public_numbers():
-			return ("The certificate does not correspond to the private key at %s." % ssl_private_key, None)
-
-		# We could also use the openssl command line tool to get the modulus
-		# listed in each file. The output of each command below looks like "Modulus=XXXXX".
-		# $ openssl rsa -inform PEM -noout -modulus -in ssl_private_key
-		# $ openssl x509 -in ssl_certificate -noout -modulus
-
-	# Third, check if the certificate is self-signed. Return a special flag string.
-	if cert.issuer == cert.subject:
-		return ("SELF-SIGNED", None)
-
-	# When selecting which certificate to use for non-primary domains, we check if the primary
-	# certificate or a www-parent-domain certificate is good for the domain. There's no need
-	# to run extra checks beyond this point.
-	if just_check_domain:
-		return ("OK", None)
-
-	# Check that the certificate hasn't expired. The datetimes returned by the
-	# certificate are 'naive' and in UTC. We need to get the current time in UTC.
-	now = datetime.datetime.utcnow()
-	if not(cert.not_valid_before <= now <= cert.not_valid_after):
-		return ("The certificate has expired or is not yet valid. It is valid from %s to %s." % (cert.not_valid_before, cert.not_valid_after), None)
-
-	# Next validate that the certificate is valid. This checks whether the certificate
-	# is self-signed, that the chain of trust makes sense, that it is signed by a CA
-	# that Ubuntu has installed on this machine's list of CAs, and I think that it hasn't
-	# expired.
-
-	# The certificate chain has to be passed separately and is given via STDIN.
-	# This command returns a non-zero exit status in most cases, so trap errors.
-	retcode, verifyoutput = shell('check_output', [
-		"openssl",
-		"verify", "-verbose",
-		"-purpose", "sslserver", "-policy_check",]
-		+ ([] if len(ssl_cert_chain) == 1 else ["-untrusted", "/proc/self/fd/0"])
-		+ [ssl_certificate],
-		input=b"\n\n".join(ssl_cert_chain[1:]),
-		trap=True)
-
-	if "self signed" in verifyoutput:
-		# Certificate is self-signed. Probably we detected this above.
-		return ("SELF-SIGNED", None)
-
-	elif retcode != 0:
-		if "unable to get local issuer certificate" in verifyoutput:
-			return ("The certificate is missing an intermediate chain or the intermediate chain is incorrect or incomplete. (%s)" % verifyoutput, None)
-
-		# There is some unknown problem. Return the `openssl verify` raw output.
-		return ("There is a problem with the SSL certificate.", verifyoutput.strip())
-
-	else:
-		# `openssl verify` returned a zero exit status so the cert is currently
-		# good.
-
-		# But is it expiring soon?
-		cert_expiration_date = cert.not_valid_after
-		ndays = (cert_expiration_date-now).days
-		if not rounded_time or ndays < 7:
-			expiry_info = "The certificate expires in %d days on %s." % (ndays, cert_expiration_date.strftime("%x"))
-		elif ndays <= 14:
-			expiry_info = "The certificate expires in less than two weeks, on %s." % cert_expiration_date.strftime("%x")
-		elif ndays <= 31:
-			expiry_info = "The certificate expires in less than a month, on %s." % cert_expiration_date.strftime("%x")
-		else:
-			expiry_info = "The certificate expires on %s." % cert_expiration_date.strftime("%x")
-
-		if ndays <= 31 and warn_if_expiring_soon:
-			return ("The certificate is expiring soon: " + expiry_info, None)
-
-		# Return the special OK code.
-		return ("OK", expiry_info)
-
-def load_cert_chain(pemfile):
-	# A certificate .pem file may contain a chain of certificates.
-	# Load the file and split them apart.
-	re_pem = rb"(-+BEGIN (?:.+)-+[\r\n]+(?:[A-Za-z0-9+/=]{1,64}[\r\n]+)+-+END (?:.+)-+[\r\n]+)"
-	with open(pemfile, "rb") as f:
-		pem = f.read() + b"\n" # ensure trailing newline
-		pemblocks = re.findall(re_pem, pem)
-		if len(pemblocks) == 0:
-			raise ValueError("File does not contain valid PEM data.")
-		return pemblocks
-
-def load_pem(pem):
-	# Parse a "---BEGIN .... END---" PEM string and return a Python object for it
-	# using classes from the cryptography package.
-	from cryptography.x509 import load_pem_x509_certificate
-	from cryptography.hazmat.primitives import serialization
-	from cryptography.hazmat.backends import default_backend
-	pem_type = re.match(b"-+BEGIN (.*?)-+[\r\n]", pem)
-	if pem_type is None:
-		raise ValueError("File is not a valid PEM-formatted file.")
-	pem_type = pem_type.group(1)
-	if pem_type in (b"RSA PRIVATE KEY", b"PRIVATE KEY"):
-		return serialization.load_pem_private_key(pem, password=None, backend=default_backend())
-	if pem_type == b"CERTIFICATE":
-		return load_pem_x509_certificate(pem, default_backend())
-	raise ValueError("Unsupported PEM object type: " + pem_type.decode("ascii", "replace"))
-
-def get_certificate_domains(cert):
-	from cryptography.x509 import DNSName, ExtensionNotFound, OID_COMMON_NAME, OID_SUBJECT_ALTERNATIVE_NAME
-	import idna
-
-	names = set()
-	cn = None
-
-	# The domain may be found in the Subject Common Name (CN). This comes back as an IDNA (ASCII)
-	# string, which is the format we store domains in - so good.
-	try:
-		cn = cert.subject.get_attributes_for_oid(OID_COMMON_NAME)[0].value
-		names.add(cn)
-	except IndexError:
-		# No common name? Certificate is probably generated incorrectly.
-		# But we'll let it error-out when it doesn't find the domain.
-		pass
-
-	# ... or be one of the Subject Alternative Names. The cryptography library handily IDNA-decodes
-	# the names for us. We must encode back to ASCII, but wildcard certificates can't pass through
-	# IDNA encoding/decoding so we must special-case. See https://github.com/pyca/cryptography/pull/2071.
-	def idna_decode_dns_name(dns_name):
-		if dns_name.startswith("*."):
-			return "*." + idna.encode(dns_name[2:]).decode('ascii')
-		else:
-			return idna.encode(dns_name).decode('ascii')
-
-	try:
-		sans = cert.extensions.get_extension_for_oid(OID_SUBJECT_ALTERNATIVE_NAME).value.get_values_for_type(DNSName)
-		for san in sans:
-			names.add(idna_decode_dns_name(san))
-	except ExtensionNotFound:
-		pass
-
-	return names, cn
 
 _apt_updates = None
 def list_apt_updates(apt_update=True):
