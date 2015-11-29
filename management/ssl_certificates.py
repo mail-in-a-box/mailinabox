@@ -2,7 +2,7 @@
 
 import os, os.path, re, shutil
 
-from utils import shell
+from utils import shell, safe_domain_name
 
 def get_ssl_certificates(env):
 	# Scan all of the installed SSL certificates and map every domain
@@ -170,7 +170,7 @@ def install_cert(domain, ssl_cert, ssl_chain, env):
 	cert = load_pem(load_cert_chain(fn)[0])
 	all_domains, cn = get_certificate_domains(cert)
 	path = "%s-%s-%s.pem" % (
-		cn, # common name
+		safe_domain_name(cn), # common name, which should be filename safe because it is IDNA-encoded, but in case of a malformed cert make sure it's ok to use as a filename
 		cert.not_valid_after.date().isoformat().replace("-", ""), # expiration date
 		hexlify(cert.fingerprint(hashes.SHA256())).decode("ascii")[0:8], # fingerprint prefix
 		)
