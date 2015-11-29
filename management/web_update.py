@@ -9,20 +9,29 @@ from dns_update import get_custom_dns_config, get_dns_zones
 from ssl_certificates import get_ssl_certificates, get_domain_ssl_files, check_certificate
 from utils import shell, safe_domain_name, sort_domains
 
-def get_web_domains(env):
-	# What domains should we serve websites for?
+def get_web_domains(env, include_www_redirects=True):
+	# What domains should we serve HTTP(S) for?
 	domains = set()
 
-	# At the least it's the PRIMARY_HOSTNAME so we can serve webmail
-	# as well as Z-Push for Exchange ActiveSync.
-	domains.add(env['PRIMARY_HOSTNAME'])
-
-	# Also serve web for all mail domains so that we might at least
+	# Serve web for all mail domains so that we might at least
 	# provide auto-discover of email settings, and also a static website
-	# if the user wants to make one. These will require an SSL cert.
+	# if the user wants to make one.
+	domains |= get_mail_domains(env)
+
+	if include_www_redirects:
+		# Add 'www.' subdomains that we want to provide default redirects
+		# to the main domain for. We'll add 'www.' to any DNS zones, i.e.
+		# the topmost of each domain we serve.
+		domains |= set('www.' + zone for zone, zonefile in get_dns_zones(env))
+	 
 	# ...Unless the domain has an A/AAAA record that maps it to a different
 	# IP address than this box. Remove those domains from our list.
-	domains |= (get_mail_domains(env) - get_domains_with_a_records(env))
+	domains -= get_domains_with_a_records(env)
+
+	# Ensure the PRIMARY_HOSTNAME is in the list so we can serve webmail
+	# as well as Z-Push for Exchange ActiveSync. This can't be removed
+	# by a custom A/AAAA record and is never a 'www.' redirect.
+	domains.add(env['PRIMARY_HOSTNAME'])
 
 	# Sort the list so the nginx conf gets written in a stable order.
 	domains = sort_domains(domains, env)
@@ -51,15 +60,6 @@ def get_web_domains_with_root_overrides(env):
 					root_overrides[domain] = (type, value)
 	return root_overrides
 
-
-def get_default_www_redirects(env):
-	# Returns a list of www subdomains that we want to provide default redirects
-	# for, i.e. any www's that aren't domains the user has actually configured
-	# to serve for real. Which would be unusual.
-	web_domains = set(get_web_domains(env))
-	www_domains = set('www.' + zone for zone, zonefile in get_dns_zones(env))
-	return sort_domains(www_domains - web_domains - get_domains_with_a_records(env), env)
-
 def do_web_update(env):
 	# Pre-load what SSL certificates we will use for each domain.
 	ssl_certificates = get_ssl_certificates(env)
@@ -78,16 +78,20 @@ def do_web_update(env):
 
 	# Add configuration all other web domains.
 	has_root_proxy_or_redirect = get_web_domains_with_root_overrides(env)
+	web_domains_not_redirect = get_web_domains(env, include_www_redirects=False)
 	for domain in get_web_domains(env):
-		if domain == env['PRIMARY_HOSTNAME']: continue # handled above
-		if domain not in has_root_proxy_or_redirect:
-			nginx_conf += make_domain_config(domain, [template0, template1], ssl_certificates, env)
+		if domain == env['PRIMARY_HOSTNAME']:
+			# PRIMARY_HOSTNAME is handled above.
+			continue
+		if domain in web_domains_not_redirect:
+			# This is a regular domain.
+			if domain not in has_root_proxy_or_redirect:
+				nginx_conf += make_domain_config(domain, [template0, template1], ssl_certificates, env)
+			else:
+				nginx_conf += make_domain_config(domain, [template0], ssl_certificates, env)
 		else:
-			nginx_conf += make_domain_config(domain, [template0], ssl_certificates, env)
-
-	# Add default www redirects.
-	for domain in get_default_www_redirects(env):
-		nginx_conf += make_domain_config(domain, [template0, template3], ssl_certificates, env)
+			# Add default 'www.' redirect.
+			nginx_conf += make_domain_config(domain, [template0, template3], ssl_certificates, env)
 
 	# Did the file change? If not, don't bother writing & restarting nginx.
 	nginx_conf_fn = "/etc/nginx/conf.d/local.conf"
@@ -187,7 +191,8 @@ def get_web_root(domain, env, test_exists=True):
 	return root
 
 def get_web_domains_info(env):
-	has_root_proxy_or_redirect = get_web_domains_with_root_overrides(env)
+	www_redirects = set(get_web_domains(env)) - set(get_web_domains(env, include_www_redirects=False))
+	has_root_proxy_or_redirect = set(get_web_domains_with_root_overrides(env))
 
 	# for the SSL config panel, get cert status
 	def check_cert(domain):
@@ -213,15 +218,7 @@ def get_web_domains_info(env):
 			"root": get_web_root(domain, env),
 			"custom_root": get_web_root(domain, env, test_exists=False),
 			"ssl_certificate": check_cert(domain),
-			"static_enabled": domain not in has_root_proxy_or_redirect,
+			"static_enabled": domain not in (www_redirects | has_root_proxy_or_redirect),
 		}
 		for domain in get_web_domains(env)
-	] + \
-	[
-		{
-			"domain": domain,
-			"ssl_certificate": check_cert(domain),
-			"static_enabled": False,
-		}
-		for domain in get_default_www_redirects(env)
 	]

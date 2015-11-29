@@ -326,12 +326,12 @@ def ssl_get_csr(domain):
 @app.route('/ssl/install', methods=['POST'])
 @authorized_personnel_only
 def ssl_install_cert():
-	from web_update import get_web_domains, get_default_www_redirects
+	from web_update import get_web_domains
 	from ssl_certificates import install_cert
 	domain = request.form.get('domain')
 	ssl_cert = request.form.get('cert')
 	ssl_chain = request.form.get('chain')
-	if domain not in get_web_domains(env) + get_default_www_redirects(env):
+	if domain not in get_web_domains(env):
 		return "Invalid domain name."
 	return install_cert(domain, ssl_cert, ssl_chain, env)
 

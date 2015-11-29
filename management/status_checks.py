@@ -11,7 +11,7 @@ import dateutil.parser, dateutil.tz
 import idna
 
 from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, get_secondary_dns, get_custom_dns_record
-from web_update import get_web_domains, get_default_www_redirects, get_domains_with_a_records
+from web_update import get_web_domains, get_domains_with_a_records
 from ssl_certificates import get_ssl_certificates, get_domain_ssl_files, check_certificate
 from mailconfig import get_mail_domains, get_mail_aliases
 
@@ -240,7 +240,7 @@ def run_domain_checks(rounded_time, env, output, pool):
 	dns_domains = set(dns_zonefiles)
 
 	# Get the list of domains we serve HTTPS for.
-	web_domains = set(get_web_domains(env) + get_default_www_redirects(env))
+	web_domains = set(get_web_domains(env))
 
 	domains_to_check = mail_domains | dns_domains | web_domains
 

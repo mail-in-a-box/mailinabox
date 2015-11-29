@@ -57,8 +57,8 @@ def do_dns_update(env, force=False):
 
 	# Custom records to add to zones.
 	additional_records = list(get_custom_dns_config(env))
-	from web_update import get_default_www_redirects
-	www_redirect_domains = get_default_www_redirects(env)
+	from web_update import get_web_domains
+	www_redirect_domains = set(get_web_domains(env)) - set(get_web_domains(env, include_www_redirects=False))
 
 	# Write zone files.
 	os.makedirs('/etc/nsd/zones', exist_ok=True)
@@ -907,8 +907,8 @@ def build_recommended_dns(env):
 	domains = get_dns_domains(env)
 	zonefiles = get_dns_zones(env)
 	additional_records = list(get_custom_dns_config(env))
-	from web_update import get_default_www_redirects
-	www_redirect_domains = get_default_www_redirects(env)
+	from web_update import get_web_domains
+	www_redirect_domains = set(get_web_domains(env)) - set(get_web_domains(env, include_www_redirects=False))
 	for domain, zonefile in zonefiles:
 		records = build_zone(domain, domains, additional_records, www_redirect_domains, env)
 

@@ -254,10 +254,8 @@ def fix_boto():
 
 
 if __name__ == "__main__":
-	from dns_update import get_dns_domains
-	from web_update import get_web_domains, get_default_www_redirects
+	from web_update import get_web_domains
 	env = load_environment()
-	domains = get_dns_domains(env) | set(get_web_domains(env) + get_default_www_redirects(env))
-	domains = sort_domains(domains, env)
+	domains = get_web_domains(env)
 	for domain in domains:
 		print(domain)
