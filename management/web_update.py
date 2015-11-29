@@ -351,21 +351,18 @@ def install_cert(domain, ssl_cert, ssl_chain, env):
 		return cert_status
 
 	# Where to put it?
-	if domain == env['PRIMARY_HOSTNAME']:
-		ssl_certificate = os.path.join(os.path.join(env["STORAGE_ROOT"], 'ssl', 'ssl_certificate.pem'))
-	else:
-		# Make a unique path for the certificate.
-		from status_checks import load_cert_chain, load_pem, get_certificate_domains
-		from cryptography.hazmat.primitives import hashes
-		from binascii import hexlify
-		cert = load_pem(load_cert_chain(fn)[0])
-		all_domains, cn = get_certificate_domains(cert)
-		path = "%s-%s-%s" % (
-			cn, # common name
-			cert.not_valid_after.date().isoformat().replace("-", ""), # expiration date
-			hexlify(cert.fingerprint(hashes.SHA256())).decode("ascii")[0:8], # fingerprint prefix
-			)
-		ssl_certificate = os.path.join(os.path.join(env["STORAGE_ROOT"], 'ssl', path, 'ssl_certificate.pem'))
+	# Make a unique path for the certificate.
+	from status_checks import load_cert_chain, load_pem, get_certificate_domains
+	from cryptography.hazmat.primitives import hashes
+	from binascii import hexlify
+	cert = load_pem(load_cert_chain(fn)[0])
+	all_domains, cn = get_certificate_domains(cert)
+	path = "%s-%s-%s.pem" % (
+		cn, # common name
+		cert.not_valid_after.date().isoformat().replace("-", ""), # expiration date
+		hexlify(cert.fingerprint(hashes.SHA256())).decode("ascii")[0:8], # fingerprint prefix
+		)
+	ssl_certificate = os.path.join(os.path.join(env["STORAGE_ROOT"], 'ssl', path))
 
 	# Install the certificate.
 	os.makedirs(os.path.dirname(ssl_certificate), exist_ok=True)
@@ -373,17 +370,23 @@ def install_cert(domain, ssl_cert, ssl_chain, env):
 
 	ret = ["OK"]
 
-	# When updating the cert for PRIMARY_HOSTNAME, also update DNS because it is
-	# used in the DANE TLSA record and restart postfix and dovecot which use
-	# that certificate.
+	# When updating the cert for PRIMARY_HOSTNAME, symlink it from the system
+	# certificate path, which is hard-coded for various purposes, and then
+	# update DNS (because of the DANE TLSA record), postfix, and dovecot,
+	# which all use the file.
 	if domain == env['PRIMARY_HOSTNAME']:
-		ret.append( do_dns_update(env) )
+		# Update symlink.
+		system_ssl_certificate = os.path.join(os.path.join(env["STORAGE_ROOT"], 'ssl', 'ssl_certificate.pem'))
+		os.unlink(system_ssl_certificate)
+		os.symlink(ssl_certificate, system_ssl_certificate)
 
+		# Update DNS & restart postfix and dovecot so they pick up the new file.
+		ret.append( do_dns_update(env) )
 		shell('check_call', ["/usr/sbin/service", "postfix", "restart"])
 		shell('check_call', ["/usr/sbin/service", "dovecot", "restart"])
 		ret.append("mail services restarted")
 
-	# Kick nginx so it sees the cert.
+	# Update the web configuration so nginx picks up the new certificate file.
 	ret.append( do_web_update(env) )
 	return "\n".join(ret)
 

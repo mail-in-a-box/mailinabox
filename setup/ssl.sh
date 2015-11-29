@@ -77,12 +77,17 @@ if [ ! -f $STORAGE_ROOT/ssl/ssl_certificate.pem ]; then
 	  -sha256 -subj "/C=$CSR_COUNTRY/ST=/L=/O=/CN=$PRIMARY_HOSTNAME"
 
 	# Generate the self-signed certificate.
+	CERT=$STORAGE_ROOT/ssl/$PRIMARY_HOSTNAME-selfsigned-$(date --rfc-3339=date | sed s/-//g).pem
 	hide_output \
 	openssl x509 -req -days 365 \
-	  -in $CSR -signkey $STORAGE_ROOT/ssl/ssl_private_key.pem -out $STORAGE_ROOT/ssl/ssl_certificate.pem
+	  -in $CSR -signkey $STORAGE_ROOT/ssl/ssl_private_key.pem -out $CERT
 
-	 # Delete the certificate signing request because it has no other purpose.
-	 rm -f $CSR
+	# Delete the certificate signing request because it has no other purpose.
+	rm -f $CSR
+
+	# Symlink the certificate into the system certificate path, so system services
+	# can find it.
+	ln -s $CERT $STORAGE_ROOT/ssl/ssl_certificate.pem
 fi
 
 # Generate some Diffie-Hellman cipher bits.
