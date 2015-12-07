@@ -103,45 +103,60 @@ def check_service(i, service, env):
 		# Skip check (no port, e.g. no sshd).
 		return (i, None, None, None)
 
-	import socket
 	output = BufferedOutput()
 	running = False
 	fatal = False
-	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	s.settimeout(1)
-	try:
-		try:
-			s.connect((
-				"127.0.0.1" if not service["public"] else env['PUBLIC_IP'],
-				service["port"]))
-			running = True
-		except OSError as e1:
-			if service["public"] and service["port"] != 53:
-				# For public services (except DNS), try the private IP as a fallback.
-				s1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-				s1.settimeout(1)
-				try:
-					s1.connect(("127.0.0.1", service["port"]))
-					output.print_error("%s is running but is not publicly accessible at %s:%d (%s)." % (service['name'], env['PUBLIC_IP'], service['port'], str(e1)))
-				except:
-					raise e1
-				finally:
-					s1.close()
-			else:
-				raise
 
-	except OSError as e:
-		output.print_error("%s is not running (%s; port %d)." % (service['name'], str(e), service['port']))
+	# Helper function to make a connection to the service, since we try
+	# up to three ways (localhost, IPv4 address, IPv6 address).
+	def try_connect(ip):
+		# Connect to the given IP address on the service's port with a one-second timeout.
+		import socket
+		s = socket.socket(socket.AF_INET if ":" not in ip else socket.AF_INET6, socket.SOCK_STREAM)
+		s.settimeout(1)
+		try:
+			s.connect((ip, service["port"]))
+			return True
+		except OSError as e:
+			# timed out or some other odd error
+			return False
+		finally:
+			s.close()
+
+	if service["public"]:
+		# Service should be publicly accessible.
+		if try_connect(env["PUBLIC_IP"]):
+			# IPv4 ok.
+			if not env.get("PUBLIC_IPV6") or service.get("ipv6") is False or try_connect(env["PUBLIC_IPV6"]):
+				# No IPv6, or service isn't meant to run on IPv6, or IPv6 is good.
+				running = True
+
+			# IPv4 ok but IPv6 failed. Try the PRIVATE_IPV6 address to see if the service is bound to the interface.
+			elif service["port"] != 53 and try_connect(env["PRIVATE_IPV6"]):
+				output.print_error("%s is running (and available over IPv4 and the local IPv6 address), but it is not publicly accessible at %s:%d." % (service['name'], env['PUBLIC_IP'], service['port']))
+			else:
+				output.print_error("%s is running and available over IPv4 but is not accessible over IPv6 at %s port %d." % (service['name'], env['PUBLIC_IPV6'], service['port']))
+
+		# IPv4 failed. Try the private IP to see if the service is running but not accessible (except DNS because a different service runs on the private IP).
+		elif service["port"] != 53 and try_connect("127.0.0.1"):
+			output.print_error("%s is running but is not publicly accessible at %s:%d." % (service['name'], env['PUBLIC_IP'], service['port']))
+		else:
+			output.print_error("%s is not running (port %d)." % (service['name'], service['port']))
 
 		# Why is nginx not running?
-		if service["port"] in (80, 443):
+		if not running and service["port"] in (80, 443):
 			output.print_line(shell('check_output', ['nginx', '-t'], capture_stderr=True, trap=True)[1].strip())
 
-		# Flag if local DNS is not running.
-		if service["port"] == 53 and service["public"] == False:
-			fatal = True
-	finally:
-		s.close()
+	else:
+		# Service should be running locally.
+		if try_connect("127.0.0.1"):
+			running = True
+		else:
+			output.print_error("%s is not running (port %d)." % (service['name'], service['port']))
+
+	# Flag if local DNS is not running.
+	if not running and service["port"] == 53 and service["public"] == False:
+		fatal = True
 
 	return (i, running, fatal, output)
 
