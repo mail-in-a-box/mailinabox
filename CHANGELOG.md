@@ -10,7 +10,7 @@ Mail:
 
 Control panel:
 
-* When IPv6 is enabled, check that system services are accessible over IPv6 too and that reverse DNS is setup correctly for the IPv6 address.
+* When IPv6 is enabled, check that system services are accessible over IPv6 too, that the box's hostname resolves over IPv6, and that reverse DNS is setup correctly for IPv6.
 * Explanatory text for setting up secondary nameserver is added/fixed.
 * DNS checks now have a timeout in case a DNS server is not responding, so the checks don't stall indefinitely.
 * Better messages if external DNS is used and, weirdly, custom secondary nameservers are set.

@@ -316,6 +316,7 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 
 	ip = query_dns(domain, "A")
 	ns_ips = query_dns("ns1." + domain, "A") + '/' + query_dns("ns2." + domain, "A")
+	my_ips = env['PUBLIC_IP'] + ((" / "+env['PUBLIC_IPV6']) if env.get("PUBLIC_IPV6") else "")
 
 	# Check that the ns1/ns2 hostnames resolve to A records. This information probably
 	# comes from the TLD since the information is set at the registrar as glue records.
@@ -338,23 +339,23 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 			public DNS to update after a change."""
 			% (env['PRIMARY_HOSTNAME'], env['PRIMARY_HOSTNAME'], env['PUBLIC_IP'], ns_ips))
 
-	# Check that PRIMARY_HOSTNAME resolves to PUBLIC_IP in public DNS.
-	if ip == env['PUBLIC_IP']:
-		output.print_ok("Domain resolves to box's IP address. [%s ↦ %s]" % (env['PRIMARY_HOSTNAME'], env['PUBLIC_IP']))
+	# Check that PRIMARY_HOSTNAME resolves to PUBLIC_IP[V6] in public DNS.
+	ipv6 = query_dns(domain, "AAAA") if env.get("PUBLIC_IPV6") else None
+	if ip == env['PUBLIC_IP'] and ipv6 in (None, env['PUBLIC_IPV6']):
+		output.print_ok("Domain resolves to box's IP address. [%s ↦ %s]" % (env['PRIMARY_HOSTNAME'], my_ips))
 	else:
 		output.print_error("""This domain must resolve to your box's IP address (%s) in public DNS but it currently resolves
 			to %s. It may take several hours for public DNS to update after a change. This problem may result from other
-			issues listed here."""
-			% (env['PUBLIC_IP'], ip))
+			issues listed above."""
+			% (my_ips, ip + ((" / " + ipv6) if ipv6 is not None else "")))
+
 
 	# Check reverse DNS matches the PRIMARY_HOSTNAME. Note that it might not be
 	# a DNS zone if it is a subdomain of another domain we have a zone for.
 	existing_rdns_v4 = query_dns(dns.reversename.from_address(env['PUBLIC_IP']), "PTR")
 	existing_rdns_v6 = query_dns(dns.reversename.from_address(env['PUBLIC_IPV6']), "PTR") if env.get("PUBLIC_IPV6") else None
 	if existing_rdns_v4 == domain and existing_rdns_v6 in (None, domain):
-		output.print_ok("Reverse DNS is set correctly at ISP. [%s ↦ %s]" % (
-			env['PUBLIC_IP'] + (("/"+env['PUBLIC_IPV6']) if env.get("PUBLIC_IPV6") else ""),
-			env['PRIMARY_HOSTNAME']))
+		output.print_ok("Reverse DNS is set correctly at ISP. [%s ↦ %s]" % (my_ips, env['PRIMARY_HOSTNAME']))
 	elif existing_rdns_v4 == existing_rdns_v6 or existing_rdns_v6 is None:
 		output.print_error("""Your box's reverse DNS is currently %s, but it should be %s. Your ISP or cloud provider will have instructions
 			on setting up reverse DNS for your box.""" % (existing_rdns_v4, domain) )
