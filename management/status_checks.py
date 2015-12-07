@@ -347,15 +347,20 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 			issues listed here."""
 			% (env['PUBLIC_IP'], ip))
 
-	# Check reverse DNS on the PRIMARY_HOSTNAME. Note that it might not be
+	# Check reverse DNS matches the PRIMARY_HOSTNAME. Note that it might not be
 	# a DNS zone if it is a subdomain of another domain we have a zone for.
-	ipaddr_rev = dns.reversename.from_address(env['PUBLIC_IP'])
-	existing_rdns = query_dns(ipaddr_rev, "PTR")
-	if existing_rdns == domain:
-		output.print_ok("Reverse DNS is set correctly at ISP. [%s ↦ %s]" % (env['PUBLIC_IP'], env['PRIMARY_HOSTNAME']))
-	else:
+	existing_rdns_v4 = query_dns(dns.reversename.from_address(env['PUBLIC_IP']), "PTR")
+	existing_rdns_v6 = query_dns(dns.reversename.from_address(env['PUBLIC_IPV6']), "PTR") if env.get("PUBLIC_IPV6") else None
+	if existing_rdns_v4 == domain and existing_rdns_v6 in (None, domain):
+		output.print_ok("Reverse DNS is set correctly at ISP. [%s ↦ %s]" % (
+			env['PUBLIC_IP'] + (("/"+env['PUBLIC_IPV6']) if env.get("PUBLIC_IPV6") else ""),
+			env['PRIMARY_HOSTNAME']))
+	elif existing_rdns_v4 == existing_rdns_v6 or existing_rdns_v6 is None:
 		output.print_error("""Your box's reverse DNS is currently %s, but it should be %s. Your ISP or cloud provider will have instructions
-			on setting up reverse DNS for your box at %s.""" % (existing_rdns, domain, env['PUBLIC_IP']) )
+			on setting up reverse DNS for your box.""" % (existing_rdns_v4, domain) )
+	else:
+		output.print_error("""Your box's reverse DNS is currently %s (IPv4) and %s (IPv6), but it should be %s. Your ISP or cloud provider will have instructions
+			on setting up reverse DNS for your box.""" % (existing_rdns_v4, existing_rdns_v6, domain) )
 
 	# Check the TLSA record.
 	tlsa_qname = "_25._tcp." + domain
