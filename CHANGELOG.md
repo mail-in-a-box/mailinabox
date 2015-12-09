@@ -26,6 +26,7 @@ System:
 * Z-Push (Exchange/ActiveSync) logs now exclude warnings and are now rotated to save disk space.
 * Fix pip command that might have not installed all necessary Python packages.
 * The control panel and backup would not work on Google Compute Engine because they install a conflicting boto package.
+* Added a new command `management/backup.py --restore` to restore files from a backup to a target directory (command line arguments are passed to `duplicity restore`).
 
 v0.14 (November 4, 2015)
 ------------------------
