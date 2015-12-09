@@ -314,6 +314,18 @@ def run_duplicity_verification():
 		env["STORAGE_ROOT"],
 	], get_env(env))
 
+def run_duplicity_restore(args):
+	env = load_environment()
+	config = get_backup_config(env)
+	backup_cache_dir = os.path.join(env["STORAGE_ROOT"], 'backup', 'cache')
+	shell('check_call', [
+		"/usr/bin/duplicity",
+		"restore",
+		"--archive-dir", backup_cache_dir,
+		config["target"],
+		] + args,
+	get_env(env))
+
 def list_target_files(config):
 	import urllib.parse
 	try:
@@ -442,6 +454,11 @@ if __name__ == "__main__":
 		# Show backup status.
 		ret = backup_status(load_environment())
 		print(rtyaml.dump(ret["backups"]))
+
+	elif len(sys.argv) >= 2 and sys.argv[1] == "--restore":
+		# Run duplicity restore. Rest of command line passed as arguments
+		# to duplicity. The restore path should be specified.
+		run_duplicity_restore(sys.argv[2:])
 
 	else:
 		# Perform a backup. Add --full to force a full backup rather than
