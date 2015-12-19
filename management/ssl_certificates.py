@@ -182,10 +182,13 @@ def get_certificates_to_provision(env):
 			domains.add(domain)
 		else:
 			cert = cert["certificate_object"]
+			import sys
 			if cert.issuer == cert.subject:
 				# This is self-signed. Get a real one.
 				domains.add(domain)
-			
+			elif "--replace-all" in sys.argv:
+				domains.add(domain)
+
 			# Valid certificate today, but is it expiring soon?
 			elif cert.not_valid_after-now < datetime.timedelta(days=14):
 				domains.add(domain)
