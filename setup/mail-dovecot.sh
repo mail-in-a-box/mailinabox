@@ -39,6 +39,14 @@ apt_install \
 # machine has, so on a two-core machine that's 500 processes/100 users).
 tools/editconf.py /etc/dovecot/conf.d/10-master.conf \
 	default_process_limit=$(echo "`nproc` * 250" | bc)
+	
+# Configure dovecot to use one imap-login process that is always available 
+# for all logins to improve performance.
+# This should have no security implications as we already use only one system 
+# user for all of our virtual mailboxes.
+tools/editconf.py /etc/dovecot/conf.d/10-master.conf \
+	service_count=0 \
+	process_min_avail=1
 
 # The inotify `max_user_instances` default is 128, which constrains
 # the total number of watched (IMAP IDLE push) folders by open connections.
