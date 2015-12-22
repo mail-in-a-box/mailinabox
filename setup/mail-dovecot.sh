@@ -88,18 +88,19 @@ sed -i "s/#port = 110/port = 0/" /etc/dovecot/conf.d/10-master.conf
 # this are minimal. But for good measure, let's go to 4 minutes to halve the
 # bandwidth and number of times the device's networking might be woken up.
 # The risk is that if the connection is silent for too long it might be reset
-# by a peer. See #129 and http://razor.occams.info/blog/2014/08/09/how-bad-is-imap-idle/.
+# by a peer. See [#129](https://github.com/mail-in-a-box/mailinabox/issues/129)
+# and [How bad is IMAP IDLE](http://razor.occams.info/blog/2014/08/09/how-bad-is-imap-idle/).
 tools/editconf.py /etc/dovecot/conf.d/20-imap.conf \
 	imap_idle_notify_interval="4 mins"
 
-# Set POP3 UIDL
-# UIDLs are used by POP3 clients to keep track of what messages they've downloaded. 
+# Set POP3 UIDL.
+# UIDLs are used by POP3 clients to keep track of what messages they've downloaded.
 # For new POP3 servers, the easiest way to set up UIDLs is to use IMAP's UIDVALIDITY
 # and UID values, the default in Dovecot.
 tools/editconf.py /etc/dovecot/conf.d/20-pop3.conf \
 	pop3_uidl_format="%08Xu%08Xv"
 
-# Full Text Search - Enable full text search of mail using dovecot's lucene plugin, 
+# Full Text Search - Enable full text search of mail using dovecot's lucene plugin,
 # which *we* package and distribute (dovecot-lucene package).
 tools/editconf.py /etc/dovecot/conf.d/10-mail.conf \
 	mail_plugins="\$mail_plugins fts fts_lucene"
