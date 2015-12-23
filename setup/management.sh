@@ -30,6 +30,12 @@ rm -f /etc/init.d/mailinabox
 ln -s $(pwd)/conf/management-initscript /etc/init.d/mailinabox
 hide_output update-rc.d mailinabox defaults
 
+# Set time zone to something convenient for the user
+# Backup will be set for 3am localtime so choice is important depending
+# on user locations.
+
+dpkg-reconfigure tzdata
+
 # Perform a daily backup.
 if [ -f /etc/cron.daily/mailinabox-backup ]; then
   rm /etc/cron.daily/mailinabox-backup
