@@ -31,25 +31,18 @@ rm -f /etc/init.d/mailinabox
 ln -s $(pwd)/conf/management-initscript /etc/init.d/mailinabox
 hide_output update-rc.d mailinabox defaults
 
-# Perform a daily backup.
-cat > /etc/cron.daily/mailinabox-backup << EOF;
-#!/bin/bash
-# Mail-in-a-Box --- Do not edit / will be overwritten on update.
-# Perform a backup.
-$(pwd)/management/backup.py
-EOF
-chmod +x /etc/cron.daily/mailinabox-backup
+# Remove old files we no longer use.
+rm -f /etc/cron.daily/mailinabox-backup
+rm -f /etc/cron.daily/mailinabox-statuschecks
 
-# Perform daily status checks. Compare each day to the previous
-# for changes and mail the changes to the administrator.
-cat > /etc/cron.daily/mailinabox-statuschecks << EOF;
-#!/bin/bash
-# Mail-in-a-Box --- Do not edit / will be overwritten on update.
-# Run status checks.
-$(pwd)/management/status_checks.py --show-changes --smtp
-EOF
-chmod +x /etc/cron.daily/mailinabox-statuschecks
+# Perform nightly tasks at 3am in system time: take a backup, run
+# status checks and email the administrator any changes.
 
+cat > /etc/cron.d/mailinabox-nightly << EOF;
+# Mail-in-a-Box --- Do not edit / will be overwritten on update.
+# Run nightly tasks: backup, status checks.
+0 3 * * *	root	(cd `pwd` && management/daily_tasks.sh)
+EOF
 
 # Start it.
 restart_service mailinabox
