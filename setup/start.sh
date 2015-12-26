@@ -47,7 +47,7 @@ source setup/start.sh
 EOF
 chmod +x /usr/local/bin/mailinabox
 
-# Ask the user for the PRIMARY_HOSTNAME, PUBLIC_IP, PUBLIC_IPV6, and CSR_COUNTRY
+# Ask the user for the PRIMARY_HOSTNAME, PUBLIC_IP, and PUBLIC_IPV6,
 # if values have not already been set in environment variables. When running
 # non-interactively, be sure to set values for all! Also sets STORAGE_USER and
 # STORAGE_ROOT.
@@ -89,7 +89,6 @@ PUBLIC_IP=$PUBLIC_IP
 PUBLIC_IPV6=$PUBLIC_IPV6
 PRIVATE_IP=$PRIVATE_IP
 PRIVATE_IPV6=$PRIVATE_IPV6
-CSR_COUNTRY=$CSR_COUNTRY
 EOF
 
 # Start service configuration.

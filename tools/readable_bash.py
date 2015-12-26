@@ -458,7 +458,6 @@ class BashScript(Grammar):
 
 		v = re.sub(r"(\$?)PRIMARY_HOSTNAME", r"<b>box.yourdomain.com</b>", v)
 		v = re.sub(r"\$STORAGE_ROOT", r"<b>$STORE</b>", v)
-		v = re.sub(r"\$CSR_COUNTRY", r"<b>US</b>", v)
 		v = v.replace("`pwd`",  "<code><b>/path/to/mailinabox</b></code>")
 
 		return v

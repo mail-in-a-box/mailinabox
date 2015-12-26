@@ -22,7 +22,6 @@ Vagrant.configure("2") do |config|
     export PUBLIC_IP=auto
     export PUBLIC_IPV6=auto
     export PRIMARY_HOSTNAME=auto-easy
-    export CSR_COUNTRY=US
     #export SKIP_NETWORK_CHECKS=1
 
     # Start the setup script.

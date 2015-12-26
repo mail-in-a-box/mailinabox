@@ -18,6 +18,7 @@ Control panel:
 * Better messages if external DNS is used and, weirdly, custom secondary nameservers are set.
 * Add POP to the mail client settings documentation.
 * The box's IP address is added to the fail2ban whitelist so that the status checks don't trigger the machine banning itself, which results in the status checks showing services down even though they are running.
+* For SSL certificates, rather than asking you what country you are in during setup, ask at the time a CSR is generated. The default system self-signed certificate now omits a country in the subject (it was never needed). The CSR_COUNTRY Mail-in-a-Box setting is dropped entirely.
 
 System:
 

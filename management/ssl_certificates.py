@@ -137,12 +137,12 @@ def get_domain_ssl_files(domain, ssl_certificates, env, allow_missing_cert=False
 
 	return cert_info['private-key'], cert_info['certificate'], via
 
-def create_csr(domain, ssl_key, env):
+def create_csr(domain, ssl_key, country_code, env):
 	return shell("check_output", [
                 "openssl", "req", "-new",
                 "-key", ssl_key,
                 "-sha256",
-                "-subj", "/C=%s/ST=/L=/O=/CN=%s" % (env["CSR_COUNTRY"], domain)])
+                "-subj", "/C=%s/ST=/L=/O=/CN=%s" % (country_code, domain)])
 
 def install_cert(domain, ssl_cert, ssl_chain, env):
 	# Write the combined cert+chain to a temporary path and validate that it is OK.

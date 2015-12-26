@@ -168,35 +168,6 @@ if [[ -z "$PRIVATE_IP" && -z "$PRIVATE_IPV6" ]]; then
 	exit
 fi
 
-# We need a country code to generate a certificate signing request. However
-# if a CSR already exists then we won't be generating a new one and there's
-# no reason to ask for the country code now. $STORAGE_ROOT has not yet been
-# set so we'll check if $DEFAULT_STORAGE_ROOT and $DEFAULT_CSR_COUNTRY are
-# set (the values from the current mailinabox.conf) and if the CSR exists
-# in the expected location.
-if [ ! -z "$DEFAULT_STORAGE_ROOT" ] && [ ! -z "$DEFAULT_CSR_COUNTRY" ] && [ -f $DEFAULT_STORAGE_ROOT/ssl/ssl_cert_sign_req.csr ]; then
-	CSR_COUNTRY=$DEFAULT_CSR_COUNTRY
-fi
-
-if [ -z "$CSR_COUNTRY" ]; then
-	# Get a list of country codes. Separate codes from country names with a ^.
-	# The input_menu function modifies shell word expansion to ignore spaces
-	# (since country names can have spaces) and use ^ instead.
-	country_code_list=$(grep -v "^#" setup/csr_country_codes.tsv | sed "s/\(..\)\t\([^\t]*\).*/\1^\2/")
-
-	input_menu "Country Code" \
-		"Choose the country where you live or where your organization is based.
-		\n\n(This is used to create an SSL certificate.)
-		\n\nCountry Code:" \
-		"$country_code_list" \
-		CSR_COUNTRY
-
-	if [ -z "$CSR_COUNTRY" ]; then
-		# user hit ESC/cancel
-		exit
-	fi
-fi
-
 # Automatic configuration, e.g. as used in our Vagrant configuration.
 if [ "$PUBLIC_IP" = "auto" ]; then
 	# Use a public API to get our public IP address, or fall back to local network configuration.
