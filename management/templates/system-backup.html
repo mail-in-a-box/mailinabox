@@ -32,12 +32,6 @@
       <p>You MUST manually copy the encryption password from <tt class="backup-encpassword-file"></tt> to a safe and secure location. You will need this file to decrypt backup files. It is NOT stored in your Amazon S3 bucket.</p>
     </div>
   </div>
-  <div class="form-group backup-target-local backup-target-s3">
-    <label for="min-age" class="col-sm-2 control-label">How many days should backups be kept?</label>
-    <div class="col-sm-8">
-      <input type="number" class="form-control" rows="1" id="min-age">
-    </div>
-  </div>
   <div class="form-group backup-target-s3">
     <label for="backup-target-s3-host" class="col-sm-2 control-label">S3 Region</label>
     <div class="col-sm-8">
@@ -64,6 +58,13 @@
     <label for="backup-target-pass" class="col-sm-2 control-label">S3 Secret Access Key</label>
     <div class="col-sm-8">
       <input type="text" class="form-control" rows="1" id="backup-target-pass">
+    </div>
+  </div>
+  <div class="form-group backup-target-local backup-target-s3">
+    <label for="min-age" class="col-sm-2 control-label">Days:</label>
+    <div class="col-sm-8">
+      <input type="number" class="form-control" rows="1" id="min-age">
+      <div class="small" style="margin-top: 2px">This is the <i>minimum</i> number of days backup data is kept for. The box makes an incremental backup, so backup data is often kept much longer. An incremental backup file that is less than this number of days old requires that all previous increments back to the most recent full backup, plus that full backup, remain available.</div>
     </div>
   </div>
   <div class="form-group">

@@ -1,27 +1,28 @@
 # This list is derived from https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2.
 # The columns are ISO_3166-1_alpha-2 code, display name, Wikipedia page name.
-# The top 20 countries by number of Internet users are grouped first, see
+# The top 21 countries by number of Internet users are grouped first, see
 # https://en.wikipedia.org/wiki/List_of_countries_by_number_of_Internet_users.
-BR	Brazil	
-CA	Canada	
 CN	China	
-EG	Egypt	
-FR	France	
-DE	Germany	
 IN	India	
-ID	Indonesia	
-IT	Italy	
-JP	Japan	
-MX	Mexico	
-NG	Nigeria	
-PH	Philippines	
-RU	Russian Federation	Russia
-ES	Spain	
-KR	South Korea
-TR	Turkey	
-GB	United Kingdom	
 US	United States	
+JP	Japan	
+BR	Brazil	
+RU	Russian Federation	Russia
+DE	Germany	
+NG	Nigeria	
+GB	United Kingdom	
+FR	France	
+MX	Mexico	
+EG	Egypt	
+KR	South Korea
 VN	Vietnam
+ID	Indonesia	
+PH	Philippines	
+TR	Turkey	
+IT	Italy	
+PK	Pakistan	
+ES	Spain	
+CA	Canada	
 AD	Andorra	
 AE	United Arab Emirates	
 AF	Afghanistan	
@@ -183,7 +184,6 @@ PA	Panama
 PE	Peru	
 PF	French Polynesia	
 PG	Papua New Guinea	
-PK	Pakistan	
 PL	Poland	
 PM	Saint Pierre and Miquelon	
 PN	Pitcairn	Pitcairn Islands

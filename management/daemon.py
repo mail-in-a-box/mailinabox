@@ -28,6 +28,14 @@ try:
 except OSError:
 	pass
 
+# for generating CSRs we need a list of country codes
+csr_country_codes = []
+with open(os.path.join(os.path.dirname(me), "csr_country_codes.tsv")) as f:
+	for line in f:
+		if line.strip() == "" or line.startswith("#"): continue
+		code, name = line.strip().split("\t")[0:2]
+		csr_country_codes.append((code, name))
+
 app = Flask(__name__, template_folder=os.path.abspath(os.path.join(os.path.dirname(me), "templates")))
 
 # Decorator to protect views that require a user with 'admin' privileges.
@@ -101,9 +109,12 @@ def index():
 	return render_template('index.html',
 		hostname=env['PRIMARY_HOSTNAME'],
 		storage_root=env['STORAGE_ROOT'],
+
 		no_users_exist=no_users_exist,
 		no_admins_exist=no_admins_exist,
+
 		backup_s3_hosts=backup_s3_hosts,
+		csr_country_codes=csr_country_codes,
 	)
 
 @app.route('/me')
@@ -321,7 +332,7 @@ def dns_get_dump():
 def ssl_get_csr(domain):
 	from ssl_certificates import create_csr
 	ssl_private_key = os.path.join(os.path.join(env["STORAGE_ROOT"], 'ssl', 'ssl_private_key.pem'))
-	return create_csr(domain, ssl_private_key, env)
+	return create_csr(domain, ssl_private_key, request.form.get('countrycode', ''), env)
 
 @app.route('/ssl/install', methods=['POST'])
 @authorized_personnel_only

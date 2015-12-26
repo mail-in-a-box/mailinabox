@@ -28,6 +28,15 @@
 
 <p><select id="ssldomain" onchange="show_csr()" class="form-control" style="width: auto"></select></p>
 
+<p>What country are you in? This is required by some SSL certificate providers. You may leave this blank if you know your SSL certificate provider doesn't require it.</p>
+
+<p><select id="sslcc" onchange="show_csr()" class="form-control" style="width: auto">
+	<option value="">(Select)</option>
+	{% for code, name in csr_country_codes %}
+		<option value="{{code}}">{{name}}</option>
+	{% endfor %}
+</select></p>
+
 <div id="csr_info" style="display: none">
   <p>You will need to provide the SSL certificate provider this Certificate Signing Request (CSR):</p>
 
@@ -94,6 +103,7 @@ function show_csr() {
     "/ssl/csr/" + $('#ssldomain').val(),
     "POST",
     {
+        countrycode: $('#sslcc').val()
     },
     function(data) {
       $('#ssl_csr').text(data);
