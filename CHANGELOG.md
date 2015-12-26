@@ -7,12 +7,15 @@ Still In Development
 Mail:
 
 * Updated Roundcube to version 1.1.3.
+* Auto-create RFC2142 aliases for abuse@.
 
 Control panel:
 
+* When IPv6 is enabled, check that system services are accessible over IPv6 too, that the box's hostname resolves over IPv6, and that reverse DNS is setup correctly for IPv6.
 * Explanatory text for setting up secondary nameserver is added/fixed.
 * DNS checks now have a timeout in case a DNS server is not responding, so the checks don't stall indefinitely.
-* Better messages if external DNS is used and, wierdly, custom secondary nameservers are set.
+* Better messages if external DNS is used and, weirdly, custom secondary nameservers are set.
+* Add POP to the mail client settings documentation.
 
 System:
 
@@ -22,6 +25,8 @@ System:
 * If ownCloud sends out email, it will use the box's administrative address now (admin@yourboxname).
 * Z-Push (Exchange/ActiveSync) logs now exclude warnings and are now rotated to save disk space.
 * Fix pip command that might have not installed all necessary Python packages.
+* The control panel and backup would not work on Google Compute Engine because they install a conflicting boto package.
+* Added a new command `management/backup.py --restore` to restore files from a backup to a target directory (command line arguments are passed to `duplicity restore`).
 
 v0.14 (November 4, 2015)
 ------------------------
@@ -392,7 +397,7 @@ v0.02 (September 21, 2014)
 * Better logic for determining when to take a full backup.
 * Reduce DNS TTL, not that it seems to really matter.
 * Add SSHFP DNS records.
-* Add an API for setting custom DNS records 
+* Add an API for setting custom DNS records
 * Update to ownCloud 7.0.2.
 * Some things were broken if the machine had an IPv6 address.
 * Use a dialogs library to ask users questions during setup.

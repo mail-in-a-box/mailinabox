@@ -4,8 +4,6 @@
 # SSL certificates have been signed, etc., and if not tells the user
 # what to do next.
 
-__ALL__ = ['check_certificate']
-
 import sys, os, os.path, re, subprocess, datetime, multiprocessing.pool
 
 import dns.reversename, dns.resolver
@@ -14,7 +12,8 @@ import idna
 import psutil
 
 from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, get_secondary_dns, get_custom_dns_record
-from web_update import get_web_domains, get_default_www_redirects, get_ssl_certificates, get_domain_ssl_files, get_domains_with_a_records
+from web_update import get_web_domains, get_domains_with_a_records
+from ssl_certificates import get_ssl_certificates, get_domain_ssl_files, check_certificate
 from mailconfig import get_mail_domains, get_mail_aliases
 
 from utils import shell, sort_domains, load_env_vars_from_file, load_settings
@@ -105,45 +104,60 @@ def check_service(i, service, env):
 		# Skip check (no port, e.g. no sshd).
 		return (i, None, None, None)
 
-	import socket
 	output = BufferedOutput()
 	running = False
 	fatal = False
-	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	s.settimeout(1)
-	try:
-		try:
-			s.connect((
-				"127.0.0.1" if not service["public"] else env['PUBLIC_IP'],
-				service["port"]))
-			running = True
-		except OSError as e1:
-			if service["public"] and service["port"] != 53:
-				# For public services (except DNS), try the private IP as a fallback.
-				s1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-				s1.settimeout(1)
-				try:
-					s1.connect(("127.0.0.1", service["port"]))
-					output.print_error("%s is running but is not publicly accessible at %s:%d (%s)." % (service['name'], env['PUBLIC_IP'], service['port'], str(e1)))
-				except:
-					raise e1
-				finally:
-					s1.close()
-			else:
-				raise
 
-	except OSError as e:
-		output.print_error("%s is not running (%s; port %d)." % (service['name'], str(e), service['port']))
+	# Helper function to make a connection to the service, since we try
+	# up to three ways (localhost, IPv4 address, IPv6 address).
+	def try_connect(ip):
+		# Connect to the given IP address on the service's port with a one-second timeout.
+		import socket
+		s = socket.socket(socket.AF_INET if ":" not in ip else socket.AF_INET6, socket.SOCK_STREAM)
+		s.settimeout(1)
+		try:
+			s.connect((ip, service["port"]))
+			return True
+		except OSError as e:
+			# timed out or some other odd error
+			return False
+		finally:
+			s.close()
+
+	if service["public"]:
+		# Service should be publicly accessible.
+		if try_connect(env["PUBLIC_IP"]):
+			# IPv4 ok.
+			if not env.get("PUBLIC_IPV6") or service.get("ipv6") is False or try_connect(env["PUBLIC_IPV6"]):
+				# No IPv6, or service isn't meant to run on IPv6, or IPv6 is good.
+				running = True
+
+			# IPv4 ok but IPv6 failed. Try the PRIVATE_IPV6 address to see if the service is bound to the interface.
+			elif service["port"] != 53 and try_connect(env["PRIVATE_IPV6"]):
+				output.print_error("%s is running (and available over IPv4 and the local IPv6 address), but it is not publicly accessible at %s:%d." % (service['name'], env['PUBLIC_IP'], service['port']))
+			else:
+				output.print_error("%s is running and available over IPv4 but is not accessible over IPv6 at %s port %d." % (service['name'], env['PUBLIC_IPV6'], service['port']))
+
+		# IPv4 failed. Try the private IP to see if the service is running but not accessible (except DNS because a different service runs on the private IP).
+		elif service["port"] != 53 and try_connect("127.0.0.1"):
+			output.print_error("%s is running but is not publicly accessible at %s:%d." % (service['name'], env['PUBLIC_IP'], service['port']))
+		else:
+			output.print_error("%s is not running (port %d)." % (service['name'], service['port']))
 
 		# Why is nginx not running?
-		if service["port"] in (80, 443):
+		if not running and service["port"] in (80, 443):
 			output.print_line(shell('check_output', ['nginx', '-t'], capture_stderr=True, trap=True)[1].strip())
 
-		# Flag if local DNS is not running.
-		if service["port"] == 53 and service["public"] == False:
-			fatal = True
-	finally:
-		s.close()
+	else:
+		# Service should be running locally.
+		if try_connect("127.0.0.1"):
+			running = True
+		else:
+			output.print_error("%s is not running (port %d)." % (service['name'], service['port']))
+
+	# Flag if local DNS is not running.
+	if not running and service["port"] == 53 and service["public"] == False:
+		fatal = True
 
 	return (i, running, fatal, output)
 
@@ -264,7 +278,7 @@ def run_domain_checks(rounded_time, env, output, pool):
 	dns_domains = set(dns_zonefiles)
 
 	# Get the list of domains we serve HTTPS for.
-	web_domains = set(get_web_domains(env) + get_default_www_redirects(env))
+	web_domains = set(get_web_domains(env))
 
 	domains_to_check = mail_domains | dns_domains | web_domains
 
@@ -325,6 +339,7 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 
 	ip = query_dns(domain, "A")
 	ns_ips = query_dns("ns1." + domain, "A") + '/' + query_dns("ns2." + domain, "A")
+	my_ips = env['PUBLIC_IP'] + ((" / "+env['PUBLIC_IPV6']) if env.get("PUBLIC_IPV6") else "")
 
 	# Check that the ns1/ns2 hostnames resolve to A records. This information probably
 	# comes from the TLD since the information is set at the registrar as glue records.
@@ -347,24 +362,29 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 			public DNS to update after a change."""
 			% (env['PRIMARY_HOSTNAME'], env['PRIMARY_HOSTNAME'], env['PUBLIC_IP'], ns_ips))
 
-	# Check that PRIMARY_HOSTNAME resolves to PUBLIC_IP in public DNS.
-	if ip == env['PUBLIC_IP']:
-		output.print_ok("Domain resolves to box's IP address. [%s ↦ %s]" % (env['PRIMARY_HOSTNAME'], env['PUBLIC_IP']))
+	# Check that PRIMARY_HOSTNAME resolves to PUBLIC_IP[V6] in public DNS.
+	ipv6 = query_dns(domain, "AAAA") if env.get("PUBLIC_IPV6") else None
+	if ip == env['PUBLIC_IP'] and ipv6 in (None, env['PUBLIC_IPV6']):
+		output.print_ok("Domain resolves to box's IP address. [%s ↦ %s]" % (env['PRIMARY_HOSTNAME'], my_ips))
 	else:
 		output.print_error("""This domain must resolve to your box's IP address (%s) in public DNS but it currently resolves
 			to %s. It may take several hours for public DNS to update after a change. This problem may result from other
-			issues listed here."""
-			% (env['PUBLIC_IP'], ip))
+			issues listed above."""
+			% (my_ips, ip + ((" / " + ipv6) if ipv6 is not None else "")))
 
-	# Check reverse DNS on the PRIMARY_HOSTNAME. Note that it might not be
+
+	# Check reverse DNS matches the PRIMARY_HOSTNAME. Note that it might not be
 	# a DNS zone if it is a subdomain of another domain we have a zone for.
-	ipaddr_rev = dns.reversename.from_address(env['PUBLIC_IP'])
-	existing_rdns = query_dns(ipaddr_rev, "PTR")
-	if existing_rdns == domain:
-		output.print_ok("Reverse DNS is set correctly at ISP. [%s ↦ %s]" % (env['PUBLIC_IP'], env['PRIMARY_HOSTNAME']))
-	else:
+	existing_rdns_v4 = query_dns(dns.reversename.from_address(env['PUBLIC_IP']), "PTR")
+	existing_rdns_v6 = query_dns(dns.reversename.from_address(env['PUBLIC_IPV6']), "PTR") if env.get("PUBLIC_IPV6") else None
+	if existing_rdns_v4 == domain and existing_rdns_v6 in (None, domain):
+		output.print_ok("Reverse DNS is set correctly at ISP. [%s ↦ %s]" % (my_ips, env['PRIMARY_HOSTNAME']))
+	elif existing_rdns_v4 == existing_rdns_v6 or existing_rdns_v6 is None:
 		output.print_error("""Your box's reverse DNS is currently %s, but it should be %s. Your ISP or cloud provider will have instructions
-			on setting up reverse DNS for your box at %s.""" % (existing_rdns, domain, env['PUBLIC_IP']) )
+			on setting up reverse DNS for your box.""" % (existing_rdns_v4, domain) )
+	else:
+		output.print_error("""Your box's reverse DNS is currently %s (IPv4) and %s (IPv6), but it should be %s. Your ISP or cloud provider will have instructions
+			on setting up reverse DNS for your box.""" % (existing_rdns_v4, existing_rdns_v6, domain) )
 
 	# Check the TLSA record.
 	tlsa_qname = "_25._tcp." + domain
@@ -691,181 +711,6 @@ def check_ssl_cert(domain, rounded_time, ssl_certificates, env, output):
 			output.print_line("")
 			output.print_line(cert_status_details)
 			output.print_line("")
-
-def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring_soon=True, rounded_time=False, just_check_domain=False):
-	# Check that the ssl_certificate & ssl_private_key files are good
-	# for the provided domain.
-
-	from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
-	from cryptography.x509 import Certificate
-
-	# The ssl_certificate file may contain a chain of certificates. We'll
-	# need to split that up before we can pass anything to openssl or
-	# parse them in Python. Parse it with the cryptography library.
-	try:
-		ssl_cert_chain = load_cert_chain(ssl_certificate)
-		cert = load_pem(ssl_cert_chain[0])
-		if not isinstance(cert, Certificate): raise ValueError("This is not a certificate file.")
-	except ValueError as e:
-		return ("There is a problem with the certificate file: %s" % str(e), None)
-
-	# First check that the domain name is one of the names allowed by
-	# the certificate.
-	if domain is not None:
-		certificate_names, cert_primary_name = get_certificate_domains(cert)
-
-		# Check that the domain appears among the acceptable names, or a wildcard
-		# form of the domain name (which is a stricter check than the specs but
-		# should work in normal cases).
-		wildcard_domain = re.sub("^[^\.]+", "*", domain)
-		if domain not in certificate_names and wildcard_domain not in certificate_names:
-			return ("The certificate is for the wrong domain name. It is for %s."
-				% ", ".join(sorted(certificate_names)), None)
-
-	# Second, check that the certificate matches the private key.
-	if ssl_private_key is not None:
-		try:
-			priv_key = load_pem(open(ssl_private_key, 'rb').read())
-		except ValueError as e:
-			return ("The private key file %s is not a private key file: %s" % (ssl_private_key, str(e)), None)
-
-		if not isinstance(priv_key, RSAPrivateKey):
-			return ("The private key file %s is not a private key file." % ssl_private_key, None)
-
-		if priv_key.public_key().public_numbers() != cert.public_key().public_numbers():
-			return ("The certificate does not correspond to the private key at %s." % ssl_private_key, None)
-
-		# We could also use the openssl command line tool to get the modulus
-		# listed in each file. The output of each command below looks like "Modulus=XXXXX".
-		# $ openssl rsa -inform PEM -noout -modulus -in ssl_private_key
-		# $ openssl x509 -in ssl_certificate -noout -modulus
-
-	# Third, check if the certificate is self-signed. Return a special flag string.
-	if cert.issuer == cert.subject:
-		return ("SELF-SIGNED", None)
-
-	# When selecting which certificate to use for non-primary domains, we check if the primary
-	# certificate or a www-parent-domain certificate is good for the domain. There's no need
-	# to run extra checks beyond this point.
-	if just_check_domain:
-		return ("OK", None)
-
-	# Check that the certificate hasn't expired. The datetimes returned by the
-	# certificate are 'naive' and in UTC. We need to get the current time in UTC.
-	now = datetime.datetime.utcnow()
-	if not(cert.not_valid_before <= now <= cert.not_valid_after):
-		return ("The certificate has expired or is not yet valid. It is valid from %s to %s." % (cert.not_valid_before, cert.not_valid_after), None)
-
-	# Next validate that the certificate is valid. This checks whether the certificate
-	# is self-signed, that the chain of trust makes sense, that it is signed by a CA
-	# that Ubuntu has installed on this machine's list of CAs, and I think that it hasn't
-	# expired.
-
-	# The certificate chain has to be passed separately and is given via STDIN.
-	# This command returns a non-zero exit status in most cases, so trap errors.
-	retcode, verifyoutput = shell('check_output', [
-		"openssl",
-		"verify", "-verbose",
-		"-purpose", "sslserver", "-policy_check",]
-		+ ([] if len(ssl_cert_chain) == 1 else ["-untrusted", "/proc/self/fd/0"])
-		+ [ssl_certificate],
-		input=b"\n\n".join(ssl_cert_chain[1:]),
-		trap=True)
-
-	if "self signed" in verifyoutput:
-		# Certificate is self-signed. Probably we detected this above.
-		return ("SELF-SIGNED", None)
-
-	elif retcode != 0:
-		if "unable to get local issuer certificate" in verifyoutput:
-			return ("The certificate is missing an intermediate chain or the intermediate chain is incorrect or incomplete. (%s)" % verifyoutput, None)
-
-		# There is some unknown problem. Return the `openssl verify` raw output.
-		return ("There is a problem with the SSL certificate.", verifyoutput.strip())
-
-	else:
-		# `openssl verify` returned a zero exit status so the cert is currently
-		# good.
-
-		# But is it expiring soon?
-		cert_expiration_date = cert.not_valid_after
-		ndays = (cert_expiration_date-now).days
-		if not rounded_time or ndays < 7:
-			expiry_info = "The certificate expires in %d days on %s." % (ndays, cert_expiration_date.strftime("%x"))
-		elif ndays <= 14:
-			expiry_info = "The certificate expires in less than two weeks, on %s." % cert_expiration_date.strftime("%x")
-		elif ndays <= 31:
-			expiry_info = "The certificate expires in less than a month, on %s." % cert_expiration_date.strftime("%x")
-		else:
-			expiry_info = "The certificate expires on %s." % cert_expiration_date.strftime("%x")
-
-		if ndays <= 31 and warn_if_expiring_soon:
-			return ("The certificate is expiring soon: " + expiry_info, None)
-
-		# Return the special OK code.
-		return ("OK", expiry_info)
-
-def load_cert_chain(pemfile):
-	# A certificate .pem file may contain a chain of certificates.
-	# Load the file and split them apart.
-	re_pem = rb"(-+BEGIN (?:.+)-+[\r\n]+(?:[A-Za-z0-9+/=]{1,64}[\r\n]+)+-+END (?:.+)-+[\r\n]+)"
-	with open(pemfile, "rb") as f:
-		pem = f.read() + b"\n" # ensure trailing newline
-		pemblocks = re.findall(re_pem, pem)
-		if len(pemblocks) == 0:
-			raise ValueError("File does not contain valid PEM data.")
-		return pemblocks
-
-def load_pem(pem):
-	# Parse a "---BEGIN .... END---" PEM string and return a Python object for it
-	# using classes from the cryptography package.
-	from cryptography.x509 import load_pem_x509_certificate
-	from cryptography.hazmat.primitives import serialization
-	from cryptography.hazmat.backends import default_backend
-	pem_type = re.match(b"-+BEGIN (.*?)-+[\r\n]", pem)
-	if pem_type is None:
-		raise ValueError("File is not a valid PEM-formatted file.")
-	pem_type = pem_type.group(1)
-	if pem_type in (b"RSA PRIVATE KEY", b"PRIVATE KEY"):
-		return serialization.load_pem_private_key(pem, password=None, backend=default_backend())
-	if pem_type == b"CERTIFICATE":
-		return load_pem_x509_certificate(pem, default_backend())
-	raise ValueError("Unsupported PEM object type: " + pem_type.decode("ascii", "replace"))
-
-def get_certificate_domains(cert):
-	from cryptography.x509 import DNSName, ExtensionNotFound, OID_COMMON_NAME, OID_SUBJECT_ALTERNATIVE_NAME
-	import idna
-
-	names = set()
-	cn = None
-
-	# The domain may be found in the Subject Common Name (CN). This comes back as an IDNA (ASCII)
-	# string, which is the format we store domains in - so good.
-	try:
-		cn = cert.subject.get_attributes_for_oid(OID_COMMON_NAME)[0].value
-		names.add(cn)
-	except IndexError:
-		# No common name? Certificate is probably generated incorrectly.
-		# But we'll let it error-out when it doesn't find the domain.
-		pass
-
-	# ... or be one of the Subject Alternative Names. The cryptography library handily IDNA-decodes
-	# the names for us. We must encode back to ASCII, but wildcard certificates can't pass through
-	# IDNA encoding/decoding so we must special-case. See https://github.com/pyca/cryptography/pull/2071.
-	def idna_decode_dns_name(dns_name):
-		if dns_name.startswith("*."):
-			return "*." + idna.encode(dns_name[2:]).decode('ascii')
-		else:
-			return idna.encode(dns_name).decode('ascii')
-
-	try:
-		sans = cert.extensions.get_extension_for_oid(OID_SUBJECT_ALTERNATIVE_NAME).value.get_values_for_type(DNSName)
-		for san in sans:
-			names.add(idna_decode_dns_name(san))
-	except ExtensionNotFound:
-		pass
-
-	return names, cn
 
 _apt_updates = None
 def list_apt_updates(apt_update=True):

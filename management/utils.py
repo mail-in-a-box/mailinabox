@@ -245,11 +245,17 @@ def wait_for_service(port, public, env, timeout):
 				return False
 		time.sleep(min(timeout/4, 1))
 
+def fix_boto():
+	# Google Compute Engine instances install some Python-2-only boto plugins that
+	# conflict with boto running under Python 3. Disable boto's default configuration
+	# file prior to importing boto so that GCE's plugin is not loaded:
+	import os
+	os.environ["BOTO_CONFIG"] = "/etc/boto3.cfg"
+
+
 if __name__ == "__main__":
-	from dns_update import get_dns_domains
-	from web_update import get_web_domains, get_default_www_redirects
+	from web_update import get_web_domains
 	env = load_environment()
-	domains = get_dns_domains(env) | set(get_web_domains(env) + get_default_www_redirects(env))
-	domains = sort_domains(domains, env)
+	domains = get_web_domains(env)
 	for domain in domains:
 		print(domain)

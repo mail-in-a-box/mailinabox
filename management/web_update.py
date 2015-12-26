@@ -2,26 +2,36 @@
 # domains for which a mail account has been set up.
 ########################################################################
 
-import os, os.path, shutil, re, tempfile, rtyaml
+import os.path, re, rtyaml
 
 from mailconfig import get_mail_domains
-from dns_update import get_custom_dns_config, do_dns_update, get_dns_zones
+from dns_update import get_custom_dns_config, get_dns_zones
+from ssl_certificates import get_ssl_certificates, get_domain_ssl_files, check_certificate
 from utils import shell, safe_domain_name, sort_domains
 
-def get_web_domains(env):
-	# What domains should we serve websites for?
+def get_web_domains(env, include_www_redirects=True):
+	# What domains should we serve HTTP(S) for?
 	domains = set()
 
-	# At the least it's the PRIMARY_HOSTNAME so we can serve webmail
-	# as well as Z-Push for Exchange ActiveSync.
-	domains.add(env['PRIMARY_HOSTNAME'])
-
-	# Also serve web for all mail domains so that we might at least
+	# Serve web for all mail domains so that we might at least
 	# provide auto-discover of email settings, and also a static website
-	# if the user wants to make one. These will require an SSL cert.
+	# if the user wants to make one.
+	domains |= get_mail_domains(env)
+
+	if include_www_redirects:
+		# Add 'www.' subdomains that we want to provide default redirects
+		# to the main domain for. We'll add 'www.' to any DNS zones, i.e.
+		# the topmost of each domain we serve.
+		domains |= set('www.' + zone for zone, zonefile in get_dns_zones(env))
+	 
 	# ...Unless the domain has an A/AAAA record that maps it to a different
 	# IP address than this box. Remove those domains from our list.
-	domains |= (get_mail_domains(env) - get_domains_with_a_records(env))
+	domains -= get_domains_with_a_records(env)
+
+	# Ensure the PRIMARY_HOSTNAME is in the list so we can serve webmail
+	# as well as Z-Push for Exchange ActiveSync. This can't be removed
+	# by a custom A/AAAA record and is never a 'www.' redirect.
+	domains.add(env['PRIMARY_HOSTNAME'])
 
 	# Sort the list so the nginx conf gets written in a stable order.
 	domains = sort_domains(domains, env)
@@ -50,15 +60,6 @@ def get_web_domains_with_root_overrides(env):
 					root_overrides[domain] = (type, value)
 	return root_overrides
 
-
-def get_default_www_redirects(env):
-	# Returns a list of www subdomains that we want to provide default redirects
-	# for, i.e. any www's that aren't domains the user has actually configured
-	# to serve for real. Which would be unusual.
-	web_domains = set(get_web_domains(env))
-	www_domains = set('www.' + zone for zone, zonefile in get_dns_zones(env))
-	return sort_domains(www_domains - web_domains - get_domains_with_a_records(env), env)
-
 def do_web_update(env):
 	# Pre-load what SSL certificates we will use for each domain.
 	ssl_certificates = get_ssl_certificates(env)
@@ -77,16 +78,20 @@ def do_web_update(env):
 
 	# Add configuration all other web domains.
 	has_root_proxy_or_redirect = get_web_domains_with_root_overrides(env)
+	web_domains_not_redirect = get_web_domains(env, include_www_redirects=False)
 	for domain in get_web_domains(env):
-		if domain == env['PRIMARY_HOSTNAME']: continue # handled above
-		if domain not in has_root_proxy_or_redirect:
-			nginx_conf += make_domain_config(domain, [template0, template1], ssl_certificates, env)
+		if domain == env['PRIMARY_HOSTNAME']:
+			# PRIMARY_HOSTNAME is handled above.
+			continue
+		if domain in web_domains_not_redirect:
+			# This is a regular domain.
+			if domain not in has_root_proxy_or_redirect:
+				nginx_conf += make_domain_config(domain, [template0, template1], ssl_certificates, env)
+			else:
+				nginx_conf += make_domain_config(domain, [template0], ssl_certificates, env)
 		else:
-			nginx_conf += make_domain_config(domain, [template0], ssl_certificates, env)
-
-	# Add default www redirects.
-	for domain in get_default_www_redirects(env):
-		nginx_conf += make_domain_config(domain, [template0, template3], ssl_certificates, env)
+			# Add default 'www.' redirect.
+			nginx_conf += make_domain_config(domain, [template0, template3], ssl_certificates, env)
 
 	# Did the file change? If not, don't bother writing & restarting nginx.
 	nginx_conf_fn = "/etc/nginx/conf.d/local.conf"
@@ -185,214 +190,12 @@ def get_web_root(domain, env, test_exists=True):
 		if os.path.exists(root) or not test_exists: break
 	return root
 
-def get_ssl_certificates(env):
-	# Scan all of the installed SSL certificates and map every domain
-	# that the certificates are good for to the best certificate for
-	# the domain.
-
-	from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
-	from cryptography.x509 import Certificate
-
-	# The certificates are all stored here:
-	ssl_root = os.path.join(env["STORAGE_ROOT"], 'ssl')
-
-	# List all of the files in the SSL directory and one level deep.
-	def get_file_list():
-		for fn in os.listdir(ssl_root):
-			fn = os.path.join(ssl_root, fn)
-			if os.path.isfile(fn):
-				yield fn
-			elif os.path.isdir(fn):
-				for fn1 in os.listdir(fn):
-					fn1 = os.path.join(fn, fn1)
-					if os.path.isfile(fn1):
-						yield fn1
-
-	# Remember stuff.
-	private_keys = { }
-	certificates = [ ]
-
-	# Scan each of the files to find private keys and certificates.
-	# We must load all of the private keys first before processing
-	# certificates so that we can check that we have a private key
-	# available before using a certificate.
-	from status_checks import load_cert_chain, load_pem
-	for fn in get_file_list():
-		try:
-			pem = load_pem(load_cert_chain(fn)[0])
-		except ValueError:
-			# Not a valid PEM format for a PEM type we care about.
-			continue
-
-		# Remember where we got this object.
-		pem._filename = fn
-
-		# Is it a private key?
-		if isinstance(pem, RSAPrivateKey):
-			private_keys[pem.public_key().public_numbers()] = pem
-
-		# Is it a certificate?
-		if isinstance(pem, Certificate):
-			certificates.append(pem)
-
-	# Process the certificates.
-	domains = { }
-	from status_checks import get_certificate_domains
-	for cert in certificates:
-		# What domains is this certificate good for?
-		cert_domains, primary_domain = get_certificate_domains(cert)
-		cert._primary_domain = primary_domain
-
-		# Is there a private key file for this certificate?
-		private_key = private_keys.get(cert.public_key().public_numbers())
-		if not private_key:
-			continue
-		cert._private_key = private_key
-
-		# Add this cert to the list of certs usable for the domains.
-		for domain in cert_domains:
-			domains.setdefault(domain, []).append(cert)
-
-	# Sort the certificates to prefer good ones.
-	import datetime
-	now = datetime.datetime.utcnow()
-	ret = { }
-	for domain, cert_list in domains.items():
-		cert_list.sort(key = lambda cert : (
-			# must be valid NOW
-			cert.not_valid_before <= now <= cert.not_valid_after,
-
-			# prefer one that is not self-signed
-			cert.issuer != cert.subject,
-
-			# prefer one with the expiration furthest into the future so
-			# that we can easily rotate to new certs as we get them
-			cert.not_valid_after,
-
-			# in case a certificate is installed in multiple paths,
-			# prefer the... lexicographically last one?
-			cert._filename,
-
-		), reverse=True)
-		cert = cert_list.pop(0)
-		ret[domain] = {
-			"private-key": cert._private_key._filename,
-			"certificate": cert._filename,
-			"primary-domain": cert._primary_domain,
-			}
-
-	return ret
-
-def get_domain_ssl_files(domain, ssl_certificates, env, allow_missing_cert=False):
-	# Get the default paths.
-	ssl_private_key = os.path.join(os.path.join(env["STORAGE_ROOT"], 'ssl', 'ssl_private_key.pem'))
-	ssl_certificate = os.path.join(os.path.join(env["STORAGE_ROOT"], 'ssl', 'ssl_certificate.pem'))
-
-	if domain == env['PRIMARY_HOSTNAME']:
-		# The primary domain must use the server certificate because
-		# it is hard-coded in some service configuration files.
-		return ssl_private_key, ssl_certificate, None
-
-	wildcard_domain = re.sub("^[^\.]+", "*", domain)
-
-	if domain in ssl_certificates:
-		cert_info = ssl_certificates[domain]
-		cert_type = "multi-domain"
-	elif wildcard_domain in ssl_certificates:
-		cert_info = ssl_certificates[wildcard_domain]
-		cert_type = "wildcard"
-	elif not allow_missing_cert:
-		# No certificate is available for this domain! Return default files.
-		ssl_via = "Using certificate for %s." % env['PRIMARY_HOSTNAME']
-		return ssl_private_key, ssl_certificate, ssl_via
-	else:
-		# No certificate is available - and warn appropriately.
-		return None
-
-	# 'via' is a hint to the user about which certificate is in use for the domain
-	if cert_info['certificate'] == os.path.join(env["STORAGE_ROOT"], 'ssl', 'ssl_certificate.pem'):
-		# Using the server certificate.
-		via = "Using same %s certificate as for %s." % (cert_type, env['PRIMARY_HOSTNAME'])
-	elif cert_info['primary-domain'] != domain and cert_info['primary-domain'] in ssl_certificates and cert_info == ssl_certificates[cert_info['primary-domain']]:
-		via = "Using same %s certificate as for %s." % (cert_type, cert_info['primary-domain'])
-	else:
-		via = None # don't show a hint - show expiration info instead
-
-	return cert_info['private-key'], cert_info['certificate'], via
-
-def create_csr(domain, ssl_key, env):
-	return shell("check_output", [
-                "openssl", "req", "-new",
-                "-key", ssl_key,
-                "-sha256",
-                "-subj", "/C=%s/ST=/L=/O=/CN=%s" % (env["CSR_COUNTRY"], domain)])
-
-def install_cert(domain, ssl_cert, ssl_chain, env):
-	if domain not in get_web_domains(env) + get_default_www_redirects(env):
-		return "Invalid domain name."
-
-	# Write the combined cert+chain to a temporary path and validate that it is OK.
-	# The certificate always goes above the chain.
-	import tempfile, os
-	fd, fn = tempfile.mkstemp('.pem')
-	os.write(fd, (ssl_cert + '\n' + ssl_chain).encode("ascii"))
-	os.close(fd)
-
-	# Do validation on the certificate before installing it.
-	from status_checks import check_certificate
-	ssl_private_key = os.path.join(os.path.join(env["STORAGE_ROOT"], 'ssl', 'ssl_private_key.pem'))
-	cert_status, cert_status_details = check_certificate(domain, fn, ssl_private_key)
-	if cert_status != "OK":
-		if cert_status == "SELF-SIGNED":
-			cert_status = "This is a self-signed certificate. I can't install that."
-		os.unlink(fn)
-		if cert_status_details is not None:
-			cert_status += " " + cert_status_details
-		return cert_status
-
-	# Where to put it?
-	if domain == env['PRIMARY_HOSTNAME']:
-		ssl_certificate = os.path.join(os.path.join(env["STORAGE_ROOT"], 'ssl', 'ssl_certificate.pem'))
-	else:
-		# Make a unique path for the certificate.
-		from status_checks import load_cert_chain, load_pem, get_certificate_domains
-		from cryptography.hazmat.primitives import hashes
-		from binascii import hexlify
-		cert = load_pem(load_cert_chain(fn)[0])
-		all_domains, cn = get_certificate_domains(cert)
-		path = "%s-%s-%s" % (
-			cn, # common name
-			cert.not_valid_after.date().isoformat().replace("-", ""), # expiration date
-			hexlify(cert.fingerprint(hashes.SHA256())).decode("ascii")[0:8], # fingerprint prefix
-			)
-		ssl_certificate = os.path.join(os.path.join(env["STORAGE_ROOT"], 'ssl', path, 'ssl_certificate.pem'))
-
-	# Install the certificate.
-	os.makedirs(os.path.dirname(ssl_certificate), exist_ok=True)
-	shutil.move(fn, ssl_certificate)
-
-	ret = ["OK"]
-
-	# When updating the cert for PRIMARY_HOSTNAME, also update DNS because it is
-	# used in the DANE TLSA record and restart postfix and dovecot which use
-	# that certificate.
-	if domain == env['PRIMARY_HOSTNAME']:
-		ret.append( do_dns_update(env) )
-
-		shell('check_call', ["/usr/sbin/service", "postfix", "restart"])
-		shell('check_call', ["/usr/sbin/service", "dovecot", "restart"])
-		ret.append("mail services restarted")
-
-	# Kick nginx so it sees the cert.
-	ret.append( do_web_update(env) )
-	return "\n".join(ret)
-
 def get_web_domains_info(env):
-	has_root_proxy_or_redirect = get_web_domains_with_root_overrides(env)
+	www_redirects = set(get_web_domains(env)) - set(get_web_domains(env, include_www_redirects=False))
+	has_root_proxy_or_redirect = set(get_web_domains_with_root_overrides(env))
 
 	# for the SSL config panel, get cert status
 	def check_cert(domain):
-		from status_checks import check_certificate
 		ssl_certificates = get_ssl_certificates(env)
 		x = get_domain_ssl_files(domain, ssl_certificates, env, allow_missing_cert=True)
 		if x is None: return ("danger", "No Certificate Installed")
@@ -415,15 +218,7 @@ def get_web_domains_info(env):
 			"root": get_web_root(domain, env),
 			"custom_root": get_web_root(domain, env, test_exists=False),
 			"ssl_certificate": check_cert(domain),
-			"static_enabled": domain not in has_root_proxy_or_redirect,
+			"static_enabled": domain not in (www_redirects | has_root_proxy_or_redirect),
 		}
 		for domain in get_web_domains(env)
-	] + \
-	[
-		{
-			"domain": domain,
-			"ssl_certificate": check_cert(domain),
-			"static_enabled": False,
-		}
-		for domain in get_default_www_redirects(env)
 	]

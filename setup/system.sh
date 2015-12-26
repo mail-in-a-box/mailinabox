@@ -1,3 +1,4 @@
+source /etc/mailinabox.conf
 source setup/functions.sh # load our functions
 
 # Basic System Configuration
@@ -11,12 +12,9 @@ source setup/functions.sh # load our functions
 # text search plugin for (and by) dovecot, which is not available in
 # Ubuntu currently.
 #
-# Add that to the system's list of repositories using add-apt-repository.
-# But add-apt-repository may not be installed. If it's not available,
-# then install it. But we have to run apt-get update before we try to
-# install anything so the package index is up to date. After adding the
-# PPA, we have to run apt-get update *again* to load the PPA's index,
-# so this must precede the apt-get update line below.
+# So, first ensure add-apt-repository is installed, then use it to install
+# the [mail-in-a-box ppa](https://launchpad.net/~mail-in-a-box/+archive/ubuntu/ppa).
+
 
 if [ ! -f /usr/bin/add-apt-repository ]; then
 	echo "Installing add-apt-repository..."
@@ -198,7 +196,9 @@ restart_service resolvconf
 # ### Fail2Ban Service
 
 # Configure the Fail2Ban installation to prevent dumb bruce-force attacks against dovecot, postfix and ssh
-cp conf/fail2ban/jail.local /etc/fail2ban/jail.local
+cat conf/fail2ban/jail.local \
+	| sed "s/PUBLIC_IP/$PUBLIC_IP/g" \
+	> /etc/fail2ban/jail.local
 cp conf/fail2ban/dovecotimap.conf /etc/fail2ban/filter.d/dovecotimap.conf
 
 restart_service fail2ban

@@ -12,7 +12,7 @@ import os, os.path, shutil, glob, re, datetime
 import dateutil.parser, dateutil.relativedelta, dateutil.tz
 import rtyaml
 
-from utils import exclusive_process, load_environment, shell, wait_for_service
+from utils import exclusive_process, load_environment, shell, wait_for_service, fix_boto
 
 def backup_status(env):
 	# Root folder
@@ -314,6 +314,18 @@ def run_duplicity_verification():
 		env["STORAGE_ROOT"],
 	], get_env(env))
 
+def run_duplicity_restore(args):
+	env = load_environment()
+	config = get_backup_config(env)
+	backup_cache_dir = os.path.join(env["STORAGE_ROOT"], 'backup', 'cache')
+	shell('check_call', [
+		"/usr/bin/duplicity",
+		"restore",
+		"--archive-dir", backup_cache_dir,
+		config["target"],
+		] + args,
+	get_env(env))
+
 def list_target_files(config):
 	import urllib.parse
 	try:
@@ -326,6 +338,7 @@ def list_target_files(config):
 
 	elif p.scheme == "s3":
 		# match to a Region
+		fix_boto() # must call prior to importing boto
 		import boto.s3
 		from boto.exception import BotoServerError
 		for region in boto.s3.regions():
@@ -436,6 +449,16 @@ if __name__ == "__main__":
 		# Run duplicity's verification command to check a) the backup files
 		# are readable, and b) report if they are up to date.
 		run_duplicity_verification()
+
+	elif sys.argv[-1] == "--status":
+		# Show backup status.
+		ret = backup_status(load_environment())
+		print(rtyaml.dump(ret["backups"]))
+
+	elif len(sys.argv) >= 2 and sys.argv[1] == "--restore":
+		# Run duplicity restore. Rest of command line passed as arguments
+		# to duplicity. The restore path should be specified.
+		run_duplicity_restore(sys.argv[2:])
 
 	else:
 		# Perform a backup. Add --full to force a full backup rather than
