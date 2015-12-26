@@ -7,7 +7,7 @@ Still In Development
 Mail:
 
 * Updated Roundcube to version 1.1.3.
-* Auto-create RFC2142 aliases for abuse@.
+* Auto-create aliases for abuse@, as required by RFC2142.
 
 Control panel:
 
@@ -16,17 +16,20 @@ Control panel:
 * DNS checks now have a timeout in case a DNS server is not responding, so the checks don't stall indefinitely.
 * Better messages if external DNS is used and, weirdly, custom secondary nameservers are set.
 * Add POP to the mail client settings documentation.
+* The box's IP address is added to the fail2ban whitelist so that the status checks don't trigger the machine banning itself, which results in the status checks showing services down even though they are running.
 
 System:
 
+* fail2ban's recidive jail is now active, which guards against persistent brute force login attacks over long periods of time.
 * Setup (first run only) now asks for your timezone to set the system time.
 * The Exchange/ActiveSync server is now taken offline during nightly backups (along with SMTP and IMAP).
 * The machine's random number generator (/dev/urandom) is now seeded with Ubuntu Pollinate and a blocking read on /dev/random.
 * DNSSEC key generation during install now uses /dev/urandom (instead of /dev/random), which is faster.
+* The $STORAGE_ROOT/ssl directory is flattened by a migration script and the system SSL certificate path is now a symlink to the actual certificate.
 * If ownCloud sends out email, it will use the box's administrative address now (admin@yourboxname).
 * Z-Push (Exchange/ActiveSync) logs now exclude warnings and are now rotated to save disk space.
 * Fix pip command that might have not installed all necessary Python packages.
-* The control panel and backup would not work on Google Compute Engine because they install a conflicting boto package.
+* The control panel and backup would not work on Google Compute Engine because GCE installs a conflicting boto package.
 * Added a new command `management/backup.py --restore` to restore files from a backup to a target directory (command line arguments are passed to `duplicity restore`).
 
 v0.14 (November 4, 2015)
