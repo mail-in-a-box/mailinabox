@@ -30,33 +30,18 @@ rm -f /etc/init.d/mailinabox
 ln -s $(pwd)/conf/management-initscript /etc/init.d/mailinabox
 hide_output update-rc.d mailinabox defaults
 
-# Set time zone to something convenient for the user
-# Backup will be set for 3am localtime so choice is important depending
-# on user locations.
+# Remove old files we no longer use.
+rm -f /etc/cron.daily/mailinabox-backup
+rm -f /etc/cron.daily/mailinabox-statuschecks
 
-dpkg-reconfigure tzdata
+# Perform nightly tasks at 3am in system time: take a backup, run
+# status checks and email the administrator any changes.
 
-# Perform a daily backup.
-if [ -f /etc/cron.daily/mailinabox-backup ]; then
-  rm /etc/cron.daily/mailinabox-backup
-fi
-cat > /etc/cron.d/mailinabox-backup << EOF;
-# /etc/cron.d/mailinabox-backup: crontab fragment to run maininabox-backup
-#  This executes $(pwd)/management/backup.py at 3am.
-
-0 3 * * *	root	$(pwd)/management/backup.py
-EOF
-
-# Perform daily status checks. Compare each day to the previous
-# for changes and mail the changes to the administrator.
-cat > /etc/cron.daily/mailinabox-statuschecks << EOF;
-#!/bin/bash
+cat > /etc/cron.d/mailinabox-nightly << EOF;
 # Mail-in-a-Box --- Do not edit / will be overwritten on update.
-# Run status checks.
-$(pwd)/management/status_checks.py --show-changes --smtp
+# Run nightly tasks: backup, status checks.
+0 3 * * *	root	(cd `pwd` && management/daily_tasks.sh)
 EOF
-chmod +x /etc/cron.daily/mailinabox-statuschecks
-
 
 # Start it.
 restart_service mailinabox

@@ -7,6 +7,7 @@ Still In Development
 Mail:
 
 * Update Roundcube to version 1.1.3.
+* Nightly backups and system status checks are now moved to 3am in the system's timezone.
 
 v0.14 (November 4, 2015)
 ------------------------
