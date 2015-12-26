@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-Still In Development
---------------------
+v0.15 Release Candidate
+-----------------------
 
 Mail:
 
