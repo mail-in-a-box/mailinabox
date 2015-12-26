@@ -283,26 +283,40 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 
 def build_tlsa_record(env):
 	# A DANE TLSA record in DNS specifies that connections on a port
-	# must use TLS and the certificate must match a particular certificate.
+	# must use TLS and the certificate must match a particular criteria.
 	#
 	# Thanks to http://blog.huque.com/2012/10/dnssec-and-certificates.html
-	# for explaining all of this!
+	# and https://community.letsencrypt.org/t/please-avoid-3-0-1-and-3-0-2-dane-tlsa-records-with-le-certificates/7022
+	# for explaining all of this! Also see https://tools.ietf.org/html/rfc6698#section-2.1
+	# and https://github.com/mail-in-a-box/mailinabox/issues/268#issuecomment-167160243.
+	#
+	# There are several criteria. We used to use "3 0 1" criteria, which
+	# meant to pin a leaf (3) certificate (0) with SHA256 hash (1). But
+	# certificates change, and especially as we move to short-lived certs
+	# they change often. The TLSA record handily supports the criteria of
+	# a leaf certificate (3)'s subject public key (1) with SHA256 hash (1).
+	# The subject public key is the public key portion of the private key
+	# that generated the CSR that generated the certificate. Since we
+	# generate a private key once the first time Mail-in-a-Box is set up
+	# and reuse it for all subsequent certificates, the TLSA record will
+	# remain valid indefinitely.
 
-	# Get the hex SHA256 of the DER-encoded server certificate:
-	certder = shell("check_output", [
-		"/usr/bin/openssl",
-		"x509",
-		"-in", os.path.join(env["STORAGE_ROOT"], "ssl", "ssl_certificate.pem"),
-		"-outform", "DER"
-		],
-		return_bytes=True)
-	certhash = hashlib.sha256(certder).hexdigest()
+	from ssl_certificates import load_cert_chain, load_pem
+	from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+
+	fn = os.path.join(env["STORAGE_ROOT"], "ssl", "ssl_certificate.pem")
+	cert = load_pem(load_cert_chain(fn)[0])
+
+	subject_public_key = cert.public_key().public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo)
+	# We could have also loaded ssl_private_key.pem and called priv_key.public_key().public_bytes(...)
+
+	pk_hash = hashlib.sha256(subject_public_key).hexdigest()
 
 	# Specify the TLSA parameters:
-	# 3: This is the certificate that the client should trust. No CA is needed.
-	# 0: The whole certificate is matched.
-	# 1: The certificate is SHA256'd here.
-	return "3 0 1 " + certhash
+	# 3: Match the (leaf) certificate. (No CA, no trust path needed.)
+	# 1: Match its subject public key.
+	# 1: Use SHA256.
+	return "3 1 1 " + pk_hash
 
 def build_sshfp_records():
 	# The SSHFP record is a way for us to embed this server's SSH public

@@ -8,6 +8,7 @@ Mail:
 
 * Updated Roundcube to version 1.1.3.
 * Auto-create aliases for abuse@, as required by RFC2142.
+* The DANE TLSA record is changed to use the certificate subject public key rather than the whole certificate, which means the record remains valid after certificate changes (so long as the private key remains the same, which it does for us).
 
 Control panel:
 

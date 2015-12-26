@@ -184,20 +184,21 @@ def install_cert(domain, ssl_cert, ssl_chain, env):
 
 	# When updating the cert for PRIMARY_HOSTNAME, symlink it from the system
 	# certificate path, which is hard-coded for various purposes, and then
-	# update DNS (because of the DANE TLSA record), postfix, and dovecot,
-	# which all use the file.
+	# restart postfix and dovecot.
 	if domain == env['PRIMARY_HOSTNAME']:
 		# Update symlink.
 		system_ssl_certificate = os.path.join(os.path.join(env["STORAGE_ROOT"], 'ssl', 'ssl_certificate.pem'))
 		os.unlink(system_ssl_certificate)
 		os.symlink(ssl_certificate, system_ssl_certificate)
 
-		# Update DNS & restart postfix and dovecot so they pick up the new file.
-		from dns_update import do_dns_update
-		ret.append( do_dns_update(env) )
+		# Restart postfix and dovecot so they pick up the new file.
 		shell('check_call', ["/usr/sbin/service", "postfix", "restart"])
 		shell('check_call', ["/usr/sbin/service", "dovecot", "restart"])
 		ret.append("mail services restarted")
+
+		# The DANE TLSA record will remain valid so long as the private key
+		# hasn't changed. We don't ever change the private key automatically.
+		# If the user does it, they must manually update DNS.
 
 	# Update the web configuration so nginx picks up the new certificate file.
 	from web_update import do_web_update
