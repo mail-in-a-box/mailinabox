@@ -34,7 +34,6 @@ System:
 * Fix pip command that might have not installed all necessary Python packages.
 * The control panel and backup would not work on Google Compute Engine because GCE installs a conflicting boto package.
 * Added a new command `management/backup.py --restore` to restore files from a backup to a target directory (command line arguments are passed to `duplicity restore`).
-* Update Roundcube to version 1.1.3.
 
 v0.14 (November 4, 2015)
 ------------------------
