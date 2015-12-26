@@ -55,6 +55,38 @@ apt_install python3 python3-dev python3-pip \
 	haveged pollinate \
 	unattended-upgrades cron ntp fail2ban
 
+# ### Set the system timezone
+#
+# Some systems are missing /etc/timezone, which we cat into the configs for
+# Z-Push and ownCloud, so we need to set it to something. Daily cron tasks
+# like the system backup are run at a time tied to the system timezone, so
+# letting the user choose will help us identify the right time to do those
+# things (i.e. late at night in whatever timezone the user actually lives
+# in).
+#
+# However, changing the timezone once it is set seems to confuse fail2ban
+# and requires restarting fail2ban (done below in the fail2ban
+# section) and syslog (see #328). There might be other issues, and it's
+# not likely the user will want to change this, so we only ask on first
+# setup.
+if [ -z "$NONINTERACTIVE" ]; then
+	if [ ! -f /etc/timezone ] || [ ! -z $FIRST_TIME_SETUP ]; then
+		# If the file is missing or this is the user's first time running
+		# Mail-in-a-Box setup, run the interactive timezone configuration
+		# tool.
+		dpkg-reconfigure tzdata
+		restart_service rsyslog
+	fi
+else
+	# This is a non-interactive setup so we can't ask the user.
+	# If /etc/timezone is missing, set it to UTC.
+	if [ ! -f /etc/timezone ]; then
+		echo "Setting timezone to UTC."
+		echo "Etc/UTC" > /etc/timezone
+		restart_service rsyslog
+	fi
+fi
+
 # ### Seed /dev/urandom
 #
 # /dev/urandom is used by various components for generating random bytes for

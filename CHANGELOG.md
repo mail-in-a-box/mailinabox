@@ -19,6 +19,7 @@ Control panel:
 
 System:
 
+* Setup (first run only) now asks for your timezone to set the system time.
 * The Exchange/ActiveSync server is now taken offline during nightly backups (along with SMTP and IMAP).
 * The machine's random number generator (/dev/urandom) is now seeded with Ubuntu Pollinate and a blocking read on /dev/random.
 * DNSSEC key generation during install now uses /dev/urandom (instead of /dev/random), which is faster.
