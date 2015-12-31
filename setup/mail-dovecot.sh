@@ -203,5 +203,8 @@ chown -R mail.mail $STORAGE_ROOT/mail/sieve
 ufw_allow imaps
 ufw_allow pop3s
 
+# Allow the Sieve port in the firewall.
+ufw_allow sieve
+
 # Restart services.
 restart_service dovecot
