@@ -5,6 +5,8 @@ import os, os.path, re, shutil
 
 from utils import shell, safe_domain_name, sort_domains
 
+import idna
+
 # SELECTING SSL CERTIFICATES FOR USE IN WEB
 
 def get_ssl_certificates(env):
@@ -155,7 +157,7 @@ def get_domain_ssl_files(domain, ssl_certificates, env, allow_missing_cert=False
 # PROVISIONING CERTIFICATES FROM LETSENCRYPT
 
 def get_certificates_to_provision(env):
-	# Get a list of domain names that we should now provision certificates
+	# Get a set of domain names that we should now provision certificates
 	# for. Provision if a domain name has no valid certificate or if any
 	# certificate is expiring in 14 days. If provisioning anything, also
 	# provision certificates expiring within 30 days. The period between
@@ -171,11 +173,13 @@ def get_certificates_to_provision(env):
 	certs = get_ssl_certificates(env)
 	domains = set()
 	domains_if_any = set()
+	problems = { }
 	for domain in get_web_domains(env):
 		try:
 			cert = get_domain_ssl_files(domain, certs, env, allow_missing_cert=True)
-		except FileNotFoundError:
+		except FileNotFoundError as e:
 			# system certificate is not present
+			problems[domain] = "Error: " + str(e)
 			continue
 		if cert is None:
 			# No valid certificate available.
@@ -192,37 +196,49 @@ def get_certificates_to_provision(env):
 			elif cert.not_valid_after-now < datetime.timedelta(days=30):
 				domains_if_any.add(domain)
 
-	# Filter out domains that don't have correct DNS, because then the CA
-	# won't be able to do DNS validation.
-	def is_domain_dns_correct(domain):
-		# Must make qname absolute to prevent a fall-back lookup with a
-		# search domain appended.
-		import dns.resolver
-		try:
-			response = dns.resolver.query(domain + ".", "A")
-		except:
+			# It's valid.
+			problems[domain] = "The certificate is valid for at least another 30 days --- no need to replace."
+
+	# Filter out domains that we can't provision a certificate for.
+	def can_provision_for_domain(domain):
+		# Let's Encrypt doesn't yet support IDNA domains.
+		# We store domains in IDNA (ASCII). To see if this domain is IDNA,
+		# we'll see if its IDNA-decoded form is different.
+		if idna.decode(domain.encode("ascii")) != domain:
+			problems[domain] = "Let's Encrypt does not yet support provisioning certificates for internationalized domains."
 			return False
-		return len(response) == 1 and str(response[0]) == env["PUBLIC_IP"]
-	domains = set(d for d in domains if is_domain_dns_correct(d))
-	domains_if_any = set(d for d in domains_if_any if is_domain_dns_correct(d))
+
+		# Does the domain resolve to this machine in public DNS? If not,
+		# we can't do domain control validation. For IPv6 is configured,
+		# make sure both IPv4 and IPv6 are correct because we don't know
+		# how Let's Encrypt will connect.
+		import dns.resolver
+		for rtype, value in [("A", env["PUBLIC_IP"]), ("AAAA", env.get("PUBLIC_IPV6"))]:
+			if not value: continue # IPv6 is not configured
+			try:
+				# Must make the qname absolute to prevent a fall-back lookup with a
+				# search domain appended, by adding a period to the end.
+				response = dns.resolver.query(domain + ".", rtype)
+			except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer) as e:
+				problems[domain] = "DNS isn't configured properly for this domain: DNS resolution failed (%s: %s)." % (rtype, str(e) or repr(e)) # NoAnswer's str is empty
+				return False
+			except Exception as e:
+				problems[domain] = "DNS isn't configured properly for this domain: DNS lookup had an error: %s." % str(e)
+				return False
+			if len(response) != 1 or str(response[0]) != value:
+				problems[domain] = "Domain control validation cannot be performed for this domain because DNS points the domain to another machine (%s %s)." % (rtype, ", ".join(str(r) for r in response))
+				return False
+
+		return True
+
+	domains = set(filter(can_provision_for_domain, domains))
 
 	# If there are any domains we definitely will provision for, add in
 	# additional domains to do at this time.
 	if len(domains) > 0:
-		domains |= domains_if_any
+		domains |= set(filter(can_provision_for_domain, domains_if_any))
 
-	# Sort, just to keep related domain names together in the next step.
-	domains = sort_domains(domains, env)
-
-	# Break into groups of up to 100 certificates at a time, which is Let's Encrypt's
-	# limit for a single certificate.
-	cert_domains = []
-	while len(domains) > 0:
-		cert_domains.append( domains[0:100] )
-		domains = domains[100:]
-
-	# Return a list of lists of domain names.
-	return cert_domains
+	return (domains, problems)
 
 def provision_certificates(env, agree_to_tos_url=None, logger=None):
 	import requests.exceptions
@@ -230,13 +246,24 @@ def provision_certificates(env, agree_to_tos_url=None, logger=None):
 
 	from free_tls_certificates import client
 
-	# What domains to provision certificates for? This is a list of
-	# lists of domains.
-	certs = get_certificates_to_provision(env)
-	if len(certs) == 0:
+	# What domains should we provision certificates for? And what
+	# errors prevent provisioning for other domains.
+	domains, problems = get_certificates_to_provision(env)
+
+	# Exit fast if there is nothing to do.
+	if len(domains) == 0:
 		return {
 			"requests": [],
+			"problems": problems,
 		}
+
+	# Break into groups of up to 100 certificates at a time, which is Let's Encrypt's
+	# limit for a single certificate. We'll sort to put related domains together.
+	domains = sort_domains(domains, env)
+	certs = []
+	while len(domains) > 0:
+		certs.append( domains[0:100] )
+		domains = domains[100:]
 
 	# Prepare to provision.
 
@@ -352,7 +379,8 @@ def provision_certificates(env, agree_to_tos_url=None, logger=None):
 
 	# Return what happened with each certificate request.
 	return {
-		"requests": ret
+		"requests": ret,
+		"problems": problems,
 	}
 
 def provision_certificates_cmdline():
@@ -377,7 +405,14 @@ def provision_certificates_cmdline():
 		if not status["requests"]:
 			# No domains need certificates.
 			if "--headless" not in sys.argv or "-v" in sys.argv:
-				print("No domains hosted on this box need a certificate at this time.")
+				if len(status["problems"]) == 0:
+					print("No domains hosted on this box need a new TLS certificate at this time.")
+				elif len(status["problems"]) > 0:
+					print("No TLS certificates could be provisoned at this time:")
+					print()
+					for domain in sort_domains(status["problems"], env):
+						print("%s: %s" % (domain, status["problems"][domain]))
+
 			sys.exit(0)
 
 		# What happened?
@@ -458,6 +493,12 @@ Do you agree to the agreement? Type Y or N and press <ENTER>: """
 		# Unless we were instructed to wait, or we just agreed to the TOS,
 		# we're done for now.
 		break
+
+	# And finally show the domains with problems.
+	if len(status["problems"]) > 0:
+		print("TLS certificates could not be provisoned for:")
+		for domain in sort_domains(status["problems"], env):
+			print("%s: %s" % (domain, status["problems"][domain]))
 
 # INSTALLING A NEW CERTIFICATE FROM THE CONTROL PANEL
 
