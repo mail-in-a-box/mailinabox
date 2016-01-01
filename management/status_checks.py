@@ -71,7 +71,6 @@ def run_services_checks(env, output, pool):
 		{ "name": "OpenDKIM", "port": 8891, "public": False, },
 		{ "name": "OpenDMARC", "port": 8893, "public": False, },
 		{ "name": "Memcached", "port": 11211, "public": False, },
-		{ "name": "Sieve (dovecot)", "port": 4190, "public": False, },
 		{ "name": "Mail-in-a-Box Management Daemon", "port": 10222, "public": False, },
 
 		{ "name": "SSH Login (ssh)", "port": get_ssh_port(), "public": True, },
@@ -80,6 +79,7 @@ def run_services_checks(env, output, pool):
 		{ "name": "Outgoing Mail (SMTP 587/postfix)", "port": 587, "public": True, },
 		#{ "name": "Postfix/master", "port": 10587, "public": True, },
 		{ "name": "IMAPS (dovecot)", "port": 993, "public": True, },
+		{ "name": "Mail Filters (Sieve/dovecot)", "port": 4190, "public": True, },
 		{ "name": "HTTP Web (nginx)", "port": 80, "public": True, },
 		{ "name": "HTTPS Web (nginx)", "port": 443, "public": True, },
 	]

@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+Mail:
+
+* The Sieve port is now open so tools like the Thunderbird Sieve program can be used to edit mail filters.
+
 v0.15 (January 1, 2016)
 -----------------------
 
