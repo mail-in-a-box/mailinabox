@@ -9,6 +9,7 @@ import sys, os, os.path, re, subprocess, datetime, multiprocessing.pool
 import dns.reversename, dns.resolver
 import dateutil.parser, dateutil.tz
 import idna
+import psutil
 
 from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, get_secondary_dns, get_custom_dns_record
 from web_update import get_web_domains, get_domains_with_a_records
@@ -166,6 +167,7 @@ def run_system_checks(rounded_values, env, output):
 	check_miab_version(env, output)
 	check_system_aliases(env, output)
 	check_free_disk_space(rounded_values, env, output)
+	check_free_memory(rounded_values, env, output)
 
 def check_ssh_password(env, output):
 	# Check that SSH login with password is disabled. The openssh-server
@@ -215,6 +217,20 @@ def check_free_disk_space(rounded_values, env, output):
 		output.print_warning(disk_msg)
 	else:
 		output.print_error(disk_msg)
+
+def check_free_memory(rounded_values, env, output):
+	# Check free memory.
+	percent_free = 100 - psutil.virtual_memory().percent
+	memory_msg = "System memory is %s%% free." % str(round(percent_free))
+	if percent_free >= 30:
+		if rounded_values: memory_msg = "System free memory is at least 30%."
+		output.print_ok(memory_msg)
+	elif percent_free >= 15:
+		if rounded_values: memory_msg = "System free memory is below 30%."
+		output.print_warning(memory_msg)
+	else:
+		if rounded_values: memory_msg = "System free memory is below 15%."
+		output.print_error(memory_msg)
 
 def run_network_checks(env, output):
 	# Also see setup/network-checks.sh.

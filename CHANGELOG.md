@@ -8,6 +8,10 @@ Mail:
 
 * The Sieve port is now open so tools like the Thunderbird Sieve program can be used to edit mail filters.
 
+Control Panel:
+
+* Report free memory usage.
+
 v0.15 (January 1, 2016)
 -----------------------
 
