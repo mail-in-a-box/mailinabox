@@ -1,6 +1,10 @@
 CHANGELOG
 =========
 
+Control Panel:
+
+* Report free memory usage.
+
 Still In Development
 --------------------
 

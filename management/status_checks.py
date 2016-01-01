@@ -206,24 +206,17 @@ def check_free_disk_space(rounded_values, env, output):
 
 def check_free_memory(rounded_values, env, output):
 	# Check free memory.
-	percent_used = psutil.virtual_memory().percent
-	percent_left = 100 - percent_used
-	if not rounded_values:
-		memory_msg = "The system has allocated %s%% of the memory." % str(round(percent_used))
-		if percent_left > 20:
-			output.print_ok(memory_msg)
-		elif percent_left > 15:
-			output.print_warning(memory_msg)
-		else:
-			output.print_error(memory_msg)
+	percent_free = 100 - psutil.virtual_memory().percent
+	memory_msg = "System memory is %s%% free." % str(round(percent_free))
+	if percent_free >= 30:
+		if rounded_values: memory_msg = "System free memory is at least 30%."
+		output.print_ok(memory_msg)
+	elif percent_free >= 15:
+		if rounded_values: memory_msg = "System free memory is below 30%."
+		output.print_warning(memory_msg)
 	else:
-		memory_msg = "The system has less than %s%% memory left." % str(round(percent_left))
-		if percent_left > 20:
-			output.print_ok("The system has more than 20% memory left")
-		elif percent_left > 15:
-			output.print_warning("The system has less than 20% memory left but more than 15%")
-		else:
-			output.print_error("The system has less than 15% memory left")
+		if rounded_values: memory_msg = "System free memory is below 15%."
+		output.print_error(memory_msg)
 
 def run_network_checks(env, output):
 	# Also see setup/network-checks.sh.
