@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-v0.15 Release Candidate
+v0.15 (January 1, 2016)
 -----------------------
 
 Mail:
