@@ -9,6 +9,7 @@ import sys, os, os.path, re, subprocess, datetime, multiprocessing.pool
 import dns.reversename, dns.resolver
 import dateutil.parser, dateutil.tz
 import idna
+import psutil
 
 from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, get_secondary_dns, get_custom_dns_record
 from web_update import get_web_domains, get_domains_with_a_records
@@ -166,6 +167,7 @@ def run_system_checks(rounded_values, env, output):
 	check_miab_version(env, output)
 	check_system_aliases(env, output)
 	check_free_disk_space(rounded_values, env, output)
+	check_free_memory(rounded_values, env, output)
 
 def check_ssh_password(env, output):
 	# Check that SSH login with password is disabled. The openssh-server
@@ -215,6 +217,27 @@ def check_free_disk_space(rounded_values, env, output):
 		output.print_warning(disk_msg)
 	else:
 		output.print_error(disk_msg)
+
+def check_free_memory(rounded_values, env, output):
+	# Check free memory.
+	percent_used = psutil.virtual_memory().percent
+	percent_left = 100 - percent_used
+	if not rounded_values:
+		memory_msg = "The system has allocated %s%% of the memory." % str(round(percent_used))
+		if percent_left > 20:
+			output.print_ok(memory_msg)
+		elif percent_left > 15:
+			output.print_warning(memory_msg)
+		else:
+			output.print_error(memory_msg)
+	else:
+		memory_msg = "The system has less than %s%% memory left." % str(round(percent_left))
+		if percent_left > 20:
+			output.print_ok("The system has more than 20% memory left")
+		elif percent_left > 15:
+			output.print_warning("The system has less than 20% memory left but more than 15%")
+		else:
+			output.print_error("The system has less than 15% memory left")
 
 def run_network_checks(env, output):
 	# Also see setup/network-checks.sh.
