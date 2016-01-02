@@ -335,7 +335,7 @@ def ssl_get_status():
 	provision, cant_provision = get_certificates_to_provision(env, ok_as_problem=False)
 	domains_status = get_web_domains_info(env)
 	return json_response({
-		"can_provision": list(provision),
+		"can_provision": utils.sort_domains(provision, env),
 		"cant_provision": [{ "domain": domain, "problem": cant_provision[domain] } for domain in utils.sort_domains(cant_provision, env) ],
 		"status": [{ "domain": d["domain"], "status": d["ssl_certificate"][0], "text": d["ssl_certificate"][1] } for d in domains_status ],
 	})

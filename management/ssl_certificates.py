@@ -156,7 +156,7 @@ def get_domain_ssl_files(domain, ssl_certificates, env, allow_missing_cert=False
 
 # PROVISIONING CERTIFICATES FROM LETSENCRYPT
 
-def get_certificates_to_provision(env, ok_as_problem=True):
+def get_certificates_to_provision(env, ok_as_problem=True, force_domains=None):
 	# Get a set of domain names that we should now provision certificates
 	# for. Provision if a domain name has no valid certificate or if any
 	# certificate is expiring in 14 days. If provisioning anything, also
@@ -175,6 +175,13 @@ def get_certificates_to_provision(env, ok_as_problem=True):
 	domains_if_any = set()
 	problems = { }
 	for domain in get_web_domains(env):
+		# If the user really wants a cert for certain domains, include it.
+		if force_domains:
+			if force_domains == "ALL" or (isinstance(force_domains, list) and domain in force_domains):
+				domains.add(domain)
+			continue
+
+		# Include this domain if its certificate is missing, self-signed, or expiring soon.
 		try:
 			cert = get_domain_ssl_files(domain, certs, env, allow_missing_cert=True)
 		except FileNotFoundError as e:
@@ -201,8 +208,9 @@ def get_certificates_to_provision(env, ok_as_problem=True):
 				problems[domain] = "The certificate is valid for at least another 30 days --- no need to replace."
 
 	# Warn the user about domains hosted elsewhere.
-	for domain in set(get_web_domains(env, exclude_dns_elsewhere=False)) - set(get_web_domains(env)):
-		problems[domain] = "The domain's DNS is pointed elsewhere, so a TLS certificate is not necessary here and cannot be provisioned automatically anyway."
+	if force_domains is None:
+		for domain in set(get_web_domains(env, exclude_dns_elsewhere=False)) - set(get_web_domains(env)):
+			problems[domain] = "The domain's DNS is pointed elsewhere, so a TLS certificate is not necessary here and cannot be provisioned automatically anyway."
 
 	# Filter out domains that we can't provision a certificate for.
 	def can_provision_for_domain(domain):
@@ -245,7 +253,7 @@ def get_certificates_to_provision(env, ok_as_problem=True):
 
 	return (domains, problems)
 
-def provision_certificates(env, agree_to_tos_url=None, logger=None):
+def provision_certificates(env, agree_to_tos_url=None, logger=None, force_domains=None):
 	import requests.exceptions
 	import acme.messages
 
@@ -253,7 +261,7 @@ def provision_certificates(env, agree_to_tos_url=None, logger=None):
 
 	# What domains should we provision certificates for? And what
 	# errors prevent provisioning for other domains.
-	domains, problems = get_certificates_to_provision(env)
+	domains, problems = get_certificates_to_provision(env, force_domains=force_domains)
 
 	# Exit fast if there is nothing to do.
 	if len(domains) == 0:
@@ -395,6 +403,24 @@ def provision_certificates_cmdline():
 	exclusive_process("update_tls_certificates")
 	env = load_environment()
 
+	verbose = False
+	headless = False
+	force_domains = None
+	
+	args = list(sys.argv)
+	args.pop(0) # program name
+	if args and args[0] == "-v":
+		verbose = True
+		args.pop(0)
+	if args and args[0] == "--headless":
+		headless = True
+		args.pop(0)
+	if args and args[0] == "--force":
+		force_domains = "ALL"
+		args.pop(0)
+	else:
+		force_domains = args
+
 	agree_to_tos_url = None
 	while True:
 		# Run the provisioning script. This installs certificates. If there are
@@ -402,14 +428,14 @@ def provision_certificates_cmdline():
 		# certificates for groups of domains. We have to check the result for
 		# each group.
 		def my_logger(message):
-			if "-v" in sys.argv:
+			if verbose:
 				print(">", message)
-		status = provision_certificates(env, agree_to_tos_url=agree_to_tos_url, logger=my_logger)
+		status = provision_certificates(env, agree_to_tos_url=agree_to_tos_url, logger=my_logger, force_domains=force_domains)
 		agree_to_tos_url = None # reset to prevent infinite looping
 
 		if not status["requests"]:
 			# No domains need certificates.
-			if "--headless" not in sys.argv or "-v" in sys.argv:
+			if not headless or verbose:
 				if len(status["problems"]) == 0:
 					print("No domains hosted on this box need a new TLS certificate at this time.")
 				elif len(status["problems"]) > 0:
@@ -430,7 +456,7 @@ def provision_certificates_cmdline():
 					continue
 
 				# Can't ask the user a question in this mode.
-				if "--headless" in sys.argv:
+				if headless in sys.argv:
 					print("Can't issue TLS certficate until user has agreed to Let's Encrypt TOS.")
 					sys.exit(1)
 
