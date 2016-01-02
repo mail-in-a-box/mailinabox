@@ -3,10 +3,30 @@
 
 <h2>TLS (SSL) Certificates</h2>
 
+<p>An SSL certificate is a cryptographic file that proves to anyone connecting to this machine (like you right now) that the connection is secure.</p>
+
+<p>You need an SSL certificate for this box&rsquo;s hostname ({{hostname}}), and although optional you should also get one for every domain name and subdomain managed by this box (unless you&rsquo;ve directed DNS for a domain elsewhere through custom or external DNS).</p>
+
+<h3>Provision a Certificate</h3>
+
+<p>We can provision an SSL certificate for you from <a href="https://letsencrypt.org/" target="_blank">Let&rsquo;s Encrypt</a>, a free SSL certificate provider.</p>
+
+<p id="ssl_provision_status"></p>
+
+<table id="ssl_provision_problems" style="display: none" class="table">
+  <thead>
+    <tr>
+      <th>Domain</th>
+      <th>Problem</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+
 <h3>Certificate Status</h3>
 
-
-<table id="ssl_domains" class="table" style="margin-bottom: 2em; width: auto;">
+<table id="ssl_domains" class="table" style="margin-bottom: 2em; width: auto; display: none">
   <thead>
     <tr>
       <th>Domain</th>
@@ -60,24 +80,47 @@
 <script>
 function show_tls() {
  api(
-    "/web/domains",
+    "/ssl/status",
     "GET",
     {
     },
-    function(domains) {
+    function(res) {
+      // provisioning status
+      if (res.can_provision.length > 0) {
+          $('#ssl_provision_status').removeClass("text-warning").removeClass("text-success")
+             .text("Domains: " + res.can_provision.join(", "));
+      } else if (res.cant_provision.length == 0) {
+          $('#ssl_provision_status').addClass("text-success").text("No domains hosted on this box need a new TLS certificate at this time.");
+      } else {
+          $('#ssl_provision_status').addClass("text-warning").text("No TLS certificates can be provisoned at this time:");
+      }
+      $('#ssl_provision_problems').toggle(res.cant_provision.length > 0);
+      $('#ssl_provision_problems tbody').text("");
+      for (var i = 0; i < res.cant_provision.length; i++) {
+        var domain = res.cant_provision[i];
+        var row = $("<tr><th class='domain'><a href=''></a></th><td class='status'></td></tr>");
+        $('#ssl_provision_problems tbody').append(row);
+        row.attr('data-domain', domain.domain);
+        row.find('.domain a').text(domain.domain);
+        row.find('.domain a').attr('href', 'https://' + domain.domain);
+        row.find('.status').text(domain.problem);
+      }
+
+      // certificate status
+      var domains = res.status;
       var tb = $('#ssl_domains tbody');
       tb.text('');
       $('#ssldomain').html('<option value="">(select)</option>');
-
+      $('#ssl_domains').show();
       for (var i = 0; i < domains.length; i++) {
         var row = $("<tr><th class='domain'><a href=''></a></th><td class='status'></td> <td class='actions'><a href='#' onclick='return ssl_install(this);' class='btn btn-xs'>Install Certificate</a></td></tr>");
         tb.append(row);
         row.attr('data-domain', domains[i].domain);
         row.find('.domain a').text(domains[i].domain);
         row.find('.domain a').attr('href', 'https://' + domains[i].domain);
-        row.addClass("text-" + domains[i].ssl_certificate[0]);
-        row.find('.status').text(domains[i].ssl_certificate[1]);
-        if (domains[i].ssl_certificate[0] == "success") {
+        row.addClass("text-" + domains[i].status);
+        row.find('.status').text(domains[i].text);
+        if (domains[i].status == "success") {
           row.find('.actions a').addClass('btn-default').text('Replace Certificate');
         } else {
           row.find('.actions a').addClass('btn-primary').text('Install Certificate');

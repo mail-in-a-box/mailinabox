@@ -9,7 +9,7 @@ from dns_update import get_custom_dns_config, get_dns_zones
 from ssl_certificates import get_ssl_certificates, get_domain_ssl_files, check_certificate
 from utils import shell, safe_domain_name, sort_domains
 
-def get_web_domains(env, include_www_redirects=True):
+def get_web_domains(env, include_www_redirects=True, exclude_dns_elsewhere=True):
 	# What domains should we serve HTTP(S) for?
 	domains = set()
 
@@ -24,9 +24,10 @@ def get_web_domains(env, include_www_redirects=True):
 		# the topmost of each domain we serve.
 		domains |= set('www.' + zone for zone, zonefile in get_dns_zones(env))
 	 
-	# ...Unless the domain has an A/AAAA record that maps it to a different
-	# IP address than this box. Remove those domains from our list.
-	domains -= get_domains_with_a_records(env)
+	if exclude_dns_elsewhere:
+		# ...Unless the domain has an A/AAAA record that maps it to a different
+		# IP address than this box. Remove those domains from our list.
+		domains -= get_domains_with_a_records(env)
 
 	# Ensure the PRIMARY_HOSTNAME is in the list so we can serve webmail
 	# as well as Z-Push for Exchange ActiveSync. This can't be removed

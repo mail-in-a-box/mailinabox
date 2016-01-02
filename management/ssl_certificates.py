@@ -156,7 +156,7 @@ def get_domain_ssl_files(domain, ssl_certificates, env, allow_missing_cert=False
 
 # PROVISIONING CERTIFICATES FROM LETSENCRYPT
 
-def get_certificates_to_provision(env):
+def get_certificates_to_provision(env, ok_as_problem=True):
 	# Get a set of domain names that we should now provision certificates
 	# for. Provision if a domain name has no valid certificate or if any
 	# certificate is expiring in 14 days. If provisioning anything, also
@@ -196,8 +196,13 @@ def get_certificates_to_provision(env):
 			elif cert.not_valid_after-now < datetime.timedelta(days=30):
 				domains_if_any.add(domain)
 
-			# It's valid.
-			problems[domain] = "The certificate is valid for at least another 30 days --- no need to replace."
+			# It's valid. Should we report its validness?
+			if ok_as_problem:
+				problems[domain] = "The certificate is valid for at least another 30 days --- no need to replace."
+
+	# Warn the user about domains hosted elsewhere.
+	for domain in set(get_web_domains(env, exclude_dns_elsewhere=False)) - set(get_web_domains(env)):
+		problems[domain] = "The domain's DNS is pointed elsewhere, so a TLS certificate is not necessary here and cannot be provisioned automatically anyway."
 
 	# Filter out domains that we can't provision a certificate for.
 	def can_provision_for_domain(domain):

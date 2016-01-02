@@ -327,6 +327,19 @@ def dns_get_dump():
 
 # SSL
 
+@app.route('/ssl/status')
+@authorized_personnel_only
+def ssl_get_status():
+	from ssl_certificates import get_certificates_to_provision
+	from web_update import get_web_domains_info
+	provision, cant_provision = get_certificates_to_provision(env, ok_as_problem=False)
+	domains_status = get_web_domains_info(env)
+	return json_response({
+		"can_provision": list(provision),
+		"cant_provision": [{ "domain": domain, "problem": cant_provision[domain] } for domain in utils.sort_domains(cant_provision, env) ],
+		"status": [{ "domain": d["domain"], "status": d["ssl_certificate"][0], "text": d["ssl_certificate"][1] } for d in domains_status ],
+	})
+
 @app.route('/ssl/csr/<domain>', methods=['POST'])
 @authorized_personnel_only
 def ssl_get_csr(domain):
