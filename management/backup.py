@@ -224,9 +224,17 @@ def perform_backup(full_backup):
 		sys.exit(1)
 
 	# Stop services.
-	shell('check_call', ["/usr/sbin/service", "php5-fpm", "stop"])
-	shell('check_call', ["/usr/sbin/service", "postfix", "stop"])
-	shell('check_call', ["/usr/sbin/service", "dovecot", "stop"])
+	def service_command(service, command, quit=None):
+		# Execute silently, but if there is an error then display the output & exit.
+		code, ret = shell('check_output', ["/usr/sbin/service", service, command], capture_stderr=True, trap=True)
+		if code != 0:
+			print(ret)
+			if quit:
+				sys.exit(code)
+
+	service_command("php5-fpm", "stop", quit=True)
+	service_command("postfix", "stop", quit=True)
+	service_command("dovecot", "stop", quit=True)
 
 	# Run a backup of STORAGE_ROOT (but excluding the backups themselves!).
 	# --allow-source-mismatch is needed in case the box's hostname is changed
@@ -235,6 +243,7 @@ def perform_backup(full_backup):
 		shell('check_call', [
 			"/usr/bin/duplicity",
 			"full" if full_backup else "incr",
+			"--verbosity", "warning", "--no-print-statistics",
 			"--archive-dir", backup_cache_dir,
 			"--exclude", backup_root,
 			"--volsize", "250",
@@ -246,9 +255,9 @@ def perform_backup(full_backup):
 			get_env(env))
 	finally:
 		# Start services again.
-		shell('check_call', ["/usr/sbin/service", "dovecot", "start"])
-		shell('check_call', ["/usr/sbin/service", "postfix", "start"])
-		shell('check_call', ["/usr/sbin/service", "php5-fpm", "start"])
+		service_command("dovecot", "start", quit=False)
+		service_command("postfix", "start", quit=False)
+		service_command("php5-fpm", "start", quit=False)
 
 	# Once the migrated backup is included in a new backup, it can be deleted.
 	if os.path.isdir(migrated_unencrypted_backup_dir):
@@ -260,6 +269,7 @@ def perform_backup(full_backup):
 		"/usr/bin/duplicity",
 		"remove-older-than",
 		"%dD" % config["min_age_in_days"],
+		"--verbosity", "error",
 		"--archive-dir", backup_cache_dir,
 		"--force",
 		config["target"]
@@ -274,6 +284,7 @@ def perform_backup(full_backup):
 	shell('check_call', [
 		"/usr/bin/duplicity",
 		"cleanup",
+		"--verbosity", "error",
 		"--archive-dir", backup_cache_dir,
 		"--force",
 		config["target"]
