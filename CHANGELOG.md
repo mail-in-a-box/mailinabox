@@ -12,6 +12,10 @@ Control Panel:
 
 * Report free memory usage.
 
+System:
+
+* The daily backup will now email the administrator if there is a problem.
+
 v0.15 (January 1, 2016)
 -----------------------
 

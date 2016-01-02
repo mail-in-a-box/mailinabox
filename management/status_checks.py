@@ -767,15 +767,11 @@ def check_miab_version(env, output):
 			output.print_error("A new version of Mail-in-a-Box is available. You are running version %s. The latest version is %s. For upgrade instructions, see https://mailinabox.email. "
 				% (this_ver, latest_ver))
 
-def run_and_output_changes(env, pool, send_via_email):
+def run_and_output_changes(env, pool):
 	import json
 	from difflib import SequenceMatcher
 
-	if not send_via_email:
-		out = ConsoleOutput()
-	else:
-		import io
-		out = FileOutput(io.StringIO(""), 70)
+	out = ConsoleOutput()
 
 	# Run status checks.
 	cur = BufferedOutput()
@@ -834,28 +830,6 @@ def run_and_output_changes(env, pool, send_via_email):
 				out.add_heading(category)
 				out.print_warning("This section was removed.")
 
-	if send_via_email:
-		# If there were changes, send off an email.
-		buf = out.buf.getvalue()
-		if len(buf) > 0:
-			# create MIME message
-			from email.message import Message
-			msg = Message()
-			msg['From'] = "\"%s\" <administrator@%s>" % (env['PRIMARY_HOSTNAME'], env['PRIMARY_HOSTNAME'])
-			msg['To'] = "administrator@%s" % env['PRIMARY_HOSTNAME']
-			msg['Subject'] = "[%s] Status Checks Change Notice" % env['PRIMARY_HOSTNAME']
-			msg.set_payload(buf, "UTF-8")
-
-			# send to administrator@
-			import smtplib
-			mailserver = smtplib.SMTP('localhost', 25)
-			mailserver.ehlo()
-			mailserver.sendmail(
-				"administrator@%s" % env['PRIMARY_HOSTNAME'], # MAIL FROM
-				"administrator@%s" % env['PRIMARY_HOSTNAME'], # RCPT TO
-				msg.as_string())
-			mailserver.quit()
-
 	# Store the current status checks output for next time.
 	os.makedirs(os.path.dirname(cache_fn), exist_ok=True)
 	with open(cache_fn, "w") as f:
@@ -886,7 +860,7 @@ class FileOutput:
 		words = re.split("(\s+)", message)
 		linelen = 0
 		for w in words:
-			if linelen + len(w) > self.width-1-len(first_line):
+			if self.width and (linelen + len(w) > self.width-1-len(first_line)):
 				print(file=self.buf)
 				print("   ", end="", file=self.buf)
 				linelen = 0
@@ -902,10 +876,22 @@ class FileOutput:
 class ConsoleOutput(FileOutput):
 	def __init__(self):
 		self.buf = sys.stdout
-		try:
-			self.width = int(shell('check_output', ['stty', 'size']).split()[1])
-		except:
-			self.width = 76
+		
+		# Do nice line-wrapping according to the size of the terminal.
+		# The 'stty' program queries standard input for terminal information.
+		if sys.stdin.isatty():
+			try:
+				self.width = int(shell('check_output', ['stty', 'size']).split()[1])
+			except:
+				self.width = 76
+
+		else:
+			# However if standard input is not a terminal, we would get
+			# "stty: standard input: Inappropriate ioctl for device". So
+			# we test with sys.stdin.isatty first, and if it is not a
+			# terminal don't do any line wrapping. When this script is
+			# run from cron, or if stdin has been redirected, this happens.
+			self.width = None
 
 class BufferedOutput:
 	# Record all of the instance method calls so we can play them back later.
@@ -933,7 +919,7 @@ if __name__ == "__main__":
 		run_checks(False, env, ConsoleOutput(), pool)
 
 	elif sys.argv[1] == "--show-changes":
-		run_and_output_changes(env, pool, sys.argv[-1] == "--smtp")
+		run_and_output_changes(env, pool)
 
 	elif sys.argv[1] == "--check-primary-hostname":
 		# See if the primary hostname appears resolvable and has a signed certificate.
