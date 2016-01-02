@@ -1,14 +1,12 @@
 #!/usr/bin/python3
 
 # This script performs a backup of all user data:
-# 1) System services are stopped while a copy of user data is made.
-# 2) An incremental encrypted backup is made using duplicity into the
-#    directory STORAGE_ROOT/backup/encrypted. The password used for
-#    encryption is stored in backup/secret_key.txt.
+# 1) System services are stopped.
+# 2) An incremental encrypted backup is made using duplicity.
 # 3) The stopped services are restarted.
-# 5) STORAGE_ROOT/backup/after-backup is executd if it exists.
+# 4) STORAGE_ROOT/backup/after-backup is executd if it exists.
 
-import os, os.path, shutil, glob, re, datetime
+import os, os.path, shutil, glob, re, datetime, sys
 import dateutil.parser, dateutil.relativedelta, dateutil.tz
 import rtyaml
 
@@ -65,8 +63,8 @@ def backup_status(env):
 		trap=True)
 	if code != 0:
 		# Command failed. This is likely due to an improperly configured remote
-		# destination for the backups.
-		return { }
+		# destination for the backups or the last backup job terminated unexpectedly.
+		raise Exception("Something is wrong with the backup: " + collection_status)
 	for line in collection_status.split('\n'):
 		if line.startswith(" full") or line.startswith(" inc"):
 			backup = parse_line(line)
@@ -217,7 +215,13 @@ def perform_backup(full_backup):
 	# will fail. Otherwise do a full backup when the size of
 	# the increments since the most recent full backup are
 	# large.
-	full_backup = full_backup or should_force_full(env)
+	try:
+		full_backup = full_backup or should_force_full(env)
+	except Exception as e:
+		# This was the first call to duplicity, and there might
+		# be an error already.
+		print(e)
+		sys.exit(1)
 
 	# Stop services.
 	shell('check_call', ["/usr/sbin/service", "php5-fpm", "stop"])

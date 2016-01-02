@@ -121,6 +121,11 @@ function show_system_backup() {
     "GET",
     { },
     function(r) {
+      if (r.error) {
+          show_modal_error("Backup Error", $("<pre/>").text(r.error));
+          return;
+      }
+
       $('#backup-status tbody').html("");
       var total_disk_size = 0;
 

@@ -422,7 +422,10 @@ def do_updates():
 @authorized_personnel_only
 def backup_status():
 	from backup import backup_status
-	return json_response(backup_status(env))
+	try:
+		return json_response(backup_status(env))
+	except Exception as e:
+		return json_response({ "error": str(e) })
 
 @app.route('/system/backup/config', methods=["GET"])
 @authorized_personnel_only
