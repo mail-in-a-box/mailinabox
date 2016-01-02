@@ -38,7 +38,7 @@ These services are protected by [TLS](https://en.wikipedia.org/wiki/Transport_La
 
 The services all follow these rules:
 
-* SSL certificates are generated with 2048-bit RSA keys and SHA-256 fingerprints. The box provides a self-signed certificate by default. The [setup guide](https://mailinabox.email/guide.html) explains how to verify the certificate fingerprint on first login. Users are encouraged to replace the certificate with a proper CA-signed one. ([source](setup/ssl.sh))
+* TLS certificates are generated with 2048-bit RSA keys and SHA-256 fingerprints. The box provides a self-signed certificate by default. The [setup guide](https://mailinabox.email/guide.html) explains how to verify the certificate fingerprint on first login. Users are encouraged to replace the certificate with a proper CA-signed one. ([source](setup/ssl.sh))
 * Only TLSv1, TLSv1.1 and TLSv1.2 are offered (the older SSL protocols are not offered).
 * Export-grade ciphers, the anonymous DH/ECDH algorithms (aNULL), and clear-text ciphers (eNULL) are not offered.
 * The minimum cipher key length offered is 112 bits. The maximum is 256 bits. Diffie-Hellman ciphers use a 2048-bit key for forward secrecy.

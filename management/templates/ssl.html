@@ -1,7 +1,7 @@
 <style>
 </style>
 
-<h2>SSL Certificates</h2>
+<h2>TLS (SSL) Certificates</h2>
 
 <h3>Certificate Status</h3>
 
@@ -20,15 +20,15 @@
 
 <p>A multi-domain or wildcard certificate will be automatically applied to any domains it is valid for.</p>
 
-<h3 id="ssl_install_header">Install SSL Certificate</h3>
+<h3 id="ssl_install_header">Install Certificate</h3>
 
-<p>There are many places where you can get a free or cheap SSL certificate. We recommend <a href="https://www.namecheap.com/security/ssl-certificates/domain-validation.aspx">Namecheap&rsquo;s $9 certificate</a>, <a href="https://www.startssl.com/">StartSSL&rsquo;s free express lane</a> or <a href="https://buy.wosign.com/free/">WoSign&rsquo;s free SSL</a></a>.</p>
+<p>There are many places where you can get a free or cheap certificate. We recommend <a href="https://www.namecheap.com/security/ssl-certificates/domain-validation.aspx">Namecheap&rsquo;s $9 certificate</a>, <a href="https://www.startssl.com/">StartSSL&rsquo;s free express lane</a> or <a href="https://buy.wosign.com/free/">WoSign&rsquo;s free TLS</a></a>.</p>
 
-<p>Which domain are you getting an SSL certificate for?</p>
+<p>Which domain are you getting a certificate for?</p>
 
 <p><select id="ssldomain" onchange="show_csr()" class="form-control" style="width: auto"></select></p>
 
-<p>What country are you in? This is required by some SSL certificate providers. You may leave this blank if you know your SSL certificate provider doesn't require it.</p>
+<p>What country are you in? This is required by some TLS certificate providers. You may leave this blank if you know your TLS certificate provider doesn't require it.</p>
 
 <p><select id="sslcc" onchange="show_csr()" class="form-control" style="width: auto">
 	<option value="">(Select)</option>
@@ -38,18 +38,18 @@
 </select></p>
 
 <div id="csr_info" style="display: none">
-  <p>You will need to provide the SSL certificate provider this Certificate Signing Request (CSR):</p>
+  <p>You will need to provide the certificate provider this Certificate Signing Request (CSR):</p>
 
   <pre id="ssl_csr"></pre>
 
   <p><small>The CSR is safe to share. It can only be used in combination with a secret key stored on this machine.</small></p>
 
-  <p>The SSL certificate provider will then provide you with an SSL certificate. They may also provide you with an intermediate chain. Paste each separately into the boxes below:</p>
+  <p>The certificate provider will then provide you with a TLS/SSL certificate. They may also provide you with an intermediate chain. Paste each separately into the boxes below:</p>
 
-  <p style="margin-bottom: .5em">SSL certificate:</p>
+  <p style="margin-bottom: .5em">TLS/SSL certificate:</p>
   <p><textarea id="ssl_paste_cert" class="form-control" style="max-width: 40em; height: 8em" placeholder="-----BEGIN CERTIFICATE-----&#xA;stuff here&#xA;-----END CERTIFICATE-----"></textarea></p>
 
-  <p style="margin-bottom: .5em">SSL intermediate chain (if provided):</p>
+  <p style="margin-bottom: .5em">TLS/SSL intermediate chain (if provided):</p>
   <p><textarea id="ssl_paste_chain" class="form-control" style="max-width: 40em; height: 8em" placeholder="-----BEGIN CERTIFICATE-----&#xA;stuff here&#xA;-----END CERTIFICATE-----&#xA;-----BEGIN CERTIFICATE-----&#xA;more stuff here&#xA;-----END CERTIFICATE-----"></textarea></p>
 
   <p>After you paste in the information, click the install button.</p>
@@ -58,7 +58,7 @@
 </div>
 
 <script>
-function show_ssl() {
+function show_tls() {
  api(
     "/web/domains",
     "GET",
@@ -122,9 +122,9 @@ function install_cert() {
     function(status) {
       if (/^OK($|\n)/.test(status)) {
         console.log(status)
-        show_modal_error("SSL Certificate Installation", "Certificate has been installed. Check that you have no connection problems to the domain.", function() { show_ssl(); $('#csr_info').slideUp(); });
+        show_modal_error("TLS Certificate Installation", "Certificate has been installed. Check that you have no connection problems to the domain.", function() { show_ssl(); $('#csr_info').slideUp(); });
       } else {
-        show_modal_error("SSL Certificate Installation", status);
+        show_modal_error("TLS Certificate Installation", status);
       }
     });
 }

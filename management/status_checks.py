@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 #
 # Checks that the upstream DNS has been set correctly and that
-# SSL certificates have been signed, etc., and if not tells the user
+# TLS certificates have been signed, etc., and if not tells the user
 # what to do next.
 
 import sys, os, os.path, re, subprocess, datetime, multiprocessing.pool
@@ -609,7 +609,7 @@ def check_web_domain(domain, rounded_time, ssl_certificates, env, output):
 				webmail or a website on this domain. The domain currently resolves to %s in public DNS. It may take several hours for
 				public DNS to update after a change. This problem may result from other issues listed here.""" % (env['PUBLIC_IP'], ip))
 
-	# We need a SSL certificate for PRIMARY_HOSTNAME because that's where the
+	# We need a TLS certificate for PRIMARY_HOSTNAME because that's where the
 	# user will log in with IMAP or webmail. Any other domain we serve a
 	# website for also needs a signed certificate.
 	check_ssl_cert(domain, rounded_time, ssl_certificates, env, output)
@@ -651,18 +651,18 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None):
 	return "; ".join(sorted(str(r).rstrip('.') for r in response))
 
 def check_ssl_cert(domain, rounded_time, ssl_certificates, env, output):
-	# Check that SSL certificate is signed.
+	# Check that TLS certificate is signed.
 
 	# Skip the check if the A record is not pointed here.
 	if query_dns(domain, "A", None) not in (env['PUBLIC_IP'], None): return
 
-	# Where is the SSL stored?
+	# Where is the certificate file stored?
 	tls_cert = get_domain_ssl_files(domain, ssl_certificates, env, allow_missing_cert=True)
 	if tls_cert is None:
-		output.print_warning("""No SSL certificate is installed for this domain. Visitors to a website on
+		output.print_warning("""No TLS (SSL) certificate is installed for this domain. Visitors to a website on
 			this domain will get a security warning. If you are not serving a website on this domain, you do
-			not need to take any action. Use the SSL Certificates page in the control panel to install a
-			SSL certificate.""")
+			not need to take any action. Use the TLS Certificates page in the control panel to install a
+			TLS certificate.""")
 		return
 
 	# Check that the certificate is good.
@@ -671,19 +671,19 @@ def check_ssl_cert(domain, rounded_time, ssl_certificates, env, output):
 
 	if cert_status == "OK":
 		# The certificate is ok. The details has expiry info.
-		output.print_ok("SSL certificate is signed & valid. " + cert_status_details)
+		output.print_ok("TLS (SSL) certificate is signed & valid. " + cert_status_details)
 
 	elif cert_status == "SELF-SIGNED":
 		# Offer instructions for purchasing a signed certificate.
 		if domain == env['PRIMARY_HOSTNAME']:
-			output.print_error("""The SSL certificate for this domain is currently self-signed. You will get a security
+			output.print_error("""The TLS (SSL) certificate for this domain is currently self-signed. You will get a security
 			warning when you check or send email and when visiting this domain in a web browser (for webmail or
 			static site hosting).""")
 		else:
-			output.print_error("""The SSL certificate for this domain is self-signed.""")
+			output.print_error("""The TLS (SSL) certificate for this domain is self-signed.""")
 
 	else:
-		output.print_error("The SSL certificate has a problem: " + cert_status)
+		output.print_error("The TLS (SSL) certificate has a problem: " + cert_status)
 		if cert_status_details:
 			output.print_line("")
 			output.print_line(cert_status_details)

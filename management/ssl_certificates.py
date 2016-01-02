@@ -663,7 +663,7 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 			return ("The certificate is missing an intermediate chain or the intermediate chain is incorrect or incomplete. (%s)" % verifyoutput, None)
 
 		# There is some unknown problem. Return the `openssl verify` raw output.
-		return ("There is a problem with the SSL certificate.", verifyoutput.strip())
+		return ("There is a problem with the certificate.", verifyoutput.strip())
 
 	else:
 		# `openssl verify` returned a zero exit status so the cert is currently

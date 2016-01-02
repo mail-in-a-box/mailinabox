@@ -87,7 +87,7 @@
               <a href="#" class="dropdown-toggle" data-toggle="dropdown">System <b class="caret"></b></a>
               <ul class="dropdown-menu">
                 <li><a href="#system_status" onclick="return show_panel(this);">Status Checks</a></li>
-                <li><a href="#ssl" onclick="return show_panel(this);">SSL Certificates</a></li>
+                <li><a href="#tls" onclick="return show_panel(this);">TLS (SSL) Certificates</a></li>
                 <li><a href="#system_backup" onclick="return show_panel(this);">Backup Status</a></li>
                 <li class="divider"></li>
                 <li class="dropdown-header">Advanced Pages</li>
@@ -155,7 +155,7 @@
       {% include "web.html" %}
       </div>
 
-      <div id="panel_ssl" class="admin_panel">
+      <div id="panel_tls" class="admin_panel">
       {% include "ssl.html" %}
       </div>
 
