@@ -3,9 +3,9 @@ if [ -z "$NONINTERACTIVE" ]; then
 	# this was being able to ask the user for input even if stdin has been redirected,
 	# e.g. if we piped a bootstrapping install script to bash to get started. In that
 	# case, the nifty '[ -t 0 ]' test won't work. But with Vagrant we must suppress so we
-	# use a shell flag instead. Really supress any output from installing dialog.
+	# use a shell flag instead. Really suppress any output from installing dialog.
 	#
-	# Also install depencies needed to validate the email address.
+	# Also install dependencies needed to validate the email address.
 	if [ ! -f /usr/bin/dialog ] || [ ! -f /usr/bin/python3 ] || [ ! -f /usr/bin/pip3 ]; then
 		echo Installing packages needed for setup...
 		apt-get -q -q update
