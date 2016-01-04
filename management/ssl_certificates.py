@@ -156,7 +156,7 @@ def get_domain_ssl_files(domain, ssl_certificates, env, allow_missing_cert=False
 
 # PROVISIONING CERTIFICATES FROM LETSENCRYPT
 
-def get_certificates_to_provision(env, ok_as_problem=True, force_domains=None):
+def get_certificates_to_provision(env, show_extended_problems=True, force_domains=None):
 	# Get a set of domain names that we should now provision certificates
 	# for. Provision if a domain name has no valid certificate or if any
 	# certificate is expiring in 14 days. If provisioning anything, also
@@ -204,13 +204,13 @@ def get_certificates_to_provision(env, ok_as_problem=True, force_domains=None):
 				domains_if_any.add(domain)
 
 			# It's valid. Should we report its validness?
-			if ok_as_problem:
+			if show_extended_problems:
 				problems[domain] = "The certificate is valid for at least another 30 days --- no need to replace."
 
 	# Warn the user about domains hosted elsewhere.
-	if force_domains is None:
+	if not force_domains and show_extended_problems:
 		for domain in set(get_web_domains(env, exclude_dns_elsewhere=False)) - set(get_web_domains(env)):
-			problems[domain] = "The domain's DNS is pointed elsewhere, so a TLS certificate is not necessary here and cannot be provisioned automatically anyway."
+			problems[domain] = "The domain's DNS is pointed elsewhere, so there is no point to installing a TLS certificate here and we could not automatically provision one anyway because provisioning requires access to the website (which isn't here)."
 
 	# Filter out domains that we can't provision a certificate for.
 	def can_provision_for_domain(domain):
@@ -253,7 +253,7 @@ def get_certificates_to_provision(env, ok_as_problem=True, force_domains=None):
 
 	return (domains, problems)
 
-def provision_certificates(env, agree_to_tos_url=None, logger=None, force_domains=None):
+def provision_certificates(env, agree_to_tos_url=None, logger=None, force_domains=None, jsonable=False):
 	import requests.exceptions
 	import acme.messages
 
@@ -324,7 +324,6 @@ def provision_certificates(env, agree_to_tos_url=None, logger=None, force_domain
 
 			except client.NeedToTakeAction as e:
 				# Write out the ACME challenge files.
-				
 				for action in e.actions:
 					if isinstance(action, client.NeedToInstallFile):
 						fn = os.path.join(challenges_path, action.file_name)
@@ -355,7 +354,7 @@ def provision_certificates(env, agree_to_tos_url=None, logger=None, force_domain
 			import time, datetime
 			ret_item.update({
 				"result": "wait",
-				"until": e.until_when, #.isoformat(),
+				"until": e.until_when if not jsonable else e.until_when.isoformat(),
 				"seconds": (e.until_when - datetime.datetime.now()).total_seconds()
 			})
 
