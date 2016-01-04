@@ -608,6 +608,7 @@ def check_web_domain(domain, rounded_time, ssl_certificates, env, output):
 			output.print_error("""This domain should resolve to your box's IP address (%s) if you would like the box to serve
 				webmail or a website on this domain. The domain currently resolves to %s in public DNS. It may take several hours for
 				public DNS to update after a change. This problem may result from other issues listed here.""" % (env['PUBLIC_IP'], ip))
+			return
 
 	# We need a TLS certificate for PRIMARY_HOSTNAME because that's where the
 	# user will log in with IMAP or webmail. Any other domain we serve a
