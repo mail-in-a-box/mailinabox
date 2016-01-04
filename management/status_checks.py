@@ -601,14 +601,21 @@ def check_web_domain(domain, rounded_time, ssl_certificates, env, output):
 	# for PRIMARY_HOSTNAME, for which it is required for mail specifically. For it and
 	# other domains, it is required to access its website.
 	if domain != env['PRIMARY_HOSTNAME']:
-		ip = query_dns(domain, "A")
-		if ip == env['PUBLIC_IP']:
-			output.print_ok("Domain resolves to this box's IP address. [%s ↦ %s]" % (domain, env['PUBLIC_IP']))
-		else:
-			output.print_error("""This domain should resolve to your box's IP address (%s) if you would like the box to serve
-				webmail or a website on this domain. The domain currently resolves to %s in public DNS. It may take several hours for
-				public DNS to update after a change. This problem may result from other issues listed here.""" % (env['PUBLIC_IP'], ip))
-			return
+		ok_values = []
+		for (rtype, expected) in (("A", env['PUBLIC_IP']), ("AAAA", env.get('PUBLIC_IPV6'))):
+			if not expected: continue # IPv6 is not configured
+			value = query_dns(domain, rtype)
+			if value == expected:
+				ok_values.append(value)
+			else:
+				output.print_error("""This domain should resolve to your box's IP address (%s %s) if you would like the box to serve
+					webmail or a website on this domain. The domain currently resolves to %s in public DNS. It may take several hours for
+					public DNS to update after a change. This problem may result from other issues listed here.""" % (rtype, expected, value))
+				return
+
+		# If both A and AAAA are correct...
+		output.print_ok("Domain resolves to this box's IP address. [%s ↦ %s]" % (domain, '; '.join(ok_values)))
+
 
 	# We need a TLS certificate for PRIMARY_HOSTNAME because that's where the
 	# user will log in with IMAP or webmail. Any other domain we serve a
