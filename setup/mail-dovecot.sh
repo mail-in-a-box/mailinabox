@@ -102,8 +102,13 @@ sed -i "s/#port = 110/port = 0/" /etc/dovecot/conf.d/10-master.conf
 # The risk is that if the connection is silent for too long it might be reset
 # by a peer. See [#129](https://github.com/mail-in-a-box/mailinabox/issues/129)
 # and [How bad is IMAP IDLE](http://razor.occams.info/blog/2014/08/09/how-bad-is-imap-idle/).
-tools/editconf.py /etc/dovecot/conf.d/20-imap.conf \
-	imap_idle_notify_interval="4 mins"
+# Also added imap_quota for quota display on roundcube.
+cat > /etc/dovecot/conf.d/20-imap.conf << EOF;
+imap_idle_notify_interval=4 mins
+protocol imap {
+  mail_plugins = \$mail_plugins antispam imap_quota
+}
+EOF
 
 # Set POP3 UIDL.
 # UIDLs are used by POP3 clients to keep track of what messages they've downloaded.
@@ -115,7 +120,34 @@ tools/editconf.py /etc/dovecot/conf.d/20-pop3.conf \
 # Full Text Search - Enable full text search of mail using dovecot's lucene plugin,
 # which *we* package and distribute (dovecot-lucene package).
 tools/editconf.py /etc/dovecot/conf.d/10-mail.conf \
-	mail_plugins="\$mail_plugins fts fts_lucene"
+	mail_plugins="\$mail_plugins fts fts_lucene quota"
+
+# Configure a simple usage of quota.
+# See this: http://wiki2.dovecot.org/Quota/Configuration
+#
+# dovecot quota as policy-service for postfix instead of dovecot to bounce it
+# See this: https://sys4.de/en/blog/2013/04/08/postfix-dovecot-mailbox-quota/
+cat > /etc/dovecot/conf.d/90-quota.conf << EOF;
+plugin {
+  quota = maildir:User quota
+  #quota_rule = *:storage=1M
+  #quota_rule2 = Trash:storage=+100M
+
+  quota_grace = 10%%
+  quota_status_success = DUNNO
+  quota_status_nouser = DUNNO
+  quota_status_overquota = "552 5.2.2 Mailbox is full"
+}
+
+service quota-status {
+  executable = quota-status -p postfix
+  inet_listener {
+    port = 12340
+  }
+  client_limit = 1
+}
+EOF
+
 cat > /etc/dovecot/conf.d/90-plugin-fts.conf << EOF;
 plugin {
   fts = lucene

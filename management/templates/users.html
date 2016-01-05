@@ -23,6 +23,10 @@
     <input type="password" class="form-control" id="adduserPassword" placeholder="Password">
   </div>
   <div class="form-group">
+    <label class="sr-only" for="adduserQuota">Quota (MB)</label>
+    <input type="text" class="form-control" id="adduserQuota" placeholder="Quota (MB)">
+  </div>
+  <div class="form-group">
     <select class="form-control" id="adduserPrivs">
       <option value="">Normal User</option>
       <option value="admin">Administrator</option>
@@ -31,6 +35,7 @@
   <button type="submit" class="btn btn-primary">Add User</button>
 </form>
 <ul style="margin-top: 1em; padding-left: 1.5em; font-size: 90%;">
+  <li>Enter blank or 0 for no quota (unlimited) accounts.</li>
   <li>Passwords must be at least eight characters and may not contain spaces. For best results, <a href="#" onclick="return generate_random_password()">generate a random password</a>.</li>
   <li>Use <a href="#" onclick="return show_panel('aliases')">aliases</a> to create email addresses that forward to existing accounts.</li>
   <li>Administrators get access to this control panel.</li>
@@ -44,6 +49,7 @@
       <th width="50%">Email Address</th>
       <th>Actions</th>
       <th>Mailbox Size</th>
+      <th>Mailbox Quota</th>
     </tr>
   </thead>
   <tbody>
@@ -66,6 +72,13 @@
           |
         </span>
 
+        <span class="if_active">
+          <a href="#" onclick="users_set_quota(this); return false;" class='setquota' title="Set Quota">
+            set quota
+          </a>
+          |
+        </span>
+
         <span class='add-privs'>
         </span>
 
@@ -74,6 +87,8 @@
         </a>
     </td>
     <td class='mailboxsize'>
+    </td>
+    <td class='mailboxquota'>
     </td>
   </tr>
   <tr id="user-extra-template" class="if_inactive">
@@ -157,6 +172,7 @@ function show_users() {
           n.attr('data-email', user.email);
           n.find('.address').text(user.email)
           n.find('.mailboxsize').text(nice_size(user.mailbox_size))
+          n.find('.mailboxquota').text(''+user.quota + " MB")
           n2.find('.restore_info tt').text(user.mailbox);
 
           if (user.status == 'inactive') continue;
@@ -185,13 +201,15 @@ function do_add_user() {
   var email = $("#adduserEmail").val();
   var pw = $("#adduserPassword").val();
   var privs = $("#adduserPrivs").val();
+  var quota = $("#adduserQuota").val();
   api(
     "/mail/users/add",
     "POST",
     {
       email: email,
       password: pw,
-      privileges: privs
+      privileges: privs,
+      quota: quota
     },
     function(r) {
       // Responses are multiple lines of pre-formatted text.
@@ -229,6 +247,33 @@ function users_set_password(elem) {
         },
         function(r) {
           show_modal_error("Set Password", r);
+        });
+    });
+}
+
+function users_set_quota(elem) {
+  var email = $(elem).parents('tr').attr('data-email');
+
+  var quota = "";
+
+  show_modal_confirm(
+    "User Quota",
+    $("<p>Set a new quota for <b>" + email + "</b>?</p> <p><label for='quota_value' style='display: block; font-weight: normal'>New Quota (MB):</label><input type='text' id='quota_value'></p><p><small>Quota must be positive integer. Enter 0 or blank for no quota.</small></p>"),
+    "Set Quota",
+    function() {
+      api(
+        "/mail/users/quota",
+        "POST",
+        {
+          email: email,
+          quota: $('#quota_value').val()
+        },
+        function(r) {
+          // Responses are multiple lines of pre-formatted text.
+          show_modal_error("Set Quota", $("<pre/>").text(r));
+        },
+        function(r) {
+          show_modal_error("Set Quota", r);
         });
     });
 }

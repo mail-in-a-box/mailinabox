@@ -148,6 +148,12 @@ def migration_11(env):
 		# meh
 		pass
 
+def migration_12(env):
+	# Add quota column to `users` table for quota implementation per user.
+	# Note that the numeric value represents megabyte. 0 is unlimited.
+	db = os.path.join(env["STORAGE_ROOT"], 'mail/users.sqlite')
+	shell("check_call", ["sqlite3", db, "ALTER TABLE users ADD quota NUMERIC NOT NULL DEFAULT 0"])
+
 def get_current_migration():
 	ver = 0
 	while True:
@@ -225,4 +231,3 @@ if __name__ == "__main__":
 	elif sys.argv[-1] == "--migrate":
 		# Perform migrations.
 		run_migrations()
-

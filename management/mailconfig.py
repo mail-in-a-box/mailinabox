@@ -128,14 +128,15 @@ def get_mail_users_ex(env, with_archived=False, with_slow_info=False):
 	users = []
 	active_accounts = set()
 	c = open_database(env)
-	c.execute('SELECT email, privileges FROM users')
-	for email, privileges in c.fetchall():
+	c.execute('SELECT email, privileges, quota FROM users')
+	for email, privileges, quota in c.fetchall():
 		active_accounts.add(email)
 
 		user = {
 			"email": email,
 			"privileges": parse_privs(privileges),
 			"status": "active",
+			"quota": quota,
 		}
 		users.append(user)
 
@@ -156,6 +157,7 @@ def get_mail_users_ex(env, with_archived=False, with_slow_info=False):
 						"privileges": "",
 						"status": "inactive",
 						"mailbox": mbox,
+						"quota": "?",
 					}
 					users.append(user)
 					if with_slow_info:
@@ -271,7 +273,7 @@ def get_mail_domains(env, filter_aliases=lambda alias : True):
 		 + [get_domain(address, as_unicode=False) for address, *_ in get_mail_aliases(env) if filter_aliases(address) ]
 		 )
 
-def add_mail_user(email, pw, privs, env):
+def add_mail_user(email, pw, privs, quota, env):
 	# validate email
 	if email.strip() == "":
 		return ("No email address provided.", 400)
@@ -285,8 +287,13 @@ def add_mail_user(email, pw, privs, env):
 		# during box setup the user won't know the rules.
 		return ("You may not make a user account for that address because it is frequently used for domain control validation. Use an alias instead if necessary.", 400)
 
+	if not quota:
+		quota = 0
+
 	# validate password
 	validate_password(pw)
+	# validate quota
+	validate_quota(quota)
 
 	# validate privileges
 	if privs is None or privs.strip() == "":
@@ -305,8 +312,8 @@ def add_mail_user(email, pw, privs, env):
 
 	# add the user to the database
 	try:
-		c.execute("INSERT INTO users (email, password, privileges) VALUES (?, ?, ?)",
-			(email, pw, "\n".join(privs)))
+		c.execute("INSERT INTO users (email, password, quota, privileges) VALUES (?, ?, ?, ?)",
+			(email, pw, quota, "\n".join(privs)))
 	except sqlite3.IntegrityError:
 		return ("User already exists.", 400)
 
@@ -326,6 +333,20 @@ def set_mail_password(email, pw, env):
 	# update the database
 	conn, c = open_database(env, with_connection=True)
 	c.execute("UPDATE users SET password=? WHERE email=?", (pw, email))
+	if c.rowcount != 1:
+		return ("That's not a user (%s)." % email, 400)
+	conn.commit()
+	return "OK"
+
+def set_mail_quota(email, quota, env):
+	if not quota:
+		quota = 0
+	# validate quota
+	validate_quota(quota)
+
+	# update the database
+	conn, c = open_database(env, with_connection=True)
+	c.execute("UPDATE users SET quota=? WHERE email=?", (quota, email))
 	if c.rowcount != 1:
 		return ("That's not a user (%s)." % email, 400)
 	conn.commit()
@@ -613,6 +634,13 @@ def validate_password(pw):
 	if len(pw) < 8:
 		raise ValueError("Passwords must be at least eight characters.")
 
+def validate_quota(quota):
+	# validate quota
+	quota = str(quota)
+	if not quota.isdigit():
+		raise ValueError("Quota must be a number.")
+	if int(quota) < 0:
+		raise ValueError("Quota must be a positive number.")
 
 if __name__ == "__main__":
 	import sys
