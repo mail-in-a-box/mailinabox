@@ -499,6 +499,13 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 
 	# Query public DNS for the DS record at the registrar.
 	ds = query_dns(domain, "DS", nxdomain=None)
+	# Some registars return multiple DS records using different digest function
+	# we are only interested in digest function 2
+	multi_ds = ds.split("; ")
+	for single_ds in multi_ds:
+		if len(single_ds.split(" ")) == 4 and single_ds.split(" ")[2] == "2":
+			ds = single_ds
+
 	ds_looks_valid = ds and len(ds.split(" ")) == 4
 	if ds_looks_valid: ds = ds.split(" ")
 	if ds_looks_valid and ds[0] == ds_keytag and ds[1] == ds_alg and ds[3] == digests.get(ds[2]):
