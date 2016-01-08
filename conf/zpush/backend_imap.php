@@ -41,6 +41,7 @@ define('IMAP_FROM_LDAP_QUERY', '(mail=#username@#domain)');
 define('IMAP_FROM_LDAP_FIELDS', serialize(array('givenname', 'sn', 'mail')));
 define('IMAP_FROM_LDAP_FROM', '#givenname #sn <#mail>');
 
+define('IMAP_SMTP_METHOD', 'sendmail');
 
 global $imap_smtp_params;
 $imap_smtp_params = array('host' => 'ssl://localhost', 'port' => 587, 'auth' => true, 'username' => 'imap_username', 'password' => 'imap_password');
