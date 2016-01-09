@@ -9,7 +9,7 @@ from dns_update import get_custom_dns_config, get_dns_zones
 from ssl_certificates import get_ssl_certificates, get_domain_ssl_files, check_certificate
 from utils import shell, safe_domain_name, sort_domains
 
-def get_web_domains(env, include_www_redirects=True):
+def get_web_domains(env, include_www_redirects=True, exclude_dns_elsewhere=True):
 	# What domains should we serve HTTP(S) for?
 	domains = set()
 
@@ -24,9 +24,10 @@ def get_web_domains(env, include_www_redirects=True):
 		# the topmost of each domain we serve.
 		domains |= set('www.' + zone for zone, zonefile in get_dns_zones(env))
 	 
-	# ...Unless the domain has an A/AAAA record that maps it to a different
-	# IP address than this box. Remove those domains from our list.
-	domains -= get_domains_with_a_records(env)
+	if exclude_dns_elsewhere:
+		# ...Unless the domain has an A/AAAA record that maps it to a different
+		# IP address than this box. Remove those domains from our list.
+		domains -= get_domains_with_a_records(env)
 
 	# Ensure the PRIMARY_HOSTNAME is in the list so we can serve webmail
 	# as well as Z-Push for Exchange ActiveSync. This can't be removed
@@ -119,7 +120,7 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 	root = get_web_root(domain, env)
 
 	# What private key and SSL certificate will we use for this domain?
-	ssl_key, ssl_certificate, ssl_via = get_domain_ssl_files(domain, ssl_certificates, env)
+	tls_cert = get_domain_ssl_files(domain, ssl_certificates, env)
 
 	# ADDITIONAL DIRECTIVES.
 
@@ -136,7 +137,7 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 		finally:
 			f.close()
 		return sha1.hexdigest()
-	nginx_conf_extra += "# ssl files sha1: %s / %s\n" % (hashfile(ssl_key), hashfile(ssl_certificate))
+	nginx_conf_extra += "# ssl files sha1: %s / %s\n" % (hashfile(tls_cert["private-key"]), hashfile(tls_cert["certificate"]))
 
 	# Add in any user customizations in YAML format.
 	hsts = "yes"
@@ -177,8 +178,8 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 	nginx_conf = nginx_conf.replace("$STORAGE_ROOT", env['STORAGE_ROOT'])
 	nginx_conf = nginx_conf.replace("$HOSTNAME", domain)
 	nginx_conf = nginx_conf.replace("$ROOT", root)
-	nginx_conf = nginx_conf.replace("$SSL_KEY", ssl_key)
-	nginx_conf = nginx_conf.replace("$SSL_CERTIFICATE", ssl_certificate)
+	nginx_conf = nginx_conf.replace("$SSL_KEY", tls_cert["private-key"])
+	nginx_conf = nginx_conf.replace("$SSL_CERTIFICATE", tls_cert["certificate"])
 	nginx_conf = nginx_conf.replace("$REDIRECT_DOMAIN", re.sub(r"^www\.", "", domain)) # for default www redirects to parent domain
 
 	return nginx_conf
@@ -193,20 +194,15 @@ def get_web_root(domain, env, test_exists=True):
 def get_web_domains_info(env):
 	www_redirects = set(get_web_domains(env)) - set(get_web_domains(env, include_www_redirects=False))
 	has_root_proxy_or_redirect = set(get_web_domains_with_root_overrides(env))
+	ssl_certificates = get_ssl_certificates(env)
 
 	# for the SSL config panel, get cert status
 	def check_cert(domain):
-		ssl_certificates = get_ssl_certificates(env)
-		x = get_domain_ssl_files(domain, ssl_certificates, env, allow_missing_cert=True)
-		if x is None: return ("danger", "No Certificate Installed")
-		ssl_key, ssl_certificate, ssl_via = x
-		cert_status, cert_status_details = check_certificate(domain, ssl_certificate, ssl_key)
+		tls_cert = get_domain_ssl_files(domain, ssl_certificates, env, allow_missing_cert=True)
+		if tls_cert is None: return ("danger", "No Certificate Installed")
+		cert_status, cert_status_details = check_certificate(domain, tls_cert["certificate"], tls_cert["private-key"])
 		if cert_status == "OK":
-			if not ssl_via:
-				return ("success", "Signed & valid. " + cert_status_details)
-			else:
-				# This is an alternate domain but using the same cert as the primary domain.
-				return ("success", "Signed & valid. " + ssl_via)
+			return ("success", "Signed & valid. " + cert_status_details)
 		elif cert_status == "SELF-SIGNED":
 			return ("warning", "Self-signed. Get a signed certificate to stop warnings.")
 		else:

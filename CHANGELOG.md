@@ -10,11 +10,13 @@ Mail:
 
 Control Panel:
 
+* The SSL (now "TLS") certificates page now supports provisioning free SSL certificates from Let's Encrypt.
 * Report free memory usage.
 
 System:
 
 * The daily backup will now email the administrator if there is a problem.
+* Expiring TLS (SSL) certificates are now automatically renewed via Let's Encrypt.
 
 v0.15a (January 9, 2016)
 ------------------------
