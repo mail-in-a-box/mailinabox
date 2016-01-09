@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+v0.15a (January 9, 2016)
+------------------------
+
+Mail:
+
+* Sending mail through Exchange/ActiveSync (Z-Push) had been broken since v0.14. This is now fixed.
+
 v0.15 (January 1, 2016)
 -----------------------
 
