@@ -751,8 +751,13 @@ def check_miab_version(env, output):
 	if config.get("privacy", True):
 		output.print_warning("Mail-in-a-Box version check disabled by privacy setting.")
 	else:
-		this_ver = what_version_is_this(env)
+		try:
+			this_ver = what_version_is_this(env)
+		except:
+			this_ver = "Unknown"
+
 		latest_ver = get_latest_miab_version()
+
 		if this_ver == latest_ver:
 			output.print_ok("Mail-in-a-Box is up to date. You are running version %s." % this_ver)
 		else:

@@ -12,6 +12,7 @@ Control Panel:
 
 * The SSL (now "TLS") certificates page now supports provisioning free SSL certificates from Let's Encrypt.
 * Report free memory usage.
+* Fix a crash when the git directory is not checked out to a tag.
 
 System:
 
