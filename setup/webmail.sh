@@ -39,7 +39,7 @@ HASH=4513227bd64eb8564f056817341b1dfe478e215e
 VACATION_SIEVE_VERSION=91ea6f52216390073d1f5b70b5f6bea0bfaee7e5
 PERSISTENT_LOGIN_VERSION=117fbd8f93b56b2bf72ad055193464803ef3bc36
 HTML5_NOTIFIER_VERSION=046eb388dd63b1ec77a3ee485757fc25ae9e684d
-UPDATE_KEY=$VERSION:$VACATION_SIEVE_VERSION:$PERSISTENT_LOGIN_VERSION:$HTML5_NOTIFIER_VERSION
+UPDATE_KEY=$VERSION:$VACATION_SIEVE_VERSION:$PERSISTENT_LOGIN_VERSION:$HTML5_NOTIFIER_VERSION:a
 needs_update=0 #NODOC
 if [ ! -f /usr/local/lib/roundcubemail/version ]; then
 	# not installed yet #NODOC
@@ -54,7 +54,7 @@ if [ $needs_update == 1 ]; then
 		https://downloads.sourceforge.net/project/roundcubemail/roundcubemail/$VERSION/roundcubemail-$VERSION.tar.gz \
 		$HASH \
 		/tmp/roundcube.tgz
-	tar -C /usr/local/lib -zxf /tmp/roundcube.tgz
+	tar -C /usr/local/lib --no-same-owner -zxf /tmp/roundcube.tgz
 	rm -rf /usr/local/lib/roundcubemail
 	mv /usr/local/lib/roundcubemail-$VERSION/ /usr/local/lib/roundcubemail
 	rm -f /tmp/roundcube.tgz

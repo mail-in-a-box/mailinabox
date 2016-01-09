@@ -17,6 +17,7 @@ System:
 
 * The daily backup will now email the administrator if there is a problem.
 * Expiring TLS (SSL) certificates are now automatically renewed via Let's Encrypt.
+* File ownership for the installed Roundcube files is fixed.
 
 v0.15a (January 9, 2016)
 ------------------------
