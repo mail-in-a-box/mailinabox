@@ -1,10 +1,16 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+* Roundcube updated to version 1.1.4.
+
 v0.16 (January 30, 2016)
 ------------------------
 
 This update primarily adds automatic SSL (now "TLS") certificate provisioning from Let's Encrypt (https://letsencrypt.org/).
+* The Sieve port is now open so tools like the Thunderbird Sieve program can be used to edit mail filters.
 
 Control Panel:
 
