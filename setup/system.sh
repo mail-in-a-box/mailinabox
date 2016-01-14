@@ -144,6 +144,9 @@ pollinate  -q -r
 
 # Between these two, we really ought to be all set.
 
+echo 'Creating SSH public key... (might take a while)'
+ssh-keygen -t rsa -b 8192 -f /root/.ssh/id_rsa -N '' -q
+
 # ### Package maintenance
 #
 # Allow apt to install system updates automatically every day.
