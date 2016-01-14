@@ -530,24 +530,31 @@ def munin_cgi(filename=""):
 	support infrastructure like spawn-fcgi.
 	"""
 
-	COMMAND = 'su - munin --preserve-environment --shell=/bin/bash -c "/usr/lib/munin/cgi/munin-cgi-graph \'%s\'"'
+	COMMAND = 'su - munin --preserve-environment --shell=/bin/bash -c /usr/lib/munin/cgi/munin-cgi-graph "%s"'
 	# su changes user, we use the munin user here
 	# --preserve-environment retains the environment, which is where Popen's `env` data is
 	# --shell=/bin/bash ensures the shell used is bash
 	# -c "/usr/lib/munin/cgi/munin-cgi-graph" passes the command to run as munin
-	# \'%s\' is a placeholder for where the request's querystring will be added
+	# "%s" is a placeholder for where the request's querystring will be added
 
 	if filename == "":
 		return ("a path must be specified", 404)
 
 	query_str = request.query_string.decode("utf-8", 'ignore')
+	query_str = query_str[1:] if query_str.startswith('&') else query_str[1:]
+	# I don't know if this is strictly necessary
 
 	env = {'PATH_INFO': '/%s/' % filename, 'QUERY_STRING': query_str}
-	cmd = COMMAND % (query_str if not query_str.startswith('&') else query_str[1:])
-	process = subprocess.Popen(cmd, env=env, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
-	stdout, stderr = process.communicate()
+	cmd = COMMAND % query_str
+	code, binout = utils.shell('check_output',
+							   cmd.split(' ', 5),
+							   # Using a maxsplit of 5 keeps the last 2 arguments together
+							   input=query_str.encode('UTF-8'),
+							   env=env,
+							   return_bytes=True,
+							   trap=True)
 
-	if process.returncode != 0:
+	if code != 0:
 		# nonzero returncode indicates error
 		app.logger.error("munin_cgi: munin-cgi-graph returned nonzero exit code, %s", process.returncode)
 		return ("error processing graph image", 500)
@@ -556,10 +563,10 @@ def munin_cgi(filename=""):
 	# Per http://www.libpng.org/pub/png/spec/1.2/PNG-Structure.html PNG files always start
 	# with the same 8 bytes (137 80 78 71 13 10 26 10) or b'\x89PNG\r\n\x1a\n' So we split
 	# the output of munin-cgi-graph where the PNG begins
-	bin_start = stdout.find(b'\x89PNG\r\n\x1a\n')
-	str_headers = stdout[:bin_start].decode("utf-8")
+	bin_start = binout.find(b'\x89PNG\r\n\x1a\n')
+	str_headers = binout[:bin_start].decode("utf-8")
 	# decode the byte str containing response headers
-	bin_image = stdout[bin_start:]
+	bin_image = binout[bin_start:]
 	response = make_response(bin_image)
 	for line in str_headers.splitlines():
 		if line:
