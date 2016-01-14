@@ -159,7 +159,7 @@ function nice_size(bytes) {
 
 function show_system_backup() {
   show_custom_backup()
-  
+
   $('#backup-status tbody').html("<tr><td colspan='2' class='text-muted'>Loading...</td></tr>")
   api(
     "/system/backup/status",
@@ -244,7 +244,7 @@ function set_custom_backup() {
   var target_type = $("#backup-target-type").val();
   var target_user = $("#backup-target-user").val();
   var target_pass = $("#backup-target-pass").val();
-  
+
   var target;
   if (target_type == "local" || target_type == "off")
     target = target_type;
