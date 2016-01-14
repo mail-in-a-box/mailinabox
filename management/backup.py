@@ -351,6 +351,33 @@ def list_target_files(config):
 	if p.scheme == "file":
 		return [(fn, os.path.getsize(os.path.join(p.path, fn))) for fn in os.listdir(p.path)]
 
+	elif p.scheme == "rsync":
+		env = load_environment()
+		rsync_fn_size_re = re.compile(r'.*    ([^ ]*) [^ ]* [^ ]* (.*)')
+		rsync_target = '{host}:{path}'
+
+		_, target_host, target_path = config['target'].split('//')
+		target_path = '/' + target_path
+
+		rsync_command = [ 'rsync',
+					'-e',
+					'/usr/bin/ssh -o StrictHostKeyChecking=no -oBatchMode=yes',
+					'--list-only',
+					'-r',
+					rsync_target.format(
+						host=target_host,
+						path=target_path)
+				]
+
+		code, listing = shell('check_output', rsync_command, get_env(env), trap=True)
+		if code == 0:
+			for l in listing.split('\n'):
+				match = rsync_fn_size_re.match(l)
+				if match:
+					yield (match.groups()[1], int(match.groups()[0].replace(',','')))
+		else:
+			raise ValueError("Connection to rsync host failed")
+
 	elif p.scheme == "s3":
 		# match to a Region
 		fix_boto() # must call prior to importing boto
