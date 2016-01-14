@@ -19,6 +19,9 @@ tmpldir /etc/munin/templates
 
 includedir /etc/munin/munin-conf.d
 
+# path dynazoom uses for requests
+cgiurl_graph /admin/munin/cgi-graph
+
 # a simple host tree
 [$PRIMARY_HOSTNAME]
 address 127.0.0.1

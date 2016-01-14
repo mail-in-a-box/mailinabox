@@ -1,10 +1,10 @@
 #!/usr/bin/python3
 
 import os, os.path, re, json
-
+import subprocess
 from functools import wraps
 
-from flask import Flask, request, render_template, abort, Response, send_from_directory
+from flask import Flask, request, render_template, abort, Response, send_from_directory, make_response
 
 import auth, utils
 from mailconfig import get_mail_users, get_mail_users_ex, get_admins, add_mail_user, set_mail_password, remove_mail_user
@@ -506,6 +506,81 @@ def munin(filename=""):
 	# the request to static files.
 	if filename == "": filename = "index.html"
 	return send_from_directory("/var/cache/munin/www", filename)
+
+# MUNIN CGI-GRAPH
+
+@app.route('/munin/cgi-graph/')
+@app.route('/munin/cgi-graph/<path:filename>')
+@authorized_personnel_only
+def munin_cgi(filename=""):
+	""" Relay munin cgi dynazoom requests
+
+	/usr/lib/munin/cgi/munin-cgi-graph is a perl cgi script in the munin package
+	that is responsible for generating binary png images _and_ associated HTTP
+	headers based on parameters in the requesting URL. All output is written
+	to stdout which munin_cgi splits into response headers and binary response
+	data.
+
+	munin-cgi-graph reads environment variables as well as passed input to determin
+	what it should do. It expects a path to be in the env-var PATH_INFO, and a
+	querystring to be in the env-var QUERY_STRING as well as passed as input to the
+	command.
+
+	munin-cgi-graph has several failure modes. Some write HTTP 404 Status headers
+	and others return nonzero exit codes. munin_cgi has some basic handling, and
+	logs errors to app.logger.
+
+	= Reasoning =
+	Situating munin_cgi between the user-agent and munin-cgi-graph enables keeping
+	the cgi script behind mailinabox's auth mechanisms and avoids additional
+	support infrastructure like spawn-fcgi.
+
+	= Configuration =
+	A single configuration change is all that is required to enable the
+	functionality of munin_cgi. In the munin.conf file (/etc/munin/munin.conf) add
+	the following line above your server listings:
+	`cgiurl_graph /admin/munin/cgi-graph`
+	This will tell munin to override the default path for dynazoom requests.
+	"""
+
+	COMMAND = 'su - munin --preserve-environment --shell=/bin/bash -c "/usr/lib/munin/cgi/munin-cgi-graph \'%s\'"'
+	# su changes user, we use the munin user here
+	# --preserve-environment retains the environment, which is where Popen's `env` data is
+	# --shell=/bin/bash ensures the shell used is bash
+	# -c "/usr/lib/munin/cgi/munin-cgi-graph" passes the command to run as munin
+	# \'%s\' is a placeholder for where the request's querystring will be added
+
+	if filename == "":
+		return ("a path must be specified", 404)
+
+	query_str = request.query_string.decode("utf-8", 'ignore')
+
+	env = {'PATH_INFO': '/%s/' % filename, 'QUERY_STRING': query_str}
+	cmd = COMMAND % (query_str if not query_str.startswith('&') else query_str[1:])
+	process = subprocess.Popen(cmd, env=env, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+	stdout, stderr = process.communicate()
+
+	if process.returncode != 0:
+		# nonzero returncode indicates error
+		app.logger.error("munin_cgi: munin-cgi-graph returned nonzero exit code, %s", process.returncode)
+		return ("error processing graph image", 500)
+
+	# /usr/lib/munin/cgi/munin-cgi-graph returns both headers and binary png when successful.
+	# Per http://www.libpng.org/pub/png/spec/1.2/PNG-Structure.html PNG files always start
+	# with the same 8 bytes (137 80 78 71 13 10 26 10) or b'\x89PNG\r\n\x1a\n' So we split
+	# the output of munin-cgi-graph where the PNG begins
+	bin_start = stdout.find(b'\x89PNG\r\n\x1a\n')
+	str_headers = stdout[:bin_start].decode("utf-8")
+	# decode the byte str containing response headers
+	bin_image = stdout[bin_start:]
+	response = make_response(bin_image)
+	for line in str_headers.splitlines():
+		if line:
+			name, value = line.split(':',1)
+			response.headers[name] = value
+	if 'Status' in response.headers and '404' in response.headers['Status']:
+		app.logger.warning("munin_cgi: munin-cgi-graph returned 404 status code. PATH_INFO=%s", env['PATH_INFO'])
+	return response
 
 # APP
 
