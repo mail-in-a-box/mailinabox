@@ -477,6 +477,10 @@ def get_backup_config(env, for_save=False, for_ui=False):
 	if config["target"] == "local":
 		# Expand to the full URL.
 		config["target"] = "file://" + config["file_target_directory"]
+	elif config["target"].startswith('rsync'):
+		ssh_pub_key = os.path.join('/root', '.ssh', 'id_rsa.pub')
+		if os.path.exists(ssh_pub_key):
+			config["ssh_pub_key"] = open(ssh_pub_key, 'r').read()
 
 	return config
 

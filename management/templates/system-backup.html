@@ -37,9 +37,6 @@
       they are safe to store anywhere.</p> <p>Separately copy the encryption
       password from <tt class="backup-encpassword-file"></tt> to a safe and
       secure location. You will need this file to decrypt backup files.</p>
-      <p>Separately copy the SSH public key from <tt>/root/.ssh/id_rsa.pub</tt>
-      and add it to your backup account on your remote server, in the
-      <tt>~/.ssh/authorized_keys</tt> file.</p>
 
     </div>
   </div>
@@ -59,6 +56,17 @@
     <label for="backup-target-rsync-user" class="col-sm-2 control-label">Username</label>
     <div class="col-sm-8">
       <input type="text" class="form-control" rows="1" id="backup-target-rsync-user">
+    </div>
+  </div>
+  <div class="form-group backup-target-rsync">
+    <label for="ssh-pub-key" class="col-sm-2 control-label">Public SSH Key</label>
+    <div class="col-sm-8">
+      <input type="text" class="form-control" rows="1" id="ssh-pub-key" readonly>
+      <div class="small" style="margin-top: 2px">
+        Copy the Public SSH Key above, and paste it within the <tt>~/.ssh/authorized_keys</tt>
+        of target user on the backup server specified above. That way you'll enable secure and
+        passwordless authentication from your mail-in-a-box server and your backup server.
+      </div>
     </div>
   </div>
   <!-- S3 BACKUP -->
@@ -208,6 +216,7 @@ function show_custom_backup() {
         $("#min-age").val(r.min_age_in_days);
         $(".backup-location").text(r.file_target_directory);
         $(".backup-encpassword-file").text(r.enc_pw_file);
+        $("#ssh-pub-key").val(r.ssh_pub_key);
 
         if (r.target == "file://" + r.file_target_directory) {
           $("#backup-target-type").val("local");
