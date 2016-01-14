@@ -253,7 +253,7 @@ def get_certificates_to_provision(env, show_extended_problems=True, force_domain
 
 	return (domains, problems)
 
-def provision_certificates(env, agree_to_tos_url=None, logger=None, force_domains=None, jsonable=False):
+def provision_certificates(env, agree_to_tos_url=None, logger=None, show_extended_problems=True, force_domains=None, jsonable=False):
 	import requests.exceptions
 	import acme.messages
 
@@ -261,7 +261,7 @@ def provision_certificates(env, agree_to_tos_url=None, logger=None, force_domain
 
 	# What domains should we provision certificates for? And what
 	# errors prevent provisioning for other domains.
-	domains, problems = get_certificates_to_provision(env, force_domains=force_domains)
+	domains, problems = get_certificates_to_provision(env, force_domains=force_domains, show_extended_problems=show_extended_problems)
 
 	# Exit fast if there is nothing to do.
 	if len(domains) == 0:
@@ -405,11 +405,15 @@ def provision_certificates_cmdline():
 	verbose = False
 	headless = False
 	force_domains = None
+	show_extended_problems = True
 	
 	args = list(sys.argv)
 	args.pop(0) # program name
 	if args and args[0] == "-v":
 		verbose = True
+		args.pop(0)
+	if args and args[0] == "q":
+		show_extended_problems = False
 		args.pop(0)
 	if args and args[0] == "--headless":
 		headless = True
@@ -429,7 +433,7 @@ def provision_certificates_cmdline():
 		def my_logger(message):
 			if verbose:
 				print(">", message)
-		status = provision_certificates(env, agree_to_tos_url=agree_to_tos_url, logger=my_logger, force_domains=force_domains)
+		status = provision_certificates(env, agree_to_tos_url=agree_to_tos_url, logger=my_logger, force_domains=force_domains, show_extended_problems=show_extended_problems)
 		agree_to_tos_url = None # reset to prevent infinite looping
 
 		if not status["requests"]:

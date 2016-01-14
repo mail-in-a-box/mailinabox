@@ -117,7 +117,8 @@ tools/dns_update
 tools/web_update
 
 # If DNS is already working, try to provision TLS certficates from Let's Encrypt.
-management/ssl_certificates.py
+# Suppress extra reasons why domains aren't getting a new certificate.
+management/ssl_certificates.py -q
 
 # If there aren't any mail users yet, create one.
 source setup/firstuser.sh
