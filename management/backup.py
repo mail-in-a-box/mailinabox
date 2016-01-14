@@ -154,24 +154,24 @@ def get_passphrase(env):
 	with open(os.path.join(backup_root, 'secret_key.txt')) as f:
 		passphrase = f.readline().strip()
 	if len(passphrase) < 43: raise Exception("secret_key.txt's first line is too short!")
-	
+
 	return passphrase
 
 def get_env(env):
 	config = get_backup_config(env)
-	
+
 	env = { "PASSPHRASE" : get_passphrase(env) }
-	
+
 	if get_target_type(config) == 's3':
 		env["AWS_ACCESS_KEY_ID"] = config["target_user"]
 		env["AWS_SECRET_ACCESS_KEY"] = config["target_pass"]
-	
+
 	return env
-	
+
 def get_target_type(config):
 	protocol = config["target"].split(":")[0]
 	return protocol
-	
+
 def perform_backup(full_backup):
 	env = load_environment()
 
@@ -181,7 +181,7 @@ def perform_backup(full_backup):
 	backup_cache_dir = os.path.join(backup_root, 'cache')
 	backup_dir = os.path.join(backup_root, 'encrypted')
 
-	# Are backups dissbled?
+	# Are backups disabled?
 	if config["target"] == "off":
 		return
 
@@ -420,7 +420,7 @@ def list_target_files(config):
 
 def backup_set_custom(env, target, target_user, target_pass, min_age):
 	config = get_backup_config(env, for_save=True)
-	
+
 	# min_age must be an int
 	if isinstance(min_age, str):
 		min_age = int(min_age)
@@ -438,11 +438,11 @@ def backup_set_custom(env, target, target_user, target_pass, min_age):
 			list_target_files(config)
 	except ValueError as e:
 		return str(e)
-	
+
 	write_backup_config(env, config)
 
 	return "OK"
-	
+
 def get_backup_config(env, for_save=False, for_ui=False):
 	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
 
