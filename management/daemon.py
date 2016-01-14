@@ -514,33 +514,20 @@ def munin(filename=""):
 @authorized_personnel_only
 def munin_cgi(filename=""):
 	""" Relay munin cgi dynazoom requests
-
 	/usr/lib/munin/cgi/munin-cgi-graph is a perl cgi script in the munin package
 	that is responsible for generating binary png images _and_ associated HTTP
 	headers based on parameters in the requesting URL. All output is written
 	to stdout which munin_cgi splits into response headers and binary response
 	data.
-
-	munin-cgi-graph reads environment variables as well as passed input to determin
+	munin-cgi-graph reads environment variables as well as passed input to determine
 	what it should do. It expects a path to be in the env-var PATH_INFO, and a
 	querystring to be in the env-var QUERY_STRING as well as passed as input to the
 	command.
-
-	munin-cgi-graph has several failure modes. Some write HTTP 404 Status headers
-	and others return nonzero exit codes. munin_cgi has some basic handling, and
-	logs errors to app.logger.
-
-	= Reasoning =
+	munin-cgi-graph has several failure modes. Some write HTTP Status headers and
+	others return nonzero exit codes.
 	Situating munin_cgi between the user-agent and munin-cgi-graph enables keeping
 	the cgi script behind mailinabox's auth mechanisms and avoids additional
 	support infrastructure like spawn-fcgi.
-
-	= Configuration =
-	A single configuration change is all that is required to enable the
-	functionality of munin_cgi. In the munin.conf file (/etc/munin/munin.conf) add
-	the following line above your server listings:
-	`cgiurl_graph /admin/munin/cgi-graph`
-	This will tell munin to override the default path for dynazoom requests.
 	"""
 
 	COMMAND = 'su - munin --preserve-environment --shell=/bin/bash -c "/usr/lib/munin/cgi/munin-cgi-graph \'%s\'"'
