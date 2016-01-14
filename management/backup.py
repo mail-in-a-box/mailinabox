@@ -57,6 +57,7 @@ def backup_status(env):
 		"--archive-dir", backup_cache_dir,
 		"--gpg-options", "--cipher-algo=AES256",
 		"--log-fd", "1",
+		"--ssh-options='-i /root/.ssh/id_rsa_miab'",
 		config["target"],
 		],
 		get_env(env),
@@ -249,6 +250,7 @@ def perform_backup(full_backup):
 			"--volsize", "250",
 			"--gpg-options", "--cipher-algo=AES256",
 			env["STORAGE_ROOT"],
+			"--ssh-options='-i /root/.ssh/id_rsa_miab'",
 			config["target"],
 			"--allow-source-mismatch"
 			],
@@ -272,6 +274,7 @@ def perform_backup(full_backup):
 		"--verbosity", "error",
 		"--archive-dir", backup_cache_dir,
 		"--force",
+		"--ssh-options='-i /root/.ssh/id_rsa_miab'",
 		config["target"]
 		],
 		get_env(env))
@@ -287,6 +290,7 @@ def perform_backup(full_backup):
 		"--verbosity", "error",
 		"--archive-dir", backup_cache_dir,
 		"--force",
+		"--ssh-options='-i /root/.ssh/id_rsa_miab'",
 		config["target"]
 		],
 		get_env(env))
@@ -325,6 +329,7 @@ def run_duplicity_verification():
 		"--compare-data",
 		"--archive-dir", backup_cache_dir,
 		"--exclude", backup_root,
+		"--ssh-options='-i /root/.ssh/id_rsa_miab'",
 		config["target"],
 		env["STORAGE_ROOT"],
 	], get_env(env))
@@ -337,6 +342,7 @@ def run_duplicity_restore(args):
 		"/usr/bin/duplicity",
 		"restore",
 		"--archive-dir", backup_cache_dir,
+		"--ssh-options='-i /root/.ssh/id_rsa_miab'",
 		config["target"],
 		] + args,
 	get_env(env))
@@ -360,7 +366,7 @@ def list_target_files(config):
 
 		rsync_command = [ 'rsync',
 					'-e',
-					'/usr/bin/ssh -o StrictHostKeyChecking=no -oBatchMode=yes',
+					'/usr/bin/ssh -i /root/.ssh/id_rsa_miab -oStrictHostKeyChecking=no -oBatchMode=yes',
 					'--list-only',
 					'-r',
 					rsync_target.format(
@@ -477,7 +483,7 @@ def get_backup_config(env, for_save=False, for_ui=False):
 		# Expand to the full URL.
 		config["target"] = "file://" + config["file_target_directory"]
 	elif config["target"].startswith('rsync'):
-		ssh_pub_key = os.path.join('/root', '.ssh', 'id_rsa.pub')
+		ssh_pub_key = os.path.join('/root', '.ssh', 'id_rsa_miab.pub')
 		if os.path.exists(ssh_pub_key):
 			config["ssh_pub_key"] = open(ssh_pub_key, 'r').read()
 
