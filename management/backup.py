@@ -352,7 +352,6 @@ def list_target_files(config):
 		return [(fn, os.path.getsize(os.path.join(p.path, fn))) for fn in os.listdir(p.path)]
 
 	elif p.scheme == "rsync":
-		env = load_environment()
 		rsync_fn_size_re = re.compile(r'.*    ([^ ]*) [^ ]* [^ ]* (.*)')
 		rsync_target = '{host}:{path}'
 
@@ -369,7 +368,7 @@ def list_target_files(config):
 						path=target_path)
 				]
 
-		code, listing = shell('check_output', rsync_command, get_env(env), trap=True)
+		code, listing = shell('check_output', rsync_command, trap=True)
 		if code == 0:
 			for l in listing.split('\n'):
 				match = rsync_fn_size_re.match(l)
