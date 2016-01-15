@@ -58,7 +58,7 @@ def backup_status(env):
 		"--gpg-options", "--cipher-algo=AES256",
 		"--log-fd", "1",
 		"--ssh-options='-i /root/.ssh/id_rsa_miab'",
-		"--rsync-options=-e \"/usr/bin/ssh -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
+		"--rsync-options=-e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
 		config["target"],
 		],
 		get_env(env),
@@ -252,7 +252,7 @@ def perform_backup(full_backup):
 			"--gpg-options", "--cipher-algo=AES256",
 			env["STORAGE_ROOT"],
 			"--ssh-options='-i /root/.ssh/id_rsa_miab'",
-			"--rsync-options=-e \"/usr/bin/ssh -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
+			"--rsync-options=-e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
 			config["target"],
 			"--allow-source-mismatch"
 			],
@@ -277,7 +277,7 @@ def perform_backup(full_backup):
 		"--archive-dir", backup_cache_dir,
 		"--force",
 		"--ssh-options='-i /root/.ssh/id_rsa_miab'",
-		"--rsync-options=-e \"/usr/bin/ssh -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
+		"--rsync-options=-e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
 		config["target"]
 		],
 		get_env(env))
@@ -294,7 +294,7 @@ def perform_backup(full_backup):
 		"--archive-dir", backup_cache_dir,
 		"--force",
 		"--ssh-options='-i /root/.ssh/id_rsa_miab'",
-		"--rsync-options=-e \"/usr/bin/ssh -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
+		"--rsync-options=-e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
 		config["target"]
 		],
 		get_env(env))
@@ -334,7 +334,7 @@ def run_duplicity_verification():
 		"--archive-dir", backup_cache_dir,
 		"--exclude", backup_root,
 		"--ssh-options='-i /root/.ssh/id_rsa_miab'",
-		"--rsync-options=-e \"/usr/bin/ssh -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
+		"--rsync-options=-e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
 		config["target"],
 		env["STORAGE_ROOT"],
 	], get_env(env))
@@ -348,7 +348,7 @@ def run_duplicity_restore(args):
 		"restore",
 		"--archive-dir", backup_cache_dir,
 		"--ssh-options='-i /root/.ssh/id_rsa_miab'",
-		"--rsync-options=-e \"/usr/bin/ssh -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
+		"--rsync-options=-e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
 		config["target"],
 		] + args,
 	get_env(env))
@@ -488,10 +488,9 @@ def get_backup_config(env, for_save=False, for_ui=False):
 	if config["target"] == "local":
 		# Expand to the full URL.
 		config["target"] = "file://" + config["file_target_directory"]
-	elif config["target"].startswith('rsync'):
-		ssh_pub_key = os.path.join('/root', '.ssh', 'id_rsa_miab.pub')
-		if os.path.exists(ssh_pub_key):
-			config["ssh_pub_key"] = open(ssh_pub_key, 'r').read()
+	ssh_pub_key = os.path.join('/root', '.ssh', 'id_rsa_miab.pub')
+	if os.path.exists(ssh_pub_key):
+		config["ssh_pub_key"] = open(ssh_pub_key, 'r').read()
 
 	return config
 
