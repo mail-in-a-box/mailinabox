@@ -60,13 +60,18 @@ apt_install postfix postfix-pcre postgrey ca-certificates
 # * Set our name (the Debian default seems to be "localhost" but make it our hostname).
 # * Set the name of the local machine to localhost, which means xxx@localhost is delivered locally, although we don't use it.
 # * Set the SMTP banner (which must have the hostname first, then anything).
-# * Set the delay_warning_time to 1 day. Informs users that their e-mail delivery is delayed.
+# * Set the delay_warning_time to 3 hours to inform users that their e-mail delivery is delayed.
+# * The bounce_queue_lifetime refers to MAILER-DAEMON messages. Should be short and has no effect on regular mail.
+# * Set maximal_queue_lifetime to 2 days. Server will try to send an undeliverable e-mail for the maximum of 2 days.
+
 tools/editconf.py /etc/postfix/main.cf \
 	inet_interfaces=all \
 	myhostname=$PRIMARY_HOSTNAME\
 	smtpd_banner="\$myhostname ESMTP Hi, I'm a Mail-in-a-Box (Ubuntu/Postfix; see https://mailinabox.email/)" \
 	mydestination=localhost
-	delay_warning_time=1d
+	delay_warning_time=3h
+	maximal_queue_lifetime=2d 
+	bounce_queue_lifetime=1d
 
 # ### Outgoing Mail
 
