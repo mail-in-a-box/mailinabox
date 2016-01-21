@@ -66,11 +66,11 @@ apt_install postfix postfix-pcre postgrey ca-certificates
 
 tools/editconf.py /etc/postfix/main.cf \
 	inet_interfaces=all \
-	myhostname=$PRIMARY_HOSTNAME\
+	myhostname=$PRIMARY_HOSTNAME \
 	smtpd_banner="\$myhostname ESMTP Hi, I'm a Mail-in-a-Box (Ubuntu/Postfix; see https://mailinabox.email/)" \
-	mydestination=localhost
-	delay_warning_time=3h
-	maximal_queue_lifetime=2d 
+	mydestination=localhost \
+	delay_warning_time=3h \
+	maximal_queue_lifetime=2d \
 	bounce_queue_lifetime=1d
 
 # ### Outgoing Mail
