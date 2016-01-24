@@ -16,14 +16,14 @@ def get_web_domains(env, include_www_redirects=True, exclude_dns_elsewhere=True)
 	# Serve web for all mail domains so that we might at least
 	# provide auto-discover of email settings, and also a static website
 	# if the user wants to make one.
-	domains |= get_mail_domains(env)
+	domains |= get_mail_domains(env, filter_list='www')
 
 	if include_www_redirects:
 		# Add 'www.' subdomains that we want to provide default redirects
 		# to the main domain for. We'll add 'www.' to any DNS zones, i.e.
 		# the topmost of each domain we serve.
 		domains |= set('www.' + zone for zone, zonefile in get_dns_zones(env))
-	 
+
 	if exclude_dns_elsewhere:
 		# ...Unless the domain has an A/AAAA record that maps it to a different
 		# IP address than this box. Remove those domains from our list.
