@@ -26,7 +26,7 @@
     </div>
   </div>
   <div class="form-group">
-    <label for="addaliasAddress" class="col-sm-1 control-label">Alias</label>
+    <label for="addaliasAddress" class="col-sm-2 control-label">Alias</label>
     <div class="col-sm-10">
       <input type="email" class="form-control" id="addaliasAddress">
       <div style="margin-top: 3px; padding-left: 3px; font-size: 90%" class="text-muted">
@@ -36,7 +36,7 @@
     </div>
   </div>
   <div class="form-group">
-    <label for="addaliasForwardsTo" class="col-sm-1 control-label">Forwards To</label>
+    <label for="addaliasForwardsTo" class="col-sm-2 control-label">Forwards To</label>
     <div class="col-sm-10">
       <textarea class="form-control" rows="3" id="addaliasForwardsTo"></textarea>
       <div style="margin-top: 3px; padding-left: 3px; font-size: 90%" class="text-muted">
@@ -45,7 +45,7 @@
     </div>
   </div>
   <div class="form-group">
-    <label for="addaliasSenders" class="col-sm-1 control-label">Permitted Senders</label>
+    <label for="addaliasSenders" class="col-sm-2 control-label">Permitted Senders</label>
     <div class="col-sm-10">
       <div class="radio">
         <label>
@@ -65,19 +65,16 @@
     </div>
   </div>
   <div class="form-group">
-    <label for="addaliasDnsHandling" class="col-sm-1 control-label">New domain</label>
+    <label for="addaliasDnsHandling" class="col-sm-2 control-label">Services</label>
     <div class="col-sm-10">
-      <div class="checkbox">
-        <label>
-          <input id="addaliasDnsHandling" name="addaliasDnsHandling" type="checkbox" checked>
-          If the email is of a non-managed domain, create DNS configuration for the domain.
-        </label>
+      <div id="alias_service_buttons" class="btn-group btn-group-xs">
+        <button id="addaliasMailHandling" data-mode="mail" class="btn btn-xs btn-success active" disabled>MAIL</button>
+        <button id="addaliasDnsHandling" data-mode="dns" class="btn btn-xs btn-success active">DNS</button>
+    	<button id="addaliasWebHandling" data-mode="www" class="btn btn-xs btn-success active">WWW</button>
       </div>
-      <div class="checkbox">
-        <label>
-          <input id="addaliasWebHandling" name="addaliasWebHandling" type="checkbox" id="addaliasWebHandling" checked>
-          If the email is of a non-managed domain, create Web configuration for the domain.
-        </label>
+      <div id="alias_service_info" class="text-info small" style="display: none; margin: .5em 0 0 0;">
+        <span class="dns hidden">When deactivated, the DNS service is not configured for the domain</span>
+        <span class="www hidden">When deactivated, the Web services is not configured for the domain</span>
       </div>
     </div>
   </div>
@@ -182,7 +179,33 @@ function show_aliases() {
       }
     })
     $('#alias_type_buttons button[data-mode="regular"]').click(); // init
-  })
+
+    // Service buttons
+    $('#alias_service_buttons button').off('click').click(function() {
+      if ($(this).hasClass('active')) {
+        $(this).removeClass('active');
+        $(this).addClass('btn-default');
+        $(this).removeClass('btn-success');
+        $('#alias_service_info .www').addClass('hidden');
+        $('#alias_service_info .dns').addClass('hidden');
+        if ($(this).attr('data-mode') == "dns") {
+          $('#alias_service_info').slideDown();
+          $('#addalias-form .dns').removeClass('hidden');
+        } else if ($(this).attr('data-mode') == "www") {
+          $('#alias_service_info').slideDown();
+          $('#addalias-form .www').removeClass('hidden');
+        }
+      } else {
+        $(this).addClass('active');
+        $(this).removeClass('btn-default');
+        $(this).addClass('btn-success');
+        $('#alias_service_info').slideUp();
+        $('#addalias-form .www').addClass('hidden');
+        $('#addalias-form .dns').addClass('hidden');
+      }
+      return false;
+    });
+  });
 }
 
 var is_alias_add_update = false;
@@ -191,8 +214,8 @@ function do_add_alias() {
   var form_address = $("#addaliasAddress").val();
   var form_forwardsto = $("#addaliasForwardsTo").val();
   var form_senders = ($('#addaliasForwardsToAdvanced').prop('checked') ? $("#addaliasSenders").val() : '');
-  var form_dns = $('#addaliasDnsHandling').prop('checked');
-  var form_web = $('#addaliasWebHandling').prop('checked');
+  var form_dns = $('#addaliasDnsHandling').hasClass('active');
+  var form_web = $('#addaliasWebHandling').hasClass('active');
   if ($('#addaliasForwardsToAdvanced').prop('checked') && !/\S/.exec($("#addaliasSenders").val())) {
     show_modal_error(title, "You did not enter any permitted senders.");
     return false;
@@ -225,12 +248,16 @@ function aliases_reset_form() {
   $("#addaliasAddress").val('')
   $("#addaliasForwardsTo").val('')
   $("#addaliasSenders").val('')
-  $('#addaliasDnsHandling').prop('disabled', false);
-  $('#addaliasWebHandling').prop('disabled', false);
   $('#alias-cancel').addClass('hidden');
   $('#add-alias-button').text('Add Alias');
   is_alias_add_update = false;
+
+  $('#addaliasDnsHandling').prop('disabled', false).addClass('btn-success');
+  $('#addaliasWebHandling').prop('disabled', false).addClass('btn-success');
+
 }
+
+
 
 function aliases_edit(elem) {
   var address = $(elem).parents('tr').attr('data-address');

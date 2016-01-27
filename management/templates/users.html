@@ -29,24 +29,20 @@
     </select>
   </div>
   <div class="form-group">
-    <label for="adduserDnsHandling" class="col-sm-1 control-label">New domain</label>
-    <div class="col-sm-10">
-      <div class="checkbox">
-        <label>
-          <input id="adduserDnsHandling" name="adduserDnsHandling" type="checkbox" checked>
-          If the email is of a non-managed domain, create DNS configuration for the domain.
-        </label>
-      </div>
-      <div class="checkbox">
-        <label>
-          <input id="adduserWebHandling" name="adduserWebHandling" type="checkbox" id="adduserWebHandling" checked>
-          If the email is of a non-managed domain, create Web configuration for the domain.
-        </label>
+    <div class="col-sm-15">
+      <div id="user_service_buttons" class="btn-group btn-group">
+        <button id="adduserMailHandling" data-mode="mail" class="btn btn-success active" disabled>MAIL</button>
+        <button id="adduserDnsHandling" data-mode="dns" class="btn btn-success active">DNS</button>
+    	<button id="adduserWebHandling" data-mode="www" class="btn btn-success active">WWW</button>
       </div>
     </div>
   </div>
   <button type="submit" class="btn btn-primary">Add User</button>
 </form>
+<div id="user_service_info" class="text-info small" style="display: none; margin: .5em 0 0 0;">
+  <span class="dns hidden">When deactivated, the DNS service is not configured for the domain</span>
+  <span class="www hidden">When deactivated, the Web services is not configured for the domain</span>
+</div>
 <ul style="margin-top: 1em; padding-left: 1.5em; font-size: 90%;">
   <li>Passwords must be at least four characters and may not contain spaces. For best results, <a href="#" onclick="return generate_random_password()">generate a random password</a>.</li>
   <li>Use <a href="#" onclick="return show_panel('aliases')">aliases</a> to create email addresses that forward to existing accounts.</li>
@@ -154,14 +150,41 @@ function show_users() {
         }
       }
     })
+
+    // Service buttons
+    $('#user_service_buttons button').off('click').click(function() {
+      if ($(this).hasClass('active')) {
+        $(this).removeClass('active');
+        $(this).addClass('btn-default');
+        $(this).removeClass('btn-success');
+        $('#user_service_info .www').addClass('hidden');
+        $('#user_service_info .dns').addClass('hidden');
+        if ($(this).attr('data-mode') == "dns") {
+          $('#user_service_info').slideDown();
+          $('#user_service_info .dns').removeClass('hidden');
+        } else if ($(this).attr('data-mode') == "www") {
+          $('#user_service_info').slideDown();
+          $('#user_service_info .www').removeClass('hidden');
+        }
+      } else {
+        $(this).addClass('active');
+        $(this).removeClass('btn-default');
+        $(this).addClass('btn-success');
+        $('#user_service_info').slideUp();
+        $('#user_service_info .www').addClass('hidden');
+        $('#user_service_info .dns').addClass('hidden');
+      }
+      return false;
+    });
+
 }
 
 function do_add_user() {
   var email = $("#adduserEmail").val();
   var pw = $("#adduserPassword").val();
   var privs = $("#adduserPrivs").val();
-  var form_dns = $('#adduserDnsHandling').prop('checked');
-  var form_web = $('#adduserWebHandling').prop('checked');
+  var form_dns = $('#adduserDnsHandling').hasClass('active');
+  var form_web = $('#adduserWebHandling').hasClass('active');
   api(
     "/mail/users/add",
     "POST",
