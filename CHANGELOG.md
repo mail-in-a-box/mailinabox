@@ -4,28 +4,30 @@ CHANGELOG
 In Development
 --------------
 
-Mail:
-
-* The Sieve port is now open so tools like the Thunderbird Sieve program can be used to edit mail filters.
-
 Control Panel:
 
-* The SSL (now "TLS") certificates page now supports provisioning free SSL certificates from Let's Encrypt.
+* The SSL certificates (now referred to as "TLS ccertificates") page now supports provisioning free certificates from Let's Encrypt.
 * Report free memory usage.
 * Fix a crash when the git directory is not checked out to a tag.
+* When IPv6 is enabled, check that all domains (besides the system hostname) resolve over IPv6.
+* When a domain doesn't resolve to the box, don't bother checking if the TLS certificate is valid.
+* Remove rounded border on the menu bar.
 
-System:
+Other:
 
+* The Sieve port is now open so tools like the Thunderbird Sieve extension can be used to edit mail filters.
+* .be domains now offer DNSSEC options supported by the TLD
 * The daily backup will now email the administrator if there is a problem.
-* Expiring TLS (SSL) certificates are now automatically renewed via Let's Encrypt.
-* File ownership for the installed Roundcube files is fixed.
+* Expiring TLS certificates are now automatically renewed via Let's Encrypt.
+* File ownership for installed Roundcube files is fixed.
+* Typos fixed.
 
 v0.15a (January 9, 2016)
 ------------------------
 
 Mail:
 
-* Sending mail through Exchange/ActiveSync (Z-Push) had been broken since v0.14. This is now fixed.
+* Sending mail through Exchange/ActiveSync (Z-Push) had been broken since v0.14 in some setups. This is now fixed.
 
 v0.15 (January 1, 2016)
 -----------------------
