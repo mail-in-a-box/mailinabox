@@ -22,7 +22,9 @@ def get_dns_domains(env):
 def get_dns_zones(env):
 	# What domains should we create DNS zones for? Never create a zone for
 	# a domain & a subdomain of that domain.
-	domains = get_dns_domains(env)
+	domains_mail = get_dns_domains(env)
+	domains_custom = set([n for n, *_ in get_custom_dns_config(env)])
+	domains = domains_mail | domains_custom
 
 	# Exclude domains that are subdomains of other domains we know. Proceed
 	# by looking at shorter domains first.
@@ -727,16 +729,16 @@ def write_custom_dns_config(config, env):
 		f.write(config_yaml)
 
 def set_custom_dns_record(qname, rtype, value, action, env):
-	# validate qname
-	for zone, fn in get_dns_zones(env):
-		# It must match a zone apex or be a subdomain of a zone
-		# that we are otherwise hosting.
-		if qname == zone or qname.endswith("."+zone):
-			break
-	else:
-		# No match.
-		if qname != "_secondary_nameserver":
-			raise ValueError("%s is not a domain name or a subdomain of a domain name managed by this box." % qname)
+	# # validate qname
+	# for zone, fn in get_dns_zones(env):
+	# 	# It must match a zone apex or be a subdomain of a zone
+	# 	# that we are otherwise hosting.
+	# 	if qname == zone or qname.endswith("."+zone):
+	# 		break
+	# else:
+	# 	# No match.
+	# 	if qname != "_secondary_nameserver":
+	# 		raise ValueError("%s is not a domain name or a subdomain of a domain name managed by this box." % qname)
 
 	# validate rtype
 	rtype = rtype.upper()

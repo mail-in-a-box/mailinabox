@@ -23,6 +23,13 @@
         <input type="text" class="form-control" id="customdnsQname" placeholder="subdomain">
       </td><td style="padding: 0 1em; font-weight: bold;">.</td><td>
         <select id="customdnsZone" class="form-control"> </select>
+        <div class="input-group" id="customdnsZoneFree">
+          <input type="text" class="form-control" placeholder="new-domain.tld" class="hidden">
+          <span class="input-group-btn">
+            <button class="btn btn-default" type="button" onclick="reset_zone_free(); return false;">X</button>
+          </span>
+        </div>
+
       </td></tr></table>
       <div class="text-info" style="margin-top: .5em">Leave the left field blank to set a record on the chosen domain name, or enter a subdomain.</div>
     </div>
@@ -163,19 +170,69 @@ function show_custom_dns() {
       $('#secondarydns-clear-instructions').toggle(data.hostnames.length > 0);
     });
 
+  $('#customdnsZone').text('');
+  var dns_list_domains = $('<optgroup/>').attr('label', 'Domains');
+  var dns_list_customs = $('<optgroup/>').attr('label', 'Custom');
+  var dns_list_advanced = $('<optgroup/>').attr('label', 'Advanced');
+
+  $('#customdnsZone').append(dns_list_domains);
+  $('#customdnsZone').append(dns_list_customs);
+  $('#customdnsZone').append(dns_list_advanced);
+
+  dns_list_advanced.append($('<option/>').text("New domain..."));
+
+  // Append all domains offered by mail
   api(
     "/dns/zones",
     "GET",
     { },
-    function(data) {
-      $('#customdnsZone').text('');
-      for (var i = 0; i < data.length; i++) {
-        $('#customdnsZone').append($('<option/>').text(data[i]));
+    function(zones) {
+      for (var i = 0; i < zones.length; i++) {
+        dns_list_domains.append($('<option/>').text(zones[i]));
       }
+
+      // Append all custom domains that are not offering mail
+      api(
+        "/dns/custom",
+        "GET",
+        { },
+        function(customs) {
+          seen = [];
+          for (var i = 0; i < customs.length; i++) {
+              fqdn = customs[i].qname.replace(/.*\.(?=[^.]*\.[^.]*$)/, "");
+              console.log(fqdn, seen);
+              if ($.inArray(fqdn, seen) == -1) {
+                seen.push(fqdn);
+                dns_list_customs.append($('<option/>').text(fqdn));
+              }
+          }
+          $('#customdnsZone')[0].selectedIndex = 0;
+        });
+
     });
 
   show_current_custom_dns();
   show_customdns_rtype_hint();
+
+  $(function() {
+    $('#customdnsZone').on('change', function(){
+      var selected = $(this).find("option:selected").val();
+      if (selected === "New domain...") {
+        $('#customdnsZoneFree').removeClass('hidden');
+        $('#customdnsZone').addClass('hidden');
+        return true;
+      }
+    });
+    return false;
+  });
+
+  reset_zone_free();
+}
+
+function reset_zone_free() {
+  $('#customdnsZoneFree').addClass('hidden');
+  $('#customdnsZone').removeClass('hidden');
+  $('#customdnsZone')[0].selectedIndex = 0;
 }
 
 function show_current_custom_dns() {
@@ -235,6 +292,14 @@ function do_set_custom_dns(qname, rtype, value, method) {
       qname = $('#customdnsQname').val() + '.' + $('#customdnsZone').val();
     else
       qname = $('#customdnsZone').val();
+
+    if ($('#customdnsZone').val() === 'New domain...') {
+      if ($('#customdnsQname').val() != '')
+        qname = $('#customdnsQname').val() + '.' + $('#customdnsZoneFree input').val();
+      else
+        qname = $('#customdnsZoneFree input').val();
+    }
+
     rtype = $('#customdnsType').val();
     value = $('#customdnsValue').val();
     method = 'POST';
