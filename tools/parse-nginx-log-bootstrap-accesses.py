@@ -2,7 +2,8 @@
 #
 # This is a tool Josh uses on his box serving mailinabox.email to parse the nginx
 # access log to see how many people are installing Mail-in-a-Box each day, by
-# looking at accesses to the bootstrap.sh script.
+# looking at accesses to the bootstrap.sh script (which is currently at the URL
+# .../setup.sh).
 
 import re, glob, gzip, os.path, json
 import dateutil.parser
@@ -24,9 +25,10 @@ for fn in glob.glob("/var/log/nginx/access.log*"):
 	# Loop through the lines in the access log.
 	with f:
 		for line in f:
-			# Find lines that are GETs on /bootstrap.sh by either curl or wget.
+			# Find lines that are GETs on the bootstrap script by either curl or wget.
 			# (Note that we purposely skip ...?ping=1 requests which is the admin panel querying us for updates.)
-			m = re.match(rb"(?P<ip>\S+) - - \[(?P<date>.*?)\] \"GET /bootstrap.sh HTTP/.*\" 200 \d+ .* \"(?:curl|wget)", line, re.I)
+			# (Also, the URL changed in January 2016, but we'll accept both.)
+			m = re.match(rb"(?P<ip>\S+) - - \[(?P<date>.*?)\] \"GET /(bootstrap.sh|setup.sh) HTTP/.*\" 200 \d+ .* \"(?:curl|wget)", line, re.I)
 			if m:
 				date, time = m.group("date").decode("ascii").split(":", 1)
 				date = dateutil.parser.parse(date).date().isoformat()

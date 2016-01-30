@@ -2,7 +2,7 @@
 #########################################################
 # This script is intended to be run like this:
 #
-#   curl https://.../bootstrap.sh | sudo bash
+#   curl https://mailinabox.email/setup.sh | sudo bash
 #
 #########################################################
 

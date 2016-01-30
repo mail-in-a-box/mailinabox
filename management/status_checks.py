@@ -740,10 +740,10 @@ def what_version_is_this(env):
 	return tag
 
 def get_latest_miab_version():
-	# This pings https://mailinabox.email/bootstrap.sh and extracts the tag named in
+	# This pings https://mailinabox.email/setup.sh and extracts the tag named in
 	# the script to determine the current product version.
 	import urllib.request
-	return re.search(b'TAG=(.*)', urllib.request.urlopen("https://mailinabox.email/bootstrap.sh?ping=1").read()).group(1).decode("utf8")
+	return re.search(b'TAG=(.*)', urllib.request.urlopen("https://mailinabox.email/setup.sh?ping=1").read()).group(1).decode("utf8")
 
 def check_miab_version(env, output):
 	config = load_settings(env)
