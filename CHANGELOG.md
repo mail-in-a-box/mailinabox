@@ -1,8 +1,10 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.16 (January 30, 2016)
+------------------------
+
+This update primarily adds automatica SSL (now "TLS") certificate provisioning from Let's Encrypt (https://letsencrypt.org/).
 
 Control Panel:
 
