@@ -57,11 +57,14 @@ apt_install postfix postfix-pcre postgrey ca-certificates
 # Set some basic settings...
 #
 # * Have postfix listen on all network interfaces.
+# * Make outgoing connections on a particular interface (if multihomed) so that SPF passes on the receiving side.
 # * Set our name (the Debian default seems to be "localhost" but make it our hostname).
 # * Set the name of the local machine to localhost, which means xxx@localhost is delivered locally, although we don't use it.
 # * Set the SMTP banner (which must have the hostname first, then anything).
 tools/editconf.py /etc/postfix/main.cf \
 	inet_interfaces=all \
+	smtp_bind_address=$PRIVATE_IP \
+	smtp_bind_address6=$PRIVATE_IPV6 \
 	myhostname=$PRIMARY_HOSTNAME\
 	smtpd_banner="\$myhostname ESMTP Hi, I'm a Mail-in-a-Box (Ubuntu/Postfix; see https://mailinabox.email/)" \
 	mydestination=localhost
