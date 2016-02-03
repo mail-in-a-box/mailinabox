@@ -250,7 +250,7 @@ function provision_tls_cert() {
           var now = new Date();
           n.append(b);
           function ready_to_finish() {
-            var remaining = r.seconds - Math.round((new Date() - now)/1000);
+            var remaining = Math.round(r.seconds - (new Date() - now)/1000);
             if (remaining > 0) {
               setTimeout(ready_to_finish, 1000);
               b.text("Finish (" + remaining + "...)")
