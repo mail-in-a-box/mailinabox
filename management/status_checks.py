@@ -464,7 +464,7 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 			elif ip is None:
 				output.print_error("Secondary nameserver %s is not configured to resolve this domain." % ns)
 			else:
-				output.print_error("Secondary nameserver %s is not configured correctly. (It resolved this domain as %s. It should be %s.)" % (ns, ip, env['PUBLIC_IP']))
+				output.print_error("Secondary nameserver %s is not configured correctly. (It resolved this domain as %s. It should be %s.)" % (ns, ip, correct_ip))
 
 def check_dns_zone_suggestions(domain, env, output, dns_zonefiles, domains_with_a_records):
 	# Warn if a custom DNS record is preventing this or the automatic www redirect from
