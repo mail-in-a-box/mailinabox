@@ -81,49 +81,66 @@ def backup_status(env):
 	# This is relied on by should_force_full() and the next step.
 	backups = sorted(backups.values(), key = lambda b : b["date"], reverse=True)
 
-	# Get the average size of incremental backups and the size of the
-	# most recent full backup.
+	# Get the average size of incremental backups, the size of the
+	# most recent full backup, and the date of the most recent
+	# backup and the most recent full backup.
 	incremental_count = 0
 	incremental_size = 0
+	first_date = None
 	first_full_size = None
+	first_full_date = None
 	for bak in backups:
+		if first_date is None:
+			first_date = dateutil.parser.parse(bak["date"])
 		if bak["full"]:
 			first_full_size = bak["size"]
+			first_full_date = dateutil.parser.parse(bak["date"])
 			break
 		incremental_count += 1
 		incremental_size += bak["size"]
 
-	# Predict how many more increments until the next full backup,
-	# and add to that the time we hold onto backups, to predict
-	# how long the most recent full backup+increments will be held
-	# onto. Round up since the backup occurs on the night following
-	# when the threshold is met.
+	# When will the most recent backup be deleted? It won't be deleted if the next
+	# backup is incremental, because the increments rely on all past increments.
+	# So first guess how many more incremental backups will occur until the next
+	# full backup. That full backup frees up this one to be deleted. But, the backup
+	# must also be at least min_age_in_days old too.
 	deleted_in = None
 	if incremental_count > 0 and first_full_size is not None:
-		deleted_in = "approx. %d days" % round(config["min_age_in_days"] + (.5 * first_full_size - incremental_size) / (incremental_size/incremental_count) + .5)
+		# How many days until the next incremental backup? First, the part of
+		# the algorithm based on increment sizes:
+		est_days_to_next_full = (.5 * first_full_size - incremental_size) / (incremental_size/incremental_count)
+		est_time_of_next_full = first_date + datetime.timedelta(days=est_days_to_next_full)
 
-	# When will a backup be deleted?
+		# ...And then the part of the algorithm based on full backup age:
+		est_time_of_next_full = min(est_time_of_next_full, first_full_date + datetime.timedelta(days=config["min_age_in_days"]*10+1))
+
+		# It still can't be deleted until it's old enough.
+		est_deleted_on = max(est_time_of_next_full, first_date + datetime.timedelta(days=config["min_age_in_days"]))
+
+		deleted_in = "approx. %d days" % round((est_deleted_on-now).total_seconds()/60/60/24 + .5)
+
+	# When will a backup be deleted? Set the deleted_in field of each backup.
 	saw_full = False
-	days_ago = now - datetime.timedelta(days=config["min_age_in_days"])
 	for bak in backups:
 		if deleted_in:
-			# Subsequent backups are deleted when the most recent increment
-			# in the chain would be deleted.
+			# The most recent increment in a chain and all of the previous backups
+			# it relies on are deleted at the same time.
 			bak["deleted_in"] = deleted_in
 		if bak["full"]:
-			# Reset when we get to a full backup. A new chain start next.
+			# Reset when we get to a full backup. A new chain start *next*.
 			saw_full = True
 			deleted_in = None
 		elif saw_full and not deleted_in:
-			# Mark deleted_in only on the first increment after a full backup.
-			deleted_in = reldate(days_ago, dateutil.parser.parse(bak["date"]), "on next daily backup")
+			# We're now on backups prior to the most recent full backup. These are
+			# free to be deleted as soon as they are min_age_in_days old.
+			deleted_in = reldate(now, dateutil.parser.parse(bak["date"]) + datetime.timedelta(days=config["min_age_in_days"]), "on next daily backup")
 			bak["deleted_in"] = deleted_in
 
 	return {
 		"backups": backups,
 	}
 
-def should_force_full(env):
+def should_force_full(config, env):
 	# Force a full backup when the total size of the increments
 	# since the last full backup is greater than half the size
 	# of that full backup.
@@ -135,8 +152,14 @@ def should_force_full(env):
 			inc_size += bak["size"]
 		else:
 			# ...until we reach the most recent full backup.
-			# Return if we should to a full backup.
-			return inc_size > .5*bak["size"]
+			# Return if we should to a full backup, which is based
+			# on the size of the increments relative to the full
+			# backup, as well as the age of the full backup.
+			if inc_size > .5*bak["size"]:
+				return True
+			if dateutil.parser.parse(bak["date"]) + datetime.timedelta(days=config["min_age_in_days"]*10+1) > datetime.datetime.now(dateutil.tz.tzlocal()):
+				return True
+			return False
 	else:
 		# If we got here there are no (full) backups, so make one.
 		# (I love for/else blocks. Here it's just to show off.)
@@ -215,7 +238,7 @@ def perform_backup(full_backup):
 	# the increments since the most recent full backup are
 	# large.
 	try:
-		full_backup = full_backup or should_force_full(env)
+		full_backup = full_backup or should_force_full(config, env)
 	except Exception as e:
 		# This was the first call to duplicity, and there might
 		# be an error already.
