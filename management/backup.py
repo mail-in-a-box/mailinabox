@@ -42,10 +42,10 @@ def backup_status(env):
 	# Get duplicity collection status and parse for a list of backups.
 	def parse_line(line):
 		keys = line.strip().split()
-		date = dateutil.parser.parse(keys[1])
+		date = dateutil.parser.parse(keys[1]).astimezone(dateutil.tz.tzlocal())
 		return {
 			"date": keys[1],
-			"date_str": date.strftime("%x %X"),
+			"date_str": date.strftime("%x %X") + " " + now.tzname(),
 			"date_delta": reldate(date, now, "the future?"),
 			"full": keys[0] == "full",
 			"size": 0, # collection-status doesn't give us the size
@@ -120,7 +120,6 @@ def backup_status(env):
 			bak["deleted_in"] = deleted_in
 
 	return {
-		"tz": now.tzname(),
 		"backups": backups,
 	}
 

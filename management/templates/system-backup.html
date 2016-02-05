@@ -142,7 +142,7 @@ function show_system_backup() {
         var b = r.backups[i];
         var tr = $('<tr/>');
         if (b.full) tr.addClass("full-backup");
-        tr.append( $('<td/>').text(b.date_str + " " + r.tz) );
+        tr.append( $('<td/>').text(b.date_str) );
         tr.append( $('<td/>').text(b.date_delta + " ago") );
         tr.append( $('<td/>').text(b.full ? "full" : "increment") );
         tr.append( $('<td style="text-align: right"/>').text( nice_size(b.size)) );
