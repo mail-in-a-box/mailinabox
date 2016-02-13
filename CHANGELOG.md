@@ -9,6 +9,7 @@ In Development
 * Backup times were displayed with the wrong time zone.
 * On low-usage systems, don't hold backups for quite so long by taking a full backup more often.
 * Nightly status checks might fail if any domains had non-ASCII characters.
+* If domains need a TLS certificate and the user hasn't installed one yet using Let's Encrypt, the administrator would get a nightly email with weird interactive text asking them to agree to Let's Encrypt's ToS. Now just say that the provisioning can't be done automatically.
 
 v0.16 (January 30, 2016)
 ------------------------

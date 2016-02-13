@@ -458,9 +458,14 @@ def provision_certificates_cmdline():
 				if agree_to_tos_url is not None:
 					continue
 
-				# Can't ask the user a question in this mode.
-				if headless in sys.argv:
-					print("Can't issue TLS certficate until user has agreed to Let's Encrypt TOS.")
+				# Can't ask the user a question in this mode. Warn the user that something
+				# needs to be done.
+				if headless:
+					print(", ".join(request["domains"]) + " need a new or renewed TLS certificate.")
+					print()
+					print("This box can't do that automatically for you until you agree to Let's Encrypt's")
+					print("Terms of Service agreement. Use the Mail-in-a-Box control panel to provision")
+					print("certificates for these domains.")
 					sys.exit(1)
 
 				print("""
@@ -513,7 +518,7 @@ Do you agree to the agreement? Type Y or N and press <ENTER>: """
 			print("A TLS certificate was requested for: " + ", ".join(wait_domains) + ".")
 			first = True
 			while wait_until > datetime.datetime.now():
-				if "--headless" not in sys.argv or first:
+				if not headless or first:
 					print ("We have to wait", int(round((wait_until - datetime.datetime.now()).total_seconds())), "seconds for the certificate to be issued...")
 				time.sleep(10)
 				first = False
