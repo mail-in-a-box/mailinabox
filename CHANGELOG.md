@@ -8,6 +8,7 @@ In Development
 * On multi-homed machines, Postfix now binds to the right network interface when sending outbound mail so that SPF checks on the receiving end will pass.
 * Backup times were displayed with the wrong time zone.
 * On low-usage systems, don't hold backups for quite so long by taking a full backup more often.
+* Nightly status checks might fail if any domains had non-ASCII characters.
 
 v0.16 (January 30, 2016)
 ------------------------

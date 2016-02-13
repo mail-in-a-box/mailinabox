@@ -10,8 +10,8 @@ source setup/preflight.sh
 
 # Ensure Python reads/writes files in UTF-8. If the machine
 # triggers some other locale in Python, like ASCII encoding,
-# Python may not be able to read/write files. Here and in
-# the management daemon startup script.
+# Python may not be able to read/write files. This is also
+# in the management daemon startup script and the cron script.
 
 if [ -z `locale -a | grep en_US.utf8` ]; then
     # Generate locale if not exists
