@@ -29,6 +29,9 @@ CMD ["/sbin/my_init"]
 # Create the user-data user, so the start script doesn't have to.
 RUN useradd -m user-data
 
+# Add project specific repo for dovecot and postgrey
+RUN add-apt-repository -y ppa:mail-in-a-box/ppa
+
 # Docker has a beautiful way to cache images after each step. The next few
 # steps of installing system packages are very intensive, so we take care
 # of them early and let docker cache the image after that, before doing
