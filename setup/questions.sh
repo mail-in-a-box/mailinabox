@@ -18,7 +18,10 @@ if [ -z "$NONINTERACTIVE" ]; then
 	message_box "Mail-in-a-Box Installation" \
 		"Hello and thanks for deploying a Mail-in-a-Box!
 		\n\nI'm going to ask you a few questions.
-		\n\nTo change your answers later, just run 'sudo mailinabox' from the command line."
+		\n\nPlease keep in mind, that you should use an machine, which is dedicated for mail-in-a-box.
+		\n\nWARNING: Your servers configuration and customization will be overwritten.
+		\n\nFor more information about the software itself, how it works and the License visit https://mailinabox.email.
+		\n\nTo change your hostname and setup configuration later, just run 'sudo mailinabox' from the command line."
 fi
 
 # The box needs a name.
