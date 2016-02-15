@@ -60,10 +60,8 @@ apt_install postfix postfix-pcre postgrey ca-certificates
 # * Set our name (the Debian default seems to be "localhost" but make it our hostname).
 # * Set the name of the local machine to localhost, which means xxx@localhost is delivered locally, although we don't use it.
 # * Set the SMTP banner (which must have the hostname first, then anything).
-# * Set the delay_warning_time to 3 hours to inform users that their e-mail delivery is delayed.
-# * The bounce_queue_lifetime refers to MAILER-DAEMON messages. Should be short and has no effect on regular mail.
-# * Set maximal_queue_lifetime to 2 days. Server will try to send an undeliverable e-mail for the maximum of 2 days.
-
+# * Inform users when their e-mail delivery is delayed more than 3 hours (default is not to warn).
+# * Stop trying to send an undeliverable e-mail after 2 days (instead of 5), and for bounce messages just try for 1 day.
 tools/editconf.py /etc/postfix/main.cf \
 	inet_interfaces=all \
 	myhostname=$PRIMARY_HOSTNAME \
