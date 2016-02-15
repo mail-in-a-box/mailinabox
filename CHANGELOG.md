@@ -5,6 +5,7 @@ In Development
 --------------
 
 * Roundcube updated to version 1.1.4.
+* When there's a problem deliverying an outgoing message, a new 'warning' bounce will come after 3 hours and the box will stop trying after 2 days (instead of 5).
 * On multi-homed machines, Postfix now binds to the right network interface when sending outbound mail so that SPF checks on the receiving end will pass.
 * TLS certificate provisioning would crash if DNS propagation was in progress and a challenge failed.
 * Backup times were displayed with the wrong time zone.
