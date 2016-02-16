@@ -204,7 +204,7 @@ def get_certificates_to_provision(env, show_extended_problems=True, force_domain
 				domains_if_any.add(domain)
 
 			# It's valid. Should we report its validness?
-			if show_extended_problems:
+			elif show_extended_problems:
 				problems[domain] = "The certificate is valid for at least another 30 days --- no need to replace."
 
 	# Warn the user about domains hosted elsewhere.
