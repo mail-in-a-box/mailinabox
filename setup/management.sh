@@ -4,11 +4,7 @@ source setup/functions.sh
 
 echo "Installing Mail-in-a-Box system management daemon..."
 
-# Switching python 2 boto to package manager's, not pypi's.
-if [ -f /usr/local/lib/python2.7/dist-packages/boto/__init__.py ]; then hide_output pip uninstall -y boto; fi
-
-# duplicity uses python 2 so we need to use the python 2 package of boto
-apt_install python3-flask links duplicity python-boto libyaml-dev python3-dnspython python3-dateutil
+apt_install python3-flask links duplicity libyaml-dev python3-dnspython python3-dateutil
 
 # These packages are required for pip to install cryptography.
 apt_install build-essential libssl-dev libffi-dev python3-dev python-pip
@@ -18,6 +14,10 @@ apt_install build-essential libssl-dev libffi-dev python3-dev python-pip
 hide_output pip3 install --upgrade \
 	rtyaml "email_validator>=1.0.0" free_tls_certificates \
 	"idna>=2.0.0" "cryptography>=1.0.2" boto psutil
+
+# Duplicity uses python2 and requires boto. Thus we need to use the python 2 package of boto.
+# The apt-get package lags behind and misses some important bug fixes.
+hide_output pip install --upgrade boto
 
 # Create a backup directory and a random key for encrypting backups.
 mkdir -p $STORAGE_ROOT/backup
