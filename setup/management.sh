@@ -14,7 +14,7 @@ apt_install python3-flask links duplicity python-boto libyaml-dev python3-dnspyt
 
 # Install other Python packages. The first line is the packages that Josh maintains himself!
 hide_output pip3 install --upgrade \
-	rtyaml "email_validator>=1.0.0" free_tls_certificates \
+	rtyaml "email_validator>=1.0.0" "free_tls_certificates>=0.1.3" \
 	"idna>=2.0.0" "cryptography>=1.0.2" boto psutil
 # email_validator is repeated in setup/questions.sh
 
