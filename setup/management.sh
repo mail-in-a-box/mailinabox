@@ -8,15 +8,16 @@ echo "Installing Mail-in-a-Box system management daemon..."
 if [ -f /usr/local/lib/python2.7/dist-packages/boto/__init__.py ]; then hide_output pip uninstall -y boto; fi
 
 # duplicity uses python 2 so we need to use the python 2 package of boto
-# build-essential libssl-dev libffi-dev python3-dev: Required to pip install cryptography.
-apt_install python3-flask links duplicity python-boto libyaml-dev python3-dnspython python3-dateutil \
-	build-essential libssl-dev libffi-dev python3-dev python-pip
+apt_install python3-flask links duplicity python-boto libyaml-dev python3-dnspython python3-dateutil
+
+# These packages are required for pip to install cryptography.
+apt_install build-essential libssl-dev libffi-dev python3-dev python-pip
 
 # Install other Python packages. The first line is the packages that Josh maintains himself!
+# Fixme: email_validator is repeated in setup/questions.sh
 hide_output pip3 install --upgrade \
 	rtyaml "email_validator>=1.0.0" free_tls_certificates \
 	"idna>=2.0.0" "cryptography>=1.0.2" boto psutil
-# email_validator is repeated in setup/questions.sh
 
 # Create a backup directory and a random key for encrypting backups.
 mkdir -p $STORAGE_ROOT/backup
