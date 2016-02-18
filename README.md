@@ -66,7 +66,7 @@ by me:
 	gpg:          There is no indication that the signature belongs to the owner.
 	Primary key fingerprint: 5F4C 0E73 13CC D744 693B  2AEA B920 41F4 C10B DD81
 
-You'll get a lot of warnings, but that's OK. Check that the primary key fingerprint matchs the
+You'll get a lot of warnings, but that's OK. Check that the primary key fingerprint matches the
 fingerprint in the key details at [https://keybase.io/joshdata](https://keybase.io/joshdata)
 and on my [personal homepage](https://razor.occams.info/). (Of course, if this repository has been compromised you can't trust these instructions.)
 
