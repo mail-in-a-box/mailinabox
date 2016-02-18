@@ -39,7 +39,7 @@ fi
 # Create a new DKIM key. This creates mail.private and mail.txt
 # in $STORAGE_ROOT/mail/dkim. The former is the private key and
 # the latter is the suggested DNS TXT entry which we'll include
-# in our DNS setup. Note tha the files are named after the
+# in our DNS setup. Note that the files are named after the
 # 'selector' of the key, which we can change later on to support
 # key rotation.
 #
