@@ -117,7 +117,7 @@ function do_login() {
       // Open the next panel the user wants to go to. Do this after the XHR response
       // is over so that we don't start a new XHR request while this one is finishing,
       // which confuses the loading indicator.
-      setTimeout(function() { show_panel(!switch_back_to_panel ? 'system_status' : switch_back_to_panel) }, 300);
+      setTimeout(function() { show_panel(!switch_back_to_panel || switch_back_to_panel == "login" ? 'system_status' : switch_back_to_panel) }, 300);
     }
   })
 }
