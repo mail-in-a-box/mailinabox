@@ -33,3 +33,11 @@ if [ ! -d /vagrant ]; then
 	exit
 fi
 fi
+
+# Check that tempfs is not mounted with noexec
+MOUNTED_TMP_AS_NO_EXEC=$(grep "/tmp.*noexec" /proc/mounts)
+if [ -n "$MOUNTED_TMP_AS_NO_EXEC" ]; then
+	echo "Mail-in-a-Box has to have exec rights on /tmp, please mount /tmp with exec"
+
+	exit
+fi
