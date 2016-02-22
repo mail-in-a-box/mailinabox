@@ -15,7 +15,7 @@ from mailconfig import get_mail_aliases, get_mail_aliases_ex, get_mail_domains, 
 # live across http requests so we don't baloon the system with
 # processes.
 import multiprocessing.pool
-pool = multiprocessing.pool.Pool(processes=10)
+pool = multiprocessing.pool.Pool(processes=5)
 
 env = utils.load_environment()
 
