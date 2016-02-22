@@ -222,14 +222,14 @@ def check_free_memory(rounded_values, env, output):
 	# Check free memory.
 	percent_free = 100 - psutil.virtual_memory().percent
 	memory_msg = "System memory is %s%% free." % str(round(percent_free))
-	if percent_free >= 30:
-		if rounded_values: memory_msg = "System free memory is at least 30%."
+	if percent_free >= 20:
+		if rounded_values: memory_msg = "System free memory is at least 20%."
 		output.print_ok(memory_msg)
-	elif percent_free >= 15:
-		if rounded_values: memory_msg = "System free memory is below 30%."
+	elif percent_free >= 10:
+		if rounded_values: memory_msg = "System free memory is below 20%."
 		output.print_warning(memory_msg)
 	else:
-		if rounded_values: memory_msg = "System free memory is below 15%."
+		if rounded_values: memory_msg = "System free memory is below 10%."
 		output.print_error(memory_msg)
 
 def run_network_checks(env, output):
