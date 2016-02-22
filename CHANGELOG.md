@@ -14,6 +14,7 @@ Control panel:
 
 * TLS certificate provisioning would crash if DNS propagation was in progress and a challenge failed; might have shown the wrong error when provisioning fails.
 * Backup times were displayed with the wrong time zone.
+* Thresholds for displaying messages when the system is running low on memory have been reduced from 30% to 20% for a warning and from 15% to 10% for an error.
 * Other minor fixes.
 
 System:
