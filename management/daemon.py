@@ -6,16 +6,10 @@ from functools import wraps
 
 from flask import Flask, request, render_template, abort, Response, send_from_directory
 
-import auth, utils
+import auth, utils, multiprocessing.pool
 from mailconfig import get_mail_users, get_mail_users_ex, get_admins, add_mail_user, set_mail_password, remove_mail_user
 from mailconfig import get_mail_user_privileges, add_remove_mail_user_privilege
 from mailconfig import get_mail_aliases, get_mail_aliases_ex, get_mail_domains, add_mail_alias, remove_mail_alias
-
-# Create a worker pool for the status checks. The pool should
-# live across http requests so we don't baloon the system with
-# processes.
-import multiprocessing.pool
-pool = multiprocessing.pool.Pool(processes=5)
 
 env = utils.load_environment()
 
@@ -436,7 +430,10 @@ def system_status():
 		def print_line(self, message, monospace=False):
 			self.items[-1]["extra"].append({ "text": message, "monospace": monospace })
 	output = WebOutput()
+	# Create a temporary pool of processes for the status checks
+	pool = multiprocessing.pool.Pool(processes=5)
 	run_checks(False, env, output, pool)
+	pool.terminate()
 	return json_response(output.items)
 
 @app.route('/system/updates')
