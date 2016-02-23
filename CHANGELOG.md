@@ -22,7 +22,7 @@ System:
 
 * Backups to some AWS S3 regions broke in version 0.15 because we reverted the version of boto. That's now fixed.
 * On low-usage systems, don't hold backups for quite so long by taking a full backup more often.
-* Nightly status checks might fail if any domains had non-ASCII characters.
+* Nightly status checks might fail on systems not configured with a default Unicode locale.
 * If domains need a TLS certificate and the user hasn't installed one yet using Let's Encrypt, the administrator would get a nightly email with weird interactive text asking them to agree to Let's Encrypt's ToS. Now just say that the provisioning can't be done automatically.
 * Reduce the number of background processes used by the management daemon to lower memory consumption
 
