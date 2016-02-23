@@ -91,7 +91,7 @@ def do_dns_update(env, force=False):
 		shell('check_call', ["/usr/sbin/service", "nsd", "restart"])
 
 	# Write the OpenDKIM configuration tables for all of the domains.
-	if write_opendkim_tables([domain for domain, zonefile in zonefiles], env):
+	if write_opendkim_tables(get_mail_domains(env), env):
 		# Settings changed. Kick opendkim.
 		shell('check_call', ["/usr/sbin/service", "opendkim", "restart"])
 		if len(updated_domains) == 0:

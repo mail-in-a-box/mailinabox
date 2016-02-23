@@ -9,6 +9,7 @@ Mail:
 * Roundcube updated to version 1.1.4.
 * When there's a problem delivering an outgoing message, a new 'warning' bounce will come after 3 hours and the box will stop trying after 2 days (instead of 5).
 * On multi-homed machines, Postfix now binds to the right network interface when sending outbound mail so that SPF checks on the receiving end will pass.
+* Mail sent from addresses on subdomains of other domains hosted by this box would not be DKIM-signed and so would fail DMARC checks by recipients, since version v0.15.
 
 Control panel:
 
@@ -21,7 +22,7 @@ System:
 
 * Backups to some AWS S3 regions broke in version 0.15 because we reverted the version of boto. That's now fixed.
 * On low-usage systems, don't hold backups for quite so long by taking a full backup more often.
-* Nightly status checks might fail if any domains had non-ASCII characters.
+* Nightly status checks might fail on systems not configured with a default Unicode locale.
 * If domains need a TLS certificate and the user hasn't installed one yet using Let's Encrypt, the administrator would get a nightly email with weird interactive text asking them to agree to Let's Encrypt's ToS. Now just say that the provisioning can't be done automatically.
 * Reduce the number of background processes used by the management daemon to lower memory consumption
 
