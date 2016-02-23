@@ -9,6 +9,7 @@ Mail:
 * Roundcube updated to version 1.1.4.
 * When there's a problem delivering an outgoing message, a new 'warning' bounce will come after 3 hours and the box will stop trying after 2 days (instead of 5).
 * On multi-homed machines, Postfix now binds to the right network interface when sending outbound mail so that SPF checks on the receiving end will pass.
+* Mail sent from addresses on subdomains of other domains hosted by this box would not be DKIM-signed and so would fail DMARC checks by recipients, since version v0.15.
 
 Control panel:
 
