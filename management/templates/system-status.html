@@ -1,5 +1,9 @@
 <h2>System Status Checks</h2>
 
+<div id="system-reboot-required" style="display: none">
+  <button type="button" class="btn btn-danger" onclick="confirm_reboot(); return false;">Reboot required</button>
+</div>
+
 <style>
 #system-checks .heading td {
   font-weight: bold;
@@ -34,7 +38,10 @@
   font-family: monospace;
   white-space: pre-wrap;
 }
-
+#system-reboot-required {
+  max-width: 20em;
+  margin-bottom: 1em;
+}
 #system-privacy-setting {
   float: right;
   max-width: 20em;
@@ -46,7 +53,6 @@
 	<div><a onclick="return enable_privacy(!current_privacy_setting)" href="#"><span>Enable/Disable</span> New-Version Check</a></div>
 	<p style="line-height: 125%"><small>(When enabled, status checks phone-home to check for a new release of Mail-in-a-Box.)</small></p>
 </div>
-
 
 <table id="system-checks" class="table" style="max-width: 60em">
   <thead>
@@ -68,6 +74,14 @@ function show_system_status() {
       $('#system-privacy-setting').show();
       $('#system-privacy-setting a span').text(r ? "Enable" : "Disable");
       $('#system-privacy-setting p').toggle(r);
+    });
+
+  api(
+    "/system/reboot",
+    "GET",
+    { },
+    function(r) {
+      $('#system-reboot-required').toggle(r);
     });
 
   api(
@@ -121,5 +135,21 @@ function enable_privacy(status) {
       show_system_status();
     });
   return false; // disable link
+}
+
+function confirm_reboot() {
+  show_modal_confirm(
+    "Reboot server",
+    $("<p>This will reboot your server, until the server is fully restarted your users will not be able to send and receive email. The reboot can't be cancelled</p>"),
+    "Reboot now",
+    function() {
+      api(
+        "/system/reboot",
+        "POST",
+        { },
+        function(r) {
+          show_modal_error("Reboot", "Please refresh the page after a minute or so." + r);
+        });
+    });
 }
 </script>

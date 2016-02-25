@@ -391,7 +391,6 @@ def ssl_provision_certs():
 def web_get_domains():
 	from web_update import get_web_domains_info
 	return json_response(get_web_domains_info(env))
-
 @app.route('/web/update', methods=['POST'])
 @authorized_personnel_only
 def web_update():
@@ -455,6 +454,23 @@ def do_updates():
 	return utils.shell("check_output", ["/usr/bin/apt-get", "-y", "upgrade"], env={
 		"DEBIAN_FRONTEND": "noninteractive"
 	})
+
+@app.route('/system/reboot', methods=["GET"])
+@authorized_personnel_only
+def needs_reboot():
+	if os.path.isfile("/var/run/reboot-required"):
+		return json_response(True)
+	else:
+		return json_response(False)
+
+@app.route('/system/reboot', methods=["POST"])
+@authorized_personnel_only
+def do_reboot():
+	if os.path.isfile("/var/run/reboot-required"):
+		return utils.shell("check_output", ["/sbin/shutdown", "-r", "now"], capture_stderr=True)
+	else:
+		return "No reboot is required"
+
 
 @app.route('/system/backup/status')
 @authorized_personnel_only
