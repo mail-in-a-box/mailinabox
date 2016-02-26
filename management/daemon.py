@@ -391,6 +391,7 @@ def ssl_provision_certs():
 def web_get_domains():
 	from web_update import get_web_domains_info
 	return json_response(get_web_domains_info(env))
+
 @app.route('/web/update', methods=['POST'])
 @authorized_personnel_only
 def web_update():
