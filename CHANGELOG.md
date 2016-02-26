@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.17 (February 25, 2016)
+-------------------------
 
 Mail:
 
@@ -24,7 +24,7 @@ System:
 * On low-usage systems, don't hold backups for quite so long by taking a full backup more often.
 * Nightly status checks might fail on systems not configured with a default Unicode locale.
 * If domains need a TLS certificate and the user hasn't installed one yet using Let's Encrypt, the administrator would get a nightly email with weird interactive text asking them to agree to Let's Encrypt's ToS. Now just say that the provisioning can't be done automatically.
-* Reduce the number of background processes used by the management daemon to lower memory consumption
+* Reduce the number of background processes used by the management daemon to lower memory consumption.
 
 Setup:
 
