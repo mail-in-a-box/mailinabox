@@ -137,19 +137,20 @@ def get_mail_users_ex(env, with_archived=False, with_slow_info=False):
 	if with_archived:
 		root = os.path.join(env['STORAGE_ROOT'], 'mail/mailboxes')
 		for domain in os.listdir(root):
-			for user in os.listdir(os.path.join(root, domain)):
-				email = user + "@" + domain
-				mbox = os.path.join(root, domain, user)
-				if email in active_accounts: continue
-				user = {
-					"email": email,
-					"privileges": "",
-					"status": "inactive",
-					"mailbox": mbox,
-				}
-				users.append(user)
-				if with_slow_info:
-					user["mailbox_size"] = utils.du(mbox)
+			if os.path.isdir(os.path.join(root, domain)):
+				for user in os.listdir(os.path.join(root, domain)):
+					email = user + "@" + domain
+					mbox = os.path.join(root, domain, user)
+					if email in active_accounts: continue
+					user = {
+						"email": email,
+						"privileges": "",
+						"status": "inactive",
+						"mailbox": mbox,
+					}
+					users.append(user)
+					if with_slow_info:
+						user["mailbox_size"] = utils.du(mbox)
 
 	# Group by domain.
 	domains = { }

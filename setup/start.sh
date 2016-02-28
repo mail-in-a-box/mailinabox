@@ -5,7 +5,8 @@
 source setup/functions.sh # load our functions
 
 # Check system setup: Are we running as root on Ubuntu 14.04 on a
-# machine with enough memory? If not, this shows an error and exits.
+# machine with enough memory? Is /tmp mounted with exec.
+# If not, this shows an error and exits.
 source setup/preflight.sh
 
 # Ensure Python reads/writes files in UTF-8. If the machine
