@@ -369,8 +369,8 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 
 	# Check reverse DNS matches the PRIMARY_HOSTNAME. Note that it might not be
 	# a DNS zone if it is a subdomain of another domain we have a zone for.
-	existing_rdns_v4 = query_dns(dns.reversename.from_address(env['PUBLIC_IP']), "PTR")
-	existing_rdns_v6 = query_dns(dns.reversename.from_address(env['PUBLIC_IPV6']), "PTR") if env.get("PUBLIC_IPV6") else None
+	existing_rdns_v4 = query_dns_ptr(dns.reversename.from_address(env['PUBLIC_IP']))
+	existing_rdns_v6 = query_dns_ptr(dns.reversename.from_address(env['PUBLIC_IPV6'])) if env.get("PUBLIC_IPV6") else None
 	if existing_rdns_v4 == domain and existing_rdns_v6 in (None, domain):
 		output.print_ok("Reverse DNS is set correctly at ISP. [%s ↦ %s]" % (my_ips, env['PRIMARY_HOSTNAME']))
 	elif existing_rdns_v4 == existing_rdns_v6 or existing_rdns_v6 is None:
@@ -394,10 +394,37 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 	else:
 		output.print_error("""The DANE TLSA record for incoming mail (%s) is not correct. It is '%s' but it should be '%s'.
 			It may take several hours for public DNS to update after a change."""
-                        % (tlsa_qname, tlsa25, tlsa25_expected))
+			% (tlsa_qname, tlsa25, tlsa25_expected))
 
 	# Check that the hostmaster@ email address exists.
 	check_alias_exists("Hostmaster contact address", "hostmaster@" + domain, env, output)
+
+def query_dns_ptr(qname):
+	# Find the authoritative name server for the address using the default nameservers
+	resolver = dns.resolver.get_default_resolver()
+	nameserver = resolver.nameservers[0]
+	query = dns.message.make_query(qname, dns.rdatatype.PTR)
+	timeout = 5
+	response = dns.query.udp(query, nameserver, timeout)
+	returnCode = response.rcode()
+
+	# Check that we were able to query the dns for the authoritative server
+	if returnCode != dns.rcode.NOERROR:
+		return "[%s]" % dns.rcode.to_text(returnCode)
+
+	# If the current DNS server isn't the authority for this address use the one we find in the response
+	if len(response.authority) > 0:
+		rrset = response.authority[0]
+	else:
+		rrset = response.answer[0]
+
+	rr = rrset[0]
+	if rr.rdtype != dns.rdatatype.SOA:
+		authority = rr.target
+		nameserver = resolver.query(authority).rrset[0].to_text()
+
+	# Resolve the PTR record using the proper name server
+	return query_dns(qname, "PTR", at=nameserver)
 
 def check_alias_exists(alias_name, alias, env, output):
 	mail_aliases = dict([(address, receivers) for address, receivers, *_ in get_mail_aliases(env)])
@@ -917,6 +944,14 @@ if __name__ == "__main__":
 
 	elif sys.argv[1] == "--show-changes":
 		run_and_output_changes(env, pool)
+
+	elif sys.argv[1] == "--check-ptr":
+		out = ConsoleOutput()
+		# Get the list of domains we serve DNS zones for (i.e. does not include subdomains).
+		dns_zonefiles = dict(get_dns_zones(env))
+		dns_domains = set(dns_zonefiles)
+		check_primary_hostname_dns(env["PRIMARY_HOSTNAME"], env, out, dns_domains, dns_zonefiles)
+
 
 	elif sys.argv[1] == "--check-primary-hostname":
 		# See if the primary hostname appears resolvable and has a signed certificate.
