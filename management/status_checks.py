@@ -421,7 +421,7 @@ def query_dns_ptr(qname):
 	rr = rrset[0]
 	if rr.rdtype != dns.rdatatype.SOA:
 		authority = rr.target
-		nameserver = resolver.query(authority).rrset[0].to_text()
+		nameserver = query_dns(authority, "A")
 
 	# Resolve the PTR record using the proper name server
 	return query_dns(qname, "PTR", at=nameserver)
