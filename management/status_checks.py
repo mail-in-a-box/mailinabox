@@ -4,7 +4,7 @@
 # TLS certificates have been signed, etc., and if not tells the user
 # what to do next.
 
-import sys, os, os.path, re, subprocess, datetime, multiprocessing.pool
+import sys, os, os.path, re, subprocess, datetime, multiprocessing.pool, time
 
 import dns.reversename, dns.resolver
 import dateutil.parser, dateutil.tz
@@ -394,37 +394,27 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 	else:
 		output.print_error("""The DANE TLSA record for incoming mail (%s) is not correct. It is '%s' but it should be '%s'.
 			It may take several hours for public DNS to update after a change."""
-			% (tlsa_qname, tlsa25, tlsa25_expected))
+                        % (tlsa_qname, tlsa25, tlsa25_expected))
 
 	# Check that the hostmaster@ email address exists.
 	check_alias_exists("Hostmaster contact address", "hostmaster@" + domain, env, output)
 
 def query_dns_ptr(qname):
-	# Find the authoritative name server for the address using the default nameservers
-	resolver = dns.resolver.get_default_resolver()
-	nameserver = resolver.nameservers[0]
-	query = dns.message.make_query(qname, dns.rdatatype.PTR)
-	timeout = 5
-	response = dns.query.udp(query, nameserver, timeout)
-	returnCode = response.rcode()
+	# When looking up PTR records bind will contact the authoritative servers for a response.
+	# Sometimes these servers don't respond properly, we will give these servers 3 chances
+	# with a 2 second pause in between.
+	for attempt in range(3):
+		result=query_dns(qname, "PTR")
 
-	# Check that we were able to query the dns for the authoritative server
-	if returnCode != dns.rcode.NOERROR:
-		return "[%s]" % dns.rcode.to_text(returnCode)
+		# Check if the authoritative servers respond properly
+		if result == "[nonameservers]":
+			time.sleep(2)
+		else:
+			# There might still be an error, like a timeout, but we will continue
+			# chances of recovering from those are slim.
+			break
 
-	# If the current DNS server isn't the authority for this address use the one we find in the response
-	if len(response.authority) > 0:
-		rrset = response.authority[0]
-	else:
-		rrset = response.answer[0]
-
-	rr = rrset[0]
-	if rr.rdtype != dns.rdatatype.SOA:
-		authority = rr.target
-		nameserver = query_dns(authority, "A")
-
-	# Resolve the PTR record using the proper name server
-	return query_dns(qname, "PTR", at=nameserver)
+	return result
 
 def check_alias_exists(alias_name, alias, env, output):
 	mail_aliases = dict([(address, receivers) for address, receivers, *_ in get_mail_aliases(env)])
@@ -672,10 +662,12 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None):
 	# Do the query.
 	try:
 		response = resolver.query(qname, rtype)
-	except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
-		# Host did not have an answer for this query; not sure what the
-		# difference is between the two exceptions.
+	except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+		# No response was received
 		return nxdomain
+	except dns.resolver.NoNameservers:
+		# No non-broken nameservers were available to respond to the request
+		return "[nonameservers]"
 	except dns.exception.Timeout:
 		return "[timeout]"
 
@@ -946,12 +938,21 @@ if __name__ == "__main__":
 		run_and_output_changes(env, pool)
 
 	elif sys.argv[1] == "--check-ptr":
-		out = ConsoleOutput()
-		# Get the list of domains we serve DNS zones for (i.e. does not include subdomains).
-		dns_zonefiles = dict(get_dns_zones(env))
-		dns_domains = set(dns_zonefiles)
-		check_primary_hostname_dns(env["PRIMARY_HOSTNAME"], env, out, dns_domains, dns_zonefiles)
-
+		# Run only the primary hostname checks, specifically the ptr check
+		shell('check_call', ["/usr/sbin/rndc", "flush"], trap=True)
+		output = ConsoleOutput()
+		domain=env["PRIMARY_HOSTNAME"]
+		my_ips = env['PUBLIC_IP'] + ((" / "+env['PUBLIC_IPV6']) if env.get("PUBLIC_IPV6") else "")
+		existing_rdns_v4 = query_dns_ptr(dns.reversename.from_address(env['PUBLIC_IP']))
+		existing_rdns_v6 = query_dns_ptr(dns.reversename.from_address(env['PUBLIC_IPV6'])) if env.get("PUBLIC_IPV6") else None
+		if existing_rdns_v4 == domain and existing_rdns_v6 in (None, domain):
+			output.print_ok("Reverse DNS is set correctly at ISP. [%s ↦ %s]" % (my_ips, env['PRIMARY_HOSTNAME']))
+		elif existing_rdns_v4 == existing_rdns_v6 or existing_rdns_v6 is None:
+			output.print_error("""Your box's reverse DNS is currently %s, but it should be %s. Your ISP or cloud provider will have instructions
+				on setting up reverse DNS for your box.""" % (existing_rdns_v4, domain) )
+		else:
+			output.print_error("""Your box's reverse DNS is currently %s (IPv4) and %s (IPv6), but it should be %s. Your ISP or cloud provider will have instructions
+				on setting up reverse DNS for your box.""" % (existing_rdns_v4, existing_rdns_v6, domain) )
 
 	elif sys.argv[1] == "--check-primary-hostname":
 		# See if the primary hostname appears resolvable and has a signed certificate.
