@@ -945,9 +945,8 @@ if __name__ == "__main__":
 		# Run only the primary hostname checks, specifically the ptr check
 		shell('check_call', ["/usr/sbin/rndc", "flush"], trap=True)
 		output = ConsoleOutput()
-		domain=env["PRIMARY_HOSTNAME"]
 		my_ips = env['PUBLIC_IP'] + ((" / "+env['PUBLIC_IPV6']) if env.get("PUBLIC_IPV6") else "")
-		check_reverse_dns(domain, my_ips, output, env)
+		check_reverse_dns(env["PRIMARY_HOSTNAME"], my_ips, output, env)
 
 	elif sys.argv[1] == "--check-primary-hostname":
 		# See if the primary hostname appears resolvable and has a signed certificate.
