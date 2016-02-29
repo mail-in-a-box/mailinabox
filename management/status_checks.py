@@ -418,6 +418,10 @@ def query_dns_ptr(qname):
 			# chances of recovering from those are slim.
 			break
 
+	# Display a slighty more meaningful message to the end users
+	if result == "[nonameservers]":
+		return "[bad response from authoritative nameservers]"
+
 	return result
 
 def check_alias_exists(alias_name, alias, env, output):
