@@ -942,7 +942,7 @@ if __name__ == "__main__":
 		run_and_output_changes(env, pool)
 
 	elif sys.argv[1] == "--check-ptr":
-		# Run only the primary hostname checks, specifically the ptr check
+		# See if the reverse dns of the box is configured properly
 		shell('check_call', ["/usr/sbin/rndc", "flush"], trap=True)
 		output = ConsoleOutput()
 		my_ips = env['PUBLIC_IP'] + ((" / "+env['PUBLIC_IPV6']) if env.get("PUBLIC_IPV6") else "")
