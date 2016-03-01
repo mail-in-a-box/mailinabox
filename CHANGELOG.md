@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+ownCloud moved their source code to a new location, breaking our installation script.
+
 v0.17 (February 25, 2016)
 -------------------------
 
