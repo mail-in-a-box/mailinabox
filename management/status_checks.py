@@ -406,7 +406,8 @@ def check_reverse_dns(domain, my_ips, output, env):
 def query_dns_ptr(qname):
 	# When looking up PTR records bind will contact the authoritative servers for a response.
 	# Sometimes these servers don't respond properly, we will give these servers 3 chances
-	# with a 2 second pause in between.
+	# with a 2 second pause in between. These servers don't take a long time to fail, so it 
+	# shouldn't slow the checks down to much.
 	for attempt in range(3):
 		result=query_dns(qname, "PTR")
 
