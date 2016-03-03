@@ -52,8 +52,8 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 	# The two apps we actually want are not in ownCloud core. Clone them from
 	# their github repositories.
 	mkdir -p /usr/local/lib/owncloud/apps
-	git_clone https://github.com/owncloud/contacts 4ff855e7c2075309041bead09fbb9eb7df678244 '' /usr/local/lib/owncloud/apps/contacts
-	git_clone https://github.com/owncloud/calendar ec53139b144c0f842c33813305612e8006c42ea5 '' /usr/local/lib/owncloud/apps/calendar
+	git_clone https://github.com/owncloudarchive/contacts 4ff855e7c2075309041bead09fbb9eb7df678244 '' /usr/local/lib/owncloud/apps/contacts
+	git_clone https://github.com/owncloudarchive/calendar ec53139b144c0f842c33813305612e8006c42ea5 '' /usr/local/lib/owncloud/apps/calendar
 
 	# Fix weird permissions.
 	chmod 750 /usr/local/lib/owncloud/{apps,config}
