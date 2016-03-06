@@ -365,7 +365,7 @@ def provision_certificates(env, agree_to_tos_url=None, logger=None, show_extende
 				"message": "Something unexpected went wrong. It looks like your local Let's Encrypt account data is corrupted. There was a problem with the file " + e.account_file_path + ".",
 			})
 
-		except (client.InvalidDomainName, client.NeedToTakeAction, client.ChallengeFailed, acme.messages.Error, requests.exceptions.RequestException) as e:
+		except (client.InvalidDomainName, client.NeedToTakeAction, client.ChallengeFailed, client.RateLimited, acme.messages.Error, requests.exceptions.RequestException) as e:
 			ret_item.update({
 				"result": "error",
 				"message": "Something unexpected went wrong: " + str(e),
