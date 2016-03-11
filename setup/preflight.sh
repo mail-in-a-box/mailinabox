@@ -43,6 +43,6 @@ fi
 
 # Check that no .wgetrc exists
 if [ -e ~/.wgetrc ]; then
-	echo "Mail-in-a-Box expects no default overrides to wget"
+	echo "Mail-in-a-Box expects no overrides to wget defaults, ~/.wgetrc exists"
 	exit
 fi
