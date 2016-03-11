@@ -40,3 +40,9 @@ if [ -n "$MOUNTED_TMP_AS_NO_EXEC" ]; then
 	echo "Mail-in-a-Box has to have exec rights on /tmp, please mount /tmp with exec"
 	exit
 fi
+
+# Check that no .wgetrc exists
+if [ -e ~/.wgetrc ]; then
+	echo "Mail-in-a-Box expects no default overrides to wget"
+	exit
+fi
