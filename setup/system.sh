@@ -8,6 +8,8 @@ source setup/functions.sh # load our functions
 
 # If the /etc/default directory has group write rights, the installer will
 # display a lot of warnings during setup
+#
+# This is incorrectly configured on Scaleway servers
 
 chmod g-w /etc/default
 
