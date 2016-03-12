@@ -4,6 +4,25 @@ source setup/functions.sh # load our functions
 # Basic System Configuration
 # -------------------------
 
+# ### Ensure system defaults access rights are correctly configured
+
+# If the /etc/default directory has group write rights, the installer will
+# display a lot of warnings during setup
+
+chmod g-w /etc/default
+
+# ### Set hostname of the box
+
+# If the hostname is not resolvable sudo can't be used. This will result in
+# errors during the install
+#
+# First the hostname in the configuration file, the activate the setting
+# Also make sure that loopback device resolves to the hostname
+
+echo $PRIMARY_HOSTNAME > /etc/hostname
+hostname $PRIMARY_HOSTNAME
+sed -i "s/127\.0\.1\.1.*/127.0.1.1\t$PRIMARY_HOSTNAME/" /etc/hosts
+
 # ### Add Mail-in-a-Box's PPA.
 
 # We've built several .deb packages on our own that we want to include.
@@ -163,6 +182,9 @@ EOF
 if [ -z "$DISABLE_FIREWALL" ]; then
 	# Install `ufw` which provides a simple firewall configuration.
 	apt_install ufw
+
+	# Make sure the system has a default policy to accept incoming connections
+	sed -i "s/DEFAULT_INPUT_POLICY.*/DEFAULT_INPUT_POLICY=\"ACCEPT\"/" /etc/default/ufw
 
 	# Allow incoming connections to SSH.
 	ufw_allow ssh;
