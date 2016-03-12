@@ -186,6 +186,13 @@ if [ -z "$DISABLE_FIREWALL" ]; then
 	# Make sure the system has a default policy to accept incoming connections
 	sed -i "s/DEFAULT_INPUT_POLICY.*/DEFAULT_INPUT_POLICY=\"ACCEPT\"/" /etc/default/ufw
 
+	# If IPV6 is disabled we should disable it in the ufw defaults
+	if [ -z "$PUBLIC_IPV6" ]; then
+		sed -i "s/IPV6.*/IPV6=no/" /etc/default/ufw
+	else
+		sed -i "s/IPV6.*/IPV6=yes/" /etc/default/ufw
+	fi
+
 	# Allow incoming connections to SSH.
 	ufw_allow ssh;
 
