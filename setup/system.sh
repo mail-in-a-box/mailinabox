@@ -13,11 +13,11 @@ chmod g-w /etc/default
 
 # ### Set hostname of the box
 
-# If the hostname is not resolvable sudo can't be used. This will result in
+# If the hostname is not correctly resolvable sudo can't be used. This will result in
 # errors during the install
 #
-# First the hostname in the configuration file, the activate the setting
-# Also make sure that loopback device resolves to the hostname
+# First set the hostname in the configuration file, then activate the setting
+# Also make sure that the loopback device resolves to the hostname
 
 echo $PRIMARY_HOSTNAME > /etc/hostname
 hostname $PRIMARY_HOSTNAME
