@@ -191,12 +191,6 @@ if [ -z "$DISABLE_FIREWALL" ]; then
 		modprobe ip6_tables
 	fi
 
-	# Some default configurations disable the firewall in the settings (Scaleway)
-	# If this isn't set, enabling the firewall will fail with:
-	#
-	# ERROR: Could not load logging rules
-	sed -i "s/ENABLED.*/ENABLED=yes/" /etc/ufw/ufw.conf
-
 	# Allow incoming connections to SSH.
 	ufw_allow ssh;
 
@@ -212,6 +206,12 @@ if [ -z "$DISABLE_FIREWALL" ]; then
 
 	fi
 	fi
+
+        # Some default configurations disable the firewall in the settings (Scaleway)
+        # If this isn't set, enabling the firewall will fail with:
+        #
+        # ERROR: Could not load logging rules
+        sed -i "s/ENABLED.*/ENABLED=yes/" /etc/ufw/ufw.conf
 
 	ufw --force enable;
 fi #NODOC
