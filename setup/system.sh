@@ -33,19 +33,13 @@ if [ ! -e /swapfile ]; then
 	echo "/swapfile   none    swap    sw    0   0" >> /etc/fstab
 
 	# Make sure the system only swaps as a last resort
-	SWAPPINESS=$(grep vm.swappiness /etc/sysctl.conf)
-	if [ -z "$SWAPPINESS" ]; then
-		hide_output sysctl vm.swappiness=10
-		echo "vm.swappiness=10" >> /etc/sysctl.conf
-	fi
+	hide_output sysctl vm.swappiness=10
+	tools/editconf.py /etc/sysctl.conf vm.swappiness=10
 
 	# Make sure the systeem keeps the file system inodes in
 	# memory as long as possible
-	PRESSURE=$(grep vm.vfs_cache_pressure /etc/sysctl.conf)
-        if [ -z "$PRESSURE" ]; then
-                hide_output sysctl vm.vfs_cache_pressure=50
-                echo "vm.vfs_cache_pressure=50" >> /etc/sysctl.conf
-        fi
+        hide_output sysctl vm.vfs_cache_pressure=50
+	tools/editconf.py /etc/sysctl.conf vm.vfs_cache_pressure=50
 fi
 fi
 fi
