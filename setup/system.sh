@@ -4,6 +4,52 @@ source setup/functions.sh # load our functions
 # Basic System Configuration
 # -------------------------
 
+# ### Add swap space to the system
+
+# If the physical memory of the system is below 2GB it is wise to create a
+# swap file. This will make the system more resiliant to memory spikes and
+# prevent for instance spam filtering from crashing
+
+# We will create a 1G file, this should be a good balance between disk usage
+# and buffers for the system
+
+# See https://www.digitalocean.com/community/tutorials/how-to-add-swap-on-ubuntu-14-04
+# for reference
+
+SWAP_MOUNTED=$(grep "swap" /proc/mounts)
+TOTAL_PHYSICAL_MEM=$(head -n 1 /proc/meminfo | awk '{print $2}')
+if [ $TOTAL_PHYSICAL_MEM -lt 19000000 ]; then
+if [ -z "$SWAP_MOUNTED" ]; then
+if [ ! -e /swapfile ]; then
+	echo "Adding swap to the system..."
+
+	# Allocate and active the swap file
+	fallocate -l 1G /swapfile
+	chmod 600 /swapfile
+	hide_output mkswap /swapfile
+	swapon /swapfile
+
+	# Make sure swap is activated on boot
+	echo "/swapfile   none    swap    sw    0   0" >> /etc/fstab
+
+	# Make sure the system only swaps as a last resort
+	SWAPPINESS=$(grep vm.swappiness /etc/sysctl.conf)
+	if [ -z "$SWAPPINESS" ]; then
+		hide_output sysctl vm.swappiness=10
+		echo "vm.swappiness=10" >> /etc/sysctl.conf
+	fi
+
+	# Make sure the systeem keeps the file system inodes in
+	# memory as long as possible
+	PRESSURE=$(grep vm.vfs_cache_pressure /etc/sysctl.conf)
+        if [ -z "$PRESSURE" ]; then
+                hide_output sysctl vm.vfs_cache_pressure=50
+                echo "vm.vfs_cache_pressure=50" >> /etc/sysctl.conf
+        fi
+fi
+fi
+fi
+
 # ### Add Mail-in-a-Box's PPA.
 
 # We've built several .deb packages on our own that we want to include.
