@@ -23,7 +23,7 @@ if [ -z "$SWAP_MOUNTED" ]; then
 if [ ! -e /swapfile ]; then
 	echo "Adding swap to the system..."
 
-	# Allocate and active the swap file
+	# Allocate and activate the swap file
 	fallocate -l 1G /swapfile
 	chmod 600 /swapfile
 	hide_output mkswap /swapfile
