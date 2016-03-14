@@ -18,7 +18,7 @@ source setup/functions.sh # load our functions
 
 SWAP_MOUNTED=$(grep "swap" /proc/mounts)
 TOTAL_PHYSICAL_MEM=$(head -n 1 /proc/meminfo | awk '{print $2}')
-if [ $TOTAL_PHYSICAL_MEM -lt 19000000 ]; then
+if [ $TOTAL_PHYSICAL_MEM -lt 1900000 ]; then
 if [ -z "$SWAP_MOUNTED" ]; then
 if [ ! -e /swapfile ]; then
 	echo "Adding swap to the system..."
