@@ -1,6 +1,9 @@
 CHANGELOG
 =========
 
+* A swap file is now created if system memory is less than 2GB, 5GB of free disk space is available, and if no swap file yet exists.
+
+
 v0.17b (March 1, 2016)
 ----------------------
 
