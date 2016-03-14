@@ -38,7 +38,7 @@ if [ ! -e /swapfile ]; then
 
 	# Make sure the systeem keeps the file system inodes in
 	# memory as long as possible
-        hide_output sysctl vm.vfs_cache_pressure=50
+	hide_output sysctl vm.vfs_cache_pressure=50
 	tools/editconf.py /etc/sysctl.conf vm.vfs_cache_pressure=50
 fi
 fi
