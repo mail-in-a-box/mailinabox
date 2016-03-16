@@ -41,7 +41,8 @@ if
 then
 	echo "Adding swap to the system..."
 
-	# Allocate and activate the swap file
+	# Allocate and activate the swap file. Allocate in 1KB chuncks
+	# doing it in one go, could fail on low memory systems
 	dd if=/dev/zero of=/swapfile bs=1024 count=$[1024*1024] status=none
 	if [ -e /swapfile ]; then
 		chmod 600 /swapfile
@@ -50,7 +51,7 @@ then
 	fi
 
 	# Check if swap is mounted then activate on boot
-        if [ -n "$(swapon -s | grep "\/swapfile")" ]; then
+        if swapon -s | grep -q "\/swapfile"; then
 		echo "/swapfile   none    swap    sw    0   0" >> /etc/fstab
 	else
 		echo "ERROR: Swap allocation failed"
