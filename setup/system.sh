@@ -18,6 +18,8 @@ source setup/functions.sh # load our functions
 # - Check if swap is currently mountend by looking at /proc/mounts
 # - Check if the user intents to activate swap on next boot by checking fstab entries.
 # - Check if a swapfile already exists
+# - Check if the root file system is not btrfs, might be an incompatible version with
+#   swapfiles. User should hanle it them selves.
 # - Check the memory requirements
 # - Check available diskspace
 
@@ -26,27 +28,32 @@ source setup/functions.sh # load our functions
 
 SWAP_MOUNTED=$(grep "swap" /proc/mounts)
 SWAP_IN_FSTAB=$(grep "swap" /etc/fstab)
+ROOT_IS_BTRFS=$(grep "\/ .*btrfs" /proc/mounts)
 TOTAL_PHYSICAL_MEM=$(head -n 1 /proc/meminfo | awk '{print $2}')
 AVAILABLE_DISK_SPACE=$(df / --output=avail | tail -n 1)
 if
 	[ -z "$SWAP_MOUNTED" ] &&
 	[ -z "$SWAP_IN_FSTAB" ] &&
 	[ ! -e /swapfile ] &&
+	[ -z "$ROOT_IS_BTRFS" ] &&
 	[ $TOTAL_PHYSICAL_MEM -lt 1900000 ] &&
 	[ $AVAILABLE_DISK_SPACE -gt 5242880 ]
 then
 	echo "Adding swap to the system..."
 
 	# Allocate and activate the swap file
-	fallocate -l 1G /swapfile
-	chmod 600 /swapfile
-	hide_output mkswap /swapfile
-	swapon /swapfile
+	dd if=/dev/zero of=/swapfile bs=1024 count=$[1024*1024] status=none
+	if [ -e /swapfile ]; then
+		chmod 600 /swapfile
+		hide_output mkswap /swapfile
+		swapon /swapfile
+	fi
 
 	# Check if swap is mounted then activate on boot
-	ACTIVATED_SWAP=$(swapon -s | grep "\/swapfile")
-	if [ -n "$ACTIVATED_SWAP" ]; then
+        if [ -n "$(swapon -s | grep "\/swapfile")" ]; then
 		echo "/swapfile   none    swap    sw    0   0" >> /etc/fstab
+	else
+		echo "ERROR: Swap allocation failed"
 	fi
 fi
 
