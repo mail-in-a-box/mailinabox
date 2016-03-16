@@ -14,16 +14,27 @@ source setup/functions.sh # load our functions
 # and buffers for the system. We will only allocate this file if there is more
 # than 5GB of disk space available
 
+# The following checks are performed:
+# - Check if swap is currently mountend by looking at /proc/mounts
+# - Check if the user intents to activate swap on next boot by checking fstab entries.
+# - Check if a swapfile already exists
+# - Check the memory requirements
+# - Check available diskspace
+
 # See https://www.digitalocean.com/community/tutorials/how-to-add-swap-on-ubuntu-14-04
 # for reference
 
 SWAP_MOUNTED=$(grep "swap" /proc/mounts)
+SWAP_IN_FSTAB=$(grep "swap" /etc/fstab)
 TOTAL_PHYSICAL_MEM=$(head -n 1 /proc/meminfo | awk '{print $2}')
 AVAILABLE_DISK_SPACE=$(df / --output=avail | tail -n 1)
-if [ $TOTAL_PHYSICAL_MEM -lt 1900000 ]; then
-if [ -z "$SWAP_MOUNTED" ]; then
-if [ ! -e /swapfile ]; then
-if [ $AVAILABLE_DISK_SPACE -gt 5242880 ]; then
+if
+	[ -z "$SWAP_MOUNTED" ] &&
+	[ -z "$SWAP_IN_FSTAB" ] &&
+	[ ! -e /swapfile ] &&
+	[ $TOTAL_PHYSICAL_MEM -lt 1900000 ] &&
+	[ $AVAILABLE_DISK_SPACE -gt 5242880 ]
+then
 	echo "Adding swap to the system..."
 
 	# Allocate and activate the swap file
@@ -32,11 +43,11 @@ if [ $AVAILABLE_DISK_SPACE -gt 5242880 ]; then
 	hide_output mkswap /swapfile
 	swapon /swapfile
 
-	# Make sure swap is activated on boot
-	echo "/swapfile   none    swap    sw    0   0" >> /etc/fstab
-fi
-fi
-fi
+	# Check if swap is mounted then activate on boot
+	ACTIVATED_SWAP=$(swapon -s | grep "\/swapfile")
+	if [ -n "$ACTIVATED_SWAP" ]; then
+		echo "/swapfile   none    swap    sw    0   0" >> /etc/fstab
+	fi
 fi
 
 # ### Add Mail-in-a-Box's PPA.
