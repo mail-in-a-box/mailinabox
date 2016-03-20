@@ -175,9 +175,6 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 		for value in build_sshfp_records():
 			records.append((None, "SSHFP", value, "Optional. Provides an out-of-band method for verifying an SSH key before connecting. Use 'VerifyHostKeyDNS yes' (or 'VerifyHostKeyDNS ask') when connecting with ssh."))
 
-	# The MX record says where email for the domain should be delivered: Here!
-	records.append((None,  "MX",  "10 %s." % env["PRIMARY_HOSTNAME"], "Required. Specifies the hostname (and priority) of the machine that handles @%s mail." % domain))
-
 	# Add DNS records for any subdomains of this domain. We should not have a zone for
 	# both a domain and one of its subdomains.
 	subdomains = [d for d in all_domains if d.endswith("." + domain)]
@@ -243,6 +240,10 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 
 	# Don't pin the list of records that has_rec checks against anymore.
 	has_rec_base = records
+
+	# The MX record says where email for the domain should be delivered: Here!
+	if not has_rec(None, "MX"):
+		records.append((None,  "MX",  "10 %s." % env["PRIMARY_HOSTNAME"], "Required. Specifies the hostname (and priority) of the machine that handles @%s mail." % domain))
 
 	# SPF record: Permit the box ('mx', see above) to send mail on behalf of
 	# the domain, and no one else.
