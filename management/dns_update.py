@@ -242,7 +242,7 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 	has_rec_base = records
 
 	# The MX record says where email for the domain should be delivered: Here!
-	if not has_rec(None, "MX"):
+	if not has_rec(None, "MX", prefix="10 "):
 		records.append((None,  "MX",  "10 %s." % env["PRIMARY_HOSTNAME"], "Required. Specifies the hostname (and priority) of the machine that handles @%s mail." % domain))
 
 	# SPF record: Permit the box ('mx', see above) to send mail on behalf of
