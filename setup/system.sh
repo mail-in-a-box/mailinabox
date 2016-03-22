@@ -15,7 +15,7 @@ source setup/functions.sh # load our functions
 # than 5GB of disk space available
 
 # The following checks are performed:
-# - Check if swap is currently mountend by looking at /proc/mounts
+# - Check if swap is currently mountend by looking at /proc/swaps
 # - Check if the user intents to activate swap on next boot by checking fstab entries.
 # - Check if a swapfile already exists
 # - Check if the root file system is not btrfs, might be an incompatible version with
@@ -26,7 +26,7 @@ source setup/functions.sh # load our functions
 # See https://www.digitalocean.com/community/tutorials/how-to-add-swap-on-ubuntu-14-04
 # for reference
 
-SWAP_MOUNTED=$(grep "swap" /proc/mounts)
+SWAP_MOUNTED=$(cat /proc/swaps | tail -n+2)
 SWAP_IN_FSTAB=$(grep "swap" /etc/fstab)
 ROOT_IS_BTRFS=$(grep "\/ .*btrfs" /proc/mounts)
 TOTAL_PHYSICAL_MEM=$(head -n 1 /proc/meminfo | awk '{print $2}')
