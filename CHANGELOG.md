@@ -1,6 +1,8 @@
 CHANGELOG
 =========
 
+* When a reboot is required (due to Ubuntu security updates automatically installed), a Reboot Box button now appears.
+
 v0.17 (February 25, 2016)
 -------------------------
 

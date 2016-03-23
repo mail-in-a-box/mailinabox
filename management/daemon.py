@@ -456,10 +456,12 @@ def do_updates():
 		"DEBIAN_FRONTEND": "noninteractive"
 	})
 
+
 @app.route('/system/reboot', methods=["GET"])
 @authorized_personnel_only
 def needs_reboot():
-	if os.path.isfile("/var/run/reboot-required"):
+	from status_checks import is_reboot_needed_due_to_package_installation
+	if is_reboot_needed_due_to_package_installation():
 		return json_response(True)
 	else:
 		return json_response(False)
@@ -467,10 +469,12 @@ def needs_reboot():
 @app.route('/system/reboot', methods=["POST"])
 @authorized_personnel_only
 def do_reboot():
-	if os.path.isfile("/var/run/reboot-required"):
+	# To keep the attack surface low, we don't allow a remote reboot if one isn't necessary.
+	from status_checks import is_reboot_needed_due_to_package_installation
+	if is_reboot_needed_due_to_package_installation():
 		return utils.shell("check_output", ["/sbin/shutdown", "-r", "now"], capture_stderr=True)
 	else:
-		return "No reboot is required"
+		return "No reboot is required, so it is not allowed."
 
 
 @app.route('/system/backup/status')
