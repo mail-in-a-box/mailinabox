@@ -7,6 +7,7 @@ In Development
 Control panel:
 
 * Munin system monitoring graphs are now zoomable.
+* When a reboot is required (due to Ubuntu security updates automatically installed), a Reboot Box button now appears.
 
 v0.17b (March 1, 2016)
 ----------------------
