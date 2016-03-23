@@ -9,6 +9,10 @@ Control panel:
 * Munin system monitoring graphs are now zoomable.
 * When a reboot is required (due to Ubuntu security updates automatically installed), a Reboot Box button now appears.
 
+Setup:
+
+* Setup dialogs did not appear correctly when connecting to SSH using Putty on Windows.
+
 v0.17b (March 1, 2016)
 ----------------------
 
