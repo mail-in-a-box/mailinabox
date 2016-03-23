@@ -1,6 +1,8 @@
 CHANGELOG
 =========
 
+* Fixed a long-standing issue with training the spam filter not working (because of a file permissions issue).
+
 v0.17b (March 1, 2016)
 ----------------------
 
