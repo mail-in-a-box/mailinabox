@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+Control panel:
+
+* Munin system monitoring graphs are now zoomable.
+
 v0.17b (March 1, 2016)
 ----------------------
 
