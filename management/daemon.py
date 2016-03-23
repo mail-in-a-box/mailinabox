@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import os, os.path, re, json
+import os, os.path, re, json, logging, logging.handlers
 
 from functools import wraps
 
@@ -32,6 +32,19 @@ with open(os.path.join(os.path.dirname(me), "csr_country_codes.tsv")) as f:
 
 app = Flask(__name__, template_folder=os.path.abspath(os.path.join(os.path.dirname(me), "templates")))
 
+# Initialize the logger
+# 
+# The logger wil automatically rotate the log if it gets to big, it will keep 3 old log files
+# The log will contain timestap-level-message
+logger = logging.getLogger('mailinabox')
+fh = logging.handlers.RotatingFileHandler("/var/log/mailinabox.log", maxBytes=10240, backupCount=3)
+fh.setFormatter(logging.Formatter('%(asctime)s %(levelname)-8s %(message)s'))
+logger.addHandler(fh)
+logger.setLevel(logging.INFO)
+
+# Log a line that the daemon was started
+logger.info("Management daemon started")
+
 # Decorator to protect views that require a user with 'admin' privileges.
 def authorized_personnel_only(viewfunc):
 	@wraps(viewfunc)
@@ -44,6 +57,9 @@ def authorized_personnel_only(viewfunc):
 			# Authentication failed.
 			privs = []
 			error = str(e)
+
+			# Write a line in the log recording the failed login
+			log_failed_login(request)
 
 		# Authorized to access an API view?
 		if "admin" in privs:
@@ -117,6 +133,9 @@ def me():
 	try:
 		email, privs = auth_service.authenticate(request, env)
 	except ValueError as e:
+		# Log the failed login
+		log_failed_login(request)
+
 		return json_response({
 			"status": "invalid",
 			"reason": str(e),
@@ -503,6 +522,9 @@ def munin(filename=""):
 	# the request to static files.
 	if filename == "": filename = "index.html"
 	return send_from_directory("/var/cache/munin/www", filename)
+
+def log_failed_login(request):
+        logger.warning("Failed login from ip %s" % (request.headers.getlist("X-Forwarded-For")[0]))
 
 # APP
 

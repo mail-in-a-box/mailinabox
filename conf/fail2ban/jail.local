@@ -24,6 +24,15 @@ filter  = dovecotimap
 findtime = 30
 maxretry = 20
 
+[management-daemon]
+enabled = true
+filter = miab-management-daemon
+port = http,https
+logpath = /var/log/mailinabox.log
+maxretry = 20
+findtime = 30
+
 [recidive]
 enabled  = true
 maxretry = 10
+

@@ -232,5 +232,6 @@ cat conf/fail2ban/jail.local \
 	| sed "s/PUBLIC_IP/$PUBLIC_IP/g" \
 	> /etc/fail2ban/jail.local
 cp conf/fail2ban/dovecotimap.conf /etc/fail2ban/filter.d/dovecotimap.conf
+cp conf/fail2ban/miab-management-daemon.conf /etc/fail2ban/filter.d/miab-management-daemon.conf
 
 restart_service fail2ban
