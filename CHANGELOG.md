@@ -1,6 +1,8 @@
 CHANGELOG
 =========
 
+* Setup dialogs did not appear correctly when connecting to SSH using Putty on Windows.
+
 v0.17b (March 1, 2016)
 ----------------------
 

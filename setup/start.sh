@@ -24,8 +24,9 @@ export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 export LC_TYPE=en_US.UTF-8
 
-# Fix for putty Line Drawing characters to be shown correctly
+# Fix so line drawing characters are shown correctly in Putty on Windows. See #744.
 export NCURSES_NO_UTF8_ACS=1
+
 # Recall the last settings used if we're running this a second time.
 if [ -f /etc/mailinabox.conf ]; then
 	# Run any system migrations before proceeding. Since this is a second run,
