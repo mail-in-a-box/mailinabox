@@ -11,6 +11,7 @@ Control panel:
 Setup:
 
 * Setup dialogs did not appear correctly when connecting to SSH using Putty on Windows.
+* We now install Roundcube from our own mirror because Sourceforge's downloads experience frequent intermittant unavailability.
 
 v0.17b (March 1, 2016)
 ----------------------
