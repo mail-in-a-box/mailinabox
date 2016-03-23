@@ -4,6 +4,10 @@ CHANGELOG
 In Development
 --------------
 
+Mail:
+
+* Fixed a long-standing issue with training the spam filter not working (because of a file permissions issue).
+
 Control panel:
 
 * Munin system monitoring graphs are now zoomable.
