@@ -507,12 +507,9 @@ def munin(filename=""):
 	if filename == "": filename = "index.html"
 	return send_from_directory("/var/cache/munin/www", filename)
 
-# MUNIN CGI-GRAPH
-
-@app.route('/munin/cgi-graph/')
 @app.route('/munin/cgi-graph/<path:filename>')
 @authorized_personnel_only
-def munin_cgi(filename=""):
+def munin_cgi(filename):
 	""" Relay munin cgi dynazoom requests
 	/usr/lib/munin/cgi/munin-cgi-graph is a perl cgi script in the munin package
 	that is responsible for generating binary png images _and_ associated HTTP
@@ -541,8 +538,6 @@ def munin_cgi(filename=""):
 		return ("a path must be specified", 404)
 
 	query_str = request.query_string.decode("utf-8", 'ignore')
-	query_str = query_str[1:] if query_str.startswith('&') else query_str[1:]
-	# I don't know if this is strictly necessary
 
 	env = {'PATH_INFO': '/%s/' % filename, 'QUERY_STRING': query_str}
 	cmd = COMMAND % query_str
@@ -560,18 +555,12 @@ def munin_cgi(filename=""):
 		return ("error processing graph image", 500)
 
 	# /usr/lib/munin/cgi/munin-cgi-graph returns both headers and binary png when successful.
-	# Per http://www.libpng.org/pub/png/spec/1.2/PNG-Structure.html PNG files always start
-	# with the same 8 bytes (137 80 78 71 13 10 26 10) or b'\x89PNG\r\n\x1a\n' So we split
-	# the output of munin-cgi-graph where the PNG begins
-	bin_start = binout.find(b'\x89PNG\r\n\x1a\n')
-	str_headers = binout[:bin_start].decode("utf-8")
-	# decode the byte str containing response headers
-	bin_image = binout[bin_start:]
-	response = make_response(bin_image)
-	for line in str_headers.splitlines():
-		if line:
-			name, value = line.split(':',1)
-			response.headers[name] = value
+	# A double-Windows-style-newline always indicates the end of HTTP headers.
+	headers, image_bytes = binout.split(b'\r\n\r\n', 1)
+	response = make_response(image_bytes)
+	for line in headers.splitlines():
+		name, value = line.decode("utf8").split(':', 1)
+		response.headers[name] = value
 	if 'Status' in response.headers and '404' in response.headers['Status']:
 		app.logger.warning("munin_cgi: munin-cgi-graph returned 404 status code. PATH_INFO=%s", env['PATH_INFO'])
 	return response

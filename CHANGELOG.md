@@ -1,6 +1,8 @@
 CHANGELOG
 =========
 
+* Munin system monitoring graphs are now zoomable.
+
 In Development
 --------------
 
