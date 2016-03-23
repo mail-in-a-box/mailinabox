@@ -4,6 +4,10 @@ CHANGELOG
 In Development
 --------------
 
+Control panel:
+
+* Prevent click-jacking of the management interface by adding HTTP headers.
+
 Setup:
 
 * Setup dialogs did not appear correctly when connecting to SSH using Putty on Windows.
