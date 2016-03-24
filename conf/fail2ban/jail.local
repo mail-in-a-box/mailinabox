@@ -40,6 +40,14 @@ logpath  = /var/log/roundcubemail/errors
 maxretry = 20
 findtime = 30
 
+[owncloud]
+enabled  = true
+port     = http,https
+filter   = owncloud
+logpath  = /home/user-data/owncloud/owncloud.log
+maxretry = 20
+findtime = 30
+
 [recidive]
 enabled  = true
 maxretry = 10

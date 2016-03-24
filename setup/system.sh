@@ -234,4 +234,5 @@ cat conf/fail2ban/jail.local \
 cp conf/fail2ban/dovecotimap.conf /etc/fail2ban/filter.d/dovecotimap.conf
 cp conf/fail2ban/miab-management-daemon.conf /etc/fail2ban/filter.d/miab-management-daemon.conf
 cp conf/fail2ban/roundcube.conf /etc/fail2ban/filter.d/roundcube.conf
+cp conf/fail2ban/owncloud.conf /etc/fail2ban/filter.d/owncloud.conf
 restart_service fail2ban
