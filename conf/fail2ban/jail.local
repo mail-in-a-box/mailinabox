@@ -32,6 +32,14 @@ logpath = /var/log/syslog
 maxretry = 20
 findtime = 30
 
+[roundcube]
+enabled  = true
+port     = http,https
+filter   = roundcube
+logpath  = /var/log/roundcubemail/errors
+maxretry = 20
+findtime = 30
+
 [recidive]
 enabled  = true
 maxretry = 10
