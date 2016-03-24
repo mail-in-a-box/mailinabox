@@ -34,19 +34,23 @@
   font-family: monospace;
   white-space: pre-wrap;
 }
-
-#system-privacy-setting {
-  float: right;
-  max-width: 20em;
-  margin-bottom: 1em;
-}
 </style>
+
+<div class="row">
+	<div class="col-md-push-9 col-md-3">
+
+<div id="system-reboot-required" style="display: none; margin-bottom: 1em;">
+	<button type="button" class="btn btn-danger" onclick="confirm_reboot(); return false;">Reboot Box</button>
+	<div>No reboot is necessary.</div>
+</div>
 
 <div id="system-privacy-setting" style="display: none">
 	<div><a onclick="return enable_privacy(!current_privacy_setting)" href="#"><span>Enable/Disable</span> New-Version Check</a></div>
 	<p style="line-height: 125%"><small>(When enabled, status checks phone-home to check for a new release of Mail-in-a-Box.)</small></p>
 </div>
 
+	</div> <!-- /col -->
+	<div class="col-md-pull-3 col-md-8">
 
 <table id="system-checks" class="table" style="max-width: 60em">
   <thead>
@@ -54,6 +58,9 @@
   <tbody>
   </tbody>
 </table>
+
+	</div> <!-- /col -->
+</div> <!-- /row -->
 
 <script>
 function show_system_status() {
@@ -68,6 +75,16 @@ function show_system_status() {
       $('#system-privacy-setting').show();
       $('#system-privacy-setting a span').text(r ? "Enable" : "Disable");
       $('#system-privacy-setting p').toggle(r);
+    });
+
+  api(
+    "/system/reboot",
+    "GET",
+    { },
+    function(r) {
+      $('#system-reboot-required').show(); // show when r becomes available
+      $('#system-reboot-required').find('button').toggle(r);
+      $('#system-reboot-required').find('div').toggle(!r);
     });
 
   api(
@@ -121,5 +138,23 @@ function enable_privacy(status) {
       show_system_status();
     });
   return false; // disable link
+}
+
+function confirm_reboot() {
+  show_modal_confirm(
+    "Reboot",
+    $("<p>This will reboot your Mail-in-a-Box <code>{{hostname}}</code>.</p> <p>Until the machine is fully restarted, your users will not be able to send and receive email, and you will not be able to connect to this control panel or with SSH. The reboot cannot be cancelled.</p>"),
+    "Reboot Now",
+    function() {
+      api(
+        "/system/reboot",
+        "POST",
+        { },
+        function(r) {
+          var msg = "<p>Please reload this page after a minute or so.</p>";
+          if (r) msg = "<p>The reboot command said:</p> <pre>" + $("<pre/>").text(r).html() + "</pre>"; // successful reboots don't produce any output; the output must be HTML-escaped
+          show_modal_error("Reboot", msg);
+        });
+    });
 }
 </script>

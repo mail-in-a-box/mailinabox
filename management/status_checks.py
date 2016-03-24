@@ -185,10 +185,13 @@ def check_ssh_password(env, output):
 	else:
 		output.print_ok("SSH disallows password-based login.")
 
+def is_reboot_needed_due_to_package_installation():
+	return os.path.exists("/var/run/reboot-required")
+
 def check_software_updates(env, output):
 	# Check for any software package updates.
 	pkgs = list_apt_updates(apt_update=False)
-	if os.path.exists("/var/run/reboot-required"):
+	if is_reboot_needed_due_to_package_installation():
 		output.print_error("System updates have been installed and a reboot of the machine is required.")
 	elif len(pkgs) == 0:
 		output.print_ok("System software is up to date.")

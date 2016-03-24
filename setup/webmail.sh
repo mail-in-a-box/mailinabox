@@ -51,7 +51,7 @@ fi
 if [ $needs_update == 1 ]; then
 	# install roundcube
 	wget_verify \
-		https://downloads.sourceforge.net/project/roundcubemail/roundcubemail/$VERSION/roundcubemail-$VERSION.tar.gz \
+		https://s3.amazonaws.com/joshdata/mail-in-a-box/public/roundcubemail-$VERSION.tar.gz \
 		$HASH \
 		/tmp/roundcube.tgz
 	tar -C /usr/local/lib --no-same-owner -zxf /tmp/roundcube.tgz

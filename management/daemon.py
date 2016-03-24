@@ -1,10 +1,11 @@
 #!/usr/bin/python3
 
 import os, os.path, re, json, time
+import subprocess
 
 from functools import wraps
 
-from flask import Flask, request, render_template, abort, Response, send_from_directory
+from flask import Flask, request, render_template, abort, Response, send_from_directory, make_response
 
 import auth, utils, multiprocessing.pool
 from mailconfig import get_mail_users, get_mail_users_ex, get_admins, add_mail_user, set_mail_password, remove_mail_user
@@ -459,6 +460,27 @@ def do_updates():
 		"DEBIAN_FRONTEND": "noninteractive"
 	})
 
+
+@app.route('/system/reboot', methods=["GET"])
+@authorized_personnel_only
+def needs_reboot():
+	from status_checks import is_reboot_needed_due_to_package_installation
+	if is_reboot_needed_due_to_package_installation():
+		return json_response(True)
+	else:
+		return json_response(False)
+
+@app.route('/system/reboot', methods=["POST"])
+@authorized_personnel_only
+def do_reboot():
+	# To keep the attack surface low, we don't allow a remote reboot if one isn't necessary.
+	from status_checks import is_reboot_needed_due_to_package_installation
+	if is_reboot_needed_due_to_package_installation():
+		return utils.shell("check_output", ["/sbin/shutdown", "-r", "now"], capture_stderr=True)
+	else:
+		return "No reboot is required, so it is not allowed."
+
+
 @app.route('/system/backup/status')
 @authorized_personnel_only
 def backup_status():
@@ -510,11 +532,69 @@ def munin(filename=""):
 	if filename == "": filename = "index.html"
 	return send_from_directory("/var/cache/munin/www", filename)
 
+@app.route('/munin/cgi-graph/<path:filename>')
+@authorized_personnel_only
+def munin_cgi(filename):
+	""" Relay munin cgi dynazoom requests
+	/usr/lib/munin/cgi/munin-cgi-graph is a perl cgi script in the munin package
+	that is responsible for generating binary png images _and_ associated HTTP
+	headers based on parameters in the requesting URL. All output is written
+	to stdout which munin_cgi splits into response headers and binary response
+	data.
+	munin-cgi-graph reads environment variables as well as passed input to determine
+	what it should do. It expects a path to be in the env-var PATH_INFO, and a
+	querystring to be in the env-var QUERY_STRING as well as passed as input to the
+	command.
+	munin-cgi-graph has several failure modes. Some write HTTP Status headers and
+	others return nonzero exit codes.
+	Situating munin_cgi between the user-agent and munin-cgi-graph enables keeping
+	the cgi script behind mailinabox's auth mechanisms and avoids additional
+	support infrastructure like spawn-fcgi.
+	"""
+
+	COMMAND = 'su - munin --preserve-environment --shell=/bin/bash -c /usr/lib/munin/cgi/munin-cgi-graph "%s"'
+	# su changes user, we use the munin user here
+	# --preserve-environment retains the environment, which is where Popen's `env` data is
+	# --shell=/bin/bash ensures the shell used is bash
+	# -c "/usr/lib/munin/cgi/munin-cgi-graph" passes the command to run as munin
+	# "%s" is a placeholder for where the request's querystring will be added
+
+	if filename == "":
+		return ("a path must be specified", 404)
+
+	query_str = request.query_string.decode("utf-8", 'ignore')
+
+	env = {'PATH_INFO': '/%s/' % filename, 'QUERY_STRING': query_str}
+	cmd = COMMAND % query_str
+	code, binout = utils.shell('check_output',
+							   cmd.split(' ', 5),
+							   # Using a maxsplit of 5 keeps the last 2 arguments together
+							   input=query_str.encode('UTF-8'),
+							   env=env,
+							   return_bytes=True,
+							   trap=True)
+
+	if code != 0:
+		# nonzero returncode indicates error
+		app.logger.error("munin_cgi: munin-cgi-graph returned nonzero exit code, %s", process.returncode)
+		return ("error processing graph image", 500)
+
+	# /usr/lib/munin/cgi/munin-cgi-graph returns both headers and binary png when successful.
+	# A double-Windows-style-newline always indicates the end of HTTP headers.
+	headers, image_bytes = binout.split(b'\r\n\r\n', 1)
+	response = make_response(image_bytes)
+	for line in headers.splitlines():
+		name, value = line.decode("utf8").split(':', 1)
+		response.headers[name] = value
+	if 'Status' in response.headers and '404' in response.headers['Status']:
+		app.logger.warning("munin_cgi: munin-cgi-graph returned 404 status code. PATH_INFO=%s", env['PATH_INFO'])
+	return response
+
 def log_failed_login(request):
-	# We need to figure out the ip to list in the message, all our calls are routed 
-	# through nginx who will put the original ip in X-Forwarded-For. 
+	# We need to figure out the ip to list in the message, all our calls are routed
+	# through nginx who will put the original ip in X-Forwarded-For.
 	# During setup we call the management interface directly to determine the user
-	# status. So we can't always use X-Forwarded-For because during setup that header 
+	# status. So we can't always use X-Forwarded-For because during setup that header
 	# will not be present.
 	if request.headers.getlist("X-Forwarded-For"):
 		ip = request.headers.getlist("X-Forwarded-For")[0]
@@ -524,6 +604,7 @@ def log_failed_login(request):
 	# We need to add a timestamp to the log message, otherwise /dev/log will eat the "duplicate"
 	# message.
 	app.logger.warning( "MIAB: Failed login attempt from ip %s - timestamp %s" % (ip, time.time()))
+
 
 # APP
 
