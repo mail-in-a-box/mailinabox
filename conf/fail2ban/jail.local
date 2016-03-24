@@ -28,7 +28,7 @@ maxretry = 20
 enabled = true
 filter = miab-management-daemon
 port = http,https
-logpath = /var/log/mailinabox.log
+logpath = /var/log/syslog
 maxretry = 20
 findtime = 30
 

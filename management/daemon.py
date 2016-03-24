@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import os, os.path, re, json, logging, logging.handlers
+import os, os.path, re, json, time
 
 from functools import wraps
 
@@ -31,19 +31,6 @@ with open(os.path.join(os.path.dirname(me), "csr_country_codes.tsv")) as f:
 		csr_country_codes.append((code, name))
 
 app = Flask(__name__, template_folder=os.path.abspath(os.path.join(os.path.dirname(me), "templates")))
-
-# Initialize the logger
-# 
-# The logger wil automatically rotate the log if it gets to big, it will keep 3 old log files
-# The log will contain timestap-level-message
-logger = logging.getLogger('mailinabox')
-fh = logging.handlers.RotatingFileHandler("/var/log/mailinabox.log", maxBytes=10240, backupCount=3)
-fh.setFormatter(logging.Formatter('%(asctime)s %(levelname)-8s %(message)s'))
-logger.addHandler(fh)
-logger.setLevel(logging.INFO)
-
-# Log a line that the daemon was started
-logger.info("Management daemon started")
 
 # Decorator to protect views that require a user with 'admin' privileges.
 def authorized_personnel_only(viewfunc):
@@ -524,7 +511,19 @@ def munin(filename=""):
 	return send_from_directory("/var/cache/munin/www", filename)
 
 def log_failed_login(request):
-        logger.warning("Failed login from ip %s" % (request.headers.getlist("X-Forwarded-For")[0]))
+	# We need to figure out the ip to list in the message, all our calls are routed 
+	# through nginx who will put the original ip in X-Forwarded-For. 
+	# During setup we call the management interface directly to determine the user
+	# status. So we can't always use X-Forwarded-For because during setup that header 
+	# will not be present.
+	if request.headers.getlist("X-Forwarded-For"):
+		ip = request.headers.getlist("X-Forwarded-For")[0]
+	else:
+		ip = request.remote_addr
+
+	# We need to add a timestamp to the log message, otherwise /dev/log will eat the "duplicate"
+	# message.
+	app.logger.warning( "MIAB: Failed login attempt from ip %s - timestamp %s" % (ip, time.time()))
 
 # APP
 
