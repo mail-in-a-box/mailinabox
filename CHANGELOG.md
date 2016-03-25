@@ -1,6 +1,24 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+Mail:
+
+* Fixed a long-standing issue with training the spam filter not working (because of a file permissions issue).
+
+Control panel:
+
+* Munin system monitoring graphs are now zoomable.
+* When a reboot is required (due to Ubuntu security updates automatically installed), a Reboot Box button now appears.
+
+Setup:
+
+* A swap file is now created if system memory is less than 2GB, 5GB of free disk space is available, and if no swap file yet exists.
+* Setup dialogs did not appear correctly when connecting to SSH using Putty on Windows.
+* We now install Roundcube from our own mirror because Sourceforge's downloads experience frequent intermittant unavailability.
+
 v0.17b (March 1, 2016)
 ----------------------
 
