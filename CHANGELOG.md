@@ -4,6 +4,10 @@ CHANGELOG
 In Development
 --------------
 
+Mail:
+
+* Roundcube html5_notifier plugin updated from version 0.6 to 0.6.2 to fix Roundcube getting stuck for some people.
+
 Control panel:
 
 * Prevent click-jacking of the management interface by adding HTTP headers.
