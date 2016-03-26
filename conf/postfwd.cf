@@ -1,0 +1,205 @@
+###################################################################################################
+##
+##   ATTENTION: This configuration uses features which require at least postfwd 1.30!
+##              Please see the manual ('postfwd -m') for example syntax for prior versions.
+##
+###################################################################################################
+
+
+##
+## Definitions
+##
+
+# Maintenance times
+&&MAINTENANCE {
+        date=15.01.2007
+        date=15.10.2007 - 17.10.2007
+	# keep as an example.
+        #days=Sat-Sun
+        #time=03:00:00 - 04:00:00
+}
+
+# Whitelists
+&&TRUSTED_NETS {
+	# empty on propose
+        #client_address=192.168.1.0/22
+        #client_address=172.16.128.32/27
+}
+&&TRUSTED_HOSTS {
+	# put them in here as an example.
+        client_name~=\.debian\.org$
+        client_name~=\.lists\.debian\.org$
+}
+&&TRUSTED_USERS {
+	# examples
+	#sasl_username==user@example.com
+	#sasl_username==(.*)@example.net
+}
+&&TRUSTED_TLS {
+	# whitelist know certs
+        #ccert_fingerprint==AA:BB:CC:DD:EE:FF:11:22:33:44:55:66
+        # optionally, whitelist senders which use TLS
+	#encryption_keysize>=64
+}
+&&FREEMAIL {
+        client_name~=\.gmx\.net$
+        client_name~=\.web\.de$
+        client_name~=\.(aol|gmail|outlook|yahoo|h(ush|ot)mail)\.com$
+}
+&&STATIC {
+        # contains freemailers
+        &&FREEMAIL
+        client_name~=[\.\-]static[[\.\-]
+        client_name~=^(mail|smtp|mout|mx)[\-]*[0-9]*\.
+}
+&&DNSWLS {
+	rbl=sbl-xbl.spamhaus.org
+        rbl=list.dnswl.org
+        rbl=query.bondedsender.org
+        rbl=hostkarma.junkemailfilter.com/^127\.0\.0\.1$/3600
+        rhsbl_client=hostkarma.junkemailfilter.com/^127\.0\.0\.1$/3600
+}
+
+# Spamchecks
+&&BADHELO {
+	client_name==!!($$(helo_name))
+}
+&&DYNAMIC {
+        client_name==unknown
+        client_name~=(\-.+){4}
+        client_name~=\d{5}
+        client_name~=[_\.\-]([axt]{0,1}dsl|br(e|oa)dband|ppp|pppoe|dynamic|dynip|ADSL|dial(up|in)|pool|dhcp|leased)[_\.\-]
+}
+&&DNSBLS {
+        rbl=zen.spamhaus.org
+        rbl=list.dsbl.org
+        rbl=bl.spamcop.net
+        rbl=dnsbl.sorbs.net
+        rbl=ix.dnsbl.manitu.net
+        rhsbl=rddn.dnsbl.net.au
+        rhsbl=rhsbl.sorbs.net
+}
+
+
+##
+## Ruleset
+##
+
+# temporary reject and drop connection during maintenance window
+id=M_001
+	&&MAINTENANCE
+	action=421 maintenance - please try again later
+
+# stress-friendly behaviour (will not match on postfix version pre 2.5)
+id=STRESS
+	stress==yes
+	action=dunno
+
+# Whitelists
+id=WL_001
+	&&TRUSTED_NETS
+	action=dunno
+id=WL_002
+	&&TRUSTED_HOSTS
+	action=dunno
+id=WL_003
+	&&TRUSTED_USERS
+	action=dunno
+id=WL_004
+	&&TRUSTED_TLS
+	action=dunno
+
+# DNSWL checks - lookup
+id=RWL_001
+	&&DNSWLS
+	rhsblcount=all ; rblcount=all
+	action=set(HIT_dnswls=$$rhsblcount,HIT_dnswls+=$$rblcount,DSWL_text=$$dnsbltext)
+
+# DNSWL - whitelisting
+id=RWL_002
+	HIT_dnswls>=2
+	action=PREPEND X-PFW-STATE: INFO: [$$DSWL_text]
+id=RWL_003
+	HIT_dnswls>=1
+	action=PREPEND X-PFW-STATE: INFO: [$$DSWL_text] ;  &&STATIC
+id=RWL_004
+	HIT_dnswls>=1
+	action=PREPEND X-PFW-STATE: INFO: [$$DSWL_text] ;  $$client_name~=$$(sender_domain)$
+
+# DNSBL checks - lookup
+id=RBL_001
+	&&DNSBLS
+	rhsblcount=all ; rblcount=all
+        action=set(HIT_dnsbls=$$rhsblcount,HIT_dnsbls+=$$rblcount,DSBL_text=$$dnsbltext)
+
+# DNSBL checks - evaluation
+
+# this will drop emails from servers which are in 2 or more blacklists
+id=RBL_002
+	HIT_dnsbls>=2
+	action=554 5.7.1 blocked using $$DSBL_count dnsbls, INFO: [$$DSBL_text]
+
+# this will drop emails from servers which are in more than 1 blacklist and have dynamic ip address
+id=RBL_003
+	HIT_dnsbls>=1
+	&&DYNAMIC
+	action=REJECT listed on dnsbl and $$client_name looks like dynip, INFO: [$$DSBL_text]
+
+# this will drop emails from servers which are in more than 1 blacklist and helo does not match their PTR
+id=RBL_004
+	HIT_dnsbls>=1
+	&&BADHELO
+	action=REJECT listed on dnsbl and $$helo_name does not match $$client_name, INFO: [$$DSBL_text]
+
+# Rate limits
+
+# rate limit servers in more than 1 dnsbl, which didn't login
+id=RATE_001
+	sasl_username==unknown
+	HIT_dnsbls>=1
+	action=rate($$client_address/1/300/450 4.7.1 please do not try more than once per 5 minutes)
+
+# rate limit servers behind a dynamic ip address, if they didn't login
+id=RATE_002
+	sasl_username==unknown
+	&&DYNAMIC
+	action=rate($$client_address/1/300/450 4.7.1 please do not try more than once per 5 minutes)
+
+# Selective greylisting
+
+# do no greylist freeemailers and servers with PTR
+id=GREY_001
+	action=dunno
+	&&STATIC
+
+# do no greylist emails which sender domain matches the server domain
+id=GREY_002
+	action=dunno
+	$$client_name~=$$(sender_domain)$
+
+# do no greylist emails which sender is in one or more dnswl.
+id=GREY_003
+	action=dunno
+	HIT_dnswls>=1
+
+# greylist dynamic ip senders
+id=GREY_004
+	action=greylisting
+	&&DYNAMIC
+
+# greylist servers in one or more dnsbl.
+id=GREY_005
+	action=greylisting
+	HIT_dnsbls>=1
+
+# Greylisting should be safe during out-of-office times
+# there is no thing as office hours, so I'll leave this commented out.
+#
+#id=GREY_006
+#	action=greylisting
+#	days=Sat-Sun
+#id=GREY_007
+#	action=greylisting
+#	days=Mon-Fri
+#	time=!!06:00:00-20:00:00
+
