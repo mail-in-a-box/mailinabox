@@ -27,3 +27,4 @@ maxretry = 20
 [recidive]
 enabled  = true
 maxretry = 10
+action   = iptables-allports[name=recidive]
