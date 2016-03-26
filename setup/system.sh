@@ -14,7 +14,6 @@ source setup/functions.sh # load our functions
 
 echo $PRIMARY_HOSTNAME > /etc/hostname
 hostname $PRIMARY_HOSTNAME
-sed -i "s/127\.0\.1\.1.*/127.0.1.1\t$PRIMARY_HOSTNAME/" /etc/hosts
 
 # ### Add swap space to the system
 
