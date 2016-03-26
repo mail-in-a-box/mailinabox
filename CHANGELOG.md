@@ -11,6 +11,7 @@ Mail:
 Control panel:
 
 * Prevent click-jacking of the management interface by adding HTTP headers.
+* Failed login no longer reveals whether an account exists on the system.
 
 Setup:
 

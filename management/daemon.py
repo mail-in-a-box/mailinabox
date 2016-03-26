@@ -49,7 +49,7 @@ def authorized_personnel_only(viewfunc):
 		except ValueError as e:
 			# Authentication failed.
 			privs = []
-			error = str(e)
+			error = "Incorrect username or password"
 
 		# Authorized to access an API view?
 		if "admin" in privs:
@@ -125,7 +125,7 @@ def me():
 	except ValueError as e:
 		return json_response({
 			"status": "invalid",
-			"reason": str(e),
+			"reason": "Incorrect username or password",
 			})
 
 	resp = {
