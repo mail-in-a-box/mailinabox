@@ -4,6 +4,18 @@ source setup/functions.sh # load our functions
 # Basic System Configuration
 # -------------------------
 
+# ### Set hostname of the box
+
+# If the hostname is not correctly resolvable sudo can't be used. This will result in
+# errors during the install
+#
+# First set the hostname in the configuration file, then activate the setting
+# Also make sure that the loopback device resolves to the hostname
+
+echo $PRIMARY_HOSTNAME > /etc/hostname
+hostname $PRIMARY_HOSTNAME
+sed -i "s/127\.0\.1\.1.*/127.0.1.1\t$PRIMARY_HOSTNAME/" /etc/hosts
+
 # ### Add swap space to the system
 
 # If the physical memory of the system is below 2GB it is wise to create a
