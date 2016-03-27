@@ -60,3 +60,24 @@ if [ -z "$ARM" ]; then
 	exit
 fi
 fi
+
+# Check that the kernel supports at least ipv4 ip_tables, either by a module or by being
+# compiled directly in the kernel
+#
+# If this isn't supported tell the user to compile the kernel module or disable the firewall
+# and inform of the risk of doing so.
+if
+	[ ! -e /proc/net/ip_tables_names ] &&
+	[ ! -e /lib/modules/`uname -r`/kernel/net/ipv4/netfilter/ip_tables.ko ] &&
+	[ -z "$DISABLE_FIREWALL" ]
+then
+	echo "Your system doesn't support at least ipv4 ip_tables. You will either need to compile"
+	echo "a kernel that supports it, or compile the kernel module"
+	echo
+	echo "If you would like to continue without a firewall you can set 'export DISABLE_FIREWALL=1' at the"
+	echo "command line. However, doing this prevents Mail-in-a-Box to activate fail2ban. This service"
+	echo "protects the system from bruteforce attacks on the exposed network services. Also services "
+	echo "that shouldn't be exposed are now exposed if you don't use a different (external) firewall"
+	exit
+fi
+
