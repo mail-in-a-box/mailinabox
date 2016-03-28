@@ -48,6 +48,22 @@ logpath  = /home/user-data/owncloud/owncloud.log
 maxretry = 20
 findtime = 30
 
+[munin]
+enabled  = true
+port     = http,https
+filter   = munin
+logpath  = /var/log/nginx/access.log
+maxretry = 20
+findtime = 30
+
+[postfix-submission]
+enabled  = true
+port     = 587
+filter   = postfix-submission
+logpath  = /var/log/mail.log
+maxretry = 20
+findtime = 30
+
 [recidive]
 enabled  = true
 maxretry = 10
