@@ -32,7 +32,7 @@ if [ ! -z "$IP_ADDRESS_OF_USER" ]; then
 		# password based logins
 		echo "Disabling password authentication for ssh"
 		tools/editconf.py /etc/ssh/sshd_config -s \
-			PasswordAuthentication=yes
+			PasswordAuthentication=no
 
 		restart_service ssh
 	fi
