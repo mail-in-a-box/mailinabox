@@ -4,6 +4,42 @@ source setup/functions.sh # load our functions
 # Basic System Configuration
 # -------------------------
 
+# ### Disable password login via SSH
+
+# We will disable password based login via ssh only if the user that logged in:
+#
+# - Is using an ssh connection
+# - Used a public key to authenticate
+# - The user still has that key in authorized_keys
+#
+# The /var/log/auth.log will contain entries for logins that used public
+# key authentication. We will try to find an entry for the user. If we
+# find a record matching the user and the current ip address we will lookup
+# the key finger print in the authorized keys of the user
+#
+# Sudo makes the use of $SSH_CLIENT client impossible, so we have to use pinky
+USERNAME_THAT_WAS_USED_TO_LOG_IN=$(logname)
+IP_ADDRESS_OF_USER=$(pinky -w $USERNAME_THAT_WAS_USED_TO_LOG_IN | tail -n+2 | tail -n1 | awk '{print $(NF)}')
+if [ ! -z "$IP_ADDRESS_OF_USER" ]; then
+	HOMEDIRECTORY_OF_USER=$(grep "$USERNAME_THAT_WAS_USED_TO_LOG_IN" /etc/passwd | cut -d":" -f6)
+	LOG_ENTRY_TO_SEARCH_FOR="ssh.* Accepted publickey for $USERNAME_THAT_WAS_USED_TO_LOG_IN from $IP_ADDRESS_OF_USER"
+	SSH_PUB_KEY_USED_TO_LOG_IN=$(grep "$LOG_ENTRY_TO_SEARCH_FOR" /var/log/auth.log* | tail -n 1 | awk '{print $(NF)}')
+
+	if [ ! -z "$SSH_PUB_KEY_USED_TO_LOG_IN" ]; then
+	if [ -e "$HOMEDIRECTORY_OF_USER"/.ssh/authorized_keys ]; then
+	if ssh-keygen -l -f "$HOMEDIRECTORY_OF_USER"/.ssh/authorized_keys | grep -q -i "$SSH_PUB_KEY_USED_TO_LOG_IN"; then
+		# Public key used to log in is still in authorized_keys so we can safely disable
+		# password based logins
+		echo "Disabling password authentication for ssh"
+		tools/editconf.py /etc/ssh/sshd_config -s \
+			PasswordAuthentication=yes
+
+		restart_service ssh
+	fi
+	fi
+	fi
+fi
+
 # ### Add swap space to the system
 
 # If the physical memory of the system is below 2GB it is wise to create a
