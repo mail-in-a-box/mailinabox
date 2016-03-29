@@ -285,10 +285,8 @@ restart_service resolvconf
 cat conf/fail2ban/jail.local \
 	| sed "s/PUBLIC_IP/$PUBLIC_IP/g" \
 	> /etc/fail2ban/jail.local
-cp conf/fail2ban/dovecotimap.conf /etc/fail2ban/filter.d/dovecotimap.conf
-cp conf/fail2ban/miab-management-daemon.conf /etc/fail2ban/filter.d/miab-management-daemon.conf
-cp conf/fail2ban/roundcube.conf /etc/fail2ban/filter.d/roundcube.conf
-cp conf/fail2ban/owncloud.conf /etc/fail2ban/filter.d/owncloud.conf
-cp conf/fail2ban/munin.conf /etc/fail2ban/filter.d/munin.conf
-cp conf/fail2ban/postfix-submission.conf /etc/fail2ban/filter.d/postfix-submission.conf
+
+cp -f conf/fail2ban/filter.d/* /etc/fail2ban/filter.d/
+cp -f conf/fail2ban/jail.d/* /etc/fail2ban/jail.d/
+
 restart_service fail2ban
