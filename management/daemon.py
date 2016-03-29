@@ -44,7 +44,7 @@ def authorized_personnel_only(viewfunc):
 		except ValueError as e:
 			# Authentication failed.
 			privs = []
-			error = str(e)
+			error = "Incorrect username or password"
 
 			# Write a line in the log recording the failed login
 			log_failed_login(request)
@@ -126,7 +126,7 @@ def me():
 
 		return json_response({
 			"status": "invalid",
-			"reason": str(e),
+			"reason": "Incorrect username or password",
 			})
 
 	resp = {
