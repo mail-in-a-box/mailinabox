@@ -208,7 +208,7 @@ tools/editconf.py /etc/default/postfwd \
 	INET=127.0.0.1 \
 	PORT=10040 \
 	RUNAS="postfw" \
-	ARGS=\"'--summary=660 --cache=600 --cache-rdomain-only --cache-no-size --max_spare_servers=5'\"
+	ARGS=\"'--summary=660 --cache=600 --cache-rdomain-only --cache-no-size --max_spare_servers=5 -S 1800'\"
 
 # Install the configuration file for postfwd service. If the local admin modified it, we won't overwrite
 # This configuration will accept emails right away (no greylist) for servers in DNSWL, gmail, hotmail, outlook, etc.
