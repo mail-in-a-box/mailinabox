@@ -7,6 +7,7 @@ In Development
 Mail:
 
 * Fixed a long-standing issue with training the spam filter not working (because of a file permissions issue).
+* Update the Roundcube html5_notifier plugin from version 0.6 to 0.6.2 to fix Roundcube getting stuck for some people.
 
 Control panel:
 
