@@ -1,8 +1,14 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.17c (April 1, 2016)
+----------------------
+
+This update addresses some minor security concerns and some installation issues.
+
+ownCoud:
+
+* Block web access to the configuration parameters (config.php). There is no immediate impact (see [#776](https://github.com/mail-in-a-box/mailinabox/pull/776)), although advanced users may want to take note.
 
 Mail:
 
