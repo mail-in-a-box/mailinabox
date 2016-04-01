@@ -7,7 +7,6 @@ In Development
 Mail:
 
 * Fixed a long-standing issue with training the spam filter not working (because of a file permissions issue).
-* Update the Roundcube html5_notifier plugin from version 0.6 to 0.6.2 to fix Roundcube getting stuck for some people.
 
 Control panel:
 
@@ -17,6 +16,27 @@ Control panel:
 Setup:
 
 * A swap file is now created if system memory is less than 2GB, 5GB of free disk space is available, and if no swap file yet exists.
+
+v0.17c (April 1, 2016)
+----------------------
+
+This update addresses some minor security concerns and some installation issues.
+
+ownCoud:
+
+* Block web access to the configuration parameters (config.php). There is no immediate impact (see [#776](https://github.com/mail-in-a-box/mailinabox/pull/776)), although advanced users may want to take note.
+
+Mail:
+
+* Roundcube html5_notifier plugin updated from version 0.6 to 0.6.2 to fix Roundcube getting stuck for some people.
+
+Control panel:
+
+* Prevent click-jacking of the management interface by adding HTTP headers.
+* Failed login no longer reveals whether an account exists on the system.
+
+Setup:
+
 * Setup dialogs did not appear correctly when connecting to SSH using Putty on Windows.
 * We now install Roundcube from our own mirror because Sourceforge's downloads experience frequent intermittant unavailability.
 
