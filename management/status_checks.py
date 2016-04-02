@@ -168,6 +168,31 @@ def run_system_checks(rounded_values, env, output):
 	check_system_aliases(env, output)
 	check_free_disk_space(rounded_values, env, output)
 	check_free_memory(rounded_values, env, output)
+	check_ufw(env, output)
+
+def check_ufw(env, output):
+	ufw = shell('check_output', ['ufw', 'status']).splitlines()
+
+	if ufw[0] == "Status: active":
+		ports_that_should_be_allowed = ["22", "53", "25", "587", "993", "995", "4190", "80", "443"]
+		not_allowed_ports = []
+
+		for port in ports_that_should_be_allowed:
+			if not is_port_allowed(ufw, port):
+				not_allowed_ports.append(port)
+		if len(not_allowed_ports) == 1:
+			output.print_error("Port %s should be allowed in the firewall, please rerun the setup." % (not_allowed_ports[0]))
+		elif len(not_allowed_ports) > 1:
+			output.print_error("Ports %s should be allowed in the firewall, please rerun the setup." % (", ".join(not_allowed_ports)))
+		else:
+			output.print_ok("Firewall is active")
+	else:
+		output.print_warning("""The firewall is disabled on this machine, this might be because the system
+			is protected by an external firewall. We can't protect against bruteforce attacks using fail2ban 
+			without the local firewall active. Via ssh please try to run: ufw enable""")
+
+def is_port_allowed(ufw, port):
+	return any(item.startswith(port) for item in ufw)
 
 def check_ssh_password(env, output):
 	# Check that SSH login with password is disabled. The openssh-server
