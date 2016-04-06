@@ -27,3 +27,14 @@ maxretry = 20
 [recidive]
 enabled  = true
 maxretry = 10
+action   = iptables-allports[name=recidive]
+# In the recidive section of jail.conf the action contains:
+#
+# action   = iptables-allports[name=recidive]
+#            sendmail-whois-lines[name=recidive, logpath=/var/log/fail2ban.log]
+#
+# The last line on the action will sent an email to the configured address. This mail will
+# notify the administrator that someone has been repeatedly triggering one of the other jails.
+# By default we don't configure this address and no action is required from the admin anyway.
+# So the notification is ommited. This will prevent message appearing in the mail.log that mail
+# can't be delivered to fail2ban@$HOSTNAME.
