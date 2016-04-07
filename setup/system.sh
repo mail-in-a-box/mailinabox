@@ -4,6 +4,15 @@ source setup/functions.sh # load our functions
 # Basic System Configuration
 # -------------------------
 
+# ### Ensure system defaults access rights are correctly configured
+
+# If the /etc/default directory has group write rights, the installer will
+# display a lot of warnings during setup
+#
+# This is incorrectly configured on Scaleway servers
+
+chmod g-w /etc/default
+
 # ### Add swap space to the system
 
 # If the physical memory of the system is below 2GB it is wise to create a
@@ -218,6 +227,44 @@ if [ -z "$DISABLE_FIREWALL" ]; then
 	# Install `ufw` which provides a simple firewall configuration.
 	apt_install ufw
 
+	# Check if the ip_tables has ipv6 support on this system, prefilght has
+	# taken care of ipv4.
+	#
+	# We check if:
+	#	- the kernel has support built-in
+	#	- the module is present on the system.
+	#
+	# If no ipv6 support is available we disable the ipv6 firewall
+	#
+	# If ipv6 is supported on the system we load the module if necessary and activate the
+	# ipv6 firewall.
+	if
+	        [ ! -e /proc/net/ip6_tables_names ] &&
+		[ ! -e /lib/modules/`uname -r`/kernel/net/ipv6/netfilter/ip6_tables.ko ]
+	then
+		# If we have a public ipv6 address we should notify the user that no ipv6 firewall is available
+		if [ ! -z "$PUBLIC_IPV6" ]; then
+			echo "WARNING: There is a public ipv6 address but no ipv6 firewall available in the kernel"
+		fi
+
+		# Disable the IPV6 firewall
+		sed -i "s/IPV6.*/IPV6=no/" /etc/default/ufw
+	else
+		# Check if the ipv6 ip_tables is not active in the kernel or that the module
+		# isn't loaded. Some providers fail to load the module by default (Scaleway)
+		if
+			[ ! -e /proc/net/ip6_tables_names ] &&
+			[ -z "`lsmod | grep ^ip6_tables`" ]
+		then
+			# Load the ip6_tables kernel module, previous step made sure it exists
+			echo ip6_tables >> /etc/modules
+			modprobe ip6_tables
+		fi
+
+		# Enable the IPV6 firewall
+                sed -i "s/IPV6.*/IPV6=yes/" /etc/default/ufw
+	fi
+
 	# Allow incoming connections to SSH.
 	ufw_allow ssh;
 
@@ -233,6 +280,12 @@ if [ -z "$DISABLE_FIREWALL" ]; then
 
 	fi
 	fi
+
+        # Some default configurations disable the firewall in the settings (Scaleway)
+        # If this isn't set, enabling the firewall will fail with:
+        #
+        # ERROR: Could not load logging rules
+        sed -i "s/ENABLED.*/ENABLED=yes/" /etc/ufw/ufw.conf
 
 	ufw --force enable;
 fi #NODOC
