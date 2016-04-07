@@ -4,6 +4,16 @@ source setup/functions.sh # load our functions
 # Basic System Configuration
 # -------------------------
 
+# ### Set hostname of the box
+
+# If the hostname is not correctly resolvable sudo can't be used. This will result in
+# errors during the install
+#
+# First set the hostname in the configuration file, then activate the setting
+
+echo $PRIMARY_HOSTNAME > /etc/hostname
+hostname $PRIMARY_HOSTNAME
+
 # ### Add swap space to the system
 
 # If the physical memory of the system is below 2GB it is wise to create a
