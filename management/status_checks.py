@@ -18,6 +18,29 @@ from mailconfig import get_mail_domains, get_mail_aliases
 
 from utils import shell, sort_domains, load_env_vars_from_file, load_settings
 
+def get_services():
+	return [
+		{ "name": "Local DNS (bind9)", "port": 53, "public": False, },
+		#{ "name": "NSD Control", "port": 8952, "public": False, },
+		{ "name": "Local DNS Control (bind9/rndc)", "port": 953, "public": False, },
+		{ "name": "Dovecot LMTP LDA", "port": 10026, "public": False, },
+		{ "name": "Postgrey", "port": 10023, "public": False, },
+		{ "name": "Spamassassin", "port": 10025, "public": False, },
+		{ "name": "OpenDKIM", "port": 8891, "public": False, },
+		{ "name": "OpenDMARC", "port": 8893, "public": False, },
+		{ "name": "Memcached", "port": 11211, "public": False, },
+		{ "name": "Mail-in-a-Box Management Daemon", "port": 10222, "public": False, },
+		{ "name": "SSH Login (ssh)", "port": get_ssh_port(), "public": True, },
+		{ "name": "Public DNS (nsd4)", "port": 53, "public": True, },
+		{ "name": "Incoming Mail (SMTP/postfix)", "port": 25, "public": True, },
+		{ "name": "Outgoing Mail (SMTP 587/postfix)", "port": 587, "public": True, },
+		#{ "name": "Postfix/master", "port": 10587, "public": True, },
+		{ "name": "IMAPS (dovecot)", "port": 993, "public": True, },
+		{ "name": "Mail Filters (Sieve/dovecot)", "port": 4190, "public": True, },
+		{ "name": "HTTP Web (nginx)", "port": 80, "public": True, },
+		{ "name": "HTTPS Web (nginx)", "port": 443, "public": True, },
+	]
+
 def run_checks(rounded_values, env, output, pool):
 	# run systems checks
 	output.add_heading("System")
@@ -61,33 +84,9 @@ def get_ssh_port():
 
 def run_services_checks(env, output, pool):
 	# Check that system services are running.
-
-	services = [
-		{ "name": "Local DNS (bind9)", "port": 53, "public": False, },
-		#{ "name": "NSD Control", "port": 8952, "public": False, },
-		{ "name": "Local DNS Control (bind9/rndc)", "port": 953, "public": False, },
-		{ "name": "Dovecot LMTP LDA", "port": 10026, "public": False, },
-		{ "name": "Postgrey", "port": 10023, "public": False, },
-		{ "name": "Spamassassin", "port": 10025, "public": False, },
-		{ "name": "OpenDKIM", "port": 8891, "public": False, },
-		{ "name": "OpenDMARC", "port": 8893, "public": False, },
-		{ "name": "Memcached", "port": 11211, "public": False, },
-		{ "name": "Mail-in-a-Box Management Daemon", "port": 10222, "public": False, },
-
-		{ "name": "SSH Login (ssh)", "port": get_ssh_port(), "public": True, },
-		{ "name": "Public DNS (nsd4)", "port": 53, "public": True, },
-		{ "name": "Incoming Mail (SMTP/postfix)", "port": 25, "public": True, },
-		{ "name": "Outgoing Mail (SMTP 587/postfix)", "port": 587, "public": True, },
-		#{ "name": "Postfix/master", "port": 10587, "public": True, },
-		{ "name": "IMAPS (dovecot)", "port": 993, "public": True, },
-		{ "name": "Mail Filters (Sieve/dovecot)", "port": 4190, "public": True, },
-		{ "name": "HTTP Web (nginx)", "port": 80, "public": True, },
-		{ "name": "HTTPS Web (nginx)", "port": 443, "public": True, },
-	]
-
 	all_running = True
 	fatal = False
-	ret = pool.starmap(check_service, ((i, service, env) for i, service in enumerate(services)), chunksize=1)
+	ret = pool.starmap(check_service, ((i, service, env) for i, service in enumerate(get_services())), chunksize=1)
 	for i, running, fatal2, output2 in sorted(ret):
 		if output2 is None: continue # skip check (e.g. no port was set, e.g. no sshd)
 		all_running = all_running and running
@@ -174,25 +173,21 @@ def check_ufw(env, output):
 	ufw = shell('check_output', ['ufw', 'status']).splitlines()
 
 	if ufw[0] == "Status: active":
-		ports_that_should_be_allowed = ["22", "53", "25", "587", "993", "995", "4190", "80", "443"]
-		not_allowed_ports = []
+		not_allowed_ports = 0
+		for service in get_services():
+			if service["public"] and not is_port_allowed(ufw, service["port"]):
+				not_allowed_ports += 1
+				output.print_error("Port %s (%s) should be allowed in the firewall, please re-run the setup." % (service["port"], service["name"]))
 
-		for port in ports_that_should_be_allowed:
-			if not is_port_allowed(ufw, port):
-				not_allowed_ports.append(port)
-		if len(not_allowed_ports) == 1:
-			output.print_error("Port %s should be allowed in the firewall, please rerun the setup." % (not_allowed_ports[0]))
-		elif len(not_allowed_ports) > 1:
-			output.print_error("Ports %s should be allowed in the firewall, please rerun the setup." % (", ".join(not_allowed_ports)))
-		else:
+		if not_allowed_ports == 0:
 			output.print_ok("Firewall is active")
 	else:
-		output.print_warning("""The firewall is disabled on this machine, this might be because the system
-			is protected by an external firewall. We can't protect against bruteforce attacks using fail2ban 
-			without the local firewall active. Via ssh please try to run: ufw enable""")
+		output.print_warning("""The firewall is disabled on this machine. This might be because the system
+			is protected by an external firewall. We can't protect the system against bruteforce attacks
+			without the local firewall active. Connect to the system via ssh and try to run: ufw enable.""")
 
 def is_port_allowed(ufw, port):
-	return any(item.startswith(port) for item in ufw)
+	return any(re.match(str(port) +"[/ \t].*", item) for item in ufw)
 
 def check_ssh_password(env, output):
 	# Check that SSH login with password is disabled. The openssh-server
