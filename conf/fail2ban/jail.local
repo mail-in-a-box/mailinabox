@@ -5,4 +5,3 @@
 # ping services over the public interface so we should whitelist that address of
 # ours too. The string is substituted during installation.
 ignoreip = 127.0.0.1/8 PUBLIC_IP
-
