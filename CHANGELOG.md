@@ -4,6 +4,10 @@ CHANGELOG
 In Development
 --------------
 
+ownCloud:
+
+* Update ownCloud to 8.2.3 
+
 Mail:
 
 * Fixed a long-standing issue with training the spam filter not working (because of a file permissions issue).
