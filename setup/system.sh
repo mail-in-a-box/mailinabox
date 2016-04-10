@@ -299,4 +299,6 @@ cat conf/fail2ban/jail.local \
 cp -f conf/fail2ban/filter.d/* /etc/fail2ban/filter.d/
 cp -f conf/fail2ban/jail.d/* /etc/fail2ban/jail.d/
 
+sed -i "s#STORAGE_ROOT#$STORAGE_ROOT#" /etc/fail2ban/jail.d/miab-owncloud.conf
+
 restart_service fail2ban
