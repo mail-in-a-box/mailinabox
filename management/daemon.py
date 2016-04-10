@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 
-import os, os.path, re, json
+import os, os.path, re, json, time
 import subprocess
+
 from functools import wraps
 
 from flask import Flask, request, render_template, abort, Response, send_from_directory, make_response
@@ -44,6 +45,9 @@ def authorized_personnel_only(viewfunc):
 			# Authentication failed.
 			privs = []
 			error = "Incorrect username or password"
+
+			# Write a line in the log recording the failed login
+			log_failed_login(request)
 
 		# Authorized to access an API view?
 		if "admin" in privs:
@@ -117,6 +121,9 @@ def me():
 	try:
 		email, privs = auth_service.authenticate(request, env)
 	except ValueError as e:
+		# Log the failed login
+		log_failed_login(request)
+
 		return json_response({
 			"status": "invalid",
 			"reason": "Incorrect username or password",
@@ -582,6 +589,22 @@ def munin_cgi(filename):
 	if 'Status' in response.headers and '404' in response.headers['Status']:
 		app.logger.warning("munin_cgi: munin-cgi-graph returned 404 status code. PATH_INFO=%s", env['PATH_INFO'])
 	return response
+
+def log_failed_login(request):
+	# We need to figure out the ip to list in the message, all our calls are routed
+	# through nginx who will put the original ip in X-Forwarded-For.
+	# During setup we call the management interface directly to determine the user
+	# status. So we can't always use X-Forwarded-For because during setup that header
+	# will not be present.
+	if request.headers.getlist("X-Forwarded-For"):
+		ip = request.headers.getlist("X-Forwarded-For")[0]
+	else:
+		ip = request.remote_addr
+
+	# We need to add a timestamp to the log message, otherwise /dev/log will eat the "duplicate"
+	# message.
+	app.logger.warning( "Mail-in-a-Box Management Daemon: Failed login attempt from ip %s - timestamp %s" % (ip, time.time()))
+
 
 # APP
 

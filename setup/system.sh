@@ -295,6 +295,10 @@ restart_service resolvconf
 cat conf/fail2ban/jail.local \
 	| sed "s/PUBLIC_IP/$PUBLIC_IP/g" \
 	> /etc/fail2ban/jail.local
-cp conf/fail2ban/dovecotimap.conf /etc/fail2ban/filter.d/dovecotimap.conf
+
+cp -f conf/fail2ban/filter.d/* /etc/fail2ban/filter.d/
+cp -f conf/fail2ban/jail.d/* /etc/fail2ban/jail.d/
+
+sed -i "s#STORAGE_ROOT#$STORAGE_ROOT#" /etc/fail2ban/jail.d/miab-owncloud.conf
 
 restart_service fail2ban
