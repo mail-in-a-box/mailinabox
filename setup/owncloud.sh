@@ -163,7 +163,10 @@ fi
 #   so set it here. It also can change if the box's PRIMARY_HOSTNAME changes, so
 #   this will make sure it has the right value.
 # * Some settings weren't included in previous versions of Mail-in-a-Box.
+# * We need to set the timezone to the system timezone to allow fail2ban to ban
+#   users within the proper timeframe
 # Use PHP to read the settings file, modify it, and write out the new settings array.
+TIMEZONE=$(cat /etc/timezone)
 CONFIG_TEMP=$(/bin/mktemp)
 php <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP $STORAGE_ROOT/owncloud/config.php;
 <?php
@@ -174,6 +177,8 @@ include("$STORAGE_ROOT/owncloud/config.php");
 \$CONFIG['memcache.local'] = '\\OC\\Memcache\\Memcached';
 \$CONFIG['overwrite.cli.url'] = '/cloud';
 \$CONFIG['mail_from_address'] = 'administrator'; # just the local part, matches our master administrator address
+
+\$CONFIG['logtimezone'] = '$TIMEZONE';
 
 echo "<?php\n\\\$CONFIG = ";
 var_export(\$CONFIG);

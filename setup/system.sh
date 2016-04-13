@@ -291,10 +291,12 @@ restart_service resolvconf
 
 # ### Fail2Ban Service
 
-# Configure the Fail2Ban installation to prevent dumb bruce-force attacks against dovecot, postfix and ssh
-cat conf/fail2ban/jail.local \
+# Configure the Fail2Ban installation to prevent dumb bruce-force attacks against dovecot, postfix, ssh, etc.
+rm -f /etc/fail2ban/jail.local # we used to use this file but don't anymore
+cat conf/fail2ban/jails.conf \
 	| sed "s/PUBLIC_IP/$PUBLIC_IP/g" \
-	> /etc/fail2ban/jail.local
-cp conf/fail2ban/dovecotimap.conf /etc/fail2ban/filter.d/dovecotimap.conf
+	| sed "s#STORAGE_ROOT#$STORAGE_ROOT#" \
+	> /etc/fail2ban/jail.d/mailinabox.conf
+cp -f conf/fail2ban/filter.d/* /etc/fail2ban/filter.d/
 
 restart_service fail2ban

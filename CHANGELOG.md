@@ -8,6 +8,10 @@ Mail:
 
 * Roundcube is updated to version 1.2.0.
 
+System:
+
+* fail2ban jails added for SMTP submission, Roundcube, ownCloud, the control panel, and munin.
+
 v0.18c (June 2, 2016)
 ---------------------
 
