@@ -99,7 +99,7 @@ cat > /usr/local/lib/roundcubemail/config/config.inc.php <<EOF;
 \$config['smtp_user'] = '%u';
 \$config['smtp_pass'] = '%p';
 \$config['support_url'] = 'https://mailinabox.email/';
-\$config['product_name'] = 'Mail-in-a-Box/Roundcube Webmail';
+\$config['product_name'] = '$PRIMARY_HOSTNAME Webmail';
 \$config['des_key'] = '$SECRET_KEY';
 \$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'vacation_sieve', 'persistent_login');
 \$config['skin'] = 'classic';
