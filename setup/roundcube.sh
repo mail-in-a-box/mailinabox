@@ -34,8 +34,8 @@ apt-get purge -qq -y roundcube* #NODOC
 # Install Roundcube from source if it is not already present or if it is out of date.
 # Combine the Roundcube version number with the commit hash of vacation_sieve to track
 # whether we have the latest version.
-VERSION=1.1.4
-HASH=4883c8bb39fadf8af94ffb09ee426cba9f8ef2e3
+VERSION=1.1.5
+HASH=476a1d45b0592b2ad43e3e08cbc72e69ef31e33ed8a8f071f02e5a1ae3e7f334
 VACATION_SIEVE_VERSION=91ea6f52216390073d1f5b70b5f6bea0bfaee7e5
 PERSISTENT_LOGIN_VERSION=1e9d724476a370ce917a2fcd5b3217b0c306c24e
 HTML5_NOTIFIER_VERSION=4b370e3cd60dabd2f428a26f45b677ad1b7118d5
