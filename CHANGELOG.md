@@ -11,6 +11,7 @@ ownCloud:
 Mail:
 
 * Fixed a long-standing issue with training the spam filter not working (because of a file permissions issue).
+* The Hostname of your Box is now the name of your Roundcube Webmailer.
 
 Control panel:
 
