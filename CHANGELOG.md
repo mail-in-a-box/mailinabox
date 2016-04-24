@@ -28,6 +28,8 @@ Setup:
 
 * The system hostname is now set during setup.
 * A swap file is now created if system memory is less than 2GB, 5GB of free disk space is available, and if no swap file yet exists.
+* We now install Roundcube from the official GitHub repository instead of our own Mirror, we have created to solve problems with SourceForge.
+
 
 v0.17c (April 1, 2016)
 ----------------------
