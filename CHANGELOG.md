@@ -10,6 +10,7 @@ ownCloud:
 
 Mail:
 
+* Roundcube is updated to version 1.1.5
 * Fixed a long-standing issue with training the spam filter not working (because of a file permissions issue).
 
 Control panel:
