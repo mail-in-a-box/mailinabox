@@ -42,7 +42,7 @@ tools/editconf.py /etc/dovecot/conf.d/10-master.conf \
 	log_path = /var/log/dovecot.log
 
 # Add logrotate entry for dovecot
-cat > /etc/dovecot/conf.d/90-plugin-fts.conf << EOF;
+cat > /etc/logrotate.d/dovecot << EOF;
 /var/log/dovecot*.log {
   missingok
   notifempty
