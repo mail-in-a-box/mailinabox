@@ -38,8 +38,31 @@ apt_install \
 # would be 20 users). Set it to 250 times the number of cores this
 # machine has, so on a two-core machine that's 500 processes/100 users).
 tools/editconf.py /etc/dovecot/conf.d/10-master.conf \
-	default_process_limit=$(echo "`nproc` * 250" | bc)
+	default_process_limit=$(echo "`nproc` * 250" | bc) \
+	log_path = /var/log/dovecot.log
 
+# Set the log file for dovecot to it's own to avoid loading up
+# syslog with excessive log events
+tools/editconf.py /etc/dovecot/conf.d/10-master.conf \
+	log_path = /var/log/dovecot.log
+
+# Add logrotate entry for dovecot
+cat > /etc/dovecot/conf.d/90-plugin-fts.conf << EOF;
+/var/log/dovecot*.log {
+  missingok
+  notifempty
+  delaycompress
+  sharedscripts
+  postrotate
+    doveadm log reopen
+  endscript
+}
+EOF
+
+# set ownership and permissions for dovecot log file
+chown syslog:adm /var/log/dovecot.log
+chmod 640 /var/log/dovecot.log
+ 
 # The inotify `max_user_instances` default is 128, which constrains
 # the total number of watched (IMAP IDLE push) folders by open connections.
 # See http://www.dovecot.org/pipermail/dovecot/2013-March/088834.html.
