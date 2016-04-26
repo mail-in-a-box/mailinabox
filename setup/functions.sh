@@ -132,6 +132,14 @@ function ufw_allow {
 	fi
 }
 
+# Adds a limit rule allowing 6 in 30 sec
+function ufw_limit {
+	if [ -z "$DISABLE_FIREWALL" ]; then
+		# ufw has completely unhelpful output
+		ufw limit $1 > /dev/null;
+	fi
+}
+
 function restart_service {
 	hide_output service $1 restart
 }
