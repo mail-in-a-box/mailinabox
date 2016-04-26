@@ -106,6 +106,6 @@ restart_service nginx
 restart_service php5-fpm
 
 # Open ports.
-ufw_allow http
-ufw_allow https
+ufw_limit http
+ufw_limit https
 
