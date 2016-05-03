@@ -1,6 +1,59 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+ownCloud:
+
+* Update ownCloud to 8.2.3 
+
+Mail:
+
+* Roundcube is updated to version 1.1.5
+* Fixed a long-standing issue with training the spam filter not working (because of a file permissions issue).
+
+Control panel:
+
+* Munin system monitoring graphs are now zoomable.
+* When a reboot is required (due to Ubuntu security updates automatically installed), a Reboot Box button now appears.
+* It is now possible to add SRV and secondary MX records in the Custom DNS page.
+* Other minor fixes.
+
+System:
+
+* The fail2ban recidive jail, which blocks long-duration brute force attacks, now no longer sends the administrator emails (which were not helpful).
+
+Setup:
+
+* The system hostname is now set during setup.
+* A swap file is now created if system memory is less than 2GB, 5GB of free disk space is available, and if no swap file yet exists.
+* We now install Roundcube from the official GitHub repository instead of our own mirror, we have created to solve problems with SourceForge.
+
+
+v0.17c (April 1, 2016)
+----------------------
+
+This update addresses some minor security concerns and some installation issues.
+
+ownCoud:
+
+* Block web access to the configuration parameters (config.php). There is no immediate impact (see [#776](https://github.com/mail-in-a-box/mailinabox/pull/776)), although advanced users may want to take note.
+
+Mail:
+
+* Roundcube html5_notifier plugin updated from version 0.6 to 0.6.2 to fix Roundcube getting stuck for some people.
+
+Control panel:
+
+* Prevent click-jacking of the management interface by adding HTTP headers.
+* Failed login no longer reveals whether an account exists on the system.
+
+Setup:
+
+* Setup dialogs did not appear correctly when connecting to SSH using Putty on Windows.
+* We now install Roundcube from our own mirror because Sourceforge's downloads experience frequent intermittant unavailability.
+
 v0.17b (March 1, 2016)
 ----------------------
 

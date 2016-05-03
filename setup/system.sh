@@ -4,6 +4,70 @@ source setup/functions.sh # load our functions
 # Basic System Configuration
 # -------------------------
 
+# ### Set hostname of the box
+
+# If the hostname is not correctly resolvable sudo can't be used. This will result in
+# errors during the install
+#
+# First set the hostname in the configuration file, then activate the setting
+
+echo $PRIMARY_HOSTNAME > /etc/hostname
+hostname $PRIMARY_HOSTNAME
+
+# ### Add swap space to the system
+
+# If the physical memory of the system is below 2GB it is wise to create a
+# swap file. This will make the system more resiliant to memory spikes and
+# prevent for instance spam filtering from crashing
+
+# We will create a 1G file, this should be a good balance between disk usage
+# and buffers for the system. We will only allocate this file if there is more
+# than 5GB of disk space available
+
+# The following checks are performed:
+# - Check if swap is currently mountend by looking at /proc/swaps
+# - Check if the user intents to activate swap on next boot by checking fstab entries.
+# - Check if a swapfile already exists
+# - Check if the root file system is not btrfs, might be an incompatible version with
+#   swapfiles. User should hanle it them selves.
+# - Check the memory requirements
+# - Check available diskspace
+
+# See https://www.digitalocean.com/community/tutorials/how-to-add-swap-on-ubuntu-14-04
+# for reference
+
+SWAP_MOUNTED=$(cat /proc/swaps | tail -n+2)
+SWAP_IN_FSTAB=$(grep "swap" /etc/fstab)
+ROOT_IS_BTRFS=$(grep "\/ .*btrfs" /proc/mounts)
+TOTAL_PHYSICAL_MEM=$(head -n 1 /proc/meminfo | awk '{print $2}')
+AVAILABLE_DISK_SPACE=$(df / --output=avail | tail -n 1)
+if
+	[ -z "$SWAP_MOUNTED" ] &&
+	[ -z "$SWAP_IN_FSTAB" ] &&
+	[ ! -e /swapfile ] &&
+	[ -z "$ROOT_IS_BTRFS" ] &&
+	[ $TOTAL_PHYSICAL_MEM -lt 1900000 ] &&
+	[ $AVAILABLE_DISK_SPACE -gt 5242880 ]
+then
+	echo "Adding a swap file to the system..."
+
+	# Allocate and activate the swap file. Allocate in 1KB chuncks
+	# doing it in one go, could fail on low memory systems
+	dd if=/dev/zero of=/swapfile bs=1024 count=$[1024*1024] status=none
+	if [ -e /swapfile ]; then
+		chmod 600 /swapfile
+		hide_output mkswap /swapfile
+		swapon /swapfile
+	fi
+
+	# Check if swap is mounted then activate on boot
+	if swapon -s | grep -q "\/swapfile"; then
+		echo "/swapfile   none    swap    sw    0   0" >> /etc/fstab
+	else
+		echo "ERROR: Swap allocation failed"
+	fi
+fi
+
 # ### Add Mail-in-a-Box's PPA.
 
 # We've built several .deb packages on our own that we want to include.
