@@ -10,7 +10,7 @@ ownCloud:
 
 Mail:
 
-* Roundcube is updated to version 1.1.5
+* Roundcube is updated to version 1.1.5 and the Roundcube login screen now says "[hostname] Webmail" instead of "Mail-in-a-Box/Roundcube webmail".
 * Fixed a long-standing issue with training the spam filter not working (because of a file permissions issue).
 
 Control panel:
@@ -28,7 +28,7 @@ Setup:
 
 * The system hostname is now set during setup.
 * A swap file is now created if system memory is less than 2GB, 5GB of free disk space is available, and if no swap file yet exists.
-* We now install Roundcube from the official GitHub repository instead of our own mirror, we have created to solve problems with SourceForge.
+* We now install Roundcube from the official GitHub repository instead of our own mirror, which we had previously created to solve problems with SourceForge.
 
 
 v0.17c (April 1, 2016)
