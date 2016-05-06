@@ -23,6 +23,7 @@ enabled = true
 filter  = dovecotimap
 findtime = 30
 maxretry = 20
+logpath  = /var/log/mail.log
 
 [recidive]
 enabled  = true
