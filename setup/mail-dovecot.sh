@@ -39,25 +39,7 @@ apt_install \
 # machine has, so on a two-core machine that's 500 processes/100 users).
 tools/editconf.py /etc/dovecot/conf.d/10-master.conf \
 	default_process_limit=$(echo "`nproc` * 250" | bc) \
-	log_path = /var/log/dovecot.log
-
-# Add logrotate entry for dovecot
-cat > /etc/logrotate.d/dovecot << EOF;
-/var/log/dovecot*.log {
-  missingok
-  notifempty
-  delaycompress
-  sharedscripts
-  postrotate
-      doveadm log reopen
-  endscript
-}
-EOF
-
-# Create base log files and set permissions
-touch /var/log/dovecot.log
-chown syslog:adm /var/log/dovecot.log
-chmod 640 /var/log/dovecot.log
+	log_path = /var/log/mail.log
 
 # The inotify `max_user_instances` default is 128, which constrains
 # the total number of watched (IMAP IDLE push) folders by open connections.
