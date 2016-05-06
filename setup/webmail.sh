@@ -91,10 +91,10 @@ cat > /usr/local/lib/roundcubemail/config/config.inc.php <<EOF;
 \$config['log_dir'] = '/var/log/roundcubemail/';
 \$config['temp_dir'] = '/tmp/roundcubemail/';
 \$config['db_dsnw'] = 'sqlite:///$STORAGE_ROOT/mail/roundcube/roundcube.sqlite?mode=0640';
-\$config['default_host'] = 'ssl://localhost';
+\$config['default_host'] = 'ssl://127.0.0.1';
 \$config['default_port'] = 993;
 \$config['imap_timeout'] = 15;
-\$config['smtp_server'] = 'tls://localhost';
+\$config['smtp_server'] = 'tls://127.0.0.1';
 \$config['smtp_port'] = 587;
 \$config['smtp_user'] = '%u';
 \$config['smtp_pass'] = '%p';
@@ -121,7 +121,7 @@ cat > /usr/local/lib/roundcubemail/plugins/vacation_sieve/config.inc.php <<EOF;
     'transfer' => array(
         'mode' =>  'managesieve',
         'ms_activate_script' => true,
-        'host'   => 'localhost',
+        'host'   => '127.0.0.1',
         'port'   => '4190',
         'usetls' => false,
         'path' => 'vacation',

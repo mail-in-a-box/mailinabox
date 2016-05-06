@@ -29,7 +29,7 @@ Setup:
 * The system hostname is now set during setup.
 * A swap file is now created if system memory is less than 2GB, 5GB of free disk space is available, and if no swap file yet exists.
 * We now install Roundcube from the official GitHub repository instead of our own mirror, which we had previously created to solve problems with SourceForge.
-
+* DKIM was incorrectly set up on machines where "localhost" was defined as something other than "127.0.0.1".
 
 v0.17c (April 1, 2016)
 ----------------------

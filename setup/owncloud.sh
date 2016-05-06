@@ -108,12 +108,12 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
   'user_backends' => array(
     array(
       'class'=>'OC_User_IMAP',
-      'arguments'=>array('{localhost:993/imap/ssl/novalidate-cert}')
+      'arguments'=>array('{127.0.0.1:993/imap/ssl/novalidate-cert}')
     )
   ),
   'memcache.local' => '\\OC\\Memcache\\Memcached',
   "memcached_servers" => array (
-    array('localhost', 11211),
+    array('127.0.0.1', 11211),
   ),
   'mail_smtpmode' => 'sendmail',
   'mail_smtpsecure' => '',
