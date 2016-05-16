@@ -4,6 +4,8 @@ CHANGELOG
 v0.18 (May 15, 2016)
 --------------------
 
+v0.18b was released immediately after fixing a Roundcube user accounts issue.
+
 ownCloud:
 
 * Updated to ownCloud to 8.2.3 
