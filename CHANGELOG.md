@@ -1,12 +1,12 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.18 (May 15, 2016)
+--------------------
 
 ownCloud:
 
-* Update ownCloud to 8.2.3 
+* Updated to ownCloud to 8.2.3 
 
 Mail:
 
@@ -16,7 +16,7 @@ Mail:
 Control panel:
 
 * Munin system monitoring graphs are now zoomable.
-* When a reboot is required (due to Ubuntu security updates automatically installed), a Reboot Box button now appears.
+* When a reboot is required (due to Ubuntu security updates automatically installed), a Reboot Box button now appears on the System Status Checks page of the control panel.
 * It is now possible to add SRV and secondary MX records in the Custom DNS page.
 * Other minor fixes.
 
