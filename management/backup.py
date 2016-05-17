@@ -2,9 +2,10 @@
 
 # This script performs a backup of all user data:
 # 1) System services are stopped.
-# 2) An incremental encrypted backup is made using duplicity.
-# 3) The stopped services are restarted.
-# 4) STORAGE_ROOT/backup/after-backup is executd if it exists.
+# 2) STORAGE_ROOT/backup/before-backup is executed if it exists.
+# 3) An incremental encrypted backup is made using duplicity.
+# 4) The stopped services are restarted.
+# 5) STORAGE_ROOT/backup/after-backup is executed if it exists.
 
 import os, os.path, shutil, glob, re, datetime, sys
 import dateutil.parser, dateutil.relativedelta, dateutil.tz
@@ -257,6 +258,15 @@ def perform_backup(full_backup):
 	service_command("php5-fpm", "stop", quit=True)
 	service_command("postfix", "stop", quit=True)
 	service_command("dovecot", "stop", quit=True)
+
+	# Execute a pre-backup script that copies files outside the homedir.
+	# Run as the STORAGE_USER user, not as root. Pass our settings in
+	# environment variables so the script has access to STORAGE_ROOT.
+	pre_script = os.path.join(backup_root, 'before-backup')
+	if os.path.exists(pre_script):
+		shell('check_call',
+			['su', env['STORAGE_USER'], '-c', pre_script, config["target"]],
+			env=env)
 
 	# Run a backup of STORAGE_ROOT (but excluding the backups themselves!).
 	# --allow-source-mismatch is needed in case the box's hostname is changed
