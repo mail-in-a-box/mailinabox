@@ -22,7 +22,7 @@ fi
 apt-get purge -qq -y owncloud*
 
 # Install it
-apt_install install -y radicale uwsgi uwsgi-plugin-http uwsgi-plugin-python
+apt_install radicale uwsgi uwsgi-core
 
 # Create Directories
 mkdir -p $STORAGE_ROOT/radicale/etc/
@@ -48,37 +48,26 @@ type = from_file
 file = $STORAGE_ROOT/radicale/etc/rights
 [storage]
 filesystem_folder = $STORAGE_ROOT/radicale/collections
-[logging]
-config = $STORAGE_ROOT/radicale/etc/logging
-#debug = True
 EOF
 
-# Logging config
-cat > $STORAGE_ROOT/radicale/etc/logging <<EOF;
-# Logging
-[loggers]
-keys = root
-[handlers]
-keys = console,file
-[formatters]
-keys = simple,full
-[logger_root]
-level = DEBUG
-handlers = file
-[handler_console]
-class = StreamHandler
-level = DEBUG
-args = (sys.stdout,)
-formatter = simple
-[handler_file]
-class = FileHandler
-args = ('$STORAGE_ROOT/radicale/radicale.log',)
-level = INFO
-formatter = full
-[formatter_simple]
-format = %(message)s
-[formatter_full]
-format = %(asctime)s - %(levelname)s: %(message)s
+# Radicale rights config
+cat > $STORAGE_ROOT/radicale/etc/rights <<EOF;
+[admin]
+user: ^admin.*$
+collection: .*
+permission: r
+[public]
+user: .*
+collection: ^public(/.+)?$
+permission: rw
+[domain-wide-access]
+user: ^.+@(.+)\..+$
+collection: ^{0}/.+$
+permission: r
+[owner-write]
+user: .+
+collection: ^%(login)s/.*$
+permission: w
 EOF
 
 # WSGI launch file
@@ -92,15 +81,16 @@ application = radicale.Application()
 EOF
 
 # UWSGI config file
-cat > /etc/uwsgi/apps-available/radicale.ini <<EOF;
+cat > /etc/uwsgi/apps-available/radicale <<EOF;
 [uwsgi]
 uid = www-data
 gid = www-data
-socket = /tmp/radicale.sock
 plugins = http, python
 wsgi-file = $STORAGE_ROOT/radicale/radicale.wsgi
-pidfile = $STORAGE_ROOT/radicale/radicale.pid
 EOF
+
+# Enabled the uwsgi app
+ln -s /etc/uwsgi/apps-available/radicale /etc/uwsgi/apps-enabled/radicale
 
 # Set proper rights
 chown -R www-data:www-data $STORAGE_ROOT/radicale
