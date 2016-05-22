@@ -95,5 +95,5 @@ ln -s /etc/uwsgi/apps-available/radicale /etc/uwsgi/apps-enabled/radicale
 # Set proper rights
 chown -R www-data:www-data $STORAGE_ROOT/radicale
 
-# Reload Radicale
-uwsgi --reload $STORAGE_ROOT/radicale/radicale.pid
+# Reload uwsgi so that Radicale starts
+service uwsgi reload
