@@ -9,24 +9,26 @@ source /etc/mailinabox.conf # load global vars
 
 echo "Installing Radicale (contacts/calendar)..."
 
-# Cleanup after Owncloud
-
-if [ -d $STORAGE_ROOT/owncloud ]; then
-	rm -rf $STORAGE_ROOT/owncloud
-fi
+# Cleanup after Owncloud install
 
 if [ -d /usr/local/lib/owncloud ]; then
 	rm -rf /usr/local/lib/owncloud
 fi
-
 apt-get purge -qq -y owncloud*
 
-# Install it
-apt_install radicale uwsgi uwsgi-core
+# Install radicale
+apt_install radicale
 
-# Create Directories
+# Create radicale directories and set proper rights
 mkdir -p $STORAGE_ROOT/radicale/etc/
+chown -R www-data:www-data $STORAGE_ROOT/radicale
+
+# Create log directory and make radicale owner
 mkdir -p /var/log/radicale
+chown -R radicale:radicale /var/log/radicale
+
+# Enable radicale on boot
+sed -i '/#ENABLE_RADICALE=yes/c\ENABLE_RADICALE=yes' /etc/default/radicale
 
 # Radicale Config file
 cat > /etc/radicale/config <<EOF;
@@ -70,30 +72,5 @@ collection: ^%(login)s/.*$
 permission: w
 EOF
 
-# WSGI launch file
-cat > $STORAGE_ROOT/radicale/radicale.wsgi <<EOF;
-#!/usr/bin/env python
-
-import radicale
-
-radicale.log.start()
-application = radicale.Application()
-EOF
-
-# UWSGI config file
-cat > /etc/uwsgi/apps-available/radicale <<EOF;
-[uwsgi]
-uid = www-data
-gid = www-data
-plugins = http, python
-wsgi-file = $STORAGE_ROOT/radicale/radicale.wsgi
-EOF
-
-# Enabled the uwsgi app
-ln -s /etc/uwsgi/apps-available/radicale /etc/uwsgi/apps-enabled/radicale
-
-# Set proper rights
-chown -R www-data:www-data $STORAGE_ROOT/radicale
-
-# Reload uwsgi so that Radicale starts
-service uwsgi reload
+# Reload radicale so that Radicale starts
+restart_service radicale
