@@ -19,7 +19,7 @@
       <key>CalDAVPort</key>
       <real>443</real>
       <key>CalDAVPrincipalURL</key>
-      <string>/cloud/remote.php/caldav/calendars/</string>
+      <string>/cloud/remote.php/dav/principals/users/</string>
       <key>CalDAVUseSSL</key>
       <true/>
       <key>PayloadDescription</key>
@@ -89,7 +89,7 @@
       <key>CardDAVPort</key>
       <integer>443</integer>
       <key>CardDAVPrincipalURL</key>
-      <string>/cloud/remote.php/carddav/addressbooks/</string>
+      <string>/cloud/remote.php/dav/principals/users/</string>
       <key>CardDAVUseSSL</key>
       <true/>
       <key>PayloadDescription</key>
