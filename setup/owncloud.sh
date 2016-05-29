@@ -16,9 +16,11 @@ apt_install \
 
 apt-get purge -qq -y owncloud*
 
-# Install ownCloud from source of this version:
-owncloud_ver=8.2.3
-owncloud_hash=bfdf6166fbf6fc5438dc358600e7239d1c970613
+# Install ownCloud, calendar and contacts from source of this version:
+owncloud_ver=9.0.2
+owncloud_hash=72a3d15d09f58c06fa8bee48b9e60c9cd356f9c5
+contacts_hash=ada080e66757e79ebf1c241065115012cde25238 #v1.2.0.0
+calendar_hash=00e3ad1e01f8f9132e897e8b709ff050ab5d4291 #v1.2.2
 
 # Migrate <= v0.10 setups that stored the ownCloud config.php in /usr/local rather than
 # in STORAGE_ROOT. Move the file to STORAGE_ROOT.
@@ -52,8 +54,8 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 	# The two apps we actually want are not in ownCloud core. Clone them from
 	# their github repositories.
 	mkdir -p /usr/local/lib/owncloud/apps
-	git_clone https://github.com/owncloudarchive/contacts 9ba2e667ae8c7ea36d8c4a4c3413c374beb24b1b '' /usr/local/lib/owncloud/apps/contacts
-	git_clone https://github.com/owncloudarchive/calendar 2086e738a3b7b868ec59cd61f0f88b49c3f21dd1 '' /usr/local/lib/owncloud/apps/calendar
+	git_clone https://github.com/owncloud/contacts $contacts_hash '' /usr/local/lib/owncloud/apps/contacts
+	git_clone https://github.com/owncloud/calendar $calendar_hash '' /usr/local/lib/owncloud/apps/calendar
 
 	# Fix weird permissions.
 	chmod 750 /usr/local/lib/owncloud/{apps,config}
