@@ -1,10 +1,18 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+* Domain aliases (and misconfigured aliases/catch-alls with non-existent local targets) would accept mail and deliver it to new mailbox folders on disk, even if the target address didn't correspond with an existing mail user. This issue was introduced in v0.18.
+
+v0.18b (May 16, 2016)
+---------------------
+
+* Fixed a Roundcube user accounts issue introduced in v0.18.
+
 v0.18 (May 15, 2016)
 --------------------
-
-v0.18b was released immediately after fixing a Roundcube user accounts issue.
 
 ownCloud:
 
