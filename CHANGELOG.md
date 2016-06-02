@@ -1,10 +1,12 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.18c (June 2, 2016)
+---------------------
 
-* Domain aliases (and misconfigured aliases/catch-alls with non-existent local targets) would accept mail and deliver it to new mailbox folders on disk, even if the target address didn't correspond with an existing mail user. This issue was introduced in v0.18.
+* Domain aliases (and misconfigured aliases/catch-alls with non-existent local targets) would accept mail and deliver it to new mailbox folders on disk even if the target address didn't correspond with an existing mail user, instead of rejecting the mail. This issue was introduced in v0.18.
+* The Munin Monitoring link in the control panel now opens a new window.
+* Added an undocumented before-backup script.
 
 v0.18b (May 16, 2016)
 ---------------------
