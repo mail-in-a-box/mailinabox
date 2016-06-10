@@ -30,6 +30,7 @@ def scan_mail_log(logger, env):
             "imap-logins": defaultdict(int),
             "pop3-logins": defaultdict(int),
             "smtp-sends": defaultdict(int),
+            "smtp-receives": defaultdict(int),
         },
         "real_mail_addresses": (
             set(mailconfig.get_mail_users(env)) | set(alias[0] for alias in mailconfig.get_mail_aliases(env))
@@ -79,15 +80,16 @@ def scan_mail_log(logger, env):
                 logger.print_line(k + "\t" + str(date) + "\t" + sender + "\t" + message)
 
     logger.add_heading("Activity by Hour")
-    logger.print_block("Logins and sent mail per hour.")
-    logger.print_block("Hour\tIMAP\tPOP3\tSent")
+    logger.print_block("Dovecot logins and Postfix mail traffic per hour.")
+    logger.print_block("Hour\tIMAP\tPOP3\tSent\tReceived")
     for h in range(24):
         logger.print_line(
-            "%d\t%d\t\t%d\t\t%d" % (
+            "%d\t%d\t\t%d\t\t%d\t\t%d" % (
                 h,
                 collector["activity-by-hour"]["imap-logins"][h],
                 collector["activity-by-hour"]["pop3-logins"][h],
-                collector["activity-by-hour"]["smtp-sends"][h]
+                collector["activity-by-hour"]["smtp-sends"][h],
+                collector["activity-by-hour"]["smtp-receives"][h],
             )
         )
 
@@ -113,6 +115,8 @@ def scan_mail_log_line(line, collector):
         scan_postgrey_line(date, log, collector)
     elif service == "postfix/smtpd":
         scan_postfix_smtpd_line(date, log, collector)
+    elif service == "postfix/cleanup":
+        scan_postfix_cleanup_line(date, log, collector)
     elif service == "postfix/submission/smtpd":
         scan_postfix_submission_line(date, log, collector)
     elif service in ("postfix/qmgr", "postfix/pickup", "postfix/cleanup", "postfix/scache", "spampd", "postfix/anvil",
@@ -155,6 +159,8 @@ def scan_postgrey_line(date, log, collector):
 def scan_postfix_smtpd_line(date, log, collector):
     """ Scan a postfix smtpd log line and extract interesting data """
 
+    # Check if the incomming mail was rejected
+
     m = re.match("NOQUEUE: reject: RCPT from .*?: (.*?); from=<(.*?)> to=<(.*?)>", log)
 
     if m:
@@ -162,7 +168,7 @@ def scan_postfix_smtpd_line(date, log, collector):
         if recipient in collector["real_mail_addresses"]:
             # only log mail to real recipients
 
-            # skip this, is reported in the greylisting report
+            # skip this, if reported in the greylisting report
             if "Recipient address rejected: Greylisted" in message:
                 return
 
@@ -178,6 +184,15 @@ def scan_postfix_smtpd_line(date, log, collector):
 
             collector["rejected-mail"].setdefault(recipient, []).append((date, sender, message))
 
+
+def scan_postfix_cleanup_line(date, _, collector):
+    """ Scan a postfix cleanup log line and extract interesting data
+
+    It is assumed that every log of postfix/cleanup indicates an email that was successfulfy received by Postfix.
+
+    """
+
+    collector["activity-by-hour"]["smtp-receives"][date.hour] += 1
 
 def scan_postfix_submission_line(date, log, collector):
     """ Scan a postfix submission log line and extract interesting data """
