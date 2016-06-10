@@ -23,10 +23,12 @@ def scan_mail_log(logger, env):
     collector = {
         "other-services": set(),
         "imap-logins": {},
+        "pop3-logins": {},
         "postgrey": {},
         "rejected-mail": {},
         "activity-by-hour": {
             "imap-logins": defaultdict(int),
+            "pop3-logins": defaultdict(int),
             "smtp-sends": defaultdict(int),
         },
         "real_mail_addresses": (
@@ -44,9 +46,16 @@ def scan_mail_log(logger, env):
 
     if collector["imap-logins"]:
         logger.add_heading("Recent IMAP Logins")
-        logger.print_block("The most recent login from each remote IP adddress is shown")
+        logger.print_block("The most recent login from each remote IP adddress is shown.")
         for k in utils.sort_email_addresses(collector["imap-logins"], env):
             for ip, date in sorted(collector["imap-logins"][k].items(), key=lambda kv: kv[1]):
+                logger.print_line(k + "\t" + str(date) + "\t" + ip)
+
+    if collector["pop3-logins"]:
+        logger.add_heading("Recent POP3 Logins")
+        logger.print_block("The most recent login from each remote IP adddress is shown.")
+        for k in utils.sort_email_addresses(collector["pop3-logins"], env):
+            for ip, date in sorted(collector["pop3-logins"][k].items(), key=lambda kv: kv[1]):
                 logger.print_line(k + "\t" + str(date) + "\t" + ip)
 
     if collector["postgrey"]:
@@ -70,11 +79,14 @@ def scan_mail_log(logger, env):
                 logger.print_line(k + "\t" + str(date) + "\t" + sender + "\t" + message)
 
     logger.add_heading("Activity by Hour")
+    logger.print_block("Logins and sent mail per hour.")
+    logger.print_block("Hour\tIMAP\tPOP3\tSent")
     for h in range(24):
         logger.print_line(
-            "%d\t%d\t%d" % (
+            "%d\t%d\t\t%d\t\t%d" % (
                 h,
                 collector["activity-by-hour"]["imap-logins"][h],
+                collector["activity-by-hour"]["pop3-logins"][h],
                 collector["activity-by-hour"]["smtp-sends"][h]
             )
         )
@@ -114,13 +126,14 @@ def scan_mail_log_line(line, collector):
 def scan_dovecot_line(date, line, collector):
     """ Scan a dovecot log line and extract interesting data """
 
-    m = re.match("imap-login: Login: user=<(.*?)>, method=PLAIN, rip=(.*?),", line)
+    m = re.match("(imap|pop3)-login: Login: user=<(.*?)>, method=PLAIN, rip=(.*?),", line)
 
     if m:
-        login, ip = m.group(1), m.group(2)
+        prot, login, ip = m.group(1), m.group(2), m.group(3)
+        logins_key = "%s-logins" % prot
         if ip != "127.0.0.1":  # local login from webmail/zpush
-            collector["imap-logins"].setdefault(login, {})[ip] = date
-        collector["activity-by-hour"]["imap-logins"][date.hour] += 1
+            collector[logins_key].setdefault(login, {})[ip] = date
+        collector["activity-by-hour"][logins_key][date.hour] += 1
 
 
 def scan_postgrey_line(date, log, collector):
