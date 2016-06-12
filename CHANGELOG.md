@@ -7,6 +7,7 @@ In Development
 Mail:
 
 * Roundcube is updated to version 1.2.0.
+* SSLv3 and RC4 are now no longer supported in incoming and outgoing mail (SMTP port 25).
 
 v0.18c (June 2, 2016)
 ---------------------
