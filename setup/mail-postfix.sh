@@ -159,6 +159,9 @@ tools/editconf.py /etc/postfix/main.cf \
 # even if we don't know if it's to the right party, than to not encrypt at all. Instead we'll
 # now see notices about trusted certs. The CA file is provided by the package `ca-certificates`.
 tools/editconf.py /etc/postfix/main.cf \
+	smtp_tls_protocols=\!SSLv2,\!SSLv3 \
+	smtp_tls_ciphers=medium \
+	smtp_tls_exclude_ciphers=aNULL,RC4 \
 	smtp_tls_security_level=dane \
 	smtp_dns_support_level=dnssec \
 	smtp_tls_CAfile=/etc/ssl/certs/ca-certificates.crt \

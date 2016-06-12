@@ -80,7 +80,7 @@ The first step in resolving the destination server for an email address is perfo
 
 ### Encryption
 
-The box (along with the vast majority of mail servers) uses [opportunistic encryption](https://en.wikipedia.org/wiki/Opportunistic_encryption), meaning the mail is encrypted in transit and protected from passive eavesdropping, but it is not protected from an active man-in-the-middle attack. Modern encryption settings will be used to the extent the recipient server supports them. ([source](setup/mail-postfix.sh))
+The box (along with the vast majority of mail servers) uses [opportunistic encryption](https://en.wikipedia.org/wiki/Opportunistic_encryption), meaning the mail is encrypted in transit and protected from passive eavesdropping, but it is not protected from an active man-in-the-middle attack. Modern encryption settings (TLSv1 and later, no RC4) will be used to the extent the recipient server supports them. ([source](setup/mail-postfix.sh))
 
 ### DANE
 
