@@ -126,6 +126,7 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
   'mail_from_address' => 'owncloud',
   'mail_domain' => '$PRIMARY_HOSTNAME',
   'logtimezone' => '$TIMEZONE',
+  'logdateformat' => 'Y-m-d H:i:s',
 );
 ?>
 EOF
@@ -179,6 +180,7 @@ include("$STORAGE_ROOT/owncloud/config.php");
 \$CONFIG['mail_from_address'] = 'administrator'; # just the local part, matches our master administrator address
 
 \$CONFIG['logtimezone'] = '$TIMEZONE';
+\$CONFIG['logdateformat'] = 'Y-m-d H:i:s';
 
 echo "<?php\n\\\$CONFIG = ";
 var_export(\$CONFIG);
