@@ -304,3 +304,8 @@ cp conf/fail2ban/miab-postfix-submission.conf /etc/fail2ban/filter.d/miab-postfi
 cp conf/fail2ban/miab-roundcube.conf /etc/fail2ban/filter.d/miab-roundcube.conf
 
 restart_service fail2ban
+
+# Add Blocklist.de malicious IP Addresses to Daily Crontab
+curl -s https://gist.githubusercontent.com/klepsydra/ecf975984b32b1c8291a/raw > /etc/cron.daily/sync-fail2ban
+chmod a+x /etc/cron.daily/sync-fail2ban
+time /etc/cron.daily/sync-fail2ban
