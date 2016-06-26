@@ -86,6 +86,8 @@ def http_test(url, expected_status, postdata=None, qsargs=None, auth=None):
 			data=postdata,
 			headers={'User-Agent': 'Mail-in-a-Box fail2ban tester'},
 			timeout=8)
+	except requests.exceptions.ConnectTimeout as e:
+		raise IsBlocked()
 	except requests.exceptions.ConnectionError as e:
 		if "Connection refused" in str(e):
 			raise IsBlocked()
@@ -180,14 +182,14 @@ if __name__ == "__main__":
 	# IMAP
 	run_test(imap_test, [], 20, 30, 4)
 
-	# Mail-in-a-Box contorl panel
+	# Mail-in-a-Box control panel
 	run_test(http_test, ["/admin/me", 200], 20, 30, 1)
 
-	# Munin via the Mail-in-a-Box contorl panel
+	# Munin via the Mail-in-a-Box control panel
 	run_test(http_test, ["/admin/munin/", 401], 20, 30, 1)
 
 	# ownCloud
-	run_test(http_test, ["/cloud/remote.php/webdav", 401, None, None, ["aa", "aa"]], 20, 30, 1)
+	run_test(http_test, ["/cloud/remote.php/webdav", 401, None, None, ["aa", "aa"]], 20, 120, 1)
 
 	# restart fail2ban so that this client machine is no longer blocked
 	restart_fail2ban_service(final=True)
