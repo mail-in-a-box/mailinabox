@@ -9,7 +9,7 @@ ignoreip = 127.0.0.1/8 PUBLIC_IP
 action = %(action_mwl)s
 
 # JAILS
-# Uncomment actions out with proper addresses once blocklist.de is configured, I like to send it to two email addresses
+# Uncomment actions out with proper addresses once blocklist.de is configured, I like to send it to two email addresses, in addition to blocklist.de
 
 [ssh]
 maxretry = 7
@@ -47,6 +47,7 @@ filter   = dovecotimap
 findtime = 30
 maxretry = 20
 # action   = sendmail-whois-lines[name=dovecot, dest="<USER>@<DOMAIN>.<TLD>,<USER2>@<DOMAIN2>.<TLD2>,fail2ban@blocklist.de", sender=fail2ban@box.<SERVER>.<TLD>, sendername="Fail2Ban"]
+logpath  = /var/log/mail.log
 
 [recidive]
 enabled  = true
