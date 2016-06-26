@@ -321,6 +321,7 @@ cp conf/fail2ban/miab-munin.conf /etc/fail2ban/filter.d/miab-munin.conf
 cp conf/fail2ban/miab-owncloud.conf /etc/fail2ban/filter.d/miab-owncloud.conf
 cp conf/fail2ban/miab-postfix-submission.conf /etc/fail2ban/filter.d/miab-postfix-submission.conf
 cp conf/fail2ban/miab-roundcube.conf /etc/fail2ban/filter.d/miab-roundcube.conf
+cp conf/fail2ban/owncloud.conf /etc/fail2ban/filter.d/owncloud.conf
 
 restart_service fail2ban
 
