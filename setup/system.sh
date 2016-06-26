@@ -118,6 +118,21 @@ apt_install python3 python3-dev python3-pip \
 	netcat-openbsd wget curl git sudo coreutils bc \
 	haveged pollinate \
 	unattended-upgrades cron ntp fail2ban
+	
+# Add Rootkit hunter
+# I have it install and then update to install dependencies and such
+# Added by Alon "Chief Gyk" Ganon
+apt_install rkhunter binutils libreadline5 ruby ruby1.9.1 unhide.rb 
+wget http://downloads.sourceforge.net/project/rkhunter/rkhunter/1.4.2/rkhunter-1.4.2.tar.gz
+tar xzvf rkhunter*
+cd rkhunter*
+./installer.sh --layout /usr --install
+cd ..
+rm -rf rkhunter*
+rkhunter --propupd
+cp conf/rkhunter/rkhunter.conf /etc/rkhunter.conf
+sed -i '/APT_AUTOGEN="false"/c\APT_AUTOGEN="yes"' /etc/default/rkhunter 
+
 
 # ### Set the system timezone
 #
@@ -306,6 +321,9 @@ cp conf/fail2ban/miab-roundcube.conf /etc/fail2ban/filter.d/miab-roundcube.conf
 restart_service fail2ban
 
 # Add Blocklist.de malicious IP Addresses to Daily Crontab
+# Added by Alon "ChiefGyk" Ganon
 curl -s https://gist.githubusercontent.com/klepsydra/ecf975984b32b1c8291a/raw > /etc/cron.daily/sync-fail2ban
 chmod a+x /etc/cron.daily/sync-fail2ban
 time /etc/cron.daily/sync-fail2ban
+
+
