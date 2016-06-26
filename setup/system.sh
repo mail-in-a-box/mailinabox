@@ -129,9 +129,10 @@ cd rkhunter*
 ./installer.sh --layout /usr --install
 cd ..
 rm -rf rkhunter*
-rkhunter --propupd
 cp conf/rkhunter/rkhunter.conf /etc/rkhunter.conf
 sed -i '/APT_AUTOGEN="false"/c\APT_AUTOGEN="yes"' /etc/default/rkhunter 
+rkhunter --propupd
+
 
 
 # ### Set the system timezone
