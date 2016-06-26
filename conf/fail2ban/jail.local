@@ -6,29 +6,54 @@
 # ours too. The string is substituted during installation.
 ignoreip = 127.0.0.1/8 PUBLIC_IP
 
+action = %(action_mwl)s
+
 # JAILS
+# Uncomment actions out with proper addresses once blocklist.de is configured, I like to send it to two email addresses
 
 [ssh]
 maxretry = 7
 bantime = 3600
-
+# action = sendmail-whois-lines[name=ssh, dest="<USER>@<DOMAIN>.<TLD>,<USER2>@<DOMAIN2>.<TLD2>,fail2ban@blocklist.de", sender=fail2ban@box.<SERVER>.<TLD>, sendername="Fail2Ban"]
+	
 [ssh-ddos]
 enabled  = true
+# action = sendmail-whois-lines[name=ssh-ddos, dest="<USER>@<DOMAIN>.<TLD>,<USER2>@<DOMAIN2>.<TLD2>,fail2ban@blocklist.de", sender=fail2ban@box.<SERVER>.<TLD>, sendername="Fail2Ban"]
 
 [sasl]
 enabled  = true
+# action   = sendmail-whois-lines[name=sasl, dest="<USER>@<DOMAIN>.<TLD>,<USER2>@<DOMAIN2>.<TLD2>,fail2ban@blocklist.de", sender=fail2ban@box.<SERVER>.<TLD>, sendername="Fail2Ban"]
+
+
+[nginx]
+
+enabled  = true
+filter   = nginx-http-auth
+port     = http,https
+# action   = sendmail-whois-lines[name=nginx-http-auth, dest="<USER>@<DOMAIN>.<TLD>,<USER2>@<DOMAIN2>.<TLD2>,fail2ban@blocklist.de", sender=fail2ban@box.<SERVER>.<TLD>, sendername="Fail2Ban"]
+
+[nginx-badbots]
+
+enabled  = true
+port     = http,https
+filter   = nginx-badbots
+# action   = sendmail-whois-lines[name=nginx-badbots, dest="<USER>@<DOMAIN>.<TLD>,<USER2>@<DOMAIN2>.<TLD2>,fail2ban@blocklist.de", sender=fail2ban@box.<SERVER>.<TLD>, sendername="Fail2Ban"]
+logpath  = /var/log/nginx/access.log
+maxretry = 2
 
 [dovecot]
-enabled = true
-filter  = dovecotimap
+enabled  = true
+filter   = dovecotimap
 findtime = 30
 maxretry = 20
-logpath  = /var/log/mail.log
+# action   = sendmail-whois-lines[name=dovecot, dest="<USER>@<DOMAIN>.<TLD>,<USER2>@<DOMAIN2>.<TLD2>,fail2ban@blocklist.de", sender=fail2ban@box.<SERVER>.<TLD>, sendername="Fail2Ban"]
 
 [recidive]
 enabled  = true
 maxretry = 10
 action   = iptables-allports[name=recidive]
+#		sendmail-whois-lines[name=recidive, dest="<USER>@<DOMAIN>.<TLD>,<USER2>@<DOMAIN2>.<TLD2>,fail2ban@blocklist.de", sender=fail2ban@box.<SERVER>.<TLD>, sendername="Fail2Ban"]
+
 # In the recidive section of jail.conf the action contains:
 #
 # action   = iptables-allports[name=recidive]
@@ -39,3 +64,59 @@ action   = iptables-allports[name=recidive]
 # By default we don't configure this address and no action is required from the admin anyway.
 # So the notification is ommited. This will prevent message appearing in the mail.log that mail
 # can't be delivered to fail2ban@$HOSTNAME.
+
+# Copied from ChiefGyk's OwnCloud
+# [owncloud]
+# enabled = true
+# filter = owncloud
+# action = sendmail-whois-lines[name=owncloud, dest="<USER>@<DOMAIN>.<TLD>,<USER2>@<DOMAIN2>.<TLD2>,fail2ban@blocklist.de", sender=fail2ban@box.<SERVER>.<TLD>, sendername="Fail2Ban"]
+# logpath = /home/user-data/owncloud/owncloud.log
+# maxretry = 20
+# findtime = 300
+# bantime = 300
+
+[miab-management]
+enabled = true
+filter = miab-management-daemon
+# action = sendmail-whois-lines[name=miab-management, dest="<USER>@<DOMAIN>.<TLD>,<USER2>@<DOMAIN2>.<TLD2>,fail2ban@blocklist.de", sender=fail2ban@box.<SERVER>.<TLD>, sendername="Fail2Ban"]
+port = http,https
+logpath = /var/log/syslog
+maxretry = 20
+findtime = 30
+
+[miab-munin]
+enabled  = true
+port     = http,https
+filter   = miab-munin
+# action = sendmail-whois-lines[name=miab-munin, dest="<USER>@<DOMAIN>.<TLD>,<USER2>@<DOMAIN2>.<TLD2>,fail2ban@blocklist.de", sender=fail2ban@box.<SERVER>.<TLD>, sendername="Fail2Ban"]
+logpath  = /var/log/nginx/access.log
+maxretry = 20
+findtime = 30
+
+[miab-owncloud]
+enabled  = true
+port     = http,https
+filter   = miab-owncloud
+# action = sendmail-whois-lines[name=miab-owncloud, dest="<USER>@<DOMAIN>.<TLD>,<USER2>@<DOMAIN2>.<TLD2>,fail2ban@blocklist.de", sender=fail2ban@box.<SERVER>.<TLD>, sendername="Fail2Ban"]
+logpath  = /home/user-data/owncloud/owncloud.log
+maxretry = 20
+findtime = 30
+
+[miab-postfix587]
+enabled  = true
+port     = 587
+filter   = miab-postfix-submission
+# action = sendmail-whois-lines[name=miab-postfix-submission, dest="<USER>@<DOMAIN>.<TLD>,<USER2>@<DOMAIN2>.<TLD2>,fail2ban@blocklist.de", sender=fail2ban@box.<SERVER>.<TLD>, sendername="Fail2Ban"]
+logpath  = /var/log/mail.log
+maxretry = 20
+findtime = 30
+
+[miab-roundcube]
+enabled  = true
+port     = http,https
+filter   = miab-roundcube
+action = sendmail-whois-lines[name=miab-roundcube, dest="<USER>@<DOMAIN>.<TLD>,<USER2>@<DOMAIN2>.<TLD2>,fail2ban@blocklist.de", sender=fail2ban@box.<SERVER>.<TLD>, sendername="Fail2Ban"]
+logpath  = /var/log/roundcubemail/errors
+maxretry = 20
+findtime = 30
+
