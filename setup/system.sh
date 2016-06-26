@@ -121,6 +121,7 @@ apt_install python3 python3-dev python3-pip \
 	
 # Add Rootkit hunter
 # I have it install and then update to install dependencies and such
+# It adds a crontab to check daily at 4:15AM
 # Added by Alon "Chief Gyk" Ganon
 apt_install rkhunter binutils libreadline5 ruby ruby1.9.1 unhide.rb 
 wget http://downloads.sourceforge.net/project/rkhunter/rkhunter/1.4.2/rkhunter-1.4.2.tar.gz
@@ -132,6 +133,8 @@ rm -rf rkhunter*
 cp conf/rkhunter/rkhunter.conf /etc/rkhunter.conf
 sed -i '/APT_AUTOGEN="false"/c\APT_AUTOGEN="yes"' /etc/default/rkhunter 
 rkhunter --propupd
+(crontab -l 2>/dev/null; echo "15 04 * * * /usr/bin/rkhunter --cronjob --update --quiet
+")| crontab -
 
 
 
