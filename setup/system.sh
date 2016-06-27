@@ -132,6 +132,7 @@ cd ..
 rm -rf rkhunter*
 cp conf/rkhunter/rkhunter.conf /etc/rkhunter.conf.local
 sed -i '/APT_AUTOGEN="false"/c\APT_AUTOGEN="yes"' /etc/default/rkhunter 
+rkhunter --update
 rkhunter --propupd
 (crontab -l 2>/dev/null; echo "15 04 * * * /usr/bin/rkhunter --cronjob --update --quiet
 ")| crontab -
