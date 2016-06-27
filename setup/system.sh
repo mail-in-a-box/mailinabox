@@ -311,6 +311,7 @@ restart_service resolvconf
 # ### Fail2Ban Service
 
 # Configure the Fail2Ban installation to prevent dumb bruce-force attacks against dovecot, postfix and ssh
+# ChiefGyk commented out a filter to use my own temporarily. May be removed later on line 322
 cat conf/fail2ban/jail.local \
 	| sed "s/PUBLIC_IP/$PUBLIC_IP/g" \
 	> /etc/fail2ban/jail.local
@@ -318,7 +319,7 @@ cp conf/fail2ban/dovecotimap.conf /etc/fail2ban/filter.d/dovecotimap.conf
 cp conf/fail2ban/nginx.conf /etc/fail2ban/filter.d/nginx.conf
 cp conf/fail2ban/miab-management-daemon.conf /etc/fail2ban/filter.d/miab-management-daemon.conf
 cp conf/fail2ban/miab-munin.conf /etc/fail2ban/filter.d/miab-munin.conf
-cp conf/fail2ban/miab-owncloud.conf /etc/fail2ban/filter.d/miab-owncloud.conf
+#cp conf/fail2ban/miab-owncloud.conf /etc/fail2ban/filter.d/miab-owncloud.conf
 cp conf/fail2ban/miab-postfix-submission.conf /etc/fail2ban/filter.d/miab-postfix-submission.conf
 cp conf/fail2ban/miab-roundcube.conf /etc/fail2ban/filter.d/miab-roundcube.conf
 cp conf/fail2ban/owncloud.conf /etc/fail2ban/filter.d/owncloud.conf
