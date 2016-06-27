@@ -92,7 +92,6 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
 	mkdir -p $STORAGE_ROOT/owncloud
 
 	# Create an initial configuration file.
-	TIMEZONE=$(cat /etc/timezone)
 	instanceid=oc$(echo $PRIMARY_HOSTNAME | sha1sum | fold -w 10 | head -n 1)
 	cat > $STORAGE_ROOT/owncloud/config.php <<EOF;
 <?php
@@ -125,8 +124,6 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
   'mail_smtppassword' => '',
   'mail_from_address' => 'owncloud',
   'mail_domain' => '$PRIMARY_HOSTNAME',
-  'logtimezone' => '$TIMEZONE',
-  'logdateformat' => 'Y-m-d H:i:s',
 );
 ?>
 EOF
@@ -166,6 +163,7 @@ fi
 # * Some settings weren't included in previous versions of Mail-in-a-Box.
 # * We need to set the timezone to the system timezone to allow fail2ban to ban
 #   users within the proper timeframe
+# * We need to set the logdateformat to something that will work correctly with fail2ban
 # Use PHP to read the settings file, modify it, and write out the new settings array.
 TIMEZONE=$(cat /etc/timezone)
 CONFIG_TEMP=$(/bin/mktemp)
