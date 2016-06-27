@@ -101,7 +101,7 @@ filter   = miab-owncloud
 # action = sendmail-whois-lines[name=miab-owncloud, dest="<USER>@<DOMAIN>.<TLD>,<USER2>@<DOMAIN2>.<TLD2>,fail2ban@blocklist.de", sender=fail2ban@box.<SERVER>.<TLD>, sendername="Fail2Ban"]
 logpath  = STORAGE_ROOT/owncloud/owncloud.log
 maxretry = 20
-findtime = 30
+findtime = 120
 
 [miab-postfix587]
 enabled  = true
