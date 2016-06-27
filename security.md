@@ -80,7 +80,7 @@ The first step in resolving the destination server for an email address is perfo
 
 ### Encryption
 
-The box (along with the vast majority of mail servers) uses [opportunistic encryption](https://en.wikipedia.org/wiki/Opportunistic_encryption), meaning the mail is encrypted in transit and protected from passive eavesdropping, but it is not protected from an active man-in-the-middle attack. Modern encryption settings will be used to the extent the recipient server supports them. ([source](setup/mail-postfix.sh))
+The box (along with the vast majority of mail servers) uses [opportunistic encryption](https://en.wikipedia.org/wiki/Opportunistic_encryption), meaning the mail is encrypted in transit and protected from passive eavesdropping, but it is not protected from an active man-in-the-middle attack. Modern encryption settings (TLSv1 and later, no RC4) will be used to the extent the recipient server supports them. ([source](setup/mail-postfix.sh))
 
 ### DANE
 
@@ -101,7 +101,7 @@ Incoming Mail
 
 ### Encryption
 
-As discussed above, there is no way to require on-the-wire encryption of mail. When the box receives an incoming email (SMTP on port 25), it offers encryption (STARTTLS) but cannot require that senders use it because some senders may not support STARTTLS at all and other senders may support STARTTLS but not with the latest protocols/ciphers. To give senders the best chance at making use of encryption, the box offers protocols back to SSLv3 and ciphers with key lengths as low as 112 bits. Modern clients (senders) will make use of the 256-bit ciphers and Diffie-Hellman ciphers with a 2048-bit key for forward secrecy, however. ([source](setup/mail-postfix.sh))
+As discussed above, there is no way to require on-the-wire encryption of mail. When the box receives an incoming email (SMTP on port 25), it offers encryption (STARTTLS) but cannot require that senders use it because some senders may not support STARTTLS at all and other senders may support STARTTLS but not with the latest protocols/ciphers. To give senders the best chance at making use of encryption, the box offers protocols back to TLSv1 and ciphers with key lengths as low as 112 bits. Modern clients (senders) will make use of the 256-bit ciphers and Diffie-Hellman ciphers with a 2048-bit key for perfect forward secrecy, however. ([source](setup/mail-postfix.sh))
 
 ### DANE
 
