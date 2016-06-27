@@ -329,7 +329,7 @@ restart_service fail2ban
 
 # Add Blocklist.de malicious IP Addresses to Daily Crontab
 # Added by Alon "ChiefGyk" Ganon
-curl -s https://gist.githubusercontent.com/klepsydra/ecf975984b32b1c8291a/raw > /etc/cron.daily/sync-fail2ban
+cp conf/blocklist/sync-fail2ban /etc/cron.daily/sync-fail2ban
 chmod a+x /etc/cron.daily/sync-fail2ban
 time /etc/cron.daily/sync-fail2ban
 
