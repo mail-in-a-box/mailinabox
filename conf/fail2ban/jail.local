@@ -14,15 +14,12 @@ action = %(action_mwl)s
 [ssh]
 maxretry = 7
 bantime = 3600
-action = sendmail-whois-lines[name=ssh, dest="admin@$DOMAIN", sender=fail2ban@$DOMAIN, sendername="Fail2Ban"]
 	
 [ssh-ddos]
 enabled  = true
-action = sendmail-whois-lines[name=ssh-ddos, dest="admin@$DOMAIN", sender=fail2ban@$DOMAIN, sendername="Fail2Ban"]
 
 [sasl]
 enabled  = true
-action   = sendmail-whois-lines[name=sasl, dest="admin@$DOMAIN", sender=fail2ban@$DOMAIN, sendername="Fail2Ban"]
 
 
 [nginx]
@@ -30,14 +27,12 @@ action   = sendmail-whois-lines[name=sasl, dest="admin@$DOMAIN", sender=fail2ban
 enabled  = true
 filter   = nginx-http-auth
 port     = http,https
-action   = sendmail-whois-lines[name=nginx-http-auth, dest="admin@$DOMAIN", sender=fail2ban@$DOMAIN, sendername="Fail2Ban"]
 
 [nginx-badbots]
 
 enabled  = true
 port     = http,https
 filter   = nginx-badbots
-action   = sendmail-whois-lines[name=nginx-badbots, dest="admin@$DOMAIN", sender=fail2ban@$DOMAIN, sendername="Fail2Ban"]
 logpath  = /var/log/nginx/access.log
 maxretry = 2
 
@@ -46,14 +41,12 @@ enabled  = true
 filter   = dovecotimap
 findtime = 30
 maxretry = 20
-action   = sendmail-whois-lines[name=dovecot, dest="admin@$DOMAIN", sender=fail2ban@$DOMAIN, sendername="Fail2Ban"]
 logpath  = /var/log/mail.log
 
 [recidive]
 enabled  = true
 maxretry = 10
 action   = iptables-allports[name=recidive]
-		sendmail-whois-lines[name=recidive, dest="admin@$DOMAIN", sender=fail2ban@$DOMAIN, sendername="Fail2Ban"]
 
 # In the recidive section of jail.conf the action contains:
 #
@@ -70,7 +63,6 @@ action   = iptables-allports[name=recidive]
 [owncloud]
 enabled = true
 filter = owncloud
-action = sendmail-whois-lines[name=owncloud, dest="admin@$DOMAIN", sender=fail2ban@$DOMAIN, sendername="Fail2Ban"]
 logpath = STORAGE_ROOT/owncloud/owncloud.log
 maxretry = 20
 findtime = 300
@@ -78,7 +70,6 @@ findtime = 300
 [miab-management]
 enabled = true
 filter = miab-management-daemon
-action = sendmail-whois-lines[name=miab-management, dest="admin@$DOMAIN", sender=fail2ban@$DOMAIN, sendername="Fail2Ban"]
 port = http,https
 logpath = /var/log/syslog
 maxretry = 20
@@ -88,7 +79,6 @@ findtime = 30
 enabled  = true
 port     = http,https
 filter   = miab-munin
-action = sendmail-whois-lines[name=miab-munin, dest="admin@$DOMAIN", sender=fail2ban@$DOMAIN, sendername="Fail2Ban"]
 logpath  = /var/log/nginx/access.log
 maxretry = 20
 findtime = 30
@@ -97,7 +87,6 @@ findtime = 30
 enabled  = true
 port     = 587
 filter   = miab-postfix-submission
-action = sendmail-whois-lines[name=miab-postfix-submission, dest="admin@$DOMAIN", sender=fail2ban@$DOMAIN, sendername="Fail2Ban"]
 logpath  = /var/log/mail.log
 maxretry = 20
 findtime = 30
@@ -106,7 +95,6 @@ findtime = 30
 enabled  = true
 port     = http,https
 filter   = miab-roundcube
-action = sendmail-whois-lines[name=miab-roundcube, dest="admin@$DOMAIN", sender=fail2ban@$DOMAIN, sendername="Fail2Ban"]
 logpath  = /var/log/roundcubemail/errors
 maxretry = 20
 findtime = 30
