@@ -298,3 +298,9 @@ cat conf/fail2ban/jail.local \
 cp conf/fail2ban/dovecotimap.conf /etc/fail2ban/filter.d/dovecotimap.conf
 
 restart_service fail2ban
+
+# Add Blocklist.de malicious IP Addresses to Daily Crontab
+# Added by Alon "ChiefGyk" Ganon
+cp conf/blocklist/sync-fail2ban /etc/cron.daily/sync-fail2ban
+chmod a+x /etc/cron.daily/sync-fail2ban
+time /etc/cron.daily/sync-fail2ban
