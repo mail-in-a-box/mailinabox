@@ -1,6 +1,8 @@
 # Add Blocklist.de malicious IP Addresses to Daily Crontab
 # Also IPtables-persistent to save IP addresses upon reboot
 # Added by Alon "ChiefGyk" Ganon
+# alon@ganon.me
+
 # Are we running as root?
 if [[ $EUID -ne 0 ]]; then
 	echo "This script must be run as root. Please re-run like this:"
