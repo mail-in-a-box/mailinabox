@@ -54,7 +54,8 @@ fi
 # prepare for next time.
 	diff -wbay $blacklistf.last $blacklistf  > $blacklistf.diff 
 
-
+# save IPtable rules
+invoke-rc.d iptables-persistent save
 
 
 
