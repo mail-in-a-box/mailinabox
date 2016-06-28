@@ -6,39 +6,21 @@
 # ours too. The string is substituted during installation.
 ignoreip = 127.0.0.1/8 PUBLIC_IP
 
-action = %(action_mwl)s
-
 # JAILS
-# Uncomment actions out with proper addresses once blocklist.de is configured, I like to send it to two email addresses, in addition to blocklist.de
 
 [ssh]
 maxretry = 7
 bantime = 3600
-	
+
 [ssh-ddos]
 enabled  = true
 
 [sasl]
 enabled  = true
 
-
-[nginx]
-
-enabled  = true
-filter   = nginx-http-auth
-port     = http,https
-
-[nginx-badbots]
-
-enabled  = true
-port     = http,https
-filter   = nginx-badbots
-logpath  = /var/log/nginx/access.log
-maxretry = 2
-
 [dovecot]
-enabled  = true
-filter   = dovecotimap
+enabled = true
+filter  = dovecotimap
 findtime = 30
 maxretry = 20
 logpath  = /var/log/mail.log
@@ -47,7 +29,6 @@ logpath  = /var/log/mail.log
 enabled  = true
 maxretry = 10
 action   = iptables-allports[name=recidive]
-
 # In the recidive section of jail.conf the action contains:
 #
 # action   = iptables-allports[name=recidive]
@@ -58,44 +39,3 @@ action   = iptables-allports[name=recidive]
 # By default we don't configure this address and no action is required from the admin anyway.
 # So the notification is ommited. This will prevent message appearing in the mail.log that mail
 # can't be delivered to fail2ban@$HOSTNAME.
-
-# Copied from ChiefGyk's OwnCloud
-[owncloud]
-enabled = true
-filter = owncloud
-logpath = STORAGE_ROOT/owncloud/owncloud.log
-maxretry = 20
-findtime = 300
-
-[miab-management]
-enabled = true
-filter = miab-management-daemon
-port = http,https
-logpath = /var/log/syslog
-maxretry = 20
-findtime = 30
-
-[miab-munin]
-enabled  = true
-port     = http,https
-filter   = miab-munin
-logpath  = /var/log/nginx/access.log
-maxretry = 20
-findtime = 30
-
-[miab-postfix587]
-enabled  = true
-port     = 587
-filter   = miab-postfix-submission
-logpath  = /var/log/mail.log
-maxretry = 20
-findtime = 30
-
-[miab-roundcube]
-enabled  = true
-port     = http,https
-filter   = miab-roundcube
-logpath  = /var/log/roundcubemail/errors
-maxretry = 20
-findtime = 30
-

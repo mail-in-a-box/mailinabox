@@ -118,26 +118,6 @@ apt_install python3 python3-dev python3-pip \
 	netcat-openbsd wget curl git sudo coreutils bc \
 	haveged pollinate \
 	unattended-upgrades cron ntp fail2ban
-	
-# Add Rootkit hunter
-# I have it install and then update to install dependencies and such
-# It adds a crontab to check daily at 4:15AM
-# Added by Alon "Chief Gyk" Ganon
-apt_install rkhunter binutils libreadline5 ruby ruby1.9.1 unhide.rb 
-wget http://downloads.sourceforge.net/project/rkhunter/rkhunter/1.4.2/rkhunter-1.4.2.tar.gz
-tar xzvf rkhunter*
-cd rkhunter*
-./installer.sh --layout /usr --install
-cd ..
-rm -rf rkhunter*
-cp conf/rkhunter/rkhunter.conf /etc/rkhunter.conf.local
-sed -i '/APT_AUTOGEN="false"/c\APT_AUTOGEN="yes"' /etc/default/rkhunter 
-rkhunter --update
-rkhunter --propupd
-(crontab -l 2>/dev/null; echo "15 04 * * * /usr/bin/rkhunter --cronjob --update --quiet
-")| crontab -
-
-
 
 # ### Set the system timezone
 #
@@ -312,25 +292,9 @@ restart_service resolvconf
 # ### Fail2Ban Service
 
 # Configure the Fail2Ban installation to prevent dumb bruce-force attacks against dovecot, postfix and ssh
-# ChiefGyk commented out a filter to use my own temporarily. May be removed later on line 322
 cat conf/fail2ban/jail.local \
 	| sed "s/PUBLIC_IP/$PUBLIC_IP/g" \
 	> /etc/fail2ban/jail.local
 cp conf/fail2ban/dovecotimap.conf /etc/fail2ban/filter.d/dovecotimap.conf
-cp conf/fail2ban/nginx.conf /etc/fail2ban/filter.d/nginx.conf
-cp conf/fail2ban/miab-management-daemon.conf /etc/fail2ban/filter.d/miab-management-daemon.conf
-cp conf/fail2ban/miab-munin.conf /etc/fail2ban/filter.d/miab-munin.conf
-#cp conf/fail2ban/miab-owncloud.conf /etc/fail2ban/filter.d/miab-owncloud.conf
-cp conf/fail2ban/miab-postfix-submission.conf /etc/fail2ban/filter.d/miab-postfix-submission.conf
-cp conf/fail2ban/miab-roundcube.conf /etc/fail2ban/filter.d/miab-roundcube.conf
-cp conf/fail2ban/owncloud.conf /etc/fail2ban/filter.d/owncloud.conf
 
 restart_service fail2ban
-
-# Add Blocklist.de malicious IP Addresses to Daily Crontab
-# Added by Alon "ChiefGyk" Ganon
-cp conf/blocklist/sync-fail2ban /etc/cron.daily/sync-fail2ban
-chmod a+x /etc/cron.daily/sync-fail2ban
-time /etc/cron.daily/sync-fail2ban
-
-
