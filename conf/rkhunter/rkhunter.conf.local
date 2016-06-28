@@ -1,0 +1,81 @@
+#
+# Email a message to this address if a warning is found when the
+# system is being checked. Multiple addresses may be specified
+# simply be separating them with a space. Setting this option to
+# null disables the option.
+#
+# NOTE: This option should be present in the configuration file.
+#
+MAIL-ON-WARNING=admin@$DOMAIN
+
+#
+# Allow the specified commands to be scripts.
+#
+# This is a space-separated list of filenames. The option may
+# be specified more than once. The option may use wildcard
+# characters.
+#
+SCRIPTWHITELIST=/bin/egrep
+SCRIPTWHITELIST=/bin/fgrep
+SCRIPTWHITELIST=/bin/which
+SCRIPTWHITELIST=/usr/bin/groups
+SCRIPTWHITELIST=/usr/bin/ldd
+#SCRIPTWHITELIST=/usr/bin/lwp-request
+SCRIPTWHITELIST=/usr/sbin/adduser
+#SCRIPTWHITELIST=/usr/sbin/prelink
+SCRIPTWHITELIST=/usr/bin/unhide.rb
+
+#
+# Allow the specified hidden directories to be whitelisted.
+#
+# This is a space-separated list of directory pathnames.
+# The option may be specified more than once. The option
+# may use wildcard characters.
+#
+#ALLOWHIDDENDIR="/etc/.java"
+#ALLOWHIDDENDIR="/dev/.static"
+#ALLOWHIDDENDIR="/dev/.SRC-unix"
+#ALLOWHIDDENDIR="/etc/.etckeeper"
+ALLOWHIDDENDIR="/dev/.udev"
+
+#
+# Allow the specified hidden files to be whitelisted.
+#
+# This is a space-separated list of filenames. The option may
+# be specified more than once. The option may use wildcard
+# characters.
+# 
+#ALLOWHIDDENFILE="/etc/.java"
+#ALLOWHIDDENFILE="/usr/share/man/man1/..1.gz"
+#ALLOWHIDDENFILE="/etc/.pwd.lock"
+#ALLOWHIDDENFILE="/etc/.init.state"
+#ALLOWHIDDENFILE="/lib/.libcrypto.so.0.9.8e.hmac /lib/.libcrypto.so.6.hmac"
+#ALLOWHIDDENFILE="/lib/.libssl.so.0.9.8e.hmac /lib/.libssl.so.6.hmac"
+#ALLOWHIDDENFILE="/usr/bin/.fipscheck.hmac"
+#ALLOWHIDDENFILE="/usr/bin/.ssh.hmac"
+#ALLOWHIDDENFILE="/usr/lib/.libfipscheck.so.1.1.0.hmac"
+#ALLOWHIDDENFILE="/usr/lib/.libfipscheck.so.1.hmac"
+#ALLOWHIDDENFILE="/usr/lib/.libgcrypt.so.11.hmac"
+#ALLOWHIDDENFILE="/usr/lib/hmaccalc/sha1hmac.hmac"
+#ALLOWHIDDENFILE="/usr/lib/hmaccalc/sha256hmac.hmac"
+#ALLOWHIDDENFILE="/usr/lib/hmaccalc/sha384hmac.hmac"
+#ALLOWHIDDENFILE="/usr/lib/hmaccalc/sha512hmac.hmac"
+#ALLOWHIDDENFILE="/usr/sbin/.sshd.hmac"
+#ALLOWHIDDENFILE="/usr/share/man/man5/.k5login.5.gz"
+#ALLOWHIDDENFILE="/etc/.gitignore"
+#ALLOWHIDDENFILE="/etc/.bzrignore"
+ALLOWHIDDENFILE="/dev/.blkid.tab"
+ALLOWHIDDENFILE="/dev/.blkid.tab.old"
+ALLOWHIDDENFILE="/dev/.initramfs"
+
+#
+# Allow the specified files to be present in the /dev directory,
+# and not regarded as suspicious.
+#
+# This is a space-separated list of pathnames. The option may
+# be specified more than once. The option may use wildcard
+# characters.
+#
+#ALLOWDEVFILE="/dev/shm/pulse-shm-*"
+#ALLOWDEVFILE="/dev/shm/sem.ADBE_*"
+ALLOWDEVFILE="/dev/.udev/rules.d/root.rules"
