@@ -296,5 +296,8 @@ cat conf/fail2ban/jail.local \
 	| sed "s/PUBLIC_IP/$PUBLIC_IP/g" \
 	> /etc/fail2ban/jail.local
 cp conf/fail2ban/dovecotimap.conf /etc/fail2ban/filter.d/dovecotimap.conf
+cp conf/fail2ban/owncloud.conf /etc/fail2ban/filter.d/owncloud.conf
+cp conf/fail2ban/nginx-http-auth.conf /etc/fail2ban/filter.d/nginx-http-auth.conf
+cp conf/fail2ban/nginx-badbots.conf /etc/fail2ban/filter.d/nginx-badbots.conf
 
 restart_service fail2ban

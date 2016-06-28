@@ -25,6 +25,25 @@ findtime = 30
 maxretry = 20
 logpath  = /var/log/mail.log
 
+[nginx]
+enabled  = true
+filter   = nginx-http-auth
+port     = http,https
+
+[nginx-badbots]
+enabled  = true
+port     = http,https
+filter   = nginx-badbots
+logpath  = /var/log/nginx/access.log
+maxretry = 2
+
+[owncloud]
+enabled = true
+filter = owncloud
+logpath = STORAGE_ROOT/owncloud/owncloud.log
+maxretry = 20
+findtime = 300
+
 [recidive]
 enabled  = true
 maxretry = 10
