@@ -55,8 +55,8 @@ fi
 	diff -wbay $blacklistf.last $blacklistf  > $blacklistf.diff 
 
 # save IPtable rules
-invoke-rc.d iptables-persistent save
-
+iptables-save > /etc/iptables/rules.v4
+ip6tables-save > /etc/iptables/rules.v6
 
 
 # Saves a copy of current iptables rules, should you like to check them later.
