@@ -29,7 +29,7 @@ echo "Adding new blocks:"
   |sort -u \
   |tee $blacklistf \
   |grep -v '^#\|:' \
-  |while read IP; do iptables -I dshield 1 -s $IP -j DROP; done 
+  |while read IP; do iptables -A dshield -p tcp -s $IP -j DROP; done 
 
 
 
