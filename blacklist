@@ -1,18 +1,26 @@
+# I found this script somewhere a long time ago and modified it
 #!/bin/bash
 IP_TMP=/tmp/ip.tmp
 IP_BLACKLIST=/etc/ip-blacklist.conf
 IP_BLACKLIST_TMP=/tmp/ip-blacklist.tmp
 IP_BLACKLIST_CUSTOM=/etc/ip-blacklist-custom.conf # optional
-list="chinese nigerian russian lacnic exploited-servers"
 BLACKLISTS=(
-"http://www.projecthoneypot.org/list_of_ips.php?t=d&rss=1" # Project Honey Pot Directory of Dictionary Attacker IPs
-"http://check.torproject.org/cgi-bin/TorBulkExitList.py?ip=1.1.1.1"  # TOR Exit Nodes
-"http://danger.rulez.sk/projects/bruteforceblocker/blist.php" # BruteForceBlocker IP List
-"http://www.spamhaus.org/drop/drop.lasso" # Spamhaus Don't Route Or Peer List (DROP)
-"http://cinsscore.com/list/ci-badguys.txt" # C.I. Army Malicious IP List
-"http://www.openbl.org/lists/base.txt"  # OpenBL.org 30 day List
-"http://www.autoshun.org/files/shunlist.csv" # Autoshun Shun List
-"http://lists.blocklist.de/lists/all.txt" # blocklist.de attackers
+# Project Honey Pot Directory of Dictionary Attacker IPs
+"http://www.projecthoneypot.org/list_of_ips.php?t=d&rss=1" 
+# TOR Exit Nodes
+"http://check.torproject.org/cgi-bin/TorBulkExitList.py?ip=1.1.1.1"
+# BruteForceBlocker
+"http://danger.rulez.sk/projects/bruteforceblocker/blist.php" 
+# Spamhaus
+"http://www.spamhaus.org/drop/drop.lasso" 
+# C.I. Army
+"http://cinsscore.com/list/ci-badguys.txt" 
+# OpenBL.org
+"http://www.openbl.org/lists/base.txt" 
+#Autoshun
+"http://www.autoshun.org/files/shunlist.csv"
+#Blocklist.de
+"http://lists.blocklist.de/lists/all.txt"
 )
 for i in "${BLACKLISTS[@]}"
 do
