@@ -14,7 +14,8 @@ iptables -I INPUT -m set --match-set blacklist src -j DROP
 cp conf/blacklist/blacklist /etc/cron.daily/blacklist
 chmod a+x /etc/cron.daily/blacklist
 time /etc/cron.daily/blacklist
+source setup/dialog.sh
 iptables-save > /etc/iptables.up.rules
 sed -i -e "\$apre-up ipset restore < /etc/ipset.up.rules" /etc/network/interfaces
-sed -e "\$apost up iptables-restore < /etc/iptables.up.rules" /etc/network/interfaces
+sed -i -e "\$apost up iptables-restore < /etc/iptables.up.rules" /etc/network/interfaces
 echo "Blacklist has been installed. It will run daily automatically."
