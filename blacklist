@@ -30,6 +30,5 @@ do
         ipset add blacklist $ip
 done
 
-# save IPtable rules
-ipset save blacklist > /etc/ipset/blacklist
+ipset save > /etc/ipset.up.rules
 iptables-save > /etc/iptables.up.rules
