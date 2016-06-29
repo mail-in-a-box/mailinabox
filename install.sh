@@ -21,6 +21,9 @@ cp conf/blacklist /etc/cron.daily/blacklist
 chmod a+x /etc/cron.daily/blacklist
 time /etc/cron.daily/blacklist
 source conf/dialog.sh
+#cp conf/dshield /etc/cron.daily/dshield
+#chmod +x /etc/cron.daily/dshield
+#time /etc/cron.daily/blacklist
 iptables-save > /etc/iptables.up.rules
 sed -i -e "\$apre-up ipset restore < /etc/ipset.up.rules" /etc/network/interfaces
 sed -i -e "\$apre-up iptables-restore < /etc/iptables.up.rules" /etc/network/interfaces
