@@ -1,5 +1,4 @@
 #!/bin/bash
-# Found here
 IP_TMP=/tmp/ip.tmp
 IP_BLACKLIST=/etc/ip-blacklist.conf
 IP_BLACKLIST_TMP=/tmp/ip-blacklist.tmp
@@ -10,7 +9,7 @@ BLACKLISTS=(
 "http://check.torproject.org/cgi-bin/TorBulkExitList.py?ip=1.1.1.1"  # TOR Exit Nodes
 "http://www.maxmind.com/en/anonymous_proxies" # MaxMind GeoIP Anonymous Proxies
 "http://danger.rulez.sk/projects/bruteforceblocker/blist.php" # BruteForceBlocker IP List
-"http://rules.emergingthreats.net/blockrules/rbn-ips.txt" # Emerging Threats - Russian Business Networks List
+#"http://rules.emergingthreats.net/blockrules/rbn-ips.txt" # Emerging Threats - Russian Business Networks List
 "http://www.spamhaus.org/drop/drop.lasso" # Spamhaus Don't Route Or Peer List (DROP)
 "http://cinsscore.com/list/ci-badguys.txt" # C.I. Army Malicious IP List
 "http://www.openbl.org/lists/base.txt"  # OpenBL.org 30 day List
@@ -25,9 +24,9 @@ done
 for i in `echo $list`; do
         # Download
         wget --quiet http://www.wizcrafts.net/$i-iptables-blocklist.html
-        # Grep out all but ip blocks
+        # Grep all but ip blocks
         cat $i-iptables-blocklist.html | grep -v \< | grep -v \: | grep -v \; | grep -v \# | grep [0-9] > $i.txt
-        # Consolidate blocks into master list
+        # Consolidate
         cat $i.txt >> $IP_BLACKLIST_TMP
 done
 
