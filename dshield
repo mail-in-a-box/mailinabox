@@ -1,0 +1,54 @@
+#!/bin/bash
+##
+##  Add the top 20 IP blocks that have been reported by DShield
+##
+##  /etc/cron.daily/dshield
+##
+## Author: Alon "ChiefGyk" Ganon
+## https://alonganon.info
+## alon@ganon.me
+
+datadir=/tmp
+
+## Get default settings of fail2ban (optional?)
+[ -r /etc/default/fail2ban ] && . /etc/default/fail2ban
+
+umask 000
+blacklistf=$datadir/dshield.txt
+
+mv -vf  $blacklistf  $blacklistf.last
+
+badlisturls="http://feeds.dshield.org/block.txt"
+
+# Create the chain if it doesn't exist. Harmless if it does.
+ iptables -vN dshield  
+  
+# Grab list(s) at http://feeds.dshield.org/block.txt .  Block.
+echo "Adding new blocks:"
+ curl -s http://feeds.dshield.org/block.txt \
+  |sort -u \
+  |tee $blacklistf \
+  |grep -v '^#\|:' \
+  |while read IP; do iptables -I dshield 1 -s $IP -j DROP; done 
+
+
+
+# Which listings had been removed since last time?  Unblock.
+echo "Removing old blocks:"
+if [[ -r  $blacklistf.diff ]]; then
+  #       comm  is brittle, cannot use sort -rn 
+ time  comm -23 $blacklistf.last  $blacklistf \
+   |tee $blacklistf.delisted \
+   |grep -v '^#\|:' \
+   |while read IP; do  iptables -w -D dshield -s $IP -j DROP || iptables -wv -D dshield -s $IP -j LOGDROP; done 
+
+fi
+
+
+# prepare for next time.
+	diff -wbay $blacklistf.last $blacklistf  > $blacklistf.diff 
+
+# save IPtable rules
+iptables-save > /etc/iptables.up.rules
+
+exit 
