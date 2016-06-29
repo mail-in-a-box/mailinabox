@@ -1,5 +1,5 @@
-# Add Blocklist.de malicious IP Addresses to Daily Crontab
-# Also IPtables-persistent to save IP addresses upon reboot
+# Add multipkle lists of malicious IP Addresses by Daily Crontab
+# Also makes ipset and iptables persistent upon reboot
 # Added by Alon "ChiefGyk" Ganon
 # alonganon.info
 # alon@ganon.me
