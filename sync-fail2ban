@@ -35,9 +35,9 @@ echo "Adding new blocks:"
  http://lists.blocklist.de/lists/imap.txt  http://lists.blocklist.de/lists/mail.txt \ 
  http://lists.blocklist.de/lists/postfix.txt  http://lists.blocklist.de/lists/apache.txt \
  http://lists.blocklist.de/lists/email.txt  http://lists.blocklist.de/lists/21.txt \
- http://lists.blocklist.de/lists/25.txt  http://lists.blocklist.de/lists/80.txt 
+ http://lists.blocklist.de/lists/25.txt  http://lists.blocklist.de/lists/80.txt \
  http://lists.blocklist.de/lists/110.txt  http://lists.blocklist.de/lists/143.txt \
- http://lists.blocklist.de/lists/443.txt  http://lists.blocklist.de/lists/993.txt  \
+ http://lists.blocklist.de/lists/443.txt  http://lists.blocklist.de/lists/993.txt \
   |sort -u \
   |tee $blacklistf \
   |grep -v '^#\|:' \
