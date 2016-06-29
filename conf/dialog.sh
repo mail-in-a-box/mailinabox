@@ -5,13 +5,14 @@ WIDTH=80
 CHOICE_HEIGHT=4
 BACKTITLE="Do you want to block China and/or Korea?"
 TITLE="Country Block"
-MENU="A lot of spam originates from Korea and China. If you don't plan on having to ever have those countries connect to your server you may block them. \
-	This will update weekly, and block all IP blocks to those countries \
+MENU="A lot of spam, as well as malicious traffic originates from Korea and China. If you don't plan on having to ever have those countries connect to your server you may block them.
+	This will add a cron that will update weekly, and block all IP blocks to those countries you choose
 	Choose one of the following options:"
 
 OPTIONS=(1 "China"
          2 "Korea"
-         3 "China and Korea")
+         3 "China and Korea"
+		 4 "Do nothing")
 
 CHOICE=$(dialog --clear \
                 --backtitle "$BACKTITLE" \
@@ -50,4 +51,5 @@ case $CHOICE in
 			time /etc/cron.weekly/sinokorea
 			apt-get install -y iptables-persistent
             ;;
+		4) break;;
 esac
