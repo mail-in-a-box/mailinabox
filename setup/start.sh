@@ -128,7 +128,7 @@ management/ssl_certificates.py -q
 source setup/firstuser.sh
 
 #Setup Blocklist
-source setup/blocklist.sh
+source setup/blacklist.sh
 
 # Done.
 echo
