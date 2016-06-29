@@ -9,6 +9,8 @@ Tested on Ubuntu 14.04LTS for my own servers, so please test on your own systems
 
 I have also added the capability to block all Chinese and/or Korean IP Addresses as a good number of spam and malicious activity are linked to them. Towards the end after ipset has added thousands of IP addresses, a dialog will appear giving the option to choose if you want to block China, Korea, both, or neither. Simply select the option you desire and it will take care of the rest. The Korean and/or Chinese addresses will only update weekly, as it blocks entire IP blocks off assigned to the country/countries you have chosen. I may add more countries down the line if need be.
 
+The latest addition in 2.2 is it looks up Dshields top 20 blocks of IP addresses that are malicious, and blocks them daily. It has been merged into the /etc/cron.daily/blacklist created prior. The Dshield script was originally found at https://github.com/koconder/dshield_automatic_iptables
+
 Simply run this once, and that's it.
 sudo ./install.sh 
 alon@ganon.me
