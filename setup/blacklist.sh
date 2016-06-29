@@ -2,6 +2,7 @@
 # Add Blocklist.de malicious IP Addresses to Daily Crontab
 # Also IPtables-persistent to save IP addresses upon reboot
 # Added by Alon "ChiefGyk" Ganon
+# Original project is here https://github.com/ChiefGyk/ipset-assassin
 # alonganon.info
 # alon@ganon.me
 source setup/functions.sh # load our functions
