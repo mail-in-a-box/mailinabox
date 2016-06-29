@@ -292,8 +292,12 @@ restart_service resolvconf
 # ### Fail2Ban Service
 
 # Configure the Fail2Ban installation to prevent dumb bruce-force attacks against dovecot, postfix and ssh
+#
+# We will whitelist our public IP and the IP of the user performing the install
+IP_ADDRESS_OF_USER=$(pinky -w `logname` | tail -n+2 | tail -n1 | awk '{print $(NF)}')
 cat conf/fail2ban/jail.local \
 	| sed "s/PUBLIC_IP/$PUBLIC_IP/g" \
+	| sed "s/REMOTE_IP/$IP_ADDRESS_OF_USER/g" \
 	> /etc/fail2ban/jail.local
 cp conf/fail2ban/dovecotimap.conf /etc/fail2ban/filter.d/dovecotimap.conf
 
