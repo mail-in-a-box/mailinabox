@@ -3,5 +3,5 @@ curl http://www.okean.com/antispam/iptables/rc.firewall.china > /tmp/china.sh
 chmod +x /tmp/china.sh
 source /tmp/china.sh
 rm -f /tmp/china.sh
-ipset save > /etc/ipset.up.rules
-iptables-save > /etc/iptables.up.rules
+invoke-rc.d iptables-persistent save
+
