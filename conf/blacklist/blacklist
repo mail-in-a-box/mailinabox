@@ -15,10 +15,14 @@ BLACKLISTS=(
 "http://cinsscore.com/list/ci-badguys.txt" 
 # OpenBL.org
 "http://www.openbl.org/lists/base.txt" 
-#Autoshun
+# Autoshun
 "http://www.autoshun.org/files/shunlist.csv"
-#Blocklist.de
+# Blocklist.de
 "http://lists.blocklist.de/lists/all.txt"
+# Malware Domain List
+"https://www.malwaredomainlist.com/hostslist/ip.txt"
+# ZeusTracker
+"https://zeustracker.abuse.ch/blocklist.php?download=ipblocklist"
 )
 for i in "${BLACKLISTS[@]}"
 do
@@ -36,5 +40,6 @@ do
         ipset add blacklist $ip
 done
 
+# Persistence 
 ipset save > /etc/ipset.up.rules
 iptables-save > /etc/iptables.up.rules
