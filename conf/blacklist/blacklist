@@ -2,12 +2,10 @@
 IP_TMP=/tmp/ip.tmp
 IP_BLACKLIST=/etc/ip-blacklist.conf
 IP_BLACKLIST_TMP=/tmp/ip-blacklist.tmp
-IP_BLACKLIST_CUSTOM=/etc/ip-blacklist-custom.conf # optional
 list="chinese nigerian russian lacnic exploited-servers"
 BLACKLISTS=(
 "http://www.projecthoneypot.org/list_of_ips.php?t=d&rss=1" # Project Honey Pot Directory of Dictionary Attacker IPs
 "http://check.torproject.org/cgi-bin/TorBulkExitList.py?ip=1.1.1.1"  # TOR Exit Nodes
-"http://www.maxmind.com/en/anonymous_proxies" # MaxMind GeoIP Anonymous Proxies
 "http://danger.rulez.sk/projects/bruteforceblocker/blist.php" # BruteForceBlocker IP List
 "http://www.spamhaus.org/drop/drop.lasso" # Spamhaus Don't Route Or Peer List (DROP)
 "http://cinsscore.com/list/ci-badguys.txt" # C.I. Army Malicious IP List
@@ -21,16 +19,6 @@ do
     grep -Po '(?:\d{1,3}\.){3}\d{1,3}(?:/\d{1,2})?' $IP_TMP >> $IP_BLACKLIST_TMP
 done
 
-# This part may not work for everyone, it seems wizcraft doesn't allow all VPS wget access, but I am looking into it
-for i in `echo $list`; do
-        # Download
-        wget --quiet http://www.wizcrafts.net/$i-iptables-blocklist.html
-        # Grep all but ip blocks
-        cat $i-iptables-blocklist.html | grep -v \< | grep -v \: | grep -v \; | grep -v \# | grep [0-9] > $i.txt
-        # Consolidate
-        cat $i.txt >> $IP_BLACKLIST_TMP
-done
-
 sort $IP_BLACKLIST_TMP -n | uniq > $IP_BLACKLIST
 rm $IP_BLACKLIST_TMP
 wc -l $IP_BLACKLIST
@@ -41,6 +29,5 @@ do
         ipset add blacklist $ip
 done
 
-# save IPtable rules
-iptables-save > /etc/iptables/rules.v4
-ip6tables-save > /etc/iptables/rules.v6
+ipset save > /etc/ipset.up.rules
+iptables-save > /etc/iptables.up.rules
