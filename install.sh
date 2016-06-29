@@ -1,4 +1,4 @@
-# Add multipkle lists of malicious IP Addresses by Daily Crontab
+# Add multiple lists of malicious IP Addresses by Daily Crontab
 # Also makes ipset and iptables persistent upon reboot
 # Added by Alon "ChiefGyk" Ganon
 # alonganon.info
