@@ -24,7 +24,7 @@ blacklistf=$datadir/blacklist.blocklist.de.txt
 
 mv -vf  $blacklistf  $blacklistf.last
 
-badlisturls="http://antivirus.neu.edu.cn/ssh/lists/base_30days.txt http://lists.blocklist.de/lists/ssh.txt  http://lists.blocklist.de/lists/bruteforcelogin.txt"
+badlisturls="http://antivirus.neu.edu.cn/ssh/lists/base_30days.txt http://lists.blocklist.de/lists/ssh.txt http://lists.blocklist.de/lists/bruteforcelogin.txt http://lists.blocklist.de/lists/imap.txt http://lists.blocklist.de/lists/mail.txt http://lists.blocklist.de/lists/postfix.txt http://lists.blocklist.de/lists/apache.txt http://lists.blocklist.de/lists/email.txt"
 
 
  iptables -vN fail2ban-ssh   # Create the chain if it doesn't exist. Harmless if it does.
