@@ -11,12 +11,12 @@ if [[ $EUID -ne 0 ]]; then
 	echo
 	exit
 fi
-cp sync-fail2ban /etc/cron.daily/sync-fail2ban
-mkdir /etc/iptables
-cp blocklist.txt /etc/iptables/blocklist.txt
-chmod a+x /etc/cron.daily/sync-fail2ban
-time /etc/cron.daily/sync-fail2ban
 echo iptables-persistent iptables-persistent/autosave_v4 boolean true | debconf-set-selections
 echo iptables-persistent iptables-persistent/autosave_v6 boolean true | debconf-set-selections
 apt-get update
+apt-get install -y ipset 
+ipset create blacklist hash:net
+cp blacklist /etc/cron.daily/blacklist
+chmod a+x /etc/cron.daily/blacklist
+time /etc/cron.daily/blacklist
 apt-get install -y iptables-persistent

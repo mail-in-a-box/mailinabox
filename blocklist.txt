@@ -1,7 +1,0 @@
-http://lists.blocklist.de/lists/ssh.txt
-http://lists.blocklist.de/lists/bruteforcelogin.txt
-http://lists.blocklist.de/lists/imap.txt
-http://lists.blocklist.de/lists/mail.txt
-http://lists.blocklist.de/lists/postfix.txt
-http://lists.blocklist.de/lists/apache.txt
-http://lists.blocklist.de/lists/email.txt
