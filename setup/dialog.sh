@@ -25,7 +25,7 @@ CHOICE=$(dialog --clear \
 clear
 case $CHOICE in
         1)
-            echo "Bombing China"
+            echo "Ok Mr. Trump"
 			echo iptables-persistent iptables-persistent/autosave_v4 boolean true | debconf-set-selections
 			echo iptables-persistent iptables-persistent/autosave_v6 boolean true | debconf-set-selections
 			cp conf/blacklist/china /etc/cron.weekly/china
