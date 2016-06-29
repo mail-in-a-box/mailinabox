@@ -51,5 +51,6 @@ case $CHOICE in
 			time /etc/cron.weekly/sinokorea
 			apt-get install -y iptables-persistent
             ;;
-		4) break;;
+		4) echo "doing nothing"
+		;;
 esac
