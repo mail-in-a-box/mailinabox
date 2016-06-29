@@ -1,7 +1,7 @@
 #!/bin/bash
 
-HEIGHT=60
-WIDTH=160
+HEIGHT=30
+WIDTH=80
 CHOICE_HEIGHT=4
 BACKTITLE="Do you want to block China and/or Korea?"
 TITLE="Country Block"
