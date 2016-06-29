@@ -24,14 +24,14 @@ blacklistf=$datadir/blacklist.blocklist.de.txt
 
 mv -vf  $blacklistf  $blacklistf.last
 
-badlisturls="http://antivirus.neu.edu.cn/ssh/lists/base_30days.txt http://lists.blocklist.de/lists/ssh.txt http://lists.blocklist.de/lists/bruteforcelogin.txt http://lists.blocklist.de/lists/imap.txt http://lists.blocklist.de/lists/mail.txt http://lists.blocklist.de/lists/postfix.txt http://lists.blocklist.de/lists/apache.txt http://lists.blocklist.de/lists/email.txt"
+badlisturls="http://antivirus.neu.edu.cn/ssh/lists/base_30days.txt https://lists.blocklist.de/lists/all.txt"
 
 
  iptables -vN fail2ban-ssh   # Create the chain if it doesn't exist. Harmless if it does.
   
 # Grab list(s) at https://www.blocklist.de/en/export.html .  Block.
 echo "Adding new blocks:"
- time xargs curl -s < /etc/iptables/blocklist.txt \
+ time  curl -s https://lists.blocklist.de/lists/all.txt \
   |sort -u \
   |tee $blacklistf \
   |grep -v '^#\|:' \
