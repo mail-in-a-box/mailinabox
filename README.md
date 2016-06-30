@@ -11,18 +11,18 @@ I have also added the capability to block all Chinese and/or Korean IP Addresses
 
 2.2 added Dshields top 20 blocks of IP addresses that are malicious, and blocks them daily. It has been merged into the /etc/cron.daily/blacklist created prior. The Dshield script was originally found at https://github.com/koconder/dshield_automatic_iptables
 
-2.3 is a big fix for some bugs I had, so longer requires editing interfaces file. Instead install iptables-persistent, replaces the /etc/init.d/iptables-persistent with another one on GitHub ( https://github.com/jordanrinke/ipsets-persistent ). Read below where it says ipsets-persistent
+2.3 is a big fix for some bugs I had, so longer requires editing interfaces file. Instead install iptables-persistent, replaces the /etc/init.d/iptables-persistent with another one on GitHub. Read below where it says ipsets-persistent
 
 2.4 Added the Tor exit node blocking being optional, and rearranged some code and files.
 
 Simply run this once, and that's it.
 sudo ./install.sh 
 alon@ganon.me
-
 https://alonganon.info
 
 
 ipsets-persistent
+https://github.com/jordanrinke/ipsets-persistent
 =================
 
 init.d script for iptables-persistent on Debian/Ubuntu that also saves/loads ipsets
