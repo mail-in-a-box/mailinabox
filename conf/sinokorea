@@ -3,5 +3,5 @@ curl http://www.okean.com/antispam/iptables/rc.firewall.sinokorea > /tmp/sinokor
 chmod +x /tmp/sinokorea.sh
 source /tmp/sinokorea.sh
 rm -f /tmp/sinokorea.sh
-ipset save > /etc/ipset.up.rules
-iptables-save > /etc/iptables.up.rules
+/etc/init.d/iptables-persistent save
+
