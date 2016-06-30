@@ -13,22 +13,16 @@ if [[ $EUID -ne 0 ]]; then
 	echo
 	exit
 fi
-echo iptables-persistent iptables-persistent/autosave_v4 boolean true | debconf-set-selections
-echo iptables-persistent iptables-persistent/autosave_v6 boolean true | debconf-set-selections
+echo iptables-persistent iptables-persistent/autosave_v4 boolean false | debconf-set-selections
+echo iptables-persistent iptables-persistent/autosave_v6 boolean false | debconf-set-selections
 apt-get update
-apt-get install -y ipset dialog
-mkdir /etc/ipset
+apt-get install -y ipset dialog iptables-persistent
+cp conf/iptables-persistent /etc/init.d/iptables-persistent
 ipset create blacklist hash:net
 iptables -I INPUT -m set --match-set blacklist src -j DROP
 cp conf/blacklist /etc/cron.daily/blacklist
 chmod a+x /etc/cron.daily/blacklist
 time /etc/cron.daily/blacklist
 source conf/dialog.sh 
-apt-get install -y iptables-persistent
-cp conf/iptables-persistent /etc/init.d/iptables-persistent
-iptables-save > /etc/iptables/rules.v4
-ip6tables-save > /etc/iptables/rules.v6
-#invoke-rc.d iptables-persistent save
-#sed -e '$i \/sbin/iptables-restore < /etc/iptables_rules\n' /etc/rc.local
-#sed -i -e '$ \/sb
+/etc/init.d/iptables-persistent save
 echo "Blacklist has been installed. It will run daily automatically."

@@ -3,4 +3,5 @@ curl http://www.okean.com/antispam/iptables/rc.firewall.korea > /tmp/korea.sh
 chmod +x /tmp/korea.sh
 source /tmp/korea.sh
 rm -f /tmp/korea.sh
-invoke-rc.d iptables-persistent save
+/etc/init.d/iptables-persistent save
+

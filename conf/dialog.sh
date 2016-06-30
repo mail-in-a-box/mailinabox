@@ -26,31 +26,23 @@ clear
 case $CHOICE in
         1)
             echo "Are you Donald Trump?"
-			echo iptables-persistent iptables-persistent/autosave_v4 boolean true | debconf-set-selections
-			echo iptables-persistent iptables-persistent/autosave_v6 boolean true | debconf-set-selections
 			cp conf/china /etc/cron.weekly/china
 			chmod +x /etc/cron.weekly/china
 			time /etc/cron.weekly/china
-			apt-get install -y iptables-persistent
             ;;
         2)
             echo "Starting the Korean war again"
-			echo iptables-persistent iptables-persistent/autosave_v4 boolean true | debconf-set-selections
-			echo iptables-persistent iptables-persistent/autosave_v6 boolean true | debconf-set-selections
 			cp conf/korea /etc/cron.weekly/korea
 			chmod +x /etc/cron.weekly/korea
 			time /etc/cron.weekly/korea
-			apt-get install -y iptables-persistent
-            ;;
+			;;
         3)
             echo "Blocking almost 1/3 of the world"
-			echo iptables-persistent iptables-persistent/autosave_v4 boolean true | debconf-set-selections
-			echo iptables-persistent iptables-persistent/autosave_v6 boolean true | debconf-set-selections
 			cp conf/sinokorea /etc/cron.weekly/sinokorea
 			chmod +x /etc/cron.weekly/sinokorea
 			time /etc/cron.weekly/sinokorea
-			apt-get install -y iptables-persistent
             ;;
+			
 		4) echo "doing nothing"
-		;;
+			;;
 esac
