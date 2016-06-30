@@ -13,6 +13,10 @@ if [[ $EUID -ne 0 ]]; then
 	echo
 	exit
 fi
+echo iptables-persistent iptables-persistent/autosave_v4 boolean false | debconf-set-selections
+echo iptables-persistent iptables-persistent/autosave_v6 boolean false | debconf-set-selections
+apt-get update
+apt-get install -y ipset dialog iptables-persistent
 cp conf/blacklist /etc/cron.daily/blacklist
 chmod a+x /etc/cron.daily/blacklist
 source conf/tor.sh
