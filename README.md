@@ -17,7 +17,7 @@ I have also added the capability to block all Chinese and/or Korean IP Addresses
 2.41 Added Malc0de blocklist
 
 The lists used:
-Project Honey Pot:		
+Project Honey Pot		
 http://www.projecthoneypot.org/list_of_ips.php?t=d&rss=1
 TOR Exit Nodes:			
 http://check.torproject.org/cgi-bin/TorBulkExitList.py?ip=1.1.1.1
