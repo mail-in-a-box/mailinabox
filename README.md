@@ -1,6 +1,6 @@
 # ipset-assassin
 
-This will install a cron to run daily and pull lists from multiple sites to block malicious IP addresses. Adding around ~40,000 or more IP addresses per day, all voluntarily and freely contributed. If setting up Fail2Ban I suggest you help contribute to blocklist.de which is one of the lists used here.
+This will install a cron to run daily and pull lists from multiple sites to block malicious IP addresses. Adding around ~40,000 or more IP addresses per day, all voluntarily and freely contributed. If setting up Fail2Ban I suggest you help contribute to blocklist.de which is one of the lists used here. 
 Script is pretty self explanatory it prepares iptables, ipset, and the cron tab. Simply run as root and it will do the work for you. 
 
 2.0 has been rewritten with help from some research to use IPset and far more tables and lists resourced. Please do not run this more than once per day, per server.
@@ -14,6 +14,21 @@ I have also added the capability to block all Chinese and/or Korean IP Addresses
 2.3 is a big fix for some bugs I had, so longer requires editing interfaces file. Instead install iptables-persistent, replaces the /etc/init.d/iptables-persistent with another one on GitHub. Read below where it says ipsets-persistent
 
 2.4 Added the Tor exit node blocking being optional, and rearranged some code and files.
+2.41 Added Malc0de blocklist
+
+The lists used:
+Project Honey Pot:		http://www.projecthoneypot.org/list_of_ips.php?t=d&rss=1
+TOR Exit Nodes:			http://check.torproject.org/cgi-bin/TorBulkExitList.py?ip=1.1.1.1
+BruteForceBlocker: 		http://danger.rulez.sk/projects/bruteforceblocker/blist.php
+Spamhaus:				http://www.spamhaus.org/drop/drop.lasso
+C.I. Army:				http://cinsscore.com/list/ci-badguys.txt
+OpenBL.org:				http://www.openbl.org/lists/base.txt
+Autoshun:				http://www.autoshun.org/files/shunlist.csv
+Blocklist.de:			http://lists.blocklist.de/lists/all.txt
+Dshield:				http://feeds.dshield.org/block.txt
+Malware Domain List:	https://www.malwaredomainlist.com/hostslist/ip.txt
+ZeusTracker:			https://zeustracker.abuse.ch/blocklist.php?download=ipblocklist
+malc0de IP blacklist:	http://malc0de.com/bl/IP_Blacklist.txt"
 
 Simply run this once, and that's it.
 sudo ./install.sh 
