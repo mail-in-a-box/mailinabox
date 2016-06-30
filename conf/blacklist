@@ -1,13 +1,12 @@
-# I found this script somewhere a long time ago and modified it
 #!/bin/bash
 IPTABLES=/sbin/iptables
 URL=http://feeds.dshield.org/block.txt
 FILE=/tmp/dshield_block.text
 CHAIN=dshield
+
 IP_TMP=/tmp/ip.tmp
 IP_BLACKLIST=/etc/ip-blacklist.conf
 IP_BLACKLIST_TMP=/tmp/ip-blacklist.tmp
-IP_BLACKLIST_CUSTOM=/etc/ip-blacklist-custom.conf # optional
 BLACKLISTS=(
 # Project Honey Pot Directory of Dictionary Attacker IPs
 "http://www.projecthoneypot.org/list_of_ips.php?t=d&rss=1" 
@@ -104,5 +103,4 @@ echo "Done!"
 unlink $FILE
 
 # Persistence 
-ipset save > /etc/ipset.up.rules
-iptables-save > /etc/iptables.up.rules
+invoke-rc.d iptables-persistent save
