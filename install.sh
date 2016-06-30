@@ -25,5 +25,10 @@ chmod a+x /etc/cron.daily/blacklist
 time /etc/cron.daily/blacklist
 source conf/dialog.sh 
 apt-get install -y iptables-persistent
-invoke-rc.d iptables-persistent save
+cp conf/iptables-persistent /etc/init.d/iptables-persistent
+iptables-save > /etc/iptables/rules.v4
+ip6tables-save > /etc/iptables/rules.v6
+#invoke-rc.d iptables-persistent save
+#sed -e '$i \/sbin/iptables-restore < /etc/iptables_rules\n' /etc/rc.local
+#sed -i -e '$ \/sb
 echo "Blacklist has been installed. It will run daily automatically."
