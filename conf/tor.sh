@@ -6,7 +6,7 @@
 dialog --title "Disable Tor Exit Nodes?" \
 --backtitle "" \
 --yesno "Would you like to block all Tor exit nodes? This will block all traffic coming from Tor which will impair people using it to \
-avoid censorship. However the majority of malicious traffic is sourced from Tor. If you change your mind later you can comment/uncomment line 14 \
+avoid censorship. However the majority of malicious traffic is sourced from Tor. If you change your mind later you can comment/uncomment line 13 \
 of /etc/cron.daily/blacklist where it specifies Tor Exit Nodes" 15 60
 
 # Get exit status
