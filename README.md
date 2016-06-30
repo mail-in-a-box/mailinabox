@@ -16,20 +16,6 @@ I have also added the capability to block all Chinese and/or Korean IP Addresses
 2.4 Added the Tor exit node blocking being optional, and rearranged some code and files.
 2.41 Added Malc0de blocklist
 
-The lists used:
-http://www.projecthoneypot.org/list_of_ips.php?t=d&rss=1
-http://check.torproject.org/cgi-bin/TorBulkExitList.py?ip=1.1.1.1
-http://danger.rulez.sk/projects/bruteforceblocker/blist.php
-http://www.spamhaus.org/drop/drop.lasso
-http://cinsscore.com/list/ci-badguys.txt
-http://www.openbl.org/lists/base.txt
-http://www.autoshun.org/files/shunlist.csv
-http://lists.blocklist.de/lists/all.txt
-http://feeds.dshield.org/block.txt
-https://www.malwaredomainlist.com/hostslist/ip.txt
-https://zeustracker.abuse.ch/blocklist.php?download=ipblocklist
-http://malc0de.com/bl/IP_Blacklist.txt
-
 Simply run this once, and that's it.
 sudo ./install.sh 
 alon@ganon.me
