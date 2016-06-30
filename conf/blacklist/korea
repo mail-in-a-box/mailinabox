@@ -1,7 +1,0 @@
-#!/bin/bash
-curl http://www.okean.com/antispam/iptables/rc.firewall.korea > /tmp/korea.sh
-chmod +x /tmp/korea.sh
-source /tmp/korea.sh
-rm -f /tmp/korea.sh
-/etc/init.d/iptables-persistent save
-

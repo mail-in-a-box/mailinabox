@@ -3,7 +3,6 @@ IPTABLES=/sbin/iptables
 URL=http://feeds.dshield.org/block.txt
 FILE=/tmp/dshield_block.text
 CHAIN=dshield
-
 IP_TMP=/tmp/ip.tmp
 IP_BLACKLIST=/etc/ip-blacklist.conf
 IP_BLACKLIST_TMP=/tmp/ip-blacklist.tmp
@@ -54,7 +53,7 @@ done
 # and also use a seprate chain file to support other iptables rules without flushing
 # i.e. fail2ban and ddosdeflate
 
-
+echo "Beginning steps to block 20 most malicious IP blocks."
 
 # check to see if the chain already exists
 $IPTABLES -L $CHAIN -n
@@ -65,7 +64,7 @@ if [ $? -eq 0 ]; then
     # flush the old rules
     $IPTABLES -F $CHAIN
 
-    echo "Flushed old rules. Applying updated dshield list...."    
+    echo "Flushed old rules..."    
 
 else
 
@@ -78,7 +77,7 @@ else
     # don't allow this traffic through
     $IPTABLES -A FORWARD -j $CHAIN
 
-    echo "Chain not detected. Creating new chain and adding dshield list...."
+    echo "Chain not detected. Creating new chain..."
 
 fi;
 
