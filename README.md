@@ -11,11 +11,22 @@ I have also added the capability to block all Chinese and/or Korean IP Addresses
 
 2.2 added Dshields top 20 blocks of IP addresses that are malicious, and blocks them daily. It has been merged into the /etc/cron.daily/blacklist created prior. The Dshield script was originally found at https://github.com/koconder/dshield_automatic_iptables
 
-2.3 is a big fix for some bugs I had, so longer requires editing interfaces file. Instead install iptables-persistent, replaces the /etc/init.d/iptables-persistent with another one on GitHub ( https://github.com/jordanrinke/ipsets-persistent ). This does the same for IPtables, but also will save and restore ipset lists as well. The new init.d file has added the ability to save iptables and ipsec configuration from the service command.
+2.3 is a big fix for some bugs I had, so longer requires editing interfaces file. Instead install iptables-persistent, replaces the /etc/init.d/iptables-persistent with another one on GitHub ( https://github.com/jordanrinke/ipsets-persistent ). Read below where it says ipsets-persistent
 
 2.4 Added the Tor exit node blocking being optional, and rearranged some code and files.
 
 Simply run this once, and that's it.
 sudo ./install.sh 
 alon@ganon.me
+
 https://alonganon.info
+
+
+ipsets-persistent
+=================
+
+init.d script for iptables-persistent on Debian/Ubuntu that also saves/loads ipsets
+
+
+I added checking for and saving ipsets. sets are saved in the same place as the other rules in a file named rules.ipset. Rules are only saved if they are defined, same with flushing and loading. Instead of checking to see if ipset is installed on the load, I just check for the rules.ipset file, since if that doesn't exist loading does't make sense. There might be better ways to do it, feel free to submit a pull etc. this is just the way I made it work for me.
+

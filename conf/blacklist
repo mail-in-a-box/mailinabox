@@ -3,14 +3,13 @@ IPTABLES=/sbin/iptables
 URL=http://feeds.dshield.org/block.txt
 FILE=/tmp/dshield_block.text
 CHAIN=dshield
-
 IP_TMP=/tmp/ip.tmp
 IP_BLACKLIST=/etc/ip-blacklist.conf
 IP_BLACKLIST_TMP=/tmp/ip-blacklist.tmp
 BLACKLISTS=(
 # Project Honey Pot Directory of Dictionary Attacker IPs
 "http://www.projecthoneypot.org/list_of_ips.php?t=d&rss=1" 
-# TOR Exit Nodes
+# TOR Exit Nodes this will block all access to Tor
 "http://check.torproject.org/cgi-bin/TorBulkExitList.py?ip=1.1.1.1"
 # BruteForceBlocker
 "http://danger.rulez.sk/projects/bruteforceblocker/blist.php" 
@@ -28,6 +27,8 @@ BLACKLISTS=(
 "https://www.malwaredomainlist.com/hostslist/ip.txt"
 # ZeusTracker
 "https://zeustracker.abuse.ch/blocklist.php?download=ipblocklist"
+# malc0de IP blacklist
+"http://malc0de.com/bl/IP_Blacklist.txt"
 )
 for i in "${BLACKLISTS[@]}"
 do
@@ -53,7 +54,7 @@ done
 # Import Dshield Blocklist in a basic shell script which will run silently via cron
 # and also use a seprate chain file to support other iptables rules without flushing
 # i.e. fail2ban and ddosdeflate
-
+# some modifications by Alon Ganon (alon@ganon.me)
 
 
 # check to see if the chain already exists
@@ -65,7 +66,7 @@ if [ $? -eq 0 ]; then
     # flush the old rules
     $IPTABLES -F $CHAIN
 
-    echo "Flushed old rules. Applying updated dshield list...."    
+    echo "Flushed old rules..."    
 
 else
 
