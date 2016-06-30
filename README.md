@@ -1,6 +1,5 @@
-<<<<<<< HEAD
 # ipset-assassin
-ipset-assassin (formerly named blocklist)
+
 This will install a cron to run daily and pull lists from multiple sites to block malicious IP addresses. Adding around ~40,000 or more IP addresses per day, all voluntarily and freely contributed. If setting up Fail2Ban I suggest you help contribute to blocklist.de which is one of the lists used here.
 Script is pretty self explanatory it prepares iptables, ipset, and the cron tab. Simply run as root and it will do the work for you. 
 
@@ -21,10 +20,10 @@ sudo ./install.sh
 alon@ganon.me
 https://alonganon.info
 
-
-ipsets-persistent
+======
+#ipsets-persistent
 https://github.com/jordanrinke/ipsets-persistent
-=================
+
 
 init.d script for iptables-persistent on Debian/Ubuntu that also saves/loads ipsets
 
@@ -32,9 +31,10 @@ init.d script for iptables-persistent on Debian/Ubuntu that also saves/loads ips
 I added checking for and saving ipsets. sets are saved in the same place as the other rules in a file named rules.ipset. Rules are only saved if they are defined, same with flushing and loading. Instead of checking to see if ipset is installed on the load, I just check for the rules.ipset file, since if that doesn't exist loading does't make sense. There might be better ways to do it, feel free to submit a pull etc. this is just the way I made it work for me.
 
 =======
-dshield_automatic_iptables
+#dshield_automatic_iptables
+
 https://github.com/koconder/dshield_automatic_iptables
-==========================
+
 
 Auto Import dshield blocklist and import to iptables as a chain. It has been merged into the /etc/cron.daily/blacklist created prior in conf/blacklist.
 
