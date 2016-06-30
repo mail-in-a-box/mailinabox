@@ -8,14 +8,15 @@
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
-apt_install -y ipset 
+echo iptables-persistent iptables-persistent/autosave_v4 boolean false | debconf-set-selections
+echo iptables-persistent iptables-persistent/autosave_v6 boolean false | debconf-set-selections
+apt_install -y ipset dialog iptables-persistent
+cp conf/iptables-persistent /etc/init.d/iptables-persistent
 ipset create blacklist hash:net
 iptables -I INPUT -m set --match-set blacklist src -j DROP
 cp conf/blacklist/blacklist /etc/cron.daily/blacklist
 chmod a+x /etc/cron.daily/blacklist
 time /etc/cron.daily/blacklist
 source setup/dialog.sh
-iptables-save > /etc/iptables.up.rules
-sed -i -e "\$apre-up ipset restore < /etc/ipset.up.rules" /etc/network/interfaces
-sed -i -e "\$apost up iptables-restore < /etc/iptables.up.rules" /etc/network/interfaces
+/etc/init.d/iptables-persistent save
 echo "Blacklist has been installed. It will run daily automatically."

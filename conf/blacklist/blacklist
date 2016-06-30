@@ -102,6 +102,4 @@ echo "Done!"
 # remove the spam list
 unlink $FILE
 
-# Persistence 
-ipset save > /etc/ipset.up.rules
-iptables-save > /etc/iptables.up.rules
+/etc/init.d/iptables-persistent save
