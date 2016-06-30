@@ -13,8 +13,10 @@ if [[ $EUID -ne 0 ]]; then
 	echo
 	exit
 fi
+echo iptables-persistent iptables-persistent/autosave_v4 boolean false | debconf-set-selections
+echo iptables-persistent iptables-persistent/autosave_v6 boolean false | debconf-set-selections
 apt-get update
-apt-get install -y ipset dialog
+apt-get install -y ipset dialog iptables-persistent
 cp conf/iptables-persistent /etc/init.d/iptables-persistent
 ipset create blacklist hash:net
 iptables -I INPUT -m set --match-set blacklist src -j DROP
