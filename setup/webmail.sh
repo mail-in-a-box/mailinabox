@@ -32,12 +32,12 @@ apt-get purge -qq -y roundcube* #NODOC
 VERSION=v1.10.1.127
 VERSION_FILENAME="rainloop-community-1.10.1.127-18d553ae9cd96eb102059b04fdee62e0.zip"
 HASH=bf2b42c99a6d8be151e2c1dc3442604ca709e1ba
-UPDATE_KEY=$VERSION:a
+UPDATE_KEY=$VERSION
 needs_update=0 #NODOC
 if [ ! -f /usr/local/lib/rainloop/version ]; then
 	# not installed yet #NODOC
 	needs_update=1 #NODOC
-elif [[ "$UPDATE_KEY" != `cat /usr/local/lib/roundcubemail/version` ]]; then
+elif [[ "$UPDATE_KEY" != "$(cat /usr/local/lib/rainloop/version)" ]]; then
 	# checks if the version is what we want
 	needs_update=1 #NODOC
 fi
