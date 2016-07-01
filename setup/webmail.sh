@@ -5,9 +5,9 @@
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
-# ### Installing Roundloop
+# ### Installing Rainloop
 
-# Roundloop's webpage (http://www.rainloop.net/downloads/) does not easily	#
+# Rainloop's webpage (http://www.rainloop.net/downloads/) does not easily	#
 # list versions as the need for VERSION_FILENAME below. 			#
 
 # 
