@@ -10,7 +10,6 @@ source /etc/mailinabox.conf # load global vars
 
 cp conf/blacklist /etc/cron.daily/blacklist
 chmod a+x /etc/cron.daily/blacklist
-source setup/tor.sh
 echo iptables-persistent iptables-persistent/autosave_v4 boolean false | debconf-set-selections
 echo iptables-persistent iptables-persistent/autosave_v6 boolean false | debconf-set-selections
 apt_install -y ipset dialog iptables-persistent

@@ -9,8 +9,6 @@ IP_BLACKLIST_TMP=/tmp/ip-blacklist.tmp
 BLACKLISTS=(
 # Project Honey Pot Directory of Dictionary Attacker IPs
 "http://www.projecthoneypot.org/list_of_ips.php?t=d&rss=1" 
-# TOR Exit Nodes
-"http://check.torproject.org/cgi-bin/TorBulkExitList.py?ip=1.1.1.1"
 # BruteForceBlocker
 "http://danger.rulez.sk/projects/bruteforceblocker/blist.php" 
 # Spamhaus
