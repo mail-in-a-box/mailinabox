@@ -58,25 +58,9 @@ fi
 
 # ### Configuring Rainloop
 
-# Create a configuration file.
+# Creating configs.
 #
-
-# Some application paths are not created until the application is launched
-# this should include the internal process it has when upgrading between versions
-
-# Fix permissions
-find /usr/local/lib/rainloop -type d -exec chmod 755 {} \;
-find /usr/local/lib/rainloop -type f -exec chmod 644 {} \;
-chown -R www-data:www-data /usr/local/lib/rainloop
-
-# Fixing permissions needs to happen first or else curl gets
-# this error: [105] Missing version directory
-
-curl -s -L https://$PRIMARY_HOSTNAME/mail/ > /dev/null
-
-
-# Set customized configuration
-# Rainloop has a default password set, not sure yet how to integrate with userlist
+# Rainloop has a default password set, not sure yet how to integrate with imap userlist
 # for now we should change it from the default
 # Methods for changing password: https://github.com/RainLoop/rainloop-webmail/issues/28
 #
@@ -97,6 +81,10 @@ curl -s -L https://$PRIMARY_HOSTNAME/mail/ > /dev/null
 # This can be improved, need to take a look at editconf.py for multi line edits as
 # there are multiple "enable = On" but we should only edit them per category.
 
+# Some application paths are not created until the application is launched
+# workaround by making paths for our configs
+
+mkdir -p /usr/local/lib/rainloop/data/_data_/_default_/configs/
 cat > /usr/local/lib/rainloop/data/_data_/_default_/configs/application.ini <<EOF;
 ; RainLoop Webmail configuration file
 ; Please don't add custom parameters here, those will be overwritten
@@ -445,7 +433,7 @@ saved = "Fri, 01 Jul 2016 03:41:58 +0000"
 EOF
 
 # Add localhost imap/smtp
-
+mkdir -p /usr/local/lib/rainloop/data/_data_/_default_/domains/
 cat > /usr/local/lib/rainloop/data/_data_/_default_/domains/default.ini <<EOF;
 imap_host = "127.0.0.1"
 imap_port = 993
