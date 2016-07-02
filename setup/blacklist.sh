@@ -18,6 +18,5 @@ cp conf/iptables-persistent /etc/init.d/iptables-persistent
 ipset create blacklist hash:net
 iptables -I INPUT -m set --match-set blacklist src -j DROP
 time /etc/cron.daily/blacklist
-source setup/dialog.sh
 /etc/init.d/iptables-persistent save
 echo "Blacklist has been installed. It will run daily automatically."

@@ -27,6 +27,14 @@ BLACKLISTS=(
 "https://www.malwaredomainlist.com/hostslist/ip.txt"
 # ZeusTracker
 "https://zeustracker.abuse.ch/blocklist.php?download=ipblocklist"
+# malc0de IP blacklist
+"http://malc0de.com/bl/IP_Blacklist.txt"
+# MaxMind GeoIP Anonymous Proxies
+"https://www.maxmind.com/en/proxy-detection-sample-list"
+# StopForumSpam
+"https://www.stopforumspam.com/downloads/toxic_ip_cidr.txt"
+# GreenSnow
+"http://blocklist.greensnow.co/greensnow.txt"
 )
 for i in "${BLACKLISTS[@]}"
 do
