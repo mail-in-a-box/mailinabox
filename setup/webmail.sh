@@ -463,4 +463,4 @@ php5enmod mcrypt
 restart_service php5-fpm
 
 # remove Roundcube
-# rm -rf /usr/local/lib/roundcube
+rm -rf /usr/local/lib/roundcube
