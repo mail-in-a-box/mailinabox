@@ -28,11 +28,12 @@ apt-get purge -qq -y roundcube* #NODOC
 # Install Roundcube from source if it is not already present or if it is out of date.
 # Combine the Roundcube version number with the commit hash of vacation_sieve to track
 # whether we have the latest version.
-VERSION=v1.10.1.127
-VERSION_FILENAME="rainloop-community-1.10.1.127-18d553ae9cd96eb102059b04fdee62e0.zip"
-HASH=bf2b42c99a6d8be151e2c1dc3442604ca709e1ba
+VERSION=v1.10.2.141
+VERSION_FILENAME="rainloop-community-1.10.2.141-df00be1a3ed3b171ed1dd0806b2aa5b7.zip"
+HASH=58bb90e717f6b1e95ac909b399c7ac4a14752076
 UPDATE_KEY=$VERSION
 needs_update=0 #NODOC
+first_install=0
 if [ ! -f /usr/local/lib/rainloop/version ]; then
 	# not installed yet #NODOC
 	needs_update=1 #NODOC
@@ -72,7 +73,6 @@ chown -R www-data:www-data /usr/local/lib/rainloop
 # Fixing permissions needs to happen first or else curl gets
 # this error: [105] Missing version directory
 
-# works manually, not in cli?
 /usr/bin/php /usr/local/lib/rainloop/index.php > /dev/null
 
 
