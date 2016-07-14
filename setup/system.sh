@@ -219,6 +219,11 @@ APT::Periodic::Unattended-Upgrade "1";
 APT::Periodic::Verbose "1";
 EOF
 
+# Harden SSH and disable weak ciphers
+echo "Ciphers aes128-ctr,aes192-ctr,aes256-ctr,arcfour256,arcfour128" >> /etc/ssh/sshd_config
+echo "MACs hmac-sha1,umac-64@openssh.com,hmac-ripemd160" >> /etc/ssh/sshd_config
+
+
 # ### Firewall
 
 # Various virtualized environments like Docker and some VPSs don't provide #NODOC
@@ -298,3 +303,4 @@ cat conf/fail2ban/jail.local \
 cp conf/fail2ban/dovecotimap.conf /etc/fail2ban/filter.d/dovecotimap.conf
 
 restart_service fail2ban
+
