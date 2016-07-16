@@ -144,9 +144,11 @@ pollinate  -q -r
 
 # Between these two, we really ought to be all set.
 
-echo 'Launching SSH public key creation...'
-
-nohup ssh-keygen -t rsa -b 2048 -a 100 -f /root/.ssh/id_rsa_miab -N '' -q 2>&1 >/dev/null
+# We need an ssh key to store backups via rsync, if it doesn't exist create one
+if [ ! -f /root/.ssh/id_rsa_miab ]; then
+	echo 'Launching SSH public key creation...'
+	ssh-keygen -t rsa -b 2048 -a 100 -f /root/.ssh/id_rsa_miab -N '' -q
+fi
 
 # ### Package maintenance
 #
