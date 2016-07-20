@@ -127,9 +127,6 @@ management/ssl_certificates.py -q
 # If there aren't any mail users yet, create one.
 source setup/firstuser.sh
 
-#Setup Blocklist
-source setup/blacklist.sh
-
 # Done.
 echo
 echo "-----------------------------------------------"

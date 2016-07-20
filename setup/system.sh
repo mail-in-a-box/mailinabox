@@ -245,6 +245,10 @@ if [ -z "$DISABLE_FIREWALL" ]; then
 	fi
 
 	ufw --force enable;
+	
+	#Setup Blocklist
+	source setup/blacklist.sh
+	
 fi #NODOC
 
 # ### Local DNS Service
