@@ -6,7 +6,7 @@
 ************************************************/
 
 define('CALDAV_PROTOCOL', 'https');
-define('CALDAV_SERVER', 'localhost');
+define('CALDAV_SERVER', '127.0.0.1');
 define('CALDAV_PORT', '443');
 define('CALDAV_PATH', '/caldav/calendars/%u/');
 define('CALDAV_PERSONAL', 'PRINCIPAL');

@@ -17,8 +17,8 @@ apt_install \
 apt-get purge -qq -y owncloud*
 
 # Install ownCloud from source of this version:
-owncloud_ver=8.1.1
-owncloud_hash=34077e78575a3e689825a00964ee37fbf83fbdda
+owncloud_ver=8.2.3
+owncloud_hash=bfdf6166fbf6fc5438dc358600e7239d1c970613
 
 # Migrate <= v0.10 setups that stored the ownCloud config.php in /usr/local rather than
 # in STORAGE_ROOT. Move the file to STORAGE_ROOT.
@@ -52,8 +52,8 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 	# The two apps we actually want are not in ownCloud core. Clone them from
 	# their github repositories.
 	mkdir -p /usr/local/lib/owncloud/apps
-	git_clone https://github.com/owncloudarchive/contacts 4ff855e7c2075309041bead09fbb9eb7df678244 '' /usr/local/lib/owncloud/apps/contacts
-	git_clone https://github.com/owncloudarchive/calendar ec53139b144c0f842c33813305612e8006c42ea5 '' /usr/local/lib/owncloud/apps/calendar
+	git_clone https://github.com/owncloudarchive/contacts 9ba2e667ae8c7ea36d8c4a4c3413c374beb24b1b '' /usr/local/lib/owncloud/apps/contacts
+	git_clone https://github.com/owncloudarchive/calendar 2086e738a3b7b868ec59cd61f0f88b49c3f21dd1 '' /usr/local/lib/owncloud/apps/calendar
 
 	# Fix weird permissions.
 	chmod 750 /usr/local/lib/owncloud/{apps,config}
@@ -108,12 +108,12 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
   'user_backends' => array(
     array(
       'class'=>'OC_User_IMAP',
-      'arguments'=>array('{localhost:993/imap/ssl/novalidate-cert}')
+      'arguments'=>array('{127.0.0.1:993/imap/ssl/novalidate-cert}')
     )
   ),
   'memcache.local' => '\\OC\\Memcache\\Memcached',
   "memcached_servers" => array (
-    array('localhost', 11211),
+    array('127.0.0.1', 11211),
   ),
   'mail_smtpmode' => 'sendmail',
   'mail_smtpsecure' => '',

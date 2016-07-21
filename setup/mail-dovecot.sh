@@ -38,7 +38,8 @@ apt_install \
 # would be 20 users). Set it to 250 times the number of cores this
 # machine has, so on a two-core machine that's 500 processes/100 users).
 tools/editconf.py /etc/dovecot/conf.d/10-master.conf \
-	default_process_limit=$(echo "`nproc` * 250" | bc)
+	default_process_limit=$(echo "`nproc` * 250" | bc) \
+	log_path=/var/log/mail.log
 
 # The inotify `max_user_instances` default is 128, which constrains
 # the total number of watched (IMAP IDLE push) folders by open connections.
