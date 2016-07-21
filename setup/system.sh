@@ -220,9 +220,12 @@ APT::Periodic::Verbose "1";
 EOF
 
 # Harden SSH and disable weak ciphers
-grep -q -F "Ciphers aes128-ctr,aes192-ctr,aes256-ctr,arcfour256,arcfour128 \
-MACs hmac-sha1,umac-64@openssh.com,hmac-ripemd160" /etc/ssh/sshd_config || echo "Ciphers aes128-ctr,aes192-ctr,aes256-ctr,arcfour256,arcfour128 \
-MACs hmac-sha1,umac-64@openssh.com,hmac-ripemd160" >> /etc/ssh/ssh_config
+echo "disabling weak SSH ciphers"
+tools/editconf.py /etc/ssh/sshd_config -s \
+	Ciphers aes128-ctr,aes192-ctr,aes256-ctr,arcfour256,arcfour128 \
+	MACs hmac-sha1,umac-64@openssh.com,hmac-ripemd160
+	
+restart_service ssh
 
 # ### Firewall
 
