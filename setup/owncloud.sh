@@ -16,10 +16,6 @@ apt_install \
 
 apt-get purge -qq -y owncloud*
 
-# Install ownCloud from source of this version:
-owncloud_ver=8.2.3
-owncloud_hash=bfdf6166fbf6fc5438dc358600e7239d1c970613
-
 # Migrate <= v0.10 setups that stored the ownCloud config.php in /usr/local rather than
 # in STORAGE_ROOT. Move the file to STORAGE_ROOT.
 if [ ! -f $STORAGE_ROOT/owncloud/config.php ] \
@@ -32,16 +28,16 @@ if [ ! -f $STORAGE_ROOT/owncloud/config.php ] \
 	ln -sf $STORAGE_ROOT/owncloud/config.php /usr/local/lib/owncloud/config/config.php
 fi
 
-# Check if ownCloud dir exist, and check if version matches owncloud_ver (if either doesn't - install/upgrade)
-if [ ! -d /usr/local/lib/owncloud/ ] \
-	|| ! grep -q $owncloud_ver /usr/local/lib/owncloud/version.php; then
+InstallOwncloud() {
+        version=$1
+        hash=$2
 
 	# Download and verify
-	wget_verify https://download.owncloud.org/community/owncloud-$owncloud_ver.zip $owncloud_hash /tmp/owncloud.zip
+	wget_verify https://download.owncloud.org/community/owncloud-$version.zip $hash /tmp/owncloud.zip
 
 	# Clear out the existing ownCloud.
 	if [ -d /usr/local/lib/owncloud/ ]; then
-		echo "upgrading ownCloud to $owncloud_ver (backing up existing ownCloud directory to /tmp/owncloud-backup-$$)..."
+		echo "upgrading ownCloud to $version (backing up existing ownCloud directory to /tmp/owncloud-backup-$$)..."
 		mv /usr/local/lib/owncloud /tmp/owncloud-backup-$$
 	fi
 
@@ -49,11 +45,17 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 	unzip -u -o -q /tmp/owncloud.zip -d /usr/local/lib #either extracts new or replaces current files
 	rm -f /tmp/owncloud.zip
 
-	# The two apps we actually want are not in ownCloud core. Clone them from
+	# The two apps we actually want are not in ownCloud core. Download the releases from
 	# their github repositories.
 	mkdir -p /usr/local/lib/owncloud/apps
-	git_clone https://github.com/owncloudarchive/contacts 9ba2e667ae8c7ea36d8c4a4c3413c374beb24b1b '' /usr/local/lib/owncloud/apps/contacts
-	git_clone https://github.com/owncloudarchive/calendar 2086e738a3b7b868ec59cd61f0f88b49c3f21dd1 '' /usr/local/lib/owncloud/apps/calendar
+	wget_verify https://github.com/owncloud/contacts/releases/download/v1.3.1.0/contacts.tar.gz 8603f05dad68d1306e72befe1e672ff06165d11e /tmp/contacts.tgz
+	tar xf /tmp/contacts.tgz -C /usr/local/lib/owncloud/apps/
+	rm /tmp/contacts.tgz
+
+	wget_verify https://github.com/owncloud/calendar/releases/download/v1.3.1/calendar.tar.gz 3b8aecd7c31a2b59721c826d9b2a2ebb619e25c6 /tmp/calendar.tgz
+	tar xf /tmp/calendar.tgz -C /usr/local/lib/owncloud/apps/
+	rm /tmp/calendar.tgz
+
 
 	# Fix weird permissions.
 	chmod 750 /usr/local/lib/owncloud/{apps,config}
@@ -69,7 +71,7 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 
 	# If this isn't a new installation, immediately run the upgrade script.
 	# Then check for success (0=ok and 3=no upgrade needed, both are success).
-	if [ -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
+	if [ -e $STORAGE_ROOT/owncloud/owncloud.db ]; then
 		# ownCloud 8.1.1 broke upgrades. It may fail on the first attempt, but
 		# that can be OK.
 		sudo -u www-data php /usr/local/lib/owncloud/occ upgrade
@@ -81,6 +83,41 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 			echo "...which seemed to work."
 		fi
 	fi
+}
+
+owncloud_ver=9.1.0
+
+echo "Checking version"
+# Check if ownCloud dir exist, and check if version matches owncloud_ver (if either doesn't - install/upgrade)
+if [ ! -d /usr/local/lib/owncloud/ ] \
+        || ! grep -q $owncloud_ver /usr/local/lib/owncloud/version.php; then
+
+	# If we are upgrading from 8.2.3 we should go to 9.0 first
+	if grep -q 8.2.3 /usr/local/lib/owncloud/version.php; then
+		echo "We are running version 8.2.3, upgrading to 9.0.2 first"
+
+		# We need to disable memcached and go with APC, the upgrade and install fails
+		# with memcached
+		CONFIG_TEMP=$(/bin/mktemp)
+		php <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP $STORAGE_ROOT/owncloud/config.php;
+		<?php
+			include("$STORAGE_ROOT/owncloud/config.php");
+
+			\$CONFIG['memcache.local'] = '\OC\Memcache\APC';
+
+			echo "<?php\n\\\$CONFIG = ";
+			var_export(\$CONFIG);
+			echo ";";
+		?>
+EOF
+
+		chown www-data.www-data $STORAGE_ROOT/owncloud/config.php
+
+		InstallOwncloud 9.0.2 72a3d15d09f58c06fa8bee48b9e60c9cd356f9c5
+	fi
+
+	echo "Upgrading to latest version"
+	InstallOwncloud $owncloud_ver 82aa7f038e2670b16e80aaf9a41260ab718a8348
 fi
 
 # ### Configuring ownCloud
@@ -111,10 +148,7 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
       'arguments'=>array('{127.0.0.1:993/imap/ssl/novalidate-cert}')
     )
   ),
-  'memcache.local' => '\\OC\\Memcache\\Memcached',
-  "memcached_servers" => array (
-    array('127.0.0.1', 11211),
-  ),
+  'memcache.local' => '\OC\Memcache\APC',
   'mail_smtpmode' => 'sendmail',
   'mail_smtpsecure' => '',
   'mail_smtpauthtype' => 'LOGIN',
@@ -171,7 +205,7 @@ include("$STORAGE_ROOT/owncloud/config.php");
 
 \$CONFIG['trusted_domains'] = array('$PRIMARY_HOSTNAME');
 
-\$CONFIG['memcache.local'] = '\\OC\\Memcache\\Memcached';
+\$CONFIG['memcache.local'] = '\OC\Memcache\APC';
 \$CONFIG['overwrite.cli.url'] = '/cloud';
 \$CONFIG['mail_from_address'] = 'administrator'; # just the local part, matches our master administrator address
 
@@ -205,7 +239,8 @@ tools/editconf.py /etc/php5/fpm/php.ini -c ';' \
 	output_buffering=16384 \
 	memory_limit=512M \
 	max_execution_time=600 \
-	short_open_tag=On
+	short_open_tag=On \
+	apc.enable_cli=1
 
 # Set up a cron job for owncloud.
 cat > /etc/cron.hourly/mailinabox-owncloud << EOF;
