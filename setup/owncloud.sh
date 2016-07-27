@@ -114,6 +114,15 @@ EOF
 		chown www-data.www-data $STORAGE_ROOT/owncloud/config.php
 
 		InstallOwncloud 9.0.2 72a3d15d09f58c06fa8bee48b9e60c9cd356f9c5
+
+		# The owncloud 9 migration doesn't migrate calendars and contacts
+		# The option to migrate these are removed in 9.1
+		sudo -u www-data php /usr/local/lib/owncloud/occ dav:migrate-addressbooks
+		for directory in $STORAGE_ROOT/owncloud/*@*/ ; do
+			username=$(basename "${directory}")
+			sudo -u www-data php /usr/local/lib/owncloud/occ dav:migrate-calendar $username
+		done
+		sudo -u www-data php /usr/local/lib/owncloud/occ dav:sync-birthday-calendar
 	fi
 
 	echo "Upgrading to latest version"
