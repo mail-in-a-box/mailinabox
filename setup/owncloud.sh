@@ -239,8 +239,7 @@ tools/editconf.py /etc/php5/fpm/php.ini -c ';' \
 	output_buffering=16384 \
 	memory_limit=512M \
 	max_execution_time=600 \
-	short_open_tag=On \
-	apc.enable_cli=1
+	short_open_tag=On
 
 # Set up a cron job for owncloud.
 cat > /etc/cron.hourly/mailinabox-owncloud << EOF;
