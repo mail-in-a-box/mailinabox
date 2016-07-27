@@ -92,7 +92,7 @@ echo "Checking version"
 if [ ! -d /usr/local/lib/owncloud/ ] \
         || ! grep -q $owncloud_ver /usr/local/lib/owncloud/version.php; then
 
-	# If we are upgrading from 8.2.3 we should go to 9.0 first
+	# If we are upgrading from 8.2.3 we should go to 9.0 first. Owncloud doesn't support skipping minor versions
 	if grep -q 8.2.3 /usr/local/lib/owncloud/version.php; then
 		echo "We are running version 8.2.3, upgrading to 9.0.2 first"
 
@@ -110,14 +110,16 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 			echo ";";
 		?>
 EOF
-
 		chown www-data.www-data $STORAGE_ROOT/owncloud/config.php
 
+		# We can now install owncloud 9.0.2
 		InstallOwncloud 9.0.2 72a3d15d09f58c06fa8bee48b9e60c9cd356f9c5
 
 		# The owncloud 9 migration doesn't migrate calendars and contacts
 		# The option to migrate these are removed in 9.1
+		# So the migrations should be done when we have 9.0 installed
 		sudo -u www-data php /usr/local/lib/owncloud/occ dav:migrate-addressbooks
+		# The following migration has to be done for each owncloud user
 		for directory in $STORAGE_ROOT/owncloud/*@*/ ; do
 			username=$(basename "${directory}")
 			sudo -u www-data php /usr/local/lib/owncloud/occ dav:migrate-calendar $username
@@ -125,7 +127,6 @@ EOF
 		sudo -u www-data php /usr/local/lib/owncloud/occ dav:sync-birthday-calendar
 	fi
 
-	echo "Upgrading to latest version"
 	InstallOwncloud $owncloud_ver 82aa7f038e2670b16e80aaf9a41260ab718a8348
 fi
 
