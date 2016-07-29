@@ -106,6 +106,40 @@
   </table>
 </div>
 
+<h3>Mail alias API</h3>
+
+<p>Use your box&rsquo;s Mail alias API to add/remove aliases.</p>
+
+<p>Usage:</p>
+
+<pre>curl -X <b>VERB</b> [-d "<b>value</b>"] --user {email}:{password} https://{{hostname}}/admin/mail/aliases[<b>action</b>]</pre>
+
+<p>(Brackets denote an optional argument.)</p>
+<p>(Adding <code>?format=json</code> will give json encoded results)</p>
+
+<h4>Verbs</h4>
+
+<table class="table">
+<thead><th>Verb</th> <th>Action</th><th></th></thead>
+<tr><td>GET</td><td></td> <td>Returns a list of existing mail aliases.</td></tr>
+<tr><td>POST</td><td>/add</td> <td>Adds a new mail alias. Required parameters are <code>address</code> and <code>forward_to</code>.</td></tr>
+<tr><td>POST</td><td>/remove</td> <td>Removes a mail alias. Required parameter is <code>address</code>.</td></tr>
+</table>
+
+<h4>Examples:</h4>
+
+<p>Try these examples. For simplicity the examples omit the <code>--user me@mydomain.com:yourpassword</code> command line argument which you must fill in with your email address and password.</p>
+
+<pre># Gives a json encoded list of all mail users
+curl -X GET https://{{hostname}}/admin/mail/users?format=json
+
+# adds a new email alias
+curl -X POST -d "address=new_alias@mydomail.com" -d "forward_to=my_email@mydomain.com" https://{{hostname}}/admin/mail/aliases/add
+
+# removes a email alias
+curl -X POST -d "address=new_alias@mydomail.com" https://{{hostname}}/admin/mail/aliases/remove
+</pre>
+
 
 <script>
 function show_aliases() {
