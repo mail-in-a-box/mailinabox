@@ -32,14 +32,11 @@ InstallOwncloud() {
         version=$1
         hash=$2
 
+	# Remove the current owncloud
+	rm -rf /usr/local/lib/owncloud
+
 	# Download and verify
 	wget_verify https://download.owncloud.org/community/owncloud-$version.zip $hash /tmp/owncloud.zip
-
-	# Clear out the existing ownCloud.
-	if [ -d /usr/local/lib/owncloud/ ]; then
-		echo "upgrading ownCloud to $version (backing up existing ownCloud directory to /tmp/owncloud-backup-$$)..."
-		mv /usr/local/lib/owncloud /tmp/owncloud-backup-$$
-	fi
 
 	# Extract ownCloud
 	unzip -u -o -q /tmp/owncloud.zip -d /usr/local/lib #either extracts new or replaces current files
@@ -87,13 +84,19 @@ InstallOwncloud() {
 
 owncloud_ver=9.1.0
 
-echo "Checking version"
 # Check if ownCloud dir exist, and check if version matches owncloud_ver (if either doesn't - install/upgrade)
 if [ ! -d /usr/local/lib/owncloud/ ] \
         || ! grep -q $owncloud_ver /usr/local/lib/owncloud/version.php; then
 
-	# If we are upgrading from 8.2.3 we should go to 9.0 first. Owncloud doesn't support skipping minor versions
-	if grep -q 8.2.3 /usr/local/lib/owncloud/version.php; then
+        # Backup the existing ownCloud.
+	if [ -d /usr/local/lib/owncloud/ ]; then
+		echo "upgrading ownCloud to $owncloud_ver (backing up existing ownCloud directory to /tmp/owncloud-backup-$$ and owncloud db to /tmp/owncloud.db)..."
+		cp -r /usr/local/lib/owncloud /tmp/owncloud-backup-$$
+		cp /home/user-data/owncloud/owncloud.db /tmp
+        fi
+
+	# If we are upgrading from 8.2.x we should go to 9.0 first. Owncloud doesn't support skipping minor versions
+	if grep -q "8.2.[0-9]" /usr/local/lib/owncloud/version.php; then
 		echo "We are running version 8.2.3, upgrading to 9.0.2 first"
 
 		# We need to disable memcached and go with APC, the upgrade and install fails
