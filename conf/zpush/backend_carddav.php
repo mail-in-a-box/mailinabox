@@ -9,8 +9,8 @@
 define('CARDDAV_PROTOCOL', 'https'); /* http or https */
 define('CARDDAV_SERVER', '127.0.0.1');
 define('CARDDAV_PORT', '443');
-define('CARDDAV_PATH', '/carddav/addressbooks/%u/');
-define('CARDDAV_DEFAULT_PATH', '/carddav/addressbooks/%u/contacts/'); /* subdirectory of the main path */
+define('CARDDAV_PATH', '/dav/principals/users/%u/');
+define('CARDDAV_DEFAULT_PATH', '/dav/principals/users/%u/'); /* subdirectory of the main path */
 define('CARDDAV_GAL_PATH', ''); /* readonly, searchable, not syncd */
 define('CARDDAV_GAL_MIN_LENGTH', 5);
 define('CARDDAV_CONTACTS_FOLDER_NAME', '%u Addressbook');
