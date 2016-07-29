@@ -167,7 +167,6 @@ def run_system_checks(rounded_values, env, output):
 	check_system_aliases(env, output)
 	check_free_disk_space(rounded_values, env, output)
 	check_free_memory(rounded_values, env, output)
-	check_ufw(env, output)
 
 def check_ufw(env, output):
 	ufw = shell('check_output', ['ufw', 'status']).splitlines()
@@ -180,7 +179,7 @@ def check_ufw(env, output):
 				output.print_error("Port %s (%s) should be allowed in the firewall, please re-run the setup." % (service["port"], service["name"]))
 
 		if not_allowed_ports == 0:
-			output.print_ok("Firewall is active")
+			output.print_ok("Firewall is active.")
 	else:
 		output.print_warning("""The firewall is disabled on this machine. This might be because the system
 			is protected by an external firewall. We can't protect the system against bruteforce attacks
@@ -259,6 +258,8 @@ def run_network_checks(env, output):
 	# Also see setup/network-checks.sh.
 
 	output.add_heading("Network")
+
+	check_ufw(env, output)
 
 	# Stop if we cannot make an outbound connection on port 25. Many residential
 	# networks block outbound port 25 to prevent their network from sending spam.

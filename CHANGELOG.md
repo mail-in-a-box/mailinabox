@@ -13,6 +13,7 @@ Control panel:
 
 * The users and aliases APIs are now documented on their control panel pages.
 * The HSTS header was missing.
+* New status checks were added for the ufw firewall.
 
 System:
 
