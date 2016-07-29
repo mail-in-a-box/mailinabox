@@ -28,9 +28,9 @@ apt-get purge -qq -y roundcube* #NODOC
 # Install Roundcube from source if it is not already present or if it is out of date.
 # Combine the Roundcube version number with the commit hash of vacation_sieve to track
 # whether we have the latest version.
-VERSION=v1.10.2.141
-VERSION_FILENAME="rainloop-community-1.10.2.141-df00be1a3ed3b171ed1dd0806b2aa5b7.zip"
-HASH=58bb90e717f6b1e95ac909b399c7ac4a14752076
+VERSION=v1.10.2.145
+VERSION_FILENAME="rainloop-community-1.10.2.145-74dc686dd82d9f29b0fef8ceb11c2903.zip"
+HASH=ee1b9cd4c2494aaecf7d291500aee9b455bbee58
 UPDATE_KEY=$VERSION
 needs_update=0 #NODOC
 first_install=0
