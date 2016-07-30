@@ -95,39 +95,47 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 		cp /home/user-data/owncloud/owncloud.db /tmp
         fi
 
-	# If we are upgrading from 8.2.x we should go to 9.0 first. Owncloud doesn't support skipping minor versions
-	if grep -q "8.2.[0-9]" /usr/local/lib/owncloud/version.php; then
-		echo "We are running version 8.2.3, upgrading to 9.0.2 first"
+	# We only need to check if we do upgrades when owncloud was previously installed
+	if [ -e /usr/local/lib/owncloud/version.php ]; then
+		if grep -q "8.1.[0-9]" /usr/local/lib/owncloud/version.php; then
+			echo "We are running 8.1.x, upgrading to 8.2.3 first"
+			InstallOwncloud 8.2.3 bfdf6166fbf6fc5438dc358600e7239d1c970613
+		fi
 
-		# We need to disable memcached and go with APC, the upgrade and install fails
-		# with memcached
-		CONFIG_TEMP=$(/bin/mktemp)
-		php <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP $STORAGE_ROOT/owncloud/config.php;
-		<?php
-			include("$STORAGE_ROOT/owncloud/config.php");
+		# If we are upgrading from 8.2.x we should go to 9.0 first. Owncloud doesn't support skipping minor versions
+		if grep -q "8.2.[0-9]" /usr/local/lib/owncloud/version.php; then
+			echo "We are running version 8.2.x, upgrading to 9.0.2 first"
 
-			\$CONFIG['memcache.local'] = '\OC\Memcache\APC';
+			# We need to disable memcached and go with APC, the upgrade and install fails
+			# with memcached
+			CONFIG_TEMP=$(/bin/mktemp)
+			php <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP $STORAGE_ROOT/owncloud/config.php;
+			<?php
+				include("$STORAGE_ROOT/owncloud/config.php");
 
-			echo "<?php\n\\\$CONFIG = ";
-			var_export(\$CONFIG);
-			echo ";";
-		?>
+				\$CONFIG['memcache.local'] = '\OC\Memcache\APC';
+
+				echo "<?php\n\\\$CONFIG = ";
+				var_export(\$CONFIG);
+				echo ";";
+			?>
 EOF
-		chown www-data.www-data $STORAGE_ROOT/owncloud/config.php
+			chown www-data.www-data $STORAGE_ROOT/owncloud/config.php
 
-		# We can now install owncloud 9.0.2
-		InstallOwncloud 9.0.2 72a3d15d09f58c06fa8bee48b9e60c9cd356f9c5
+			# We can now install owncloud 9.0.2
+			InstallOwncloud 9.0.2 72a3d15d09f58c06fa8bee48b9e60c9cd356f9c5
 
-		# The owncloud 9 migration doesn't migrate calendars and contacts
-		# The option to migrate these are removed in 9.1
-		# So the migrations should be done when we have 9.0 installed
-		sudo -u www-data php /usr/local/lib/owncloud/occ dav:migrate-addressbooks
-		# The following migration has to be done for each owncloud user
-		for directory in $STORAGE_ROOT/owncloud/*@*/ ; do
-			username=$(basename "${directory}")
-			sudo -u www-data php /usr/local/lib/owncloud/occ dav:migrate-calendar $username
-		done
-		sudo -u www-data php /usr/local/lib/owncloud/occ dav:sync-birthday-calendar
+			# The owncloud 9 migration doesn't migrate calendars and contacts
+			# The option to migrate these are removed in 9.1
+			# So the migrations should be done when we have 9.0 installed
+			sudo -u www-data php /usr/local/lib/owncloud/occ dav:migrate-addressbooks
+			# The following migration has to be done for each owncloud user
+			for directory in $STORAGE_ROOT/owncloud/*@*/ ; do
+				username=$(basename "${directory}")
+				sudo -u www-data php /usr/local/lib/owncloud/occ dav:migrate-calendar $username
+			done
+			sudo -u www-data php /usr/local/lib/owncloud/occ dav:sync-birthday-calendar
+		fi
 	fi
 
 	InstallOwncloud $owncloud_ver 82aa7f038e2670b16e80aaf9a41260ab718a8348
