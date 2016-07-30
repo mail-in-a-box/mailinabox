@@ -101,7 +101,7 @@ def backup_status(env):
 	# onto. Round up since the backup occurs on the night following
 	# when the threshold is met.
 	deleted_in = None
-	if incremental_count > 0 and first_full_size is not None:
+	if incremental_count > 0 and first_full_size is not None and incremental_size > 0:
 		deleted_in = "approx. %d days" % round(config["min_age_in_days"] + (.5 * first_full_size - incremental_size) / (incremental_size/incremental_count) + .5)
 
 	# When will a backup be deleted?
@@ -369,6 +369,8 @@ def list_target_files(config):
 
 		_, target_host, target_path = config['target'].split('//')
 		target_path = '/' + target_path
+		if not target_path.endswith('/'):
+			target_path += '/'
 
 		rsync_command = [ 'rsync',
 					'-e',
