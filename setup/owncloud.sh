@@ -88,6 +88,9 @@ owncloud_ver=9.1.0
 if [ ! -d /usr/local/lib/owncloud/ ] \
         || ! grep -q $owncloud_ver /usr/local/lib/owncloud/version.php; then
 
+	# Stop php-fpm
+	hide_output service php5-fpm stop
+
         # Backup the existing ownCloud.
 	if [ -d /usr/local/lib/owncloud/ ]; then
 		echo "upgrading ownCloud to $owncloud_ver (backing up existing ownCloud directory to /tmp/owncloud-backup-$$ and owncloud db to /tmp/owncloud.db)..."
