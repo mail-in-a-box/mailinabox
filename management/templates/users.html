@@ -84,6 +84,47 @@
   </table>
 </div>
 
+<h3>Mail user API</h3>
+
+<p>Use your box&rsquo;s Mail user API to add/change/remove users.</p>
+
+<p>Usage:</p>
+
+<pre>curl -X <b>VERB</b> [-d "<b>value</b>"] --user {email}:{password} https://{{hostname}}/admin/mail/users[<b>action</b>]</pre>
+
+<p>(Brackets denote an optional argument.)</p>
+<p>(Adding <code>?format=json</code> will give json encoded results)</p>
+
+<h4>Verbs</h4>
+
+<table class="table">
+<thead><th>Verb</th> <th>Action</th><th></th></thead>
+<tr><td>GET</td><td></td> <td>Returns a list of existing mail users.</td></tr>
+<tr><td>POST</td><td>/add</td> <td>Adds a new mail user. Required parameters are <code>email</code> and <code>password</code>.</td></tr>
+<tr><td>POST</td><td>/remove</td> <td>Removes a mail user. Required parameter is <code>email</code>.</td></tr>
+<tr><td>POST</td><td>/privileges/add</td> <td>Used to make a mail user an admin. Required parameters are <code>email</code> and <code>privilege=admin</code>.</td></tr>
+<tr><td>POST</td><td>/privileges/remove</td> <td>Used to remove the admin privilege from a mail user. Required parameter is <code>email</code>.</td></tr>
+</table>
+
+<h4>Examples:</h4>
+
+<p>Try these examples. For simplicity the examples omit the <code>--user me@mydomain.com:yourpassword</code> command line argument which you must fill in with your email address and password.</p>
+
+<pre># Gives a json encoded list of all mail users
+curl -X GET https://{{hostname}}/admin/mail/users?format=json
+
+# adds a new email user
+curl -X POST -d "email=new_user@mydomail.com" -d "password=s3curE_pa5Sw0rD" https://{{hostname}}/admin/mail/users/add
+
+# removes a email user
+curl -X POST -d "email=new_user@mydomail.com" https://{{hostname}}/admin/mail/users/remove
+
+# adds admin privilege to an email user
+curl -X POST -d "email=new_user@mydomail.com" -d "privilege=admin" https://{{hostname}}/admin/mail/users/privileges/add
+
+# removes admin privilege from an email user
+curl -X POST -d "email=new_user@mydomail.com" https://{{hostname}}/admin/mail/users/privileges/remove
+</pre>
 
 <script>
 function show_users() {
