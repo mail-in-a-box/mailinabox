@@ -10,11 +10,12 @@ import sys, os, time, functools
 
 # parse command line
 
-if len(sys.argv) < 2:
-	print("Usage: tests/fail2ban.py user@hostname")
+if len(sys.argv) < 3:
+	print("Usage: tests/fail2ban.py user@hostname owncloud_user")
 	sys.exit(1)
 
 ssh_user, hostname = sys.argv[1].split("@", 1)
+owncloud_user = sys.argv[2]
 
 # define some test types
 
@@ -189,7 +190,7 @@ if __name__ == "__main__":
 	run_test(http_test, ["/admin/munin/", 401], 20, 30, 1)
 
 	# ownCloud
-	run_test(http_test, ["/cloud/remote.php/webdav", 401, None, None, ["aa", "aa"]], 20, 120, 1)
+	run_test(http_test, ["/cloud/remote.php/webdav", 401, None, None, [owncloud_user, "aa"]], 20, 120, 1)
 
 	# restart fail2ban so that this client machine is no longer blocked
 	restart_fail2ban_service(final=True)
