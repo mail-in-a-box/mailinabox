@@ -93,9 +93,10 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 
         # Backup the existing ownCloud.
 	if [ -d /usr/local/lib/owncloud/ ]; then
-		echo "upgrading ownCloud to $owncloud_ver (backing up existing ownCloud directory to /tmp/owncloud-backup-$$ and owncloud db to /tmp/owncloud.db)..."
+		echo "upgrading ownCloud to $owncloud_ver (backing up existing ownCloud directory to /tmp/owncloud-backup-$$ and owncloud db to $STORAGE_ROOT/owncloud-backup/owncloud.db-$$)..."
 		cp -r /usr/local/lib/owncloud /tmp/owncloud-backup-$$
-		cp /home/user-data/owncloud/owncloud.db /tmp
+		mkdir -p $STORAGE_ROOT/owncloud-backup
+		cp /home/user-data/owncloud/owncloud.db $STORAGE_ROOT/owncloud-backup/owncloud.db-$$
         fi
 
 	# We only need to check if we do upgrades when owncloud was previously installed
