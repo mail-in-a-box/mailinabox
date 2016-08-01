@@ -274,6 +274,13 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 		if not has_rec(dmarc_qname, "TXT", prefix="v=DMARC1; "):
 			records.append((dmarc_qname, "TXT", 'v=DMARC1; p=reject', "Recommended. Prevents use of this domain name for outbound mail by specifying that the SPF rule should be honoured for mail from @%s." % (qname + "." + domain)))
 
+	# Add CardDAV/CalDAV SRV records on the non-primary hostname that points to the primary hostname.
+	# The SRV record format is priority (0, whatever), weight (0, whatever), port, service provider hostname (w/ trailing dot).
+	if domain != env["PRIMARY_HOSTNAME"]:
+		for dav in ("card", "cal"):
+			qname = "_" + dav + "davs._tcp"
+			if not has_rec(qname, "SRV"):
+				records.append((qname, "SRV", "0 0 443 " + env["PRIMARY_HOSTNAME"] + ".", "Recommended. Specifies the hostname of the server that handles CardDAV/CalDAV services for email addresses on this domain."))
 
 	# Sort the records. The None records *must* go first in the nsd zone file. Otherwise it doesn't matter.
 	records.sort(key = lambda rec : list(reversed(rec[0].split(".")) if rec[0] is not None else ""))
