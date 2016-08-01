@@ -15,6 +15,10 @@ Control panel:
 * The HSTS header was missing.
 * New status checks were added for the ufw firewall.
 
+DNS:
+
+* Add SRV records for CardDAV/CalDAV to facilitate autoconfiguration (e.g. in DavDroid, whose latest version didn't seem to work to configure with entering just a hostname).
+
 System:
 
 * fail2ban jails added for SMTP submission, Roundcube, ownCloud, the control panel, and munin.
