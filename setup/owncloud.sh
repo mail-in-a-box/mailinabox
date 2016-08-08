@@ -17,8 +17,8 @@ apt_install \
 apt-get purge -qq -y owncloud*
 
 # Install ownCloud from source of this version:
-owncloud_ver=8.2.3
-owncloud_hash=bfdf6166fbf6fc5438dc358600e7239d1c970613
+owncloud_ver=8.2.7
+owncloud_hash=723ba3f46dad219109cdf28dcc016fcd8a6bc434
 
 # Migrate <= v0.10 setups that stored the ownCloud config.php in /usr/local rather than
 # in STORAGE_ROOT. Move the file to STORAGE_ROOT.
