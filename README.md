@@ -9,7 +9,7 @@ Mail-in-a-Box helps individuals take back control of their email by defining a o
 
 * * *
 
-I am trying to:
+Our goals are to:
 
 * Make deploying a good mail server easy.
 * Promote [decentralization](http://redecentralize.org/), innovation, and privacy on the web.
@@ -17,7 +17,7 @@ I am trying to:
 * **Not** make a totally unhackable, NSA-proof server.
 * **Not** make something customizable by power users.
 
-This setup is what has been powering my own personal email since September 2013.
+Additionally, this project has a [Code of Conduct](CODE_OF_CONDUCT.md), which supersedes the goals above. Please review it when joining our community.
 
 The Box
 -------
