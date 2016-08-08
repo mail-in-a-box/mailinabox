@@ -4,6 +4,10 @@ CHANGELOG
 In Development
 --------------
 
+ownCloud:
+
+* Updated to ownCloud to 8.2.7
+
 Mail:
 
 * Roundcube is updated to version 1.2.0.
