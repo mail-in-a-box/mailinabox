@@ -69,6 +69,16 @@ The [setup guide video](https://mailinabox.email/) explains how to verify the ho
 
 If DNSSEC is enabled at the box's domain name's registrar, the SSHFP record that the box automatically puts into DNS can also be used to verify the host key fingerprint by setting `VerifyHostKeyDNS yes` in your `ssh/.config` file or by logging in with `ssh -o VerifyHostKeyDNS=yes`. ([source](management/dns_update.py))
 
+### Brute-force attack mitigation
+
+`fail2ban` provides some protection from brute-force login attacks (repeated logins that guess account passwords) by blocking offending IP addresses at the network level.
+
+The following services are protected: SSH, IMAP (dovecot), SMTP submission (postfix), webmail (roundcube), ownCloud/CalDAV/CardDAV (over HTTP), and the Mail-in-a-Box control panel & munin (over HTTP).
+
+Some other services running on the box may be missing fail2ban filters.
+
+`fail2ban` only blocks IPv4 addresses, however. If the box has a public IPv6 address, it is not protected from these attacks.
+
 Outbound Mail
 -------------
 
