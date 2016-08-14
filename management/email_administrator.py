@@ -3,6 +3,7 @@
 # Reads in STDIN. If the stream is not empty, mail it to the system administrator.
 
 import sys
+import time
 
 import smtplib
 from email.message import Message
@@ -21,9 +22,15 @@ admin_addr = "administrator@" + env['PRIMARY_HOSTNAME']
 # Read in STDIN.
 content = sys.stdin.read().strip()
 
-# If there's nothing coming in, just exit.
+# Checks if content is nil. If nil, it tries again, with 5 second wait time. after 10 attempts, quits
+i = 0
 while content == "":
 	content = sys.stdin.read().strip()
+	time.sleep(5)
+	i = i + 1
+	if i == 10:
+		sys.exit(0)
+	
 
 # create MIME message
 msg = Message()
