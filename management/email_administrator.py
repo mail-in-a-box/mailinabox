@@ -22,8 +22,8 @@ admin_addr = "administrator@" + env['PRIMARY_HOSTNAME']
 content = sys.stdin.read().strip()
 
 # If there's nothing coming in, just exit.
-if content == "":
-	sys.exit(0)
+while content == "":
+	content = sys.stdin.read().strip()
 
 # create MIME message
 msg = Message()
