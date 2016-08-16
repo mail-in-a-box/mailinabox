@@ -4,11 +4,11 @@ Mail-in-a-Box is an open source community project about working, as a group, to 
 
 We are committed to providing a safe, welcoming, and harrassment-free space for collaboration, for everyone, without regard to age, disability, economic situation, ethnicity, gender identity and expression, language fluency, level of knowledge or experience, nationality, personal appearance, race, religion, sexual identity and orientation, or any other attribute. Community comes first. This policy supersedes all other project goals.
 
-The maintainers of Mail-in-a-Box share the dual responsibility of leading by example and enforcing these policies as necessary to maintain an open and welcoming environment.
+The maintainers of Mail-in-a-Box share the dual responsibility of leading by example and enforcing these policies as necessary to maintain an open and welcoming environment. All community members should be excellent to each other.
 
 ## Scope
 
-This Code of Conduct applies to all places where Mail-in-a-Box community activity is ocurring, including in on Github, in discussion forums, on Slack, on social media, and in real life. The Code of Conduct applies not only on websites/at events run by the Mail-in-a-Box community (e.g. our Github organization, our Slack team) but also at any other location where the Mail-in-a-Box community is present (e.g. in issues of other Github organizations where Mail-in-a-Box community members are discussing problems related to Mail-in-a-Box, or real-life professional conferences), or whenever a Mail-in-a-Box community member is representing Mail-in-a-Box to the public at large or acting on behalf of Mail-in-a-Box.
+This Code of Conduct applies to all places where Mail-in-a-Box community activity is ocurring, including on GitHub, in discussion forums, on Slack, on social media, and in real life. The Code of Conduct applies not only on websites/at events run by the Mail-in-a-Box community (e.g. our GitHub organization, our Slack team) but also at any other location where the Mail-in-a-Box community is present (e.g. in issues of other GitHub organizations where Mail-in-a-Box community members are discussing problems related to Mail-in-a-Box, or real-life professional conferences), or whenever a Mail-in-a-Box community member is representing Mail-in-a-Box to the public at large or acting on behalf of Mail-in-a-Box.
 
 This code does not apply to activity on a server running Mail-in-a-Box software, unless your server is hosting a service for the Mail-in-a-Box community at large.
 
