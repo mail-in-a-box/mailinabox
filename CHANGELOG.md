@@ -4,9 +4,16 @@ CHANGELOG
 In Development
 --------------
 
+ownCloud:
+
+* Updated to ownCloud to 8.2.7.
+
+v0.19 (August 13, 2016)
+-----------------------
+
 Mail:
 
-* Roundcube is updated to version 1.2.0.
+* Roundcube is updated to version 1.2.1.
 * SSLv3 and RC4 are now no longer supported in incoming and outgoing mail (SMTP port 25).
 
 Control panel:
