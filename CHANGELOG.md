@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+* fail2ban won't start if Roundcube had not yet been used - new installations probably do not have fail2ban running.
+
 v0.19 (August 13, 2016)
 -----------------------
 
