@@ -8,6 +8,13 @@ ownCloud:
 
 * Updated to ownCloud to 8.2.7.
 
+v0.19a (August 18, 2016)
+------------------------
+
+This update corrects a security issue in v0.19.
+
+* fail2ban won't start if Roundcube had not yet been used - new installations probably do not have fail2ban running.
+
 v0.19 (August 13, 2016)
 -----------------------
 
