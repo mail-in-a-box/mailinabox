@@ -562,7 +562,7 @@ def munin_cgi(filename):
 	if filename == "":
 		return ("a path must be specified", 404)
 
-	query_str = request.query_string.decode("utf-8", 'ignore')
+	query_str = request.query_string.decode("utf-8", 'ignore').replace('"', r'\"')
 
 	env = {'PATH_INFO': '/%s/' % filename, 'QUERY_STRING': query_str}
 	cmd = COMMAND % query_str
