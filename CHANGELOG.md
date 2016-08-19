@@ -1,6 +1,8 @@
 CHANGELOG
 =========
 
+A remote code execution vulnerability is corrected in how the munin system monitoring graphs are generated for the control panel. The vulnerability involves an administrative user visiting a carefully crafted URL.
+
 v0.19a (August 18, 2016)
 ------------------------
 

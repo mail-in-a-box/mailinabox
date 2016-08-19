@@ -541,10 +541,9 @@ def munin_cgi(filename):
 	headers based on parameters in the requesting URL. All output is written
 	to stdout which munin_cgi splits into response headers and binary response
 	data.
-	munin-cgi-graph reads environment variables as well as passed input to determine
+	munin-cgi-graph reads environment variables to determine
 	what it should do. It expects a path to be in the env-var PATH_INFO, and a
-	querystring to be in the env-var QUERY_STRING as well as passed as input to the
-	command.
+	querystring to be in the env-var QUERY_STRING.
 	munin-cgi-graph has several failure modes. Some write HTTP Status headers and
 	others return nonzero exit codes.
 	Situating munin_cgi between the user-agent and munin-cgi-graph enables keeping
@@ -552,7 +551,7 @@ def munin_cgi(filename):
 	support infrastructure like spawn-fcgi.
 	"""
 
-	COMMAND = 'su - munin --preserve-environment --shell=/bin/bash -c /usr/lib/munin/cgi/munin-cgi-graph "%s"'
+	COMMAND = 'su - munin --preserve-environment --shell=/bin/bash -c /usr/lib/munin/cgi/munin-cgi-graph'
 	# su changes user, we use the munin user here
 	# --preserve-environment retains the environment, which is where Popen's `env` data is
 	# --shell=/bin/bash ensures the shell used is bash
@@ -564,12 +563,10 @@ def munin_cgi(filename):
 
 	query_str = request.query_string.decode("utf-8", 'ignore')
 
-	env = {'PATH_INFO': '/%s/' % filename, 'QUERY_STRING': query_str}
-	cmd = COMMAND % query_str
+	env = {'PATH_INFO': '/%s/' % filename, 'REQUEST_METHOD': 'GET', 'QUERY_STRING': query_str}
 	code, binout = utils.shell('check_output',
-							   cmd.split(' ', 5),
-							   # Using a maxsplit of 5 keeps the last 2 arguments together
-							   input=query_str.encode('UTF-8'),
+							   COMMAND.split(" ", 5),
+							   # Using a maxsplit of 5 keeps the last arguments together
 							   env=env,
 							   return_bytes=True,
 							   trap=True)
