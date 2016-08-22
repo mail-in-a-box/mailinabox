@@ -9,7 +9,7 @@ echo "Installing clamsmtpd (ClamAV e-mail virus scanning)..."
 
 
 # Install clamav-daemon & clamsmtpd with additional scanning formats
-apt_install clamav-daemon clamav clamsmtp unzip p7zip zip arj bzip2 cabextract cpio file gzip lhasa nomarch pax rar unrar unzip zip zoo
+apt_install sqlite clamav-daemon clamav clamsmtp unzip p7zip zip arj bzip2 cabextract cpio file gzip lhasa nomarch pax rar unrar unzip zip zoo
 
 
 # Config /etc/clamsmtpd.conf
@@ -20,10 +20,10 @@ apt_install clamav-daemon clamav clamsmtp unzip p7zip zip arj bzip2 cabextract c
 # Adds script to notify destination user only (since sender may be spoofed) that mail was dropped due to virus detection)
 
 tools/editconf.py /etc/clamsmtpd.conf -s \
-		OutAddress:=127.0.0.1:10028 \
-		Listen:=127.0.0.1:10027 \
-		Header:="X-AV-Checked: ClamAV" \
-		VirusAction:="/usr/local/lib/clamsmtpd/email_virus_notify.sh"
+                OutAddress:=127.0.0.1:10028 \
+                Listen:=127.0.0.1:10027 \
+                Header:="X-AV-Checked: ClamAV" \
+                VirusAction:="/usr/local/lib/clamsmtpd/email_virus_notify.sh"
 
 # Configure postfix main.cf
 
@@ -34,9 +34,9 @@ content_filter=scan:127.0.0.1:10027 #\
 
 # Configure postfix master.cf
 tools/editconf.py /etc/postfix/master.cf -s -w \
-        "scan      unix  -       -       n       -       16      smtp
+        "scan=unix  -       -       n       -       16      smtp
           -o smtp_send_xforward_command=yes" \
-        "127.0.0.1:10028 inet  n -       n       -       16      smtpd
+        "127.0.0.1:10028=inet  n -       n       -       16      smtpd
           -o content_filter=
           -o receive_override_options=no_unknown_recipient_checks,no_header_body_checks
           -o smtpd_helo_restrictions=
@@ -66,4 +66,3 @@ restart_service postfix
 restart_service clamsmtp
 restart_service clamav-daemon
 restart_service clamav-freshclam
-

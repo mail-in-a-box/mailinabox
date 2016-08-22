@@ -22,24 +22,25 @@ for j in $dest_email; do
 if [[ "$i" == "$j" ]]
 then
 {
+echo "Subject: Email Virus Scan Notification"
+echo ""
 echo "Hello $i,"
 echo ""
 echo "This is the email system of $PRIMARY_HOSTNAME."
-echo "" 
-echo "The email from $SENDER to you was infected with a virus ($VIRUS)." 
-echo "The email was blocked and this notification was sent instead." 
-echo "" 
-echo "If you encounter further problems please contact your System Administrator." 
-echo "" 
-echo "Regards," 
+echo ""
+echo "The email from $SENDER to you was infected with a virus ($VIRUS)."
+echo "The email was blocked and this notification was sent instead."
+echo ""
+echo "If you encounter further problems please contact your System Administrator."
+echo ""
+echo "Regards,"
 echo "The email server at $PRIMARY_HOSTNAME"
 #sending email to recipient that is hosted on this system
-} | mail -a "From: postmaster@$PRIMARY_HOSTNAME" -s "Email Virus Scan Notificaton" "$i"
+} | sendmail -f "postmaster@$PRIMARY_HOSTNAME" "$i"
 #continue with next recipient
 
 fi
 
-done 
-
 done
 
+done
