@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+ownCloud:
+
+* Updated to ownCloud to 8.2.7.
+
 v0.19b (August 20, 2016)
 ------------------------
 
