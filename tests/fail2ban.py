@@ -68,6 +68,28 @@ def imap_test():
 	finally:
 		M.logout() # shuts down connection, has nothing to do with login()
 
+
+def pop_test():
+	import poplib
+	try:
+		M = poplib.POP3_SSL(hostname)
+	except ConnectionRefusedError:
+		# looks like fail2ban worked
+		raise IsBlocked()
+	try:
+		M.user('fakeuser')
+		try:
+			M.pass_('fakepassword')
+		except poplib.error_proto as e:
+			# Authentication should fail.
+			M = None # don't .quit()
+			return
+		M.list()
+		raise Exception("authentication didn't fail")
+	finally:
+		if M:
+			M.quit()
+
 def http_test(url, expected_status, postdata=None, qsargs=None, auth=None):
 	import urllib.parse
 	import requests
@@ -182,6 +204,9 @@ if __name__ == "__main__":
 
 	# IMAP
 	run_test(imap_test, [], 20, 30, 4)
+
+	# POP
+	run_test(pop_test, [], 20, 30, 4)
 
 	# Mail-in-a-Box control panel
 	run_test(http_test, ["/admin/me", 200], 20, 30, 1)
