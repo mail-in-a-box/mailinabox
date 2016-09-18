@@ -8,6 +8,20 @@ ownCloud:
 
 * Updated to ownCloud to 8.2.7.
 
+v0.19b (August 20, 2016)
+------------------------
+
+This update corrects a security issue introduced in v0.18.
+
+* A remote code execution vulnerability is corrected in how the munin system monitoring graphs are generated for the control panel. The vulnerability involves an administrative user visiting a carefully crafted URL.
+
+v0.19a (August 18, 2016)
+------------------------
+
+This update corrects a security issue in v0.19.
+
+* fail2ban won't start if Roundcube had not yet been used - new installations probably do not have fail2ban running.
+
 v0.19 (August 13, 2016)
 -----------------------
 
@@ -134,7 +148,6 @@ v0.16 (January 30, 2016)
 ------------------------
 
 This update primarily adds automatic SSL (now "TLS") certificate provisioning from Let's Encrypt (https://letsencrypt.org/).
-* The Sieve port is now open so tools like the Thunderbird Sieve program can be used to edit mail filters.
 
 Control Panel:
 
@@ -573,4 +586,4 @@ v0.02 (September 21, 2014)
 v0.01 (August 19, 2014)
 -----------------------
 
-First release.
+First versioned release after a year of unversioned development.

@@ -1,21 +1,20 @@
 # Test that a box's fail2ban setting are working
 # correctly by attempting a bunch of failed logins.
-# Specify SSH login information the command line -
-# we use that to reset fail2ban after each test,
-# and we extract the hostname from that to open
-# connections to.
+#
+# Specify a SSH login command (which we use to reset
+# fail2ban after each test) and the hostname to
+# try to log in to.
 ######################################################################
 
 import sys, os, time, functools
 
 # parse command line
 
-if len(sys.argv) < 3:
-	print("Usage: tests/fail2ban.py user@hostname owncloud_user")
+if len(sys.argv) != 4:
+	print("Usage: tests/fail2ban.py \"ssh user@hostname\" hostname owncloud_user")
 	sys.exit(1)
 
-ssh_user, hostname = sys.argv[1].split("@", 1)
-owncloud_user = sys.argv[2]
+ssh_command, hostname, owncloud_user = sys.argv[1:4]
 
 # define some test types
 
@@ -69,6 +68,28 @@ def imap_test():
 	finally:
 		M.logout() # shuts down connection, has nothing to do with login()
 
+
+def pop_test():
+	import poplib
+	try:
+		M = poplib.POP3_SSL(hostname)
+	except ConnectionRefusedError:
+		# looks like fail2ban worked
+		raise IsBlocked()
+	try:
+		M.user('fakeuser')
+		try:
+			M.pass_('fakepassword')
+		except poplib.error_proto as e:
+			# Authentication should fail.
+			M = None # don't .quit()
+			return
+		M.list()
+		raise Exception("authentication didn't fail")
+	finally:
+		if M:
+			M.quit()
+
 def http_test(url, expected_status, postdata=None, qsargs=None, auth=None):
 	import urllib.parse
 	import requests
@@ -86,7 +107,8 @@ def http_test(url, expected_status, postdata=None, qsargs=None, auth=None):
 			auth=HTTPBasicAuth(*auth) if auth else None,
 			data=postdata,
 			headers={'User-Agent': 'Mail-in-a-Box fail2ban tester'},
-			timeout=8)
+			timeout=8,
+			verify=False) # don't bother with HTTPS validation, it may not be configured yet
 	except requests.exceptions.ConnectTimeout as e:
 		raise IsBlocked()
 	except requests.exceptions.ConnectionError as e:
@@ -107,7 +129,7 @@ def restart_fail2ban_service(final=False):
 	if not final:
 		# Stop recidive jails during testing.
 		command += " && sudo fail2ban-client stop recidive"
-	os.system("ssh %s@%s \"%s\"" % (ssh_user, hostname, command))
+	os.system("%s \"%s\"" % (ssh_command, command))
 
 def testfunc_runner(i, testfunc, *args):
 	print(i+1, end=" ", flush=True)
@@ -182,6 +204,9 @@ if __name__ == "__main__":
 
 	# IMAP
 	run_test(imap_test, [], 20, 30, 4)
+
+	# POP
+	run_test(pop_test, [], 20, 30, 4)
 
 	# Mail-in-a-Box control panel
 	run_test(http_test, ["/admin/me", 200], 20, 30, 1)

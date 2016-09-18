@@ -229,15 +229,15 @@ def check_free_disk_space(rounded_values, env, output):
 	st = os.statvfs(env['STORAGE_ROOT'])
 	bytes_total = st.f_blocks * st.f_frsize
 	bytes_free = st.f_bavail * st.f_frsize
-	if not rounded_values:
-		disk_msg = "The disk has %s GB space remaining." % str(round(bytes_free/1024.0/1024.0/1024.0*10.0)/10)
-	else:
-		disk_msg = "The disk has less than %s%% space left." % str(round(bytes_free/bytes_total/10 + .5)*10)
+	disk_msg = "The disk has %.2f GB space remaining." % (bytes_free/1024.0/1024.0/1024.0)
 	if bytes_free > .3 * bytes_total:
+		if rounded_values: disk_msg = "The disk has more than 30% free space."
 		output.print_ok(disk_msg)
 	elif bytes_free > .15 * bytes_total:
+		if rounded_values: disk_msg = "The disk has less than 30% free space."
 		output.print_warning(disk_msg)
 	else:
+		if rounded_values: disk_msg = "The disk has less than 15% free space."
 		output.print_error(disk_msg)
 
 def check_free_memory(rounded_values, env, output):
@@ -472,7 +472,7 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 				% (existing_ns, correct_ns) )
 
 	# Check that each custom secondary nameserver resolves the IP address.
-	
+
 	if custom_secondary_ns and not probably_external_dns:
 		for ns in custom_secondary_ns:
 			# We must first resolve the nameserver to an IP address so we can query it.
@@ -897,7 +897,7 @@ class FileOutput:
 class ConsoleOutput(FileOutput):
 	def __init__(self):
 		self.buf = sys.stdout
-		
+
 		# Do nice line-wrapping according to the size of the terminal.
 		# The 'stty' program queries standard input for terminal information.
 		if sys.stdin.isatty():

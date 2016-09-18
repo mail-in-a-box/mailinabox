@@ -133,6 +133,9 @@ EOF
 mkdir -p /var/log/roundcubemail /tmp/roundcubemail $STORAGE_ROOT/mail/roundcube
 chown -R www-data.www-data /var/log/roundcubemail /tmp/roundcubemail $STORAGE_ROOT/mail/roundcube
 
+# Ensure the log file monitored by fail2ban exists, or else fail2ban can't start.
+sudo -u www-data touch /var/log/roundcubemail/errors
+
 # Password changing plugin settings
 # The config comes empty by default, so we need the settings 
 # we're not planning to change in config.inc.dist...
