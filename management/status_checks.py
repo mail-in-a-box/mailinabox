@@ -680,7 +680,14 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None):
 	# periods from responses since that's how qnames are encoded in DNS but is
 	# confusing for us. The order of the answers doesn't matter, so sort so we
 	# can compare to a well known order.
-	return "; ".join(sorted(str(r).rstrip('.') for r in response))
+	addresses = list()
+	for r in response:
+		try:
+			addresses.append(str(r).rstrip('.'))
+		except TypeError:
+			addresses.append(r.to_text().decode('utf8').rstrip('.'))
+	
+	return "; ".join(sorted(addresses))
 
 def check_ssl_cert(domain, rounded_time, ssl_certificates, env, output):
 	# Check that TLS certificate is signed.

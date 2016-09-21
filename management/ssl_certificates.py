@@ -238,8 +238,22 @@ def get_certificates_to_provision(env, show_extended_problems=True, force_domain
 			except Exception as e:
 				problems[domain] = "DNS isn't configured properly for this domain: DNS lookup had an error: %s." % str(e)
 				return False
-			if len(response) != 1 or str(response[0]) != value:
-				problems[domain] = "Domain control validation cannot be performed for this domain because DNS points the domain to another machine (%s %s)." % (rtype, ", ".join(str(r) for r in response))
+
+			if len(response) == 1:
+				try:
+					response_str = str(response[0])
+				except TypeError:
+					response_str = response[0].to_text().decode('utf8') 
+			if len(response) != 1 or response_str != value:
+				addresses = list()
+				for r in response:
+					try:
+						addresses.append(str(r).rstrip('.'))
+					except TypeError:
+						addresses.append(r.to_text().decode('utf8').rstrip('.'))
+		
+				err_txt = ", ".join(sorted(addresses))
+				problems[domain] = "Domain control validation cannot be performed for this domain because DNS points the domain to another machine (%s %s)." % (rtype, err_txt)
 				return False
 
 		return True
