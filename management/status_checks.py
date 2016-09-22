@@ -680,6 +680,22 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None):
 	# periods from responses since that's how qnames are encoded in DNS but is
 	# confusing for us. The order of the answers doesn't matter, so sort so we
 	# can compare to a well known order.
+
+	# Unfortunately, the response.__str__ returns bytes
+	# instead of string, if it resulted from an AAAA-query.
+	# We need to convert manually, until this is fixed:
+	# https://github.com/rthalley/dnspython/issues/204
+	#
+	# BEGIN HOTFIX
+	response_new = []
+	for r in response:
+	        if isinstance(r.to_text(), bytes):
+	                response_new.append(r.to_text().decode('utf-8'))
+	        else:
+	                response_new.append(r)
+	response = response_new
+	# END HOTFIX
+
 	return "; ".join(sorted(str(r).rstrip('.') for r in response))
 
 def check_ssl_cert(domain, rounded_time, ssl_certificates, env, output):
