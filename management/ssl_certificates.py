@@ -196,7 +196,7 @@ def get_certificates_to_provision(env, show_extended_problems=True, force_domain
 			if cert.issuer == cert.subject:
 				# This is self-signed. Get a real one.
 				domains.add(domain)
-
+			
 			# Valid certificate today, but is it expiring soon?
 			elif cert.not_valid_after-now < datetime.timedelta(days=14):
 				domains.add(domain)
@@ -417,7 +417,7 @@ def provision_certificates_cmdline():
 	headless = False
 	force_domains = None
 	show_extended_problems = True
-
+	
 	args = list(sys.argv)
 	args.pop(0) # program name
 	if args and args[0] == "-v":
@@ -499,7 +499,7 @@ control panel.
 
 Do you agree to the agreement? Type Y or N and press <ENTER>: """
 				 % request["url"], end='', flush=True)
-
+			
 				if sys.stdin.readline().strip().upper() != "Y":
 					print("\nYou didn't agree. Quitting.")
 					sys.exit(1)
