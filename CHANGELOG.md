@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.20 (September 23, 2016)
+--------------------------
 
 ownCloud:
 
