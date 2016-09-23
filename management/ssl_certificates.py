@@ -245,12 +245,15 @@ def get_certificates_to_provision(env, show_extended_problems=True, force_domain
 			# https://github.com/rthalley/dnspython/issues/204
 			#
 			# BEGIN HOTFIX
-			if isinstance(response[0].to_text(), bytes):
-				 response = [response[0].to_text().decode('utf-8')]
+			def rdata__str__(r):
+				s = r.to_text()
+				if isinstance(s, bytes):
+					 s = s.decode('utf-8')
+				return s
 			# END HOTFIX
 
-			if len(response) != 1 or str(response[0]) != value:
-				problems[domain] = "Domain control validation cannot be performed for this domain because DNS points the domain to another machine (%s %s)." % (rtype, ", ".join(str(r) for r in response))
+			if len(response) != 1 or rdata__str__(response[0]) != value:
+				problems[domain] = "Domain control validation cannot be performed for this domain because DNS points the domain to another machine (%s %s)." % (rtype, ", ".join(rdata__str__(r) for r in response))
 				return False
 
 		return True

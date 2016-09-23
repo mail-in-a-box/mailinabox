@@ -8,6 +8,10 @@ ownCloud:
 
 * Updated to ownCloud to 8.2.7.
 
+Control Panel:
+
+* Fixed a crash that occurs when there are IPv6 DNS records due to a bug in dnspython 1.14.0.
+
 v0.19b (August 20, 2016)
 ------------------------
 
