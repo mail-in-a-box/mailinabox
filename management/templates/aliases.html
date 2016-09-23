@@ -123,7 +123,7 @@
 <table class="table" style="margin-top: .5em">
 <thead><th>Verb</th> <th>Action</th><th></th></thead>
 <tr><td>GET</td><td><i>(none)</i></td> <td>Returns a list of existing mail aliases. Adding <code>?format=json</code> to the URL will give JSON-encoded results.</td></tr>
-<tr><td>POST</td><td>/add</td> <td>Adds a new mail alias. Required POST-body parameters are <code>address</code> and <code>forward_to</code>.</td></tr>
+<tr><td>POST</td><td>/add</td> <td>Adds a new mail alias. Required POST-body parameters are <code>address</code> and <code>forwards_to</code>.</td></tr>
 <tr><td>POST</td><td>/remove</td> <td>Removes a mail alias. Required POST-body parameter is <code>address</code>.</td></tr>
 </table>
 
@@ -135,7 +135,7 @@
 curl -X GET https://{{hostname}}/admin/mail/aliases?format=json
 
 # Adds a new alias
-curl -X POST -d "address=new_alias@mydomail.com" -d "forward_to=my_email@mydomain.com" https://{{hostname}}/admin/mail/aliases/add
+curl -X POST -d "address=new_alias@mydomail.com" -d "forwards_to=my_email@mydomain.com" https://{{hostname}}/admin/mail/aliases/add
 
 # Removes an alias
 curl -X POST -d "address=new_alias@mydomail.com" https://{{hostname}}/admin/mail/aliases/remove
