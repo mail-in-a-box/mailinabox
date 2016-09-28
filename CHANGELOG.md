@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+Control panel:
+
+* Remove recommendations for Certificate Providers
+
 v0.20 (September 23, 2016)
 --------------------------
 
