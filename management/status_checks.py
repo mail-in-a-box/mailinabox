@@ -344,6 +344,8 @@ def run_domain_checks_on_domain(domain, rounded_time, env, dns_domains, dns_zone
 	if domain in dns_domains:
 		check_dns_zone_suggestions(domain, env, output, dns_zonefiles, domains_with_a_records)
 
+	check_spf_domain(domain, domain in mail_domains, env, output)
+
 	return (domain, output)
 
 def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
@@ -403,6 +405,10 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 	else:
 		output.print_error("""Your box's reverse DNS is currently %s (IPv4) and %s (IPv6), but it should be %s. Your ISP or cloud provider will have instructions
 			on setting up reverse DNS for your box.""" % (existing_rdns_v4, existing_rdns_v6, domain) )
+
+	# Check the SPF records.
+	for ns in ['ns1', 'ns2']:
+		check_spf_domain(ns + '.' + domain, False, env, output)
 
 	# Check the TLSA record.
 	tlsa_qname = "_25._tcp." + domain
@@ -645,6 +651,16 @@ def check_web_domain(domain, rounded_time, ssl_certificates, env, output):
 	# user will log in with IMAP or webmail. Any other domain we serve a
 	# website for also needs a signed certificate.
 	check_ssl_cert(domain, rounded_time, ssl_certificates, env, output)
+
+def check_spf_domain(domain, deliverable, env, output):
+	# Ensure the SPF record for this domain either allows or prevents email
+	expected = "\"v=spf1 %s-all\"" % ('mx ' if deliverable else '')
+	action = 'allow' if deliverable else 'prevent'
+	values = query_dns(domain, "TXT").split('; ')
+	if expected in values:
+		output.print_ok("Domain's SPF record %ss mail delivery. [%s ↦ %s]" % (action, domain, expected))
+	else:
+		output.print_error("This domain should %s mail delivery by setting a TXT record: %s ↦ %s" % (action, domain, expected))
 
 def query_dns(qname, rtype, nxdomain='[Not Set]', at=None):
 	# Make the qname absolute by appending a period. Without this, dns.resolver.query
