@@ -620,6 +620,20 @@ def check_mail_domain(domain, env, output):
 			which may prevent recipients from receiving your mail.
 			See http://www.spamhaus.org/dbl/ and http://www.spamhaus.org/query/domain/%s.""" % (dbl, domain))
 
+	# ensure the DKIM keys are correct for this domain
+	dkim_domain = 'mail._domainkey.' + domain
+	opendkim_record_file = os.path.join(env['STORAGE_ROOT'], 'mail/dkim/mail.txt')
+	with open(opendkim_record_file) as orf:
+		m = re.match(r'(\S+)\s+IN\s+TXT\s+\( ((?:"[^"]+"\s+)+)\)', orf.read(), re.S)
+		expected = '"' + "".join(re.findall(r'"([^"]+)"', m.group(2))) + '"'
+	# it appears dnspython doesn't join long lines so we'll do it with a replace statement
+	# https://github.com/rthalley/dnspython/blob/master/dns/rdtypes/txtbase.py#L42
+	dkim = query_dns(dkim_domain, "TXT").replace('" "', '')
+	if dkim == expected:
+		output.print_ok("Domain's DKIM record is set correctly. [%s]" % (dkim_domain))
+	else:
+		output.print_warning("Domain's DKIM record is not set to [%s ↦ %s]" % (dkim_domain, expected))
+
 def check_web_domain(domain, rounded_time, ssl_certificates, env, output):
 	# See if the domain's A record resolves to our PUBLIC_IP. This is already checked
 	# for PRIMARY_HOSTNAME, for which it is required for mail specifically. For it and
