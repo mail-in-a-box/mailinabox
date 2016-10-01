@@ -314,6 +314,20 @@ def run_domain_checks(rounded_time, env, output, pool):
 	for domain in sort_domains(ret, env):
 		ret[domain].playback(output)
 
+	run_custom_domain_checks(env, output)
+
+def run_custom_domain_checks(env, output):
+	header_pending = True
+	for qname, rtype, value in get_custom_dns_config(env):
+		if header_pending:
+			output.add_heading("Custom")
+			header_pending = False
+		result = query_dns(qname, rtype).replace('" "', '')
+		if value == result or '"' + value + '"' in result:
+			output.print_ok("Custom %s record is set correctly. [%s ↦ %s]" % (rtype, qname, value))
+		else:
+			output.print_warning("Custom %s record should be set to [%s ↦ %s]" % (rtype, qname, value))
+
 def run_domain_checks_on_domain(domain, rounded_time, env, dns_domains, dns_zonefiles, mail_domains, web_domains, domains_with_a_records):
 	output = BufferedOutput()
 
