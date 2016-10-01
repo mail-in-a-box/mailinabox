@@ -661,7 +661,7 @@ def check_deliverability_domain(domain, deliverable, env, output):
 	if expected in values:
 		output.print_ok("Domain's SPF record %ss mail delivery. [%s ↦ %s]" % (action, domain, expected))
 	else:
-		output.print_error("This domain should %s mail delivery by setting a TXT record: %s ↦ %s" % (action, domain, expected))
+		output.print_warning("This domain should %s mail delivery by setting a TXT record: %s ↦ %s" % (action, domain, expected))
 
 	# ensure the DMARC record specifies the correct action
 	dmarc_domain = '_dmarc.' + domain
@@ -670,7 +670,7 @@ def check_deliverability_domain(domain, deliverable, env, output):
 	if expected == values:
 		output.print_ok("Domain's DMARC record %ss mail delivery. [%s ↦ %s]" % (action, dmarc_domain, expected))
 	else:
-		output.print_error("This domain should %s mail delivery by setting a DMARC record: %s ↦ %s" % (action, dmarc_domain, expected))
+		output.print_warning("This domain should %s mail delivery by setting a DMARC record: %s ↦ %s" % (action, dmarc_domain, expected))
 
 
 def query_dns(qname, rtype, nxdomain='[Not Set]', at=None):
