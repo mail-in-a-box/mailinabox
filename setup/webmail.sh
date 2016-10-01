@@ -68,6 +68,12 @@ if [ $needs_update == 1 ]; then
 	# install roundcube html5_notifier plugin
 	git_clone https://github.com/kitist/html5_notifier.git $HTML5_NOTIFIER_VERSION '' /usr/local/lib/roundcubemail/plugins/html5_notifier
 
+	# install roundcube threecol plugin
+	git_clone https://github.com/EstudioNexos/threecol.git '' '' /usr/local/lib/roundcubemail/plugins/threecol
+
+	# install roundcube mabola skin
+	git_clone https://github.com/EstudioNexos/mabola.git '' '' /usr/local/lib/roundcubemail/skins/mabola
+
 	# record the version we've installed
 	echo $UPDATE_KEY > /usr/local/lib/roundcubemail/version
 fi
@@ -102,6 +108,7 @@ cat > /usr/local/lib/roundcubemail/config/config.inc.php <<EOF;
 \$config['product_name'] = '$PRIMARY_HOSTNAME Webmail';
 \$config['des_key'] = '$SECRET_KEY';
 \$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'vacation_sieve', 'persistent_login');
+\$rcmail_config['plugins'] = array('threecol');
 \$config['skin'] = 'classic';
 \$config['login_autocomplete'] = 2;
 \$config['password_charset'] = 'UTF-8';
