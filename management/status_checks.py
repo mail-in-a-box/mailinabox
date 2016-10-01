@@ -344,7 +344,7 @@ def run_domain_checks_on_domain(domain, rounded_time, env, dns_domains, dns_zone
 	if domain in dns_domains:
 		check_dns_zone_suggestions(domain, env, output, dns_zonefiles, domains_with_a_records)
 
-	check_spf_domain(domain, domain in mail_domains, env, output)
+	check_deliverability_domain(domain, domain in mail_domains, env, output)
 
 	return (domain, output)
 
@@ -408,7 +408,7 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 
 	# Check the SPF records.
 	for ns in ['ns1', 'ns2']:
-		check_spf_domain(ns + '.' + domain, False, env, output)
+		check_deliverability_domain(ns + '.' + domain, False, env, output)
 
 	# Check the TLSA record.
 	tlsa_qname = "_25._tcp." + domain
@@ -652,15 +652,26 @@ def check_web_domain(domain, rounded_time, ssl_certificates, env, output):
 	# website for also needs a signed certificate.
 	check_ssl_cert(domain, rounded_time, ssl_certificates, env, output)
 
-def check_spf_domain(domain, deliverable, env, output):
+def check_deliverability_domain(domain, deliverable, env, output):
+	action = 'allow' if deliverable else 'prevent'
+
 	# Ensure the SPF record for this domain either allows or prevents email
 	expected = "\"v=spf1 %s-all\"" % ('mx ' if deliverable else '')
-	action = 'allow' if deliverable else 'prevent'
 	values = query_dns(domain, "TXT").split('; ')
 	if expected in values:
 		output.print_ok("Domain's SPF record %ss mail delivery. [%s ↦ %s]" % (action, domain, expected))
 	else:
 		output.print_error("This domain should %s mail delivery by setting a TXT record: %s ↦ %s" % (action, domain, expected))
+
+	# ensure the DMARC record specifies the correct action
+	dmarc_domain = '_dmarc.' + domain
+	values = query_dns(dmarc_domain, "TXT")
+	expected = "\"v=DMARC1; p=%s\"" % ('quarantine' if deliverable else 'reject')
+	if expected == values:
+		output.print_ok("Domain's DMARC record %ss mail delivery. [%s ↦ %s]" % (action, dmarc_domain, expected))
+	else:
+		output.print_error("This domain should %s mail delivery by setting a DMARC record: %s ↦ %s" % (action, dmarc_domain, expected))
+
 
 def query_dns(qname, rtype, nxdomain='[Not Set]', at=None):
 	# Make the qname absolute by appending a period. Without this, dns.resolver.query
