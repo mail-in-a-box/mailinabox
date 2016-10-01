@@ -620,6 +620,16 @@ def check_mail_domain(domain, env, output):
 			which may prevent recipients from receiving your mail.
 			See http://www.spamhaus.org/dbl/ and http://www.spamhaus.org/query/domain/%s.""" % (dbl, domain))
 
+	if domain != env["PRIMARY_HOSTNAME"]:
+		for dav in ("card", "cal"):
+			dav_domain = "_" + dav + "davs._tcp." + domain
+			expected = "0 0 443 " + env["PRIMARY_HOSTNAME"]
+			values = query_dns(dav_domain, "SRV")
+			if expected == values:
+				output.print_ok("Domain's %sdav is set properly. [%s ↦ %s]" % (dav, dav_domain, expected))
+			else:
+				output.print_warning("This domain should set a %sdav record: %s ↦ %s" % (dav, dav_domain, expected))
+
 def check_web_domain(domain, rounded_time, ssl_certificates, env, output):
 	# See if the domain's A record resolves to our PUBLIC_IP. This is already checked
 	# for PRIMARY_HOSTNAME, for which it is required for mail specifically. For it and
