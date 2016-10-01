@@ -11,7 +11,7 @@ import dateutil.parser, dateutil.tz
 import idna
 import psutil
 
-from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, get_secondary_dns, get_custom_dns_record
+from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, get_secondary_dns, get_custom_dns_record, retrieve_dkim_record
 from web_update import get_web_domains, get_domains_with_a_records
 from ssl_certificates import get_ssl_certificates, get_domain_ssl_files, check_certificate
 from mailconfig import get_mail_domains, get_mail_aliases
@@ -609,6 +609,17 @@ def check_mail_domain(domain, env, output):
 	if "@" + domain not in [address for address, *_ in get_mail_aliases(env)]:
 		check_alias_exists("Postmaster contact address", "postmaster@" + domain, env, output)
 
+	# ensure the DKIM keys are correct for this domain
+	dkim_domain = 'mail._domainkey.' + domain
+	m, val = retrieve_dkim_record(env)
+	# it appears dnspython doesn't join long lines so we'll do it with a replace statement
+	# https://github.com/rthalley/dnspython/blob/master/dns/rdtypes/txtbase.py#L42
+	dkim = query_dns(dkim_domain, "TXT").replace('" "', '')
+	if dkim == '"' + val + '"':
+		output.print_ok("Domain's DKIM record is set correctly. [%s]" % (dkim_domain))
+	else:
+		output.print_warning("Domain's DKIM record is not set to [%s ↦ %s]" % (dkim_domain, val))
+
 	# Stop if the domain is listed in the Spamhaus Domain Block List.
 	# The user might have chosen a domain that was previously in use by a spammer
 	# and will not be able to reliably send mail.
@@ -619,20 +630,6 @@ def check_mail_domain(domain, env, output):
 		output.print_error("""This domain is listed in the Spamhaus Domain Block List (code %s),
 			which may prevent recipients from receiving your mail.
 			See http://www.spamhaus.org/dbl/ and http://www.spamhaus.org/query/domain/%s.""" % (dbl, domain))
-
-	# ensure the DKIM keys are correct for this domain
-	dkim_domain = 'mail._domainkey.' + domain
-	opendkim_record_file = os.path.join(env['STORAGE_ROOT'], 'mail/dkim/mail.txt')
-	with open(opendkim_record_file) as orf:
-		m = re.match(r'(\S+)\s+IN\s+TXT\s+\( ((?:"[^"]+"\s+)+)\)', orf.read(), re.S)
-		expected = '"' + "".join(re.findall(r'"([^"]+)"', m.group(2))) + '"'
-	# it appears dnspython doesn't join long lines so we'll do it with a replace statement
-	# https://github.com/rthalley/dnspython/blob/master/dns/rdtypes/txtbase.py#L42
-	dkim = query_dns(dkim_domain, "TXT").replace('" "', '')
-	if dkim == expected:
-		output.print_ok("Domain's DKIM record is set correctly. [%s]" % (dkim_domain))
-	else:
-		output.print_warning("Domain's DKIM record is not set to [%s ↦ %s]" % (dkim_domain, expected))
 
 def check_web_domain(domain, rounded_time, ssl_certificates, env, output):
 	# See if the domain's A record resolves to our PUBLIC_IP. This is already checked
