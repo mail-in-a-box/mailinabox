@@ -3,7 +3,7 @@
     <emailProvider id="PRIMARY_HOSTNAME">
       <domain>PRIMARY_HOSTNAME</domain>
 
-      <displayName>PRIMARY_HOSTNAME (Mail-in-a-Box)</displayName>
+      <displayName>%EMAILADDRESS% (PRIMARY_HOSTNAME)</displayName>
       <displayShortName>PRIMARY_HOSTNAME</displayShortName>
 
       <incomingServer type="imap">
