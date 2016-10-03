@@ -173,8 +173,8 @@ def check_ufw(env, output):
 
 	if code != 0:
 		# The command failed, it's safe to say the firewall is disabled
-		output.print_warning("""The firewall is probably disabled on this machine. An error was received
-					while trying to check the firewall.""")
+		output.print_warning("""The firewall is not working on this machine. An error was received
+					while trying to check the firewall. To investigate run 'sudo ufw status'.""")
 		return
 
 	ufw = ufw.splitlines()
