@@ -358,7 +358,8 @@ def run_domain_checks_on_domain(domain, rounded_time, env, dns_domains, dns_zone
 	if domain in dns_domains:
 		check_dns_zone_suggestions(domain, env, output, dns_zonefiles, domains_with_a_records)
 
-	check_deliverability_domain(domain, domain in mail_domains, env, output)
+	if check_deliverability_domain(domain, domain in mail_domains, env, output):
+		output.print_ok("Domain's SPF and DMARC records are set up correctly.")
 
 	return (domain, output)
 
@@ -420,9 +421,9 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 		output.print_error("""Your box's reverse DNS is currently %s (IPv4) and %s (IPv6), but it should be %s. Your ISP or cloud provider will have instructions
 			on setting up reverse DNS for your box.""" % (existing_rdns_v4, existing_rdns_v6, domain) )
 
-	# Check the SPF records.
-	for ns in ['ns1', 'ns2']:
-		check_deliverability_domain(ns + '.' + domain, False, env, output)
+	# ensure our nameservers aren't deliverable
+	if check_deliverability_domain('ns1.' + domain, False, env, output) and check_deliverability_domain('ns2.' + domain, False, env, output):
+		output.print_ok("Root nameservers prevent delivery with SPF and DMARC records.")
 
 	# Check the TLSA record.
 	tlsa_qname = "_25._tcp." + domain
@@ -629,17 +630,6 @@ def check_mail_domain(domain, env, output):
 	if "@" + domain not in [address for address, *_ in get_mail_aliases(env)]:
 		check_alias_exists("Postmaster contact address", "postmaster@" + domain, env, output)
 
-	# ensure the DKIM keys are correct for this domain
-	dkim_domain = 'mail._domainkey.' + domain
-	m, val = retrieve_dkim_record(env)
-	# it appears dnspython doesn't join long lines so we'll do it with a replace statement
-	# https://github.com/rthalley/dnspython/blob/master/dns/rdtypes/txtbase.py#L42
-	dkim = query_dns(dkim_domain, "TXT").replace('" "', '')
-	if dkim == '"' + val + '"':
-		output.print_ok("Domain's DKIM record is set correctly. [%s]" % (dkim_domain))
-	else:
-		output.print_warning("Domain's DKIM record is not set to [%s ↦ %s]" % (dkim_domain, val))
-
 	# Stop if the domain is listed in the Spamhaus Domain Block List.
 	# The user might have chosen a domain that was previously in use by a spammer
 	# and will not be able to reliably send mail.
@@ -651,15 +641,33 @@ def check_mail_domain(domain, env, output):
 			which may prevent recipients from receiving your mail.
 			See http://www.spamhaus.org/dbl/ and http://www.spamhaus.org/query/domain/%s.""" % (dbl, domain))
 
-	if domain != env["PRIMARY_HOSTNAME"]:
-		for dav in ("card", "cal"):
-			dav_domain = "_" + dav + "davs._tcp." + domain
-			expected = "0 0 443 " + env["PRIMARY_HOSTNAME"]
-			values = query_dns(dav_domain, "SRV")
-			if expected == values:
-				output.print_ok("Domain's %sdav is set properly. [%s ↦ %s]" % (dav, dav_domain, expected))
-			else:
-				output.print_warning("This domain should set a %sdav record: %s ↦ %s" % (dav, dav_domain, expected))
+	if domain == env["PRIMARY_HOSTNAME"]:
+		if check_dkim_domain(domain, env, output):
+			output.print_ok("Domain's DKIM record is set correctly.")
+	else:
+		if check_dkim_domain(domain, env, output) and check_dav_domain("cal", domain, env, output) and check_dav_domain("card", domain, env, output):
+			output.print_ok("Domain's DKIM, caldav, and carddav records are set correctly.")
+
+def check_dkim_domain(domain, env, output):
+	# ensure the DKIM keys are correct for this domain
+	dkim_domain = 'mail._domainkey.' + domain
+	m, val = retrieve_dkim_record(env)
+	# it appears dnspython doesn't join long lines so we'll do it with a replace statement
+	# https://github.com/rthalley/dnspython/blob/master/dns/rdtypes/txtbase.py#L42
+	dkim = query_dns(dkim_domain, "TXT").replace('" "', '')
+	if dkim == '"' + val + '"':
+		return True
+	else:
+		output.print_warning("Domain's DKIM record is not set to [%s ↦ %s]" % (dkim_domain, val))
+
+def check_dav_domain(dav, domain, env, output):
+	dav_domain = "_" + dav + "davs._tcp." + domain
+	expected = "0 0 443 " + env["PRIMARY_HOSTNAME"]
+	values = query_dns(dav_domain, "SRV")
+	if expected == values:
+		return True
+	else:
+		output.print_warning("This domain should set a %sdav record: %s ↦ %s" % (dav, dav_domain, expected))
 
 def check_web_domain(domain, rounded_time, ssl_certificates, env, output):
 	# See if the domain's A record resolves to our PUBLIC_IP. This is already checked
@@ -688,25 +696,25 @@ def check_web_domain(domain, rounded_time, ssl_certificates, env, output):
 	check_ssl_cert(domain, rounded_time, ssl_certificates, env, output)
 
 def check_deliverability_domain(domain, deliverable, env, output):
+	result = True  # returns True if everything is set up OK
 	action = 'allow' if deliverable else 'prevent'
 
 	# Ensure the SPF record for this domain either allows or prevents email
 	expected = "\"v=spf1 %s-all\"" % ('mx ' if deliverable else '')
 	values = query_dns(domain, "TXT").split('; ')
-	if expected in values:
-		output.print_ok("Domain's SPF record %ss mail delivery. [%s ↦ %s]" % (action, domain, expected))
-	else:
-		output.print_warning("This domain should %s mail delivery by setting a TXT record: %s ↦ %s" % (action, domain, expected))
+	if expected not in values:
+		output.print_warning("This domain should %s mail delivery by setting a TXT record. [%s ↦ %s]" % (action, domain, expected))
+		result = False
 
 	# ensure the DMARC record specifies the correct action
 	dmarc_domain = '_dmarc.' + domain
 	values = query_dns(dmarc_domain, "TXT")
 	expected = "\"v=DMARC1; p=%s\"" % ('quarantine' if deliverable else 'reject')
-	if expected == values:
-		output.print_ok("Domain's DMARC record %ss mail delivery. [%s ↦ %s]" % (action, dmarc_domain, expected))
-	else:
-		output.print_warning("This domain should %s mail delivery by setting a DMARC record: %s ↦ %s" % (action, dmarc_domain, expected))
+	if expected != values:
+		output.print_warning("This domain should %s mail delivery by setting a DMARC record. [%s ↦ %s]" % (action, dmarc_domain, expected))
+		result = False
 
+	return result
 
 def query_dns(qname, rtype, nxdomain='[Not Set]', at=None):
 	# Make the qname absolute by appending a period. Without this, dns.resolver.query
