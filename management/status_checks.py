@@ -11,7 +11,7 @@ import dateutil.parser, dateutil.tz
 import idna
 import psutil
 
-from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, get_secondary_dns, get_custom_dns_record
+from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, get_secondary_dns, get_custom_dns_record, retrieve_dkim_record
 from web_update import get_web_domains, get_domains_with_a_records
 from ssl_certificates import get_ssl_certificates, get_domain_ssl_files, check_certificate
 from mailconfig import get_mail_domains, get_mail_aliases
@@ -314,6 +314,20 @@ def run_domain_checks(rounded_time, env, output, pool):
 	for domain in sort_domains(ret, env):
 		ret[domain].playback(output)
 
+	run_custom_domain_checks(env, output)
+
+def run_custom_domain_checks(env, output):
+	header_pending = True
+	for qname, rtype, value in get_custom_dns_config(env):
+		if header_pending:
+			output.add_heading("Custom")
+			header_pending = False
+		result = query_dns(qname, rtype).replace('" "', '')
+		if value == result or '"' + value + '"' in result:
+			output.print_ok("Custom %s record is set correctly. [%s ↦ %s]" % (rtype, qname, value))
+		else:
+			output.print_warning("Custom %s record should be set to [%s ↦ %s]" % (rtype, qname, value))
+
 def run_domain_checks_on_domain(domain, rounded_time, env, dns_domains, dns_zonefiles, mail_domains, web_domains, domains_with_a_records):
 	output = BufferedOutput()
 
@@ -615,6 +629,17 @@ def check_mail_domain(domain, env, output):
 	if "@" + domain not in [address for address, *_ in get_mail_aliases(env)]:
 		check_alias_exists("Postmaster contact address", "postmaster@" + domain, env, output)
 
+	# ensure the DKIM keys are correct for this domain
+	dkim_domain = 'mail._domainkey.' + domain
+	m, val = retrieve_dkim_record(env)
+	# it appears dnspython doesn't join long lines so we'll do it with a replace statement
+	# https://github.com/rthalley/dnspython/blob/master/dns/rdtypes/txtbase.py#L42
+	dkim = query_dns(dkim_domain, "TXT").replace('" "', '')
+	if dkim == '"' + val + '"':
+		output.print_ok("Domain's DKIM record is set correctly. [%s]" % (dkim_domain))
+	else:
+		output.print_warning("Domain's DKIM record is not set to [%s ↦ %s]" % (dkim_domain, val))
+
 	# Stop if the domain is listed in the Spamhaus Domain Block List.
 	# The user might have chosen a domain that was previously in use by a spammer
 	# and will not be able to reliably send mail.
@@ -625,6 +650,16 @@ def check_mail_domain(domain, env, output):
 		output.print_error("""This domain is listed in the Spamhaus Domain Block List (code %s),
 			which may prevent recipients from receiving your mail.
 			See http://www.spamhaus.org/dbl/ and http://www.spamhaus.org/query/domain/%s.""" % (dbl, domain))
+
+	if domain != env["PRIMARY_HOSTNAME"]:
+		for dav in ("card", "cal"):
+			dav_domain = "_" + dav + "davs._tcp." + domain
+			expected = "0 0 443 " + env["PRIMARY_HOSTNAME"]
+			values = query_dns(dav_domain, "SRV")
+			if expected == values:
+				output.print_ok("Domain's %sdav is set properly. [%s ↦ %s]" % (dav, dav_domain, expected))
+			else:
+				output.print_warning("This domain should set a %sdav record: %s ↦ %s" % (dav, dav_domain, expected))
 
 def check_web_domain(domain, rounded_time, ssl_certificates, env, output):
 	# See if the domain's A record resolves to our PUBLIC_IP. This is already checked
