@@ -169,8 +169,15 @@ def run_system_checks(rounded_values, env, output):
 	check_free_memory(rounded_values, env, output)
 
 def check_ufw(env, output):
-	ufw = shell('check_output', ['ufw', 'status']).splitlines()
+	code, ufw = shell('check_output', ['ufw', 'status'], trap=True)
 
+	if code != 0:
+		# The command failed, it's safe to say the firewall is disabled
+		output.print_warning("""The firewall is not working on this machine. An error was received
+					while trying to check the firewall. To investigate run 'sudo ufw status'.""")
+		return
+
+	ufw = ufw.splitlines()
 	if ufw[0] == "Status: active":
 		not_allowed_ports = 0
 		for service in get_services():
