@@ -39,7 +39,7 @@ InstallOwncloud() {
 	wget_verify https://download.owncloud.org/community/owncloud-$version.zip $hash /tmp/owncloud.zip
 
 	# Extract ownCloud
-	unzip -u -o -q /tmp/owncloud.zip -d /usr/local/lib #either extracts new or replaces current files
+	unzip -q /tmp/owncloud.zip -d /usr/local/lib
 	rm -f /tmp/owncloud.zip
 
 	# The two apps we actually want are not in ownCloud core. Download the releases from
