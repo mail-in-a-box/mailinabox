@@ -355,7 +355,7 @@ def build_sshfp_records():
 		t = f.readlines()
 		for line in t:
 			s = line.split()
-			if s != [] and s[0] == 'Port':
+			if len(s) == 2 and s[0] == 'Port':
 				ports = ports + [s[1]]
 	# the keys are the same at each port, so we only need to get
 	# them at the first port found (may not be port 22)
