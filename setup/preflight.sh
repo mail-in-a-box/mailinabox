@@ -19,19 +19,25 @@ fi
 
 # Check that we have enough memory.
 #
-# /proc/meminfo reports free memory in kibibytes. Our baseline will be 768 MB,
-# which is 750000 kibibytes.
+# /proc/meminfo reports free memory in kibibytes. Our baseline will be 512 MB,
+# which is 500000 kibibytes.
+#
+# We will display a warning if the memory is below 768 MB which is 750000 kibibytes
 #
 # Skip the check if we appear to be running inside of Vagrant, because that's really just for testing.
 TOTAL_PHYSICAL_MEM=$(head -n 1 /proc/meminfo | awk '{print $2}')
-if [ $TOTAL_PHYSICAL_MEM -lt 750000 ]; then
+if [ $TOTAL_PHYSICAL_MEM -lt 500000 ]; then
 if [ ! -d /vagrant ]; then
 	TOTAL_PHYSICAL_MEM=$(expr \( \( $TOTAL_PHYSICAL_MEM \* 1024 \) / 1000 \) / 1000)
 	echo "Your Mail-in-a-Box needs more memory (RAM) to function properly."
-	echo "Please provision a machine with at least 768 MB, 1 GB recommended."
+	echo "Please provision a machine with at least 512 MB, 1 GB recommended."
 	echo "This machine has $TOTAL_PHYSICAL_MEM MB memory."
 	exit
 fi
+fi
+if [ $TOTAL_PHYSICAL_MEM -lt 750000 ]; then
+	echo "WARNING: Your Mail-in-a-Box has less than 768 MB of memory."
+	echo "         It might run unreliably when under heavy load."
 fi
 
 # Check that tempfs is mounted with exec

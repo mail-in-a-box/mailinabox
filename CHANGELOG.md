@@ -10,6 +10,10 @@ Control panel:
 * Status checks failed if the system doesn't support iptables
 * Add support for SSHFP records when sshd listens on non-standard ports
 
+System:
+
+* Lower memory requirements to 512MB, display a warning if system memory is below 768MB.
+
 v0.20 (September 23, 2016)
 --------------------------
 
