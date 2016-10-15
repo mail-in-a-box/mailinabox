@@ -8,6 +8,7 @@ Control panel:
 
 * Remove recommendations for Certificate Providers
 * Status checks failed if the system doesn't support iptables
+* Add support for SSHFP records when sshd listens on non-standard ports
 
 v0.20 (September 23, 2016)
 --------------------------
