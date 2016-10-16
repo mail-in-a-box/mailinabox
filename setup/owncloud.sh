@@ -45,14 +45,13 @@ InstallOwncloud() {
 	# The two apps we actually want are not in ownCloud core. Download the releases from
 	# their github repositories.
 	mkdir -p /usr/local/lib/owncloud/apps
-	wget_verify https://github.com/owncloud/contacts/releases/download/v1.3.1.0/contacts.tar.gz 8603f05dad68d1306e72befe1e672ff06165d11e /tmp/contacts.tgz
+	wget_verify https://github.com/owncloud/contacts/releases/download/v1.4.0.0/contacts.tar.gz c1c22d29699456a45db447281682e8bc3f10e3e7 /tmp/contacts.tgz
 	tar xf /tmp/contacts.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/contacts.tgz
 
-	wget_verify https://github.com/owncloud/calendar/releases/download/v1.3.1/calendar.tar.gz 3b8aecd7c31a2b59721c826d9b2a2ebb619e25c6 /tmp/calendar.tgz
+        wget_verify https://github.com/nextcloud/calendar/releases/download/v1.4.0/calendar.tar.gz c84f3170efca2a99ea6254de34b0af3cb0b3a821 /tmp/calendar.tgz
 	tar xf /tmp/calendar.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/calendar.tgz
-
 
 	# Fix weird permissions.
 	chmod 750 /usr/local/lib/owncloud/{apps,config}
@@ -82,7 +81,7 @@ InstallOwncloud() {
 	fi
 }
 
-owncloud_ver=9.1.0
+owncloud_ver=9.1.1
 
 # Check if ownCloud dir exist, and check if version matches owncloud_ver (if either doesn't - install/upgrade)
 if [ ! -d /usr/local/lib/owncloud/ ] \
@@ -92,11 +91,18 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 	hide_output service php5-fpm stop
 
         # Backup the existing ownCloud.
+	# Create a backup directory to store the current installation and database to
+	BACKUP_DIRECTORY=$STORAGE_ROOT/owncloud-backup/`date +"%Y-%m-%d-%T"`
+	mkdir -p "$BACKUP_DIRECTORY"
 	if [ -d /usr/local/lib/owncloud/ ]; then
-		echo "upgrading ownCloud to $owncloud_ver (backing up existing ownCloud directory to /tmp/owncloud-backup-$$ and owncloud db to $STORAGE_ROOT/owncloud-backup/owncloud.db-$$)..."
-		cp -r /usr/local/lib/owncloud /tmp/owncloud-backup-$$
-		mkdir -p $STORAGE_ROOT/owncloud-backup
-		cp /home/user-data/owncloud/owncloud.db $STORAGE_ROOT/owncloud-backup/owncloud.db-$$
+		echo "upgrading ownCloud to $owncloud_ver (backing up existing ownCloud installation, configuration and database to directory to $BACKUP_DIRECTORY..."
+		cp -r /usr/local/lib/owncloud "$BACKUP_DIRECTORY/owncloud-install"
+	fi
+	if [ -e /home/user-data/owncloud/owncloud.db ]; then
+		cp /home/user-data/owncloud/owncloud.db $BACKUP_DIRECTORY
+        fi
+        if [ -e /home/user-data/owncloud/config.php ]; then
+                cp /home/user-data/owncloud/config.php $BACKUP_DIRECTORY
         fi
 
 	# We only need to check if we do upgrades when owncloud was previously installed
@@ -110,7 +116,7 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 		if grep -q "8.2.[0-9]" /usr/local/lib/owncloud/version.php; then
 			echo "We are running version 8.2.x, upgrading to 9.0.2 first"
 
-			# We need to disable memcached and go with APC, the upgrade and install fails
+			# We need to disable memcached. The upgrade and install fails
 			# with memcached
 			CONFIG_TEMP=$(/bin/mktemp)
 			php <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP $STORAGE_ROOT/owncloud/config.php;
@@ -142,7 +148,7 @@ EOF
 		fi
 	fi
 
-	InstallOwncloud $owncloud_ver 82aa7f038e2670b16e80aaf9a41260ab718a8348
+	InstallOwncloud $owncloud_ver 72ed9812432f01b3a459c4afc33f5c76b71eec09
 fi
 
 # ### Configuring ownCloud
