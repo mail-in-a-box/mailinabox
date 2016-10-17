@@ -29,6 +29,10 @@ if [ ! -f $STORAGE_ROOT/owncloud/config.php ] \
 fi
 
 InstallOwncloud() {
+	echo
+	echo "Upgrading to ownCloud version $1"
+	echo
+
         version=$1
         hash=$2
 
