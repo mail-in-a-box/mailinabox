@@ -14,6 +14,10 @@ System:
 
 * Lower memory requirements to 512MB, display a warning if system memory is below 768MB.
 
+Mail:
+
+* Turn off header filters for forwarded email.
+
 v0.20 (September 23, 2016)
 --------------------------
 
