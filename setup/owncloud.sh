@@ -281,6 +281,12 @@ tools/editconf.py /etc/php5/fpm/php.ini -c ';' \
 	max_execution_time=600 \
 	short_open_tag=On
 
+# If apc is explicitly disabled we need to enable it
+if grep -q apc.enabled=0 /etc/php5/mods-available/apcu.ini; then
+	tools/editconf.py /etc/php5/mods-available/apcu.ini -c ';' \
+		apc.enabled=1
+fi
+
 # Set up a cron job for owncloud.
 cat > /etc/cron.hourly/mailinabox-owncloud << EOF;
 #!/bin/bash
