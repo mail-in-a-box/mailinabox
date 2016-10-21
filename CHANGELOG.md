@@ -4,6 +4,10 @@ CHANGELOG
 In Development
 --------------
 
+ownCloud:
+
+* Update ownCloud to version 9.1.1
+
 Control panel:
 
 * Remove recommendations for Certificate Providers
