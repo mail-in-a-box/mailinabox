@@ -169,6 +169,10 @@ def run_system_checks(rounded_values, env, output):
 	check_free_memory(rounded_values, env, output)
 
 def check_ufw(env, output):
+	if not os.path.isfile('/usr/sbin/ufw'):
+		output.print_warning("""The ufw program was not installed. If your system is able to run iptables, rerun the setup.""")
+		return
+
 	code, ufw = shell('check_output', ['ufw', 'status'], trap=True)
 
 	if code != 0:
