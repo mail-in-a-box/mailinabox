@@ -119,6 +119,12 @@ apt_install python3 python3-dev python3-pip \
 	haveged pollinate \
 	unattended-upgrades cron ntp fail2ban
 
+# ### Suppress Upgrade Prompts
+# Since Mail-in-a-Box might jump straight to 18.04 LTS, there's no need
+# to be reminded about 16.04 on every login.
+tools/editconf.py /etc/update-manager/release-upgrades Prompt=never
+rm -f /var/lib/ubuntu-release-upgrader/release-upgrade-available
+
 # ### Set the system timezone
 #
 # Some systems are missing /etc/timezone, which we cat into the configs for
