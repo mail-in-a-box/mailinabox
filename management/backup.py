@@ -29,6 +29,11 @@ def backup_status(env):
 	backups = { }
 	backup_cache_dir = os.path.join(backup_root, 'cache')
 
+	rsync_ssh_options = [
+		"--ssh-options='-i /root/.ssh/id_rsa_miab'",
+		"--rsync-options=-e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
+	]
+
 	def reldate(date, ref, clip):
 		if ref < date: return clip
 		rd = dateutil.relativedelta.relativedelta(ref, date)
@@ -51,16 +56,15 @@ def backup_status(env):
 			"size": 0, # collection-status doesn't give us the size
 			"volumes": keys[2], # number of archive volumes for this backup (not really helpful)
 		}
+
 	code, collection_status = shell('check_output', [
 		"/usr/bin/duplicity",
 		"collection-status",
 		"--archive-dir", backup_cache_dir,
 		"--gpg-options", "--cipher-algo=AES256",
 		"--log-fd", "1",
-		"--ssh-options='-i /root/.ssh/id_rsa_miab'",
-		"--rsync-options=-e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
 		config["target"],
-		],
+		] + rsync_ssh_options,
 		get_env(env),
 		trap=True)
 	if code != 0:
@@ -251,11 +255,9 @@ def perform_backup(full_backup):
 			"--volsize", "250",
 			"--gpg-options", "--cipher-algo=AES256",
 			env["STORAGE_ROOT"],
-			"--ssh-options='-i /root/.ssh/id_rsa_miab'",
-			"--rsync-options=-e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
 			config["target"],
 			"--allow-source-mismatch"
-			],
+			] + rsync_ssh_options,
 			get_env(env))
 	finally:
 		# Start services again.
@@ -276,10 +278,8 @@ def perform_backup(full_backup):
 		"--verbosity", "error",
 		"--archive-dir", backup_cache_dir,
 		"--force",
-		"--ssh-options='-i /root/.ssh/id_rsa_miab'",
-		"--rsync-options=-e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
 		config["target"]
-		],
+		] + rsync_ssh_options,
 		get_env(env))
 
 	# From duplicity's manual:
@@ -293,10 +293,8 @@ def perform_backup(full_backup):
 		"--verbosity", "error",
 		"--archive-dir", backup_cache_dir,
 		"--force",
-		"--ssh-options='-i /root/.ssh/id_rsa_miab'",
-		"--rsync-options=-e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
 		config["target"]
-		],
+		] + rsync_ssh_options,
 		get_env(env))
 
 	# Change ownership of backups to the user-data user, so that the after-bcakup
@@ -333,11 +331,9 @@ def run_duplicity_verification():
 		"--compare-data",
 		"--archive-dir", backup_cache_dir,
 		"--exclude", backup_root,
-		"--ssh-options='-i /root/.ssh/id_rsa_miab'",
-		"--rsync-options=-e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
 		config["target"],
 		env["STORAGE_ROOT"],
-	], get_env(env))
+	] + rsync_ssh_options, get_env(env))
 
 def run_duplicity_restore(args):
 	env = load_environment()
@@ -347,10 +343,8 @@ def run_duplicity_restore(args):
 		"/usr/bin/duplicity",
 		"restore",
 		"--archive-dir", backup_cache_dir,
-		"--ssh-options='-i /root/.ssh/id_rsa_miab'",
-		"--rsync-options=-e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
 		config["target"],
-		] + args,
+		] + rsync_ssh_options + args,
 	get_env(env))
 
 def list_target_files(config):
