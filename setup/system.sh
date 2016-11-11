@@ -4,6 +4,70 @@ source setup/functions.sh # load our functions
 # Basic System Configuration
 # -------------------------
 
+# ### Set hostname of the box
+
+# If the hostname is not correctly resolvable sudo can't be used. This will result in
+# errors during the install
+#
+# First set the hostname in the configuration file, then activate the setting
+
+echo $PRIMARY_HOSTNAME > /etc/hostname
+hostname $PRIMARY_HOSTNAME
+
+# ### Add swap space to the system
+
+# If the physical memory of the system is below 2GB it is wise to create a
+# swap file. This will make the system more resiliant to memory spikes and
+# prevent for instance spam filtering from crashing
+
+# We will create a 1G file, this should be a good balance between disk usage
+# and buffers for the system. We will only allocate this file if there is more
+# than 5GB of disk space available
+
+# The following checks are performed:
+# - Check if swap is currently mountend by looking at /proc/swaps
+# - Check if the user intents to activate swap on next boot by checking fstab entries.
+# - Check if a swapfile already exists
+# - Check if the root file system is not btrfs, might be an incompatible version with
+#   swapfiles. User should hanle it them selves.
+# - Check the memory requirements
+# - Check available diskspace
+
+# See https://www.digitalocean.com/community/tutorials/how-to-add-swap-on-ubuntu-14-04
+# for reference
+
+SWAP_MOUNTED=$(cat /proc/swaps | tail -n+2)
+SWAP_IN_FSTAB=$(grep "swap" /etc/fstab)
+ROOT_IS_BTRFS=$(grep "\/ .*btrfs" /proc/mounts)
+TOTAL_PHYSICAL_MEM=$(head -n 1 /proc/meminfo | awk '{print $2}')
+AVAILABLE_DISK_SPACE=$(df / --output=avail | tail -n 1)
+if
+	[ -z "$SWAP_MOUNTED" ] &&
+	[ -z "$SWAP_IN_FSTAB" ] &&
+	[ ! -e /swapfile ] &&
+	[ -z "$ROOT_IS_BTRFS" ] &&
+	[ $TOTAL_PHYSICAL_MEM -lt 1900000 ] &&
+	[ $AVAILABLE_DISK_SPACE -gt 5242880 ]
+then
+	echo "Adding a swap file to the system..."
+
+	# Allocate and activate the swap file. Allocate in 1KB chuncks
+	# doing it in one go, could fail on low memory systems
+	dd if=/dev/zero of=/swapfile bs=1024 count=$[1024*1024] status=none
+	if [ -e /swapfile ]; then
+		chmod 600 /swapfile
+		hide_output mkswap /swapfile
+		swapon /swapfile
+	fi
+
+	# Check if swap is mounted then activate on boot
+	if swapon -s | grep -q "\/swapfile"; then
+		echo "/swapfile   none    swap    sw    0   0" >> /etc/fstab
+	else
+		echo "ERROR: Swap allocation failed"
+	fi
+fi
+
 # ### Add Mail-in-a-Box's PPA.
 
 # We've built several .deb packages on our own that we want to include.
@@ -54,6 +118,12 @@ apt_install python3 python3-dev python3-pip \
 	netcat-openbsd wget curl git sudo coreutils bc \
 	haveged pollinate \
 	unattended-upgrades cron ntp fail2ban
+
+# ### Suppress Upgrade Prompts
+# Since Mail-in-a-Box might jump straight to 18.04 LTS, there's no need
+# to be reminded about 16.04 on every login.
+tools/editconf.py /etc/update-manager/release-upgrades Prompt=never
+rm -f /var/lib/ubuntu-release-upgrader/release-upgrade-available
 
 # ### Set the system timezone
 #
@@ -233,10 +303,17 @@ restart_service resolvconf
 
 # ### Fail2Ban Service
 
-# Configure the Fail2Ban installation to prevent dumb bruce-force attacks against dovecot, postfix and ssh
-cat conf/fail2ban/jail.local \
+# Configure the Fail2Ban installation to prevent dumb bruce-force attacks against dovecot, postfix, ssh, etc.
+rm -f /etc/fail2ban/jail.local # we used to use this file but don't anymore
+cat conf/fail2ban/jails.conf \
 	| sed "s/PUBLIC_IP/$PUBLIC_IP/g" \
-	> /etc/fail2ban/jail.local
-cp conf/fail2ban/dovecotimap.conf /etc/fail2ban/filter.d/dovecotimap.conf
+	| sed "s#STORAGE_ROOT#$STORAGE_ROOT#" \
+	> /etc/fail2ban/jail.d/mailinabox.conf
+cp -f conf/fail2ban/filter.d/* /etc/fail2ban/filter.d/
 
+# On first installation, the log files that the jails look at don't all exist.
+# e.g., The roundcube error log isn't normally created until someone logs into
+# Roundcube for the first time. This causes fail2ban to fail to start. Later
+# scripts will ensure the files exist and then fail2ban is given another
+# restart at the very end of setup.
 restart_service fail2ban

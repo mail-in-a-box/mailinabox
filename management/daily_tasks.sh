@@ -1,6 +1,14 @@
 #!/bin/bash
 # This script is run daily (at 3am each night).
 
+# Set character encoding flags to ensure that any non-ASCII
+# characters don't cause problems. See setup/start.sh and
+# the management daemon startup script.
+export LANGUAGE=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+export LANG=en_US.UTF-8
+export LC_TYPE=en_US.UTF-8
+
 # Take a backup.
 management/backup.py | management/email_administrator.py "Backup Status"
 

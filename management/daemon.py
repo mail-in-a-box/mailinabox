@@ -1,21 +1,16 @@
 #!/usr/bin/python3
 
-import os, os.path, re, json
+import os, os.path, re, json, time
+import subprocess
 
 from functools import wraps
 
-from flask import Flask, request, render_template, abort, Response, send_from_directory
+from flask import Flask, request, render_template, abort, Response, send_from_directory, make_response
 
-import auth, utils
+import auth, utils, multiprocessing.pool
 from mailconfig import get_mail_users, get_mail_users_ex, get_admins, add_mail_user, set_mail_password, remove_mail_user
 from mailconfig import get_mail_user_privileges, add_remove_mail_user_privilege
 from mailconfig import get_mail_aliases, get_mail_aliases_ex, get_mail_domains, add_mail_alias, remove_mail_alias
-
-# Create a worker pool for the status checks. The pool should
-# live across http requests so we don't baloon the system with
-# processes.
-import multiprocessing.pool
-pool = multiprocessing.pool.Pool(processes=10)
 
 env = utils.load_environment()
 
@@ -49,7 +44,10 @@ def authorized_personnel_only(viewfunc):
 		except ValueError as e:
 			# Authentication failed.
 			privs = []
-			error = str(e)
+			error = "Incorrect username or password"
+
+			# Write a line in the log recording the failed login
+			log_failed_login(request)
 
 		# Authorized to access an API view?
 		if "admin" in privs:
@@ -123,9 +121,12 @@ def me():
 	try:
 		email, privs = auth_service.authenticate(request, env)
 	except ValueError as e:
+		# Log the failed login
+		log_failed_login(request)
+
 		return json_response({
 			"status": "invalid",
-			"reason": str(e),
+			"reason": "Incorrect username or password",
 			})
 
 	resp = {
@@ -436,7 +437,10 @@ def system_status():
 		def print_line(self, message, monospace=False):
 			self.items[-1]["extra"].append({ "text": message, "monospace": monospace })
 	output = WebOutput()
+	# Create a temporary pool of processes for the status checks
+	pool = multiprocessing.pool.Pool(processes=5)
 	run_checks(False, env, output, pool)
+	pool.terminate()
 	return json_response(output.items)
 
 @app.route('/system/updates')
@@ -455,6 +459,27 @@ def do_updates():
 	return utils.shell("check_output", ["/usr/bin/apt-get", "-y", "upgrade"], env={
 		"DEBIAN_FRONTEND": "noninteractive"
 	})
+
+
+@app.route('/system/reboot', methods=["GET"])
+@authorized_personnel_only
+def needs_reboot():
+	from status_checks import is_reboot_needed_due_to_package_installation
+	if is_reboot_needed_due_to_package_installation():
+		return json_response(True)
+	else:
+		return json_response(False)
+
+@app.route('/system/reboot', methods=["POST"])
+@authorized_personnel_only
+def do_reboot():
+	# To keep the attack surface low, we don't allow a remote reboot if one isn't necessary.
+	from status_checks import is_reboot_needed_due_to_package_installation
+	if is_reboot_needed_due_to_package_installation():
+		return utils.shell("check_output", ["/sbin/shutdown", "-r", "now"], capture_stderr=True)
+	else:
+		return "No reboot is required, so it is not allowed."
+
 
 @app.route('/system/backup/status')
 @authorized_personnel_only
@@ -506,6 +531,77 @@ def munin(filename=""):
 	# the request to static files.
 	if filename == "": filename = "index.html"
 	return send_from_directory("/var/cache/munin/www", filename)
+
+@app.route('/munin/cgi-graph/<path:filename>')
+@authorized_personnel_only
+def munin_cgi(filename):
+	""" Relay munin cgi dynazoom requests
+	/usr/lib/munin/cgi/munin-cgi-graph is a perl cgi script in the munin package
+	that is responsible for generating binary png images _and_ associated HTTP
+	headers based on parameters in the requesting URL. All output is written
+	to stdout which munin_cgi splits into response headers and binary response
+	data.
+	munin-cgi-graph reads environment variables to determine
+	what it should do. It expects a path to be in the env-var PATH_INFO, and a
+	querystring to be in the env-var QUERY_STRING.
+	munin-cgi-graph has several failure modes. Some write HTTP Status headers and
+	others return nonzero exit codes.
+	Situating munin_cgi between the user-agent and munin-cgi-graph enables keeping
+	the cgi script behind mailinabox's auth mechanisms and avoids additional
+	support infrastructure like spawn-fcgi.
+	"""
+
+	COMMAND = 'su - munin --preserve-environment --shell=/bin/bash -c /usr/lib/munin/cgi/munin-cgi-graph'
+	# su changes user, we use the munin user here
+	# --preserve-environment retains the environment, which is where Popen's `env` data is
+	# --shell=/bin/bash ensures the shell used is bash
+	# -c "/usr/lib/munin/cgi/munin-cgi-graph" passes the command to run as munin
+	# "%s" is a placeholder for where the request's querystring will be added
+
+	if filename == "":
+		return ("a path must be specified", 404)
+
+	query_str = request.query_string.decode("utf-8", 'ignore')
+
+	env = {'PATH_INFO': '/%s/' % filename, 'REQUEST_METHOD': 'GET', 'QUERY_STRING': query_str}
+	code, binout = utils.shell('check_output',
+							   COMMAND.split(" ", 5),
+							   # Using a maxsplit of 5 keeps the last arguments together
+							   env=env,
+							   return_bytes=True,
+							   trap=True)
+
+	if code != 0:
+		# nonzero returncode indicates error
+		app.logger.error("munin_cgi: munin-cgi-graph returned nonzero exit code, %s", process.returncode)
+		return ("error processing graph image", 500)
+
+	# /usr/lib/munin/cgi/munin-cgi-graph returns both headers and binary png when successful.
+	# A double-Windows-style-newline always indicates the end of HTTP headers.
+	headers, image_bytes = binout.split(b'\r\n\r\n', 1)
+	response = make_response(image_bytes)
+	for line in headers.splitlines():
+		name, value = line.decode("utf8").split(':', 1)
+		response.headers[name] = value
+	if 'Status' in response.headers and '404' in response.headers['Status']:
+		app.logger.warning("munin_cgi: munin-cgi-graph returned 404 status code. PATH_INFO=%s", env['PATH_INFO'])
+	return response
+
+def log_failed_login(request):
+	# We need to figure out the ip to list in the message, all our calls are routed
+	# through nginx who will put the original ip in X-Forwarded-For.
+	# During setup we call the management interface directly to determine the user
+	# status. So we can't always use X-Forwarded-For because during setup that header
+	# will not be present.
+	if request.headers.getlist("X-Forwarded-For"):
+		ip = request.headers.getlist("X-Forwarded-For")[0]
+	else:
+		ip = request.remote_addr
+
+	# We need to add a timestamp to the log message, otherwise /dev/log will eat the "duplicate"
+	# message.
+	app.logger.warning( "Mail-in-a-Box Management Daemon: Failed login attempt from ip %s - timestamp %s" % (ip, time.time()))
+
 
 # APP
 

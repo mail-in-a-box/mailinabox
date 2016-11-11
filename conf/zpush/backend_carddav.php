@@ -7,7 +7,7 @@
 
 
 define('CARDDAV_PROTOCOL', 'https'); /* http or https */
-define('CARDDAV_SERVER', 'localhost');
+define('CARDDAV_SERVER', '127.0.0.1');
 define('CARDDAV_PORT', '443');
 define('CARDDAV_PATH', '/carddav/addressbooks/%u/');
 define('CARDDAV_DEFAULT_PATH', '/carddav/addressbooks/%u/contacts/'); /* subdirectory of the main path */

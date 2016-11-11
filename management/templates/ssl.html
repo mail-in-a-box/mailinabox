@@ -8,7 +8,7 @@
 <p>You need a TLS certificate for this box&rsquo;s hostname ({{hostname}}) and every other domain name and subdomain that this box is hosting a website for (see the list below).</p>
 
 <div id="ssl_provision">
-<h3>Provision a Certificate</h3>
+<h3>Provision a certificate</h3>
 
 <div id="ssl_provision_p" style="display: none; margin-top: 1.5em">
   <button onclick='return provision_tls_cert();' class='btn btn-primary' style="float: left; margin: 0 1.5em 1em 0;">Provision</button>
@@ -36,7 +36,7 @@
 </div>
 </div>
 
-<h3>Certificate Status</h3>
+<h3>Certificate status</h3>
 
 <p style="margin-top: 1.5em">Certificates expire after a period of time. All certificates will be automatically renewed through <a href="https://letsencrypt.org/" target="_blank">Let&rsquo;s Encrypt</a> 14 days prior to expiration.</p>
 
@@ -53,9 +53,9 @@
 </table>
 
 
-<h3 id="ssl_install_header">Install Certificate</h3>
+<h3 id="ssl_install_header">Install certificate</h3>
 
-<p>There are many places where you can get a free or cheap certificate. We recommend <a href="https://www.namecheap.com/security/ssl-certificates/domain-validation.aspx">Namecheap&rsquo;s $9 certificate</a>, <a href="https://www.startssl.com/">StartSSL&rsquo;s free express lane</a> or <a href="https://buy.wosign.com/free/">WoSign&rsquo;s free TLS</a></a>.</p>
+<p>If you don't want to use our automatic Let's Encrypt integration, you can give any other certificate provider a try. You can generate the needed CSR below.</p>
 
 <p>Which domain are you getting a certificate for?</p>
 
@@ -108,7 +108,7 @@ function show_tls(keep_provisioning_shown) {
       $('#ssl_provision_p').toggle(res.can_provision.length > 0);
       if (res.can_provision.length > 0)
           $('#ssl_provision_p span').text(res.can_provision.join(", "));
-      
+
       $('#ssl_provision_problems_div').toggle(res.cant_provision.length > 0);
       $('#ssl_provision_problems tbody').text("");
       for (var i = 0; i < res.cant_provision.length; i++) {
@@ -250,7 +250,7 @@ function provision_tls_cert() {
           var now = new Date();
           n.append(b);
           function ready_to_finish() {
-            var remaining = r.seconds - Math.round((new Date() - now)/1000);
+            var remaining = Math.round(r.seconds - (new Date() - now)/1000);
             if (remaining > 0) {
               setTimeout(ready_to_finish, 1000);
               b.text("Finish (" + remaining + "...)")
@@ -260,7 +260,7 @@ function provision_tls_cert() {
             }
           }
           ready_to_finish();
-          
+
           // don't re-enable the Provision button -- user must use the Retry button when it becomes enabled
           may_reenable_provision_button = false;
 
@@ -268,7 +268,7 @@ function provision_tls_cert() {
           n.find("p").addClass("text-success").text("The TLS certificate was provisioned and installed.");
           setTimeout("show_tls(true)", 1); // update main table of certificate statuses, call with arg keep_provisioning_shown true so that we don't clear what we just outputted
         }
-        
+
         // display the detailed log info in case of problems
         var trace = $("<div class='small text-muted' style='margin-top: 1.5em'>Log:</div>");
         n.append(trace);

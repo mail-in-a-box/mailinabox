@@ -5,13 +5,14 @@
 source setup/functions.sh # load our functions
 
 # Check system setup: Are we running as root on Ubuntu 14.04 on a
-# machine with enough memory? If not, this shows an error and exits.
+# machine with enough memory? Is /tmp mounted with exec.
+# If not, this shows an error and exits.
 source setup/preflight.sh
 
 # Ensure Python reads/writes files in UTF-8. If the machine
 # triggers some other locale in Python, like ASCII encoding,
-# Python may not be able to read/write files. Here and in
-# the management daemon startup script.
+# Python may not be able to read/write files. This is also
+# in the management daemon startup script and the cron script.
 
 if [ -z `locale -a | grep en_US.utf8` ]; then
     # Generate locale if not exists
@@ -22,6 +23,9 @@ export LANGUAGE=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 export LC_TYPE=en_US.UTF-8
+
+# Fix so line drawing characters are shown correctly in Putty on Windows. See #744.
+export NCURSES_NO_UTF8_ACS=1
 
 # Recall the last settings used if we're running this a second time.
 if [ -f /etc/mailinabox.conf ]; then
@@ -107,14 +111,21 @@ source setup/zpush.sh
 source setup/management.sh
 source setup/munin.sh
 
-# Ping the management daemon to write the DNS and nginx configuration files.
-until nc -z -w 4 localhost 10222
+# Wait for the management daemon to start...
+until nc -z -w 4 127.0.0.1 10222
 do
 	echo Waiting for the Mail-in-a-Box management daemon to start...
 	sleep 2
 done
+
+# ...and then have it write the DNS and nginx configuration files and start those
+# services.
 tools/dns_update
 tools/web_update
+
+# Give fail2ban another restart. The log files may not all have been present when
+# fail2ban was first configured, but they should exist now.
+restart_service fail2ban
 
 # If DNS is already working, try to provision TLS certficates from Let's Encrypt.
 # Suppress extra reasons why domains aren't getting a new certificate.

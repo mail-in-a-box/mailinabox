@@ -204,7 +204,7 @@ def get_certificates_to_provision(env, show_extended_problems=True, force_domain
 				domains_if_any.add(domain)
 
 			# It's valid. Should we report its validness?
-			if show_extended_problems:
+			elif show_extended_problems:
 				problems[domain] = "The certificate is valid for at least another 30 days --- no need to replace."
 
 	# Warn the user about domains hosted elsewhere.
@@ -238,8 +238,22 @@ def get_certificates_to_provision(env, show_extended_problems=True, force_domain
 			except Exception as e:
 				problems[domain] = "DNS isn't configured properly for this domain: DNS lookup had an error: %s." % str(e)
 				return False
-			if len(response) != 1 or str(response[0]) != value:
-				problems[domain] = "Domain control validation cannot be performed for this domain because DNS points the domain to another machine (%s %s)." % (rtype, ", ".join(str(r) for r in response))
+
+			# Unfortunately, the response.__str__ returns bytes
+			# instead of string, if it resulted from an AAAA-query.
+			# We need to convert manually, until this is fixed:
+			# https://github.com/rthalley/dnspython/issues/204
+			#
+			# BEGIN HOTFIX
+			def rdata__str__(r):
+				s = r.to_text()
+				if isinstance(s, bytes):
+					 s = s.decode('utf-8')
+				return s
+			# END HOTFIX
+
+			if len(response) != 1 or rdata__str__(response[0]) != value:
+				problems[domain] = "Domain control validation cannot be performed for this domain because DNS points the domain to another machine (%s %s)." % (rtype, ", ".join(rdata__str__(r) for r in response))
 				return False
 
 		return True
@@ -365,7 +379,7 @@ def provision_certificates(env, agree_to_tos_url=None, logger=None, show_extende
 				"message": "Something unexpected went wrong. It looks like your local Let's Encrypt account data is corrupted. There was a problem with the file " + e.account_file_path + ".",
 			})
 
-		except (client.InvalidDomainName, client.NeedToTakeAction, acme.messages.Error, requests.exceptions.RequestException) as e:
+		except (client.InvalidDomainName, client.NeedToTakeAction, client.ChallengeFailed, client.RateLimited, acme.messages.Error, requests.exceptions.RequestException) as e:
 			ret_item.update({
 				"result": "error",
 				"message": "Something unexpected went wrong: " + str(e),
@@ -458,9 +472,14 @@ def provision_certificates_cmdline():
 				if agree_to_tos_url is not None:
 					continue
 
-				# Can't ask the user a question in this mode.
-				if headless in sys.argv:
-					print("Can't issue TLS certficate until user has agreed to Let's Encrypt TOS.")
+				# Can't ask the user a question in this mode. Warn the user that something
+				# needs to be done.
+				if headless:
+					print(", ".join(request["domains"]) + " need a new or renewed TLS certificate.")
+					print()
+					print("This box can't do that automatically for you until you agree to Let's Encrypt's")
+					print("Terms of Service agreement. Use the Mail-in-a-Box control panel to provision")
+					print("certificates for these domains.")
 					sys.exit(1)
 
 				print("""
@@ -513,7 +532,7 @@ Do you agree to the agreement? Type Y or N and press <ENTER>: """
 			print("A TLS certificate was requested for: " + ", ".join(wait_domains) + ".")
 			first = True
 			while wait_until > datetime.datetime.now():
-				if "--headless" not in sys.argv or first:
+				if not headless or first:
 					print ("We have to wait", int(round((wait_until - datetime.datetime.now()).total_seconds())), "seconds for the certificate to be issued...")
 				time.sleep(10)
 				first = False

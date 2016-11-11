@@ -4,28 +4,201 @@ CHANGELOG
 In Development
 --------------
 
-Mail:
+ownCloud:
 
-* The Sieve port is now open so tools like the Thunderbird Sieve program can be used to edit mail filters.
+* Update ownCloud to version 9.1.1
 
-Control Panel:
+Control panel:
 
-* The SSL (now "TLS") certificates page now supports provisioning free SSL certificates from Let's Encrypt.
-* Report free memory usage.
-* Fix a crash when the git directory is not checked out to a tag.
+* Remove recommendations for Certificate Providers
+* Status checks failed if the system doesn't support iptables
+* Add support for SSHFP records when sshd listens on non-standard ports
 
 System:
 
+* Lower memory requirements to 512MB, display a warning if system memory is below 768MB.
+
+Mail:
+
+* Turn off header filters for forwarded email.
+
+v0.20 (September 23, 2016)
+--------------------------
+
+ownCloud:
+
+* Updated to ownCloud to 8.2.7.
+
+Control Panel:
+
+* Fixed a crash that occurs when there are IPv6 DNS records due to a bug in dnspython 1.14.0.
+* Improved the wonky low disk space check.
+
+v0.19b (August 20, 2016)
+------------------------
+
+This update corrects a security issue introduced in v0.18.
+
+* A remote code execution vulnerability is corrected in how the munin system monitoring graphs are generated for the control panel. The vulnerability involves an administrative user visiting a carefully crafted URL.
+
+v0.19a (August 18, 2016)
+------------------------
+
+This update corrects a security issue in v0.19.
+
+* fail2ban won't start if Roundcube had not yet been used - new installations probably do not have fail2ban running.
+
+v0.19 (August 13, 2016)
+-----------------------
+
+Mail:
+
+* Roundcube is updated to version 1.2.1.
+* SSLv3 and RC4 are now no longer supported in incoming and outgoing mail (SMTP port 25).
+
+Control panel:
+
+* The users and aliases APIs are now documented on their control panel pages.
+* The HSTS header was missing.
+* New status checks were added for the ufw firewall.
+
+DNS:
+
+* Add SRV records for CardDAV/CalDAV to facilitate autoconfiguration (e.g. in DavDroid, whose latest version didn't seem to work to configure with entering just a hostname).
+
+System:
+
+* fail2ban jails added for SMTP submission, Roundcube, ownCloud, the control panel, and munin.
+* Mail-in-a-Box can now be installed on the i686 architecture.
+
+v0.18c (June 2, 2016)
+---------------------
+
+* Domain aliases (and misconfigured aliases/catch-alls with non-existent local targets) would accept mail and deliver it to new mailbox folders on disk even if the target address didn't correspond with an existing mail user, instead of rejecting the mail. This issue was introduced in v0.18.
+* The Munin Monitoring link in the control panel now opens a new window.
+* Added an undocumented before-backup script.
+
+v0.18b (May 16, 2016)
+---------------------
+
+* Fixed a Roundcube user accounts issue introduced in v0.18.
+
+v0.18 (May 15, 2016)
+--------------------
+
+ownCloud:
+
+* Updated to ownCloud to 8.2.3 
+
+Mail:
+
+* Roundcube is updated to version 1.1.5 and the Roundcube login screen now says "[hostname] Webmail" instead of "Mail-in-a-Box/Roundcube webmail".
+* Fixed a long-standing issue with training the spam filter not working (because of a file permissions issue).
+
+Control panel:
+
+* Munin system monitoring graphs are now zoomable.
+* When a reboot is required (due to Ubuntu security updates automatically installed), a Reboot Box button now appears on the System Status Checks page of the control panel.
+* It is now possible to add SRV and secondary MX records in the Custom DNS page.
+* Other minor fixes.
+
+System:
+
+* The fail2ban recidive jail, which blocks long-duration brute force attacks, now no longer sends the administrator emails (which were not helpful).
+
+Setup:
+
+* The system hostname is now set during setup.
+* A swap file is now created if system memory is less than 2GB, 5GB of free disk space is available, and if no swap file yet exists.
+* We now install Roundcube from the official GitHub repository instead of our own mirror, which we had previously created to solve problems with SourceForge.
+* DKIM was incorrectly set up on machines where "localhost" was defined as something other than "127.0.0.1".
+
+v0.17c (April 1, 2016)
+----------------------
+
+This update addresses some minor security concerns and some installation issues.
+
+ownCoud:
+
+* Block web access to the configuration parameters (config.php). There is no immediate impact (see [#776](https://github.com/mail-in-a-box/mailinabox/pull/776)), although advanced users may want to take note.
+
+Mail:
+
+* Roundcube html5_notifier plugin updated from version 0.6 to 0.6.2 to fix Roundcube getting stuck for some people.
+
+Control panel:
+
+* Prevent click-jacking of the management interface by adding HTTP headers.
+* Failed login no longer reveals whether an account exists on the system.
+
+Setup:
+
+* Setup dialogs did not appear correctly when connecting to SSH using Putty on Windows.
+* We now install Roundcube from our own mirror because Sourceforge's downloads experience frequent intermittant unavailability.
+
+v0.17b (March 1, 2016)
+----------------------
+
+ownCloud moved their source code to a new location, breaking our installation script.
+
+v0.17 (February 25, 2016)
+-------------------------
+
+Mail:
+
+* Roundcube updated to version 1.1.4.
+* When there's a problem delivering an outgoing message, a new 'warning' bounce will come after 3 hours and the box will stop trying after 2 days (instead of 5).
+* On multi-homed machines, Postfix now binds to the right network interface when sending outbound mail so that SPF checks on the receiving end will pass.
+* Mail sent from addresses on subdomains of other domains hosted by this box would not be DKIM-signed and so would fail DMARC checks by recipients, since version v0.15.
+
+Control panel:
+
+* TLS certificate provisioning would crash if DNS propagation was in progress and a challenge failed; might have shown the wrong error when provisioning fails.
+* Backup times were displayed with the wrong time zone.
+* Thresholds for displaying messages when the system is running low on memory have been reduced from 30% to 20% for a warning and from 15% to 10% for an error.
+* Other minor fixes.
+
+System:
+
+* Backups to some AWS S3 regions broke in version 0.15 because we reverted the version of boto. That's now fixed.
+* On low-usage systems, don't hold backups for quite so long by taking a full backup more often.
+* Nightly status checks might fail on systems not configured with a default Unicode locale.
+* If domains need a TLS certificate and the user hasn't installed one yet using Let's Encrypt, the administrator would get a nightly email with weird interactive text asking them to agree to Let's Encrypt's ToS. Now just say that the provisioning can't be done automatically.
+* Reduce the number of background processes used by the management daemon to lower memory consumption.
+
+Setup:
+
+* The first screen now warns users not to install on a machine used for other things.
+
+v0.16 (January 30, 2016)
+------------------------
+
+This update primarily adds automatic SSL (now "TLS") certificate provisioning from Let's Encrypt (https://letsencrypt.org/).
+
+Control Panel:
+
+* The SSL certificates (now referred to as "TLS ccertificates") page now supports provisioning free certificates from Let's Encrypt.
+* Report free memory usage.
+* Fix a crash when the git directory is not checked out to a tag.
+* When IPv6 is enabled, check that all domains (besides the system hostname) resolve over IPv6.
+* When a domain doesn't resolve to the box, don't bother checking if the TLS certificate is valid.
+* Remove rounded border on the menu bar.
+
+Other:
+
+* The Sieve port is now open so tools like the Thunderbird Sieve extension can be used to edit mail filters.
+* .be domains now offer DNSSEC options supported by the TLD
 * The daily backup will now email the administrator if there is a problem.
-* Expiring TLS (SSL) certificates are now automatically renewed via Let's Encrypt.
-* File ownership for the installed Roundcube files is fixed.
+* Expiring TLS certificates are now automatically renewed via Let's Encrypt.
+* File ownership for installed Roundcube files is fixed.
+* Typos fixed.
 
 v0.15a (January 9, 2016)
 ------------------------
 
 Mail:
 
-* Sending mail through Exchange/ActiveSync (Z-Push) had been broken since v0.14. This is now fixed.
+* Sending mail through Exchange/ActiveSync (Z-Push) had been broken since v0.14 in some setups. This is now fixed.
 
 v0.15 (January 1, 2016)
 -----------------------
@@ -439,4 +612,4 @@ v0.02 (September 21, 2014)
 v0.01 (August 19, 2014)
 -----------------------
 
-First release.
+First versioned release after a year of unversioned development.

@@ -27,9 +27,9 @@ EXEC_AS_USER=root
 
 # Ensure Python reads/writes files in UTF-8. If the machine
 # triggers some other locale in Python, like ASCII encoding,
-# Python may not be able to read/write files. Here and in
+# Python may not be able to read/write files. Set also
 # setup/start.sh (where the locale is also installed if not
-# already present).
+# already present) and management/daily_tasks.sh.
 export LANGUAGE=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8

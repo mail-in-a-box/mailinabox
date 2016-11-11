@@ -2,9 +2,10 @@
 
 # This script performs a backup of all user data:
 # 1) System services are stopped.
-# 2) An incremental encrypted backup is made using duplicity.
-# 3) The stopped services are restarted.
-# 4) STORAGE_ROOT/backup/after-backup is executd if it exists.
+# 2) STORAGE_ROOT/backup/before-backup is executed if it exists.
+# 3) An incremental encrypted backup is made using duplicity.
+# 4) The stopped services are restarted.
+# 5) STORAGE_ROOT/backup/after-backup is executed if it exists.
 
 import os, os.path, shutil, glob, re, datetime, sys
 import dateutil.parser, dateutil.relativedelta, dateutil.tz
@@ -47,10 +48,10 @@ def backup_status(env):
 	# Get duplicity collection status and parse for a list of backups.
 	def parse_line(line):
 		keys = line.strip().split()
-		date = dateutil.parser.parse(keys[1])
+		date = dateutil.parser.parse(keys[1]).astimezone(dateutil.tz.tzlocal())
 		return {
 			"date": keys[1],
-			"date_str": date.strftime("%x %X"),
+			"date_str": date.strftime("%x %X") + " " + now.tzname(),
 			"date_delta": reldate(date, now, "the future?"),
 			"full": keys[0] == "full",
 			"size": 0, # collection-status doesn't give us the size
@@ -87,50 +88,66 @@ def backup_status(env):
 	# This is relied on by should_force_full() and the next step.
 	backups = sorted(backups.values(), key = lambda b : b["date"], reverse=True)
 
-	# Get the average size of incremental backups and the size of the
-	# most recent full backup.
+	# Get the average size of incremental backups, the size of the
+	# most recent full backup, and the date of the most recent
+	# backup and the most recent full backup.
 	incremental_count = 0
 	incremental_size = 0
+	first_date = None
 	first_full_size = None
+	first_full_date = None
 	for bak in backups:
+		if first_date is None:
+			first_date = dateutil.parser.parse(bak["date"])
 		if bak["full"]:
 			first_full_size = bak["size"]
+			first_full_date = dateutil.parser.parse(bak["date"])
 			break
 		incremental_count += 1
 		incremental_size += bak["size"]
 
-	# Predict how many more increments until the next full backup,
-	# and add to that the time we hold onto backups, to predict
-	# how long the most recent full backup+increments will be held
-	# onto. Round up since the backup occurs on the night following
-	# when the threshold is met.
+	# When will the most recent backup be deleted? It won't be deleted if the next
+	# backup is incremental, because the increments rely on all past increments.
+	# So first guess how many more incremental backups will occur until the next
+	# full backup. That full backup frees up this one to be deleted. But, the backup
+	# must also be at least min_age_in_days old too.
 	deleted_in = None
-	if incremental_count > 0 and first_full_size is not None and incremental_size > 0:
-		deleted_in = "approx. %d days" % round(config["min_age_in_days"] + (.5 * first_full_size - incremental_size) / (incremental_size/incremental_count) + .5)
+	if incremental_count > 0 and first_full_size is not None:
+		# How many days until the next incremental backup? First, the part of
+		# the algorithm based on increment sizes:
+		est_days_to_next_full = (.5 * first_full_size - incremental_size) / (incremental_size/incremental_count)
+		est_time_of_next_full = first_date + datetime.timedelta(days=est_days_to_next_full)
 
-	# When will a backup be deleted?
+		# ...And then the part of the algorithm based on full backup age:
+		est_time_of_next_full = min(est_time_of_next_full, first_full_date + datetime.timedelta(days=config["min_age_in_days"]*10+1))
+
+		# It still can't be deleted until it's old enough.
+		est_deleted_on = max(est_time_of_next_full, first_date + datetime.timedelta(days=config["min_age_in_days"]))
+
+		deleted_in = "approx. %d days" % round((est_deleted_on-now).total_seconds()/60/60/24 + .5)
+
+	# When will a backup be deleted? Set the deleted_in field of each backup.
 	saw_full = False
-	days_ago = now - datetime.timedelta(days=config["min_age_in_days"])
 	for bak in backups:
 		if deleted_in:
-			# Subsequent backups are deleted when the most recent increment
-			# in the chain would be deleted.
+			# The most recent increment in a chain and all of the previous backups
+			# it relies on are deleted at the same time.
 			bak["deleted_in"] = deleted_in
 		if bak["full"]:
-			# Reset when we get to a full backup. A new chain start next.
+			# Reset when we get to a full backup. A new chain start *next*.
 			saw_full = True
 			deleted_in = None
 		elif saw_full and not deleted_in:
-			# Mark deleted_in only on the first increment after a full backup.
-			deleted_in = reldate(days_ago, dateutil.parser.parse(bak["date"]), "on next daily backup")
+			# We're now on backups prior to the most recent full backup. These are
+			# free to be deleted as soon as they are min_age_in_days old.
+			deleted_in = reldate(now, dateutil.parser.parse(bak["date"]) + datetime.timedelta(days=config["min_age_in_days"]), "on next daily backup")
 			bak["deleted_in"] = deleted_in
 
 	return {
-		"tz": now.tzname(),
 		"backups": backups,
 	}
 
-def should_force_full(env):
+def should_force_full(config, env):
 	# Force a full backup when the total size of the increments
 	# since the last full backup is greater than half the size
 	# of that full backup.
@@ -142,8 +159,14 @@ def should_force_full(env):
 			inc_size += bak["size"]
 		else:
 			# ...until we reach the most recent full backup.
-			# Return if we should to a full backup.
-			return inc_size > .5*bak["size"]
+			# Return if we should to a full backup, which is based
+			# on the size of the increments relative to the full
+			# backup, as well as the age of the full backup.
+			if inc_size > .5*bak["size"]:
+				return True
+			if dateutil.parser.parse(bak["date"]) + datetime.timedelta(days=config["min_age_in_days"]*10+1) < datetime.datetime.now(dateutil.tz.tzlocal()):
+				return True
+			return False
 	else:
 		# If we got here there are no (full) backups, so make one.
 		# (I love for/else blocks. Here it's just to show off.)
@@ -222,7 +245,7 @@ def perform_backup(full_backup):
 	# the increments since the most recent full backup are
 	# large.
 	try:
-		full_backup = full_backup or should_force_full(env)
+		full_backup = full_backup or should_force_full(config, env)
 	except Exception as e:
 		# This was the first call to duplicity, and there might
 		# be an error already.
@@ -241,6 +264,15 @@ def perform_backup(full_backup):
 	service_command("php5-fpm", "stop", quit=True)
 	service_command("postfix", "stop", quit=True)
 	service_command("dovecot", "stop", quit=True)
+
+	# Execute a pre-backup script that copies files outside the homedir.
+	# Run as the STORAGE_USER user, not as root. Pass our settings in
+	# environment variables so the script has access to STORAGE_ROOT.
+	pre_script = os.path.join(backup_root, 'before-backup')
+	if os.path.exists(pre_script):
+		shell('check_call',
+			['su', env['STORAGE_USER'], '-c', pre_script, config["target"]],
+			env=env)
 
 	# Run a backup of STORAGE_ROOT (but excluding the backups themselves!).
 	# --allow-source-mismatch is needed in case the box's hostname is changed

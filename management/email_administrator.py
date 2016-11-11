@@ -33,7 +33,7 @@ msg['Subject'] = "[%s] %s" % (env['PRIMARY_HOSTNAME'], subject)
 msg.set_payload(content, "UTF-8")
 
 # send
-smtpclient = smtplib.SMTP('localhost', 25)
+smtpclient = smtplib.SMTP('127.0.0.1', 25)
 smtpclient.ehlo()
 smtpclient.sendmail(
         admin_addr, # MAIL FROM

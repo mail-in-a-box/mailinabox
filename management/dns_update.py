@@ -91,7 +91,7 @@ def do_dns_update(env, force=False):
 		shell('check_call', ["/usr/sbin/service", "nsd", "restart"])
 
 	# Write the OpenDKIM configuration tables for all of the domains.
-	if write_opendkim_tables([domain for domain, zonefile in zonefiles], env):
+	if write_opendkim_tables(get_mail_domains(env), env):
 		# Settings changed. Kick opendkim.
 		shell('check_call', ["/usr/sbin/service", "opendkim", "restart"])
 		if len(updated_domains) == 0:
@@ -175,9 +175,6 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 		for value in build_sshfp_records():
 			records.append((None, "SSHFP", value, "Optional. Provides an out-of-band method for verifying an SSH key before connecting. Use 'VerifyHostKeyDNS yes' (or 'VerifyHostKeyDNS ask') when connecting with ssh."))
 
-	# The MX record says where email for the domain should be delivered: Here!
-	records.append((None,  "MX",  "10 %s." % env["PRIMARY_HOSTNAME"], "Required. Specifies the hostname (and priority) of the machine that handles @%s mail." % domain))
-
 	# Add DNS records for any subdomains of this domain. We should not have a zone for
 	# both a domain and one of its subdomains.
 	subdomains = [d for d in all_domains if d.endswith("." + domain)]
@@ -244,6 +241,10 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 	# Don't pin the list of records that has_rec checks against anymore.
 	has_rec_base = records
 
+	# The MX record says where email for the domain should be delivered: Here!
+	if not has_rec(None, "MX", prefix="10 "):
+		records.append((None,  "MX",  "10 %s." % env["PRIMARY_HOSTNAME"], "Required. Specifies the hostname (and priority) of the machine that handles @%s mail." % domain))
+
 	# SPF record: Permit the box ('mx', see above) to send mail on behalf of
 	# the domain, and no one else.
 	# Skip if the user has set a custom SPF record.
@@ -273,6 +274,13 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 		if not has_rec(dmarc_qname, "TXT", prefix="v=DMARC1; "):
 			records.append((dmarc_qname, "TXT", 'v=DMARC1; p=reject', "Recommended. Prevents use of this domain name for outbound mail by specifying that the SPF rule should be honoured for mail from @%s." % (qname + "." + domain)))
 
+	# Add CardDAV/CalDAV SRV records on the non-primary hostname that points to the primary hostname.
+	# The SRV record format is priority (0, whatever), weight (0, whatever), port, service provider hostname (w/ trailing dot).
+	if domain != env["PRIMARY_HOSTNAME"]:
+		for dav in ("card", "cal"):
+			qname = "_" + dav + "davs._tcp"
+			if not has_rec(qname, "SRV"):
+				records.append((qname, "SRV", "0 0 443 " + env["PRIMARY_HOSTNAME"] + ".", "Recommended. Specifies the hostname of the server that handles CardDAV/CalDAV services for email addresses on this domain."))
 
 	# Sort the records. The None records *must* go first in the nsd zone file. Otherwise it doesn't matter.
 	records.sort(key = lambda rec : list(reversed(rec[0].split(".")) if rec[0] is not None else ""))
@@ -340,7 +348,18 @@ def build_sshfp_records():
 	# like the known_hosts file: hostname, keytype, fingerprint. The order
 	# of the output is arbitrary, so sort it to prevent spurrious updates
 	# to the zone file (that trigger bumping the serial number).
-	keys = shell("check_output", ["ssh-keyscan", "localhost"])
+
+	# scan the sshd_config and find the ssh ports (port 22 may be closed)
+	with open('/etc/ssh/sshd_config', 'r') as f:
+		ports = []
+		t = f.readlines()
+		for line in t:
+			s = line.split()
+			if len(s) == 2 and s[0] == 'Port':
+				ports = ports + [s[1]]
+	# the keys are the same at each port, so we only need to get
+	# them at the first port found (may not be port 22)
+	keys = shell("check_output", ["ssh-keyscan", "-p", ports[0], "localhost"])
 	for key in sorted(keys.split("\n")):
 		if key.strip() == "" or key[0] == "#": continue
 		try:
