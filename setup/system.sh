@@ -146,7 +146,7 @@ pollinate  -q -r
 
 # We need an ssh key to store backups via rsync, if it doesn't exist create one
 if [ ! -f /root/.ssh/id_rsa_miab ]; then
-	echo 'Launching SSH public key creation...'
+	echo 'Creating SSH key for backup…'
 	ssh-keygen -t rsa -b 2048 -a 100 -f /root/.ssh/id_rsa_miab -N '' -q
 fi
 
