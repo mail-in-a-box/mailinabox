@@ -13,6 +13,11 @@ import rtyaml
 
 from utils import exclusive_process, load_environment, shell, wait_for_service, fix_boto
 
+rsync_ssh_options = [
+	"--ssh-options='-i /root/.ssh/id_rsa_miab'",
+	"--rsync-options=-e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
+]
+
 def backup_status(env):
 	# Root folder
 	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
@@ -29,11 +34,6 @@ def backup_status(env):
 
 	backups = { }
 	backup_cache_dir = os.path.join(backup_root, 'cache')
-
-	rsync_ssh_options = [
-		"--ssh-options='-i /root/.ssh/id_rsa_miab'",
-		"--rsync-options=-e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
-	]
 
 	def reldate(date, ref, clip):
 		if ref < date: return clip
@@ -410,10 +410,12 @@ def list_target_files(config):
 
 		code, listing = shell('check_output', rsync_command, trap=True)
 		if code == 0:
+			ret = []
 			for l in listing.split('\n'):
 				match = rsync_fn_size_re.match(l)
 				if match:
-					yield (match.groups()[1], int(match.groups()[0].replace(',','')))
+					ret.append( (match.groups()[1], int(match.groups()[0].replace(',',''))) )
+			return ret
 		else:
 			raise ValueError("Connection to rsync host failed")
 

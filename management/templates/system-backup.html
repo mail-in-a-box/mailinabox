@@ -225,10 +225,10 @@ function show_custom_backup() {
         } else if (r.target.substring(0, 8) == "rsync://") {
           $("#backup-target-type").val("rsync");
           var path = r.target.substring(8).split('//');
-          var [ user, host ] = path.shift().split('@');
-          $("#backup-target-rsync-user").val(user);
-          $("#backup-target-rsync-host").val(host);
-          $("#backup-target-rsync-path").val('/'+path);
+          var host_parts = path.shift().split('@');
+          $("#backup-target-rsync-user").val(host_parts[0]);
+          $("#backup-target-rsync-host").val(host_parts[1]);
+          $("#backup-target-rsync-path").val('/'+path[0]);
         } else if (r.target.substring(0, 5) == "s3://") {
           $("#backup-target-type").val("s3");
           var hostpath = r.target.substring(5).split('/');
