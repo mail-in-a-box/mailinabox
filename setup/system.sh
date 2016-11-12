@@ -214,6 +214,12 @@ pollinate  -q -r
 
 # Between these two, we really ought to be all set.
 
+# We need an ssh key to store backups via rsync, if it doesn't exist create one
+if [ ! -f /root/.ssh/id_rsa_miab ]; then
+	echo 'Creating SSH key for backup…'
+	ssh-keygen -t rsa -b 2048 -a 100 -f /root/.ssh/id_rsa_miab -N '' -q
+fi
+
 # ### Package maintenance
 #
 # Allow apt to install system updates automatically every day.

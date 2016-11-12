@@ -16,16 +16,60 @@
       <select class="form-control" rows="1" id="backup-target-type" onchange="toggle_form()">
         <option value="off">Nowhere (Disable Backups)</option>
         <option value="local">{{hostname}}</option>
+        <option value="rsync">rsync</option>
         <option value="s3">Amazon S3</option>
       </select>
     </div>
   </div>
+  <!-- LOCAL BACKUP -->
   <div class="form-group backup-target-local">
     <div class="col-sm-10 col-sm-offset-2">
-      <p>Backups are stored on this machine&rsquo;s own hard disk. You are responsible for periodically using SFTP (FTP over SSH) to copy the backup files from <tt id="backup-location"></tt> to a safe location. These files are encrypted, so they are safe to store anywhere.</p>
+      <p>Backups are stored on this machine&rsquo;s own hard disk. You are responsible for periodically using SFTP (FTP over SSH) to copy the backup files from <tt class="backup-location"></tt> to a safe location. These files are encrypted, so they are safe to store anywhere.</p>
       <p>Separately copy the encryption password from <tt class="backup-encpassword-file"></tt> to a safe and secure location. You will need this file to decrypt backup files.</p>
     </div>
   </div>
+  <!-- RSYNC BACKUP -->
+  <div class="form-group backup-target-rsync">
+    <div class="col-sm-10 col-sm-offset-2">
+
+      <p>Backups synced to a remote machine using rsync over SSH, with local
+      copies in <tt class="backup-location"></tt>. These files are encrypted, so
+      they are safe to store anywhere.</p> <p>Separately copy the encryption
+      password from <tt class="backup-encpassword-file"></tt> to a safe and
+      secure location. You will need this file to decrypt backup files.</p>
+
+    </div>
+  </div>
+  <div class="form-group backup-target-rsync">
+    <label for="backup-target-rsync-host" class="col-sm-2 control-label">Hostname</label>
+    <div class="col-sm-8">
+      <input type="text" placeholder="hostname.local" class="form-control" rows="1" id="backup-target-rsync-host">
+    </div>
+  </div>
+  <div class="form-group backup-target-rsync">
+    <label for="backup-target-rsync-path" class="col-sm-2 control-label">Path</label>
+    <div class="col-sm-8">
+        <input type="text" placeholder="/backups/{{hostname}}" class="form-control" rows="1" id="backup-target-rsync-path">
+    </div>
+  </div>
+  <div class="form-group backup-target-rsync">
+    <label for="backup-target-rsync-user" class="col-sm-2 control-label">Username</label>
+    <div class="col-sm-8">
+      <input type="text" class="form-control" rows="1" id="backup-target-rsync-user">
+    </div>
+  </div>
+  <div class="form-group backup-target-rsync">
+    <label for="ssh-pub-key" class="col-sm-2 control-label">Public SSH Key</label>
+    <div class="col-sm-8">
+      <input type="text" class="form-control" rows="1" id="ssh-pub-key" readonly>
+      <div class="small" style="margin-top: 2px">
+        Copy the Public SSH Key above, and paste it within the <tt>~/.ssh/authorized_keys</tt>
+        of target user on the backup server specified above. That way you'll enable secure and
+        passwordless authentication from your mail-in-a-box server and your backup server.
+      </div>
+    </div>
+  </div>
+  <!-- S3 BACKUP -->
   <div class="form-group backup-target-s3">
     <div class="col-sm-10 col-sm-offset-2">
       <p>Backups are stored in an Amazon Web Services S3 bucket. You must have an AWS account already.</p>
@@ -60,7 +104,8 @@
       <input type="text" class="form-control" rows="1" id="backup-target-pass">
     </div>
   </div>
-  <div class="form-group backup-target-local backup-target-s3">
+  <!-- Common -->
+  <div class="form-group backup-target-local backup-target-rsync backup-target-s3">
     <label for="min-age" class="col-sm-2 control-label">Days:</label>
     <div class="col-sm-8">
       <input type="number" class="form-control" rows="1" id="min-age">
@@ -92,7 +137,7 @@
 
 function toggle_form() {
   var target_type = $("#backup-target-type").val();
-  $(".backup-target-local, .backup-target-s3").hide();
+  $(".backup-target-local, .backup-target-rsync, .backup-target-s3").hide();
   $(".backup-target-" + target_type).show();
 }
 
@@ -114,7 +159,7 @@ function nice_size(bytes) {
 
 function show_system_backup() {
   show_custom_backup()
-  
+
   $('#backup-status tbody').html("<tr><td colspan='2' class='text-muted'>Loading...</td></tr>")
   api(
     "/system/backup/status",
@@ -160,28 +205,37 @@ function show_system_backup() {
 }
 
 function show_custom_backup() {
-    $(".backup-target-local, .backup-target-s3").hide();
+    $(".backup-target-local, .backup-target-rsync, .backup-target-s3").hide();
     api(
       "/system/backup/config",
       "GET",
       { },
       function(r) {
+        $("#backup-target-user").val(r.target_user);
+        $("#backup-target-pass").val(r.target_pass);
+        $("#min-age").val(r.min_age_in_days);
+        $(".backup-location").text(r.file_target_directory);
+        $(".backup-encpassword-file").text(r.enc_pw_file);
+        $("#ssh-pub-key").val(r.ssh_pub_key);
+
         if (r.target == "file://" + r.file_target_directory) {
           $("#backup-target-type").val("local");
         } else if (r.target == "off") {
           $("#backup-target-type").val("off");
+        } else if (r.target.substring(0, 8) == "rsync://") {
+          $("#backup-target-type").val("rsync");
+          var path = r.target.substring(8).split('//');
+          var [ user, host ] = path.shift().split('@');
+          $("#backup-target-rsync-user").val(user);
+          $("#backup-target-rsync-host").val(host);
+          $("#backup-target-rsync-path").val('/'+path);
         } else if (r.target.substring(0, 5) == "s3://") {
           $("#backup-target-type").val("s3");
-	  var hostpath = r.target.substring(5).split('/');
+          var hostpath = r.target.substring(5).split('/');
           var host = hostpath.shift();
           $("#backup-target-s3-host").val(host);
           $("#backup-target-s3-path").val(hostpath.join('/'));
         }
-        $("#backup-target-user").val(r.target_user);
-        $("#backup-target-pass").val(r.target_pass);
-        $("#min-age").val(r.min_age_in_days);
-        $('#backup-location').text(r.file_target_directory);
-        $('.backup-encpassword-file').text(r.enc_pw_file);
         toggle_form()
       })
 }
@@ -190,12 +244,18 @@ function set_custom_backup() {
   var target_type = $("#backup-target-type").val();
   var target_user = $("#backup-target-user").val();
   var target_pass = $("#backup-target-pass").val();
-  
+
   var target;
   if (target_type == "local" || target_type == "off")
     target = target_type;
   else if (target_type == "s3")
     target = "s3://" + $("#backup-target-s3-host").val() + "/" + $("#backup-target-s3-path").val();
+  else if (target_type == "rsync") {
+    target = "rsync://" + $("#backup-target-rsync-user").val() + "@" + $("#backup-target-rsync-host").val()
+                                                                + "/" + $("#backup-target-rsync-path").val();
+    target_user = '';
+  }
+
 
   var min_age = $("#min-age").val();
   api(
