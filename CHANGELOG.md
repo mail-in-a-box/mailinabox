@@ -10,17 +10,21 @@ ownCloud:
 
 Control panel:
 
+* Backups can now be made using rsync-over-ssh!
 * Remove recommendations for Certificate Providers
-* Status checks failed if the system doesn't support iptables
+* Status checks failed if the system doesn't support iptables or doesn't have ufw installed.
 * Add support for SSHFP records when sshd listens on non-standard ports
 
 System:
 
+* Ubuntu's "Upgrade to 16.04" notice is suppressed since you should not do that.
 * Lower memory requirements to 512MB, display a warning if system memory is below 768MB.
 
 Mail:
 
 * Turn off header filters for forwarded email.
+* Another go at fixing a long-standing issue with training the spam filter not working (because of a file permissions issue).
+* Exchange/ActiveSync will now use your display name set in Roundcube in the From: line of outgoing email.
 
 v0.20 (September 23, 2016)
 --------------------------
