@@ -6,14 +6,44 @@ In Development
 
 ownCloud:
 
+* Update ownCloud to version 9.1.1
+
+Control panel:
+
+* Backups can now be made using rsync-over-ssh!
+* Remove recommendations for Certificate Providers
+* Status checks failed if the system doesn't support iptables or doesn't have ufw installed.
+* Add support for SSHFP records when sshd listens on non-standard ports
+
+System:
+
+* Ubuntu's "Upgrade to 16.04" notice is suppressed since you should not do that.
+* Lower memory requirements to 512MB, display a warning if system memory is below 768MB.
+
+Mail:
+
+* Turn off header filters for forwarded email.
+* Another go at fixing a long-standing issue with training the spam filter not working (because of a file permissions issue).
+* Exchange/ActiveSync will now use your display name set in Roundcube in the From: line of outgoing email.
+
+v0.20 (September 23, 2016)
+--------------------------
+
+ownCloud:
+
 * Updated to ownCloud to 8.2.7.
+
+Control Panel:
+
+* Fixed a crash that occurs when there are IPv6 DNS records due to a bug in dnspython 1.14.0.
+* Improved the wonky low disk space check.
 
 v0.19b (August 20, 2016)
 ------------------------
 
 This update corrects a security issue introduced in v0.18.
 
-A remote code execution vulnerability is corrected in how the munin system monitoring graphs are generated for the control panel. The vulnerability involves an administrative user visiting a carefully crafted URL.
+* A remote code execution vulnerability is corrected in how the munin system monitoring graphs are generated for the control panel. The vulnerability involves an administrative user visiting a carefully crafted URL.
 
 v0.19a (August 18, 2016)
 ------------------------
@@ -148,7 +178,6 @@ v0.16 (January 30, 2016)
 ------------------------
 
 This update primarily adds automatic SSL (now "TLS") certificate provisioning from Let's Encrypt (https://letsencrypt.org/).
-* The Sieve port is now open so tools like the Thunderbird Sieve program can be used to edit mail filters.
 
 Control Panel:
 
@@ -587,4 +616,4 @@ v0.02 (September 21, 2014)
 v0.01 (August 19, 2014)
 -----------------------
 
-First release.
+First versioned release after a year of unversioned development.

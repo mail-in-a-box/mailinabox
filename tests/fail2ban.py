@@ -10,11 +10,11 @@ import sys, os, time, functools
 
 # parse command line
 
-if len(sys.argv) != 3:
-	print("Usage: tests/fail2ban.py \"ssh user@hostname\" hostname")
+if len(sys.argv) != 4:
+	print("Usage: tests/fail2ban.py \"ssh user@hostname\" hostname owncloud_user")
 	sys.exit(1)
 
-ssh_command, hostname = sys.argv[1:3]
+ssh_command, hostname, owncloud_user = sys.argv[1:4]
 
 # define some test types
 
@@ -67,6 +67,28 @@ def imap_test():
 		pass
 	finally:
 		M.logout() # shuts down connection, has nothing to do with login()
+
+
+def pop_test():
+	import poplib
+	try:
+		M = poplib.POP3_SSL(hostname)
+	except ConnectionRefusedError:
+		# looks like fail2ban worked
+		raise IsBlocked()
+	try:
+		M.user('fakeuser')
+		try:
+			M.pass_('fakepassword')
+		except poplib.error_proto as e:
+			# Authentication should fail.
+			M = None # don't .quit()
+			return
+		M.list()
+		raise Exception("authentication didn't fail")
+	finally:
+		if M:
+			M.quit()
 
 def http_test(url, expected_status, postdata=None, qsargs=None, auth=None):
 	import urllib.parse
@@ -183,6 +205,9 @@ if __name__ == "__main__":
 	# IMAP
 	run_test(imap_test, [], 20, 30, 4)
 
+	# POP
+	run_test(pop_test, [], 20, 30, 4)
+
 	# Mail-in-a-Box control panel
 	run_test(http_test, ["/admin/me", 200], 20, 30, 1)
 
@@ -190,7 +215,7 @@ if __name__ == "__main__":
 	run_test(http_test, ["/admin/munin/", 401], 20, 30, 1)
 
 	# ownCloud
-	run_test(http_test, ["/cloud/remote.php/webdav", 401, None, None, ["aa", "aa"]], 20, 120, 1)
+	run_test(http_test, ["/cloud/remote.php/webdav", 401, None, None, [owncloud_user, "aa"]], 20, 120, 1)
 
 	# restart fail2ban so that this client machine is no longer blocked
 	restart_fail2ban_service(final=True)

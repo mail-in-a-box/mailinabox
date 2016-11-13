@@ -35,8 +35,8 @@
         <option value="AAAA" data-hint="Enter an IPv6 address.">AAAA (IPv6 address)</option>
         <option value="CNAME" data-hint="Enter another domain name followed by a period at the end (e.g. mypage.github.io.).">CNAME (DNS forwarding)</option>
         <option value="TXT" data-hint="Enter arbitrary text.">TXT (text record)</option>
-        <option value="MX" data-hint="Enter record in the form of PRIORIY DOMAIN., including trailing period (e.g. 20 mx.example.com.).">MX (mail exchanger)</option>
-        <option value="SRV" data-hint="Enter record in the form of PRIORIY WEIGHT PORT TARGET., including trailing period (e.g. 10 10 5060 sip.example.com.).">SRV (service record)</option>
+        <option value="MX" data-hint="Enter record in the form of PRIORITY DOMAIN., including trailing period (e.g. 20 mx.example.com.).">MX (mail exchanger)</option>
+        <option value="SRV" data-hint="Enter record in the form of PRIORITY WEIGHT PORT TARGET., including trailing period (e.g. 10 10 5060 sip.example.com.).">SRV (service record)</option>
       </select>
     </div>
   </div>
@@ -69,7 +69,7 @@
 <h3>Using a secondary nameserver</h3>
 
 <p>If your TLD requires you to have two separate nameservers, you can either set up <a href="#" onclick="return show_panel('external_dns')">external DNS</a> and ignore the DNS server on this box entirely, or use the DNS server on this box but add a secondary (aka &ldquo;slave&rdquo;) nameserver.</p>
-<p>If you choose to use a seconday nameserver, you must find a seconday nameserver service provider. Your domain name registrar or virtual cloud provider may provide this service for you. Once you set up the seconday nameserver service, enter the hostname (not the IP address) of <em>their</em> secondary nameserver in the box below.</p>
+<p>If you choose to use a secondary nameserver, you must find a secondary nameserver service provider. Your domain name registrar or virtual cloud provider may provide this service for you. Once you set up the secondary nameserver service, enter the hostname (not the IP address) of <em>their</em> secondary nameserver in the box below.</p>
 
 <form class="form-horizontal" role="form" onsubmit="do_set_secondary_dns(); return false;">
   <div class="form-group">

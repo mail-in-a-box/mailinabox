@@ -13,6 +13,11 @@ import rtyaml
 
 from utils import exclusive_process, load_environment, shell, wait_for_service, fix_boto
 
+rsync_ssh_options = [
+	"--ssh-options='-i /root/.ssh/id_rsa_miab'",
+	"--rsync-options=-e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
+]
+
 def backup_status(env):
 	# Root folder
 	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
@@ -52,6 +57,7 @@ def backup_status(env):
 			"size": 0, # collection-status doesn't give us the size
 			"volumes": keys[2], # number of archive volumes for this backup (not really helpful)
 		}
+
 	code, collection_status = shell('check_output', [
 		"/usr/bin/duplicity",
 		"collection-status",
@@ -59,7 +65,7 @@ def backup_status(env):
 		"--gpg-options", "--cipher-algo=AES256",
 		"--log-fd", "1",
 		config["target"],
-		],
+		] + rsync_ssh_options,
 		get_env(env),
 		trap=True)
 	if code != 0:
@@ -177,24 +183,24 @@ def get_passphrase(env):
 	with open(os.path.join(backup_root, 'secret_key.txt')) as f:
 		passphrase = f.readline().strip()
 	if len(passphrase) < 43: raise Exception("secret_key.txt's first line is too short!")
-	
+
 	return passphrase
 
 def get_env(env):
 	config = get_backup_config(env)
-	
+
 	env = { "PASSPHRASE" : get_passphrase(env) }
-	
+
 	if get_target_type(config) == 's3':
 		env["AWS_ACCESS_KEY_ID"] = config["target_user"]
 		env["AWS_SECRET_ACCESS_KEY"] = config["target_pass"]
-	
+
 	return env
-	
+
 def get_target_type(config):
 	protocol = config["target"].split(":")[0]
 	return protocol
-	
+
 def perform_backup(full_backup):
 	env = load_environment()
 
@@ -204,7 +210,7 @@ def perform_backup(full_backup):
 	backup_cache_dir = os.path.join(backup_root, 'cache')
 	backup_dir = os.path.join(backup_root, 'encrypted')
 
-	# Are backups dissbled?
+	# Are backups disabled?
 	if config["target"] == "off":
 		return
 
@@ -283,7 +289,7 @@ def perform_backup(full_backup):
 			env["STORAGE_ROOT"],
 			config["target"],
 			"--allow-source-mismatch"
-			],
+			] + rsync_ssh_options,
 			get_env(env))
 	finally:
 		# Start services again.
@@ -305,7 +311,7 @@ def perform_backup(full_backup):
 		"--archive-dir", backup_cache_dir,
 		"--force",
 		config["target"]
-		],
+		] + rsync_ssh_options,
 		get_env(env))
 
 	# From duplicity's manual:
@@ -320,7 +326,7 @@ def perform_backup(full_backup):
 		"--archive-dir", backup_cache_dir,
 		"--force",
 		config["target"]
-		],
+		] + rsync_ssh_options,
 		get_env(env))
 
 	# Change ownership of backups to the user-data user, so that the after-bcakup
@@ -359,7 +365,7 @@ def run_duplicity_verification():
 		"--exclude", backup_root,
 		config["target"],
 		env["STORAGE_ROOT"],
-	], get_env(env))
+	] + rsync_ssh_options, get_env(env))
 
 def run_duplicity_restore(args):
 	env = load_environment()
@@ -370,7 +376,7 @@ def run_duplicity_restore(args):
 		"restore",
 		"--archive-dir", backup_cache_dir,
 		config["target"],
-		] + args,
+		] + rsync_ssh_options + args,
 	get_env(env))
 
 def list_target_files(config):
@@ -382,6 +388,36 @@ def list_target_files(config):
 
 	if p.scheme == "file":
 		return [(fn, os.path.getsize(os.path.join(p.path, fn))) for fn in os.listdir(p.path)]
+
+	elif p.scheme == "rsync":
+		rsync_fn_size_re = re.compile(r'.*    ([^ ]*) [^ ]* [^ ]* (.*)')
+		rsync_target = '{host}:{path}'
+
+		_, target_host, target_path = config['target'].split('//')
+		target_path = '/' + target_path
+		if not target_path.endswith('/'):
+			target_path += '/'
+
+		rsync_command = [ 'rsync',
+					'-e',
+					'/usr/bin/ssh -i /root/.ssh/id_rsa_miab -oStrictHostKeyChecking=no -oBatchMode=yes',
+					'--list-only',
+					'-r',
+					rsync_target.format(
+						host=target_host,
+						path=target_path)
+				]
+
+		code, listing = shell('check_output', rsync_command, trap=True)
+		if code == 0:
+			ret = []
+			for l in listing.split('\n'):
+				match = rsync_fn_size_re.match(l)
+				if match:
+					ret.append( (match.groups()[1], int(match.groups()[0].replace(',',''))) )
+			return ret
+		else:
+			raise ValueError("Connection to rsync host failed")
 
 	elif p.scheme == "s3":
 		# match to a Region
@@ -425,7 +461,7 @@ def list_target_files(config):
 
 def backup_set_custom(env, target, target_user, target_pass, min_age):
 	config = get_backup_config(env, for_save=True)
-	
+
 	# min_age must be an int
 	if isinstance(min_age, str):
 		min_age = int(min_age)
@@ -443,11 +479,11 @@ def backup_set_custom(env, target, target_user, target_pass, min_age):
 			list_target_files(config)
 	except ValueError as e:
 		return str(e)
-	
+
 	write_backup_config(env, config)
 
 	return "OK"
-	
+
 def get_backup_config(env, for_save=False, for_ui=False):
 	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
 
@@ -482,6 +518,9 @@ def get_backup_config(env, for_save=False, for_ui=False):
 	if config["target"] == "local":
 		# Expand to the full URL.
 		config["target"] = "file://" + config["file_target_directory"]
+	ssh_pub_key = os.path.join('/root', '.ssh', 'id_rsa_miab.pub')
+	if os.path.exists(ssh_pub_key):
+		config["ssh_pub_key"] = open(ssh_pub_key, 'r').read()
 
 	return config
 

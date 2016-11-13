@@ -238,8 +238,22 @@ def get_certificates_to_provision(env, show_extended_problems=True, force_domain
 			except Exception as e:
 				problems[domain] = "DNS isn't configured properly for this domain: DNS lookup had an error: %s." % str(e)
 				return False
-			if len(response) != 1 or str(response[0]) != value:
-				problems[domain] = "Domain control validation cannot be performed for this domain because DNS points the domain to another machine (%s %s)." % (rtype, ", ".join(str(r) for r in response))
+
+			# Unfortunately, the response.__str__ returns bytes
+			# instead of string, if it resulted from an AAAA-query.
+			# We need to convert manually, until this is fixed:
+			# https://github.com/rthalley/dnspython/issues/204
+			#
+			# BEGIN HOTFIX
+			def rdata__str__(r):
+				s = r.to_text()
+				if isinstance(s, bytes):
+					 s = s.decode('utf-8')
+				return s
+			# END HOTFIX
+
+			if len(response) != 1 or rdata__str__(response[0]) != value:
+				problems[domain] = "Domain control validation cannot be performed for this domain because DNS points the domain to another machine (%s %s)." % (rtype, ", ".join(rdata__str__(r) for r in response))
 				return False
 
 		return True
