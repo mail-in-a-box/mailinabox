@@ -85,7 +85,7 @@ InstallOwncloud() {
 	fi
 }
 
-owncloud_ver=9.1.1
+owncloud_ver=9.1.2
 
 # Check if ownCloud dir exist, and check if version matches owncloud_ver (if either doesn't - install/upgrade)
 if [ ! -d /usr/local/lib/owncloud/ ] \
@@ -152,7 +152,7 @@ EOF
 		fi
 	fi
 
-	InstallOwncloud $owncloud_ver 72ed9812432f01b3a459c4afc33f5c76b71eec09
+	InstallOwncloud $owncloud_ver ba9b1cdb681b8a3607d928cbe56f52e3888d9296
 fi
 
 # ### Configuring ownCloud
