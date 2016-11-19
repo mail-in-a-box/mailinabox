@@ -48,7 +48,7 @@ echo "public.pyzor.org:24441" > /etc/spamassassin/pyzor/servers
 # * Disable localmode so Pyzor, DKIM and DNS checks can be used.
 tools/editconf.py /etc/default/spampd \
 	DESTPORT=10026 \
-	ADDOPTS="\"--maxsize=500\"" \
+	ADDOPTS="\"--maxsize=2000\"" \
 	LOCALONLY=0
 
 # Spamassassin normally wraps spam as an attachment inside a fresh
@@ -63,7 +63,8 @@ tools/editconf.py /etc/default/spampd \
 # Tell Spamassassin not to modify the original message except for adding
 # the X-Spam-Status mail header and related headers.
 tools/editconf.py /etc/spamassassin/local.cf -s \
-	report_safe=0
+	report_safe=0 \
+	add_header="all Report _REPORT_"
 
 # Bayesean learning
 # -----------------
