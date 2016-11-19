@@ -15,13 +15,11 @@ Vagrant.configure("2") do |config|
   config.vm.provision :shell, :inline => <<-SH
 	# Set environment variables so that the setup script does
 	# not ask any questions during provisioning. We'll let the
-	# machine figure out its own public IP and it'll take a
-	# subdomain on our justtesting.email domain so we can get
-	# started quickly.
+	# machine figure out its own public IP.
     export NONINTERACTIVE=1
     export PUBLIC_IP=auto
     export PUBLIC_IPV6=auto
-    export PRIMARY_HOSTNAME=auto-easy
+    export PRIMARY_HOSTNAME=auto
     #export SKIP_NETWORK_CHECKS=1
 
     # Start the setup script.

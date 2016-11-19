@@ -180,9 +180,6 @@ if [ "$PUBLIC_IPV6" = "auto" ]; then
 fi
 if [ "$PRIMARY_HOSTNAME" = "auto" ]; then
 	PRIMARY_HOSTNAME=$(get_default_hostname)
-elif [ "$PRIMARY_HOSTNAME" = "auto-easy" ]; then
-	# Generate a probably-unique subdomain under our justtesting.email domain.
-	PRIMARY_HOSTNAME=`echo $PUBLIC_IP | sha1sum | cut -c1-5`.justtesting.email
 fi
 
 # Set STORAGE_USER and STORAGE_ROOT to default values (user-data and /home/user-data), unless
