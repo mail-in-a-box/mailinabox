@@ -4,27 +4,29 @@ CHANGELOG
 In Development
 --------------
 
+This version updates ownCloud, which may include security fixes, and makes some other smaller improvements.
+
+Mail:
+
+* Header privacy filters were improperly running on the contents of forwarded email --- that's fixed.
+* We have another go at fixing a long-standing issue with training the spam filter (because of a file permissions issue).
+* Exchange/ActiveSync will now use your display name set in Roundcube in the From: line of outgoing email.
+
 ownCloud:
 
-* Update ownCloud to version 9.1.1
+* Updated ownCloud to version 9.1.1.
 
 Control panel:
 
 * Backups can now be made using rsync-over-ssh!
-* Remove recommendations for Certificate Providers
 * Status checks failed if the system doesn't support iptables or doesn't have ufw installed.
-* Add support for SSHFP records when sshd listens on non-standard ports
+* Added support for SSHFP records when sshd listens on non-standard ports.
+* Recommendations for TLS certificate providers were removed now that everyone mostly uses Let's Encrypt.
 
 System:
 
 * Ubuntu's "Upgrade to 16.04" notice is suppressed since you should not do that.
-* Lower memory requirements to 512MB, display a warning if system memory is below 768MB.
-
-Mail:
-
-* Turn off header filters for forwarded email.
-* Another go at fixing a long-standing issue with training the spam filter not working (because of a file permissions issue).
-* Exchange/ActiveSync will now use your display name set in Roundcube in the From: line of outgoing email.
+* Lowered memory requirements to 512MB, display a warning if system memory is below 768MB.
 
 v0.20 (September 23, 2016)
 --------------------------
