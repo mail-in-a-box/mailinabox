@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.21 (November 30, 2016)
+-------------------------
 
 This version updates ownCloud, which may include security fixes, and makes some other smaller improvements.
 
