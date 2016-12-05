@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+v0.21b (December 4, 2016)
+-------------------------
+
+This update corrects a first-time installation issue introduced in v0.21 caused by the new Exchange/ActiveSync feature.
+
 v0.21 (November 30, 2016)
 -------------------------
 
