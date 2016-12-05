@@ -162,6 +162,7 @@ chmod 664 $STORAGE_ROOT/mail/users.sqlite
 
 # Run Roundcube database migration script (database is created if it does not exist)
 /usr/local/lib/roundcubemail/bin/updatedb.sh --dir /usr/local/lib/roundcubemail/SQL --package roundcube
+chown www-data:www-data $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 
 # Enable PHP modules.
 php5enmod mcrypt
