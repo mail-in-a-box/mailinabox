@@ -121,7 +121,7 @@ cat > $RCM_CONFIG <<EOF;
 \$config['support_url'] = 'https://mailinabox.email/';
 \$config['product_name'] = '$PRIMARY_HOSTNAME Webmail';
 \$config['des_key'] = '$SECRET_KEY';
-\$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'vacation_sieve', 'persistent_login', 'carddav');
+\$config['plugins'] = array('html5_notifier','enigma', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'vacation_sieve', 'persistent_login', 'carddav');
 \$config['skin'] = 'classic';
 \$config['login_autocomplete'] = 2;
 \$config['password_charset'] = 'UTF-8';
@@ -201,11 +201,14 @@ chown root.www-data $STORAGE_ROOT/mail
 chmod 775 $STORAGE_ROOT/mail
 chown root.www-data $STORAGE_ROOT/mail/users.sqlite
 chmod 664 $STORAGE_ROOT/mail/users.sqlite
+<<<<<<< HEAD
 
 # Fix Carddav permissions:
 chown -f -R root.www-data ${RCM_PLUGIN_DIR}/carddav
 # root.www-data need all permissions, others only read
 chmod -R 774 ${RCM_PLUGIN_DIR}/carddav
+=======
+>>>>>>> adding the enigma plugin to webmail setup script
 
 # Run Roundcube database migration script (database is created if it does not exist)
 ${RCM_DIR}/bin/updatedb.sh --dir ${RCM_DIR}/SQL --package roundcube
