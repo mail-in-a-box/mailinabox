@@ -11,7 +11,7 @@ import dateutil.parser, dateutil.tz
 import idna
 import psutil
 
-from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, get_secondary_dns, get_custom_dns_record
+from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, get_secondary_dns, get_custom_dns_record, retrieve_dkim_record
 from web_update import get_web_domains, get_domains_with_a_records
 from ssl_certificates import get_ssl_certificates, get_domain_ssl_files, check_certificate
 from mailconfig import get_mail_domains, get_mail_aliases
@@ -325,6 +325,20 @@ def run_domain_checks(rounded_time, env, output, pool):
 	for domain in sort_domains(ret, env):
 		ret[domain].playback(output)
 
+	run_custom_domain_checks(env, output)
+
+def run_custom_domain_checks(env, output):
+	header_pending = True
+	for qname, rtype, value in get_custom_dns_config(env):
+		if header_pending:
+			output.add_heading("Custom")
+			header_pending = False
+		result = query_dns(qname, rtype).replace('" "', '')
+		if value == result or '"' + value + '"' in result:
+			output.print_ok("Custom %s record is set correctly. [%s ↦ %s]" % (rtype, qname, value))
+		else:
+			output.print_warning("Custom %s record should be set to [%s ↦ %s]" % (rtype, qname, value))
+
 def run_domain_checks_on_domain(domain, rounded_time, env, dns_domains, dns_zonefiles, mail_domains, web_domains, domains_with_a_records):
 	output = BufferedOutput()
 
@@ -354,6 +368,9 @@ def run_domain_checks_on_domain(domain, rounded_time, env, dns_domains, dns_zone
 
 	if domain in dns_domains:
 		check_dns_zone_suggestions(domain, env, output, dns_zonefiles, domains_with_a_records)
+
+	if check_deliverability_domain(domain, domain in mail_domains, env, output):
+		output.print_ok("Domain's SPF and DMARC records are set up correctly.")
 
 	return (domain, output)
 
@@ -414,6 +431,10 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 	else:
 		output.print_error("""Your box's reverse DNS is currently %s (IPv4) and %s (IPv6), but it should be %s. Your ISP or cloud provider will have instructions
 			on setting up reverse DNS for your box.""" % (existing_rdns_v4, existing_rdns_v6, domain) )
+
+	# ensure our nameservers aren't deliverable
+	if check_deliverability_domain('ns1.' + domain, False, env, output) and check_deliverability_domain('ns2.' + domain, False, env, output):
+		output.print_ok("Root nameservers prevent delivery with SPF and DMARC records.")
 
 	# Check the TLSA record.
 	tlsa_qname = "_25._tcp." + domain
@@ -631,6 +652,34 @@ def check_mail_domain(domain, env, output):
 			which may prevent recipients from receiving your mail.
 			See http://www.spamhaus.org/dbl/ and http://www.spamhaus.org/query/domain/%s.""" % (dbl, domain))
 
+	if domain == env["PRIMARY_HOSTNAME"]:
+		if check_dkim_domain(domain, env, output):
+			output.print_ok("Domain's DKIM record is set correctly.")
+	else:
+		if check_dkim_domain(domain, env, output) and check_dav_domain("cal", domain, env, output) and check_dav_domain("card", domain, env, output):
+			output.print_ok("Domain's DKIM, caldav, and carddav records are set correctly.")
+
+def check_dkim_domain(domain, env, output):
+	# ensure the DKIM keys are correct for this domain
+	dkim_domain = 'mail._domainkey.' + domain
+	m, val = retrieve_dkim_record(env)
+	# it appears dnspython doesn't join long lines so we'll do it with a replace statement
+	# https://github.com/rthalley/dnspython/blob/master/dns/rdtypes/txtbase.py#L42
+	dkim = query_dns(dkim_domain, "TXT").replace('" "', '')
+	if dkim == '"' + val + '"':
+		return True
+	else:
+		output.print_warning("Domain's DKIM record is not set to [%s ↦ %s]" % (dkim_domain, val))
+
+def check_dav_domain(dav, domain, env, output):
+	dav_domain = "_" + dav + "davs._tcp." + domain
+	expected = "0 0 443 " + env["PRIMARY_HOSTNAME"]
+	values = query_dns(dav_domain, "SRV")
+	if expected == values:
+		return True
+	else:
+		output.print_warning("This domain should set a %sdav record: %s ↦ %s" % (dav, dav_domain, expected))
+
 def check_web_domain(domain, rounded_time, ssl_certificates, env, output):
 	# See if the domain's A record resolves to our PUBLIC_IP. This is already checked
 	# for PRIMARY_HOSTNAME, for which it is required for mail specifically. For it and
@@ -656,6 +705,27 @@ def check_web_domain(domain, rounded_time, ssl_certificates, env, output):
 	# user will log in with IMAP or webmail. Any other domain we serve a
 	# website for also needs a signed certificate.
 	check_ssl_cert(domain, rounded_time, ssl_certificates, env, output)
+
+def check_deliverability_domain(domain, deliverable, env, output):
+	result = True  # returns True if everything is set up OK
+	action = 'allow' if deliverable else 'prevent'
+
+	# Ensure the SPF record for this domain either allows or prevents email
+	expected = "\"v=spf1 %s-all\"" % ('mx ' if deliverable else '')
+	values = query_dns(domain, "TXT").split('; ')
+	if expected not in values:
+		output.print_warning("This domain should %s mail delivery by setting a TXT record. [%s ↦ %s]" % (action, domain, expected))
+		result = False
+
+	# ensure the DMARC record specifies the correct action
+	dmarc_domain = '_dmarc.' + domain
+	values = query_dns(dmarc_domain, "TXT")
+	expected = "\"v=DMARC1; p=%s\"" % ('quarantine' if deliverable else 'reject')
+	if expected != values:
+		output.print_warning("This domain should %s mail delivery by setting a DMARC record. [%s ↦ %s]" % (action, dmarc_domain, expected))
+		result = False
+
+	return result
 
 def query_dns(qname, rtype, nxdomain='[Not Set]', at=None):
 	# Make the qname absolute by appending a period. Without this, dns.resolver.query
