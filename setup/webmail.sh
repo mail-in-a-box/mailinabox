@@ -39,7 +39,17 @@ HASH=81fbfba4683522f6e54006d0300a48e6da3f3bbd
 VACATION_SIEVE_VERSION=91ea6f52216390073d1f5b70b5f6bea0bfaee7e5
 PERSISTENT_LOGIN_VERSION=1e9d724476a370ce917a2fcd5b3217b0c306c24e
 HTML5_NOTIFIER_VERSION=4b370e3cd60dabd2f428a26f45b677ad1b7118d5
-UPDATE_KEY=$VERSION:$VACATION_SIEVE_VERSION:$PERSISTENT_LOGIN_VERSION:$HTML5_NOTIFIER_VERSION:a
+CARDDAV_VERSION=2.0.4
+# sha1sum of the rcmcarddav plugin release
+CARDDAV_HASH=d93f3cfb3038a519e71c7c3212c1d16f5da609a4
+
+UPDATE_KEY=$VERSION:$VACATION_SIEVE_VERSION:$PERSISTENT_LOGIN_VERSION:$HTML5_NOTIFIER_VERSION:$CARDDAV_VERSION:a
+
+# paths that are often reused.
+RCM_DIR=/usr/local/lib/roundcubemail
+RCM_PLUGIN_DIR=${RCM_DIR}/plugins
+RCM_CONFIG=${RCM_DIR}/config/config.inc.php
+
 needs_update=0 #NODOC
 if [ ! -f /usr/local/lib/roundcubemail/version ]; then
 	# not installed yet #NODOC
@@ -56,20 +66,30 @@ if [ $needs_update == 1 ]; then
 		/tmp/roundcube.tgz
 	tar -C /usr/local/lib --no-same-owner -zxf /tmp/roundcube.tgz
 	rm -rf /usr/local/lib/roundcubemail
-	mv /usr/local/lib/roundcubemail-$VERSION/ /usr/local/lib/roundcubemail
+	mv /usr/local/lib/roundcubemail-$VERSION/ $RCM_DIR
 	rm -f /tmp/roundcube.tgz
 
 	# install roundcube autoreply/vacation plugin
-	git_clone https://github.com/arodier/Roundcube-Plugins.git $VACATION_SIEVE_VERSION plugins/vacation_sieve /usr/local/lib/roundcubemail/plugins/vacation_sieve
+	git_clone https://github.com/arodier/Roundcube-Plugins.git $VACATION_SIEVE_VERSION plugins/vacation_sieve ${RCM_PLUGIN_DIR}/vacation_sieve
 
 	# install roundcube persistent_login plugin
-	git_clone https://github.com/mfreiholz/Roundcube-Persistent-Login-Plugin.git $PERSISTENT_LOGIN_VERSION '' /usr/local/lib/roundcubemail/plugins/persistent_login
+	git_clone https://github.com/mfreiholz/Roundcube-Persistent-Login-Plugin.git $PERSISTENT_LOGIN_VERSION '' ${RCM_PLUGIN_DIR}/persistent_login
 
 	# install roundcube html5_notifier plugin
-	git_clone https://github.com/kitist/html5_notifier.git $HTML5_NOTIFIER_VERSION '' /usr/local/lib/roundcubemail/plugins/html5_notifier
+	git_clone https://github.com/kitist/html5_notifier.git $HTML5_NOTIFIER_VERSION '' ${RCM_PLUGIN_DIR}/html5_notifier
+
+	# download and verify the full release of the carddav plugin
+	wget_verify \
+		https://github.com/blind-coder/rcmcarddav/releases/download/v${CARDDAV_VERSION}/carddav-${CARDDAV_VERSION}.zip \
+		$CARDDAV_HASH \
+		/tmp/carddav.zip
+
+	# unzip and cleanup
+	unzip -q /tmp/carddav.zip -d ${RCM_PLUGIN_DIR}
+	rm -f /tmp/carddav.zip
 
 	# record the version we've installed
-	echo $UPDATE_KEY > /usr/local/lib/roundcubemail/version
+	echo $UPDATE_KEY > ${RCM_DIR}/version
 fi
 
 # ### Configuring Roundcube
@@ -82,7 +102,7 @@ SECRET_KEY=$(dd if=/dev/urandom bs=1 count=18 2>/dev/null | base64 | fold -w 24 
 # For security, temp and log files are not stored in the default locations
 # which are inside the roundcube sources directory. We put them instead
 # in normal places.
-cat > /usr/local/lib/roundcubemail/config/config.inc.php <<EOF;
+cat > $RCM_CONFIG <<EOF;
 <?php
 /*
  * Do not edit. Written by Mail-in-a-Box. Regenerated on updates.
@@ -101,12 +121,34 @@ cat > /usr/local/lib/roundcubemail/config/config.inc.php <<EOF;
 \$config['support_url'] = 'https://mailinabox.email/';
 \$config['product_name'] = '$PRIMARY_HOSTNAME Webmail';
 \$config['des_key'] = '$SECRET_KEY';
-\$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'vacation_sieve', 'persistent_login');
+\$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'vacation_sieve', 'persistent_login', 'carddav');
 \$config['skin'] = 'classic';
 \$config['login_autocomplete'] = 2;
 \$config['password_charset'] = 'UTF-8';
 \$config['junk_mbox'] = 'Spam';
 ?>
+EOF
+
+# Configure CardDav
+cat > ${RCM_PLUGIN_DIR}/carddav/config.inc.php <<EOF;
+<?php
+/* Do not edit. Written by Mail-in-a-Box. Regenerated on updates. */
+\$prefs['ownCloud'] = array(
+	 // required attributes
+	 'name'         =>  'ownCloud',
+	 // will be substituted for the roundcube username
+	 'username'     =>  '%u',
+	 // will be substituted for the roundcube password
+	 'password'     =>  '%p',
+	 // %u will be substituted for the CardDAV username
+	 'url'          =>  'https://${PRIMARY_HOSTNAME}/cloud/remote.php/carddav/addressbooks/%u/contacts',
+	 'active'       =>  true,
+	 'readonly'     =>  false,
+	 'refresh_time' => '02:00:00',
+	 'fixed'        =>  array('username','password'),
+	 'preemptive_auth' => '1',
+	 'hide'        =>  false,
+);
 EOF
 
 # Configure vaction_sieve.
@@ -137,12 +179,12 @@ chown -R www-data.www-data /var/log/roundcubemail /tmp/roundcubemail $STORAGE_RO
 sudo -u www-data touch /var/log/roundcubemail/errors
 
 # Password changing plugin settings
-# The config comes empty by default, so we need the settings 
+# The config comes empty by default, so we need the settings
 # we're not planning to change in config.inc.dist...
-cp /usr/local/lib/roundcubemail/plugins/password/config.inc.php.dist \
-	/usr/local/lib/roundcubemail/plugins/password/config.inc.php
+cp ${RCM_PLUGIN_DIR}/password/config.inc.php.dist \
+	${RCM_PLUGIN_DIR}/password/config.inc.php
 
-tools/editconf.py /usr/local/lib/roundcubemail/plugins/password/config.inc.php \
+tools/editconf.py ${RCM_PLUGIN_DIR}/password/config.inc.php \
 	"\$config['password_minimum_length']=6;" \
 	"\$config['password_db_dsn']='sqlite:///$STORAGE_ROOT/mail/users.sqlite';" \
 	"\$config['password_query']='UPDATE users SET password=%D WHERE email=%u';" \
@@ -157,11 +199,16 @@ usermod -a -G dovecot www-data
 # could use dovecot instead of www-data, but not sure it matters
 chown root.www-data $STORAGE_ROOT/mail
 chmod 775 $STORAGE_ROOT/mail
-chown root.www-data $STORAGE_ROOT/mail/users.sqlite 
-chmod 664 $STORAGE_ROOT/mail/users.sqlite 
+chown root.www-data $STORAGE_ROOT/mail/users.sqlite
+chmod 664 $STORAGE_ROOT/mail/users.sqlite
+
+# Fix Carddav permissions:
+chown -f -R root.www-data ${RCM_PLUGIN_DIR}/carddav
+# root.www-data need all permissions, others only read
+chmod -R 774 ${RCM_PLUGIN_DIR}/carddav
 
 # Run Roundcube database migration script (database is created if it does not exist)
-/usr/local/lib/roundcubemail/bin/updatedb.sh --dir /usr/local/lib/roundcubemail/SQL --package roundcube
+${RCM_DIR}/bin/updatedb.sh --dir ${RCM_DIR}/SQL --package roundcube
 chown www-data:www-data $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 chmod 664 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 
