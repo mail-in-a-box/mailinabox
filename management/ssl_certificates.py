@@ -426,7 +426,7 @@ def provision_certificates_cmdline():
 	if args and args[0] == "-v":
 		verbose = True
 		args.pop(0)
-	if args and args[0] == "q":
+	if args and args[0] == "-q":
 		show_extended_problems = False
 		args.pop(0)
 	if args and args[0] == "--headless":
