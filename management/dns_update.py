@@ -881,10 +881,10 @@ def set_secondary_dns(hostnames, env):
 	return do_dns_update(env)
 
 
-def get_custom_dns_record(custom_dns, qname, rtype):
+def get_custom_dns_records(custom_dns, qname, rtype):
 	for qname1, rtype1, value in custom_dns:
 		if qname1 == qname and rtype1 == rtype:
-			return value
+			yield value
 	return None
 
 ########################################################################

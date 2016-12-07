@@ -11,7 +11,7 @@ import dateutil.parser, dateutil.tz
 import idna
 import psutil
 
-from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, get_secondary_dns, get_custom_dns_record
+from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, get_secondary_dns, get_custom_dns_records
 from web_update import get_web_domains, get_domains_with_a_records
 from ssl_certificates import get_ssl_certificates, get_domain_ssl_files, check_certificate
 from mailconfig import get_mail_domains, get_mail_aliases
@@ -459,7 +459,7 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 	# half working.)
 
 	custom_dns_records = list(get_custom_dns_config(env)) # generator => list so we can reuse it
-	correct_ip = get_custom_dns_record(custom_dns_records, domain, "A") or env['PUBLIC_IP']
+	correct_ip = "; ".join(sorted(get_custom_dns_records(custom_dns_records, domain, "A"))) or env['PUBLIC_IP']
 	custom_secondary_ns = get_secondary_dns(custom_dns_records, mode="NS")
 	secondary_ns = custom_secondary_ns or ["ns2." + env['PRIMARY_HOSTNAME']]
 
