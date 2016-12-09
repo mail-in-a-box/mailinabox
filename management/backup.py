@@ -382,21 +382,21 @@ def run_duplicity_restore(args):
 def list_target_files(config):
 	import urllib.parse
 	try:
-		p = urllib.parse.urlparse(config["target"])
+		target = urllib.parse.urlparse(config["target"])
 	except ValueError:
 		return "invalid target"
 
-	if p.scheme == "file":
-		return [(fn, os.path.getsize(os.path.join(p.path, fn))) for fn in os.listdir(p.path)]
+	if target.scheme == "file":
+		return [(fn, os.path.getsize(os.path.join(target.path, fn))) for fn in os.listdir(target.path)]
 
-	elif p.scheme == "rsync":
+	elif target.scheme == "rsync":
 		rsync_fn_size_re = re.compile(r'.*    ([^ ]*) [^ ]* [^ ]* (.*)')
 		rsync_target = '{host}:{path}'
 
-		_, target_host, target_path = config['target'].split('//')
-		target_path = '/' + target_path
-		if not target_path.endswith('/'):
-			target_path += '/'
+		if not target.path.endswith('/'):
+			target_path = target.path + '/'
+		if target.path.startswith('/'):
+			target_path = target.path[1:]
 
 		rsync_command = [ 'rsync',
 					'-e',
@@ -404,7 +404,7 @@ def list_target_files(config):
 					'--list-only',
 					'-r',
 					rsync_target.format(
-						host=target_host,
+						host=target.netloc,
 						path=target_path)
 				]
 
@@ -419,19 +419,19 @@ def list_target_files(config):
 		else:
 			raise ValueError("Connection to rsync host failed")
 
-	elif p.scheme == "s3":
+	elif target.scheme == "s3":
 		# match to a Region
 		fix_boto() # must call prior to importing boto
 		import boto.s3
 		from boto.exception import BotoServerError
 		for region in boto.s3.regions():
-			if region.endpoint == p.hostname:
+			if region.endpoint == target.hostname:
 				break
 		else:
 			raise ValueError("Invalid S3 region/host.")
 
-		bucket = p.path[1:].split('/')[0]
-		path = '/'.join(p.path[1:].split('/')[1:]) + '/'
+		bucket = target.path[1:].split('/')[0]
+		path = '/'.join(target.path[1:].split('/')[1:]) + '/'
 
 		# If no prefix is specified, set the path to '', otherwise boto won't list the files
 		if path == '/':
