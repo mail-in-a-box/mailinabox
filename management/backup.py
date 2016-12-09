@@ -408,7 +408,7 @@ def list_target_files(config):
 						path=target_path)
 				]
 
-		code, listing = shell('check_output', rsync_command, trap=True)
+		code, listing = shell('check_output', rsync_command, trap=True, capture_stderr=True)
 		if code == 0:
 			ret = []
 			for l in listing.split('\n'):
@@ -417,7 +417,19 @@ def list_target_files(config):
 					ret.append( (match.groups()[1], int(match.groups()[0].replace(',',''))) )
 			return ret
 		else:
-			raise ValueError("Connection to rsync host failed")
+			if 'Permission denied (publickey).' in listing:
+				reason = "Invalid user or check you correctly copied the SSH key."
+			elif 'No such file or directory' in listing:
+				reason = "Provided path {} is invalid.".format(target_path)
+			elif 'Network is unreachable' in listing:
+				reason = "The IP address {} is unreachable.".format(target.hostname)
+			elif 'Could not resolve hostname':
+				reason = "The hostname {} cannot be resolved.".format(target.hostname)
+			else:
+				reason = "Unknown error." \
+						"Please check running 'python management/backup.py --verify'" \
+						"from mailinabox sources to debug the issue."
+			raise ValueError("Connection to rsync host failed: {}".format(reason))
 
 	elif target.scheme == "s3":
 		# match to a Region
