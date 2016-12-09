@@ -548,6 +548,12 @@ if __name__ == "__main__":
 		# are readable, and b) report if they are up to date.
 		run_duplicity_verification()
 
+	elif sys.argv[-1] == "--list":
+		# Run duplicity's verification command to check a) the backup files
+		# are readable, and b) report if they are up to date.
+		for fn, size in list_target_files(get_backup_config(load_environment())):
+			print("{}\t{}".format(fn, size))
+
 	elif sys.argv[-1] == "--status":
 		# Show backup status.
 		ret = backup_status(load_environment())
