@@ -393,8 +393,11 @@ def list_target_files(config):
 		rsync_fn_size_re = re.compile(r'.*    ([^ ]*) [^ ]* [^ ]* (.*)')
 		rsync_target = '{host}:{path}'
 
-		_, target_host, target_path = config['target'].split('//')
-		target_path = '/' + target_path
+		## _, target_host, target_path = config['target'].split('//')
+		target_host = p.netloc
+		target_path = p.path
+		if not target_path.startswith('/'):
+			target_path = '/' + target_path
 		if not target_path.endswith('/'):
 			target_path += '/'
 
