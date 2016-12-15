@@ -8,9 +8,9 @@ start-up a vagrant box
 
     vagrant up
 
-install pytest
+install test requirements
 
-    pip install pytest
+    pip install pytest caldav
 
 run the tests
 

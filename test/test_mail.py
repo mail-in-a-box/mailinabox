@@ -1,5 +1,4 @@
 from time import sleep
-import uuid
 import requests
 import os
 import pytest
@@ -9,12 +8,13 @@ import smtplib
 from email.mime.text import MIMEText
 
 from settings import *
+from common import random_id
 
 
 def new_message(from_email, to_email):
     """Creates an email (headers & body) with a random subject"""
     msg = MIMEText('Testing')
-    msg['Subject'] = uuid.uuid4().hex[:8]
+    msg['Subject'] = random_id()
     msg['From'] = from_email
     msg['To'] = to_email
     return msg.as_string(), msg['subject']
