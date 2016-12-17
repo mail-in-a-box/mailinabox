@@ -319,3 +319,7 @@ cp -f conf/fail2ban/filter.d/* /etc/fail2ban/filter.d/
 # scripts will ensure the files exist and then fail2ban is given another
 # restart at the very end of setup.
 restart_service fail2ban
+
+# Guard against IP Spoofing in the host.conf file
+# see http://www.tldp.org/LDP/nag/node82.html
+grep -q -F 'nospoof on' host.conf || echo 'nospoof on' >> host.conf
