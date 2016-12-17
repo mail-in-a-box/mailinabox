@@ -382,21 +382,21 @@ def run_duplicity_restore(args):
 def list_target_files(config):
 	import urllib.parse
 	try:
-		p = urllib.parse.urlparse(config["target"])
+		target = urllib.parse.urlparse(config["target"])
 	except ValueError:
 		return "invalid target"
 
-	if p.scheme == "file":
-		return [(fn, os.path.getsize(os.path.join(p.path, fn))) for fn in os.listdir(p.path)]
+	if target.scheme == "file":
+		return [(fn, os.path.getsize(os.path.join(target.path, fn))) for fn in os.listdir(target.path)]
 
-	elif p.scheme == "rsync":
+	elif target.scheme == "rsync":
 		rsync_fn_size_re = re.compile(r'.*    ([^ ]*) [^ ]* [^ ]* (.*)')
 		rsync_target = '{host}:{path}'
 
-		_, target_host, target_path = config['target'].split('//')
-		target_path = '/' + target_path
-		if not target_path.endswith('/'):
-			target_path += '/'
+		if not target.path.endswith('/'):
+			target_path = target.path + '/'
+		if target.path.startswith('/'):
+			target_path = target.path[1:]
 
 		rsync_command = [ 'rsync',
 					'-e',
@@ -404,11 +404,11 @@ def list_target_files(config):
 					'--list-only',
 					'-r',
 					rsync_target.format(
-						host=target_host,
+						host=target.netloc,
 						path=target_path)
 				]
 
-		code, listing = shell('check_output', rsync_command, trap=True)
+		code, listing = shell('check_output', rsync_command, trap=True, capture_stderr=True)
 		if code == 0:
 			ret = []
 			for l in listing.split('\n'):
@@ -417,21 +417,33 @@ def list_target_files(config):
 					ret.append( (match.groups()[1], int(match.groups()[0].replace(',',''))) )
 			return ret
 		else:
-			raise ValueError("Connection to rsync host failed")
+			if 'Permission denied (publickey).' in listing:
+				reason = "Invalid user or check you correctly copied the SSH key."
+			elif 'No such file or directory' in listing:
+				reason = "Provided path {} is invalid.".format(target_path)
+			elif 'Network is unreachable' in listing:
+				reason = "The IP address {} is unreachable.".format(target.hostname)
+			elif 'Could not resolve hostname':
+				reason = "The hostname {} cannot be resolved.".format(target.hostname)
+			else:
+				reason = "Unknown error." \
+						"Please check running 'python management/backup.py --verify'" \
+						"from mailinabox sources to debug the issue."
+			raise ValueError("Connection to rsync host failed: {}".format(reason))
 
-	elif p.scheme == "s3":
+	elif target.scheme == "s3":
 		# match to a Region
 		fix_boto() # must call prior to importing boto
 		import boto.s3
 		from boto.exception import BotoServerError
 		for region in boto.s3.regions():
-			if region.endpoint == p.hostname:
+			if region.endpoint == target.hostname:
 				break
 		else:
 			raise ValueError("Invalid S3 region/host.")
 
-		bucket = p.path[1:].split('/')[0]
-		path = '/'.join(p.path[1:].split('/')[1:]) + '/'
+		bucket = target.path[1:].split('/')[0]
+		path = '/'.join(target.path[1:].split('/')[1:]) + '/'
 
 		# If no prefix is specified, set the path to '', otherwise boto won't list the files
 		if path == '/':
@@ -535,6 +547,12 @@ if __name__ == "__main__":
 		# Run duplicity's verification command to check a) the backup files
 		# are readable, and b) report if they are up to date.
 		run_duplicity_verification()
+
+	elif sys.argv[-1] == "--list":
+		# Run duplicity's verification command to check a) the backup files
+		# are readable, and b) report if they are up to date.
+		for fn, size in list_target_files(get_backup_config(load_environment())):
+			print("{}\t{}".format(fn, size))
 
 	elif sys.argv[-1] == "--status":
 		# Show backup status.
