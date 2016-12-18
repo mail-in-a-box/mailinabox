@@ -30,8 +30,6 @@ and there needs to be at least one assert statement.
 
 TODO
 =====
-* calendar
-* contacts
 * dns
 
 
