@@ -10,7 +10,7 @@ start-up a vagrant box
 
 install test requirements
 
-    pip install pytest caldav
+    pip install pytest caldav pycarddav
 
 run the tests
 

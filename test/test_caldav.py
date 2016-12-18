@@ -7,7 +7,7 @@ from common import random_id
 
 
 def connect():
-    url = "https://" + TEST_DOMAIN + "/cloud/remote.php/dav/calendars/me@mailinabox.lan/personal/"
+    url = "https://" + TEST_DOMAIN + "/cloud/remote.php/dav/calendars/" + TEST_ADDRESS + "/personal/"
     client = caldav.DAVClient(url, username=TEST_ADDRESS, password=TEST_PASSWORD, ssl_verify_cert=False)
     principal = client.principal()
     calendars = principal.calendars()
