@@ -18,9 +18,10 @@ def new_message(from_email, to_email):
     msg['From'] = from_email
     msg['To'] = to_email
     return msg.as_string(), msg['subject']
+    
 
 
-def assert_imap_received(subject):
+def check_imap_received(subject):
     """Connects with IMAP and asserts the existence of an email, then deletes it"""
 
     sleep(3)
@@ -30,15 +31,16 @@ def assert_imap_received(subject):
     m.login(TEST_ADDRESS, TEST_PASSWORD)
     m.select()
 
-    # Assert the message exists
+    # check the message exists
     typ, data = m.search(None, '(SUBJECT \"{}\")'.format(subject))
-    assert len(data[0].split()) == 1
-
-    # Delete it & logout
-    m.store(data[0].strip(), '+FLAGS', '\\Deleted')
-    m.expunge()
+    res = len(data[0].split()) == 1
+    
+    if res:
+        m.store(data[0].strip(), '+FLAGS', '\\Deleted')
+        m.expunge()
     m.close()
     m.logout()
+    return res
 
 
 def assert_pop3_received(subject):
@@ -81,7 +83,7 @@ def test_smtps():
     s.login(TEST_ADDRESS, TEST_PASSWORD)
     s.sendmail(TEST_ADDRESS, [TEST_ADDRESS], msg)
     s.quit()
-    assert_imap_received(subject)
+    assert check_imap_received(subject)
 
 
 def test_smtps_tag():
@@ -93,7 +95,7 @@ def test_smtps_tag():
     s.login(TEST_ADDRESS, TEST_PASSWORD)
     s.sendmail(TEST_ADDRESS, [mail_address], msg)
     s.quit()
-    assert_imap_received(subject)
+    assert check_imap_received(subject)
 
 
 def test_smtps_requires_auth():
@@ -117,7 +119,7 @@ def test_smtp():
     s = smtplib.SMTP(TEST_DOMAIN, 25)
     s.sendmail(TEST_SENDER, [TEST_ADDRESS], msg)
     s.quit()
-    assert_imap_received(subject)
+    assert check_imap_received(subject)
 
 
 def test_smtp_tls():
@@ -127,7 +129,7 @@ def test_smtp_tls():
     s.starttls()
     s.sendmail(TEST_SENDER, [TEST_ADDRESS], msg)
     s.quit()
-    assert_imap_received(subject)
+    assert check_imap_received(subject)
 
 
 # FIXME
@@ -193,7 +195,7 @@ def test_smtp_headers():
 
 
 def test_pop3s():
-    """Connects with POP3S and asserts the existance of an email, then deletes it"""
+    """Connects with POP3S and asserts the existance of an email"""
     msg, subject = new_message(TEST_ADDRESS, TEST_ADDRESS)
     s = smtplib.SMTP(TEST_DOMAIN, 587)
     s.starttls()
