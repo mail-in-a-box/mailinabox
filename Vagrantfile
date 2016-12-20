@@ -9,7 +9,7 @@ Vagrant.configure("2") do |config|
   # to the public web. However, we currently don't want to expose SSH since
   # the machine's box will let anyone log into it. So instead we'll put the
   # machine on a private network.
-  config.vm.hostname = "mailinabox"
+  config.vm.hostname = "mailinabox.lan"
   config.vm.network "private_network", ip: "192.168.50.4"
 
   config.vm.provision :shell, :inline => <<-SH
