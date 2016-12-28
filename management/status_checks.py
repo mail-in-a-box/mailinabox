@@ -704,6 +704,7 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None):
 		s = r.to_text()
 		if isinstance(s, bytes):
 			s = s.decode('utf-8')
+		s = str(ipaddress.ip_address(s))
 		response_new.append(s)
 	
 	response = response_new
