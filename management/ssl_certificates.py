@@ -256,6 +256,7 @@ def get_certificates_to_provision(env, show_extended_problems=True, force_domain
 
 			if len(response) != 1 or rdata__str__(response[0]) != value:
 				problems[domain] = "Domain control validation cannot be performed for this domain because DNS points the domain to another machine (%s %s)." % (rtype, ", ".join(rdata__str__(r) for r in response))
+				print(value)
 				return False
 
 		return True
