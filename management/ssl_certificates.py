@@ -6,6 +6,7 @@ import os, os.path, re, shutil
 from utils import shell, safe_domain_name, sort_domains
 
 import idna
+import ipaddress
 
 # SELECTING SSL CERTIFICATES FOR USE IN WEB
 
@@ -249,6 +250,7 @@ def get_certificates_to_provision(env, show_extended_problems=True, force_domain
 				s = r.to_text()
 				if isinstance(s, bytes):
 					 s = s.decode('utf-8')
+				s = str(ipaddress.ip_address(s))
 				return s
 			# END HOTFIX
 

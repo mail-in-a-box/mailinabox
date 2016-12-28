@@ -10,6 +10,7 @@ import dns.reversename, dns.resolver
 import dateutil.parser, dateutil.tz
 import idna
 import psutil
+import ipaddress
 
 from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, get_secondary_dns, get_custom_dns_records
 from web_update import get_web_domains, get_domains_with_a_records
@@ -700,10 +701,11 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None):
 	# BEGIN HOTFIX
 	response_new = []
 	for r in response:
-	        if isinstance(r.to_text(), bytes):
-	                response_new.append(r.to_text().decode('utf-8'))
-	        else:
-	                response_new.append(r)
+		s = r.to_text()
+		if isinstance(s, bytes):
+			 s = s.decode('utf-8')
+		s = str(ipaddress.ip_address(s))
+        response_new.append(s)
 	response = response_new
 	# END HOTFIX
 
