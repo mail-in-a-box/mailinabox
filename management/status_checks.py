@@ -430,7 +430,7 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 	else:
 		output.print_error("""The DANE TLSA record for incoming mail (%s) is not correct. It is '%s' but it should be '%s'.
 			It may take several hours for public DNS to update after a change."""
-                        % (tlsa_qname, tlsa25, tlsa25_expected))
+						% (tlsa_qname, tlsa25, tlsa25_expected))
 
 	# Check that the hostmaster@ email address exists.
 	check_alias_exists("Hostmaster contact address", "hostmaster@" + domain, env, output)
@@ -705,7 +705,7 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None):
 		if isinstance(s, bytes):
 			 s = s.decode('utf-8')
 		s = str(ipaddress.ip_address(s))
-        response_new.append(s)
+		response_new.append(s)
 	response = response_new
 	# END HOTFIX
 
