@@ -6,7 +6,6 @@ import os, os.path, re, shutil
 from utils import shell, safe_domain_name, sort_domains
 
 import idna
-import ipaddress
 
 # SELECTING SSL CERTIFICATES FOR USE IN WEB
 
@@ -250,11 +249,10 @@ def get_certificates_to_provision(env, show_extended_problems=True, force_domain
 				s = r.to_text()
 				if isinstance(s, bytes):
 					 s = s.decode('utf-8')
-				s = str(ipaddress.ip_address(s))
 				return s
 			# END HOTFIX
 
-			if len(response) != 1 or rdata__str__(response[0]) != value:
+			if len(response) != 1 or normalize_ip(rdata__str__(response[0])) != normalize_ip(value):
 				problems[domain] = "Domain control validation cannot be performed for this domain because DNS points the domain to another machine (%s %s)." % (rtype, ", ".join(rdata__str__(r) for r in response))
 				return False
 
@@ -803,6 +801,10 @@ def get_certificate_domains(cert):
 		pass
 
 	return names, cn
+
+def normalize_ip(ip):
+	import ipaddress
+	return str(ipaddress.ip_address(ip))
 
 if __name__  == "__main__":
 	# Provision certificates.

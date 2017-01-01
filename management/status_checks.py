@@ -10,7 +10,6 @@ import dns.reversename, dns.resolver
 import dateutil.parser, dateutil.tz
 import idna
 import psutil
-import ipaddress
 
 from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, get_secondary_dns, get_custom_dns_records
 from web_update import get_web_domains, get_domains_with_a_records
@@ -394,7 +393,7 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 
 	# Check that PRIMARY_HOSTNAME resolves to PUBLIC_IP[V6] in public DNS.
 	ipv6 = query_dns(domain, "AAAA") if env.get("PUBLIC_IPV6") else None
-	if ip == env['PUBLIC_IP'] and ipv6 in (None, env['PUBLIC_IPV6']):
+	if ip == env['PUBLIC_IP'] and normalize_ip(ipv6) in (None, normalize_ip(env['PUBLIC_IPV6'])):
 		output.print_ok("Domain resolves to box's IP address. [%s ↦ %s]" % (env['PRIMARY_HOSTNAME'], my_ips))
 	else:
 		output.print_error("""This domain must resolve to your box's IP address (%s) in public DNS but it currently resolves
@@ -704,7 +703,6 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None):
 		s = r.to_text()
 		if isinstance(s, bytes):
 			s = s.decode('utf-8')
-		s = str(ipaddress.ip_address(s))
 		response_new.append(s)
 	
 	response = response_new
@@ -885,6 +883,10 @@ def run_and_output_changes(env, pool):
 	os.makedirs(os.path.dirname(cache_fn), exist_ok=True)
 	with open(cache_fn, "w") as f:
 		json.dump(cur.buf, f, indent=True)
+
+def normalize_ip(ip):
+	import ipaddress
+	return str(ipaddress.ip_address(ip))
 
 class FileOutput:
 	def __init__(self, buf, width):
