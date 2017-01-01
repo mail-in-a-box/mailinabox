@@ -10,8 +10,9 @@
 import os, os.path, shutil, glob, re, datetime, sys
 import dateutil.parser, dateutil.relativedelta, dateutil.tz
 import rtyaml
+from exclusiveprocess import Lock
 
-from utils import exclusive_process, load_environment, shell, wait_for_service, fix_boto
+from utils import load_environment, shell, wait_for_service, fix_boto
 
 rsync_ssh_options = [
 	"--ssh-options='-i /root/.ssh/id_rsa_miab'",
@@ -204,7 +205,10 @@ def get_target_type(config):
 def perform_backup(full_backup):
 	env = load_environment()
 
-	exclusive_process("backup")
+	# Create an global exclusive lock so that the backup script
+	# cannot be run more than one.
+	Lock(die=True).forever()
+
 	config = get_backup_config(env)
 	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
 	backup_cache_dir = os.path.join(backup_root, 'cache')

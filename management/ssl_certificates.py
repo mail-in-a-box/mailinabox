@@ -411,9 +411,11 @@ def provision_certificates(env, agree_to_tos_url=None, logger=None, show_extende
 
 def provision_certificates_cmdline():
 	import sys
-	from utils import load_environment, exclusive_process
+	from exclusiveprocess import Lock
 
-	exclusive_process("update_tls_certificates")
+	from utils import load_environment
+
+	Lock(die=True).forever()
 	env = load_environment()
 
 	verbose = False
