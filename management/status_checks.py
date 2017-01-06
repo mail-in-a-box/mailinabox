@@ -885,6 +885,7 @@ def run_and_output_changes(env, pool):
 		json.dump(cur.buf, f, indent=True)
 
 def normalize_ip(ip):
+	# Use ipaddress module to normalize the IPv6 notation and ensure we are matching IPv6 addresses written in different representations according to rfc5952.
 	import ipaddress
 	return str(ipaddress.ip_address(ip))
 

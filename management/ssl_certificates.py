@@ -4,7 +4,7 @@
 import os, os.path, re, shutil
 
 from utils import shell, safe_domain_name, sort_domains
-
+from status_checks import normalize_ip
 import idna
 
 # SELECTING SSL CERTIFICATES FOR USE IN WEB
@@ -801,10 +801,6 @@ def get_certificate_domains(cert):
 		pass
 
 	return names, cn
-
-def normalize_ip(ip):
-	import ipaddress
-	return str(ipaddress.ip_address(ip))
 
 if __name__  == "__main__":
 	# Provision certificates.
