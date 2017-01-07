@@ -4,4 +4,3 @@ management/__pycache__/
 tools/__pycache__/
 externals/
 .env
-.vagrant
