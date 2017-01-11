@@ -13,6 +13,7 @@ In Development
 * Fixed bugs in rsync backup method.
 * Added support for DSA and ED25519 SSHFP records.
 * Added support for custom SSHFP records.
+* The management mail_log.py tool has been rewritten.
 
 v0.21c (February 1, 2017)
 -------------------------
