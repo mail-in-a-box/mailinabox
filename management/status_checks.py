@@ -797,7 +797,7 @@ def get_latest_miab_version():
     from socket import timeout
 
     try:
-        return re.search(b'TAG=(.*)', urlopen("https://rinzedelaat.nl//setup.sh?ping=1", timeout=5).read()).group(1).decode("utf8")
+        return re.search(b'TAG=(.*)', urlopen("https://mailinabox.email/setup.sh?ping=1", timeout=5).read()).group(1).decode("utf8")
     except (HTTPError, URLError, timeout):
         return None
 
