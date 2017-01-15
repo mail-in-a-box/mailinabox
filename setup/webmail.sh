@@ -39,6 +39,7 @@ HASH=81fbfba4683522f6e54006d0300a48e6da3f3bbd
 VACATION_SIEVE_VERSION=91ea6f52216390073d1f5b70b5f6bea0bfaee7e5
 PERSISTENT_LOGIN_VERSION=1e9d724476a370ce917a2fcd5b3217b0c306c24e
 HTML5_NOTIFIER_VERSION=4b370e3cd60dabd2f428a26f45b677ad1b7118d5
+TWOFACTOR_GAUTHENTICATOR_VERSION=2020378f8cfb8349614c72faf1a76f8896653cca
 UPDATE_KEY=$VERSION:$VACATION_SIEVE_VERSION:$PERSISTENT_LOGIN_VERSION:$HTML5_NOTIFIER_VERSION:a
 needs_update=0 #NODOC
 if [ ! -f /usr/local/lib/roundcubemail/version ]; then
@@ -67,6 +68,9 @@ if [ $needs_update == 1 ]; then
 
 	# install roundcube html5_notifier plugin
 	git_clone https://github.com/kitist/html5_notifier.git $HTML5_NOTIFIER_VERSION '' /usr/local/lib/roundcubemail/plugins/html5_notifier
+
+	# install roundcube twofactor_gauthenticator plugin
+	git clone https://github.com/alexandregz/twofactor_gauthenticator.git $TWOFACTOR_GAUTHENTICATOR_VERSION '' /usr/local/lib/roundcubemail/plugins/twofactor_gauthenticator
 
 	# record the version we've installed
 	echo $UPDATE_KEY > /usr/local/lib/roundcubemail/version
@@ -101,7 +105,7 @@ cat > /usr/local/lib/roundcubemail/config/config.inc.php <<EOF;
 \$config['support_url'] = 'https://mailinabox.email/';
 \$config['product_name'] = '$PRIMARY_HOSTNAME Webmail';
 \$config['des_key'] = '$SECRET_KEY';
-\$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'vacation_sieve', 'persistent_login');
+\$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'vacation_sieve', 'persistent_login', 'twofactor_gauthenticator');
 \$config['skin'] = 'classic';
 \$config['login_autocomplete'] = 2;
 \$config['password_charset'] = 'UTF-8';
