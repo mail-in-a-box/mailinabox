@@ -1,6 +1,17 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+* The CardDAV plugin has been added to Roundcube so that your ownCloud contacts are available in webmail.
+* Upgraded to ownCloud 9.1.2.
+* Upgraded to Roundcube 1.2.3.
+* The status checks page crashed when the mailinabox.email website was down - that's fixed.
+* Allow larger messages to be checked by SpamAssassin.
+* Made nightly re-provisioning of TLS certificates less noisy.
+* Fixed bugs in rsync backup method.
+
 v0.21b (December 4, 2016)
 -------------------------
 
