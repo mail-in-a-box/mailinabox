@@ -393,7 +393,7 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 
 	# Check that PRIMARY_HOSTNAME resolves to PUBLIC_IP[V6] in public DNS.
 	ipv6 = query_dns(domain, "AAAA") if env.get("PUBLIC_IPV6") else None
-	if ip == env['PUBLIC_IP'] and ipv6 in (None, env['PUBLIC_IPV6']):
+	if ip == env['PUBLIC_IP'] and normalize_ip(ipv6) in (None, normalize_ip(env['PUBLIC_IPV6'])):
 		output.print_ok("Domain resolves to box's IP address. [%s ↦ %s]" % (env['PRIMARY_HOSTNAME'], my_ips))
 	else:
 		output.print_error("""This domain must resolve to your box's IP address (%s) in public DNS but it currently resolves
@@ -700,10 +700,11 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None):
 	# BEGIN HOTFIX
 	response_new = []
 	for r in response:
-	        if isinstance(r.to_text(), bytes):
-	                response_new.append(r.to_text().decode('utf-8'))
-	        else:
-	                response_new.append(r)
+		s = r.to_text()
+		if isinstance(s, bytes):
+			s = s.decode('utf-8')
+		response_new.append(s)
+	
 	response = response_new
 	# END HOTFIX
 
@@ -889,6 +890,11 @@ def run_and_output_changes(env, pool):
 	os.makedirs(os.path.dirname(cache_fn), exist_ok=True)
 	with open(cache_fn, "w") as f:
 		json.dump(cur.buf, f, indent=True)
+
+def normalize_ip(ip):
+	# Use ipaddress module to normalize the IPv6 notation and ensure we are matching IPv6 addresses written in different representations according to rfc5952.
+	import ipaddress
+	return str(ipaddress.ip_address(ip))
 
 class FileOutput:
 	def __init__(self, buf, width):
