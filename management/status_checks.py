@@ -393,7 +393,7 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 
 	# Check that PRIMARY_HOSTNAME resolves to PUBLIC_IP[V6] in public DNS.
 	ipv6 = query_dns(domain, "AAAA") if env.get("PUBLIC_IPV6") else None
-	if ip == env['PUBLIC_IP'] and normalize_ip(ipv6) in (None, normalize_ip(env['PUBLIC_IPV6'])):
+	if ip == env['PUBLIC_IP'] and not (ipv6 and env['PUBLIC_IPV6'] and normalize_ip(ipv6) != normalize_ip(env['PUBLIC_IPV6'])):
 		output.print_ok("Domain resolves to box's IP address. [%s ↦ %s]" % (env['PRIMARY_HOSTNAME'], my_ips))
 	else:
 		output.print_error("""This domain must resolve to your box's IP address (%s) in public DNS but it currently resolves
