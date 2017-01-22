@@ -116,7 +116,7 @@ apt_get_quiet upgrade
 echo Installing system packages...
 apt_install python3 python3-dev python3-pip \
 	netcat-openbsd wget curl git sudo coreutils bc \
-	haveged pollinate \
+	haveged pollinate unzip \
 	unattended-upgrades cron ntp fail2ban
 
 # ### Suppress Upgrade Prompts
