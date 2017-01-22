@@ -117,7 +117,7 @@ echo Installing system packages...
 apt_install python3 python3-dev python3-pip \
 	netcat-openbsd wget curl git sudo coreutils bc \
 	haveged pollinate unzip \
-	unattended-upgrades cron ntp fail2ban
+	unattended-upgrades cron ntp fail2ban gist
 
 # ### Suppress Upgrade Prompts
 # Since Mail-in-a-Box might jump straight to 18.04 LTS, there's no need
