@@ -45,7 +45,8 @@ touch $TMP_FILE;
 echo >> $TMP_FILE; # newline after status_checks
 
 # all of the commands we want to run.
-declare -a commands=("uptime"
+declare -a commands=("git -C /root/mailinabox status"
+                     "uptime"
                      "lsb_release -a"
                      "free -m"
                      "df -h"
@@ -60,8 +61,7 @@ declare -a commands=("uptime"
                      "cat /var/log/syslog"
                      "cat /var/log/mail.log"
                      "cat /var/log/boot.log"
-                     "cat /var/log/roundcubemail/errors"
-                     )
+                     "cat /var/log/roundcubemail/errors")
 
 function name_and_delineator () {
   CMD_LENGTH=${#1}
