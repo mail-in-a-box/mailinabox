@@ -83,17 +83,37 @@ do
   echo >> $TMP_FILE; # newline
 done
 
+function post_gist () {
+  echo "Posting the debug log to https://gist.github.com at this url:"
+  echo $(gist-paste -p -s `echo $TMP_FILE`)
+  echo "Please provide this url to help diagnose your issue."
+}
 
-# double check that the user wants to post to github. default
-echo "Do You want to post your debug log on github publicly?"
+# double check that the user wants to post to github.
+echo "Do You want to post your debug log on https://gist.github.com publicly?"
 echo "Please type 'YES' below, anything else will cancel."
 echo -n "Type YES to publish:"
 read answer
 if echo "$answer" | grep -q "^YES" ;then
-    echo "Posting the debug log to gist.github.com at this url:"
-    echo $(gist-paste -p `echo $TMP_FILE`)
-    echo "Please provide this url to help diagnose your issue."
-else
-    echo "Your debug log file is here: $TMP_FILE"
+  if [ ! -f /root/.gist ]; then
+    echo "You will need to log into Github first."
+    echo "You can skip this step by pressing <ctrl-c>, but you will not"
+    echo "be able to delete the debug log if you do not log in."
+    gist-paste --login
+    # ask again, just to be sure.
+    echo "Are you sure you want to post your debug log on https://gist.github.com publicly?"
+    echo "Please type 'YES' below, anything else will cancel."
+    echo -n "Type YES to publish:"
+    read answer
+    if echo "$answer" | grep -q "^YES" ;then
+      post_gist
+    else
+      # logged in to github, but said no on the second request
+      echo "Your debug log file is here: $TMP_FILE"
+    fi
+  else
+    post_gist
+  fi
+else # said no to initial request to post to gist.github.com
+  echo "Your debug log file is here: $TMP_FILE"
 fi
-
