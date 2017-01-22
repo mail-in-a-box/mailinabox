@@ -342,6 +342,7 @@ def build_sshfp_records():
 		"ssh-rsa": 1,
 		"ssh-dss": 2,
 		"ecdsa-sha2-nistp256": 3,
+		"ssh-ed25519": 4,
 	}
 
 	# Get our local fingerprints by running ssh-keyscan. The output looks
@@ -359,7 +360,7 @@ def build_sshfp_records():
 				ports = ports + [s[1]]
 	# the keys are the same at each port, so we only need to get
 	# them at the first port found (may not be port 22)
-	keys = shell("check_output", ["ssh-keyscan", "-p", ports[0], "localhost"])
+	keys = shell("check_output", ["ssh-keyscan", "-t", "rsa,dsa,ecdsa,ed25519", "-p", ports[0], "localhost"])
 	for key in sorted(keys.split("\n")):
 		if key.strip() == "" or key[0] == "#": continue
 		try:
