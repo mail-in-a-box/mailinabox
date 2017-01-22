@@ -12,6 +12,7 @@ In Development
 * Made nightly re-provisioning of TLS certificates less noisy.
 * Fixed bugs in rsync backup method.
 * Added support for DSA and ED25519 SSHFP records.
+* Added support for custom SSHFP records.
 
 v0.21b (December 4, 2016)
 -------------------------
