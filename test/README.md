@@ -10,7 +10,7 @@ start-up a vagrant box
 
 install test requirements
 
-    pip install pytest caldav pycarddav
+    pip install -r requirements.txt
 
 run the tests
 
@@ -19,8 +19,8 @@ run the tests
 to just run a subset of the tests (e.g. the ssh related ones):
 
     pytest test_ssh.py
-    
-    
+
+
 Contributing
 ============
 
@@ -31,6 +31,3 @@ and there needs to be at least one assert statement.
 TODO
 =====
 * dns
-
-
-
