@@ -15,9 +15,11 @@ apt_install build-essential libssl-dev libffi-dev python3-dev
 # Install other Python 3 packages used by the management daemon.
 # The first line is the packages that Josh maintains himself!
 # NOTE: email_validator is repeated in setup/questions.sh, so please keep the versions synced.
+hide_output pip3 install --upgrade setuptools
+
 hide_output pip3 install --upgrade \
 	rtyaml "email_validator>=1.0.0" "free_tls_certificates>=0.1.3" "exclusiveprocess" \
-	"idna>=2.0.0" "cryptography>=1.0.2" boto psutil setuptools
+	"idna>=2.0.0" "cryptography<=1.0.2" boto psutil
 
 # duplicity uses python 2 so we need to get the python 2 package of boto to have backups to S3.
 # boto from the Ubuntu package manager is too out-of-date -- it doesn't support the newer
