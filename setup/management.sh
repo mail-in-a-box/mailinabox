@@ -19,7 +19,7 @@ hide_output pip3 install --upgrade setuptools
 
 hide_output pip3 install --upgrade \
 	rtyaml "email_validator>=1.0.0" "free_tls_certificates>=0.1.3" "exclusiveprocess" \
-	"idna>=2.0.0" "cryptography<=1.0.2" boto psutil
+	"idna>=2.0.0" "cryptography>=1.7.1" boto psutil
 
 # duplicity uses python 2 so we need to get the python 2 package of boto to have backups to S3.
 # boto from the Ubuntu package manager is too out-of-date -- it doesn't support the newer
