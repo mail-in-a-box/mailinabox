@@ -47,7 +47,7 @@ echo >> $TMP_FILE; # newline after status_checks
 # all of the commands we want to run.
 declare -a commands=("git -C /root/mailinabox status"
                      "uptime"
-                     "lsb_release -a"
+                     "lsb_release -d"
                      "free -m"
                      "df -h"
                      "ps auxf"
