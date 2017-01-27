@@ -82,8 +82,8 @@ def is_dcv_address(email):
 			return True
 	return False
 
-def open_database(env, with_connection=False):
-	conn = sqlite3.connect(env["STORAGE_ROOT"] + "/mail/users.sqlite")
+def open_database(env, with_connection=False, db_path="/mail/users.sqlite"):
+	conn = sqlite3.connect(env["STORAGE_ROOT"] + db_path)
 	if not with_connection:
 		return conn.cursor()
 	else:
