@@ -15,7 +15,19 @@ apt_install build-essential libssl-dev libffi-dev python3-dev
 # Install other Python 3 packages used by the management daemon.
 # The first line is the packages that Josh maintains himself!
 # NOTE: email_validator is repeated in setup/questions.sh, so please keep the versions synced.
-hide_output pip3 install --upgrade setuptools
+
+# the below fixes the issue with an older version of pip3 and setup tools
+# breaking pip3 via a race condition
+# see https://github.com/pypa/pip/issues/4253
+# and
+# https://github.com/mail-in-a-box/mailinabox/issues/1086
+
+# need to use hide output, because we have to re-install this.
+hide_output apt-get install -y --reinstall python-pkg-resources
+# ensure that we have a modern version of setuptools, distribute and pip3 first
+hide_output python3 -m pip install --upgrade setuptools
+hide_output python3 -m pip install --upgrade distribute
+hide_output python3 -m pip install --upgrade pip
 
 hide_output pip3 install --upgrade \
 	rtyaml "email_validator>=1.0.0" "free_tls_certificates>=0.1.3" "exclusiveprocess" \
