@@ -12,6 +12,13 @@ In Development
 * Made nightly re-provisioning of TLS certificates less noisy.
 * Fixed bugs in rsync backup method.
 
+v0.21c (February 1, 2017)
+-------------------------
+
+Installations and upgrades started failing about 10 days ago with the error "ImportError: No module named 'packaging'" after an upstream package (Python's setuptools) was updated by its maintainers. The updated package conflicted with Ubuntu 14.04's version of another package (Python's pip). This update upgrades both packages to remove the conflict.
+
+If you already encountered the error during installation or upgrade of Mail-in-a-Box, this update may not correct the problem on your existing system. See https://discourse.mailinabox.email/t/v0-21c-release-fixes-python-package-installation-issue/1881 for help if the problem persists after upgrading to this version of Mail-in-a-Box.
+
 v0.21b (December 4, 2016)
 -------------------------
 
