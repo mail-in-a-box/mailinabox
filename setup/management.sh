@@ -41,9 +41,12 @@ hide_output pip3 install --upgrade setuptools
 # Install other Python 3 packages used by the management daemon.
 # The first line is the packages that Josh maintains himself!
 # NOTE: email_validator is repeated in setup/questions.sh, so please keep the versions synced.
+# Force acme to be updated because it seems to need it after the
+# pip/setuptools breakage (see above) and the ACME protocol may
+# have changed (I got an error on one of my systems).
 hide_output pip3 install --upgrade \
 	rtyaml "email_validator>=1.0.0" "free_tls_certificates>=0.1.3" \
-	"idna>=2.0.0" "cryptography>=1.0.2" boto psutil
+	"idna>=2.0.0" "cryptography>=1.0.2" acme boto psutil
 
 # duplicity uses python 2 so we need to get the python 2 package of boto to have backups to S3.
 # boto from the Ubuntu package manager is too out-of-date -- it doesn't support the newer
