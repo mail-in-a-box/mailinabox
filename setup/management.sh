@@ -4,13 +4,39 @@ source setup/functions.sh
 
 echo "Installing Mail-in-a-Box system management daemon..."
 
-# Install packages.
+# DEPENDENCIES
+
+# Install Python packages that are available from the Ubuntu
+# apt repository:
 # flask, yaml, dnspython, and dateutil are all for our Python 3 management daemon itself.
 # duplicity does backups. python-pip is so we can 'pip install boto' for Python 2, for duplicity, so it can do backups to AWS S3.
 apt_install python3-flask links duplicity libyaml-dev python3-dnspython python3-dateutil python-pip
 
 # These are required to pip install cryptography.
 apt_install build-essential libssl-dev libffi-dev python3-dev
+
+# pip<6.1 + setuptools>=34 have a problem with packages that
+# try to update setuptools during installation, like cryptography.
+# See https://github.com/pypa/pip/issues/4253. The Ubuntu 14.04
+# package versions are pip 1.5.4 and setuptools 3.3. When we
+# install cryptography under those versions, it tries to update
+# setuptools to version 34, which now creates the conflict, and
+# then pip gets permanently broken with errors like
+# "ImportError: No module named 'packaging'".
+#
+# Let's test for the error:
+if ! python3 -c "from pkg_resources import load_entry_point" 2&> /dev/null; then
+	# This system seems to be broken already.
+	echo "Fixing broken pip and setuptools..."
+	rm -rf /usr/local/lib/python3.4/dist-packages/{pkg_resources,setuptools}*
+	apt-get install --reinstall python3-setuptools python3-pip python3-pkg-resources
+fi
+#
+# The easiest work-around on systems that aren't already broken is
+# to upgrade pip (to >=9.0.1) and setuptools (to >=34.1) individually
+# before we install any package that tries to update setuptools.
+hide_output pip3 install --upgrade pip
+hide_output pip3 install --upgrade setuptools
 
 # Install other Python 3 packages used by the management daemon.
 # The first line is the packages that Josh maintains himself!
@@ -23,6 +49,8 @@ hide_output pip3 install --upgrade \
 # boto from the Ubuntu package manager is too out-of-date -- it doesn't support the newer
 # S3 api used in some regions, which breaks backups to those regions.  See #627, #653.
 hide_output pip install --upgrade boto
+
+# CONFIGURATION
 
 # Create a backup directory and a random key for encrypting backups.
 mkdir -p $STORAGE_ROOT/backup
