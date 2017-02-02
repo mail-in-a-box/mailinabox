@@ -32,7 +32,7 @@ def create_event():
     uid = random_id()
     event = vcal.format(uid)
     return event, uid
-    
+
 
 def event_exists(uid):
     c, cal = connect()
@@ -48,19 +48,21 @@ def test_addremove_event():
     event, uid = create_event()
     cal.add_event(event)
     assert event_exists(uid)
-    
-    # now delete the event again 
+
+    # now delete the event again
     event = cal.event(uid)
     event.delete()
     sleep(3)
     assert (not event_exists(uid))
-    
 
-#def test_addremove_calendar():
-#    c, cal = connect()
-#    cal_id = random_id()
-#    #c.principal().make_calendar(name="test", cal_id=cal_id)
-#    cal = caldav.Calendar(c, name="TEST", parent=c.principal(), id="12").save()
 
-    
-        
+def test_addremove_calendar():
+    c, _ = connect()
+    cal_id = random_id()
+    cal = c.principal().make_calendar(name="test", cal_id=cal_id)
+    matching = [calendar for calendar in c.principal().calendars() if cal_id in str(calendar.url)]
+    assert len(matching) == 1
+
+    c.delete(cal.url)
+    matching = [calendar for calendar in c.principal().calendars() if cal_id in str(calendar.url)]
+    assert len(matching) == 0
