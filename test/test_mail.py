@@ -18,7 +18,7 @@ def new_message(from_email, to_email):
     msg['From'] = from_email
     msg['To'] = to_email
     return msg.as_string(), msg['subject']
-    
+
 
 
 def check_imap_received(subject):
@@ -34,7 +34,7 @@ def check_imap_received(subject):
     # check the message exists
     typ, data = m.search(None, '(SUBJECT \"{}\")'.format(subject))
     res = len(data[0].split()) == 1
-    
+
     if res:
         m.store(data[0].strip(), '+FLAGS', '\\Deleted')
         m.expunge()
@@ -130,41 +130,6 @@ def test_smtp_tls():
     s.sendmail(TEST_SENDER, [TEST_ADDRESS], msg)
     s.quit()
     assert check_imap_received(subject)
-
-
-# FIXME
-#def test_smtps_headers():
-#    """Email sent from an MUA has DKIM and TLS headers"""
-#    import smtplib
-#    import imaplib
-#
-#    # Send a message to admin
-#    mail_address = "admin@" + TEST_DOMAIN
-#    msg, subject = new_message(TEST_ADDRESS, mail_address)
-#    s = smtplib.SMTP(TEST_DOMAIN, 587)
-#    s.starttls()
-#    s.login(TEST_ADDRESS, TEST_PASSWORD)
-#    s.sendmail(TEST_ADDRESS, [mail_address], msg)
-#    s.quit()
-#
-#    sleep(3)
-#
-#    # Get the message
-#    m = imaplib.IMAP4_SSL(TEST_DOMAIN, 993)
-#    m.login(TEST_ADDRESS, TEST_PASSWORD)
-#    m.select()
-#    _, res = m.search(None, '(SUBJECT \"{}\")'.format(subject))
-#    _, data = m.fetch(res[0], '(RFC822)')
-#
-#    assert 'DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=mailinabox.lan;' in data[0][1]
-#
-#    assert 'ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits)' in data[0][1]
-#
-#    # Clean up
-#    m.store(res[0].strip(), '+FLAGS', '\\Deleted')
-#    m.expunge()
-#    m.close()
-#    m.logout()
 
 
 def test_smtp_headers():

@@ -1,9 +1,7 @@
 import pytest
 from pycarddav import carddav
-from time import sleep
 
 from settings import *
-from common import random_id
 
 
 test_vcf = """
