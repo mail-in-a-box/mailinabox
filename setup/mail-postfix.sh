@@ -50,7 +50,7 @@ source /etc/mailinabox.conf # load global vars
 # > anti-spam solutions) must register with dnswl.org and purchase a subscription.
 
 echo "Installing Postfix (SMTP server)..."
-apt_install postfix postfix-pcre postgrey ca-certificates
+apt_install postfix postfix-pcre postgrey ca-certificates postfwd
 
 # ### Basic Settings
 
@@ -199,11 +199,31 @@ tools/editconf.py /etc/postfix/main.cf virtual_transport=lmtp:[127.0.0.1]:10025
 # whitelisted) then postfix does a DEFER_IF_REJECT, which results in all "unknown user" sorts of messages turning into #NODOC
 # "450 4.7.1 Client host rejected: Service unavailable". This is a retry code, so the mail doesn't properly bounce. #NODOC
 tools/editconf.py /etc/postfix/main.cf \
-	smtpd_sender_restrictions="reject_non_fqdn_sender,reject_unknown_sender_domain,reject_authenticated_sender_login_mismatch,reject_rhsbl_sender dbl.spamhaus.org" \
-	smtpd_recipient_restrictions=permit_sasl_authenticated,permit_mynetworks,"reject_rbl_client zen.spamhaus.org",reject_unlisted_recipient,"check_policy_service inet:127.0.0.1:10023"
+        smtpd_sender_restrictions="reject_non_fqdn_sender,reject_unknown_sender_domain,reject_authenticated_sender_login_mismatch,reject_rhsbl_sender dbl.spamhaus.org" \
+	smtpd_recipient_restrictions="permit_sasl_authenticated,permit_mynetworks,reject_rbl_client zen.spamhaus.org,reject_unlisted_recipient,check_policy_service inet:127.0.0.1:10040" \
+	smtpd_restriction_classes="greylisting" \
+	greylisting="check_policy_service inet:127.0.0.1:10023"
 
-# Postfix connects to Postgrey on the 127.0.0.1 interface specifically. Ensure that
-# Postgrey listens on the same interface (and not IPv6, for instance).
+
+# Postfix connects to Postfwd on the 127.0.0.1 interface specifically. Ensure that
+# Postfwd listens on the same interface (and not IPv6, for instance).
+# Postfwd is an advanced policy engine for Postfix, it may reject, limit, greylist or accept emails.
+
+tools/editconf.py /etc/default/postfwd \
+	STARTUP=1 \
+	CONF=/etc/postfix/postfwd.cf \
+	INET=127.0.0.1 \
+	PORT=10040 \
+	RUNAS="postfw" \
+	ARGS=\"'--summary=660 --cache=600 --cache-rdomain-only --cache-no-size --max_spare_servers=5 -S 1800'\"
+
+# Install the configuration file for postfwd service. If the local admin modified it, we won't overwrite
+# This configuration will accept emails right away (no greylist) for servers in DNSWL, gmail, hotmail, outlook, etc.
+# If the server has a dynamic ip it will be greylisted.
+
+cp -n conf/postfwd.cf /etc/postfix/postfwd.cf
+
+# Postfwd will instruct Postfix to greylist some emails, depending on who is sending it and the server who is sending it.
 # A lot of legit mail servers try to resend before 300 seconds.
 # As a matter of fact RFC is not strict about retry timer so postfix and
 # other MTA have their own intervals. To fix the problem of receiving
@@ -226,3 +246,4 @@ ufw_allow submission
 
 restart_service postfix
 restart_service postgrey
+restart_service postfwd
