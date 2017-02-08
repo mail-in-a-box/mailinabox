@@ -226,6 +226,36 @@ fi
 #
 # Allow apt to install system updates automatically every day.
 
+# Add Rootkit hunter
+# I have it install and then update to install dependencies and such
+# It adds a crontab to check daily at 4:15AM
+# Added by Alon "Chief Gyk" Ganon
+# alon@ganon.me
+
+echo "setting debconf variables"
+debconf-set-selections <<< "postfix postfix/mailname string $DOMAIN"
+debconf-set-selections <<< "postfix postfix/main_mailer_type string 'Internet Site'"
+echo "Installing RKHunter from Ubuntu Repo first to setup system files properly"
+apt_install -y rkhunter binutils libreadline5 ruby ruby1.9.1 unhide.rb mailutils
+echo "Downloading latest RKHunter"
+wget http://downloads.sourceforge.net/project/rkhunter/rkhunter/1.4.2/rkhunter-1.4.2.tar.gz
+rkhunter_ver=1.4.2
+rkhunter_hash=da01bc6757e14549560ad6ea46d1e93dbf5ac90f
+tar xzvf rkhunter-1.4.2.tar.gz
+cd rkhunter-1.4.2
+./installer.sh --layout /usr --install
+cd ..
+rm -rf rkhunter-1.4.2*
+cp conf/rkhunter/rkhunter.conf /etc/rkhunter.conf
+cp conf/rkhunter/rkhunter.conf.local /etc/rkhunter.conf.local
+rkhunter --versioncheck
+rkhunter --update
+rkhunter --propupd
+cp conf/rkhunter-cron.sh /etc/cron.daily/rkhunter-cron.sh
+chmod +x /etc/cron.daily/rkhunter-cron.sh
+sed -i '/APT_AUTOGEN="false"/c\APT_AUTOGEN="yes"' /etc/default/rkhunter 
+
+
 cat > /etc/apt/apt.conf.d/02periodic <<EOF;
 APT::Periodic::MaxAge "7";
 APT::Periodic::Update-Package-Lists "1";
