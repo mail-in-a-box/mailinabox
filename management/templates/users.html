@@ -31,7 +31,7 @@
   <button type="submit" class="btn btn-primary">Add User</button>
 </form>
 <ul style="margin-top: 1em; padding-left: 1.5em; font-size: 90%;">
-  <li>Passwords must be at least four characters and may not contain spaces. For best results, <a href="#" onclick="return generate_random_password()">generate a random password</a>.</li>
+  <li>Passwords must be at least eight characters and may not contain spaces. For best results, <a href="#" onclick="return generate_random_password()">generate a random password</a>.</li>
   <li>Use <a href="#" onclick="return show_panel('aliases')">aliases</a> to create email addresses that forward to existing accounts.</li>
   <li>Administrators get access to this control panel.</li>
   <li>User accounts cannot contain any international (non-ASCII) characters, but <a href="#" onclick="return show_panel('aliases');">aliases</a> can.</li>
@@ -296,7 +296,7 @@ function mod_priv(elem, add_remove) {
 function generate_random_password() {
   var pw = "";
   var charset = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789"; // confusable characters skipped
-  for (var i = 0; i < 10; i++)
+  for (var i = 0; i < 12; i++)
     pw += charset.charAt(Math.floor(Math.random() * charset.length));
   show_modal_error("Random Password", "<p>Here, try this:</p> <p><code style='font-size: 110%'>" + pw + "</code></pr");
   return false; // cancel click

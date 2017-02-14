@@ -599,8 +599,8 @@ def validate_password(pw):
 		raise ValueError("No password provided.")
 	if re.search(r"[\s]", pw):
 		raise ValueError("Passwords cannot contain spaces.")
-	if len(pw) < 4:
-		raise ValueError("Passwords must be at least four characters.")
+	if len(pw) < 8:
+		raise ValueError("Passwords must be at least eight characters.")
 
 
 if __name__ == "__main__":
