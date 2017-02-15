@@ -39,6 +39,8 @@ def backup_status(env):
 	def reldate(date, ref, clip):
 		if ref < date: return clip
 		rd = dateutil.relativedelta.relativedelta(ref, date)
+		if rd.years > 1: return "%d years, %d months" % (rd.years, rd.months)
+		if rd.years == 1: return "%d year, %d months" % (rd.years, rd.months)
 		if rd.months > 1: return "%d months, %d days" % (rd.months, rd.days)
 		if rd.months == 1: return "%d month, %d days" % (rd.months, rd.days)
 		if rd.days >= 7: return "%d days" % rd.days
