@@ -147,17 +147,17 @@ if management/status_checks.py --check-primary-hostname; then
 	echo https://$PRIMARY_HOSTNAME/admin
 	echo
 	echo "If you have a DNS problem put the box's IP address in the URL"
-	echo "(https://$PUBLIC_IP/admin) but then check the SSL fingerprint:"
-	openssl x509 -in $STORAGE_ROOT/ssl/ssl_certificate.pem -noout -fingerprint \
-        	| sed "s/SHA1 Fingerprint=//"
+	echo "(https://$PUBLIC_IP/admin) but then check the TLS fingerprint:"
+	openssl x509 -in $STORAGE_ROOT/ssl/ssl_certificate.pem -noout -fingerprint -sha256\
+        	| sed "s/SHA256 Fingerprint=//"
 else
 	echo https://$PUBLIC_IP/admin
 	echo
 	echo You will be alerted that the website has an invalid certificate. Check that
 	echo the certificate fingerprint matches:
 	echo
-	openssl x509 -in $STORAGE_ROOT/ssl/ssl_certificate.pem -noout -fingerprint \
-        	| sed "s/SHA1 Fingerprint=//"
+	openssl x509 -in $STORAGE_ROOT/ssl/ssl_certificate.pem -noout -fingerprint -sha256\
+        	| sed "s/SHA256 Fingerprint=//"
 	echo
 	echo Then you can confirm the security exception and continue.
 	echo
