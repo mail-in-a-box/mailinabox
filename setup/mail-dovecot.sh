@@ -37,8 +37,16 @@ apt_install \
 # of active IMAP connections (at, say, 5 open connections per user that
 # would be 20 users). Set it to 250 times the number of cores this
 # machine has, so on a two-core machine that's 500 processes/100 users).
+# The `default_vsz_limit` is the maximum amount of virtual memory that
+# can be allocated. It should be set *reasonably high* to avoid allocation
+# issues with larger mailboxes. We're setting it to 1/3 of the total
+# available memory (physical mem + swap) to be sure.
+# See here for discussion:
+# - https://www.dovecot.org/list/dovecot/2012-August/137569.html
+# - https://www.dovecot.org/list/dovecot/2011-December/132455.html
 tools/editconf.py /etc/dovecot/conf.d/10-master.conf \
 	default_process_limit=$(echo "`nproc` * 250" | bc) \
+	default_vsz_limit=$(echo "`free -tom  | tail -1 | awk '{print $2}'` / 3" | bc)M \
 	log_path=/var/log/mail.log
 
 # The inotify `max_user_instances` default is 128, which constrains
