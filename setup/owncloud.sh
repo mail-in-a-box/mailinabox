@@ -29,12 +29,13 @@ if [ ! -f $STORAGE_ROOT/owncloud/config.php ] \
 fi
 
 InstallOwncloud() {
-	echo
-	echo "Upgrading to ownCloud version $1"
-	echo
 
-        version=$1
-        hash=$2
+	version=$1
+	hash=$2
+
+	echo
+	echo "Upgrading to ownCloud version $version"
+	echo
 
 	# Remove the current owncloud
 	rm -rf /usr/local/lib/owncloud
