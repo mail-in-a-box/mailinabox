@@ -7,7 +7,7 @@ source /etc/mailinabox.conf # load global vars
 
 # ### Installing ownCloud
 
-echo "Installing ownCloud (contacts/calendar)..."
+echo "Installing Nextcloud (contacts/calendar)..."
 
 apt_install \
 	dbconfig-common \
@@ -32,29 +32,48 @@ InstallOwncloud() {
 
 	version=$1
 	hash=$2
+	flavor=$3
 
 	echo
-	echo "Upgrading to ownCloud version $version"
+	echo "Upgrading to $flavor version $version"
 	echo
 
 	# Remove the current owncloud
 	rm -rf /usr/local/lib/owncloud
 
 	# Download and verify
-	wget_verify https://download.owncloud.org/community/owncloud-$version.zip $hash /tmp/owncloud.zip
+	if [ "$flavor" = "Nextcloud" ]; then
+		wget_verify https://download.nextcloud.com/server/releases/nextcloud-$version.zip $hash /tmp/owncloud.zip
+	else
+		wget_verify https://download.owncloud.org/community/owncloud-$version.zip $hash /tmp/owncloud.zip
+	fi
 
 	# Extract ownCloud
 	unzip -q /tmp/owncloud.zip -d /usr/local/lib
+	if [ "$flavor" = "Nextcloud" ]; then
+		mv /usr/local/lib/nextcloud /usr/local/lib/owncloud
+	fi
 	rm -f /tmp/owncloud.zip
 
 	# The two apps we actually want are not in ownCloud core. Download the releases from
 	# their github repositories.
 	mkdir -p /usr/local/lib/owncloud/apps
-	wget_verify https://github.com/owncloud/contacts/releases/download/v1.4.0.0/contacts.tar.gz c1c22d29699456a45db447281682e8bc3f10e3e7 /tmp/contacts.tgz
+
+	if [ "$flavor" = "Nextcloud" ]; then
+		wget_verify https://github.com/nextcloud/contacts/releases/download/v1.5.3/contacts.tar.gz 78c4d49e73f335084feecd4853bd8234cf32615e /tmp/contacts.tgz
+	else
+		wget_verify https://github.com/owncloud/contacts/releases/download/v1.4.0.0/contacts.tar.gz c1c22d29699456a45db447281682e8bc3f10e3e7 /tmp/contacts.tgz
+	fi
+
 	tar xf /tmp/contacts.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/contacts.tgz
 
-        wget_verify https://github.com/nextcloud/calendar/releases/download/v1.4.0/calendar.tar.gz c84f3170efca2a99ea6254de34b0af3cb0b3a821 /tmp/calendar.tgz
+	if [ "$flavor" = "Nextcloud" ]; then
+		wget_verify https://github.com/nextcloud/calendar/releases/download/v1.5.2/calendar.tar.gz 7b8a94e01fe740c5c23017ed5bc211983c780fce /tmp/calendar.tgz
+	else
+    wget_verify https://github.com/nextcloud/calendar/releases/download/v1.4.0/calendar.tar.gz c84f3170efca2a99ea6254de34b0af3cb0b3a821 /tmp/calendar.tgz
+	fi
+
 	tar xf /tmp/calendar.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/calendar.tgz
 
@@ -86,8 +105,9 @@ InstallOwncloud() {
 	fi
 }
 
-owncloud_ver=9.1.4
-owncloud_hash=e637cab7b2ca3346164f3506b1a0eb812b4e841a
+owncloud_ver=10.0.4
+owncloud_hash=346590278a5cc7b0a3c8d1a68eafec68ac59c475
+owncloud_flavor=Nextcloud
 
 # Check if ownCloud dir exist, and check if version matches owncloud_ver (if either doesn't - install/upgrade)
 if [ ! -d /usr/local/lib/owncloud/ ] \
@@ -101,7 +121,7 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 	BACKUP_DIRECTORY=$STORAGE_ROOT/owncloud-backup/`date +"%Y-%m-%d-%T"`
 	mkdir -p "$BACKUP_DIRECTORY"
 	if [ -d /usr/local/lib/owncloud/ ]; then
-		echo "upgrading ownCloud to $owncloud_ver (backing up existing ownCloud installation, configuration and database to directory to $BACKUP_DIRECTORY..."
+		echo "upgrading ownCloud/Nextcloud to $owncloud_flavor $owncloud_ver (backing up existing installation, configuration and database to directory to $BACKUP_DIRECTORY..."
 		cp -r /usr/local/lib/owncloud "$BACKUP_DIRECTORY/owncloud-install"
 	fi
 	if [ -e /home/user-data/owncloud/owncloud.db ]; then
@@ -115,7 +135,7 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 	if [ -e /usr/local/lib/owncloud/version.php ]; then
 		if grep -q "8\.1\.[0-9]" /usr/local/lib/owncloud/version.php; then
 			echo "We are running 8.1.x, upgrading to 8.2.3 first"
-			InstallOwncloud 8.2.3 bfdf6166fbf6fc5438dc358600e7239d1c970613
+			InstallOwncloud 8.2.3 bfdf6166fbf6fc5438dc358600e7239d1c970613 ownCloud
 		fi
 
 		# If we are upgrading from 8.2.x we should go to 9.0 first. Owncloud doesn't support skipping minor versions
@@ -139,7 +159,7 @@ EOF
 			chown www-data.www-data $STORAGE_ROOT/owncloud/config.php
 
 			# We can now install owncloud 9.0.2
-			InstallOwncloud 9.0.2 72a3d15d09f58c06fa8bee48b9e60c9cd356f9c5
+			InstallOwncloud 9.0.2 72a3d15d09f58c06fa8bee48b9e60c9cd356f9c5 ownCloud
 
 			# The owncloud 9 migration doesn't migrate calendars and contacts
 			# The option to migrate these are removed in 9.1
@@ -152,9 +172,16 @@ EOF
 			done
 			sudo -u www-data php /usr/local/lib/owncloud/occ dav:sync-birthday-calendar
 		fi
+
+		# If we are upgrading from 9.0.x we should go to 9.1 first.
+		if grep -q "9\.0\.[0-9]" /usr/local/lib/owncloud/version.php; then
+			echo "We are running ownCloud 9.0.x, upgrading to ownCloud 9.1.4 first"
+			InstallOwncloud 9.1.4 e637cab7b2ca3346164f3506b1a0eb812b4e841a ownCloud
+		fi
+
 	fi
 
-	InstallOwncloud $owncloud_ver $owncloud_hash
+	InstallOwncloud $owncloud_ver $owncloud_hash Nextcloud
 fi
 
 # ### Configuring ownCloud
