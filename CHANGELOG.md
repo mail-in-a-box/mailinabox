@@ -7,7 +7,7 @@ In Development
 Mail:
 
 * The CardDAV plugin has been added to Roundcube so that your ownCloud contacts are available in webmail.
-* Upgraded to Roundcube 1.2.3.
+* Upgraded to Roundcube 1.2.4 and updated the persistent login plugin.
 * Allow larger messages to be checked by SpamAssassin.
 * Dovecot's vsz memory limit has been increased proportional to system memory.
 * Newly set user passwords must be at least eight characters.
