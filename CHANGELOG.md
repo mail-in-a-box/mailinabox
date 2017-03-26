@@ -4,16 +4,38 @@ CHANGELOG
 In Development
 --------------
 
+Mail:
+
 * The CardDAV plugin has been added to Roundcube so that your ownCloud contacts are available in webmail.
-* Upgraded to ownCloud 9.1.2.
 * Upgraded to Roundcube 1.2.3.
-* The status checks page crashed when the mailinabox.email website was down - that's fixed.
 * Allow larger messages to be checked by SpamAssassin.
+* Dovecot's vsz memory limit has been increased proportional to system memory.
+* Newly set user passwords must be at least eight characters.
+
+ownCloud:
+
+* Upgraded to ownCloud 9.1.4.
+
+Control Panel/Management:
+
+* The status checks page crashed when the mailinabox.email website was down - that's fixed.
 * Made nightly re-provisioning of TLS certificates less noisy.
-* Fixed bugs in rsync backup method.
-* Added support for DSA and ED25519 SSHFP records.
-* Added support for custom SSHFP records.
+* Fixed bugs in rsync backup method and in the list of recent backups.
+* Fixed incorrect status checks errors about IPv6 addresses.
+* Fixed incorrect status checks errors for secondary nameservers if round-robin custom A records are set.
 * The management mail_log.py tool has been rewritten.
+
+DNS:
+
+* Added support for DSA, ED25519, and custom SSHFP records.
+
+System:
+
+* The SSH fail2ban jail was not activated.
+
+Installation:
+
+* At the end of installation, the SHA256 -- rather than SHA1 -- hash of the system's TLS certificate is shown.
 
 v0.21c (February 1, 2017)
 -------------------------
