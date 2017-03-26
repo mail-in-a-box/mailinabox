@@ -29,12 +29,13 @@ if [ ! -f $STORAGE_ROOT/owncloud/config.php ] \
 fi
 
 InstallOwncloud() {
-	echo
-	echo "Upgrading to ownCloud version $1"
-	echo
 
-        version=$1
-        hash=$2
+	version=$1
+	hash=$2
+
+	echo
+	echo "Upgrading to ownCloud version $version"
+	echo
 
 	# Remove the current owncloud
 	rm -rf /usr/local/lib/owncloud
@@ -85,7 +86,8 @@ InstallOwncloud() {
 	fi
 }
 
-owncloud_ver=9.1.2
+owncloud_ver=9.1.4
+owncloud_hash=e637cab7b2ca3346164f3506b1a0eb812b4e841a
 
 # Check if ownCloud dir exist, and check if version matches owncloud_ver (if either doesn't - install/upgrade)
 if [ ! -d /usr/local/lib/owncloud/ ] \
@@ -152,7 +154,7 @@ EOF
 		fi
 	fi
 
-	InstallOwncloud $owncloud_ver ba9b1cdb681b8a3607d928cbe56f52e3888d9296
+	InstallOwncloud $owncloud_ver $owncloud_hash
 fi
 
 # ### Configuring ownCloud
