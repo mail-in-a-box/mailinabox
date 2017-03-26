@@ -14,7 +14,11 @@ fi
 echo "This script produces a diagnostic log to help the maintainers"
 echo "figure out why your Mail-in-a-Box installation isn't working the"
 echo "way you expected it to."
-
+echo
+echo "It gives you the option to post this log to a *Secret* github gist"
+echo "and only those you send the link to will be able to view it."
+echo "If you have a github account, and you log in with your github account"
+echo "you will be able to delete the secret gist."
 echo
 echo "This log will contain sensitive information about your installation"
 echo "including, but not limited to:"
@@ -25,13 +29,16 @@ echo "server security configuration"
 echo "etc."
 echo
 echo "====================================================================="
-echo "Please do not post this file to the internet if you are not comfortable"
+echo "Do not post this file to the internet if you are not comfortable"
 echo "exposing this information publicly to the world forever."
 echo "====================================================================="
 echo
 echo "Once the log has been collected, you will be given the option to post"
 echo "the log to https://gist.github.com/ so that others can help you diagnose"
 echo "the issues with your Mail-in-a-Box installation"
+echo
+echo "Should you decide not to post the log to a gist, it will be saved"
+echo "to disk and you can scrub it before sharing it."
 echo
 echo "You are solely responsible for the data you choose to publish"
 
@@ -56,6 +63,7 @@ declare -a commands=("git -C /root/mailinabox status"
                      "ufw status verbose"
                      "ifconfig"
                      "lsof -i"
+                     "dmesg"
                      "cat /etc/hosts"
                      "cat /etc/resolv.conf"
                      "cat /var/log/syslog"
@@ -90,7 +98,10 @@ function post_gist () {
 }
 
 # double check that the user wants to post to github.
-echo "Do You want to post your debug log on https://gist.github.com publicly?"
+echo "Do You want to post your debug log on https://gist.github.com?"
+echo
+echo "It will create a *secret* gist that you can delete later"
+echo
 echo "Please type 'YES' below, anything else will cancel."
 echo -n "Type YES to publish:"
 read answer
@@ -101,7 +112,7 @@ if echo "$answer" | grep -q "^YES" ;then
     echo "be able to delete the debug log if you do not log in."
     gist-paste --login
     # ask again, just to be sure.
-    echo "Are you sure you want to post your debug log on https://gist.github.com publicly?"
+    echo "Are you sure you want to post your debug log on https://gist.github.com?"
     echo "Please type 'YES' below, anything else will cancel."
     echo -n "Type YES to publish:"
     read answer
@@ -109,11 +120,21 @@ if echo "$answer" | grep -q "^YES" ;then
       post_gist
     else
       # logged in to github, but said no on the second request
-      echo "Your debug log file is here: $TMP_FILE"
+      echo "Nothing has been posted to gist.github.com"
+      echo "Your debug log file is here:"
+      echo "$TMP_FILE"
+      echo
+      echo "You can review and edit the file to remove private information and"
+      echo "manually post it to gist.github.com."
     fi
   else
     post_gist
   fi
 else # said no to initial request to post to gist.github.com
-  echo "Your debug log file is here: $TMP_FILE"
+  echo "Nothing has been posted to gist.github.com"
+  echo "Your debug log file is here:"
+  echo "$TMP_FILE"
+  echo
+  echo "You can review and edit the file to remove private information and"
+  echo "manually post it to gist.github.com."
 fi
