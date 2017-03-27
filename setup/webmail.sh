@@ -132,14 +132,12 @@ EOF
 cat > ${RCM_PLUGIN_DIR}/carddav/config.inc.php <<EOF;
 <?php
 /* Do not edit. Written by Mail-in-a-Box. Regenerated on updates. */
+\$prefs['_GLOBAL']['hide_preferences'] = true;
+\$prefs['_GLOBAL']['suppress_version_warning'] = true;
 \$prefs['ownCloud'] = array(
-	 // required attributes
 	 'name'         =>  'ownCloud',
-	 // will be substituted for the roundcube username
-	 'username'     =>  '%u',
-	 // will be substituted for the roundcube password
-	 'password'     =>  '%p',
-	 // %u will be substituted for the CardDAV username
+	 'username'     =>  '%u', // login username
+	 'password'     =>  '%p', // login password
 	 'url'          =>  'https://${PRIMARY_HOSTNAME}/cloud/remote.php/carddav/addressbooks/%u/contacts',
 	 'active'       =>  true,
 	 'readonly'     =>  false,
