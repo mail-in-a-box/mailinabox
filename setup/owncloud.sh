@@ -47,7 +47,7 @@ InstallOwncloud() {
 	unzip -q /tmp/owncloud.zip -d /usr/local/lib
 	rm -f /tmp/owncloud.zip
 
-	# The two apps we actually want are not in ownCloud core. Download the releases from
+	# The three apps we actually want are not in ownCloud core. Download the releases from
 	# their github repositories.
 	mkdir -p /usr/local/lib/owncloud/apps
 	wget_verify https://github.com/owncloud/contacts/releases/download/v1.4.0.0/contacts.tar.gz c1c22d29699456a45db447281682e8bc3f10e3e7 /tmp/contacts.tgz
@@ -57,6 +57,10 @@ InstallOwncloud() {
         wget_verify https://github.com/nextcloud/calendar/releases/download/v1.4.0/calendar.tar.gz c84f3170efca2a99ea6254de34b0af3cb0b3a821 /tmp/calendar.tgz
 	tar xf /tmp/calendar.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/calendar.tgz
+	
+	wget_verify https://github.com/owncloud/notes/releases/download/v2.0.2/notes-2.0.2.tar.gz 78f001d55ed66686dac13454650f83e0de6adb3b /tmp/notes.tgz
+	tar xf /tmp/notes.tgz -C /usr/local/lib/owncloud/apps/
+	rm /tmp/notes.tgz
 
 	# Fix weird permissions.
 	chmod 750 /usr/local/lib/owncloud/{apps,config}
@@ -266,6 +270,7 @@ hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:disable
 hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable user_external
 hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable contacts
 hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable calendar
+hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable notes
 
 # When upgrading, run the upgrade script again now that apps are enabled. It seems like
 # the first upgrade at the top won't work because apps may be disabled during upgrade?
