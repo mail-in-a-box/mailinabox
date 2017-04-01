@@ -4,7 +4,6 @@
 import os, os.path, re, shutil
 
 from utils import shell, safe_domain_name, sort_domains
-
 import idna
 
 # SELECTING SSL CERTIFICATES FOR USE IN WEB
@@ -214,6 +213,7 @@ def get_certificates_to_provision(env, show_extended_problems=True, force_domain
 
 	# Filter out domains that we can't provision a certificate for.
 	def can_provision_for_domain(domain):
+		from status_checks import normalize_ip
 		# Let's Encrypt doesn't yet support IDNA domains.
 		# We store domains in IDNA (ASCII). To see if this domain is IDNA,
 		# we'll see if its IDNA-decoded form is different.
@@ -238,8 +238,22 @@ def get_certificates_to_provision(env, show_extended_problems=True, force_domain
 			except Exception as e:
 				problems[domain] = "DNS isn't configured properly for this domain: DNS lookup had an error: %s." % str(e)
 				return False
-			if len(response) != 1 or str(response[0]) != value:
-				problems[domain] = "Domain control validation cannot be performed for this domain because DNS points the domain to another machine (%s %s)." % (rtype, ", ".join(str(r) for r in response))
+
+			# Unfortunately, the response.__str__ returns bytes
+			# instead of string, if it resulted from an AAAA-query.
+			# We need to convert manually, until this is fixed:
+			# https://github.com/rthalley/dnspython/issues/204
+			#
+			# BEGIN HOTFIX
+			def rdata__str__(r):
+				s = r.to_text()
+				if isinstance(s, bytes):
+					 s = s.decode('utf-8')
+				return s
+			# END HOTFIX
+
+			if len(response) != 1 or normalize_ip(rdata__str__(response[0])) != normalize_ip(value):
+				problems[domain] = "Domain control validation cannot be performed for this domain because DNS points the domain to another machine (%s %s)." % (rtype, ", ".join(rdata__str__(r) for r in response))
 				return False
 
 		return True
@@ -365,7 +379,7 @@ def provision_certificates(env, agree_to_tos_url=None, logger=None, show_extende
 				"message": "Something unexpected went wrong. It looks like your local Let's Encrypt account data is corrupted. There was a problem with the file " + e.account_file_path + ".",
 			})
 
-		except (client.InvalidDomainName, client.NeedToTakeAction, client.ChallengeFailed, acme.messages.Error, requests.exceptions.RequestException) as e:
+		except (client.InvalidDomainName, client.NeedToTakeAction, client.ChallengeFailed, client.RateLimited, acme.messages.Error, requests.exceptions.RequestException) as e:
 			ret_item.update({
 				"result": "error",
 				"message": "Something unexpected went wrong: " + str(e),
@@ -397,9 +411,11 @@ def provision_certificates(env, agree_to_tos_url=None, logger=None, show_extende
 
 def provision_certificates_cmdline():
 	import sys
-	from utils import load_environment, exclusive_process
+	from exclusiveprocess import Lock
 
-	exclusive_process("update_tls_certificates")
+	from utils import load_environment
+
+	Lock(die=True).forever()
 	env = load_environment()
 
 	verbose = False
@@ -412,7 +428,7 @@ def provision_certificates_cmdline():
 	if args and args[0] == "-v":
 		verbose = True
 		args.pop(0)
-	if args and args[0] == "q":
+	if args and args[0] == "-q":
 		show_extended_problems = False
 		args.pop(0)
 	if args and args[0] == "--headless":

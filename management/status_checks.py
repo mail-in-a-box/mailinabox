@@ -11,12 +11,35 @@ import dateutil.parser, dateutil.tz
 import idna
 import psutil
 
-from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, get_secondary_dns, get_custom_dns_record
+from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, get_secondary_dns, get_custom_dns_records
 from web_update import get_web_domains, get_domains_with_a_records
 from ssl_certificates import get_ssl_certificates, get_domain_ssl_files, check_certificate
 from mailconfig import get_mail_domains, get_mail_aliases
 
 from utils import shell, sort_domains, load_env_vars_from_file, load_settings
+
+def get_services():
+	return [
+		{ "name": "Local DNS (bind9)", "port": 53, "public": False, },
+		#{ "name": "NSD Control", "port": 8952, "public": False, },
+		{ "name": "Local DNS Control (bind9/rndc)", "port": 953, "public": False, },
+		{ "name": "Dovecot LMTP LDA", "port": 10026, "public": False, },
+		{ "name": "Postgrey", "port": 10023, "public": False, },
+		{ "name": "Spamassassin", "port": 10025, "public": False, },
+		{ "name": "OpenDKIM", "port": 8891, "public": False, },
+		{ "name": "OpenDMARC", "port": 8893, "public": False, },
+		{ "name": "Memcached", "port": 11211, "public": False, },
+		{ "name": "Mail-in-a-Box Management Daemon", "port": 10222, "public": False, },
+		{ "name": "SSH Login (ssh)", "port": get_ssh_port(), "public": True, },
+		{ "name": "Public DNS (nsd4)", "port": 53, "public": True, },
+		{ "name": "Incoming Mail (SMTP/postfix)", "port": 25, "public": True, },
+		{ "name": "Outgoing Mail (SMTP 587/postfix)", "port": 587, "public": True, },
+		#{ "name": "Postfix/master", "port": 10587, "public": True, },
+		{ "name": "IMAPS (dovecot)", "port": 993, "public": True, },
+		{ "name": "Mail Filters (Sieve/dovecot)", "port": 4190, "public": True, },
+		{ "name": "HTTP Web (nginx)", "port": 80, "public": True, },
+		{ "name": "HTTPS Web (nginx)", "port": 443, "public": True, },
+	]
 
 def run_checks(rounded_values, env, output, pool):
 	# run systems checks
@@ -61,33 +84,9 @@ def get_ssh_port():
 
 def run_services_checks(env, output, pool):
 	# Check that system services are running.
-
-	services = [
-		{ "name": "Local DNS (bind9)", "port": 53, "public": False, },
-		#{ "name": "NSD Control", "port": 8952, "public": False, },
-		{ "name": "Local DNS Control (bind9/rndc)", "port": 953, "public": False, },
-		{ "name": "Dovecot LMTP LDA", "port": 10026, "public": False, },
-		{ "name": "Postgrey", "port": 10023, "public": False, },
-		{ "name": "Spamassassin", "port": 10025, "public": False, },
-		{ "name": "OpenDKIM", "port": 8891, "public": False, },
-		{ "name": "OpenDMARC", "port": 8893, "public": False, },
-		{ "name": "Memcached", "port": 11211, "public": False, },
-		{ "name": "Mail-in-a-Box Management Daemon", "port": 10222, "public": False, },
-
-		{ "name": "SSH Login (ssh)", "port": get_ssh_port(), "public": True, },
-		{ "name": "Public DNS (nsd4)", "port": 53, "public": True, },
-		{ "name": "Incoming Mail (SMTP/postfix)", "port": 25, "public": True, },
-		{ "name": "Outgoing Mail (SMTP 587/postfix)", "port": 587, "public": True, },
-		#{ "name": "Postfix/master", "port": 10587, "public": True, },
-		{ "name": "IMAPS (dovecot)", "port": 993, "public": True, },
-		{ "name": "Mail Filters (Sieve/dovecot)", "port": 4190, "public": True, },
-		{ "name": "HTTP Web (nginx)", "port": 80, "public": True, },
-		{ "name": "HTTPS Web (nginx)", "port": 443, "public": True, },
-	]
-
 	all_running = True
 	fatal = False
-	ret = pool.starmap(check_service, ((i, service, env) for i, service in enumerate(services)), chunksize=1)
+	ret = pool.starmap(check_service, ((i, service, env) for i, service in enumerate(get_services())), chunksize=1)
 	for i, running, fatal2, output2 in sorted(ret):
 		if output2 is None: continue # skip check (e.g. no port was set, e.g. no sshd)
 		all_running = all_running and running
@@ -169,6 +168,37 @@ def run_system_checks(rounded_values, env, output):
 	check_free_disk_space(rounded_values, env, output)
 	check_free_memory(rounded_values, env, output)
 
+def check_ufw(env, output):
+	if not os.path.isfile('/usr/sbin/ufw'):
+		output.print_warning("""The ufw program was not installed. If your system is able to run iptables, rerun the setup.""")
+		return
+
+	code, ufw = shell('check_output', ['ufw', 'status'], trap=True)
+
+	if code != 0:
+		# The command failed, it's safe to say the firewall is disabled
+		output.print_warning("""The firewall is not working on this machine. An error was received
+					while trying to check the firewall. To investigate run 'sudo ufw status'.""")
+		return
+
+	ufw = ufw.splitlines()
+	if ufw[0] == "Status: active":
+		not_allowed_ports = 0
+		for service in get_services():
+			if service["public"] and not is_port_allowed(ufw, service["port"]):
+				not_allowed_ports += 1
+				output.print_error("Port %s (%s) should be allowed in the firewall, please re-run the setup." % (service["port"], service["name"]))
+
+		if not_allowed_ports == 0:
+			output.print_ok("Firewall is active.")
+	else:
+		output.print_warning("""The firewall is disabled on this machine. This might be because the system
+			is protected by an external firewall. We can't protect the system against bruteforce attacks
+			without the local firewall active. Connect to the system via ssh and try to run: ufw enable.""")
+
+def is_port_allowed(ufw, port):
+	return any(re.match(str(port) +"[/ \t].*", item) for item in ufw)
+
 def check_ssh_password(env, output):
 	# Check that SSH login with password is disabled. The openssh-server
 	# package may not be installed so check that before trying to access
@@ -185,10 +215,13 @@ def check_ssh_password(env, output):
 	else:
 		output.print_ok("SSH disallows password-based login.")
 
+def is_reboot_needed_due_to_package_installation():
+	return os.path.exists("/var/run/reboot-required")
+
 def check_software_updates(env, output):
 	# Check for any software package updates.
 	pkgs = list_apt_updates(apt_update=False)
-	if os.path.exists("/var/run/reboot-required"):
+	if is_reboot_needed_due_to_package_installation():
 		output.print_error("System updates have been installed and a reboot of the machine is required.")
 	elif len(pkgs) == 0:
 		output.print_ok("System software is up to date.")
@@ -207,15 +240,15 @@ def check_free_disk_space(rounded_values, env, output):
 	st = os.statvfs(env['STORAGE_ROOT'])
 	bytes_total = st.f_blocks * st.f_frsize
 	bytes_free = st.f_bavail * st.f_frsize
-	if not rounded_values:
-		disk_msg = "The disk has %s GB space remaining." % str(round(bytes_free/1024.0/1024.0/1024.0*10.0)/10)
-	else:
-		disk_msg = "The disk has less than %s%% space left." % str(round(bytes_free/bytes_total/10 + .5)*10)
+	disk_msg = "The disk has %.2f GB space remaining." % (bytes_free/1024.0/1024.0/1024.0)
 	if bytes_free > .3 * bytes_total:
+		if rounded_values: disk_msg = "The disk has more than 30% free space."
 		output.print_ok(disk_msg)
 	elif bytes_free > .15 * bytes_total:
+		if rounded_values: disk_msg = "The disk has less than 30% free space."
 		output.print_warning(disk_msg)
 	else:
+		if rounded_values: disk_msg = "The disk has less than 15% free space."
 		output.print_error(disk_msg)
 
 def check_free_memory(rounded_values, env, output):
@@ -236,6 +269,8 @@ def run_network_checks(env, output):
 	# Also see setup/network-checks.sh.
 
 	output.add_heading("Network")
+
+	check_ufw(env, output)
 
 	# Stop if we cannot make an outbound connection on port 25. Many residential
 	# networks block outbound port 25 to prevent their network from sending spam.
@@ -358,7 +393,7 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 
 	# Check that PRIMARY_HOSTNAME resolves to PUBLIC_IP[V6] in public DNS.
 	ipv6 = query_dns(domain, "AAAA") if env.get("PUBLIC_IPV6") else None
-	if ip == env['PUBLIC_IP'] and ipv6 in (None, env['PUBLIC_IPV6']):
+	if ip == env['PUBLIC_IP'] and not (ipv6 and env['PUBLIC_IPV6'] and normalize_ip(ipv6) != normalize_ip(env['PUBLIC_IPV6'])):
 		output.print_ok("Domain resolves to box's IP address. [%s ↦ %s]" % (env['PRIMARY_HOSTNAME'], my_ips))
 	else:
 		output.print_error("""This domain must resolve to your box's IP address (%s) in public DNS but it currently resolves
@@ -450,7 +485,7 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 	# half working.)
 
 	custom_dns_records = list(get_custom_dns_config(env)) # generator => list so we can reuse it
-	correct_ip = get_custom_dns_record(custom_dns_records, domain, "A") or env['PUBLIC_IP']
+	correct_ip = "; ".join(sorted(get_custom_dns_records(custom_dns_records, domain, "A"))) or env['PUBLIC_IP']
 	custom_secondary_ns = get_secondary_dns(custom_dns_records, mode="NS")
 	secondary_ns = custom_secondary_ns or ["ns2." + env['PRIMARY_HOSTNAME']]
 
@@ -474,7 +509,7 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 				% (existing_ns, correct_ns) )
 
 	# Check that each custom secondary nameserver resolves the IP address.
-	
+
 	if custom_secondary_ns and not probably_external_dns:
 		for ns in custom_secondary_ns:
 			# We must first resolve the nameserver to an IP address so we can query it.
@@ -684,6 +719,23 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None):
 	# periods from responses since that's how qnames are encoded in DNS but is
 	# confusing for us. The order of the answers doesn't matter, so sort so we
 	# can compare to a well known order.
+
+	# Unfortunately, the response.__str__ returns bytes
+	# instead of string, if it resulted from an AAAA-query.
+	# We need to convert manually, until this is fixed:
+	# https://github.com/rthalley/dnspython/issues/204
+	#
+	# BEGIN HOTFIX
+	response_new = []
+	for r in response:
+		s = r.to_text()
+		if isinstance(s, bytes):
+			s = s.decode('utf-8')
+		response_new.append(s)
+	
+	response = response_new
+	# END HOTFIX
+
 	return "; ".join(sorted(str(r).rstrip('.') for r in response))
 
 def check_ssl_cert(domain, rounded_time, ssl_certificates, env, output):
@@ -770,8 +822,13 @@ def what_version_is_this(env):
 def get_latest_miab_version():
 	# This pings https://mailinabox.email/setup.sh and extracts the tag named in
 	# the script to determine the current product version.
-	import urllib.request
-	return re.search(b'TAG=(.*)', urllib.request.urlopen("https://mailinabox.email/setup.sh?ping=1").read()).group(1).decode("utf8")
+    from urllib.request import urlopen, HTTPError, URLError
+    from socket import timeout
+
+    try:
+        return re.search(b'TAG=(.*)', urlopen("https://mailinabox.email/setup.sh?ping=1", timeout=5).read()).group(1).decode("utf8")
+    except (HTTPError, URLError, timeout):
+        return None
 
 def check_miab_version(env, output):
 	config = load_settings(env)
@@ -788,6 +845,8 @@ def check_miab_version(env, output):
 
 		if this_ver == latest_ver:
 			output.print_ok("Mail-in-a-Box is up to date. You are running version %s." % this_ver)
+		elif latest_ver is None:
+			output.print_error("Latest Mail-in-a-Box version could not be determined. You are running version %s." % this_ver)
 		else:
 			output.print_error("A new version of Mail-in-a-Box is available. You are running version %s. The latest version is %s. For upgrade instructions, see https://mailinabox.email. "
 				% (this_ver, latest_ver))
@@ -860,6 +919,11 @@ def run_and_output_changes(env, pool):
 	with open(cache_fn, "w") as f:
 		json.dump(cur.buf, f, indent=True)
 
+def normalize_ip(ip):
+	# Use ipaddress module to normalize the IPv6 notation and ensure we are matching IPv6 addresses written in different representations according to rfc5952.
+	import ipaddress
+	return str(ipaddress.ip_address(ip))
+
 class FileOutput:
 	def __init__(self, buf, width):
 		self.buf = buf
@@ -901,7 +965,7 @@ class FileOutput:
 class ConsoleOutput(FileOutput):
 	def __init__(self):
 		self.buf = sys.stdout
-		
+
 		# Do nice line-wrapping according to the size of the terminal.
 		# The 'stty' program queries standard input for terminal information.
 		if sys.stdin.isatty():

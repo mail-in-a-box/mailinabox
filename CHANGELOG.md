@@ -1,6 +1,195 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+Mail:
+
+* The CardDAV plugin has been added to Roundcube so that your ownCloud contacts are available in webmail.
+* Upgraded to Roundcube 1.2.4 and updated the persistent login plugin.
+* Allow larger messages to be checked by SpamAssassin.
+* Dovecot's vsz memory limit has been increased proportional to system memory.
+* Newly set user passwords must be at least eight characters.
+
+ownCloud:
+
+* Upgraded to ownCloud 9.1.4.
+
+Control Panel/Management:
+
+* The status checks page crashed when the mailinabox.email website was down - that's fixed.
+* Made nightly re-provisioning of TLS certificates less noisy.
+* Fixed bugs in rsync backup method and in the list of recent backups.
+* Fixed incorrect status checks errors about IPv6 addresses.
+* Fixed incorrect status checks errors for secondary nameservers if round-robin custom A records are set.
+* The management mail_log.py tool has been rewritten.
+
+DNS:
+
+* Added support for DSA, ED25519, and custom SSHFP records.
+
+System:
+
+* The SSH fail2ban jail was not activated.
+
+Installation:
+
+* At the end of installation, the SHA256 -- rather than SHA1 -- hash of the system's TLS certificate is shown.
+
+v0.21c (February 1, 2017)
+-------------------------
+
+Installations and upgrades started failing about 10 days ago with the error "ImportError: No module named 'packaging'" after an upstream package (Python's setuptools) was updated by its maintainers. The updated package conflicted with Ubuntu 14.04's version of another package (Python's pip). This update upgrades both packages to remove the conflict.
+
+If you already encountered the error during installation or upgrade of Mail-in-a-Box, this update may not correct the problem on your existing system. See https://discourse.mailinabox.email/t/v0-21c-release-fixes-python-package-installation-issue/1881 for help if the problem persists after upgrading to this version of Mail-in-a-Box.
+
+v0.21b (December 4, 2016)
+-------------------------
+
+This update corrects a first-time installation issue introduced in v0.21 caused by the new Exchange/ActiveSync feature.
+
+v0.21 (November 30, 2016)
+-------------------------
+
+This version updates ownCloud, which may include security fixes, and makes some other smaller improvements.
+
+Mail:
+
+* Header privacy filters were improperly running on the contents of forwarded email --- that's fixed.
+* We have another go at fixing a long-standing issue with training the spam filter (because of a file permissions issue).
+* Exchange/ActiveSync will now use your display name set in Roundcube in the From: line of outgoing email.
+
+ownCloud:
+
+* Updated ownCloud to version 9.1.1.
+
+Control panel:
+
+* Backups can now be made using rsync-over-ssh!
+* Status checks failed if the system doesn't support iptables or doesn't have ufw installed.
+* Added support for SSHFP records when sshd listens on non-standard ports.
+* Recommendations for TLS certificate providers were removed now that everyone mostly uses Let's Encrypt.
+
+System:
+
+* Ubuntu's "Upgrade to 16.04" notice is suppressed since you should not do that.
+* Lowered memory requirements to 512MB, display a warning if system memory is below 768MB.
+
+v0.20 (September 23, 2016)
+--------------------------
+
+ownCloud:
+
+* Updated to ownCloud to 8.2.7.
+
+Control Panel:
+
+* Fixed a crash that occurs when there are IPv6 DNS records due to a bug in dnspython 1.14.0.
+* Improved the wonky low disk space check.
+
+v0.19b (August 20, 2016)
+------------------------
+
+This update corrects a security issue introduced in v0.18.
+
+* A remote code execution vulnerability is corrected in how the munin system monitoring graphs are generated for the control panel. The vulnerability involves an administrative user visiting a carefully crafted URL.
+
+v0.19a (August 18, 2016)
+------------------------
+
+This update corrects a security issue in v0.19.
+
+* fail2ban won't start if Roundcube had not yet been used - new installations probably do not have fail2ban running.
+
+v0.19 (August 13, 2016)
+-----------------------
+
+Mail:
+
+* Roundcube is updated to version 1.2.1.
+* SSLv3 and RC4 are now no longer supported in incoming and outgoing mail (SMTP port 25).
+
+Control panel:
+
+* The users and aliases APIs are now documented on their control panel pages.
+* The HSTS header was missing.
+* New status checks were added for the ufw firewall.
+
+DNS:
+
+* Add SRV records for CardDAV/CalDAV to facilitate autoconfiguration (e.g. in DavDroid, whose latest version didn't seem to work to configure with entering just a hostname).
+
+System:
+
+* fail2ban jails added for SMTP submission, Roundcube, ownCloud, the control panel, and munin.
+* Mail-in-a-Box can now be installed on the i686 architecture.
+
+v0.18c (June 2, 2016)
+---------------------
+
+* Domain aliases (and misconfigured aliases/catch-alls with non-existent local targets) would accept mail and deliver it to new mailbox folders on disk even if the target address didn't correspond with an existing mail user, instead of rejecting the mail. This issue was introduced in v0.18.
+* The Munin Monitoring link in the control panel now opens a new window.
+* Added an undocumented before-backup script.
+
+v0.18b (May 16, 2016)
+---------------------
+
+* Fixed a Roundcube user accounts issue introduced in v0.18.
+
+v0.18 (May 15, 2016)
+--------------------
+
+ownCloud:
+
+* Updated to ownCloud to 8.2.3 
+
+Mail:
+
+* Roundcube is updated to version 1.1.5 and the Roundcube login screen now says "[hostname] Webmail" instead of "Mail-in-a-Box/Roundcube webmail".
+* Fixed a long-standing issue with training the spam filter not working (because of a file permissions issue).
+
+Control panel:
+
+* Munin system monitoring graphs are now zoomable.
+* When a reboot is required (due to Ubuntu security updates automatically installed), a Reboot Box button now appears on the System Status Checks page of the control panel.
+* It is now possible to add SRV and secondary MX records in the Custom DNS page.
+* Other minor fixes.
+
+System:
+
+* The fail2ban recidive jail, which blocks long-duration brute force attacks, now no longer sends the administrator emails (which were not helpful).
+
+Setup:
+
+* The system hostname is now set during setup.
+* A swap file is now created if system memory is less than 2GB, 5GB of free disk space is available, and if no swap file yet exists.
+* We now install Roundcube from the official GitHub repository instead of our own mirror, which we had previously created to solve problems with SourceForge.
+* DKIM was incorrectly set up on machines where "localhost" was defined as something other than "127.0.0.1".
+
+v0.17c (April 1, 2016)
+----------------------
+
+This update addresses some minor security concerns and some installation issues.
+
+ownCoud:
+
+* Block web access to the configuration parameters (config.php). There is no immediate impact (see [#776](https://github.com/mail-in-a-box/mailinabox/pull/776)), although advanced users may want to take note.
+
+Mail:
+
+* Roundcube html5_notifier plugin updated from version 0.6 to 0.6.2 to fix Roundcube getting stuck for some people.
+
+Control panel:
+
+* Prevent click-jacking of the management interface by adding HTTP headers.
+* Failed login no longer reveals whether an account exists on the system.
+
+Setup:
+
+* Setup dialogs did not appear correctly when connecting to SSH using Putty on Windows.
+* We now install Roundcube from our own mirror because Sourceforge's downloads experience frequent intermittant unavailability.
+
 v0.17b (March 1, 2016)
 ----------------------
 
@@ -39,7 +228,6 @@ v0.16 (January 30, 2016)
 ------------------------
 
 This update primarily adds automatic SSL (now "TLS") certificate provisioning from Let's Encrypt (https://letsencrypt.org/).
-* The Sieve port is now open so tools like the Thunderbird Sieve program can be used to edit mail filters.
 
 Control Panel:
 
@@ -478,4 +666,4 @@ v0.02 (September 21, 2014)
 v0.01 (August 19, 2014)
 -----------------------
 
-First release.
+First versioned release after a year of unversioned development.

@@ -30,8 +30,8 @@ def mgmt(cmd, data=None, is_json=False):
 def read_password():
     while True:
         first = getpass.getpass('password: ')
-        if len(first) < 4:
-            print("Passwords must be at least four characters.")
+        if len(first) < 8:
+            print("Passwords must be at least eight characters.")
             continue
         if re.search(r'[\s]', first):
             print("Passwords cannot contain spaces.")

@@ -48,7 +48,7 @@ echo "public.pyzor.org:24441" > /etc/spamassassin/pyzor/servers
 # * Disable localmode so Pyzor, DKIM and DNS checks can be used.
 tools/editconf.py /etc/default/spampd \
 	DESTPORT=10026 \
-	ADDOPTS="\"--maxsize=500\"" \
+	ADDOPTS="\"--maxsize=2000\"" \
 	LOCALONLY=0
 
 # Spamassassin normally wraps spam as an attachment inside a fresh
@@ -63,7 +63,8 @@ tools/editconf.py /etc/default/spampd \
 # Tell Spamassassin not to modify the original message except for adding
 # the X-Spam-Status mail header and related headers.
 tools/editconf.py /etc/spamassassin/local.cf -s \
-	report_safe=0
+	report_safe=0 \
+	add_header="all Report _REPORT_"
 
 # Bayesean learning
 # -----------------
@@ -78,9 +79,13 @@ tools/editconf.py /etc/spamassassin/local.cf -s \
 # * Writable by the debian-spamd user, which runs /etc/cron.daily/spamassassin.
 #
 # We'll have these files owned by spampd and grant access to the other two processes.
+#
+# Spamassassin will change the access rights back to the defaults, so we must also configure
+# the filemode in the config file.
 
 tools/editconf.py /etc/spamassassin/local.cf -s \
-	bayes_path=$STORAGE_ROOT/mail/spamassassin/bayes
+	bayes_path=$STORAGE_ROOT/mail/spamassassin/bayes \
+	bayes_file_mode=0666
 
 mkdir -p $STORAGE_ROOT/mail/spamassassin
 chown -R spampd:spampd $STORAGE_ROOT/mail/spamassassin

@@ -91,7 +91,8 @@ tools/editconf.py /etc/postfix/main.cf \
 # * Give it a different name in syslog to distinguish it from the port 25 smtpd server.
 # * Add a new cleanup service specific to the submission service ('authclean')
 #   that filters out privacy-sensitive headers on mail being sent out by
-#   authenticated users.
+#   authenticated users.  By default Postfix also applies this to attached
+#   emails but we turn this off by setting nested_header_checks empty.
 tools/editconf.py /etc/postfix/master.cf -s -w \
 	"submission=inet n       -       -       -       -       smtpd
 	  -o syslog_name=postfix/submission
@@ -100,7 +101,8 @@ tools/editconf.py /etc/postfix/master.cf -s -w \
 	  -o smtpd_tls_ciphers=high -o smtpd_tls_exclude_ciphers=aNULL,DES,3DES,MD5,DES+MD5,RC4 -o smtpd_tls_mandatory_protocols=!SSLv2,!SSLv3
 	  -o cleanup_service_name=authclean" \
 	"authclean=unix  n       -       -       -       0       cleanup
-	  -o header_checks=pcre:/etc/postfix/outgoing_mail_header_filters"
+	  -o header_checks=pcre:/etc/postfix/outgoing_mail_header_filters
+	  -o nested_header_checks="
 
 # Install the `outgoing_mail_header_filters` file required by the new 'authclean' service.
 cp conf/postfix_outgoing_mail_header_filters /etc/postfix/outgoing_mail_header_filters
@@ -122,8 +124,9 @@ tools/editconf.py /etc/postfix/main.cf \
 	smtpd_tls_cert_file=$STORAGE_ROOT/ssl/ssl_certificate.pem \
 	smtpd_tls_key_file=$STORAGE_ROOT/ssl/ssl_private_key.pem \
 	smtpd_tls_dh1024_param_file=$STORAGE_ROOT/ssl/dh2048.pem \
+	smtpd_tls_protocols=\!SSLv2,\!SSLv3 \
 	smtpd_tls_ciphers=medium \
-	smtpd_tls_exclude_ciphers=aNULL \
+	smtpd_tls_exclude_ciphers=aNULL,RC4 \
 	smtpd_tls_received_header=yes
 
 # Prevent non-authenticated users from sending mail that requires being
@@ -158,6 +161,10 @@ tools/editconf.py /etc/postfix/main.cf \
 # even if we don't know if it's to the right party, than to not encrypt at all. Instead we'll
 # now see notices about trusted certs. The CA file is provided by the package `ca-certificates`.
 tools/editconf.py /etc/postfix/main.cf \
+	smtp_tls_protocols=\!SSLv2,\!SSLv3 \
+	smtp_tls_mandatory_protocols=\!SSLv2,\!SSLv3 \
+	smtp_tls_ciphers=medium \
+	smtp_tls_exclude_ciphers=aNULL,RC4 \
 	smtp_tls_security_level=dane \
 	smtp_dns_support_level=dnssec \
 	smtp_tls_CAfile=/etc/ssl/certs/ca-certificates.crt \

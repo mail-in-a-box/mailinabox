@@ -24,6 +24,9 @@ export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 export LC_TYPE=en_US.UTF-8
 
+# Fix so line drawing characters are shown correctly in Putty on Windows. See #744.
+export NCURSES_NO_UTF8_ACS=1
+
 # Recall the last settings used if we're running this a second time.
 if [ -f /etc/mailinabox.conf ]; then
 	# Run any system migrations before proceeding. Since this is a second run,
@@ -108,14 +111,21 @@ source setup/zpush.sh
 source setup/management.sh
 source setup/munin.sh
 
-# Ping the management daemon to write the DNS and nginx configuration files.
-until nc -z -w 4 localhost 10222
+# Wait for the management daemon to start...
+until nc -z -w 4 127.0.0.1 10222
 do
 	echo Waiting for the Mail-in-a-Box management daemon to start...
 	sleep 2
 done
+
+# ...and then have it write the DNS and nginx configuration files and start those
+# services.
 tools/dns_update
 tools/web_update
+
+# Give fail2ban another restart. The log files may not all have been present when
+# fail2ban was first configured, but they should exist now.
+restart_service fail2ban
 
 # If DNS is already working, try to provision TLS certficates from Let's Encrypt.
 # Suppress extra reasons why domains aren't getting a new certificate.
@@ -137,17 +147,17 @@ if management/status_checks.py --check-primary-hostname; then
 	echo https://$PRIMARY_HOSTNAME/admin
 	echo
 	echo "If you have a DNS problem put the box's IP address in the URL"
-	echo "(https://$PUBLIC_IP/admin) but then check the SSL fingerprint:"
-	openssl x509 -in $STORAGE_ROOT/ssl/ssl_certificate.pem -noout -fingerprint \
-        	| sed "s/SHA1 Fingerprint=//"
+	echo "(https://$PUBLIC_IP/admin) but then check the TLS fingerprint:"
+	openssl x509 -in $STORAGE_ROOT/ssl/ssl_certificate.pem -noout -fingerprint -sha256\
+        	| sed "s/SHA256 Fingerprint=//"
 else
 	echo https://$PUBLIC_IP/admin
 	echo
 	echo You will be alerted that the website has an invalid certificate. Check that
 	echo the certificate fingerprint matches:
 	echo
-	openssl x509 -in $STORAGE_ROOT/ssl/ssl_certificate.pem -noout -fingerprint \
-        	| sed "s/SHA1 Fingerprint=//"
+	openssl x509 -in $STORAGE_ROOT/ssl/ssl_certificate.pem -noout -fingerprint -sha256\
+        	| sed "s/SHA256 Fingerprint=//"
 	echo
 	echo Then you can confirm the security exception and continue.
 	echo

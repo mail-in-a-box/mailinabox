@@ -10,7 +10,7 @@
 
 <p>It is possible to set custom DNS records on domains hosted here.</p>
 
-<h3>Set Custom DNS Records</h3>
+<h3>Set custom DNS records</h3>
 
 <p>You can set additional DNS records, such as if you have a website running on another server, to add DKIM records for external mail providers, or for various confirmation-of-ownership tests.</p>
 
@@ -35,7 +35,9 @@
         <option value="AAAA" data-hint="Enter an IPv6 address.">AAAA (IPv6 address)</option>
         <option value="CNAME" data-hint="Enter another domain name followed by a period at the end (e.g. mypage.github.io.).">CNAME (DNS forwarding)</option>
         <option value="TXT" data-hint="Enter arbitrary text.">TXT (text record)</option>
-        <option value="MX" data-hint="Enter record in the form of PRIORIY DOMAIN., including trailing period (e.g. 20 mx.example.com.).">MX (mail exchanger)</option>
+        <option value="MX" data-hint="Enter record in the form of PRIORITY DOMAIN., including trailing period (e.g. 20 mx.example.com.).">MX (mail exchanger)</option>
+        <option value="SRV" data-hint="Enter record in the form of PRIORITY WEIGHT PORT TARGET., including trailing period (e.g. 10 10 5060 sip.example.com.).">SRV (service record)</option>
+        <option value="SSHFP" data-hint="Enter record in the form of ALGORITHM TYPE FINGERPRINT.">SSHFP (SSH fingerprint record)</option>
       </select>
     </div>
   </div>
@@ -65,10 +67,10 @@
   </tbody>
 </table>
 
-<h3>Using a Secondary Nameserver</h3>
+<h3>Using a secondary nameserver</h3>
 
 <p>If your TLD requires you to have two separate nameservers, you can either set up <a href="#" onclick="return show_panel('external_dns')">external DNS</a> and ignore the DNS server on this box entirely, or use the DNS server on this box but add a secondary (aka &ldquo;slave&rdquo;) nameserver.</p>
-<p>If you choose to use a seconday nameserver, you must find a seconday nameserver service provider. Your domain name registrar or virtual cloud provider may provide this service for you. Once you set up the seconday nameserver service, enter the hostname (not the IP address) of <em>their</em> secondary nameserver in the box below.</p>
+<p>If you choose to use a secondary nameserver, you must find a secondary nameserver service provider. Your domain name registrar or virtual cloud provider may provide this service for you. Once you set up the secondary nameserver service, enter the hostname (not the IP address) of <em>their</em> secondary nameserver in the box below.</p>
 
 <form class="form-horizontal" role="form" onsubmit="do_set_secondary_dns(); return false;">
   <div class="form-group">
@@ -123,7 +125,7 @@
 <tr><td>email</td> <td>The email address of any administrative user here.</td></tr>
 <tr><td>password</td> <td>That user&rsquo;s password.</td></tr>
 <tr><td>qname</td> <td>The fully qualified domain name for the record you are trying to set. It must be one of the domain names or a subdomain of one of the domain names hosted on this box. (Add mail users or aliases to add new domains.)</td></tr>
-<tr><td>rtype</td> <td>The resource type. Defaults to <code>A</code> if omitted. Possible values: <code>A</code> (an IPv4 address), <code>AAAA</code> (an IPv6 address), <code>TXT</code> (a text string), <code>CNAME</code> (an alias, which is a fully qualified domain name &mdash; don&rsquo;t forget the final period), <code>MX</code>, or <code>SRV</code>.</td></tr>
+<tr><td>rtype</td> <td>The resource type. Defaults to <code>A</code> if omitted. Possible values: <code>A</code> (an IPv4 address), <code>AAAA</code> (an IPv6 address), <code>TXT</code> (a text string), <code>CNAME</code> (an alias, which is a fully qualified domain name &mdash; don&rsquo;t forget the final period), <code>MX</code>, <code>SRV</code>, or <code>SSHFP</code>.</td></tr>
 <tr><td>value</td> <td>For PUT, POST, and DELETE, the record&rsquo;s value. If the <code>rtype</code> is <code>A</code> or <code>AAAA</code> and <code>value</code> is empty or omitted, the IPv4 or IPv6 address of the remote host is used (be sure to use the <code>-4</code> or <code>-6</code> options to curl). This is handy for dynamic DNS!</td></tr>
 </table>
 

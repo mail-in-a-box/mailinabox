@@ -35,7 +35,7 @@ if [ -z "`tools/mail.py user`" ]; then
 		else
 			# Use me@PRIMARY_HOSTNAME
 			EMAIL_ADDR=me@$PRIMARY_HOSTNAME
-			EMAIL_PW=1234
+			EMAIL_PW=12345678
 			echo
 			echo "Creating a new administrative mail account for $EMAIL_ADDR with password $EMAIL_PW."
 			echo
