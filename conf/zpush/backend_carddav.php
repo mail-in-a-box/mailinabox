@@ -17,7 +17,7 @@ define('CARDDAV_CONTACTS_FOLDER_NAME', '%u Addressbook');
 define('CARDDAV_SUPPORTS_SYNC', false);
 
 // If the CardDAV server supports the FN attribute for searches
-// DAViCal supports it, but SabreDav, Owncloud and SOGo don't
+// DAViCal supports it, but SabreDav, Nextcloud and SOGo don't
 // Setting this to true will search by FN. If false will search by sn, givenName and email
 // It's safe to leave it as false
 define('CARDDAV_SUPPORTS_FN_SEARCH', false);
