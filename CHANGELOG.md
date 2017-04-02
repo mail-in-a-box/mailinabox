@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.22 (April 2, 2017)
+---------------------
 
 Mail:
 
