@@ -1,11 +1,11 @@
 #!/bin/bash
-# Owncloud
+# Nextcloud
 ##########################
 
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
-# ### Installing ownCloud
+# ### Installing Nextcloud
 
 echo "Installing Nextcloud (contacts/calendar)..."
 
@@ -38,7 +38,7 @@ InstallOwncloud() {
 	echo "Upgrading to $flavor version $version"
 	echo
 
-	# Remove the current owncloud
+	# Remove the current owncloud/Nextcloud
 	rm -rf /usr/local/lib/owncloud
 
 	# Download and verify
@@ -48,14 +48,14 @@ InstallOwncloud() {
 		wget_verify https://download.owncloud.org/community/owncloud-$version.zip $hash /tmp/owncloud.zip
 	fi
 
-	# Extract ownCloud
+	# Extract ownCloud/Nextcloud
 	unzip -q /tmp/owncloud.zip -d /usr/local/lib
 	if [ "$flavor" = "Nextcloud" ]; then
 		mv /usr/local/lib/nextcloud /usr/local/lib/owncloud
 	fi
 	rm -f /tmp/owncloud.zip
 
-	# The two apps we actually want are not in ownCloud core. Download the releases from
+	# The two apps we actually want are not in Nextcloud core. Download the releases from
 	# their github repositories.
 	mkdir -p /usr/local/lib/owncloud/apps
 
@@ -109,14 +109,14 @@ owncloud_ver=10.0.4
 owncloud_hash=346590278a5cc7b0a3c8d1a68eafec68ac59c475
 owncloud_flavor=Nextcloud
 
-# Check if ownCloud dir exist, and check if version matches owncloud_ver (if either doesn't - install/upgrade)
+# Check if Nextcloud dir exist, and check if version matches owncloud_ver (if either doesn't - install/upgrade)
 if [ ! -d /usr/local/lib/owncloud/ ] \
         || ! grep -q $owncloud_ver /usr/local/lib/owncloud/version.php; then
 
 	# Stop php-fpm
 	hide_output service php5-fpm stop
 
-        # Backup the existing ownCloud.
+	# Backup the existing ownCloud/Nextcloud.
 	# Create a backup directory to store the current installation and database to
 	BACKUP_DIRECTORY=$STORAGE_ROOT/owncloud-backup/`date +"%Y-%m-%d-%T"`
 	mkdir -p "$BACKUP_DIRECTORY"
@@ -131,7 +131,7 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
                 cp /home/user-data/owncloud/config.php $BACKUP_DIRECTORY
         fi
 
-	# We only need to check if we do upgrades when owncloud was previously installed
+	# We only need to check if we do upgrades when owncloud/Nextcloud was previously installed
 	if [ -e /usr/local/lib/owncloud/version.php ]; then
 		if grep -q "8\.1\.[0-9]" /usr/local/lib/owncloud/version.php; then
 			echo "We are running 8.1.x, upgrading to 8.2.3 first"
@@ -184,9 +184,9 @@ EOF
 	InstallOwncloud $owncloud_ver $owncloud_hash Nextcloud
 fi
 
-# ### Configuring ownCloud
+# ### Configuring Nextcloud
 
-# Setup ownCloud if the ownCloud database does not yet exist. Running setup when
+# Setup Nextcloud if the Nextcloud database does not yet exist. Running setup when
 # the database does exist wipes the database and user data.
 if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
 	# Create user data directory
@@ -201,7 +201,7 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
 
   'instanceid' => '$instanceid',
 
-  'forcessl' => true, # if unset/false, ownCloud sends a HSTS=0 header, which conflicts with nginx config
+  'forcessl' => true, # if unset/false, Nextcloud sends a HSTS=0 header, which conflicts with nginx config
 
   'overwritewebroot' => '/cloud',
   'overwrite.cli.url' => '/cloud',
@@ -238,7 +238,7 @@ EOF
   'dbtype' => 'sqlite3',
 
   # create an administrator account with a random password so that
-  # the user does not have to enter anything on first load of ownCloud
+  # the user does not have to enter anything on first load of Nextcloud
   'adminlogin'    => 'root',
   'adminpass'     => '$adminpassword',
 );
@@ -248,7 +248,7 @@ EOF
 	# Set permissions
 	chown -R www-data.www-data $STORAGE_ROOT/owncloud /usr/local/lib/owncloud
 
-	# Execute ownCloud's setup step, which creates the ownCloud sqlite database.
+	# Execute Nextcloud's setup step, which creates the Nextcloud sqlite database.
 	# It also wipes it if it exists. And it updates config.php with database
 	# settings and deletes the autoconfig.php file.
 	(cd /usr/local/lib/owncloud; sudo -u www-data php /usr/local/lib/owncloud/index.php;)
@@ -285,9 +285,9 @@ echo ";";
 EOF
 chown www-data.www-data $STORAGE_ROOT/owncloud/config.php
 
-# Enable/disable apps. Note that this must be done after the ownCloud setup.
+# Enable/disable apps. Note that this must be done after the Nextcloud setup.
 # The firstrunwizard gave Josh all sorts of problems, so disabling that.
-# user_external is what allows ownCloud to use IMAP for login. The contacts
+# user_external is what allows Nextcloud to use IMAP for login. The contacts
 # and calendar apps are the extensions we really care about here.
 hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:disable firstrunwizard
 hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable user_external
@@ -316,7 +316,7 @@ if grep -q apc.enabled=0 /etc/php5/mods-available/apcu.ini; then
 		apc.enabled=1
 fi
 
-# Set up a cron job for owncloud.
+# Set up a cron job for Nextcloud.
 cat > /etc/cron.hourly/mailinabox-owncloud << EOF;
 #!/bin/bash
 # Mail-in-a-Box
@@ -324,8 +324,8 @@ sudo -u www-data php -f /usr/local/lib/owncloud/cron.php
 EOF
 chmod +x /etc/cron.hourly/mailinabox-owncloud
 
-# There's nothing much of interest that a user could do as an admin for ownCloud,
-# and there's a lot they could mess up, so we don't make any users admins of ownCloud.
+# There's nothing much of interest that a user could do as an admin for Nextcloud,
+# and there's a lot they could mess up, so we don't make any users admins of Nextcloud.
 # But if we wanted to, we would do this:
 # ```
 # for user in $(tools/mail.py user admins); do

@@ -28,9 +28,9 @@ fi
 echo "Restoring backup from $1"
 service php5-fpm stop
 
-# remove the current owncloud installation
+# remove the current ownCloud/Nextcloud installation
 rm -rf /usr/local/lib/owncloud/
-# restore the current owncloud application
+# restore the current ownCloud/Nextcloud application
 cp -r  "$1/owncloud-install" /usr/local/lib/owncloud
 
 # restore access rights
