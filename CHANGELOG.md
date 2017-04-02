@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+ownCloud is replaced with Nextcloud 10.0.4.
+
 v0.22 (April 2, 2017)
 ---------------------
 
