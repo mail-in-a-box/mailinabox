@@ -894,7 +894,10 @@ def run_and_output_changes(env, pool):
 def normalize_ip(ip):
 	# Use ipaddress module to normalize the IPv6 notation and ensure we are matching IPv6 addresses written in different representations according to rfc5952.
 	import ipaddress
-	return str(ipaddress.ip_address(ip))
+	try:
+		return str(ipaddress.ip_address(ip))
+	except:
+		return ip
 
 class FileOutput:
 	def __init__(self, buf, width):
