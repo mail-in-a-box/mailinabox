@@ -391,5 +391,5 @@ chmod +x /etc/cron.hourly/mailinabox-owncloud
 # ```
 
 # Enable PHP modules and restart PHP.
-#php5enmod imap
+restart_service php5-fpm
 restart_service php7.0-fpm
