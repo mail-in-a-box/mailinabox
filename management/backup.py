@@ -399,10 +399,11 @@ def list_target_files(config):
 		rsync_fn_size_re = re.compile(r'.*    ([^ ]*) [^ ]* [^ ]* (.*)')
 		rsync_target = '{host}:{path}'
 
-		if not target.path.endswith('/'):
-			target_path = target.path + '/'
-		if target.path.startswith('/'):
-			target_path = target.path[1:]
+		target_path = target.path
+		if not target_path.endswith('/'):
+			target_path = target_path + '/'
+		if target_path.startswith('/'):
+			target_path = target_path[1:]
 
 		rsync_command = [ 'rsync',
 					'-e',
