@@ -23,7 +23,7 @@ apt_install nsd ldnsutils openssh-client
 mkdir -p /var/run/nsd
 
 cat > /etc/nsd/nsd.conf << EOF;
-# No not edit. Overwritten by Mail-in-a-Box setup.
+# Do not edit. Overwritten by Mail-in-a-Box setup.
 server:
   hide-version: yes
 
