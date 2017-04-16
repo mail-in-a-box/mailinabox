@@ -4,7 +4,8 @@ CHANGELOG
 In Development
 --------------
 
-ownCloud is replaced with Nextcloud 10.0.4.
+* ownCloud is replaced with Nextcloud 10.0.4.
+* Let's Encrypt now supports internationalized domains so the block on provisioning those domains through Let's Encrypt is now removed.
 
 v0.22 (April 2, 2017)
 ---------------------
