@@ -5,11 +5,12 @@
 * Descr     :   Autodiscover configuration file
 ************************************************/
 
+define('TIMEZONE', '');
+
 // Defines the base path on the server
 define('BASE_PATH', dirname($_SERVER['SCRIPT_FILENAME']). '/');
 
-// The Z-Push server location for the autodiscover response
-define('SERVERURL', 'https://PRIMARY_HOSTNAME/Microsoft-Server-ActiveSync');
+define('ZPUSH_HOST', 'PRIMARY_HOSTNAME');
 
 define('USE_FULLEMAIL_FOR_LOGIN', true);
 
@@ -18,6 +19,7 @@ define('LOGFILE', LOGFILEDIR . 'autodiscover.log');
 define('LOGERRORFILE', LOGFILEDIR . 'autodiscover-error.log');
 define('LOGLEVEL', LOGLEVEL_INFO);
 define('LOGUSERLEVEL', LOGLEVEL);
+$specialLogUsers = array();
 
 // the backend data provider
 define('BACKEND_PROVIDER', 'BackendCombined');
