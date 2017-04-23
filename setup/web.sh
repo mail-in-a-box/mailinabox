@@ -95,6 +95,10 @@ if [ -L /etc/init.d/php-fastcgi ]; then
 	apt-get -y purge php5-cgi #NODOC
 fi
 
+# Don't expose the php version
+tools/editconf.py /etc/nginx/fastcgi_params \
+	 "fastcgi_param PHP_VALUE \"expose_php"="Off\";"
+
 # Remove obsoleted scripts. #NODOC
 # exchange-autodiscover is now handled by Z-Push. #NODOC
 for f in webfinger exchange-autodiscover; do #NODOC
