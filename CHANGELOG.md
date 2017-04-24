@@ -19,6 +19,13 @@ Control Panel/Management:
 * Fix an error in the control panel related to IPv6 addresses.
 * TLS certificates for internationalized domain names can now be provisioned from Let's Encrypt automatically.
 
+v0.22a (April 24, 2017)
+---------------------
+Installation:
+
+* Fixed an error in Owncloud/Nextcloud setup not updating domain when changing hostname.
+
+
 v0.22 (April 2, 2017)
 ---------------------
 
@@ -160,7 +167,7 @@ v0.18 (May 15, 2016)
 
 ownCloud:
 
-* Updated to ownCloud to 8.2.3 
+* Updated to ownCloud to 8.2.3
 
 Mail:
 
