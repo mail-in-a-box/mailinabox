@@ -11,7 +11,7 @@ Mail:
 
 ownCloud (now Nextcloud):
 
-* ownCloud is replaced with Nextcloud 10.0.4.
+* ownCloud is replaced with Nextcloud 10.0.5.
 
 Control Panel/Management:
 
