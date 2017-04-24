@@ -221,7 +221,6 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
   'mail_smtpname' => '',
   'mail_smtppassword' => '',
   'mail_from_address' => 'owncloud',
-  'mail_domain' => '$PRIMARY_HOSTNAME',
 );
 ?>
 EOF
@@ -277,6 +276,8 @@ include("$STORAGE_ROOT/owncloud/config.php");
 
 \$CONFIG['logtimezone'] = '$TIMEZONE';
 \$CONFIG['logdateformat'] = 'Y-m-d H:i:s';
+
+\$CONFIG['mail_domain'] => '$PRIMARY_HOSTNAME',
 
 echo "<?php\n\\\$CONFIG = ";
 var_export(\$CONFIG);
