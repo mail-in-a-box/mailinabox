@@ -23,6 +23,9 @@ define('IMAP_FOLDER_TRASH', 'TRASH');
 define('IMAP_FOLDER_SPAM', 'SPAM');
 define('IMAP_FOLDER_ARCHIVE', 'ARCHIVE');
 
+define('IMAP_INLINE_FORWARD', true);
+define('IMAP_EXCLUDED_FOLDERS', '');
+
 define('IMAP_FROM_SQL_DSN', 'sqlite:STORAGE_ROOT/mail/roundcube/roundcube.sqlite');
 define('IMAP_FROM_SQL_USER', '');
 define('IMAP_FROM_SQL_PASSWORD', '');
@@ -49,5 +52,6 @@ global $imap_smtp_params;
 $imap_smtp_params = array('host' => 'ssl://127.0.0.1', 'port' => 587, 'auth' => true, 'username' => 'imap_username', 'password' => 'imap_password');
 
 define('MAIL_MIMEPART_CRLF', "\r\n");
+define('IMAP_MEETING_USE_CALDAV', true);
 
 ?>

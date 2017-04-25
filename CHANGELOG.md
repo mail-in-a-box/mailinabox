@@ -4,7 +4,20 @@ CHANGELOG
 In Development
 --------------
 
-ownCloud is replaced with Nextcloud 10.0.4.
+Mail:
+
+* The default theme for Roundcube was changed to the nicer Larry theme.
+* Exchange/ActiveSync support has been replaced with z-push 2.3.5 from z-push.org (rather than z-push-contrib).
+
+ownCloud (now Nextcloud):
+
+* ownCloud is replaced with Nextcloud 10.0.5.
+
+Control Panel/Management:
+
+* Fix an error in the control panel showing rsync backup status.
+* Fix an error in the control panel related to IPv6 addresses.
+* TLS certificates for internationalized domain names can now be provisioned from Let's Encrypt automatically.
 
 v0.22 (April 2, 2017)
 ---------------------

@@ -214,12 +214,6 @@ def get_certificates_to_provision(env, show_extended_problems=True, force_domain
 	# Filter out domains that we can't provision a certificate for.
 	def can_provision_for_domain(domain):
 		from status_checks import normalize_ip
-		# Let's Encrypt doesn't yet support IDNA domains.
-		# We store domains in IDNA (ASCII). To see if this domain is IDNA,
-		# we'll see if its IDNA-decoded form is different.
-		if idna.decode(domain.encode("ascii")) != domain:
-			problems[domain] = "Let's Encrypt does not yet support provisioning certificates for internationalized domains."
-			return False
 
 		# Does the domain resolve to this machine in public DNS? If not,
 		# we can't do domain control validation. For IPv6 is configured,
