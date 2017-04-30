@@ -33,6 +33,7 @@
       <select id="customdnsType" class="form-control" style="max-width: 400px" onchange="show_customdns_rtype_hint()">
         <option value="A" data-hint="Enter an IPv4 address (i.e. a dotted quad, such as 123.456.789.012).">A (IPv4 address)</option>
         <option value="AAAA" data-hint="Enter an IPv6 address.">AAAA (IPv6 address)</option>
+        <option value="CAA" data-hint="Enter a CA that can issue certificates for this domain in the form of FLAG TAG VALUE. (0 issuewild &quot;letsencrypt.org&quot;)">CAA (Certificate Authority Authorization)</option>
         <option value="CNAME" data-hint="Enter another domain name followed by a period at the end (e.g. mypage.github.io.).">CNAME (DNS forwarding)</option>
         <option value="TXT" data-hint="Enter arbitrary text.">TXT (text record)</option>
         <option value="MX" data-hint="Enter record in the form of PRIORITY DOMAIN., including trailing period (e.g. 20 mx.example.com.).">MX (mail exchanger)</option>
@@ -125,7 +126,7 @@
 <tr><td>email</td> <td>The email address of any administrative user here.</td></tr>
 <tr><td>password</td> <td>That user&rsquo;s password.</td></tr>
 <tr><td>qname</td> <td>The fully qualified domain name for the record you are trying to set. It must be one of the domain names or a subdomain of one of the domain names hosted on this box. (Add mail users or aliases to add new domains.)</td></tr>
-<tr><td>rtype</td> <td>The resource type. Defaults to <code>A</code> if omitted. Possible values: <code>A</code> (an IPv4 address), <code>AAAA</code> (an IPv6 address), <code>TXT</code> (a text string), <code>CNAME</code> (an alias, which is a fully qualified domain name &mdash; don&rsquo;t forget the final period), <code>MX</code>, <code>SRV</code>, or <code>SSHFP</code>.</td></tr>
+<tr><td>rtype</td> <td>The resource type. Defaults to <code>A</code> if omitted. Possible values: <code>A</code> (an IPv4 address), <code>AAAA</code> (an IPv6 address), <code>TXT</code> (a text string), <code>CNAME</code> (an alias, which is a fully qualified domain name &mdash; don&rsquo;t forget the final period), <code>MX</code>, <code>SRV</code>, <code>SSHFP</code> or <code>CAA</code>.</td></tr>
 <tr><td>value</td> <td>For PUT, POST, and DELETE, the record&rsquo;s value. If the <code>rtype</code> is <code>A</code> or <code>AAAA</code> and <code>value</code> is empty or omitted, the IPv4 or IPv6 address of the remote host is used (be sure to use the <code>-4</code> or <code>-6</code> options to curl). This is handy for dynamic DNS!</td></tr>
 </table>
 
