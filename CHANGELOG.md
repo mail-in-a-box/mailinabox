@@ -12,18 +12,13 @@ Mail:
 ownCloud (now Nextcloud):
 
 * ownCloud is replaced with Nextcloud 10.0.5.
+* Fixed an error in Owncloud/Nextcloud setup not updating domain when changing hostname.
 
 Control Panel/Management:
 
 * Fix an error in the control panel showing rsync backup status.
 * Fix an error in the control panel related to IPv6 addresses.
 * TLS certificates for internationalized domain names can now be provisioned from Let's Encrypt automatically.
-
-v0.22a (April 24, 2017)
----------------------
-Installation:
-
-* Fixed an error in Owncloud/Nextcloud setup not updating domain when changing hostname.
 
 
 v0.22 (April 2, 2017)
