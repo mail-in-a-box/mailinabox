@@ -26,6 +26,7 @@ cgiurl_graph /admin/munin/cgi-graph
 # a simple host tree
 [$PRIMARY_HOSTNAME]
 address 127.0.0.1
+use_node_name yes
 
 # send alerts to the following address
 contacts admin
