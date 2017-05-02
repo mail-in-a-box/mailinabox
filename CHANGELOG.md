@@ -7,7 +7,7 @@ In Development
 Mail:
 
 * The default theme for Roundcube was changed to the nicer Larry theme.
-* Exchange/ActiveSync support has been replaced with z-push 2.3.5 from z-push.org (rather than z-push-contrib).
+* Exchange/ActiveSync support has been replaced with z-push 2.3.6 from z-push.org (rather than z-push-contrib).
 
 ownCloud (now Nextcloud):
 
