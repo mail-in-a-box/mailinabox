@@ -18,6 +18,7 @@ apt-get purge -qq -y owncloud*
 
 # Install php-7 from the ppa of the ubuntu php maintainer Ondřej Surý located here https://launchpad.net/%7Eondrej/+archive/ubuntu/php
 hide_output add-apt-repository -y ppa:ondrej/php
+apt_add_repository_to_unattended_upgrades LP-PPA-ondrej-php:trusty
 hide_output apt-get update
 apt_install php7.0 php7.0-fpm \
 	php7.0-cli php7.0-sqlite php7.0-gd php7.0-imap php7.0-curl php-pear php-apc curl \
