@@ -191,7 +191,7 @@
           </div>
         </div>
 
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js" integrity="sha256-rsPUGdUPBXgalvIj4YKJrrUlmLXbOb6Cp7cdxn1qeUc=" crossorigin="anonymous"></script>
+        <script src="https://code.jquery.com/jquery-2.1.4.min.js" integrity="sha256-8WqyJLuWKRBVhxXIL1jBDD7SDxU936oZkCnxQbWwJVw=" crossorigin="anonymous"></script>
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
         <script>
@@ -218,7 +218,7 @@ $(function() {
     if (global_modal_state == null) global_modal_state = 1; // cancel if the user hit ESC or clicked outside of the modal
     if (global_modal_funcs && global_modal_funcs[global_modal_state])
       global_modal_funcs[global_modal_state]();
-  })  
+  })
 })
 
 function show_modal_error(title, message, callback) {
@@ -281,7 +281,7 @@ function ajax_with_indicator(options) {
   };
   options.error = function(jqxhr) {
     hide_loading_indicator();
-    if (!old_error) 
+    if (!old_error)
       show_modal_error("Error", "Something went wrong, sorry.")
     else
       old_error(jqxhr.responseText, jqxhr);
