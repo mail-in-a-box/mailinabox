@@ -166,6 +166,7 @@ Mail:
 
 * Roundcube is updated to version 1.1.5 and the Roundcube login screen now says "[hostname] Webmail" instead of "Mail-in-a-Box/Roundcube webmail".
 * Fixed a long-standing issue with training the spam filter not working (because of a file permissions issue).
+* The Hostname of your Box is now the name of your Roundcube Webmailer.
 
 Control panel:
 
