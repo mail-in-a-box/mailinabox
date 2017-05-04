@@ -18,8 +18,8 @@ Control Panel/Management:
 * Fix an error in the control panel showing rsync backup status.
 * Fix an error in the control panel related to IPv6 addresses.
 * TLS certificates for internationalized domain names can now be provisioned from Let's Encrypt automatically.
-* Updated jQuery CDN to use code.jquery.com
-* Updated jQuery version to 2.1.4 to match Roundcube/Nextcloud
+* Updated jQuery to use local files
+* Updated Bootstrap to use local files
 
 v0.22 (April 2, 2017)
 ---------------------
