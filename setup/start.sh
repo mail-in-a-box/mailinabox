@@ -106,6 +106,7 @@ source setup/dkim.sh
 source setup/spamassassin.sh
 source setup/web.sh
 source setup/webmail.sh
+source setup/rcmcarddav.sh
 source setup/owncloud.sh
 source setup/zpush.sh
 source setup/management.sh
@@ -133,6 +134,9 @@ management/ssl_certificates.py -q
 
 # If there aren't any mail users yet, create one.
 source setup/firstuser.sh
+
+# Post-setup rcmcarddav db init
+source setup/rcmcarddav_dbinit.sh
 
 # Done.
 echo
