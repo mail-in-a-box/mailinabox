@@ -86,6 +86,43 @@ if [ ! -f $STORAGE_ROOT/www/default/index.html ]; then
 fi
 chown -R $STORAGE_USER $STORAGE_ROOT/www
 
+
+# download jQuery and Bootstrap local files
+if [ ! -d $STORAGE_ROOT/www/default/assets ]; then
+	echo "Downloading Assets..."
+
+	js_lib=$STORAGE_ROOT/www/default/assets/js/lib
+	css_lib=$STORAGE_ROOT/www/default/assets/css/lib
+
+	#jQuery CDN URL
+	jquery_version=2.1.4
+	jquery_url=https://code.jquery.com
+
+	#Bootstrap CDN URL
+	bootstrap_version=3.3.7
+	bootstrap_url=https://maxcdn.bootstrapcdn.com/bootstrap/$bootstrap_version/css
+
+	#get the Javascript files
+	if [ ! -d $js_lib ]; then
+		mkdir -p $js_lib
+
+		wget_verifiy $jquery_url/jquery-$jquery_version.min.js 43dc554608df885a59ddeece1598c6ace434d747 $js_lib
+		wget_verifiy https://maxcdn.bootstrapcdn.com/bootstrap/$bootstrap_version/js/bootstrap.min.js 430a443d74830fe9be26efca431f448c1b3740f9 $js_lib
+	fi
+
+	# get the CSS(map) files
+	if [ ! -d $css_lib ]; then
+		mkdir -p $css_lib
+
+		wget_verifiy $bootstrap_url/bootstrap-theme.min.css 8256575374f430476bdcd49de98c77990229ce31 $css_lib
+		wget_verifiy $bootstrap_url/bootstrap-theme.min.css.map 87f7dfd79d77051ac2eca7d093d961fbd1c8f6eb $css_lib
+		wget_verifiy $bootstrap_url/bootstrap.min.css 6527d8bf3e1e9368bab8c7b60f56bc01fa3afd68 $css_lib
+		wget_verifiy $bootstrap_url/bootstrap.min.css.map e0d7b2bde55a0bac1b658a507e8ca491a6729e06 $css_lib
+	fi
+fi
+
+
+
 # We previously installed a custom init script to start the PHP FastCGI daemon. #NODOC
 # Remove it now that we're using php5-fpm. #NODOC
 if [ -L /etc/init.d/php-fastcgi ]; then
@@ -108,4 +145,3 @@ restart_service php5-fpm
 # Open ports.
 ufw_allow http
 ufw_allow https
-
