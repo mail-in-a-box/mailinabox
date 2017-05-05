@@ -61,6 +61,41 @@ if [ ! -f $STORAGE_ROOT/backup/secret_key.txt ]; then
 	$(umask 077; openssl rand -base64 2048 > $STORAGE_ROOT/backup/secret_key.txt)
 fi
 
+
+# Download jQuery and Bootstrap local files
+ if [ ! -d $HOME/mailinabox/management/static ]; then
+
+   js_lib=$HOME/mailinabox/management/static/assets/js/lib
+   css_lib=$HOME/mailinabox/management/static/assets/css/lib
+
+	 # jQuery CDN URL
+	 jquery_version=2.1.4
+   jquery_url=https://code.jquery.com
+
+   # Bootstrap CDN URL
+   bootstrap_version=3.3.7
+   bootstrap_url=https://maxcdn.bootstrapcdn.com/bootstrap/$bootstrap_version
+
+	# Get the Javascript files
+	if [ ! -d $js_lib ]; then
+		mkdir -p $js_lib
+
+		wget_verify $jquery_url/jquery-$jquery_version.min.js 43dc554608df885a59ddeece1598c6ace434d747 $js_lib/jquery.min.js
+		wget_verify $bootstrap_url/js/bootstrap.min.js 430a443d74830fe9be26efca431f448c1b3740f9 $js_lib/bootstrap.min.js
+	fi
+
+	# Get the CSS(map) files
+	if [ ! -d $css_lib ]; then
+		mkdir -p $css_lib
+
+		wget_verify $bootstrap_url/css/bootstrap-theme.min.css 8256575374f430476bdcd49de98c77990229ce31 $css_lib/bootstrap-theme.min.css
+		wget_verify $bootstrap_url/css/bootstrap-theme.min.css.map 87f7dfd79d77051ac2eca7d093d961fbd1c8f6eb $css_lib/bootstrap-theme.min.css.map
+		wget_verify $bootstrap_url/css/bootstrap.min.css 6527d8bf3e1e9368bab8c7b60f56bc01fa3afd68 $css_lib/bootstrap.min.css
+		wget_verify $bootstrap_url/css/bootstrap.min.css.map e0d7b2bde55a0bac1b658a507e8ca491a6729e06 $css_lib/bootstrap.min.css.map
+	fi
+ fi
+
+
 # Link the management server daemon into a well known location.
 rm -f /usr/local/bin/mailinabox-daemon
 ln -s `pwd`/management/daemon.py /usr/local/bin/mailinabox-daemon
