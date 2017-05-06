@@ -32,6 +32,7 @@ with open(os.path.join(os.path.dirname(me), "csr_country_codes.tsv")) as f:
 		csr_country_codes.append((code, name))
 
 app = Flask(__name__, template_folder=os.path.abspath(os.path.join(os.path.dirname(me), "templates")))
+app._static_folder = os.path.abspath(os.path.join(os.path.dirname(me), "static"))
 
 # Decorator to protect views that require a user with 'admin' privileges.
 def authorized_personnel_only(viewfunc):
