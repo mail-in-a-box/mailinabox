@@ -18,6 +18,7 @@ Control Panel/Management:
 * Fix an error in the control panel showing rsync backup status.
 * Fix an error in the control panel related to IPv6 addresses.
 * TLS certificates for internationalized domain names can now be provisioned from Let's Encrypt automatically.
+* Download management web assets (jQuery/Bootstrap) to the static web root directory.
 
 v0.22 (April 2, 2017)
 ---------------------
@@ -160,7 +161,7 @@ v0.18 (May 15, 2016)
 
 ownCloud:
 
-* Updated to ownCloud to 8.2.3 
+* Updated to ownCloud to 8.2.3
 
 Mail:
 
