@@ -63,7 +63,7 @@ fi
 
 
 # Download jQuery and Bootstrap local files
-echo "Installing Mail-in-a-Box system management assets..."
+echo "Installing Mail-in-a-Box system management web assets..."
 
 js_lib=$STORAGE_ROOT/www/default/assets/js/lib
 css_lib=$STORAGE_ROOT/www/default/assets/css/lib
