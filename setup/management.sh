@@ -72,15 +72,15 @@ mkdir -p $assets_dir
 jquery_version=2.1.4
 jquery_url=https://code.jquery.com
 
-# Get the Javascript files
+# Get jQuery
 wget_verify $jquery_url/jquery-$jquery_version.min.js 43dc554608df885a59ddeece1598c6ace434d747 $assets_dir/jquery.min.js
-wget_verify $bootstrap_url/js/bootstrap.min.js 430a443d74830fe9be26efca431f448c1b3740f9 $assets_dir/bootstrap.min.js
 
 # Bootstrap CDN URL
 bootstrap_version=3.3.7
 bootstrap_url=https://maxcdn.bootstrapcdn.com/bootstrap/$bootstrap_version
 
-# Get the CSS/Map files
+# Get Bootstrap
+wget_verify $bootstrap_url/js/bootstrap.min.js 430a443d74830fe9be26efca431f448c1b3740f9 $assets_dir/bootstrap.min.js
 wget_verify $bootstrap_url/css/bootstrap-theme.min.css 8256575374f430476bdcd49de98c77990229ce31 $assets_dir/bootstrap-theme.min.css
 wget_verify $bootstrap_url/css/bootstrap-theme.min.css.map 87f7dfd79d77051ac2eca7d093d961fbd1c8f6eb $assets_dir/bootstrap-theme.min.css.map
 wget_verify $bootstrap_url/css/bootstrap.min.css 6527d8bf3e1e9368bab8c7b60f56bc01fa3afd68 $assets_dir/bootstrap.min.css
