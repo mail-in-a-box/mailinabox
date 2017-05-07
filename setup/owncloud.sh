@@ -221,7 +221,6 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
   'mail_smtpname' => '',
   'mail_smtppassword' => '',
   'mail_from_address' => 'owncloud',
-  'mail_domain' => '$PRIMARY_HOSTNAME',
 );
 ?>
 EOF
@@ -262,6 +261,8 @@ fi
 # * We need to set the timezone to the system timezone to allow fail2ban to ban
 #   users within the proper timeframe
 # * We need to set the logdateformat to something that will work correctly with fail2ban
+# * mail_domain' needs to be set every time we run the setup. Making sure we are setting 
+#   the correct domain name if the domain is being change from the previous setup.
 # Use PHP to read the settings file, modify it, and write out the new settings array.
 TIMEZONE=$(cat /etc/timezone)
 CONFIG_TEMP=$(/bin/mktemp)
@@ -277,6 +278,8 @@ include("$STORAGE_ROOT/owncloud/config.php");
 
 \$CONFIG['logtimezone'] = '$TIMEZONE';
 \$CONFIG['logdateformat'] = 'Y-m-d H:i:s';
+
+\$CONFIG['mail_domain'] => '$PRIMARY_HOSTNAME',
 
 echo "<?php\n\\\$CONFIG = ";
 var_export(\$CONFIG);
