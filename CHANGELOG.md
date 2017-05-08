@@ -19,6 +19,7 @@ Control Panel/Management:
 * Fix an error in the control panel showing rsync backup status.
 * Fix an error in the control panel related to IPv6 addresses.
 * TLS certificates for internationalized domain names can now be provisioned from Let's Encrypt automatically.
+* Download management web assets (jQuery/Bootstrap) to the static web root directory.
 
 DNS:
 
