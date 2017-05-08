@@ -20,6 +20,9 @@ Control Panel/Management:
 * Fix an error in the control panel related to IPv6 addresses.
 * TLS certificates for internationalized domain names can now be provisioned from Let's Encrypt automatically.
 
+DNS:
+
+* Add support for custom CAA records.
 
 v0.22 (April 2, 2017)
 ---------------------
