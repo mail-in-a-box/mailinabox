@@ -371,6 +371,10 @@ tools/editconf.py /etc/php/7.0/fpm/php.ini -c ';' \
 	max_execution_time=600 \
 	short_open_tag=On
 
+# Configure the path environment for php-fpm
+tools/editconf.py /etc/php/7.0/fpm/pool.d/www.conf -c ';' \
+        env[PATH]=/usr/local/bin:/usr/bin:/bin
+
 # If apc is explicitly disabled we need to enable it
 if grep -q apc.enabled=0 /etc/php/7.0/mods-available/apcu.ini; then
 	tools/editconf.py /etc/php/7.0/mods-available/apcu.ini -c ';' \
