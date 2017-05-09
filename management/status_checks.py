@@ -644,8 +644,8 @@ def check_web_domain(domain, rounded_time, ssl_certificates, env, output):
 				ok_values.append(value)
 			else:
 				output.print_error("""This domain should resolve to your box's IP address (%s %s) if you would like the box to serve
-					webmail or a website on this domain. The domain currently resolves to %s in public DNS. It may take several hours for
-					public DNS to update after a change. This problem may result from other issues listed here.""" % (rtype, expected, value))
+					webmail or a website on this domain. It may take several hours for public DNS to update after a change.
+					This problem may result from other issues listed here.""" % (rtype, expected))
 				return
 
 		# If both A and AAAA are correct...
