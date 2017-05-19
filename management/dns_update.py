@@ -12,6 +12,11 @@ import dns.resolver
 from mailconfig import get_mail_domains
 from utils import shell, load_env_vars_from_file, safe_domain_name, sort_domains
 
+# From https://stackoverflow.com/questions/3026957/how-to-validate-a-domain-name-using-regex-php/16491074#16491074
+# Thanks to Onur Yıldırım
+# This regular expression matches domain names according to RFCs, it also accepts fqdn with an leading dot
+DOMAIN_RE = "^(?!\-)(?:[a-zA-Z\d\-]{0,62}[a-zA-Z\d]\.){1,126}(?!\d+)[a-zA-Z\d]{1,63}(\.?)$"
+
 def get_dns_domains(env):
 	# Add all domain names in use by email users and mail aliases and ensure
 	# PRIMARY_HOSTNAME is in the list.
@@ -759,6 +764,9 @@ def set_custom_dns_record(qname, rtype, value, action, env):
 		if qname != "_secondary_nameserver":
 			raise ValueError("%s is not a domain name or a subdomain of a domain name managed by this box." % qname)
 
+	if not re.search(DOMAIN_RE, qname):
+		raise ValueError("Invalid name.")
+
 	# validate rtype
 	rtype = rtype.upper()
 	if value is not None and qname != "_secondary_nameserver":
@@ -767,6 +775,16 @@ def set_custom_dns_record(qname, rtype, value, action, env):
 				v = ipaddress.ip_address(value) # raises a ValueError if there's a problem
 				if rtype == "A" and not isinstance(v, ipaddress.IPv4Address): raise ValueError("That's an IPv6 address.")
 				if rtype == "AAAA" and not isinstance(v, ipaddress.IPv6Address): raise ValueError("That's an IPv4 address.")
+		elif rtype in ("CNAME", "NS"):
+			if rtype == "NS" and qname == zone:
+				raise ValueError("NS records can only be set for subdomains.")
+
+			# ensure value has a trailing dot
+			if not value.endswith("."):
+				value = value + "."
+
+			if not re.search(DOMAIN_RE, value):
+				raise ValueError("Invalid value.")
 		elif rtype in ("CNAME", "TXT", "SRV", "MX", "SSHFP", "CAA"):
 			# anything goes
 			pass
