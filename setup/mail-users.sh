@@ -99,7 +99,8 @@ EOF
 tools/editconf.py /etc/postfix/main.cf \
 	virtual_mailbox_domains=sqlite:/etc/postfix/virtual-mailbox-domains.cf \
 	virtual_mailbox_maps=sqlite:/etc/postfix/virtual-mailbox-maps.cf \
-	virtual_alias_maps=sqlite:/etc/postfix/virtual-alias-maps.cf \
+	virtual_alias_maps=sqlite:/etc/postfix/virtual-alias-maps.cf, \
+                    sqlite:/etc/postfix/virtual-self-alias-maps.cf \
 	local_recipient_maps=\$virtual_mailbox_maps
 
 # SQL statement to check if we handle incoming mail for a domain, either for users or aliases.
@@ -141,6 +142,12 @@ EOF
 cat > /etc/postfix/virtual-alias-maps.cf << EOF;
 dbpath=$db_path
 query = SELECT destination from (SELECT destination, 0 as priority FROM aliases WHERE source='%s' AND destination<>'' UNION SELECT email as destination, 1 as priority FROM users WHERE email='%s') ORDER BY priority LIMIT 1;
+EOF
+
+# SQL statement to implicitly define an alias for each user so that existing users won't be caught by catchall aliases.
+cat > /etc/postfix/virtual-self-alias-maps.cf << EOF;
+dbpath=$db_path
+query = SELECT email FROM users WHERE email='%s'
 EOF
 
 # Restart Services
