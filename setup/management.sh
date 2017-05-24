@@ -65,7 +65,7 @@ fi
 # Download jQuery and Bootstrap local files
 
 # Make sure we have the directory to save to.
-assets_dir=$STORAGE_ROOT/www/default/assets
+assets_dir=/usr/local/lib/mailinabox/vendor/assets
 mkdir -p $assets_dir
 
 # jQuery CDN URL
