@@ -376,6 +376,16 @@ tools/editconf.py /etc/php/7.0/fpm/php.ini -c ';' \
 	max_execution_time=600 \
 	short_open_tag=On
 
+# Set Nextcloud recommended opcache settings
+tools/editconf.py /etc/php/7.0/cli/conf.d/10-opcache.ini -c ';' \
+	opcache.enable=1 \
+	opcache.enable_cli=1 \
+	opcache.interned_strings_buffer=8 \
+	opcache.max_accelerated_files=10000 \
+	opcache.memory_consumption=128 \
+	opcache.save_comments=1 \
+	opcache.revalidate_freq=1
+
 # Configure the path environment for php-fpm
 tools/editconf.py /etc/php/7.0/fpm/pool.d/www.conf -c ';' \
         env[PATH]=/usr/local/bin:/usr/bin:/bin
