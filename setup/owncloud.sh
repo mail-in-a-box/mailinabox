@@ -42,7 +42,7 @@ InstallNextCloud() {
 	hash=$2
 
 	echo
-	echo "Upgrading to NextCloud version $version"
+	echo "Upgrading to Nextcloud version $version"
 	echo
 
 	# Remove the current owncloud/Nextcloud
@@ -233,13 +233,13 @@ EOF
 
 		# If we are upgrading from 9.1.x we should go to NextCloud 10.0 first.
 		if grep -q "9\.1\.[0-9]" /usr/local/lib/owncloud/version.php; then
-			echo "We are running ownCloud 9.0.x, upgrading to NextCloud 10.0.5 first"
+			echo "We are running ownCloud 9.0.x, upgrading to Nextcloud 10.0.5 first"
 			InstallNextCloud 10.0.5 686f6a8e9d7867c32e3bf3ca63b3cc2020564bf6
 		fi
 
 		# If we are upgrading from 10.0.x we should go to NextCloud 11.0 first.
 		if grep -q "10\.0\.[0-9]" /usr/local/lib/owncloud/version.php; then
-			echo "We are running ownCloud 10.0.x, upgrading to NextCloud 11.0.3 first"
+			echo "We are running Nextcloud 10.0.x, upgrading to Nextcloud 11.0.3 first"
 			InstallNextCloud 11.0.3 a396aaa1c9f920099a90a86b4a9cd0ec13083c99
 		fi
 	fi
