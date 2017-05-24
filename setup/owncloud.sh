@@ -64,7 +64,7 @@ InstallNextCloud() {
 	tar xf /tmp/contacts.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/contacts.tgz
 
-	wget_verify https://github.com/nextcloud/calendar/releases/download/v1.5.2/calendar.tar.gz 7b8a94e01fe740c5c23017ed5bc211983c780fce /tmp/calendar.tgz
+	wget_verify https://github.com/nextcloud/calendar/releases/download/v1.5.3/calendar.tar.gz b370352d1f280805cc7128f78af4615f623827f8 /tmp/calendar.tgz
 	tar xf /tmp/calendar.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/calendar.tgz
 
@@ -157,8 +157,8 @@ InstallOwncloud() {
 	fi
 }
 
-owncloud_ver=11.0.3
-owncloud_hash=a396aaa1c9f920099a90a86b4a9cd0ec13083c99
+owncloud_ver=12.0.0
+owncloud_hash=5d64307d9ce513a8905514b2fbe212f563fe76df
 
 # Check if Nextcloud dir exist, and check if version matches owncloud_ver (if either doesn't - install/upgrade)
 if [ ! -d /usr/local/lib/owncloud/ ] \
@@ -233,10 +233,15 @@ EOF
 
 		# If we are upgrading from 9.1.x we should go to NextCloud 10.0 first.
 		if grep -q "9\.1\.[0-9]" /usr/local/lib/owncloud/version.php; then
-			echo "We are running ownCloud 9.0.x, upgrading to NextCloud 10.0.4 first"
-			InstallNextCloud 10.0.4 346590278a5cc7b0a3c8d1a68eafec68ac59c475
+			echo "We are running ownCloud 9.0.x, upgrading to NextCloud 10.0.5 first"
+			InstallNextCloud 10.0.5 686f6a8e9d7867c32e3bf3ca63b3cc2020564bf6
 		fi
 
+		# If we are upgrading from 10.0.x we should go to NextCloud 11.0 first.
+		if grep -q "10\.0\.[0-9]" /usr/local/lib/owncloud/version.php; then
+			echo "We are running ownCloud 10.0.x, upgrading to NextCloud 11.0.3 first"
+			InstallNextCloud 11.0.3 a396aaa1c9f920099a90a86b4a9cd0ec13083c99
+		fi
 	fi
 
 	InstallNextCloud $owncloud_ver $owncloud_hash
