@@ -47,6 +47,9 @@ if [ -n "$MOUNTED_TMP_AS_NO_EXEC" ]; then
 	exit
 fi
 
+#make sure that shared memory is secured
+grep -q -F 'tmpfs     /run/shm     tmpfs     defaults,noexec,nosuid     0     0' /etc/fstab || echo 'tmpfs     /run/shm     tmpfs     defaults,noexec,nosuid     0     0' >> /etc/fstab
+
 # Check that no .wgetrc exists
 if [ -e ~/.wgetrc ]; then
 	echo "Mail-in-a-Box expects no overrides to wget defaults, ~/.wgetrc exists"
