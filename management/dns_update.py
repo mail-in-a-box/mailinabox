@@ -144,7 +144,7 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 		# Define ns2.PRIMARY_HOSTNAME or whatever the user overrides.
 		# User may provide one or more additional nameservers
 		secondary_ns_list = get_secondary_dns(additional_records, mode="NS") \
-			or ["ns2." + env["PRIMARY_HOSTNAME"]] 
+			or ["ns2." + env["PRIMARY_HOSTNAME"]]
 		for secondary_ns in secondary_ns_list:
 			records.append((None,  "NS", secondary_ns+'.', False))
 
