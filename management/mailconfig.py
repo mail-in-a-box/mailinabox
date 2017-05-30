@@ -3,7 +3,34 @@
 import subprocess, shutil, os, sqlite3, re
 import utils
 from email_validator import validate_email as validate_email_, EmailNotValidError
+import rtyaml
 import idna
+
+def load_domain_blacklist(env, service):
+	try:
+		return set(rtyaml.load(open(os.path.join(env['STORAGE_ROOT'], '{}/ignored.yaml'.format(service)))))
+	except:
+		return set()
+
+def add_domain_blacklist(env, domain, service):
+		try:
+			ignored = set(rtyaml.load(open(os.path.join(env['STORAGE_ROOT'], '{}/ignored.yaml'.format(service)))))
+			ignored.add(domain)
+		except Exception as err:
+			# if non-existent or baldy formatted, consider it new
+			ignored = {domain}
+		with open(os.path.join(env['STORAGE_ROOT'], '{}/ignored.yaml'.format(service)), "w") as f:
+			f.write(rtyaml.dump(list(ignored)))
+
+def remove_domain_blacklist(env, domain, service):
+	try:
+		ignored = set(rtyaml.load(open(os.path.join(env['STORAGE_ROOT'], '{}/ignored.yaml'.format(service)))))
+		if domain in ignored:
+			ignored.remove(domain)
+		with open(os.path.join(env['STORAGE_ROOT'], '{}/ignored.yaml'.format(service)), "w") as f:
+			f.write(rtyaml.dump(list(ignored)))
+	except Exception as err:
+		pass
 
 def validate_email(email, mode=None):
 	# Checks that an email address is syntactically valid. Returns True/False.
@@ -254,15 +281,20 @@ def get_domain(emailaddr, as_unicode=True):
 			pass
 	return ret
 
-def get_mail_domains(env, filter_aliases=lambda alias : True):
+def get_mail_domains(env, filter_aliases=lambda alias : True, filter_list=None):
+	ignored = set()
+	if filter_list == 'dns':
+		ignored |= load_domain_blacklist(env, 'dns')
+	if filter_list in ('web', 'www'):
+		ignored |= load_domain_blacklist(env, 'www')
 	# Returns the domain names (IDNA-encoded) of all of the email addresses
 	# configured on the system.
 	return set(
 		   [get_domain(login, as_unicode=False) for login in get_mail_users(env)]
 		 + [get_domain(address, as_unicode=False) for address, *_ in get_mail_aliases(env) if filter_aliases(address) ]
-		 )
+		 ) - ignored
 
-def add_mail_user(email, pw, privs, env):
+def add_mail_user(email, pw, privs, env, dns_enabled=True, web_enabled=True):
 	# validate email
 	if email.strip() == "":
 		return ("No email address provided.", 400)
@@ -303,6 +335,14 @@ def add_mail_user(email, pw, privs, env):
 
 	# write databasebefore next step
 	conn.commit()
+
+	# Add non dns enabled domain to the ignored domain list
+	if dns_enabled == 'false':
+		add_domain_blacklist(env, get_domain(email), 'dns')
+
+	# Add non web enabled domain to the ignored domain list
+	if web_enabled == 'false':
+		add_domain_blacklist(env, get_domain(email), 'www')
 
 	# Update things in case any new domains are added.
 	return kick(env, "mail user added")
@@ -347,6 +387,9 @@ def remove_mail_user(email, env):
 	if c.rowcount != 1:
 		return ("That's not a user (%s)." % email, 400)
 	conn.commit()
+
+	remove_domain_blacklist(env, get_domain(address), 'dns')
+	remove_domain_blacklist(env, get_domain(address), 'www')
 
 	# Update things in case any domains are removed.
 	return kick(env, "mail user removed")
@@ -396,7 +439,7 @@ def add_remove_mail_user_privilege(email, priv, action, env):
 
 	return "OK"
 
-def add_mail_alias(address, forwards_to, permitted_senders, env, update_if_exists=False, do_kick=True):
+def add_mail_alias(address, forwards_to, permitted_senders, env, update_if_exists=False, dns_enabled=True, web_enabled=True, do_kick=True):
 	# convert Unicode domain to IDNA
 	address = sanitize_idn_email_address(address)
 
@@ -485,6 +528,14 @@ def add_mail_alias(address, forwards_to, permitted_senders, env, update_if_exist
 
 	conn.commit()
 
+	# Add non dns enabled domain to the ignored domain list
+	if dns_enabled == 'false':
+		add_domain_blacklist(env, get_domain(address), 'dns')
+
+	# Add non web enabled domain to the ignored domain list
+	if web_enabled == 'false':
+		add_domain_blacklist(env, get_domain(address), 'www')
+
 	if do_kick:
 		# Update things in case any new domains are added.
 		return kick(env, return_status)
@@ -499,6 +550,9 @@ def remove_mail_alias(address, env, do_kick=True):
 	if c.rowcount != 1:
 		return ("That's not an alias (%s)." % address, 400)
 	conn.commit()
+
+	remove_domain_blacklist(env, get_domain(address), 'dns')
+	remove_domain_blacklist(env, get_domain(address), 'www')
 
 	if do_kick:
 		# Update things in case any domains are removed.

@@ -15,15 +15,16 @@ from utils import shell, load_env_vars_from_file, safe_domain_name, sort_domains
 def get_dns_domains(env):
 	# Add all domain names in use by email users and mail aliases and ensure
 	# PRIMARY_HOSTNAME is in the list.
-	domains = set()
-	domains |= get_mail_domains(env)
+	domains = get_mail_domains(env, filter_list='dns')
 	domains.add(env['PRIMARY_HOSTNAME'])
 	return domains
 
 def get_dns_zones(env):
 	# What domains should we create DNS zones for? Never create a zone for
 	# a domain & a subdomain of that domain.
-	domains = get_dns_domains(env)
+	domains_mail = get_dns_domains(env)
+	domains_custom = set([n for n, *_ in get_custom_dns_config(env)])
+	domains = domains_mail | domains_custom
 
 	# Exclude domains that are subdomains of other domains we know. Proceed
 	# by looking at shorter domains first.
@@ -144,7 +145,7 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 		# Define ns2.PRIMARY_HOSTNAME or whatever the user overrides.
 		# User may provide one or more additional nameservers
 		secondary_ns_list = get_secondary_dns(additional_records, mode="NS") \
-			or ["ns2." + env["PRIMARY_HOSTNAME"]] 
+			or ["ns2." + env["PRIMARY_HOSTNAME"]]
 		for secondary_ns in secondary_ns_list:
 			records.append((None,  "NS", secondary_ns+'.', False))
 
@@ -748,16 +749,16 @@ def write_custom_dns_config(config, env):
 		f.write(config_yaml)
 
 def set_custom_dns_record(qname, rtype, value, action, env):
-	# validate qname
-	for zone, fn in get_dns_zones(env):
-		# It must match a zone apex or be a subdomain of a zone
-		# that we are otherwise hosting.
-		if qname == zone or qname.endswith("."+zone):
-			break
-	else:
-		# No match.
-		if qname != "_secondary_nameserver":
-			raise ValueError("%s is not a domain name or a subdomain of a domain name managed by this box." % qname)
+	# # validate qname
+	# for zone, fn in get_dns_zones(env):
+	# 	# It must match a zone apex or be a subdomain of a zone
+	# 	# that we are otherwise hosting.
+	# 	if qname == zone or qname.endswith("."+zone):
+	# 		break
+	# else:
+	# 	# No match.
+	# 	if qname != "_secondary_nameserver":
+	# 		raise ValueError("%s is not a domain name or a subdomain of a domain name managed by this box." % qname)
 
 	# validate rtype
 	rtype = rtype.upper()
