@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+v0.23a (May 31, 2017)
+---------------------
+
+Corrects a problem in the new way third-party assets are downloaded during setup for the control panel, since v0.23.
+
 v0.23 (May 30, 2017)
 --------------------
 
