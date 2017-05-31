@@ -282,6 +282,17 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 			if not has_rec(qname, "SRV"):
 				records.append((qname, "SRV", "0 0 443 " + env["PRIMARY_HOSTNAME"] + ".", "Recommended. Specifies the hostname of the server that handles CardDAV/CalDAV services for email addresses on this domain."))
 
+	# Add TLSA records for all locally-resolved qnames except the nameservers
+	locally_resolved_ips = [env["PUBLIC_IP"]]
+	if env.get("PUBLIC_IPV6"):
+		locally_resolved_ips += [env["PUBLIC_IPV6"]]
+	all_locally_resolved_qnames = set(r[0] for r in records if r[1] in ("A", "AAAA") and r[2] in locally_resolved_ips)
+	for qname in all_locally_resolved_qnames:
+		tlsa_qname = "_443._tcp" + ("" if qname is None else "." + qname)
+		if ".ns1" in tlsa_qname or ".ns2" in tlsa_qname: continue # don't include the nameservers
+		if not has_rec(tlsa_qname, "TLSA"):
+			records.append((tlsa_qname, "TLSA", build_tlsa_record(env), "Optional. When DNSSEC is enabled, provides out-of-band HTTPS certificate validation for a few web clients that support it."))
+
 	# Sort the records. The None records *must* go first in the nsd zone file. Otherwise it doesn't matter.
 	records.sort(key = lambda rec : list(reversed(rec[0].split(".")) if rec[0] is not None else ""))
 
