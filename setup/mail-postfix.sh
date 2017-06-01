@@ -41,6 +41,8 @@ source /etc/mailinabox.conf # load global vars
 #   always will.
 # * `ca-certificates`: A trust store used to squelch postfix warnings about
 #   untrusted opportunistically-encrypted connections.
+# * `postfix-policyd-spf-python`: A SPF policy checker for postfix, checks DNS
+#   spf records from the sender to check if they are allowed to send email for the domain.
 #
 # postgrey is going to come in via the Mail-in-a-Box PPA, which publishes
 # a modified version of postgrey that lets senders whitelisted by dnswl.org
@@ -50,7 +52,7 @@ source /etc/mailinabox.conf # load global vars
 # > anti-spam solutions) must register with dnswl.org and purchase a subscription.
 
 echo "Installing Postfix (SMTP server)..."
-apt_install postfix postfix-pcre postgrey ca-certificates
+apt_install postfix postfix-pcre postgrey ca-certificates postfix-policyd-spf-python
 
 # ### Basic Settings
 
@@ -191,7 +193,8 @@ tools/editconf.py /etc/postfix/main.cf virtual_transport=lmtp:[127.0.0.1]:10025
 # * `permit_mynetworks`: Mail that originates locally can skip further checks.
 # * `reject_rbl_client`: Reject connections from IP addresses blacklisted in zen.spamhaus.org
 # * `reject_unlisted_recipient`: Although Postfix will reject mail to unknown recipients, it's nicer to reject such mail ahead of greylisting rather than after.
-# * `check_policy_service`: Apply greylisting using postgrey.
+# * `check_policy_service inet:127.0.0.1:10023`: Apply greylisting using postgrey.
+# * `check_policy_service unix:private/policy-spf`: Apply SPF record verification using policy-spf.
 #
 # Notes: #NODOC
 # permit_dnswl_client can pass through mail from whitelisted IP addresses, which would be good to put before greylisting #NODOC
@@ -200,7 +203,7 @@ tools/editconf.py /etc/postfix/main.cf virtual_transport=lmtp:[127.0.0.1]:10025
 # "450 4.7.1 Client host rejected: Service unavailable". This is a retry code, so the mail doesn't properly bounce. #NODOC
 tools/editconf.py /etc/postfix/main.cf \
 	smtpd_sender_restrictions="reject_non_fqdn_sender,reject_unknown_sender_domain,reject_authenticated_sender_login_mismatch,reject_rhsbl_sender dbl.spamhaus.org" \
-	smtpd_recipient_restrictions=permit_sasl_authenticated,permit_mynetworks,"reject_rbl_client zen.spamhaus.org",reject_unlisted_recipient,"check_policy_service inet:127.0.0.1:10023"
+	smtpd_recipient_restrictions=permit_sasl_authenticated,permit_mynetworks,"reject_rbl_client zen.spamhaus.org",reject_unlisted_recipient,"check_policy_service inet:127.0.0.1:10023","check_policy_service unix:private/policy-spf"
 
 # Postfix connects to Postgrey on the 127.0.0.1 interface specifically. Ensure that
 # Postgrey listens on the same interface (and not IPv6, for instance).
@@ -216,6 +219,19 @@ tools/editconf.py /etc/default/postgrey \
 # The same limit is specified in nginx.conf for mail submitted via webmail and Z-Push.
 tools/editconf.py /etc/postfix/main.cf \
 	message_size_limit=134217728
+
+# Configure the SPF policy checking for incoming email
+#
+# Policy SPF will check the if the sender has configured an SPF record on the domain.
+# This record contains the address of the smtp server(s) that is allowd to send email
+# on behalf of this domain. If that doesn't match with the server sending us email,
+# the message will be rejected
+tools/editconf.py /etc/postfix/main.cf \
+	policy-spf_time_limit=3600s \
+
+tools/editconf.py /etc/postfix/master.cf \
+	"policy-spf unix  -       n       n       -       -       spawn
+	  user=nobody argv=/usr/bin/policyd-spf"
 
 # Allow the two SMTP ports in the firewall.
 
