@@ -45,7 +45,11 @@ EOF
 # DNS queries that require a recursive nameserver, and the system
 # might have other network interfaces for e.g. tunnelling, we have
 # to be specific about the network interfaces that nsd binds to.
-for ip in $PRIVATE_IP $PRIVATE_IPV6; do
+#
+# NSD does not support providing the same ip multiple times so we 
+# have to sort through the list and make sure, that each ip is only
+# listed once in the config
+for ip in `echo $PUBLIC_IP $PRIVATE_IP $PUBLIC_IPV6 $PRIVATE_IPV6 | tr ' ' '\n' | sort -u`; do
 	echo "  ip-address: $ip" >> /etc/nsd/nsd.conf;
 done
 
