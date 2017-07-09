@@ -22,8 +22,10 @@ source /etc/mailinabox.conf # load global vars
 echo "Installing Roundcube (webmail)..."
 apt_install \
 	dbconfig-common \
-	php5 php5-sqlite php5-mcrypt php5-intl php5-json php5-common php-auth php-net-smtp php-net-socket php-net-sieve php-mail-mime php-crypt-gpg php5-gd php5-pspell \
-	tinymce libjs-jquery libjs-jquery-mousewheel libmagic1
+	php7.0-cli php7.0-sqlite php7.0-mcrypt php7.0-intl php7.0-json php7.0-common \
+	php-auth php-net-smtp php-net-socket php-net-sieve php-mail-mime php-crypt-gpg \
+	php7.0-gd php7.0-pspell tinymce libjs-jquery libjs-jquery-mousewheel libmagic1
+
 apt_get_quiet remove php-mail-mimedecode # no longer needed since Roundcube 1.1.3
 
 # We used to install Roundcube from Ubuntu, without triggering the dependencies #NODOC
@@ -34,8 +36,8 @@ apt-get purge -qq -y roundcube* #NODOC
 # Install Roundcube from source if it is not already present or if it is out of date.
 # Combine the Roundcube version number with the commit hash of vacation_sieve to track
 # whether we have the latest version.
-VERSION=1.2.4
-HASH=e2091ea775b80eda43ab225130d5a2e888c3789a
+VERSION=1.3.0
+HASH=634c89b9c51c44fb757bb19c77ad5083cf7aa030
 VACATION_SIEVE_VERSION=91ea6f52216390073d1f5b70b5f6bea0bfaee7e5
 PERSISTENT_LOGIN_VERSION=c4516c4be37d12ef653de86497304e073a863c2a
 HTML5_NOTIFIER_VERSION=4b370e3cd60dabd2f428a26f45b677ad1b7118d5
@@ -60,7 +62,7 @@ fi
 if [ $needs_update == 1 ]; then
 	# install roundcube
 	wget_verify \
-		https://github.com/roundcube/roundcubemail/releases/download/$VERSION/roundcubemail-$VERSION.tar.gz \
+		https://github.com/roundcube/roundcubemail/releases/download/$VERSION/roundcubemail-$VERSION-complete.tar.gz \
 		$HASH \
 		/tmp/roundcube.tgz
 	tar -C /usr/local/lib --no-same-owner -zxf /tmp/roundcube.tgz
@@ -110,10 +112,10 @@ cat > $RCM_CONFIG <<EOF;
 \$config['log_dir'] = '/var/log/roundcubemail/';
 \$config['temp_dir'] = '/tmp/roundcubemail/';
 \$config['db_dsnw'] = 'sqlite:///$STORAGE_ROOT/mail/roundcube/roundcube.sqlite?mode=0640';
-\$config['default_host'] = 'ssl://localhost';
+\$config['default_host'] = 'ssl://${PRIMARY_HOSTNAME}';
 \$config['default_port'] = 993;
 \$config['imap_timeout'] = 15;
-\$config['smtp_server'] = 'tls://127.0.0.1';
+\$config['smtp_server'] = 'tls://${PRIMARY_HOSTNAME}';
 \$config['smtp_port'] = 587;
 \$config['smtp_user'] = '%u';
 \$config['smtp_pass'] = '%p';
@@ -210,5 +212,5 @@ chown www-data:www-data $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 chmod 664 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 
 # Enable PHP modules.
-php5enmod mcrypt
-restart_service php5-fpm
+phpenmod -v php7.0 mcrypt imap
+restart_service php7.0-fpm

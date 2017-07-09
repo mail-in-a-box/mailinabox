@@ -9,6 +9,7 @@ source /etc/mailinabox.conf # load global vars
 
 echo "Installing Nextcloud (contacts/calendar)..."
 
+# Keep the php5 dependancies for the owncloud upgrades
 apt_install \
 	dbconfig-common \
 	php5-cli php5-sqlite php5-gd php5-imap php5-curl php-pear php-apc curl libapr1 libtool libcurl4-openssl-dev php-xml-parser \
@@ -16,10 +17,6 @@ apt_install \
 
 apt-get purge -qq -y owncloud*
 
-# Install php-7 from the ppa of the ubuntu php maintainer Ondřej Surý located here https://launchpad.net/%7Eondrej/+archive/ubuntu/php
-hide_output add-apt-repository -y ppa:ondrej/php
-apt_add_repository_to_unattended_upgrades LP-PPA-ondrej-php:trusty
-hide_output apt-get update
 apt_install php7.0 php7.0-fpm \
 	php7.0-cli php7.0-sqlite php7.0-gd php7.0-imap php7.0-curl php-pear php-apc curl \
         php7.0-dev php7.0-gd memcached php7.0-memcached php7.0-xml php7.0-mbstring php7.0-zip php7.0-apcu
@@ -85,12 +82,12 @@ InstallNextCloud() {
 	if [ -e $STORAGE_ROOT/owncloud/owncloud.db ]; then
 		# ownCloud 8.1.1 broke upgrades. It may fail on the first attempt, but
 		# that can be OK.
-		sudo -u www-data php7.0 /usr/local/lib/owncloud/occ upgrade
+		sudo -u www-data php /usr/local/lib/owncloud/occ upgrade
 		if [ \( $? -ne 0 \) -a \( $? -ne 3 \) ]; then
 			echo "Trying ownCloud upgrade again to work around ownCloud upgrade bug..."
-			sudo -u www-data php7.0 /usr/local/lib/owncloud/occ upgrade
+			sudo -u www-data php /usr/local/lib/owncloud/occ upgrade
 			if [ \( $? -ne 0 \) -a \( $? -ne 3 \) ]; then exit 1; fi
-			sudo -u www-data php7.0 /usr/local/lib/owncloud/occ maintenance:mode --off
+			sudo -u www-data php /usr/local/lib/owncloud/occ maintenance:mode --off
 			echo "...which seemed to work."
 		fi
 	fi
@@ -146,12 +143,12 @@ InstallOwncloud() {
 	if [ -e $STORAGE_ROOT/owncloud/owncloud.db ]; then
 		# ownCloud 8.1.1 broke upgrades. It may fail on the first attempt, but
 		# that can be OK.
-		sudo -u www-data php /usr/local/lib/owncloud/occ upgrade
+		sudo -u www-data php5 /usr/local/lib/owncloud/occ upgrade
 		if [ \( $? -ne 0 \) -a \( $? -ne 3 \) ]; then
 			echo "Trying ownCloud upgrade again to work around ownCloud upgrade bug..."
-			sudo -u www-data php /usr/local/lib/owncloud/occ upgrade
+			sudo -u www-data php5 /usr/local/lib/owncloud/occ upgrade
 			if [ \( $? -ne 0 \) -a \( $? -ne 3 \) ]; then exit 1; fi
-			sudo -u www-data php /usr/local/lib/owncloud/occ maintenance:mode --off
+			sudo -u www-data php5 /usr/local/lib/owncloud/occ maintenance:mode --off
 			echo "...which seemed to work."
 		fi
 	fi
@@ -216,13 +213,13 @@ EOF
 			# The owncloud 9 migration doesn't migrate calendars and contacts
 			# The option to migrate these are removed in 9.1
 			# So the migrations should be done when we have 9.0 installed
-			sudo -u www-data php /usr/local/lib/owncloud/occ dav:migrate-addressbooks
+			sudo -u www-data php5 /usr/local/lib/owncloud/occ dav:migrate-addressbooks
 			# The following migration has to be done for each owncloud user
 			for directory in $STORAGE_ROOT/owncloud/*@*/ ; do
 				username=$(basename "${directory}")
-				sudo -u www-data php /usr/local/lib/owncloud/occ dav:migrate-calendar $username
+				sudo -u www-data php5 /usr/local/lib/owncloud/occ dav:migrate-calendar $username
 			done
-			sudo -u www-data php /usr/local/lib/owncloud/occ dav:sync-birthday-calendar
+			sudo -u www-data php5 /usr/local/lib/owncloud/occ dav:sync-birthday-calendar
 		fi
 
 		# If we are upgrading from 9.0.x we should go to 9.1 first.
@@ -313,7 +310,7 @@ EOF
 	# Execute Nextcloud's setup step, which creates the Nextcloud sqlite database.
 	# It also wipes it if it exists. And it updates config.php with database
 	# settings and deletes the autoconfig.php file.
-	(cd /usr/local/lib/owncloud; sudo -u www-data php7.0 /usr/local/lib/owncloud/index.php;)
+	(cd /usr/local/lib/owncloud; sudo -u www-data php /usr/local/lib/owncloud/index.php;)
 fi
 
 # Update config.php.
@@ -355,15 +352,15 @@ chown www-data.www-data $STORAGE_ROOT/owncloud/config.php
 # The firstrunwizard gave Josh all sorts of problems, so disabling that.
 # user_external is what allows Nextcloud to use IMAP for login. The contacts
 # and calendar apps are the extensions we really care about here.
-hide_output sudo -u www-data php7.0 /usr/local/lib/owncloud/console.php app:disable firstrunwizard
-hide_output sudo -u www-data php7.0 /usr/local/lib/owncloud/console.php app:enable user_external
-hide_output sudo -u www-data php7.0 /usr/local/lib/owncloud/console.php app:enable contacts
-hide_output sudo -u www-data php7.0 /usr/local/lib/owncloud/console.php app:enable calendar
+hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:disable firstrunwizard
+hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable user_external
+hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable contacts
+hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable calendar
 
 # When upgrading, run the upgrade script again now that apps are enabled. It seems like
 # the first upgrade at the top won't work because apps may be disabled during upgrade?
 # Check for success (0=ok, 3=no upgrade needed).
-sudo -u www-data php7.0 /usr/local/lib/owncloud/occ upgrade
+sudo -u www-data php /usr/local/lib/owncloud/occ upgrade
 if [ \( $? -ne 0 \) -a \( $? -ne 3 \) ]; then exit 1; fi
 
 # Set PHP FPM values to support large file uploads
@@ -400,7 +397,7 @@ fi
 cat > /etc/cron.hourly/mailinabox-owncloud << EOF;
 #!/bin/bash
 # Mail-in-a-Box
-sudo -u www-data php7.0 -f /usr/local/lib/owncloud/cron.php
+sudo -u www-data php -f /usr/local/lib/owncloud/cron.php
 EOF
 chmod +x /etc/cron.hourly/mailinabox-owncloud
 
@@ -414,5 +411,4 @@ chmod +x /etc/cron.hourly/mailinabox-owncloud
 # ```
 
 # Enable PHP modules and restart PHP.
-restart_service php5-fpm
 restart_service php7.0-fpm

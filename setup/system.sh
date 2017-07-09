@@ -88,6 +88,16 @@ fi
 
 hide_output add-apt-repository -y ppa:mail-in-a-box/ppa
 
+# ### Add PHP7 PPA
+
+# Nextcloud requires PHP7, we will install the ppa from ubuntu php maintainer Ondřej Surý
+# The PPA is located here https://launchpad.net/%7Eondrej/+archive/ubuntu/php
+# Unattended upgrades are activated for the repository
+
+hide_output add-apt-repository -y ppa:ondrej/php
+apt_add_repository_to_unattended_upgrades LP-PPA-ondrej-php:trusty
+hide_output apt-get update
+
 # ### Update Packages
 
 # Update system packages to make sure we have the latest upstream versions of things from Ubuntu.
