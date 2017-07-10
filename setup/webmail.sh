@@ -32,17 +32,16 @@ apt_get_quiet remove php-mail-mimedecode # no longer needed since Roundcube 1.1.
 apt-get purge -qq -y roundcube* #NODOC
 
 # Install Roundcube from source if it is not already present or if it is out of date.
-# Combine the Roundcube version number with the commit hash of vacation_sieve to track
-# whether we have the latest version.
-VERSION=1.2.4
-HASH=e2091ea775b80eda43ab225130d5a2e888c3789a
-VACATION_SIEVE_VERSION=91ea6f52216390073d1f5b70b5f6bea0bfaee7e5
+# Combine the Roundcube version number with the commit hash of plugins to track
+# whether we have the latest version of everything.
+VERSION=1.3.0
+HASH=634c89b9c51c44fb757bb19c77ad5083cf7aa030
 PERSISTENT_LOGIN_VERSION=c4516c4be37d12ef653de86497304e073a863c2a
 HTML5_NOTIFIER_VERSION=4b370e3cd60dabd2f428a26f45b677ad1b7118d5
 CARDDAV_VERSION=2.0.4
 CARDDAV_HASH=d93f3cfb3038a519e71c7c3212c1d16f5da609a4
 
-UPDATE_KEY=$VERSION:$VACATION_SIEVE_VERSION:$PERSISTENT_LOGIN_VERSION:$HTML5_NOTIFIER_VERSION:$CARDDAV_VERSION:a
+UPDATE_KEY=$VERSION:$PERSISTENT_LOGIN_VERSION:$HTML5_NOTIFIER_VERSION:$CARDDAV_VERSION
 
 # paths that are often reused.
 RCM_DIR=/usr/local/lib/roundcubemail
@@ -60,16 +59,13 @@ fi
 if [ $needs_update == 1 ]; then
 	# install roundcube
 	wget_verify \
-		https://github.com/roundcube/roundcubemail/releases/download/$VERSION/roundcubemail-$VERSION.tar.gz \
+		https://github.com/roundcube/roundcubemail/releases/download/$VERSION/roundcubemail-$VERSION-complete.tar.gz \
 		$HASH \
 		/tmp/roundcube.tgz
 	tar -C /usr/local/lib --no-same-owner -zxf /tmp/roundcube.tgz
 	rm -rf /usr/local/lib/roundcubemail
 	mv /usr/local/lib/roundcubemail-$VERSION/ $RCM_DIR
 	rm -f /tmp/roundcube.tgz
-
-	# install roundcube autoreply/vacation plugin
-	git_clone https://github.com/arodier/Roundcube-Plugins.git $VACATION_SIEVE_VERSION plugins/vacation_sieve ${RCM_PLUGIN_DIR}/vacation_sieve
 
 	# install roundcube persistent_login plugin
 	git_clone https://github.com/mfreiholz/Roundcube-Persistent-Login-Plugin.git $PERSISTENT_LOGIN_VERSION '' ${RCM_PLUGIN_DIR}/persistent_login
@@ -120,7 +116,7 @@ cat > $RCM_CONFIG <<EOF;
 \$config['support_url'] = 'https://mailinabox.email/';
 \$config['product_name'] = '$PRIMARY_HOSTNAME Webmail';
 \$config['des_key'] = '$SECRET_KEY';
-\$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'vacation_sieve', 'persistent_login', 'carddav');
+\$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'persistent_login', 'carddav');
 \$config['skin'] = 'larry';
 \$config['login_autocomplete'] = 2;
 \$config['password_charset'] = 'UTF-8';
@@ -145,26 +141,6 @@ cat > ${RCM_PLUGIN_DIR}/carddav/config.inc.php <<EOF;
 	 'fixed'        =>  array('username','password'),
 	 'preemptive_auth' => '1',
 	 'hide'        =>  false,
-);
-EOF
-
-# Configure vaction_sieve.
-cat > /usr/local/lib/roundcubemail/plugins/vacation_sieve/config.inc.php <<EOF;
-<?php
-/* Do not edit. Written by Mail-in-a-Box. Regenerated on updates. */
-\$rcmail_config['vacation_sieve'] = array(
-    'date_format' => 'd/m/Y',
-    'working_hours' => array(8,18),
-    'msg_format' => 'text',
-    'logon_transform' => array('#([a-z])[a-z]+(\.|\s)([a-z])#i', '\$1\$3'),
-    'transfer' => array(
-        'mode' =>  'managesieve',
-        'ms_activate_script' => true,
-        'host'   => '127.0.0.1',
-        'port'   => '4190',
-        'usetls' => false,
-        'path' => 'vacation',
-    )
 );
 EOF
 

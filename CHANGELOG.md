@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+Mail:
+
+* Updated to Roundcube 1.3, but unfortunately dropping the Vacation plugin because it has not been supported by its author and is not compatible with Roundcube 1.3.
+
 v0.23a (May 31, 2017)
 ---------------------
 
