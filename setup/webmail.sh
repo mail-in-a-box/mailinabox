@@ -211,6 +211,9 @@ ${RCM_DIR}/bin/updatedb.sh --dir ${RCM_DIR}/SQL --package roundcube
 chown www-data:www-data $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 chmod 664 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 
+# Make sure all the users are configured to use the correct hostname
+sqlite3 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite "update users set mail_host = '$PRIMARY_HOSTNAME'"
+
 # Enable PHP modules.
 phpenmod -v php7.0 mcrypt imap
 restart_service php7.0-fpm
