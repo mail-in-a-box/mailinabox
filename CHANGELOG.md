@@ -1,8 +1,13 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.23a (May 31, 2017)
+---------------------
+
+Corrects a problem in the new way third-party assets are downloaded during setup for the control panel, since v0.23.
+
+v0.23 (May 30, 2017)
+--------------------
 
 Mail:
 
@@ -19,7 +24,7 @@ Control Panel/Management:
 * Fix an error in the control panel showing rsync backup status.
 * Fix an error in the control panel related to IPv6 addresses.
 * TLS certificates for internationalized domain names can now be provisioned from Let's Encrypt automatically.
-* Download management web assets (jQuery/Bootstrap) to the static web root directory.
+* Third-party assets used in the control panel (jQuery/Bootstrap) are now downloaded during setup and served from the box rather than from a CDN.
 
 DNS:
 
