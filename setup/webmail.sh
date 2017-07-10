@@ -112,13 +112,25 @@ cat > $RCM_CONFIG <<EOF;
 \$config['log_dir'] = '/var/log/roundcubemail/';
 \$config['temp_dir'] = '/tmp/roundcubemail/';
 \$config['db_dsnw'] = 'sqlite:///$STORAGE_ROOT/mail/roundcube/roundcube.sqlite?mode=0640';
-\$config['default_host'] = 'ssl://${PRIMARY_HOSTNAME}';
+\$config['default_host'] = 'ssl://localhost';
 \$config['default_port'] = 993;
+\$config['imap_conn_options'] = array(
+  'ssl'         => array(
+     'verify_peer'  => false,
+     'verify_peer_name'  => false,
+   ),
+ );
 \$config['imap_timeout'] = 15;
-\$config['smtp_server'] = 'tls://${PRIMARY_HOSTNAME}';
+\$config['smtp_server'] = 'tls://127.0.0.1';
 \$config['smtp_port'] = 587;
 \$config['smtp_user'] = '%u';
 \$config['smtp_pass'] = '%p';
+\$config['smtp_conn_options'] = array(
+  'ssl'         => array(
+     'verify_peer'  => false,
+     'verify_peer_name'  => false,
+   ),
+ );
 \$config['support_url'] = 'https://mailinabox.email/';
 \$config['product_name'] = '$PRIMARY_HOSTNAME Webmail';
 \$config['des_key'] = '$SECRET_KEY';
@@ -210,9 +222,6 @@ chmod -R 774 ${RCM_PLUGIN_DIR}/carddav
 ${RCM_DIR}/bin/updatedb.sh --dir ${RCM_DIR}/SQL --package roundcube
 chown www-data:www-data $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 chmod 664 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
-
-# Make sure all the users are configured to use the correct hostname
-sqlite3 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite "update users set mail_host = '$PRIMARY_HOSTNAME'"
 
 # Enable PHP modules.
 phpenmod -v php7.0 mcrypt imap
