@@ -6,7 +6,8 @@ In Development
 
 Mail:
 
-* Updated to Roundcube 1.3, but unfortunately dropping the Vacation plugin because it has not been supported by its author and is not compatible with Roundcube 1.3.
+* Updated to [Roundcube 1.3](https://roundcube.net/news/2017/06/26/roundcube-webmail-1.3.0-released), but unfortunately dropping the Vacation plugin because it has not been supported by its author and is not compatible with Roundcube 1.3.
+* Updated to [Z-Push 2.3.7](http://download.z-push.org/final/2.3/z-push-2.3.7.txt).
 
 v0.23a (May 31, 2017)
 ---------------------
