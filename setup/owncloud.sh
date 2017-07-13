@@ -9,12 +9,17 @@ source /etc/mailinabox.conf # load global vars
 
 echo "Installing Nextcloud (contacts/calendar)..."
 
+# Keep the php5 dependancies for the owncloud upgrades
 apt_install \
 	dbconfig-common \
 	php5-cli php5-sqlite php5-gd php5-imap php5-curl php-pear php-apc curl libapr1 libtool libcurl4-openssl-dev php-xml-parser \
 	php5 php5-dev php5-gd php5-fpm memcached php5-memcached
 
 apt-get purge -qq -y owncloud*
+
+apt_install php7.0 php7.0-fpm \
+	php7.0-cli php7.0-sqlite php7.0-gd php7.0-imap php7.0-curl php-pear php-apc curl \
+        php7.0-dev php7.0-gd memcached php7.0-memcached php7.0-xml php7.0-mbstring php7.0-zip php7.0-apcu
 
 # Migrate <= v0.10 setups that stored the ownCloud config.php in /usr/local rather than
 # in STORAGE_ROOT. Move the file to STORAGE_ROOT.
@@ -28,52 +33,35 @@ if [ ! -f $STORAGE_ROOT/owncloud/config.php ] \
 	ln -sf $STORAGE_ROOT/owncloud/config.php /usr/local/lib/owncloud/config/config.php
 fi
 
-InstallOwncloud() {
+InstallNextCloud() {
 
 	version=$1
 	hash=$2
-	flavor=$3
 
 	echo
-	echo "Upgrading to $flavor version $version"
+	echo "Upgrading to Nextcloud version $version"
 	echo
 
 	# Remove the current owncloud/Nextcloud
 	rm -rf /usr/local/lib/owncloud
 
 	# Download and verify
-	if [ "$flavor" = "Nextcloud" ]; then
-		wget_verify https://download.nextcloud.com/server/releases/nextcloud-$version.zip $hash /tmp/owncloud.zip
-	else
-		wget_verify https://download.owncloud.org/community/owncloud-$version.zip $hash /tmp/owncloud.zip
-	fi
+	wget_verify https://download.nextcloud.com/server/releases/nextcloud-$version.zip $hash /tmp/nextcloud.zip
 
 	# Extract ownCloud/Nextcloud
-	unzip -q /tmp/owncloud.zip -d /usr/local/lib
-	if [ "$flavor" = "Nextcloud" ]; then
-		mv /usr/local/lib/nextcloud /usr/local/lib/owncloud
-	fi
-	rm -f /tmp/owncloud.zip
+	unzip -q /tmp/nextcloud.zip -d /usr/local/lib
+	mv /usr/local/lib/nextcloud /usr/local/lib/owncloud
+	rm -f /tmp/nextcloud.zip
 
 	# The two apps we actually want are not in Nextcloud core. Download the releases from
 	# their github repositories.
 	mkdir -p /usr/local/lib/owncloud/apps
 
-	if [ "$flavor" = "Nextcloud" ]; then
-		wget_verify https://github.com/nextcloud/contacts/releases/download/v1.5.3/contacts.tar.gz 78c4d49e73f335084feecd4853bd8234cf32615e /tmp/contacts.tgz
-	else
-		wget_verify https://github.com/owncloud/contacts/releases/download/v1.4.0.0/contacts.tar.gz c1c22d29699456a45db447281682e8bc3f10e3e7 /tmp/contacts.tgz
-	fi
-
+	wget_verify https://github.com/nextcloud/contacts/releases/download/v1.5.3/contacts.tar.gz 78c4d49e73f335084feecd4853bd8234cf32615e /tmp/contacts.tgz
 	tar xf /tmp/contacts.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/contacts.tgz
 
-	if [ "$flavor" = "Nextcloud" ]; then
-		wget_verify https://github.com/nextcloud/calendar/releases/download/v1.5.2/calendar.tar.gz 7b8a94e01fe740c5c23017ed5bc211983c780fce /tmp/calendar.tgz
-	else
-    wget_verify https://github.com/nextcloud/calendar/releases/download/v1.4.0/calendar.tar.gz c84f3170efca2a99ea6254de34b0af3cb0b3a821 /tmp/calendar.tgz
-	fi
-
+	wget_verify https://github.com/nextcloud/calendar/releases/download/v1.5.3/calendar.tar.gz b370352d1f280805cc7128f78af4615f623827f8 /tmp/calendar.tgz
 	tar xf /tmp/calendar.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/calendar.tgz
 
@@ -105,15 +93,76 @@ InstallOwncloud() {
 	fi
 }
 
-owncloud_ver=10.0.5
-owncloud_hash=686f6a8e9d7867c32e3bf3ca63b3cc2020564bf6
-owncloud_flavor=Nextcloud
+# We only install ownCloud intermediate versions to be able to seemlesly upgrade to NextCloud
+InstallOwncloud() {
+
+	version=$1
+	hash=$2
+
+	echo
+	echo "Upgrading to OwnCloud version $version"
+	echo
+
+	# Remove the current owncloud/Nextcloud
+	rm -rf /usr/local/lib/owncloud
+
+	# Download and verify
+	wget_verify https://download.owncloud.org/community/owncloud-$version.zip $hash /tmp/owncloud.zip
+
+
+	# Extract ownCloud
+	unzip -q /tmp/owncloud.zip -d /usr/local/lib
+	rm -f /tmp/owncloud.zip
+
+	# The two apps we actually want are not in Nextcloud core. Download the releases from
+	# their github repositories.
+	mkdir -p /usr/local/lib/owncloud/apps
+
+	wget_verify https://github.com/owncloud/contacts/releases/download/v1.4.0.0/contacts.tar.gz c1c22d29699456a45db447281682e8bc3f10e3e7 /tmp/contacts.tgz
+	tar xf /tmp/contacts.tgz -C /usr/local/lib/owncloud/apps/
+	rm /tmp/contacts.tgz
+
+	wget_verify https://github.com/nextcloud/calendar/releases/download/v1.4.0/calendar.tar.gz c84f3170efca2a99ea6254de34b0af3cb0b3a821 /tmp/calendar.tgz
+	tar xf /tmp/calendar.tgz -C /usr/local/lib/owncloud/apps/
+	rm /tmp/calendar.tgz
+
+	# Fix weird permissions.
+	chmod 750 /usr/local/lib/owncloud/{apps,config}
+
+	# Create a symlink to the config.php in STORAGE_ROOT (for upgrades we're restoring the symlink we previously
+	# put in, and in new installs we're creating a symlink and will create the actual config later).
+	ln -sf $STORAGE_ROOT/owncloud/config.php /usr/local/lib/owncloud/config/config.php
+
+	# Make sure permissions are correct or the upgrade step won't run.
+	# $STORAGE_ROOT/owncloud may not yet exist, so use -f to suppress
+	# that error.
+	chown -f -R www-data.www-data $STORAGE_ROOT/owncloud /usr/local/lib/owncloud
+
+	# If this isn't a new installation, immediately run the upgrade script.
+	# Then check for success (0=ok and 3=no upgrade needed, both are success).
+	if [ -e $STORAGE_ROOT/owncloud/owncloud.db ]; then
+		# ownCloud 8.1.1 broke upgrades. It may fail on the first attempt, but
+		# that can be OK.
+		sudo -u www-data php5 /usr/local/lib/owncloud/occ upgrade
+		if [ \( $? -ne 0 \) -a \( $? -ne 3 \) ]; then
+			echo "Trying ownCloud upgrade again to work around ownCloud upgrade bug..."
+			sudo -u www-data php5 /usr/local/lib/owncloud/occ upgrade
+			if [ \( $? -ne 0 \) -a \( $? -ne 3 \) ]; then exit 1; fi
+			sudo -u www-data php5 /usr/local/lib/owncloud/occ maintenance:mode --off
+			echo "...which seemed to work."
+		fi
+	fi
+}
+
+owncloud_ver=12.0.0
+owncloud_hash=5d64307d9ce513a8905514b2fbe212f563fe76df
 
 # Check if Nextcloud dir exist, and check if version matches owncloud_ver (if either doesn't - install/upgrade)
 if [ ! -d /usr/local/lib/owncloud/ ] \
         || ! grep -q $owncloud_ver /usr/local/lib/owncloud/version.php; then
 
 	# Stop php-fpm
+	hide_output service php7.0-fpm stop
 	hide_output service php5-fpm stop
 
 	# Backup the existing ownCloud/Nextcloud.
@@ -135,7 +184,7 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 	if [ -e /usr/local/lib/owncloud/version.php ]; then
 		if grep -q "8\.1\.[0-9]" /usr/local/lib/owncloud/version.php; then
 			echo "We are running 8.1.x, upgrading to 8.2.3 first"
-			InstallOwncloud 8.2.3 bfdf6166fbf6fc5438dc358600e7239d1c970613 ownCloud
+			InstallOwncloud 8.2.3 bfdf6166fbf6fc5438dc358600e7239d1c970613
 		fi
 
 		# If we are upgrading from 8.2.x we should go to 9.0 first. Owncloud doesn't support skipping minor versions
@@ -149,7 +198,7 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 			<?php
 				include("$STORAGE_ROOT/owncloud/config.php");
 
-				\$CONFIG['memcache.local'] = '\OC\Memcache\APC';
+				\$CONFIG['memcache.local'] = '\OC\Memcache\APCu';
 
 				echo "<?php\n\\\$CONFIG = ";
 				var_export(\$CONFIG);
@@ -159,29 +208,40 @@ EOF
 			chown www-data.www-data $STORAGE_ROOT/owncloud/config.php
 
 			# We can now install owncloud 9.0.2
-			InstallOwncloud 9.0.2 72a3d15d09f58c06fa8bee48b9e60c9cd356f9c5 ownCloud
+			InstallOwncloud 9.0.2 72a3d15d09f58c06fa8bee48b9e60c9cd356f9c5
 
 			# The owncloud 9 migration doesn't migrate calendars and contacts
 			# The option to migrate these are removed in 9.1
 			# So the migrations should be done when we have 9.0 installed
-			sudo -u www-data php /usr/local/lib/owncloud/occ dav:migrate-addressbooks
+			sudo -u www-data php5 /usr/local/lib/owncloud/occ dav:migrate-addressbooks
 			# The following migration has to be done for each owncloud user
 			for directory in $STORAGE_ROOT/owncloud/*@*/ ; do
 				username=$(basename "${directory}")
-				sudo -u www-data php /usr/local/lib/owncloud/occ dav:migrate-calendar $username
+				sudo -u www-data php5 /usr/local/lib/owncloud/occ dav:migrate-calendar $username
 			done
-			sudo -u www-data php /usr/local/lib/owncloud/occ dav:sync-birthday-calendar
+			sudo -u www-data php5 /usr/local/lib/owncloud/occ dav:sync-birthday-calendar
 		fi
 
 		# If we are upgrading from 9.0.x we should go to 9.1 first.
 		if grep -q "9\.0\.[0-9]" /usr/local/lib/owncloud/version.php; then
 			echo "We are running ownCloud 9.0.x, upgrading to ownCloud 9.1.4 first"
-			InstallOwncloud 9.1.4 e637cab7b2ca3346164f3506b1a0eb812b4e841a ownCloud
+			InstallOwncloud 9.1.4 e637cab7b2ca3346164f3506b1a0eb812b4e841a
 		fi
 
+		# If we are upgrading from 9.1.x we should go to NextCloud 10.0 first.
+		if grep -q "9\.1\.[0-9]" /usr/local/lib/owncloud/version.php; then
+			echo "We are running ownCloud 9.0.x, upgrading to Nextcloud 10.0.5 first"
+			InstallNextCloud 10.0.5 686f6a8e9d7867c32e3bf3ca63b3cc2020564bf6
+		fi
+
+		# If we are upgrading from 10.0.x we should go to NextCloud 11.0 first.
+		if grep -q "10\.0\.[0-9]" /usr/local/lib/owncloud/version.php; then
+			echo "We are running Nextcloud 10.0.x, upgrading to Nextcloud 11.0.3 first"
+			InstallNextCloud 11.0.3 a396aaa1c9f920099a90a86b4a9cd0ec13083c99
+		fi
 	fi
 
-	InstallOwncloud $owncloud_ver $owncloud_hash Nextcloud
+	InstallNextCloud $owncloud_ver $owncloud_hash
 fi
 
 # ### Configuring Nextcloud
@@ -211,7 +271,7 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
       'arguments'=>array('{127.0.0.1:993/imap/ssl/novalidate-cert}')
     )
   ),
-  'memcache.local' => '\OC\Memcache\APC',
+  'memcache.local' => '\OC\Memcache\APCu',
   'mail_smtpmode' => 'sendmail',
   'mail_smtpsecure' => '',
   'mail_smtpauthtype' => 'LOGIN',
@@ -272,7 +332,7 @@ include("$STORAGE_ROOT/owncloud/config.php");
 
 \$CONFIG['trusted_domains'] = array('$PRIMARY_HOSTNAME');
 
-\$CONFIG['memcache.local'] = '\OC\Memcache\APC';
+\$CONFIG['memcache.local'] = '\OC\Memcache\APCu';
 \$CONFIG['overwrite.cli.url'] = '/cloud';
 \$CONFIG['mail_from_address'] = 'administrator'; # just the local part, matches our master administrator address
 
@@ -305,7 +365,7 @@ if [ \( $? -ne 0 \) -a \( $? -ne 3 \) ]; then exit 1; fi
 
 # Set PHP FPM values to support large file uploads
 # (semicolon is the comment character in this file, hashes produce deprecation warnings)
-tools/editconf.py /etc/php5/fpm/php.ini -c ';' \
+tools/editconf.py /etc/php/7.0/fpm/php.ini -c ';' \
 	upload_max_filesize=16G \
 	post_max_size=16G \
 	output_buffering=16384 \
@@ -313,9 +373,23 @@ tools/editconf.py /etc/php5/fpm/php.ini -c ';' \
 	max_execution_time=600 \
 	short_open_tag=On
 
+# Set Nextcloud recommended opcache settings
+tools/editconf.py /etc/php/7.0/cli/conf.d/10-opcache.ini -c ';' \
+	opcache.enable=1 \
+	opcache.enable_cli=1 \
+	opcache.interned_strings_buffer=8 \
+	opcache.max_accelerated_files=10000 \
+	opcache.memory_consumption=128 \
+	opcache.save_comments=1 \
+	opcache.revalidate_freq=1
+
+# Configure the path environment for php-fpm
+tools/editconf.py /etc/php/7.0/fpm/pool.d/www.conf -c ';' \
+        env[PATH]=/usr/local/bin:/usr/bin:/bin
+
 # If apc is explicitly disabled we need to enable it
-if grep -q apc.enabled=0 /etc/php5/mods-available/apcu.ini; then
-	tools/editconf.py /etc/php5/mods-available/apcu.ini -c ';' \
+if grep -q apc.enabled=0 /etc/php/7.0/mods-available/apcu.ini; then
+	tools/editconf.py /etc/php/7.0/mods-available/apcu.ini -c ';' \
 		apc.enabled=1
 fi
 
@@ -337,5 +411,4 @@ chmod +x /etc/cron.hourly/mailinabox-owncloud
 # ```
 
 # Enable PHP modules and restart PHP.
-php5enmod imap
-restart_service php5-fpm
+restart_service php7.0-fpm

@@ -22,8 +22,10 @@ source /etc/mailinabox.conf # load global vars
 echo "Installing Roundcube (webmail)..."
 apt_install \
 	dbconfig-common \
-	php5 php5-sqlite php5-mcrypt php5-intl php5-json php5-common php-auth php-net-smtp php-net-socket php-net-sieve php-mail-mime php-crypt-gpg php5-gd php5-pspell \
-	tinymce libjs-jquery libjs-jquery-mousewheel libmagic1
+	php7.0-cli php7.0-sqlite php7.0-mcrypt php7.0-intl php7.0-json php7.0-common \
+	php-auth php-net-smtp php-net-socket php-net-sieve php-mail-mime php-crypt-gpg \
+	php7.0-gd php7.0-pspell tinymce libjs-jquery libjs-jquery-mousewheel libmagic1
+
 apt_get_quiet remove php-mail-mimedecode # no longer needed since Roundcube 1.1.3
 
 # We used to install Roundcube from Ubuntu, without triggering the dependencies #NODOC
@@ -108,11 +110,23 @@ cat > $RCM_CONFIG <<EOF;
 \$config['db_dsnw'] = 'sqlite:///$STORAGE_ROOT/mail/roundcube/roundcube.sqlite?mode=0640';
 \$config['default_host'] = 'ssl://localhost';
 \$config['default_port'] = 993;
+\$config['imap_conn_options'] = array(
+  'ssl'         => array(
+     'verify_peer'  => false,
+     'verify_peer_name'  => false,
+   ),
+ );
 \$config['imap_timeout'] = 15;
 \$config['smtp_server'] = 'tls://127.0.0.1';
 \$config['smtp_port'] = 587;
 \$config['smtp_user'] = '%u';
 \$config['smtp_pass'] = '%p';
+\$config['smtp_conn_options'] = array(
+  'ssl'         => array(
+     'verify_peer'  => false,
+     'verify_peer_name'  => false,
+   ),
+ );
 \$config['support_url'] = 'https://mailinabox.email/';
 \$config['product_name'] = '$PRIMARY_HOSTNAME Webmail';
 \$config['des_key'] = '$SECRET_KEY';
@@ -186,5 +200,5 @@ chown www-data:www-data $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 chmod 664 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 
 # Enable PHP modules.
-php5enmod mcrypt
-restart_service php5-fpm
+phpenmod -v php7.0 mcrypt imap
+restart_service php7.0-fpm
