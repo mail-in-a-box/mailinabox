@@ -66,6 +66,7 @@ fi
 
 # Make sure we have the directory to save to.
 assets_dir=/usr/local/lib/mailinabox/vendor/assets
+rm -rf $assets_dir
 mkdir -p $assets_dir
 
 # jQuery CDN URL
@@ -77,15 +78,13 @@ wget_verify $jquery_url/jquery-$jquery_version.min.js 43dc554608df885a59ddeece15
 
 # Bootstrap CDN URL
 bootstrap_version=3.3.7
-bootstrap_url=https://maxcdn.bootstrapcdn.com/bootstrap/$bootstrap_version
+bootstrap_url=https://github.com/twbs/bootstrap/releases/download/v$bootstrap_version/bootstrap-$bootstrap_version-dist.zip
 
 # Get Bootstrap
-wget_verify $bootstrap_url/js/bootstrap.min.js 430a443d74830fe9be26efca431f448c1b3740f9 $assets_dir/bootstrap.min.js
-wget_verify $bootstrap_url/css/bootstrap-theme.min.css 8256575374f430476bdcd49de98c77990229ce31 $assets_dir/bootstrap-theme.min.css
-wget_verify $bootstrap_url/css/bootstrap-theme.min.css.map 87f7dfd79d77051ac2eca7d093d961fbd1c8f6eb $assets_dir/bootstrap-theme.min.css.map
-wget_verify $bootstrap_url/css/bootstrap.min.css 6527d8bf3e1e9368bab8c7b60f56bc01fa3afd68 $assets_dir/bootstrap.min.css
-wget_verify $bootstrap_url/css/bootstrap.min.css.map e0d7b2bde55a0bac1b658a507e8ca491a6729e06 $assets_dir/bootstrap.min.css.map
-
+wget_verify $bootstrap_url e6b1000b94e835ffd37f4c6dcbdad43f4b48a02a /tmp/bootstrap.zip
+unzip -q /tmp/bootstrap.zip -d /usr/local/lib/mailinabox/vendor/assets
+mv /usr/local/lib/mailinabox/vendor/assets/bootstrap-$bootstrap_version-dist /usr/local/lib/mailinabox/vendor/assets/bootstrap
+rm -f /tmp/bootstrap.zip
 
 # Link the management server daemon into a well known location.
 rm -f /usr/local/bin/mailinabox-daemon

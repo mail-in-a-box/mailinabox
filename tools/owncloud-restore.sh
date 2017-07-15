@@ -27,6 +27,7 @@ fi
 
 echo "Restoring backup from $1"
 service php5-fpm stop
+service php7.0-fpm stop
 
 # remove the current ownCloud/Nextcloud installation
 rm -rf /usr/local/lib/owncloud/
@@ -46,4 +47,5 @@ chown www-data.www-data $STORAGE_ROOT/owncloud/config.php
 sudo -u www-data php /usr/local/lib/owncloud/occ maintenance:mode --off
 
 service php5-fpm start
+service php7.0-fpm start
 echo "Done"

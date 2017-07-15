@@ -6,6 +6,23 @@ In Development
 
 Mail:
 
+* Updated to [Roundcube 1.3](https://roundcube.net/news/2017/06/26/roundcube-webmail-1.3.0-released), but unfortunately dropping the Vacation plugin because it has not been supported by its author and is not compatible with Roundcube 1.3.
+* Updated to [Z-Push 2.3.7](http://download.z-push.org/final/2.3/z-push-2.3.7.txt).
+
+Nextcloud:
+
+* Nextcloud updated to 12.0.0.
+
+v0.23a (May 31, 2017)
+---------------------
+
+Corrects a problem in the new way third-party assets are downloaded during setup for the control panel, since v0.23.
+
+v0.23 (May 30, 2017)
+--------------------
+
+Mail:
+
 * The default theme for Roundcube was changed to the nicer Larry theme.
 * Exchange/ActiveSync support has been replaced with z-push 2.3.6 from z-push.org (rather than z-push-contrib).
 
@@ -19,7 +36,7 @@ Control Panel/Management:
 * Fix an error in the control panel showing rsync backup status.
 * Fix an error in the control panel related to IPv6 addresses.
 * TLS certificates for internationalized domain names can now be provisioned from Let's Encrypt automatically.
-* Download management web assets (jQuery/Bootstrap) to the static web root directory.
+* Third-party assets used in the control panel (jQuery/Bootstrap) are now downloaded during setup and served from the box rather than from a CDN.
 
 DNS:
 
