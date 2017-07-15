@@ -433,10 +433,10 @@ def add_mail_alias(address, forwards_to, permitted_senders, env, update_if_exist
 		for line in forwards_to.split("\n"):
 			for email in line.split(","):
 				email = email.strip()
-				# Strip any +tag from email alias and check privileges
-				privileged_email = re.sub(r"(?=\+)[^@]*(?=@)",'',email)
 				if email == "": continue
 				email = sanitize_idn_email_address(email) # Unicode => IDNA
+				# Strip any +tag from email alias and check privileges
+				privileged_email = re.sub(r"(?=\+)[^@]*(?=@)",'',email)
 				if not validate_email(email):
 					return ("Invalid receiver email address (%s)." % email, 400)
 				if is_dcv_source and not is_dcv_address(email) and "admin" not in get_mail_user_privileges(privileged_email, env, empty_on_error=True):
