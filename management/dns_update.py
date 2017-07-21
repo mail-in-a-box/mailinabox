@@ -764,12 +764,12 @@ def set_custom_dns_record(qname, rtype, value, action, env):
 		if qname != "_secondary_nameserver":
 			raise ValueError("%s is not a domain name or a subdomain of a domain name managed by this box." % qname)
 
-	if not re.search(DOMAIN_RE, qname):
-		raise ValueError("Invalid name.")
-
 	# validate rtype
 	rtype = rtype.upper()
 	if value is not None and qname != "_secondary_nameserver":
+		if not re.search(DOMAIN_RE, qname):
+			raise ValueError("Invalid name.")
+
 		if rtype in ("A", "AAAA"):
 			if value != "local": # "local" is a special flag for us
 				v = ipaddress.ip_address(value) # raises a ValueError if there's a problem
