@@ -14,7 +14,7 @@ build_postgrey: clean
 	git clone git://git.debian.org/git/collab-maint/postgrey.git /tmp/build/postgrey
 
 	# Download the corresponding upstream package.
-	wget -O /tmp/build/postgrey_1.35.orig.tar.gz http://postgrey.schweikert.ch/pub/postgrey-1.35.tar.gz
+	wget -O /tmp/build/postgrey_1.35.orig.tar.gz http://postgrey.schweikert.ch/pub/old/postgrey-1.35.tar.gz
 
 	# Add our source patch to the debian packaging listing.
 	cp postgrey_sources.diff /tmp/build/postgrey/debian/patches/mailinabox
