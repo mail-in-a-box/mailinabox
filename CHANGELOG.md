@@ -6,7 +6,7 @@ In Development
 
 System:
 
-* Install PHP7 via a PPA.
+* Install PHP7 via a PPA. Switch to the on-demand process manager.
 
 Mail:
 
