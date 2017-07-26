@@ -47,6 +47,10 @@ tools/editconf.py /etc/php5/fpm/php.ini -c ';' \
 tools/editconf.py /etc/php5/fpm/php.ini -c ';' \
         default_charset="UTF-8"
 
+# Switch from the dynamic process manager to the ondemand manager
+tools/editconf.py /etc/php5/fpm/pool.d/www.conf -c ';' \
+	pm = ondemand
+
 # Bump up PHP's max_children to support more concurrent connections
 tools/editconf.py /etc/php5/fpm/pool.d/www.conf -c ';' \
 	pm.max_children=8
