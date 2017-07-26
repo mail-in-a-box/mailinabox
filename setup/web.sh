@@ -50,7 +50,11 @@ tools/editconf.py /etc/php/7.0/fpm/php.ini -c ';' \
 # Set PHPs default charset to UTF-8, since we use it. See #367.
 tools/editconf.py /etc/php/7.0/fpm/php.ini -c ';' \
         default_charset="UTF-8"
-
+        
+# Switch from the dynamic process manager to the ondemand manager see #1215
+tools/editconf.py /etc/php/7.0/fpm/pool.d/www.conf -c ';' \
+	pm = ondemand
+    
 # Bump up PHP's max_children to support more concurrent connections
 tools/editconf.py /etc/php/7.0/fpm/pool.d/www.conf -c ';' \
 	pm.max_children=8
