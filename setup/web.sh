@@ -47,7 +47,7 @@ tools/editconf.py /etc/php5/fpm/php.ini -c ';' \
 tools/editconf.py /etc/php5/fpm/php.ini -c ';' \
         default_charset="UTF-8"
 
-# Switch from the dynamic process manager to the ondemand manager
+# Switch from the dynamic process manager to the ondemand manager see #1215
 tools/editconf.py /etc/php5/fpm/pool.d/www.conf -c ';' \
 	pm = ondemand
 
