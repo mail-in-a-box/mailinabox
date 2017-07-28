@@ -127,6 +127,21 @@ apt_install python3 python3-dev python3-pip \
 
 hide_output add-apt-repository -y ppa:ondrej/php
 apt_add_repository_to_unattended_upgrades LP-PPA-ondrej-php:trusty
+
+# The PHP7 PPA has an updated openssl package that breaks our setup. It has some extra patches.
+# For instance it completely disables SSLv3. Which isn't bad, but not thoroughly tested with our setup.
+# So we will instruct apt to ignore the package.
+#
+# Pin priorities are explained here: https://www.debian.org/doc/manuals/apt-howto/ch-apt-get.en.html#s-pin
+#
+# We lower the priority of the PPA so apt will prefer the packages from Ubuntu
+cat > /etc/apt/preferences.d/openssl <<EOF;
+Package: *
+Pin: release o=lp-ppa-ondrej-php
+Pin-Priority: 400
+EOF
+
+# Update apt to get the PPA
 hide_output apt-get update
 
 
