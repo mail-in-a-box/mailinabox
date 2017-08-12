@@ -79,12 +79,15 @@ tools/editconf.py /etc/dovecot/conf.d/10-auth.conf \
 
 # Enable SSL, specify the location of the SSL certificate and private key files.
 # Disable obsolete SSL protocols and allow only good ciphers per http://baldric.net/2013/12/07/tls-ciphers-in-postfix-and-dovecot/.
+# Enable strong ssl dh parameters
 tools/editconf.py /etc/dovecot/conf.d/10-ssl.conf \
 	ssl=required \
 	"ssl_cert=<$STORAGE_ROOT/ssl/ssl_certificate.pem" \
 	"ssl_key=<$STORAGE_ROOT/ssl/ssl_private_key.pem" \
 	"ssl_protocols=!SSLv3 !SSLv2" \
-	"ssl_cipher_list=TLSv1+HIGH !SSLv2 !RC4 !aNULL !eNULL !3DES @STRENGTH"
+	"ssl_cipher_list=TLSv1+HIGH !SSLv2 !RC4 !aNULL !eNULL !3DES @STRENGTH" \
+	"ssl_prefer_server_ciphers = yes" \
+	"ssl_dh_parameters_length = 2048"
 
 # Disable in-the-clear IMAP/POP because there is no reason for a user to transmit
 # login credentials outside of an encrypted connection. Only the over-TLS versions
