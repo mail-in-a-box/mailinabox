@@ -64,6 +64,12 @@ InstallNextcloud() {
 	wget_verify https://github.com/nextcloud/calendar/releases/download/v1.5.3/calendar.tar.gz b370352d1f280805cc7128f78af4615f623827f8 /tmp/calendar.tgz
 	tar xf /tmp/calendar.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/calendar.tgz
+    
+    local SPREED_VERSION=2.0.1
+    wget_verify https://github.com/nextcloud/spreed/archive/v${SPREED_VERSION}.tar.gz 6b768afd685e84bef3414c4af734734f47b35298 /tmp/spreed.tgz
+    tar xf /tmp/spreed.tgz -C /usr/local/lib/owncloud/apps/
+    rm /tmp/spreed.tgz
+    mv /usr/local/lib/owncloud/apps/spreed-${SPREED_VERSION} /usr/local/lib/owncloud/apps/spreed
 
 	# Fix weird permissions.
 	chmod 750 /usr/local/lib/owncloud/{apps,config}
