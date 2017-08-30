@@ -16,7 +16,7 @@ Mail:
 
 Nextcloud:
 
-* Nextcloud updated to 12.0.0, using PHP7.
+* Nextcloud updated to 12.0.2, using PHP7.
 
 Control Panel:
 

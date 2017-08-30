@@ -154,8 +154,8 @@ InstallOwncloud() {
 	fi
 }
 
-owncloud_ver=12.0.0
-owncloud_hash=5d64307d9ce513a8905514b2fbe212f563fe76df
+owncloud_ver=12.0.2
+owncloud_hash=eba44ac1dd8590b1e38ea67c29fe277f57d6cf18
 
 # Check if Nextcloud dir exist, and check if version matches owncloud_ver (if either doesn't - install/upgrade)
 if [ ! -d /usr/local/lib/owncloud/ ] \
@@ -182,13 +182,13 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 
 	# We only need to check if we do upgrades when owncloud/Nextcloud was previously installed
 	if [ -e /usr/local/lib/owncloud/version.php ]; then
-		if grep -q "8\.1\.[0-9]" /usr/local/lib/owncloud/version.php; then
+		if grep -q "OC_VersionString = '8\.1\.[0-9]" /usr/local/lib/owncloud/version.php; then
 			echo "We are running 8.1.x, upgrading to 8.2.3 first"
 			InstallOwncloud 8.2.3 bfdf6166fbf6fc5438dc358600e7239d1c970613
 		fi
 
 		# If we are upgrading from 8.2.x we should go to 9.0 first. Owncloud doesn't support skipping minor versions
-		if grep -q "8\.2\.[0-9]" /usr/local/lib/owncloud/version.php; then
+		if grep -q "OC_VersionString = '8\.2\.[0-9]" /usr/local/lib/owncloud/version.php; then
 			echo "We are running version 8.2.x, upgrading to 9.0.2 first"
 
 			# We need to disable memcached. The upgrade and install fails
@@ -223,19 +223,19 @@ EOF
 		fi
 
 		# If we are upgrading from 9.0.x we should go to 9.1 first.
-		if grep -q "9\.0\.[0-9]" /usr/local/lib/owncloud/version.php; then
+		if grep -q "OC_VersionString = '9\.0\.[0-9]" /usr/local/lib/owncloud/version.php; then
 			echo "We are running ownCloud 9.0.x, upgrading to ownCloud 9.1.4 first"
 			InstallOwncloud 9.1.4 e637cab7b2ca3346164f3506b1a0eb812b4e841a
 		fi
 
 		# If we are upgrading from 9.1.x we should go to Nextcloud 10.0 first.
-		if grep -q "9\.1\.[0-9]" /usr/local/lib/owncloud/version.php; then
+		if grep -q "OC_VersionString = '9\.1\.[0-9]" /usr/local/lib/owncloud/version.php; then
 			echo "We are running ownCloud 9.1.x, upgrading to Nextcloud 10.0.5 first"
 			InstallNextcloud 10.0.5 686f6a8e9d7867c32e3bf3ca63b3cc2020564bf6
 		fi
 
 		# If we are upgrading from 10.0.x we should go to Nextcloud 11.0 first.
-		if grep -q "10\.0\.[0-9]" /usr/local/lib/owncloud/version.php; then
+		if grep -q "OC_VersionString = '10\.0\.[0-9]" /usr/local/lib/owncloud/version.php; then
 			echo "We are running Nextcloud 10.0.x, upgrading to Nextcloud 11.0.3 first"
 			InstallNextcloud 11.0.3 a396aaa1c9f920099a90a86b4a9cd0ec13083c99
 		fi
