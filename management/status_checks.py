@@ -237,19 +237,30 @@ def check_system_aliases(env, output):
 
 def check_free_disk_space(rounded_values, env, output):
 	# Check free disk space.
-	st = os.statvfs(env['STORAGE_ROOT'])
-	bytes_total = st.f_blocks * st.f_frsize
-	bytes_free = st.f_bavail * st.f_frsize
-	disk_msg = "The disk has %.2f GB space remaining." % (bytes_free/1024.0/1024.0/1024.0)
-	if bytes_free > .3 * bytes_total:
-		if rounded_values: disk_msg = "The disk has more than 30% free space."
-		output.print_ok(disk_msg)
-	elif bytes_free > .15 * bytes_total:
-		if rounded_values: disk_msg = "The disk has less than 30% free space."
-		output.print_warning(disk_msg)
-	else:
-		if rounded_values: disk_msg = "The disk has less than 15% free space."
-		output.print_error(disk_msg)
+	all_partitions = psutil.disk_partitions()
+
+	# We may have more than 1 data disk, so show info about each of those
+	for partition in all_partitions:
+		# Skip booting mountpoint
+		if partition.mountpoint == "/boot/efi":
+			continue
+
+		disk_name = partition.device
+		usage = psutil.disk_usage(partition.mountpoint)
+
+		disk_msg = "The disk '{0}' has {1:.2f} GB space remaining. Total size: {2:.2f} GB".format(
+			disk_name, usage.free/1024.0/1024.0/1024.0, usage.total/1024.0/1024.0/1024.0
+		)
+
+		if usage.free > .3 * usage.total:
+			if rounded_values: disk_msg = "The disk '{0}' has more than 30% free space.".format(disk_name)
+			output.print_ok(disk_msg)
+		elif usage.free > .15 * usage.total:
+			if rounded_values: disk_msg = "The disk '{0}' has less than 30% free space.".format(disk_name)
+			output.print_warning(disk_msg)
+		else:
+			if rounded_values: disk_msg = "The disk '{0}' has less than 15% free space.".format(disk_name)
+			output.print_error(disk_msg)
 
 def check_free_memory(rounded_values, env, output):
 	# Check free memory.
