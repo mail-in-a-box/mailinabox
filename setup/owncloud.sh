@@ -154,8 +154,8 @@ InstallOwncloud() {
 	fi
 }
 
-owncloud_ver=12.0.0
-owncloud_hash=5d64307d9ce513a8905514b2fbe212f563fe76df
+owncloud_ver=12.0.2
+owncloud_hash=eba44ac1dd8590b1e38ea67c29fe277f57d6cf18
 
 # Check if Nextcloud dir exist, and check if version matches owncloud_ver (if either doesn't - install/upgrade)
 if [ ! -d /usr/local/lib/owncloud/ ] \
