@@ -4,14 +4,25 @@ CHANGELOG
 In Development
 --------------
 
+System:
+
+* Install PHP7 via a PPA. Switch to the on-demand process manager.
+
 Mail:
 
 * Updated to [Roundcube 1.3](https://roundcube.net/news/2017/06/26/roundcube-webmail-1.3.0-released), but unfortunately dropping the Vacation plugin because it has not been supported by its author and is not compatible with Roundcube 1.3.
 * Updated to [Z-Push 2.3.7](http://download.z-push.org/final/2.3/z-push-2.3.7.txt).
+* Dovecot now uses stronger 2048 bit DH params for better forward secrecy.
 
 Nextcloud:
 
-* Nextcloud updated to 12.0.0.
+* Nextcloud updated to 12.0.2, using PHP7.
+
+Control Panel:
+
+* Nameserver (NS) records can now be set on custom domains.
+* Fix an erroneous status check error due to IPv6 address formatting.
+* Aliases for administrative addresses can now be set to send mail to +tag administrative addresses.
 
 v0.23a (May 31, 2017)
 ---------------------
