@@ -10,13 +10,13 @@ System:
 
 Mail:
 
-* Updated to [Roundcube 1.3](https://roundcube.net/news/2017/06/26/roundcube-webmail-1.3.0-released), but unfortunately dropping the Vacation plugin because it has not been supported by its author and is not compatible with Roundcube 1.3.
-* Updated to [Z-Push 2.3.7](http://download.z-push.org/final/2.3/z-push-2.3.7.txt).
+* Updated to [Roundcube 1.3.1](https://roundcube.net/news/2017/06/26/roundcube-webmail-1.3.0-released), but unfortunately dropping the Vacation plugin because it has not been supported by its author and is not compatible with Roundcube 1.3, and updated the persistent login plugin.
+* Updated to [Z-Push 2.3.8](http://download.z-push.org/final/2.3/z-push-2.3.8.txt).
 * Dovecot now uses stronger 2048 bit DH params for better forward secrecy.
 
 Nextcloud:
 
-* Nextcloud updated to 12.0.2, using PHP7.
+* Nextcloud updated to 12.0.3, using PHP7.
 
 Control Panel:
 
