@@ -161,9 +161,9 @@ owncloud_hash=beab41f6a748a43f0accfa6a9808387aef718c61
 if [ ! -d /usr/local/lib/owncloud/ ] \
         || ! grep -q $owncloud_ver /usr/local/lib/owncloud/version.php; then
 
-	# Stop php-fpm
-	hide_output service php7.0-fpm stop
-	hide_output service php5-fpm stop
+	# Stop php-fpm if running. If theyre not running (which happens on a previously failed install), dont bail.
+	service php7.0-fpm stop &> /dev/null || /bin/true
+	service php5-fpm stop &> /dev/null || /bin/true
 
 	# Backup the existing ownCloud/Nextcloud.
 	# Create a backup directory to store the current installation and database to
