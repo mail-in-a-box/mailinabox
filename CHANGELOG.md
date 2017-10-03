@@ -1,6 +1,14 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+Web:
+
+* Updated cipher list to Mozilla's current intermediate recommendation.
+* Updated HSTS header to use longer six month duration.
+
 v0.24 (October 3, 2017)
 -----------------------
 
