@@ -93,9 +93,9 @@ PORT 25
   * SSLV3 Cipher Suites:
       Server rejected all cipher suites.
 
-  Should Not Offer: DHE-RSA-SEED-SHA, EDH-RSA-DES-CBC3-SHA, SEED-SHA
-  Could Also Offer: DH-DSS-AES128-GCM-SHA256, DH-DSS-AES128-SHA, DH-DSS-AES128-SHA256, DH-DSS-AES256-GCM-SHA384, DH-DSS-AES256-SHA, DH-DSS-AES256-SHA256, DH-DSS-CAMELLIA128-SHA, DH-DSS-CAMELLIA256-SHA, DH-DSS-DES-CBC3-SHA, DH-RSA-AES128-GCM-SHA256, DH-RSA-AES128-SHA, DH-RSA-AES128-SHA256, DH-RSA-AES256-GCM-SHA384, DH-RSA-AES256-SHA, DH-RSA-AES256-SHA256, DH-RSA-CAMELLIA128-SHA, DH-RSA-CAMELLIA256-SHA, DH-RSA-DES-CBC3-SHA, DHE-DSS-AES128-GCM-SHA256, DHE-DSS-AES128-SHA, DHE-DSS-AES128-SHA256, DHE-DSS-AES256-GCM-SHA384, DHE-DSS-AES256-SHA, DHE-DSS-AES256-SHA256, DHE-DSS-CAMELLIA128-SHA, DHE-DSS-CAMELLIA256-SHA, ECDHE-ECDSA-AES128-GCM-SHA256, ECDHE-ECDSA-AES128-SHA, ECDHE-ECDSA-AES128-SHA256, ECDHE-ECDSA-AES256-GCM-SHA384, ECDHE-ECDSA-AES256-SHA, ECDHE-ECDSA-AES256-SHA384, ECDHE-ECDSA-DES-CBC3-SHA, SRP-3DES-EDE-CBC-SHA, SRP-AES-128-CBC-SHA, SRP-AES-256-CBC-SHA, SRP-DSS-3DES-EDE-CBC-SHA, SRP-DSS-AES-128-CBC-SHA, SRP-DSS-AES-256-CBC-SHA, SRP-RSA-3DES-EDE-CBC-SHA, SRP-RSA-AES-128-CBC-SHA, SRP-RSA-AES-256-CBC-SHA
-  Supported Clients: OpenSSL/1.0.2, OpenSSL/1.0.1l, BingPreview/Jan 2015, Yahoo Slurp/Jan 2015, YandexBot/Jan 2015, Android/4.4.2, Safari/7/iOS 7.1, Safari/8/OS X 10.10, Safari/8/iOS 8.1.2, Safari/7/OS X 10.9, Safari/6/iOS 6.0.1, Firefox/31.3.0 ESR/Win 7, Baidu/Jan 2015, IE/11/Win 8.1, IE/11/Win 7, IE Mobile/11/Win Phone 8.1, Android/5.0.0, Java/8u31, Chrome/42/OS X, Googlebot/Feb 2015, Android/4.1.1, Android/4.0.4, Safari/6.0.4/OS X 10.8.4, Android/4.2.2, Android/4.3, Safari/5.1.9/OS X 10.6.8, Firefox/37/OS X, OpenSSL/0.9.8y, Java/7u25, IE/8-10/Win 7, IE/7/Vista, IE Mobile/10/Win Phone 8.0, Android/2.3.7, Java/6u45, IE/8/XP
+  Should Not Offer: (none -- good)
+  Could Also Offer: DHE-DSS-AES128-GCM-SHA256, DHE-DSS-AES128-SHA, DHE-DSS-AES128-SHA256, DHE-DSS-AES256-GCM-SHA384, DHE-DSS-AES256-SHA, DHE-DSS-AES256-SHA256, DHE-DSS-CAMELLIA128-SHA, DHE-DSS-CAMELLIA256-SHA, DHE-DSS-SEED-SHA, ECDHE-ECDSA-AES128-GCM-SHA256, ECDHE-ECDSA-AES128-SHA, ECDHE-ECDSA-AES128-SHA256, ECDHE-ECDSA-AES256-GCM-SHA384, ECDHE-ECDSA-AES256-SHA, ECDHE-ECDSA-AES256-SHA384, ECDHE-ECDSA-DES-CBC3-SHA
+  Supported Clients: Yahoo Slurp/Jan 2015, OpenSSL/1.0.1l, BingPreview/Jan 2015, OpenSSL/1.0.2, YandexBot/Jan 2015, Android/4.4.2, Safari/8/OS X 10.10, Safari/7/OS X 10.9, Safari/7/iOS 7.1, Safari/8/iOS 8.1.2, Safari/6/iOS 6.0.1, Baidu/Jan 2015, Firefox/31.3.0 ESR/Win 7, IE/11/Win 7, IE Mobile/11/Win Phone 8.1, IE/11/Win 8.1, Android/5.0.0, Java/8u31, Googlebot/Feb 2015, Chrome/42/OS X, Android/4.3, Android/4.1.1, Safari/6.0.4/OS X 10.8.4, Android/4.0.4, Android/4.2.2, Safari/5.1.9/OS X 10.6.8, Firefox/37/OS X, OpenSSL/0.9.8y, Java/7u25, IE Mobile/10/Win Phone 8.0, IE/8-10/Win 7, IE/7/Vista, Java/6u45, Android/2.3.7, IE/8/XP
 
 PORT 587
 --------
@@ -183,9 +183,9 @@ PORT 587
   * SSLV3 Cipher Suites:
       Server rejected all cipher suites.
 
-  Should Not Offer: AES128-GCM-SHA256, AES128-SHA, AES128-SHA256, AES256-GCM-SHA384, AES256-SHA, AES256-SHA256, CAMELLIA128-SHA, CAMELLIA256-SHA, DHE-RSA-CAMELLIA128-SHA, DHE-RSA-CAMELLIA256-SHA, DHE-RSA-SEED-SHA, SEED-SHA
-  Could Also Offer: DHE-DSS-AES128-GCM-SHA256, DHE-DSS-AES128-SHA256, DHE-DSS-AES256-GCM-SHA384, DHE-DSS-AES256-SHA, ECDHE-ECDSA-AES128-GCM-SHA256, ECDHE-ECDSA-AES128-SHA, ECDHE-ECDSA-AES128-SHA256, ECDHE-ECDSA-AES256-GCM-SHA384, ECDHE-ECDSA-AES256-SHA, ECDHE-ECDSA-AES256-SHA384
-  Supported Clients: OpenSSL/1.0.2, OpenSSL/1.0.1l, BingPreview/Jan 2015, Yahoo Slurp/Jan 2015, YandexBot/Jan 2015, Android/4.4.2, Safari/7/iOS 7.1, IE/11/Win 8.1, Safari/8/iOS 8.1.2, IE/11/Win 7, IE Mobile/11/Win Phone 8.1, Safari/8/OS X 10.10, Safari/7/OS X 10.9, Safari/6/iOS 6.0.1, Firefox/31.3.0 ESR/Win 7, Baidu/Jan 2015, Chrome/42/OS X, Android/5.0.0, Java/8u31, Googlebot/Feb 2015, Firefox/37/OS X, Android/4.0.4, Android/4.1.1, Safari/6.0.4/OS X 10.8.4, Android/4.2.2, Android/4.3, Safari/5.1.9/OS X 10.6.8, IE/8-10/Win 7, IE/7/Vista, IE Mobile/10/Win Phone 8.0, OpenSSL/0.9.8y, Java/7u25, Java/6u45, Android/2.3.7
+  Should Not Offer: AES128-GCM-SHA256, AES128-SHA, AES128-SHA256, AES256-GCM-SHA384, AES256-SHA, AES256-SHA256, CAMELLIA128-SHA, CAMELLIA256-SHA, DHE-RSA-AES128-GCM-SHA256, DHE-RSA-AES128-SHA, DHE-RSA-AES128-SHA256, DHE-RSA-AES256-GCM-SHA384, DHE-RSA-AES256-SHA, DHE-RSA-AES256-SHA256, DHE-RSA-CAMELLIA128-SHA, DHE-RSA-CAMELLIA256-SHA, DHE-RSA-SEED-SHA, ECDHE-RSA-AES128-SHA, ECDHE-RSA-AES256-SHA, SEED-SHA
+  Could Also Offer: ECDHE-ECDSA-AES128-GCM-SHA256, ECDHE-ECDSA-AES128-SHA256, ECDHE-ECDSA-AES256-GCM-SHA384, ECDHE-ECDSA-AES256-SHA384
+  Supported Clients: Yahoo Slurp/Jan 2015, OpenSSL/1.0.1l, BingPreview/Jan 2015, OpenSSL/1.0.2, YandexBot/Jan 2015, Android/4.4.2, Safari/8/OS X 10.10, Safari/7/OS X 10.9, IE/11/Win 7, IE Mobile/11/Win Phone 8.1, IE/11/Win 8.1, Safari/7/iOS 7.1, Safari/8/iOS 8.1.2, Safari/6/iOS 6.0.1, Baidu/Jan 2015, Firefox/31.3.0 ESR/Win 7, Android/5.0.0, Java/8u31, Chrome/42/OS X, Googlebot/Feb 2015, Firefox/37/OS X, Android/4.3, Android/4.1.1, Safari/6.0.4/OS X 10.8.4, Android/4.0.4, Android/4.2.2, Safari/5.1.9/OS X 10.6.8, OpenSSL/0.9.8y, IE Mobile/10/Win Phone 8.0, IE/8-10/Win 7, IE/7/Vista, Java/7u25, Java/6u45, Android/2.3.7
 
 PORT 443
 --------
@@ -205,7 +205,7 @@ PORT 443
       With TLS Session Tickets:          OK - Supported
 
   * HTTP Strict Transport Security:
-      OK - HSTS header received:         max-age=31536000
+      OK - HSTS header received:         max-age=15768000
 
 Unhandled exception when processing --chrome_sha1: 
 exceptions.TypeError - Incorrect padding
@@ -223,12 +223,20 @@ exceptions.TypeError - Incorrect padding
                  DHE-RSA-AES256-SHA256         DH-2048 bits   256 bits      HTTP 200 OK                        
                  DHE-RSA-AES256-SHA            DH-2048 bits   256 bits      HTTP 200 OK                        
                  DHE-RSA-AES256-GCM-SHA384     DH-2048 bits   256 bits      HTTP 200 OK                        
+                 AES256-SHA256                 -              256 bits      HTTP 200 OK                        
+                 AES256-SHA                    -              256 bits      HTTP 200 OK                        
+                 AES256-GCM-SHA384             -              256 bits      HTTP 200 OK                        
                  ECDHE-RSA-AES128-SHA256       ECDH-256 bits  128 bits      HTTP 200 OK                        
                  ECDHE-RSA-AES128-SHA          ECDH-256 bits  128 bits      HTTP 200 OK                        
                  ECDHE-RSA-AES128-GCM-SHA256   ECDH-256 bits  128 bits      HTTP 200 OK                        
                  DHE-RSA-AES128-SHA256         DH-2048 bits   128 bits      HTTP 200 OK                        
                  DHE-RSA-AES128-SHA            DH-2048 bits   128 bits      HTTP 200 OK                        
                  DHE-RSA-AES128-GCM-SHA256     DH-2048 bits   128 bits      HTTP 200 OK                        
+                 AES128-SHA256                 -              128 bits      HTTP 200 OK                        
+                 AES128-SHA                    -              128 bits      HTTP 200 OK                        
+                 AES128-GCM-SHA256             -              128 bits      HTTP 200 OK                        
+                 ECDHE-RSA-DES-CBC3-SHA        ECDH-256 bits  112 bits      HTTP 200 OK                        
+                 EDH-RSA-DES-CBC3-SHA          DH-2048 bits   112 bits      HTTP 200 OK                        
                  DES-CBC3-SHA                  -              112 bits      HTTP 200 OK                        
 
   * TLSV1_1 Cipher Suites:
@@ -237,8 +245,12 @@ exceptions.TypeError - Incorrect padding
       Accepted:                        
                  ECDHE-RSA-AES256-SHA          ECDH-256 bits  256 bits      HTTP 200 OK                        
                  DHE-RSA-AES256-SHA            DH-2048 bits   256 bits      HTTP 200 OK                        
+                 AES256-SHA                    -              256 bits      HTTP 200 OK                        
                  ECDHE-RSA-AES128-SHA          ECDH-256 bits  128 bits      HTTP 200 OK                        
                  DHE-RSA-AES128-SHA            DH-2048 bits   128 bits      HTTP 200 OK                        
+                 AES128-SHA                    -              128 bits      HTTP 200 OK                        
+                 ECDHE-RSA-DES-CBC3-SHA        ECDH-256 bits  112 bits      HTTP 200 OK                        
+                 EDH-RSA-DES-CBC3-SHA          DH-2048 bits   112 bits      HTTP 200 OK                        
                  DES-CBC3-SHA                  -              112 bits      HTTP 200 OK                        
 
   * TLSV1 Cipher Suites:
@@ -247,16 +259,20 @@ exceptions.TypeError - Incorrect padding
       Accepted:                        
                  ECDHE-RSA-AES256-SHA          ECDH-256 bits  256 bits      HTTP 200 OK                        
                  DHE-RSA-AES256-SHA            DH-2048 bits   256 bits      HTTP 200 OK                        
+                 AES256-SHA                    -              256 bits      HTTP 200 OK                        
                  ECDHE-RSA-AES128-SHA          ECDH-256 bits  128 bits      HTTP 200 OK                        
                  DHE-RSA-AES128-SHA            DH-2048 bits   128 bits      HTTP 200 OK                        
+                 AES128-SHA                    -              128 bits      HTTP 200 OK                        
+                 ECDHE-RSA-DES-CBC3-SHA        ECDH-256 bits  112 bits      HTTP 200 OK                        
+                 EDH-RSA-DES-CBC3-SHA          DH-2048 bits   112 bits      HTTP 200 OK                        
                  DES-CBC3-SHA                  -              112 bits      HTTP 200 OK                        
 
   * SSLV3 Cipher Suites:
       Server rejected all cipher suites.
 
   Should Not Offer: (none -- good)
-  Could Also Offer: AES128-GCM-SHA256, AES128-SHA, AES128-SHA256, AES256-GCM-SHA384, AES256-SHA, AES256-SHA256, CAMELLIA128-SHA, CAMELLIA256-SHA, DH-DSS-AES128-GCM-SHA256, DH-DSS-AES128-SHA, DH-DSS-AES128-SHA256, DH-DSS-AES256-GCM-SHA384, DH-DSS-AES256-SHA, DH-DSS-AES256-SHA256, DH-DSS-CAMELLIA128-SHA, DH-DSS-CAMELLIA256-SHA, DH-RSA-AES128-GCM-SHA256, DH-RSA-AES128-SHA, DH-RSA-AES128-SHA256, DH-RSA-AES256-GCM-SHA384, DH-RSA-AES256-SHA, DH-RSA-AES256-SHA256, DH-RSA-CAMELLIA128-SHA, DH-RSA-CAMELLIA256-SHA, DHE-DSS-AES128-GCM-SHA256, DHE-DSS-AES128-SHA, DHE-DSS-AES128-SHA256, DHE-DSS-AES256-GCM-SHA384, DHE-DSS-AES256-SHA, DHE-DSS-AES256-SHA256, DHE-DSS-CAMELLIA128-SHA, DHE-DSS-CAMELLIA256-SHA, DHE-RSA-CAMELLIA128-SHA, DHE-RSA-CAMELLIA256-SHA, ECDHE-ECDSA-AES128-GCM-SHA256, ECDHE-ECDSA-AES128-SHA, ECDHE-ECDSA-AES128-SHA256, ECDHE-ECDSA-AES256-GCM-SHA384, ECDHE-ECDSA-AES256-SHA, ECDHE-ECDSA-AES256-SHA384, SRP-AES-128-CBC-SHA, SRP-AES-256-CBC-SHA, SRP-DSS-AES-128-CBC-SHA, SRP-DSS-AES-256-CBC-SHA, SRP-RSA-AES-128-CBC-SHA, SRP-RSA-AES-256-CBC-SHA
-  Supported Clients: OpenSSL/1.0.2, OpenSSL/1.0.1l, BingPreview/Jan 2015, YandexBot/Jan 2015, Yahoo Slurp/Jan 2015, Android/4.4.2, Safari/7/iOS 7.1, Safari/8/OS X 10.10, Safari/8/iOS 8.1.2, Safari/7/OS X 10.9, Safari/6/iOS 6.0.1, Chrome/42/OS X, IE/11/Win 8.1, IE/11/Win 7, Android/5.0.0, Java/8u31, IE Mobile/11/Win Phone 8.1, Googlebot/Feb 2015, Firefox/31.3.0 ESR/Win 7, Firefox/37/OS X, Android/4.1.1, Android/4.0.4, Baidu/Jan 2015, Safari/6.0.4/OS X 10.8.4, Android/4.2.2, Android/4.3, Safari/5.1.9/OS X 10.6.8, IE/8-10/Win 7, IE/7/Vista, OpenSSL/0.9.8y, IE Mobile/10/Win Phone 8.0, Java/7u25, Android/2.3.7, Java/6u45, IE/8/XP
+  Could Also Offer: ECDHE-ECDSA-AES128-GCM-SHA256, ECDHE-ECDSA-AES128-SHA, ECDHE-ECDSA-AES128-SHA256, ECDHE-ECDSA-AES256-GCM-SHA384, ECDHE-ECDSA-AES256-SHA, ECDHE-ECDSA-AES256-SHA384, ECDHE-ECDSA-DES-CBC3-SHA
+  Supported Clients: Yahoo Slurp/Jan 2015, OpenSSL/1.0.1l, BingPreview/Jan 2015, OpenSSL/1.0.2, YandexBot/Jan 2015, Android/4.4.2, Safari/8/OS X 10.10, Safari/7/OS X 10.9, Safari/7/iOS 7.1, Safari/8/iOS 8.1.2, Safari/6/iOS 6.0.1, IE/11/Win 7, IE Mobile/11/Win Phone 8.1, IE/11/Win 8.1, Android/5.0.0, Java/8u31, Chrome/42/OS X, Firefox/31.3.0 ESR/Win 7, Googlebot/Feb 2015, Baidu/Jan 2015, Android/4.3, Android/4.1.1, Safari/6.0.4/OS X 10.8.4, Android/4.0.4, Android/4.2.2, Safari/5.1.9/OS X 10.6.8, Firefox/37/OS X, OpenSSL/0.9.8y, Java/7u25, IE Mobile/10/Win Phone 8.0, IE/8-10/Win 7, IE/7/Vista, Java/6u45, Android/2.3.7, IE/8/XP
 
 PORT 993
 --------
@@ -279,55 +295,25 @@ _nassl.OpenSSLError - error:140940F5:SSL routines:ssl3_read_bytes:unexpected rec
 
   * TLSV1_2 Cipher Suites:
       Preferred:                       
-                 ECDHE-RSA-AES256-SHA          ECDH-384 bits  256 bits                                         
+                 ECDHE-RSA-AES256-GCM-SHA384   ECDH-384 bits  256 bits                                         
       Accepted:                        
-                 ECDHE-RSA-AES256-SHA          ECDH-384 bits  256 bits                                         
-                 DHE-RSA-CAMELLIA256-SHA       DH-1024 bits   256 bits                                         
-                 DHE-RSA-AES256-SHA            DH-1024 bits   256 bits                                         
-                 CAMELLIA256-SHA               -              256 bits                                         
-                 AES256-SHA                    -              256 bits                                         
-                 ECDHE-RSA-AES128-SHA          ECDH-384 bits  128 bits                                         
-                 DHE-RSA-CAMELLIA128-SHA       DH-1024 bits   128 bits                                         
-                 DHE-RSA-AES128-SHA            DH-1024 bits   128 bits                                         
-                 CAMELLIA128-SHA               -              128 bits                                         
-                 AES128-SHA                    -              128 bits                                         
+                 ECDHE-RSA-AES256-SHA384       ECDH-384 bits  256 bits                                         
+                 ECDHE-RSA-AES256-GCM-SHA384   ECDH-384 bits  256 bits                                         
+                 ECDHE-RSA-AES128-SHA256       ECDH-384 bits  128 bits                                         
+                 ECDHE-RSA-AES128-GCM-SHA256   ECDH-384 bits  128 bits                                         
 
   * TLSV1_1 Cipher Suites:
-      Preferred:                       
-                 ECDHE-RSA-AES256-SHA          ECDH-384 bits  256 bits                                         
-      Accepted:                        
-                 ECDHE-RSA-AES256-SHA          ECDH-384 bits  256 bits                                         
-                 DHE-RSA-CAMELLIA256-SHA       DH-1024 bits   256 bits                                         
-                 DHE-RSA-AES256-SHA            DH-1024 bits   256 bits                                         
-                 CAMELLIA256-SHA               -              256 bits                                         
-                 AES256-SHA                    -              256 bits                                         
-                 ECDHE-RSA-AES128-SHA          ECDH-384 bits  128 bits                                         
-                 DHE-RSA-CAMELLIA128-SHA       DH-1024 bits   128 bits                                         
-                 DHE-RSA-AES128-SHA            DH-1024 bits   128 bits                                         
-                 CAMELLIA128-SHA               -              128 bits                                         
-                 AES128-SHA                    -              128 bits                                         
+      Server rejected all cipher suites.
 
   * TLSV1 Cipher Suites:
-      Preferred:                       
-                 ECDHE-RSA-AES256-SHA          ECDH-384 bits  256 bits                                         
-      Accepted:                        
-                 ECDHE-RSA-AES256-SHA          ECDH-384 bits  256 bits                                         
-                 DHE-RSA-CAMELLIA256-SHA       DH-1024 bits   256 bits                                         
-                 DHE-RSA-AES256-SHA            DH-1024 bits   256 bits                                         
-                 CAMELLIA256-SHA               -              256 bits                                         
-                 AES256-SHA                    -              256 bits                                         
-                 ECDHE-RSA-AES128-SHA          ECDH-384 bits  128 bits                                         
-                 DHE-RSA-CAMELLIA128-SHA       DH-1024 bits   128 bits                                         
-                 DHE-RSA-AES128-SHA            DH-1024 bits   128 bits                                         
-                 CAMELLIA128-SHA               -              128 bits                                         
-                 AES128-SHA                    -              128 bits                                         
+      Server rejected all cipher suites.
 
   * SSLV3 Cipher Suites:
       Server rejected all cipher suites.
 
-  Should Not Offer: AES128-SHA, AES256-SHA, CAMELLIA128-SHA, CAMELLIA256-SHA, DHE-RSA-CAMELLIA128-SHA, DHE-RSA-CAMELLIA256-SHA
-  Could Also Offer: DHE-DSS-AES128-GCM-SHA256, DHE-DSS-AES128-SHA256, DHE-DSS-AES256-GCM-SHA384, DHE-DSS-AES256-SHA, DHE-RSA-AES128-GCM-SHA256, DHE-RSA-AES128-SHA256, DHE-RSA-AES256-GCM-SHA384, DHE-RSA-AES256-SHA256, ECDHE-ECDSA-AES128-GCM-SHA256, ECDHE-ECDSA-AES128-SHA, ECDHE-ECDSA-AES128-SHA256, ECDHE-ECDSA-AES256-GCM-SHA384, ECDHE-ECDSA-AES256-SHA, ECDHE-ECDSA-AES256-SHA384, ECDHE-RSA-AES128-GCM-SHA256, ECDHE-RSA-AES128-SHA256, ECDHE-RSA-AES256-GCM-SHA384, ECDHE-RSA-AES256-SHA384
-  Supported Clients: OpenSSL/1.0.2, Firefox/31.3.0 ESR/Win 7, OpenSSL/1.0.1l, BingPreview/Jan 2015, Yahoo Slurp/Jan 2015, Baidu/Jan 2015, Safari/7/iOS 7.1, Chrome/42/OS X, Googlebot/Feb 2015, Android/4.0.4, Safari/8/iOS 8.1.2, Android/4.1.1, Android/5.0.0, Safari/6/iOS 6.0.1, YandexBot/Jan 2015, Safari/6.0.4/OS X 10.8.4, Android/4.2.2, Safari/8/OS X 10.10, Firefox/37/OS X, Safari/7/OS X 10.9, Android/4.3, Safari/5.1.9/OS X 10.6.8, Android/4.4.2, IE/8-10/Win 7, IE/7/Vista, IE/11/Win 8.1, IE/11/Win 7, OpenSSL/0.9.8y, IE Mobile/10/Win Phone 8.0, IE Mobile/11/Win Phone 8.1, Java/7u25, Java/8u31, Java/6u45, Android/2.3.7
+  Should Not Offer: (none -- good)
+  Could Also Offer: ECDHE-ECDSA-AES128-GCM-SHA256, ECDHE-ECDSA-AES128-SHA256, ECDHE-ECDSA-AES256-GCM-SHA384, ECDHE-ECDSA-AES256-SHA384
+  Supported Clients: Yahoo Slurp/Jan 2015, OpenSSL/1.0.2, YandexBot/Jan 2015, OpenSSL/1.0.1l, BingPreview/Jan 2015, Android/4.4.2, Java/8u31, Safari/8/OS X 10.10, Safari/7/iOS 7.1, Safari/6/iOS 6.0.1, IE Mobile/11/Win Phone 8.1, Safari/7/OS X 10.9, IE/11/Win 7, Safari/8/iOS 8.1.2, IE/11/Win 8.1, Chrome/42/OS X, Firefox/37/OS X, Googlebot/Feb 2015, Firefox/31.3.0 ESR/Win 7, Android/5.0.0
 
 PORT 995
 --------
@@ -350,53 +336,23 @@ _nassl.OpenSSLError - error:140940F5:SSL routines:ssl3_read_bytes:unexpected rec
 
   * TLSV1_2 Cipher Suites:
       Preferred:                       
-                 ECDHE-RSA-AES256-SHA          ECDH-384 bits  256 bits                                         
+                 ECDHE-RSA-AES256-GCM-SHA384   ECDH-384 bits  256 bits                                         
       Accepted:                        
-                 ECDHE-RSA-AES256-SHA          ECDH-384 bits  256 bits                                         
-                 DHE-RSA-CAMELLIA256-SHA       DH-1024 bits   256 bits                                         
-                 DHE-RSA-AES256-SHA            DH-1024 bits   256 bits                                         
-                 CAMELLIA256-SHA               -              256 bits                                         
-                 AES256-SHA                    -              256 bits                                         
-                 ECDHE-RSA-AES128-SHA          ECDH-384 bits  128 bits                                         
-                 DHE-RSA-CAMELLIA128-SHA       DH-1024 bits   128 bits                                         
-                 DHE-RSA-AES128-SHA            DH-1024 bits   128 bits                                         
-                 CAMELLIA128-SHA               -              128 bits                                         
-                 AES128-SHA                    -              128 bits                                         
+                 ECDHE-RSA-AES256-SHA384       ECDH-384 bits  256 bits                                         
+                 ECDHE-RSA-AES256-GCM-SHA384   ECDH-384 bits  256 bits                                         
+                 ECDHE-RSA-AES128-SHA256       ECDH-384 bits  128 bits                                         
+                 ECDHE-RSA-AES128-GCM-SHA256   ECDH-384 bits  128 bits                                         
 
   * TLSV1_1 Cipher Suites:
-      Preferred:                       
-                 ECDHE-RSA-AES256-SHA          ECDH-384 bits  256 bits                                         
-      Accepted:                        
-                 ECDHE-RSA-AES256-SHA          ECDH-384 bits  256 bits                                         
-                 DHE-RSA-CAMELLIA256-SHA       DH-1024 bits   256 bits                                         
-                 DHE-RSA-AES256-SHA            DH-1024 bits   256 bits                                         
-                 CAMELLIA256-SHA               -              256 bits                                         
-                 AES256-SHA                    -              256 bits                                         
-                 ECDHE-RSA-AES128-SHA          ECDH-384 bits  128 bits                                         
-                 DHE-RSA-CAMELLIA128-SHA       DH-1024 bits   128 bits                                         
-                 DHE-RSA-AES128-SHA            DH-1024 bits   128 bits                                         
-                 CAMELLIA128-SHA               -              128 bits                                         
-                 AES128-SHA                    -              128 bits                                         
+      Server rejected all cipher suites.
 
   * TLSV1 Cipher Suites:
-      Preferred:                       
-                 ECDHE-RSA-AES256-SHA          ECDH-384 bits  256 bits                                         
-      Accepted:                        
-                 ECDHE-RSA-AES256-SHA          ECDH-384 bits  256 bits                                         
-                 DHE-RSA-CAMELLIA256-SHA       DH-1024 bits   256 bits                                         
-                 DHE-RSA-AES256-SHA            DH-1024 bits   256 bits                                         
-                 CAMELLIA256-SHA               -              256 bits                                         
-                 AES256-SHA                    -              256 bits                                         
-                 ECDHE-RSA-AES128-SHA          ECDH-384 bits  128 bits                                         
-                 DHE-RSA-CAMELLIA128-SHA       DH-1024 bits   128 bits                                         
-                 DHE-RSA-AES128-SHA            DH-1024 bits   128 bits                                         
-                 CAMELLIA128-SHA               -              128 bits                                         
-                 AES128-SHA                    -              128 bits                                         
+      Server rejected all cipher suites.
 
   * SSLV3 Cipher Suites:
       Server rejected all cipher suites.
 
-  Should Not Offer: AES128-SHA, AES256-SHA, CAMELLIA128-SHA, CAMELLIA256-SHA, DHE-RSA-CAMELLIA128-SHA, DHE-RSA-CAMELLIA256-SHA
-  Could Also Offer: DHE-DSS-AES128-GCM-SHA256, DHE-DSS-AES128-SHA256, DHE-DSS-AES256-GCM-SHA384, DHE-DSS-AES256-SHA, DHE-RSA-AES128-GCM-SHA256, DHE-RSA-AES128-SHA256, DHE-RSA-AES256-GCM-SHA384, DHE-RSA-AES256-SHA256, ECDHE-ECDSA-AES128-GCM-SHA256, ECDHE-ECDSA-AES128-SHA, ECDHE-ECDSA-AES128-SHA256, ECDHE-ECDSA-AES256-GCM-SHA384, ECDHE-ECDSA-AES256-SHA, ECDHE-ECDSA-AES256-SHA384, ECDHE-RSA-AES128-GCM-SHA256, ECDHE-RSA-AES128-SHA256, ECDHE-RSA-AES256-GCM-SHA384, ECDHE-RSA-AES256-SHA384
-  Supported Clients: OpenSSL/1.0.2, Firefox/31.3.0 ESR/Win 7, OpenSSL/1.0.1l, BingPreview/Jan 2015, Yahoo Slurp/Jan 2015, Baidu/Jan 2015, Safari/7/iOS 7.1, Chrome/42/OS X, Googlebot/Feb 2015, Android/4.0.4, Safari/8/iOS 8.1.2, Android/4.1.1, Android/5.0.0, Safari/6/iOS 6.0.1, YandexBot/Jan 2015, Safari/6.0.4/OS X 10.8.4, Android/4.2.2, Safari/8/OS X 10.10, Firefox/37/OS X, Safari/7/OS X 10.9, Android/4.3, Safari/5.1.9/OS X 10.6.8, Android/4.4.2, IE/8-10/Win 7, IE/7/Vista, IE/11/Win 8.1, IE/11/Win 7, OpenSSL/0.9.8y, IE Mobile/10/Win Phone 8.0, IE Mobile/11/Win Phone 8.1, Java/7u25, Java/8u31, Java/6u45, Android/2.3.7
+  Should Not Offer: (none -- good)
+  Could Also Offer: ECDHE-ECDSA-AES128-GCM-SHA256, ECDHE-ECDSA-AES128-SHA256, ECDHE-ECDSA-AES256-GCM-SHA384, ECDHE-ECDSA-AES256-SHA384
+  Supported Clients: Yahoo Slurp/Jan 2015, OpenSSL/1.0.2, YandexBot/Jan 2015, OpenSSL/1.0.1l, BingPreview/Jan 2015, Android/4.4.2, Java/8u31, Safari/8/OS X 10.10, Safari/7/iOS 7.1, Safari/6/iOS 6.0.1, IE Mobile/11/Win Phone 8.1, Safari/7/OS X 10.9, IE/11/Win 7, Safari/8/iOS 8.1.2, IE/11/Win 8.1, Chrome/42/OS X, Firefox/37/OS X, Googlebot/Feb 2015, Firefox/31.3.0 ESR/Win 7, Android/5.0.0
 
