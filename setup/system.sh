@@ -241,7 +241,7 @@ cat > /etc/apt/apt.conf.d/02periodic <<EOF;
 APT::Periodic::MaxAge "7";
 APT::Periodic::Update-Package-Lists "1";
 APT::Periodic::Unattended-Upgrade "1";
-APT::Periodic::Verbose "1";
+APT::Periodic::Verbose "0";
 EOF
 
 # ### Firewall
