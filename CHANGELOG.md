@@ -13,6 +13,10 @@ Mail:
 
 * Updated IMAP/POP cipher list to Mozilla's current mondern recommendation.
 
+Installer:
+
+* We now run `apt-get autoremove` at the start of setup to clear out old packages, especially old kernels that take up a lot of space. On the first run, this step may take a long time.
+
 v0.24 (October 3, 2017)
 -----------------------
 
