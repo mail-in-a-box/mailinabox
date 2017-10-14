@@ -115,6 +115,7 @@ apt_get_quiet upgrade
 
 echo Installing system packages...
 apt_install python3 python3-dev python3-pip \
+    build-essential libssl-dev libffi-dev \
 	netcat-openbsd wget curl git sudo coreutils bc \
 	haveged pollinate unzip \
 	unattended-upgrades cron ntp fail2ban
