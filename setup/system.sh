@@ -129,6 +129,16 @@ hide_output add-apt-repository -y ppa:ondrej/php
 apt_add_repository_to_unattended_upgrades LP-PPA-ondrej-php:trusty
 hide_output apt-get update
 
+# ### Add duplicity PPA
+
+# We would use the package in the system repository, but the version in the system repo
+# does not support some backends like B2Blaze. This adds the stable PPA that should be
+# reasonably reliable. This also enables the ability for duplicity to be upgraded to the 
+# latest version. Since the relibility of this package affects the stabillity of system
+# backups, unintended upgrades are not enabled.
+
+hide_output add-apt-repository -y ppa:duplicity-team/ppa
+hide_output apt-get update
 
 # ### Suppress Upgrade Prompts
 # Since Mail-in-a-Box might jump straight to 18.04 LTS, there's no need
