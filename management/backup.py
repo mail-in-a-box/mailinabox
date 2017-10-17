@@ -474,12 +474,13 @@ def list_target_files(config):
 
 		return [(key.name[len(path):], key.size) for key in bucket.list(prefix=path)]
 	elif target.scheme == "b2":
-		(auth_token, api_url) = b2_perform_authentication(target.username, target.password)
+		api = b2_perform_authentication(target.username, target.password)
 		if api == None:
 			raise ValueError("B2 authentication failed for unknown reason.")
-		
+		(auth_token, api_url) = api
+
 		bucket_id = b2_get_bucket_id(target.username, api_url, auth_token, target.hostname)
-		
+		return b2_list_files(target.username, api_url, auth_token, bucket_id, target.path)
 	else:
 		raise ValueError(config["target"])
 
@@ -492,7 +493,7 @@ def b2_perform_authentication(acc_id, app_key):
 	import json
 
 	# Formulate the authtoken according to B2 Storage API Spec
-	auth_token = base64.b64encode((acc_id + ":" + app_key).encode('utf-8'))
+	auth_token = "Basic" + base64.b64encode((acc_id + ":" + app_key).encode('utf-8')).decode('utf-8')
 	headers = {'Authorization': auth_token}
 
 	req = Request("https://api.backblazeb2.com/b2api/v1/b2_authorize_account", headers=headers)
@@ -502,6 +503,7 @@ def b2_perform_authentication(acc_id, app_key):
 			return (data['authorizationToken'], data['apiUrl'])
 	except HTTPError as e:
 		e_data = json.loads(e.read().decode('utf-8'))
+		print(e_data)
 		if e_data['code'] == 'unauthorized':
 			raise ValueError("Invalid key pair, or B2 has not been enabled, or the user is suspended.")
 		elif e_data['code'] == 'missing_phone_number':
@@ -523,14 +525,9 @@ def b2_perform_request(acc_id, api_url, auth_token, method, data):
 		req_data = None
 
 	req = Request("{0}/b2api/v1/{1}".format(api_url, method), data=req_data, headers = { 'Authorization': auth_token})
-	try:
-		with urlopen(req) as res:
-			data = json.loads(res.read().decode('utf-8'))
-			return data
-	except HTTPError as e:
-		raise e
-	except:
-		raise ValueError("B2 Storage: Unknown error occured")
+	with urlopen(req) as res:
+		data = json.loads(res.read().decode('utf-8'))
+		return data
 
 def b2_get_bucket_id(acc_id, api_url, auth_token, bucket_name):
 	from urllib.error import HTTPError
@@ -544,6 +541,23 @@ def b2_get_bucket_id(acc_id, api_url, auth_token, bucket_name):
 		e_data = json.loads(e.read().decode('utf-8'))
 		if e_data['code'] == 'bad_request':
 			raise ValueError("B2 Storage: Account ID does not exist")
+
+def b2_list_files(acc_id, api_url, auth_token, bucket_id, path):
+	from urllib.error import HTTPError
+	if len(path) > 1:
+		path = path[1:] if path[0] == '/' else path
+	else:
+		path = ''
+
+	try:
+		file_list = b2_perform_request(acc_id, api_url, auth_token, 'b2_list_file_names', {
+			'bucketId': bucket_id,
+			'prefix': path
+		})['files']
+		file_list = [x for x in file_list if x['action'] == 'upload']
+		return [(key['fileName'][len(path) + 1:], key['size']) for key in file_list]
+	except HTTPError as e:
+		raise ValueError("B2 Storage: Could not list files")
 
 def backup_set_custom(env, target, target_user, target_pass, min_age):
 	config = get_backup_config(env, for_save=True)
