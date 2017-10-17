@@ -473,10 +473,18 @@ def list_target_files(config):
 			raise ValueError(e.reason)
 
 		return [(key.name[len(path):], key.size) for key in bucket.list(prefix=path)]
-
+	elif target.scheme == "b2":
 	else:
 		raise ValueError(config["target"])
 
+def b2_perform_authentication(acc_id, app_key):
+	# Perform Authentication with B2 Storage. Returns a tuple
+	# containing the auth token and the API endpoint to use.
+	from urllib.request import Request, urlopen
+	import base64
+	import json
+
+	req = Request()
 
 def backup_set_custom(env, target, target_user, target_pass, min_age):
 	config = get_backup_config(env, for_save=True)

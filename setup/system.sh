@@ -132,7 +132,7 @@ hide_output apt-get update
 # ### Add duplicity PPA
 
 # We would use the package in the system repository, but the version in the system repo
-# does not support some backends like B2Blaze. This adds the stable PPA that should be
+# does not support some backends like B2 Storage. This adds the stable PPA that should be
 # reasonably reliable. This also enables the ability for duplicity to be upgraded to the 
 # latest version. Since the relibility of this package affects the stabillity of system
 # backups, unintended upgrades are not enabled.
