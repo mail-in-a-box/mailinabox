@@ -474,6 +474,9 @@ def list_target_files(config):
 
 		return [(key.name[len(path):], key.size) for key in bucket.list(prefix=path)]
 	elif target.scheme == "b2":
+		api = b2_perform_authentication(target.username, target.password)
+		if api == None:
+			raise ValueError("B2 authentication failed for unknown reason.")
 	else:
 		raise ValueError(config["target"])
 
@@ -481,10 +484,25 @@ def b2_perform_authentication(acc_id, app_key):
 	# Perform Authentication with B2 Storage. Returns a tuple
 	# containing the auth token and the API endpoint to use.
 	from urllib.request import Request, urlopen
+	from urllib.error import HTTPError
 	import base64
 	import json
 
-	req = Request()
+	# Formulate the authtoken according to B2 Storage API Spec
+	auth_token = base64.b64encode((acc_id + ":" + app_key).encode('utf-8'))
+	headers = {'Authorization': auth_token}
+
+	req = Request("https://api.backblazeb2.com/b2api/v1/b2_authorize_account", headers=headers)
+	try:
+		with urlopen(req) as res:
+			data = json.loads(res.read().decode('utf-8'))
+			return (data['authorizationToken'], data['apiUrl'])
+	except HTTPError as e:
+		e_data = json.loads(e.read().decode('utf-8'))
+		if e_data['code'] == 'unauthorized':
+			raise ValueError("Invalid key pair, or B2 has not been enabled, or the user is suspended.")
+		elif e_data['code'] == 'missing_phone_number':
+			raise ValueError("The B2 account must have a phone number associated.")
 
 def backup_set_custom(env, target, target_user, target_pass, min_age):
 	config = get_backup_config(env, for_save=True)
