@@ -474,9 +474,12 @@ def list_target_files(config):
 
 		return [(key.name[len(path):], key.size) for key in bucket.list(prefix=path)]
 	elif target.scheme == "b2":
-		api = b2_perform_authentication(target.username, target.password)
+		(auth_token, api_url) = b2_perform_authentication(target.username, target.password)
 		if api == None:
 			raise ValueError("B2 authentication failed for unknown reason.")
+		
+		bucket_id = b2_get_bucket_id(target.username, api_url, auth_token, target.hostname)
+		
 	else:
 		raise ValueError(config["target"])
 
@@ -503,6 +506,44 @@ def b2_perform_authentication(acc_id, app_key):
 			raise ValueError("Invalid key pair, or B2 has not been enabled, or the user is suspended.")
 		elif e_data['code'] == 'missing_phone_number':
 			raise ValueError("The B2 account must have a phone number associated.")
+
+def b2_perform_request(acc_id, api_url, auth_token, method, data):
+	# Perform a request against the B2 Storage API. b2_perform_authentication must
+	# have been called first to get the appropriate API endpoint and auth token.
+	# Refer to the B2 Storage API for more details. Since the method varies, the CALLER
+	# must catch any errors.
+	from urllib.request import Request, urlopen
+	from urllib.error import HTTPError
+	import base64
+	import json
+
+	if data != None:
+		req_data = json.dumps(data).encode('utf-8')
+	else:
+		req_data = None
+
+	req = Request("{0}/b2api/v1/{1}".format(api_url, method), data=req_data, headers = { 'Authorization': auth_token})
+	try:
+		with urlopen(req) as res:
+			data = json.loads(res.read().decode('utf-8'))
+			return data
+	except HTTPError as e:
+		raise e
+	except:
+		raise ValueError("B2 Storage: Unknown error occured")
+
+def b2_get_bucket_id(acc_id, api_url, auth_token, bucket_name):
+	from urllib.error import HTTPError
+	try:
+		bucket_list = b2_perform_request(acc_id, api_url, auth_token, 'b2_list_buckets', {'accountId': acc_id})['buckets']
+
+		# Will always have a len of 0 or 1 as bucket names are unique.
+		bucket_id = [x['bucketId'] for x in bucket_list if x['bucketName'] == bucket_name]
+		return bucket_id[0] if len(bucket_id) else None
+	except HTTPError as e:
+		e_data = json.loads(e.read().decode('utf-8'))
+		if e_data['code'] == 'bad_request':
+			raise ValueError("B2 Storage: Account ID does not exist")
 
 def backup_set_custom(env, target, target_user, target_pass, min_age):
 	config = get_backup_config(env, for_save=True)
