@@ -31,8 +31,8 @@
     <label for="customdnsType" class="col-sm-1 control-label">Type</label>
     <div class="col-sm-10">
       <select id="customdnsType" class="form-control" style="max-width: 400px" onchange="show_customdns_rtype_hint()">
-        <option value="A" data-hint="Enter an IPv4 address (i.e. a dotted quad, such as 123.456.789.012).">A (IPv4 address)</option>
-        <option value="AAAA" data-hint="Enter an IPv6 address.">AAAA (IPv6 address)</option>
+        <option value="A" data-hint="Enter an IPv4 address (i.e. a dotted quad, such as 123.456.789.012).  The 'local' alias sets the record to this box's public IPv4 address.">A (IPv4 address)</option>
+        <option value="AAAA" data-hint="Enter an IPv6 address.  The 'local' alias sets the record to this box's public IPv6 address.">AAAA (IPv6 address)</option>
         <option value="CAA" data-hint="Enter a CA that can issue certificates for this domain in the form of FLAG TAG VALUE. (0 issuewild &quot;letsencrypt.org&quot;)">CAA (Certificate Authority Authorization)</option>
         <option value="CNAME" data-hint="Enter another domain name followed by a period at the end (e.g. mypage.github.io.).">CNAME (DNS forwarding)</option>
         <option value="TXT" data-hint="Enter arbitrary text.">TXT (text record)</option>
