@@ -528,12 +528,13 @@ zone:
 
 def dnssec_choose_algo(domain, env):
 	if '.' in domain and domain.rsplit('.')[-1] in \
-		("email", "guide", "fund", "be"):
+		("email", "guide", "fund", "be", "lv"):
 		# At GoDaddy, RSASHA256 is the only algorithm supported
 		# for .email and .guide.
 		# A variety of algorithms are supported for .fund. This
 		# is preferred.
 		# Gandi tells me that .be does not support RSASHA1-NSEC3-SHA1
+        # Nic.lv does not support RSASHA1-NSEC3-SHA1 for .lv tld's
 		return "RSASHA256"
 
 	# For any domain we were able to sign before, don't change the algorithm
