@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+Control Panel:
+
+* Fix DNS validation to allow wildcard custom DNS entries to be set.
+
 v0.24 (October 3, 2017)
 -----------------------
 
