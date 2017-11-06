@@ -14,9 +14,9 @@ from utils import shell, load_env_vars_from_file, safe_domain_name, sort_domains
 
 # From https://stackoverflow.com/questions/3026957/how-to-validate-a-domain-name-using-regex-php/16491074#16491074
 # This regular expression matches domain names according to RFCs, it also accepts fqdn with an leading dot,
-# as well as underscores which are allowed in domain names but not hostnames (i.e. allowed in
+# underscores, as well as asteriks which are allowed in domain names but not hostnames (i.e. allowed in
 # DNS but not in URLs), which are common in certain record types like for DKIM.
-DOMAIN_RE = "^(?!\-)(?:^[*][.])?(?:[a-zA-Z\d\-_]{0,62}[a-zA-Z\d_]\.){1,126}(?!\d+)[a-zA-Z\d_]{1,63}(\.?)$"
+DOMAIN_RE = "^(?!\-)(?:[*][.])?(?:[a-zA-Z\d\-_]{0,62}[a-zA-Z\d_]\.){1,126}(?!\d+)[a-zA-Z\d_]{1,63}(\.?)$"
 
 def get_dns_domains(env):
 	# Add all domain names in use by email users and mail aliases and ensure
