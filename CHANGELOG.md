@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.25 (November 15, 2017)
+-------------------------
 
 This update is a security update addressing [CVE-2017-16651, a vulnerability in Roundcube webmail that allows logged-in users to access files on the local filesystem](https://roundcube.net/news/2017/11/08/security-updates-1.3.3-1.2.7-and-1.1.10).
 
