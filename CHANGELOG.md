@@ -4,6 +4,12 @@ CHANGELOG
 In Development
 --------------
 
+This update is a security update addressing [CVE-2017-16651, a vulnerability in Roundcube webmail that allows logged-in users to access files on the local filesystem](https://roundcube.net/news/2017/11/08/security-updates-1.3.3-1.2.7-and-1.1.10).
+
+Mail:
+
+* Update to Roundcube 1.3.3.
+
 Control Panel:
 
 * Fix DNS validation to allow wildcard custom DNS entries to be set.
