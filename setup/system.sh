@@ -346,6 +346,12 @@ cat conf/fail2ban/jails.conf \
 	> /etc/fail2ban/jail.d/mailinabox.conf
 cp -f conf/fail2ban/filter.d/* /etc/fail2ban/filter.d/
 
+if [[ -n "$LX_ZONE" ]]; then
+sed -i -e "s/iptables-allports/ipfilter/g" /etc/fail2ban/jail.conf
+sed -i -e "s/iptables-allports/ipfilter/g" /etc/fail2ban/jail.d/mailinabox.conf
+sed -i -e "s@/sbin/ipf@/native/usr/sbin/ipf@g" /etc/fail2ban/action.d/ipfilter.conf
+fi
+
 # On first installation, the log files that the jails look at don't all exist.
 # e.g., The roundcube error log isn't normally created until someone logs into
 # Roundcube for the first time. This causes fail2ban to fail to start. Later
