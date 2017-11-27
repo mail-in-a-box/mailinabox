@@ -64,3 +64,13 @@ if [ "$ARCHITECTURE" != "x86_64" ] && [ "$ARCHITECTURE" != "i686" ]; then
 	echo "You are on your own."
 	echo
 fi
+
+
+# Check if we're running in a SmartOS LX zone and disable firewall and
+# accordingly.
+KERNEL_VERSION=$(uname -v)
+if [[ "$KERNEL_VERSION" =~ "BrandZ virtual linux" ]]; then
+	echo "WARNING: Mail-in-a-Box will disable firewall setttings please make sure to handle this yourself."
+  DISABLE_FIREWALL=1
+  LX_ZONE=1
+fi
