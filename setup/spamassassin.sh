@@ -61,10 +61,11 @@ tools/editconf.py /etc/default/spampd \
 # content or execute scripts, and it is probably confusing to most users.
 #
 # Tell Spamassassin not to modify the original message except for adding
-# the X-Spam-Status mail header and related headers.
+# the X-Spam-Status & X-Spam-Score mail headers and related headers.
 tools/editconf.py /etc/spamassassin/local.cf -s \
 	report_safe=0 \
-	add_header="all Report _REPORT_"
+	add_header="all Report _REPORT_" \
+    add_header="all Score _SCORE_"
 
 # Bayesean learning
 # -----------------
