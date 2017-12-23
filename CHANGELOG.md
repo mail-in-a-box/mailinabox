@@ -16,6 +16,7 @@ Mail:
 Installer:
 
 * We now run `apt-get autoremove` at the start of setup to clear out old packages, especially old kernels that take up a lot of space. On the first run, this step may take a long time.
+* We now fetch z-push from their tagged git repository
 
 v0.25 (November 15, 2017)
 -------------------------
