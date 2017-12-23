@@ -11,7 +11,14 @@ Web:
 
 Mail:
 
-* Updated IMAP/POP cipher list to Mozilla's current mondern recommendation.
+* Adding attachments in Roundcube broke after the last update for some users after rebooting because a temporary directory was deleted on reboot. The temporary directory is now moved from /tmp to /var so that it is persistent.
+* Updated IMAP/POP cipher list to Mozilla's current mondern recommendation. Some older mail clients that use less secure TLS ciphers may no longer be able to connect to IMAP/POP.
+* `X-Spam-Score` header added to incoming mail.
+
+Control panel:
+
+* RSASHA256 is now used for DNSSEC for for .lv domains.
+* Some documentation/links improvements.
 
 Installer:
 
@@ -29,7 +36,7 @@ Mail:
 
 Control Panel:
 
-* Fix DNS validation to allow wildcard custom DNS entries to be set.
+* Allow custom DNS records to be set for DNS wildcard subdomains (i.e. `*`).
 
 v0.24 (October 3, 2017)
 -----------------------
