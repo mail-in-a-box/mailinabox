@@ -40,20 +40,13 @@ The services all follow these rules:
 
 * TLS certificates are generated with 2048-bit RSA keys and SHA-256 fingerprints. The box provides a self-signed certificate by default. The [setup guide](https://mailinabox.email/guide.html) explains how to verify the certificate fingerprint on first login. Users are encouraged to replace the certificate with a proper CA-signed one. ([source](setup/ssl.sh))
 * Only TLSv1, TLSv1.1 and TLSv1.2 are offered (the older SSL protocols are not offered).
-* Export-grade ciphers, the anonymous DH/ECDH algorithms (aNULL), and clear-text ciphers (eNULL) are not offered.
-* The minimum cipher key length offered is 112 bits. The maximum is 256 bits. Diffie-Hellman ciphers use a 2048-bit key for forward secrecy.
+* HTTPS, IMAP, and POP track the [Mozilla Intermediate Ciphers Recommendation](https://wiki.mozilla.org/Security/Server_Side_TLS), balancing security with supporting a wide range of mail clients. Diffie-Hellman ciphers use a 2048-bit key for forward secrecy. For more details, see the [output of SSLyze for these ports](tests/tls_results.txt).
+* SMTP (port 25) uses the Postfix medium grade ciphers and SMTP Submission (port 587) uses the Postfix high grade ciphers ([more info](http://www.postfix.org/postconf.5.html#smtpd_tls_mandatory_ciphers)).
 
 Additionally:
 
 * SMTP Submission (port 587) will not accept user credentials without STARTTLS (true also of SMTP on port 25 in case of client misconfiguration), and the submission port won't accept mail without encryption. The minimum cipher key length is 128 bits. (The box is of course configured not to be an open relay. User credentials are required to send outbound mail.) ([source](setup/mail-postfix.sh))
 * HTTPS (port 443): The HTTPS Strict Transport Security header is set. A redirect from HTTP to HTTPS is offered. The [Qualys SSL Labs test](https://www.ssllabs.com/ssltest) should report an A+ grade. ([source 1](conf/nginx-ssl.conf), [source 2](conf/nginx.conf))
-
-For more details, see the [output of SSLyze for these ports](tests/tls_results.txt).
-
-The cipher and protocol selection are chosen to support the following clients:
-
-* For HTTPS: Firefox 1, Chrome 1, IE 7, Opera 5, Safari 1, Windows XP IE8, Android 2.3, Java 7.
-* For other protocols: TBD.
 
 ### Password Storage
 
