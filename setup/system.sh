@@ -357,3 +357,20 @@ cp -f conf/fail2ban/filter.d/* /etc/fail2ban/filter.d/
 # scripts will ensure the files exist and then fail2ban is given another
 # restart at the very end of setup.
 restart_service fail2ban
+
+# ### S.M.A.R.T. Monitoring Tools
+
+# Install and configure smartmontools so we can check for failing hard drives.
+# We'll perform a first single smartd startup to check if any devices are found
+# which can be monitored. If none are found (virtual machines!), we will configure
+# smartd to not start automatically. Otherwise, smartd will run.
+apt_install smartmontools
+smartd --quit=onecheck > /dev/null 2>&1 || { smart=$? ; }
+if [ "${smart:-0}" -ne 17 ]; then # smartd manpage: 17 means smartd didn't find any devices to monitor.
+	echo "S.M.A.R.T. capable hard drives found, setting up smartd..."
+	tools/editconf.py /etc/default/smartmontools start_smartd=yes
+	restart_service smartmontools
+else
+	echo "No S.M.A.R.T. capable hard drives found, disabling smartd..."
+	tools/editconf.py /etc/default/smartmontools start_smartd=no
+fi
