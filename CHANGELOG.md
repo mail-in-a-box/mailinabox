@@ -16,7 +16,7 @@ Mail:
 
 Control panel:
 
-* RSASHA256 is now used for DNSSEC for for .lv domains.
+* RSASHA256 is now used for DNSSEC for .lv domains.
 * Some documentation/links improvements.
 
 Installer:
