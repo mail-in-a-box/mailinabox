@@ -166,6 +166,7 @@ def run_system_checks(rounded_values, env, output):
 	check_miab_version(env, output)
 	check_system_aliases(env, output)
 	check_free_disk_space(rounded_values, env, output)
+	check_raid_status(env, output)
 	check_free_memory(rounded_values, env, output)
 
 def check_ufw(env, output):
@@ -250,6 +251,29 @@ def check_free_disk_space(rounded_values, env, output):
 	else:
 		if rounded_values: disk_msg = "The disk has less than 15% free space."
 		output.print_error(disk_msg)
+
+def check_raid_status(env, output):
+	try:
+		with open('/proc/mdstat','r') as f:
+			mdstat = f.read()
+	except FileNotFoundError: return
+
+	mdstat = re.sub(r'^Personalities\s+:.+\n', '', mdstat)
+
+	for md in mdstat.split("\n\n"):
+		m = re.match(r'^(\S+)\s+:\s+(\S+)\s+raid(\d+).+?\[([U_]+)\](.+recovery\s+=\s+(\S+%))?', md.replace("\n",""))
+		if m:
+			device, active, level, updown, recovery = m.group(1, 2, 3, 4, 6)
+			if active == 'active' and '_' not in updown:
+				output.print_ok("RAID%s %s is active and in sync." % (level, device))
+			elif recovery:
+				output.print_warning("RAID%s %s is degraded but currently recovering at %s. More information:" % (level, device, recovery))
+				output.print_line("")
+				output.print_line(md, monospace=True)
+			else:
+				output.print_error("RAID%s %s is faulty or degraded. You should replace hard drives immediately. More information:" % (level,device))
+				output.print_line("")
+				output.print_line(md, monospace=True)
 
 def check_free_memory(rounded_values, env, output):
 	# Check free memory.
