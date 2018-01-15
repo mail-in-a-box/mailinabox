@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/local/lib/mailinabox/env/bin/python
 # Utilities for installing and selecting SSL certificates.
 
 import os, os.path, re, shutil

@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/local/lib/mailinabox/env/bin/python
 
 # This script performs a backup of all user data:
 # 1) System services are stopped.

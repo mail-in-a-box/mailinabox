@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/local/lib/mailinabox/env/bin/python
 #
 # Checks that the upstream DNS has been set correctly and that
 # TLS certificates have been signed, etc., and if not tells the user

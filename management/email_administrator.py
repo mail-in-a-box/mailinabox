@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/local/lib/mailinabox/env/bin/python
 
 # Reads in STDIN. If the stream is not empty, mail it to the system administrator.
 

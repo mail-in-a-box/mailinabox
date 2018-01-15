@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/local/lib/mailinabox/env/bin/python
 
 import subprocess, shutil, os, sqlite3, re
 import utils

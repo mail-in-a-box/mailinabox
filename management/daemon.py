@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 import os, os.path, re, json, time
 import subprocess
 

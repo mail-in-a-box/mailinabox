@@ -6,21 +6,33 @@ echo "Installing Mail-in-a-Box system management daemon..."
 
 # DEPENDENCIES
 
-# Install Python packages that are available from the Ubuntu
-# apt repository:
-# flask, yaml, dnspython, and dateutil are all for our Python 3 management daemon itself.
-# duplicity does backups. python-pip is so we can 'pip install boto' for Python 2, for duplicity, so it can do backups to AWS S3.
-apt_install python3-flask links duplicity libyaml-dev python3-dnspython python3-dateutil python-pip
+# duplicity is used to make backups of user data. It uses boto
+# (via Python 2) to do backups to AWS S3. boto from the Ubuntu
+# package manager is too out-of-date -- it doesn't support the newer
+# S3 api used in some regions, which breaks backups to those regions.
+# See #627, #653.
+apt_install duplicity python-pip
+hide_output pip2 install --upgrade boto
 
-# These are required to pip install cryptography.
-apt_install build-essential libssl-dev libffi-dev python3-dev
+# These are required to build/install the cryptography Python package
+# used by our management daemon.
+apt_install python-virtualenv build-essential libssl-dev libffi-dev python3-dev
 
-# pip<6.1 + setuptools>=34 have a problem with packages that
+# Create a virtualenv for the installation of Python 3 packages
+# used by the management daemon.
+inst_dir=/usr/local/lib/mailinabox
+mkdir -p $inst_dir
+venv=$inst_dir/env
+if [ ! -d $venv ]; then
+	virtualenv -ppython3 $venv
+fi
+
+# pip<6.1 + setuptools>=34 had a problem with packages that
 # try to update setuptools during installation, like cryptography.
 # See https://github.com/pypa/pip/issues/4253. The Ubuntu 14.04
-# package versions are pip 1.5.4 and setuptools 3.3. When we
-# install cryptography under those versions, it tries to update
-# setuptools to version 34, which now creates the conflict, and
+# package versions are pip 1.5.4 and setuptools 3.3. When we used to
+# instal cryptography system-wide under those versions, it updated
+# setuptools to version 34, which created the conflict, and
 # then pip gets permanently broken with errors like
 # "ImportError: No module named 'packaging'".
 #
@@ -35,8 +47,8 @@ fi
 # The easiest work-around on systems that aren't already broken is
 # to upgrade pip (to >=9.0.1) and setuptools (to >=34.1) individually
 # before we install any package that tries to update setuptools.
-hide_output pip3 install --upgrade pip
-hide_output pip3 install --upgrade setuptools
+hide_output $venv/bin/pip install --upgrade pip
+hide_output $venv/bin/pip install --upgrade setuptools
 
 # Install other Python 3 packages used by the management daemon.
 # The first line is the packages that Josh maintains himself!
@@ -44,14 +56,10 @@ hide_output pip3 install --upgrade setuptools
 # Force acme to be updated because it seems to need it after the
 # pip/setuptools breakage (see above) and the ACME protocol may
 # have changed (I got an error on one of my systems).
-hide_output pip3 install --upgrade \
+hide_output $venv/bin/pip install --upgrade \
 	rtyaml "email_validator>=1.0.0" "free_tls_certificates>=0.1.3" "exclusiveprocess" \
+	flask dnspython python-dateutil \
 	"idna>=2.0.0" "cryptography>=1.0.2" acme boto psutil
-
-# duplicity uses python 2 so we need to get the python 2 package of boto to have backups to S3.
-# boto from the Ubuntu package manager is too out-of-date -- it doesn't support the newer
-# S3 api used in some regions, which breaks backups to those regions.  See #627, #653.
-hide_output pip2 install --upgrade boto
 
 # CONFIGURATION
 
@@ -65,7 +73,7 @@ fi
 # Download jQuery and Bootstrap local files
 
 # Make sure we have the directory to save to.
-assets_dir=/usr/local/lib/mailinabox/vendor/assets
+assets_dir=$inst_dir/vendor/assets
 rm -rf $assets_dir
 mkdir -p $assets_dir
 
@@ -82,16 +90,19 @@ bootstrap_url=https://github.com/twbs/bootstrap/releases/download/v$bootstrap_ve
 
 # Get Bootstrap
 wget_verify $bootstrap_url e6b1000b94e835ffd37f4c6dcbdad43f4b48a02a /tmp/bootstrap.zip
-unzip -q /tmp/bootstrap.zip -d /usr/local/lib/mailinabox/vendor/assets
-mv /usr/local/lib/mailinabox/vendor/assets/bootstrap-$bootstrap_version-dist /usr/local/lib/mailinabox/vendor/assets/bootstrap
+unzip -q /tmp/bootstrap.zip -d $assets_dir
+mv $assets_dir/bootstrap-$bootstrap_version-dist $assets_dir/bootstrap
 rm -f /tmp/bootstrap.zip
-
-# Link the management server daemon into a well known location.
-rm -f /usr/local/bin/mailinabox-daemon
-ln -s `pwd`/management/daemon.py /usr/local/bin/mailinabox-daemon
 
 # Create an init script to start the management daemon and keep it
 # running after a reboot.
+rm -f /usr/local/bin/mailinabox-daemon # old path
+cat > $inst_dir/start <<EOF;
+#!/bin/bash
+source $venv/bin/activate
+python `pwd`/management/daemon.py
+EOF
+chmod +x $inst_dir/start
 rm -f /etc/init.d/mailinabox
 ln -s $(pwd)/conf/management-initscript /etc/init.d/mailinabox
 hide_output update-rc.d mailinabox defaults
