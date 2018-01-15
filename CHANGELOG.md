@@ -23,6 +23,7 @@ Installer:
 
 * We now run `apt-get autoremove` at the start of setup to clear out old packages, especially old kernels that take up a lot of space. On the first run, this step may take a long time.
 * We now fetch Z-Push from their tagged git repository, fixing an installation problem.
+* Some old PHP5 packages are removed from setup, fixing an installation bug where Apache would get installed.
 
 v0.25 (November 15, 2017)
 -------------------------
