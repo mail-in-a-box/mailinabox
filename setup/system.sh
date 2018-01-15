@@ -129,12 +129,13 @@ apt_install python3 python3-dev python3-pip \
 
 # Nextcloud requires PHP7, we will install the ppa from ubuntu php maintainer Ondřej Surý
 # The PPA is located here https://launchpad.net/%7Eondrej/+archive/ubuntu/php
-# Unattended upgrades are activated for the repository
-
+# Unattended upgrades are activated for the repository If it appears it's already
+# installed, don't do it again so we can avoid an unnecessary call to apt-get update.
+if [ ! -f /etc/apt/sources.list.d/ondrej-php-trusty.list ]; then
 hide_output add-apt-repository -y ppa:ondrej/php
 apt_add_repository_to_unattended_upgrades LP-PPA-ondrej-php:trusty
 hide_output apt-get update
-
+fi
 
 # ### Suppress Upgrade Prompts
 # Since Mail-in-a-Box might jump straight to 18.04 LTS, there's no need
