@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.26 (January 18, 2018)
+------------------------
 
 Security:
 
@@ -12,7 +12,7 @@ Security:
 Mail:
 
 * Adding attachments in Roundcube broke after the last update for some users after rebooting because a temporary directory was deleted on reboot. The temporary directory is now moved from /tmp to /var so that it is persistent.
-* `X-Spam-Score` header added to incoming mail.
+* `X-Spam-Score` header is added to incoming mail.
 
 Control panel:
 
