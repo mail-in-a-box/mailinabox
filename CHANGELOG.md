@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+* Reduce munin-node.conf log_level to warning(1) as default ubuntu package uses log_level debug(4) which over time creates big log files.
+
+
 v0.26 (January 18, 2018)
 ------------------------
 
