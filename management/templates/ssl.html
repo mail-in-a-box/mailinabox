@@ -57,12 +57,6 @@
 
 <p>If you don't want to use our automatic Let's Encrypt integration, you can give any other certificate provider a try. You can generate the needed CSR below.</p>
 
-<p>Which domain are you getting a certificate for?</p>
-
-<p><select id="ssldomain" onchange="show_csr()" class="form-control" style="width: auto"></select></p>
-
-<p>(A multi-domain or wildcard certificate will be automatically applied to any domains it is valid for besides the one you choose above.)</p>
-
 <p>What country are you in? This is required by some TLS certificate providers. You may leave this blank if you know your TLS certificate provider doesn't require it.</p>
 
 <p><select id="sslcc" onchange="show_csr()" class="form-control" style="width: auto">
@@ -71,6 +65,12 @@
 		<option value="{{code}}">{{name}}</option>
 	{% endfor %}
 </select></p>
+
+<p>Which domain are you getting a certificate for?</p>
+
+<p><select id="ssldomain" onchange="show_csr()" class="form-control" style="width: auto"></select></p>
+
+<p>(A multi-domain or wildcard certificate will be automatically applied to any domains it is valid for besides the one you choose above.)</p>
 
 <div id="csr_info" style="display: none">
   <p>You will need to provide the certificate provider this Certificate Signing Request (CSR):</p>
