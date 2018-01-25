@@ -1,6 +1,8 @@
 CHANGELOG
 =========
 
+* Fix CSR generation bug by updating the `-subj` value passed to `openssl`, and changing the input order.
+
 v0.26b (January 25, 2018)
 -------------------------
 
