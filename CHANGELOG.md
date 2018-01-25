@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.26b (January 25, 2018)
+-------------------------
 
 * Fix new installations which broke at the step of asking for the user's desired email address, which was broken by v0.26's changes related to the control panel.
 * Fix the provisioning of TLS certificates by pinning a Python package we rely on (acme) to an earlier version because our code isn't yet compatible with its current version.
