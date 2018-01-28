@@ -100,7 +100,7 @@ rm -f /usr/local/bin/mailinabox-daemon # old path
 cat > $inst_dir/start <<EOF;
 #!/bin/bash
 source $venv/bin/activate
-python `pwd`/management/daemon.py
+exec python `pwd`/management/daemon.py
 EOF
 chmod +x $inst_dir/start
 rm -f /etc/init.d/mailinabox

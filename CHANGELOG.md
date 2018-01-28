@@ -6,6 +6,7 @@ In Development
 
 Control Panel:
 
+* The background service for the control panel was not restarting on updates, leaving the old version running. This was broken in v0.26 and is now fixed.
 * Installing your own TLS/SSL certificate had been broken since v0.24 because the new version of openssl became stricter about CSR generation parameters.
 
 v0.26b (January 25, 2018)
