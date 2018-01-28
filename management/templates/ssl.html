@@ -159,7 +159,11 @@ function ssl_install(elem) {
 }
 
 function show_csr() {
+ // Can't show a CSR until both inputs are entered.
  if ($('#ssldomain').val() == "") return;
+ if ($('#sslcc').val() == "") return;
+
+ // Scroll to it and fetch.
  $('#csr_info').slideDown();
  $('#ssl_csr').text('Loading...');
  api(
