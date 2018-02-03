@@ -179,7 +179,7 @@ function wget_verify {
 	DEST=$3
 	CHECKSUM="$HASH  $DEST"
 	rm -f $DEST
-	wget -q -O $DEST $URL || exit 1
+	hide_output wget -O $DEST $URL
 	if ! echo "$CHECKSUM" | sha1sum --check --strict > /dev/null; then
 		echo "------------------------------------------------------------"
 		echo "Download of $URL did not match expected checksum."
