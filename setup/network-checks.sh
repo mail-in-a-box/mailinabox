@@ -7,6 +7,7 @@ apt_get_quiet install bind9-host sed netcat-openbsd
 # and will not be able to reliably send mail. Do this after any automatic
 # choices made above.
 if host $PRIMARY_HOSTNAME.dbl.spamhaus.org > /dev/null; then
+if [ ! -d /vagrant ]; then
 	echo
 	echo "The hostname you chose '$PRIMARY_HOSTNAME' is listed in the"
 	echo "Spamhaus Domain Block List. See http://www.spamhaus.org/dbl/"
@@ -17,6 +18,7 @@ if host $PRIMARY_HOSTNAME.dbl.spamhaus.org > /dev/null; then
 	echo
 	exit 1
 fi
+fi
 
 # Stop if the IPv4 address is listed in the ZEN Spamhouse Block List.
 # The user might have ended up on an IP address that was previously in use
@@ -24,6 +26,7 @@ fi
 # will not be able to reliably send mail in these cases.
 REVERSED_IPV4=$(echo $PUBLIC_IP | sed "s/\([0-9]*\).\([0-9]*\).\([0-9]*\).\([0-9]*\)/\4.\3.\2.\1/")
 if host $REVERSED_IPV4.zen.spamhaus.org > /dev/null; then
+if [ ! -d /vagrant ]; then
 	echo
 	echo "The IP address $PUBLIC_IP is listed in the Spamhaus Block List."
 	echo "See http://www.spamhaus.org/query/ip/$PUBLIC_IP."
@@ -36,6 +39,7 @@ if host $REVERSED_IPV4.zen.spamhaus.org > /dev/null; then
 	echo "typically cannot be used on a residential Internet connection."
 	echo
 	exit 1
+fi
 fi
 
 # Stop if we cannot make an outbound connection on port 25. Many residential
