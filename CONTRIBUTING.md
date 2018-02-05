@@ -24,7 +24,7 @@ After a while, Mail-in-a-Box will be available at `192.168.50.4` (unless you cha
 
     $ echo "192.168.50.4 mailinabox.lan" | sudo tee -a /etc/hosts
 
-You should now be able to navigate to https://mailinabox.lan/admin using your browser.
+You should now be able to navigate to https://mailinabox.lan/admin using your browser. There should be an initial admin user with the name `me@mailinabox.lan` and the password `12345678`.
 
 ### Making changes
 
