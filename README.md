@@ -82,6 +82,12 @@ For help, DO NOT contact me directly --- I don't do tech support by email or twe
 
 Post your question on the [discussion forum](https://discourse.mailinabox.email/) instead, where me and other Mail-in-a-Box users may be able to help you.
 
+Contributing and Development
+----------------------------
+
+Mail-in-a-Box is an open source project. Your contributions and pull requests are welcome. See [CONTRIBUTING](CONTRIBUTING.md) to get started. 
+
+
 The Acknowledgements
 --------------------
 
