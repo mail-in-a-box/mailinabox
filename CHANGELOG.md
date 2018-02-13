@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.26c (February 13, 2018)
+--------------------------
 
 Setup:
 
