@@ -36,7 +36,7 @@ apt-get purge -qq -y roundcube* #NODOC
 # Combine the Roundcube version number with the commit hash of plugins to track
 # whether we have the latest version of everything.
 VERSION=1.3.4
-HASH=8ed21cf96b5196e66ac4adaf85807bc1b04302a
+HASH=8ed21cf96b5196e66ac4adaf85807bc1b043020a
 PERSISTENT_LOGIN_VERSION=dc5ca3d3f4415cc41edb2fde533c8a8628a94c76
 HTML5_NOTIFIER_VERSION=4b370e3cd60dabd2f428a26f45b677ad1b7118d5
 CARDDAV_VERSION=2.0.4
