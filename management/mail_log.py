@@ -53,10 +53,10 @@ VERBOSE = False
 # List of strings to filter users with
 FILTERS = None
 
-# What to show by default
+# What to show (with defaults)
 SCAN_OUT = True  # Outgoing email
 SCAN_IN = True  # Incoming email
-SCAN_CONN = False  # IMAP and POP3 logins
+SCAN_DOVECOT_LOGIN = True  # Dovecot Logins
 SCAN_GREY = False  # Greylisted email
 SCAN_BLOCKED = False  # Rejected email
 
@@ -105,7 +105,7 @@ def scan_mail_log(env):
         "scan_time": time.time(),  # The time in seconds the scan took
         "sent_mail": OrderedDict(),  # Data about email sent by users
         "received_mail": OrderedDict(),  # Data about email received by users
-        "dovecot": OrderedDict(),  # Data about Dovecot activity
+        "logins": OrderedDict(),  # Data about Dovecot login activity
         "postgrey": {},  # Data about greylisting of email addresses
         "rejected": OrderedDict(),  # Emails that were blocked
         "known_addresses": None,  # Addresses handled by the Miab installation
@@ -199,43 +199,55 @@ def scan_mail_log(env):
             [accum]
         )
 
-    # Print Dovecot report
+    # Print login report
 
-    if collector["dovecot"]:
-        msg = "Email client logins between {:%Y-%m-%d %H:%M:%S} and {:%Y-%m-%d %H:%M:%S}"
+    if collector["logins"]:
+        msg = "User logins per hour between {:%Y-%m-%d %H:%M:%S} and {:%Y-%m-%d %H:%M:%S}"
         print_header(msg.format(END_DATE, START_DATE))
 
-        data = OrderedDict(sorted(collector["dovecot"].items(), key=email_sort))
+        data = OrderedDict(sorted(collector["logins"].items(), key=email_sort))
+
+        # Get a list of all of the protocols seen in the logs in reverse count order.
+        all_protocols = defaultdict(int)
+        for u in data.values():
+            for protocol_name, count in u["totals_by_protocol"].items():
+                all_protocols[protocol_name] += count
+        all_protocols = [k for k, v in sorted(all_protocols.items(), key=lambda kv : -kv[1])]
 
         print_user_table(
             data.keys(),
             data=[
-                ("imap", [u["imap"] for u in data.values()]),
-                ("pop3", [u["pop3"] for u in data.values()]),
+                (protocol_name, [
+                    round(u["totals_by_protocol"][protocol_name] / (u["latest"]-u["earliest"]).total_seconds() * 60*60, 1)
+                    if (u["latest"]-u["earliest"]).total_seconds() > 0
+                    else 0 # prevent division by zero
+                  for u in data.values()])
+                for protocol_name in all_protocols
             ],
             sub_data=[
-                ("IMAP IP addresses", [[k + " (%d)" % v for k, v in u["imap-logins"].items()]
-                                       for u in data.values()]),
-                ("POP3 IP addresses", [[k + " (%d)" % v for k, v in u["pop3-logins"].items()]
-                                       for u in data.values()]),
+                ("Protocol and Source", [[
+                    "{} {}: {} times".format(protocol_name, host, count)
+                    for (protocol_name, host), count
+                    in sorted(u["totals_by_protocol_and_host"].items(), key=lambda kv:-kv[1])
+                  ] for u in data.values()])
             ],
             activity=[
-                ("imap", [u["activity-by-hour"]["imap"] for u in data.values()]),
-                ("pop3", [u["activity-by-hour"]["pop3"] for u in data.values()]),
+                (protocol_name, [u["activity-by-hour"][protocol_name] for u in data.values()])
+                for protocol_name in all_protocols
             ],
             earliest=[u["earliest"] for u in data.values()],
             latest=[u["latest"] for u in data.values()],
+            numstr=lambda n : str(round(n, 1)),
         )
 
-        accum = {"imap": defaultdict(int), "pop3": defaultdict(int), "both": defaultdict(int)}
+        accum = { protocol_name: defaultdict(int) for protocol_name in all_protocols }
         for h in range(24):
-            accum["imap"][h] = sum(d["activity-by-hour"]["imap"][h] for d in data.values())
-            accum["pop3"][h] = sum(d["activity-by-hour"]["pop3"][h] for d in data.values())
-            accum["both"][h] = accum["imap"][h] + accum["pop3"][h]
+            for protocol_name in all_protocols:
+              accum[protocol_name][h] = sum(d["activity-by-hour"][protocol_name][h] for d in data.values())
 
         print_time_table(
-            ["imap", "pop3", "   +"],
-            [accum["imap"], accum["pop3"], accum["both"]]
+            all_protocols,
+            [accum[protocol_name] for protocol_name in all_protocols]
         )
 
     if collector["postgrey"]:
@@ -348,9 +360,9 @@ def scan_mail_log_line(line, collector):
     elif service == "postfix/lmtp":
         if SCAN_IN:
             scan_postfix_lmtp_line(date, log, collector)
-    elif service in ("imap-login", "pop3-login"):
-        if SCAN_CONN:
-            scan_dovecot_line(date, log, collector, service[:4])
+    elif service.endswith("-login"):
+        if SCAN_DOVECOT_LOGIN:
+            scan_dovecot_login_line(date, log, collector, service[:4])
     elif service == "postgrey":
         if SCAN_GREY:
             scan_postgrey_line(date, log, collector)
@@ -448,8 +460,8 @@ def scan_postfix_smtpd_line(date, log, collector):
                 collector["rejected"][user] = data
 
 
-def scan_dovecot_line(date, log, collector, prot):
-    """ Scan a dovecot log line and extract interesting data """
+def scan_dovecot_login_line(date, log, collector, protocol_name):
+    """ Scan a dovecot login log line and extract interesting data """
 
     m = re.match("Info: Login: user=<(.*?)>, method=PLAIN, rip=(.*?),", log)
 
@@ -459,33 +471,28 @@ def scan_dovecot_line(date, log, collector, prot):
 
         if user_match(user):
             # Get the user data, or create it if the user is new
-            data = collector["dovecot"].get(
+            data = collector["logins"].get(
                 user,
                 {
-                    "imap": 0,
-                    "pop3": 0,
                     "earliest": None,
                     "latest": None,
-                    "imap-logins": defaultdict(int),
-                    "pop3-logins": defaultdict(int),
-                    "activity-by-hour": {
-                        "imap": defaultdict(int),
-                        "pop3": defaultdict(int),
-                    },
+                    "totals_by_protocol": defaultdict(int),
+                    "totals_by_protocol_and_host": defaultdict(int),
+                    "activity-by-hour": defaultdict(lambda : defaultdict(int)),
                 }
             )
-
-            data[prot] += 1
-            data["activity-by-hour"][prot][date.hour] += 1
 
             if data["latest"] is None:
                 data["latest"] = date
             data["earliest"] = date
 
-            if rip not in ("127.0.0.1", "::1") or True:
-                data["%s-logins" % prot][rip] += 1
+            data["totals_by_protocol"][protocol_name] += 1
+            data["totals_by_protocol_and_host"][(protocol_name, rip)] += 1
 
-            collector["dovecot"][user] = data
+            if rip not in ("127.0.0.1", "::1") or True:
+                data["activity-by-hour"][protocol_name][date.hour] += 1
+
+            collector["logins"][user] = data
 
 
 def scan_postfix_lmtp_line(date, log, collector):
@@ -640,7 +647,7 @@ def print_time_table(labels, data, do_print=True):
         for i, d in enumerate(data):
             lines[i] += base.format(d[h])
 
-    lines.insert(0, "┬")
+    lines.insert(0, "┬ totals by time of day:")
     lines.append("└" + (len(lines[-1]) - 2) * "─")
 
     if do_print:
@@ -650,7 +657,7 @@ def print_time_table(labels, data, do_print=True):
 
 
 def print_user_table(users, data=None, sub_data=None, activity=None, latest=None, earliest=None,
-                     delimit=False):
+                     delimit=False, numstr=str):
     str_temp = "{:<32} "
     lines = []
     data = data or []
@@ -764,7 +771,7 @@ def print_user_table(users, data=None, sub_data=None, activity=None, latest=None
 
     # Print totals
 
-    data_accum = [str(a) for a in data_accum]
+    data_accum = [numstr(a) for a in data_accum]
     footer = str_temp.format("Totals:" if do_accum else " ")
     for row, (l, _) in enumerate(data):
         temp = "{:>%d}" % max(5, len(l) + 1)
@@ -818,7 +825,7 @@ if __name__ == "__main__":
                         action="store_true")
     parser.add_argument("-s", "--sent", help="Scan for sent emails.",
                         action="store_true")
-    parser.add_argument("-l", "--logins", help="Scan for IMAP/POP logins.",
+    parser.add_argument("-l", "--logins", help="Scan for user logins to IMAP/POP3.",
                         action="store_true")
     parser.add_argument("-g", "--grey", help="Scan for greylisted emails.",
                         action="store_true")
@@ -863,8 +870,8 @@ if __name__ == "__main__":
         if not SCAN_OUT:
             print("Ignoring sent emails")
 
-        SCAN_CONN = args.logins
-        if not SCAN_CONN:
+        SCAN_DOVECOT_LOGIN = args.logins
+        if not SCAN_DOVECOT_LOGIN:
             print("Ignoring logins")
 
         SCAN_GREY = args.grey
