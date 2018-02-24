@@ -105,7 +105,7 @@ def scan_mail_log(env):
         "scan_time": time.time(),  # The time in seconds the scan took
         "sent_mail": OrderedDict(),  # Data about email sent by users
         "received_mail": OrderedDict(),  # Data about email received by users
-        "logins": OrderedDict(),  # Data about Dovecot login activity
+        "logins": OrderedDict(),  # Data about login activity
         "postgrey": {},  # Data about greylisting of email addresses
         "rejected": OrderedDict(),  # Emails that were blocked
         "known_addresses": None,  # Addresses handled by the Miab installation
@@ -467,9 +467,13 @@ def scan_dovecot_login_line(date, log, collector, protocol_name):
 
     if m:
         # TODO: CHECK DIT
-        user, rip = m.groups()
+        user, host = m.groups()
 
         if user_match(user):
+            add_login(user, date, protocol_name, host, collector)
+
+
+def add_login(user, date, protocol_name, host, collector):
             # Get the user data, or create it if the user is new
             data = collector["logins"].get(
                 user,
@@ -487,9 +491,9 @@ def scan_dovecot_login_line(date, log, collector, protocol_name):
             data["earliest"] = date
 
             data["totals_by_protocol"][protocol_name] += 1
-            data["totals_by_protocol_and_host"][(protocol_name, rip)] += 1
+            data["totals_by_protocol_and_host"][(protocol_name, host)] += 1
 
-            if rip not in ("127.0.0.1", "::1") or True:
+            if host not in ("127.0.0.1", "::1") or True:
                 data["activity-by-hour"][protocol_name][date.hour] += 1
 
             collector["logins"][user] = data
@@ -568,6 +572,8 @@ def scan_postfix_submission_line(date, log, collector):
 
             collector["sent_mail"][user] = data
 
+            # Also log this as a login.
+            add_login(user, date, "smtp", client, collector)
 
 # Utility functions
 
