@@ -4,8 +4,14 @@
 
 import sys
 
+import html
 import smtplib
-from email.message import Message
+
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+# In Python 3.6:
+#from email.message import Message
 
 from utils import load_environment
 
@@ -26,11 +32,23 @@ if content == "":
 	sys.exit(0)
 
 # create MIME message
-msg = Message()
+msg = MIMEMultipart('alternative')
+
+# In Python 3.6:
+#msg = Message()
+
 msg['From'] = "\"%s\" <%s>" % (env['PRIMARY_HOSTNAME'], admin_addr)
 msg['To'] = admin_addr
 msg['Subject'] = "[%s] %s" % (env['PRIMARY_HOSTNAME'], subject)
-msg.set_payload(content, "UTF-8")
+
+content_html = "<html><body><pre>{}</pre></body></html>".format(html.escape(content))
+
+msg.attach(MIMEText(content, 'plain'))
+msg.attach(MIMEText(content_html, 'html'))
+
+# In Python 3.6:
+#msg.set_content(content)
+#msg.add_alternative(content_html, "html")
 
 # send
 smtpclient = smtplib.SMTP('127.0.0.1', 25)

@@ -76,7 +76,8 @@ def scan_files(collector):
             tmp_file = tempfile.NamedTemporaryFile()
             shutil.copyfileobj(gzip.open(fn), tmp_file)
 
-        print("Processing file", fn, "...")
+        if VERBOSE:
+            print("Processing file", fn, "...")
         fn = tmp_file.name if tmp_file else fn
 
         for line in reverse_readline(fn):
@@ -119,8 +120,8 @@ def scan_mail_log(env):
     except ImportError:
         pass
 
-    print("Scanning from {:%Y-%m-%d %H:%M:%S} back to {:%Y-%m-%d %H:%M:%S}".format(
-        START_DATE, END_DATE)
+    print("Scanning logs from {:%Y-%m-%d %H:%M:%S} to {:%Y-%m-%d %H:%M:%S}".format(
+        END_DATE, START_DATE)
     )
 
     # Scan the lines in the log files until the date goes out of range
@@ -138,8 +139,8 @@ def scan_mail_log(env):
     # Print Sent Mail report
 
     if collector["sent_mail"]:
-        msg = "Sent email between {:%Y-%m-%d %H:%M:%S} and {:%Y-%m-%d %H:%M:%S}"
-        print_header(msg.format(END_DATE, START_DATE))
+        msg = "Sent email"
+        print_header(msg)
 
         data = OrderedDict(sorted(collector["sent_mail"].items(), key=email_sort))
 
@@ -173,8 +174,8 @@ def scan_mail_log(env):
     # Print Received Mail report
 
     if collector["received_mail"]:
-        msg = "Received email between {:%Y-%m-%d %H:%M:%S} and {:%Y-%m-%d %H:%M:%S}"
-        print_header(msg.format(END_DATE, START_DATE))
+        msg = "Received email"
+        print_header(msg)
 
         data = OrderedDict(sorted(collector["received_mail"].items(), key=email_sort))
 
@@ -202,8 +203,8 @@ def scan_mail_log(env):
     # Print login report
 
     if collector["logins"]:
-        msg = "User logins per hour between {:%Y-%m-%d %H:%M:%S} and {:%Y-%m-%d %H:%M:%S}"
-        print_header(msg.format(END_DATE, START_DATE))
+        msg = "User logins per hour"
+        print_header(msg)
 
         data = OrderedDict(sorted(collector["logins"].items(), key=email_sort))
 

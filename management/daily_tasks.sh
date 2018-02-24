@@ -9,6 +9,12 @@ export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 export LC_TYPE=en_US.UTF-8
 
+# On Mondays, i.e. once a week, send the administrator a report of total emails
+# sent and received so the admin might notice server abuse.
+if [ `date "+%u"` -eq 1 ]; then
+    management/mail_log.py -t week | management/email_administrator.py "Mail-in-a-Box Usage Report"
+fi
+
 # Take a backup.
 management/backup.py | management/email_administrator.py "Backup Status"
 
