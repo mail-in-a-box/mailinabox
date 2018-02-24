@@ -5,6 +5,7 @@ In Development
 --------------
 
 * Update Roundcube to version 1.3.4 and Z-Push to version 2.3.9.
+* The undocumented feature for proxying web requests to another server now sets X-Forwarded-For.
 
 v0.26c (February 13, 2018)
 --------------------------
