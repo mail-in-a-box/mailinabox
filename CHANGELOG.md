@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+* Update Roundcube to version 1.3.4 and Z-Push to version 2.3.9.
+
 v0.26c (February 13, 2018)
 --------------------------
 
