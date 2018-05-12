@@ -393,7 +393,7 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 
 	# Check that PRIMARY_HOSTNAME resolves to PUBLIC_IP[V6] in public DNS.
 	ipv6 = query_dns(domain, "AAAA") if env.get("PUBLIC_IPV6") else None
-	if ip == env['PUBLIC_IP'] and not (ipv6 and env['PUBLIC_IPV6'] and normalize_ip(ipv6) != normalize_ip(env['PUBLIC_IPV6'])):
+	if ip == env['PUBLIC_IP'] and not (ipv6 and env['PUBLIC_IPV6'] and ipv6 != normalize_ip(env['PUBLIC_IPV6'])):
 		output.print_ok("Domain resolves to box's IP address. [%s ↦ %s]" % (env['PRIMARY_HOSTNAME'], my_ips))
 	else:
 		output.print_error("""This domain must resolve to your box's IP address (%s) in public DNS but it currently resolves
@@ -640,7 +640,7 @@ def check_web_domain(domain, rounded_time, ssl_certificates, env, output):
 		for (rtype, expected) in (("A", env['PUBLIC_IP']), ("AAAA", env.get('PUBLIC_IPV6'))):
 			if not expected: continue # IPv6 is not configured
 			value = query_dns(domain, rtype)
-			if normalize_ip(value) == normalize_ip(expected):
+			if value == normalize_ip(expected):
 				ok_values.append(value)
 			else:
 				output.print_error("""This domain should resolve to your box's IP address (%s %s) if you would like the box to serve
@@ -687,27 +687,17 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None):
 	except dns.exception.Timeout:
 		return "[timeout]"
 
+	# Normalize IP addresses. IP address --- especially IPv6 addresses --- can
+	# be expressed in equivalent string forms. Canonicalize the form before
+	# returning them. The caller should normalize any IP addresses the result
+	# of this method is compared with.
+	if rtype in ("A", "AAAA"):
+		response = [normalize_ip(str(r)) for r in response]
+
 	# There may be multiple answers; concatenate the response. Remove trailing
 	# periods from responses since that's how qnames are encoded in DNS but is
 	# confusing for us. The order of the answers doesn't matter, so sort so we
 	# can compare to a well known order.
-
-	# Unfortunately, the response.__str__ returns bytes
-	# instead of string, if it resulted from an AAAA-query.
-	# We need to convert manually, until this is fixed:
-	# https://github.com/rthalley/dnspython/issues/204
-	#
-	# BEGIN HOTFIX
-	response_new = []
-	for r in response:
-		s = r.to_text()
-		if isinstance(s, bytes):
-			s = s.decode('utf-8')
-		response_new.append(s)
-	
-	response = response_new
-	# END HOTFIX
-
 	return "; ".join(sorted(str(r).rstrip('.') for r in response))
 
 def check_ssl_cert(domain, rounded_time, ssl_certificates, env, output):
@@ -892,7 +882,9 @@ def run_and_output_changes(env, pool):
 		json.dump(cur.buf, f, indent=True)
 
 def normalize_ip(ip):
-	# Use ipaddress module to normalize the IPv6 notation and ensure we are matching IPv6 addresses written in different representations according to rfc5952.
+	# Use ipaddress module to normalize the IPv6 notation and
+	# ensure we are matching IPv6 addresses written in different
+	# representations according to rfc5952.
 	import ipaddress
 	try:
 		return str(ipaddress.ip_address(ip))
