@@ -213,41 +213,17 @@ def get_certificates_to_provision(env, show_extended_problems=True, force_domain
 
 	# Filter out domains that we can't provision a certificate for.
 	def can_provision_for_domain(domain):
-		from status_checks import normalize_ip
+		from status_checks import query_dns, normalize_ip
 
 		# Does the domain resolve to this machine in public DNS? If not,
 		# we can't do domain control validation. For IPv6 is configured,
 		# make sure both IPv4 and IPv6 are correct because we don't know
 		# how Let's Encrypt will connect.
-		import dns.resolver
 		for rtype, value in [("A", env["PUBLIC_IP"]), ("AAAA", env.get("PUBLIC_IPV6"))]:
 			if not value: continue # IPv6 is not configured
-			try:
-				# Must make the qname absolute to prevent a fall-back lookup with a
-				# search domain appended, by adding a period to the end.
-				response = dns.resolver.query(domain + ".", rtype)
-			except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer) as e:
-				problems[domain] = "DNS isn't configured properly for this domain: DNS resolution failed (%s: %s)." % (rtype, str(e) or repr(e)) # NoAnswer's str is empty
-				return False
-			except Exception as e:
-				problems[domain] = "DNS isn't configured properly for this domain: DNS lookup had an error: %s." % str(e)
-				return False
-
-			# Unfortunately, the response.__str__ returns bytes
-			# instead of string, if it resulted from an AAAA-query.
-			# We need to convert manually, until this is fixed:
-			# https://github.com/rthalley/dnspython/issues/204
-			#
-			# BEGIN HOTFIX
-			def rdata__str__(r):
-				s = r.to_text()
-				if isinstance(s, bytes):
-					 s = s.decode('utf-8')
-				return s
-			# END HOTFIX
-
-			if len(response) != 1 or normalize_ip(rdata__str__(response[0])) != normalize_ip(value):
-				problems[domain] = "Domain control validation cannot be performed for this domain because DNS points the domain to another machine (%s %s)." % (rtype, ", ".join(rdata__str__(r) for r in response))
+			response = query_dns(domain, rtype)
+			if response != normalize_ip(value):
+				problems[domain] = "The domain name does not resolve to this machine: DNS %s resolved to %s." % (rtype, response)
 				return False
 
 		return True
