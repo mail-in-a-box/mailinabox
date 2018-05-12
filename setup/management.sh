@@ -11,12 +11,11 @@ echo "Installing Mail-in-a-Box system management daemon..."
 # package manager is too out-of-date -- it doesn't support the newer
 # S3 api used in some regions, which breaks backups to those regions.
 # See #627, #653.
-apt_install duplicity python-pip
+#
+# python-virtualenv is used to isolate the Python 3 packages we
+# install via pip from the system-installed packages.
+apt_install duplicity python-pip python-virtualenv
 hide_output pip2 install --upgrade boto
-
-# These are required to build/install the cryptography Python package
-# used by our management daemon.
-apt_install python-virtualenv build-essential libssl-dev libffi-dev python3-dev
 
 # Create a virtualenv for the installation of Python 3 packages
 # used by the management daemon.
@@ -27,28 +26,8 @@ if [ ! -d $venv ]; then
 	virtualenv -ppython3 $venv
 fi
 
-# pip<6.1 + setuptools>=34 had a problem with packages that
-# try to update setuptools during installation, like cryptography.
-# See https://github.com/pypa/pip/issues/4253. The Ubuntu 14.04
-# package versions are pip 1.5.4 and setuptools 3.3. When we used to
-# instal cryptography system-wide under those versions, it updated
-# setuptools to version 34, which created the conflict, and
-# then pip gets permanently broken with errors like
-# "ImportError: No module named 'packaging'".
-#
-# Let's test for the error:
-if ! python3 -c "from pkg_resources import load_entry_point" 2&> /dev/null; then
-	# This system seems to be broken already.
-	echo "Fixing broken pip and setuptools..."
-	rm -rf /usr/local/lib/python3.4/dist-packages/{pkg_resources,setuptools}*
-	apt-get install --reinstall python3-setuptools python3-pip python3-pkg-resources
-fi
-#
-# The easiest work-around on systems that aren't already broken is
-# to upgrade pip (to >=9.0.1) and setuptools (to >=34.1) individually
-# before we install any package that tries to update setuptools.
+# Upgrade pip because the Ubuntu-packaged version is out of date.
 hide_output $venv/bin/pip install --upgrade pip
-hide_output $venv/bin/pip install --upgrade setuptools
 
 # Install other Python 3 packages used by the management daemon.
 # The first line is the packages that Josh maintains himself!
@@ -59,7 +38,7 @@ hide_output $venv/bin/pip install --upgrade setuptools
 hide_output $venv/bin/pip install --upgrade \
 	rtyaml "email_validator>=1.0.0" "free_tls_certificates>=0.1.3" "exclusiveprocess" \
 	flask dnspython python-dateutil \
-	"idna>=2.0.0" "cryptography>=1.0.2" "acme==0.20.0" boto psutil
+	"idna>=2.0.0" "cryptography==2.2.2" "acme==0.20.0" boto psutil
 
 # CONFIGURATION
 
