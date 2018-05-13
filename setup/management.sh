@@ -6,6 +6,18 @@ echo "Installing Mail-in-a-Box system management daemon..."
 
 # DEPENDENCIES
 
+# We used to install management daemon-related Python packages
+# directly to /usr/local/lib. We moved to a virtualenv because
+# these packages might conflict with apt-installed packages.
+# We may have a lingering version of acme that conflcits with
+# certbot, which we're about to install below, so remove it
+# first. Once acme is installed by an apt package, this might
+# break the package version and `apt-get install --reinstall python3-acme`
+# might be needed in that case.
+while [ -d /usr/local/lib/python3.4/dist-packages/acme ]; do
+	pip3 uninstall -y acme;
+done
+
 # duplicity is used to make backups of user data. It uses boto
 # (via Python 2) to do backups to AWS S3. boto from the Ubuntu
 # package manager is too out-of-date -- it doesn't support the newer
@@ -14,7 +26,10 @@ echo "Installing Mail-in-a-Box system management daemon..."
 #
 # python-virtualenv is used to isolate the Python 3 packages we
 # install via pip from the system-installed packages.
-apt_install duplicity python-pip python-virtualenv
+#
+# certbot installs EFF's certbot which we use to
+# provision free TLS certificates.
+apt_install duplicity python-pip python-virtualenv certbot
 hide_output pip2 install --upgrade boto
 
 # Create a virtualenv for the installation of Python 3 packages
@@ -32,13 +47,10 @@ hide_output $venv/bin/pip install --upgrade pip
 # Install other Python 3 packages used by the management daemon.
 # The first line is the packages that Josh maintains himself!
 # NOTE: email_validator is repeated in setup/questions.sh, so please keep the versions synced.
-# Force acme to be updated because it seems to need it after the
-# pip/setuptools breakage (see above) and the ACME protocol may
-# have changed (I got an error on one of my systems).
 hide_output $venv/bin/pip install --upgrade \
-	rtyaml "email_validator>=1.0.0" "free_tls_certificates>=0.1.3" "exclusiveprocess" \
+	rtyaml "email_validator>=1.0.0" "exclusiveprocess" \
 	flask dnspython python-dateutil \
-	"idna>=2.0.0" "cryptography==2.2.2" "acme==0.20.0" boto psutil
+	"idna>=2.0.0" "cryptography==2.2.2" boto psutil
 
 # CONFIGURATION
 

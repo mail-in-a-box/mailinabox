@@ -137,6 +137,17 @@ def migration_10(env):
 				shutil.move(sslcert, newname)
 				os.rmdir(d)
 
+def migration_11(env):
+	# Archive the old Let's Encrypt account directory managed by free_tls_certificates
+	# because we'll use that path now for the directory managed by certbot.
+	try:
+		old_path = os.path.join(env["STORAGE_ROOT"], 'ssl', 'lets_encrypt')
+		new_path = os.path.join(env["STORAGE_ROOT"], 'ssl', 'lets_encrypt-old')
+		shutil.move(old_path, new_path)
+	except:
+		# meh
+		pass
+
 def get_current_migration():
 	ver = 0
 	while True:

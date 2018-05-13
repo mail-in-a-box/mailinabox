@@ -127,12 +127,20 @@ tools/web_update
 # fail2ban was first configured, but they should exist now.
 restart_service fail2ban
 
-# If DNS is already working, try to provision TLS certficates from Let's Encrypt.
-# Suppress extra reasons why domains aren't getting a new certificate.
-management/ssl_certificates.py -q
-
 # If there aren't any mail users yet, create one.
 source setup/firstuser.sh
+
+# Register with Let's Encrypt, including agreeing to the Terms of Service. This
+# is an interactive command.
+if [ ! -d $STORAGE_ROOT/ssl/lets_encrypt/accounts/acme-v01.api.letsencrypt.org/ ]; then
+echo
+echo "-----------------------------------------------"
+echo "Mail-in-a-Box uses Let's Encrypt to provision free certificates"
+echo "to enable HTTPS connections to your box. You'll now be asked to agree"
+echo "to Let's Encrypt's terms of service."
+echo
+certbot register --register-unsafely-without-email --config-dir $STORAGE_ROOT/ssl/lets_encrypt
+fi
 
 # Done.
 echo
