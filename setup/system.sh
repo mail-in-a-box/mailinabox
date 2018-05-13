@@ -68,17 +68,10 @@ then
 	fi
 fi
 
-# ### Add Mail-in-a-Box's PPA.
+# ### Add PPAs.
 
-# We've built several .deb packages on our own that we want to include.
-# One is a replacement for Ubuntu's stock postgrey package that makes
-# some enhancements. The other is dovecot-lucene, a Lucene-based full
-# text search plugin for (and by) dovecot, which is not available in
-# Ubuntu currently.
-#
-# So, first ensure add-apt-repository is installed, then use it to install
-# the [mail-in-a-box ppa](https://launchpad.net/~mail-in-a-box/+archive/ubuntu/ppa).
-
+# We install some non-standard Ubuntu packages maintained by us and other
+# third-party providers. First ensure add-apt-repository is installed.
 
 if [ ! -f /usr/bin/add-apt-repository ]; then
 	echo "Installing add-apt-repository..."
@@ -86,11 +79,21 @@ if [ ! -f /usr/bin/add-apt-repository ]; then
 	apt_install software-properties-common
 fi
 
+# [Main-in-a-Box's own PPA](https://launchpad.net/~mail-in-a-box/+archive/ubuntu/ppa)
+# holds several .deb packages that we built on our own.
+# One is a replacement for Ubuntu's stock postgrey package that makes
+# some enhancements. The other is dovecot-lucene, a Lucene-based full
+# text search plugin for (and by) dovecot, which is not available in
+# Ubuntu currently.
+
 hide_output add-apt-repository -y ppa:mail-in-a-box/ppa
+hide_output add-apt-repository -y ppa:certbot/certbot
 
 # ### Update Packages
 
-# Update system packages to make sure we have the latest upstream versions of things from Ubuntu.
+# Update system packages to make sure we have the latest upstream versions
+# of things from Ubuntu, as well as the directory of packages provide by the
+# PPAs so we can install those packages later.
 
 echo Updating system packages...
 hide_output apt-get update

@@ -4,8 +4,14 @@ CHANGELOG
 In Development
 --------------
 
+Mail:
+
 * A report of box activity, including sent/received mail totals and logins by user, is now emailed to the box's administrator user each week.
 * Update Roundcube to version 1.3.6 and Z-Push to version 2.3.9.
+
+Control Panel:
+
+* We now use EFF's `certbot` tool to provision HTTPS certificates instead of our home-grown free_tls_certificates package.
 * The undocumented feature for proxying web requests to another server now sets X-Forwarded-For.
 
 v0.26c (February 13, 2018)

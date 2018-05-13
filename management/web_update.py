@@ -201,8 +201,11 @@ def get_web_domains_info(env):
 
 	# for the SSL config panel, get cert status
 	def check_cert(domain):
-		tls_cert = get_domain_ssl_files(domain, ssl_certificates, env, allow_missing_cert=True)
-		if tls_cert is None: return ("danger", "No Certificate Installed")
+		try:
+			tls_cert = get_domain_ssl_files(domain, ssl_certificates, env, allow_missing_cert=True)
+		except OSError: # PRIMARY_HOSTNAME cert is missing
+			tls_cert = None
+		if tls_cert is None: return ("danger", "No certificate installed.")
 		cert_status, cert_status_details = check_certificate(domain, tls_cert["certificate"], tls_cert["private-key"])
 		if cert_status == "OK":
 			return ("success", "Signed & valid. " + cert_status_details)

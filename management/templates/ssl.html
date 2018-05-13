@@ -8,7 +8,7 @@
 <p>You need a TLS certificate for this box&rsquo;s hostname ({{hostname}}) and every other domain name and subdomain that this box is hosting a website for (see the list below).</p>
 
 <div id="ssl_provision">
-<h3>Provision a certificate</h3>
+<h3>Provision certificates</h3>
 
 <div id="ssl_provision_p" style="display: none; margin-top: 1.5em">
   <button onclick='return provision_tls_cert();' class='btn btn-primary' style="float: left; margin: 0 1.5em 1em 0;">Provision</button>
@@ -19,21 +19,6 @@
 <div class="clearfix"> </div>
 
 <div id="ssl_provision_result"></div>
-
-<div id="ssl_provision_problems_div" style="display: none;">
-<p style="margin-bottom: .5em;">Certificates cannot be automatically provisioned for:</p>
-<table id="ssl_provision_problems" style="margin-top: 0;" class="table">
-  <thead>
-    <tr>
-      <th>Domain</th>
-      <th>Problem</th>
-    </tr>
-  </thead>
-  <tbody>
-  </tbody>
-</table>
-<p>Use the <em>Install Certificate</em> button below for these domains.</p>
-</div>
 </div>
 
 <h3>Certificate status</h3>
@@ -103,23 +88,11 @@ function show_tls(keep_provisioning_shown) {
       // provisioning status
 
       if (!keep_provisioning_shown)
-        $('#ssl_provision').toggle(res.can_provision.length + res.cant_provision.length > 0)
+        $('#ssl_provision').toggle(res.can_provision.length > 0)
 
       $('#ssl_provision_p').toggle(res.can_provision.length > 0);
       if (res.can_provision.length > 0)
           $('#ssl_provision_p span').text(res.can_provision.join(", "));
-
-      $('#ssl_provision_problems_div').toggle(res.cant_provision.length > 0);
-      $('#ssl_provision_problems tbody').text("");
-      for (var i = 0; i < res.cant_provision.length; i++) {
-        var domain = res.cant_provision[i];
-        var row = $("<tr><th class='domain'><a href=''></a></th><td class='status'></td></tr>");
-        $('#ssl_provision_problems tbody').append(row);
-        row.attr('data-domain', domain.domain);
-        row.find('.domain a').text(domain.domain);
-        row.find('.domain a').attr('href', 'https://' + domain.domain);
-        row.find('.status').text(domain.problem);
-      }
 
       // certificate status
       var domains = res.status;
@@ -196,20 +169,15 @@ function install_cert() {
     });
 }
 
-var agree_to_tos_url_prompt = null;
-var agree_to_tos_url = null;
 function provision_tls_cert() {
   // Automatically provision any certs.
   $('#ssl_provision_p .btn').attr('disabled', '1'); // prevent double-clicks
   api(
     "/ssl/provision",
     "POST",
-    {
-      agree_to_tos_url: agree_to_tos_url
-    },
+    { },
     function(status) {
       // Clear last attempt.
-      agree_to_tos_url = null;
       $('#ssl_provision_result').text("");
       may_reenable_provision_button = true;
 
@@ -225,52 +193,33 @@ function provision_tls_cert() {
       for (var i = 0; i < status.requests.length; i++) {
         var r = status.requests[i];
 
+        if (r.result == "skipped") {
+          // not interested --- this domain wasn't in the table
+          // to begin with
+          continue;
+        }
+
         // create an HTML block to display the results of this request
         var n = $("<div><h4/><p/></div>");
         $('#ssl_provision_result').append(n);
+
+        // plain log line
+        if (typeof r === "string") {
+          n.find("p").text(r);
+          continue;
+        }
 
         // show a header only to disambiguate request blocks
         if (status.requests.length > 0)
           n.find("h4").text(r.domains.join(", "));
 
-        if (r.result == "agree-to-tos") {
-          // user needs to agree to Let's Encrypt's TOS
-          agree_to_tos_url_prompt = r.url;
-          $('#ssl_provision_p .btn').attr('disabled', '1');
-          n.find("p").html("Please open and review <a href='" + r.url + "' target='_blank'>Let's Encrypt's terms of service agreement</a>. You must agree to their terms for a certificate to be automatically provisioned from them.");
-          n.append($('<button onclick="agree_to_tos_url = agree_to_tos_url_prompt; return provision_tls_cert();" class="btn btn-success" style="margin-left: 2em">Agree &amp; Try Again</button>'));
-
-          // don't re-enable the Provision button -- user must use the Agree button
-          may_reenable_provision_button = false;
-
-        } else if (r.result == "error") {
+        if (r.result == "error") {
           n.find("p").addClass("text-danger").text(r.message);
-
-        } else if (r.result == "wait") {
-          // Show a button that counts down to zero, at which point it becomes enabled.
-          n.find("p").text("A certificate is now in the process of being provisioned, but it takes some time. Please wait until the Finish button is enabled, and then click it to acquire the certificate.");
-          var b = $('<button onclick="return provision_tls_cert();" class="btn btn-success" style="margin-left: 2em">Finish</button>');
-          b.attr("disabled", "1");
-          var now = new Date();
-          n.append(b);
-          function ready_to_finish() {
-            var remaining = Math.round(r.seconds - (new Date() - now)/1000);
-            if (remaining > 0) {
-              setTimeout(ready_to_finish, 1000);
-              b.text("Finish (" + remaining + "...)")
-            } else {
-              b.text("Finish (ready)")
-              b.removeAttr("disabled");
-            }
-          }
-          ready_to_finish();
-
-          // don't re-enable the Provision button -- user must use the Retry button when it becomes enabled
-          may_reenable_provision_button = false;
 
         } else if (r.result == "installed") {
           n.find("p").addClass("text-success").text("The TLS certificate was provisioned and installed.");
           setTimeout("show_tls(true)", 1); // update main table of certificate statuses, call with arg keep_provisioning_shown true so that we don't clear what we just outputted
+
         }
 
         // display the detailed log info in case of problems
@@ -278,7 +227,6 @@ function provision_tls_cert() {
         n.append(trace);
         for (var j = 0; j < r.log.length; j++)
           trace.append($("<div/>").text(r.log[j]));
-
       }
 
       if (may_reenable_provision_button)
