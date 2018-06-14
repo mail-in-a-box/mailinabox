@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.27 (June 14, 2018)
+---------------------
 
 * A report of box activity, including sent/received mail totals and logins by user, is now emailed to the box's administrator user each week.
 * Update Roundcube to version 1.3.6 and Z-Push to version 2.3.9.
