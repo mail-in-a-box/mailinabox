@@ -657,7 +657,11 @@ def check_web_domain(domain, rounded_time, ssl_certificates, env, output):
 	# website for also needs a signed certificate.
 	check_ssl_cert(domain, rounded_time, ssl_certificates, env, output)
 
-def query_dns(qname, rtype, nxdomain='[Not Set]', at=None):
+# On Ubuntu 18.04 dns queries by default do not query the network for loopback addresses
+# This means that dig A <my host> will always return 127.0.0.1.  I've switched the default
+# resolver for query_dns to the primary OpenDNS server, so that the correct A record will
+# be returned.  If this box is publishing DNS correctly, this should be fine, I think
+def query_dns(qname, rtype, nxdomain='[Not Set]', at="208.67.222.222"):
 	# Make the qname absolute by appending a period. Without this, dns.resolver.query
 	# will fall back a failed lookup to a second query with this machine's hostname
 	# appended. This has been causing some false-positive Spamhaus reports. The

@@ -86,7 +86,9 @@ fi
 # text search plugin for (and by) dovecot, which is not available in
 # Ubuntu currently.
 
-hide_output add-apt-repository -y ppa:mail-in-a-box/ppa
+# The mail-in-a-box ppa doesn't have bionic-compatible sources, so
+# do not add it
+#hide_output add-apt-repository -y ppa:mail-in-a-box/ppa
 hide_output add-apt-repository -y ppa:certbot/certbot
 
 # ### Update Packages

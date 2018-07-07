@@ -61,6 +61,18 @@ done
 # Create a 'state' directory. Not sure why we need to do this manually.
 mkdir -p /var/lib/munin-node/plugin-state/
 
+# Here, I create a systemd service for munin, since the old /etc/init.d one
+# just wasn't working.  I put the script in /usr/local/lib/mailinabox because
+# I didn't know a better place to put it
+cp management/munin_start.sh /usr/local/lib/mailinabox/munin_start.sh
+chmod 0644 /usr/local/lib/mailinabox/munin_start.sh
+chmod +x /usr/local/lib/mailinabox/munin_start.sh
+rm -f  /lib/systemd/system/munin.service
+cp conf/munin-service /lib/systemd/system/munin.service
+hide_output systemctl daemon-reload
+hide_output systemctl unmask munin.service
+hide_output systemctl enable munin.service
+
 # Restart services.
 restart_service munin
 restart_service munin-node
