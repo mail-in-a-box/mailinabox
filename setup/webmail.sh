@@ -25,8 +25,6 @@ apt_install \
 	php7.0-cli php7.0-sqlite php7.0-mcrypt php7.0-intl php7.0-json php7.0-common php7.0-curl \
 	php7.0-gd php7.0-pspell tinymce libjs-jquery libjs-jquery-mousewheel libmagic1 php7.0-mbstring
 
-apt_get_quiet remove php-mail-mimedecode # no longer needed since Roundcube 1.1.3
-
 # We used to install Roundcube from Ubuntu, without triggering the dependencies #NODOC
 # on Apache and MySQL, by downloading the debs and installing them manually. #NODOC
 # Now that we're beyond that, get rid of those debs before installing from source. #NODOC

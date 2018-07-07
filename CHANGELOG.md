@@ -1,10 +1,13 @@
 CHANGELOG
 =========
 
+This branch supports Ubuntu 18.04 **only**. When upgrading, **always** upgrade your **existing** Ubuntu 14.04 machine to version the latest release supporting Ubuntu 14.04 --- v0.28. If you are running an older version of Mail-in-a-Box which has an old version of ownCloud or Nextcloud, you will *not* be able to upgrade your data because older versions of ownCloud and Nextcloud that are required to perform the upgrade *cannot* be run on Ubuntu 18.04.
+
 In Development
 --------------
 
 * Starting with v0.28, TLS certificate provisioning wouldn't work on new boxes until the mailinabox setup command was run a second time because of a problem with the non-interactive setup.
+
 * Update to Nextcloud 13.0.5.
 * Update to Roundcube 1.3.7.
 * Update to Z-Push 2.4.4.

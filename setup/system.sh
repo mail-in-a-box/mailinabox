@@ -70,7 +70,7 @@ fi
 
 # ### Add PPAs.
 
-# We install some non-standard Ubuntu packages maintained by us and other
+# We install some non-standard Ubuntu packages maintained by other
 # third-party providers. First ensure add-apt-repository is installed.
 
 if [ ! -f /usr/bin/add-apt-repository ]; then
@@ -79,14 +79,7 @@ if [ ! -f /usr/bin/add-apt-repository ]; then
 	apt_install software-properties-common
 fi
 
-# [Main-in-a-Box's own PPA](https://launchpad.net/~mail-in-a-box/+archive/ubuntu/ppa)
-# holds several .deb packages that we built on our own.
-# One is a replacement for Ubuntu's stock postgrey package that makes
-# some enhancements. The other is dovecot-lucene, a Lucene-based full
-# text search plugin for (and by) dovecot, which is not available in
-# Ubuntu currently.
-
-hide_output add-apt-repository -y ppa:mail-in-a-box/ppa
+# Install the certbot PPA.
 hide_output add-apt-repository -y ppa:certbot/certbot
 
 # ### Update Packages

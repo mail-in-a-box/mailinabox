@@ -354,19 +354,20 @@ def build_sshfp_records():
 	# Get our local fingerprints by running ssh-keyscan. The output looks
 	# like the known_hosts file: hostname, keytype, fingerprint. The order
 	# of the output is arbitrary, so sort it to prevent spurrious updates
-	# to the zone file (that trigger bumping the serial number).
-
-	# scan the sshd_config and find the ssh ports (port 22 may be closed)
+	# to the zone file (that trigger bumping the serial number). However,
+	# if SSH has been configured to listen on a nonstandard port, we must
+	# specify that port to sshkeyscan.
+	port = 22
 	with open('/etc/ssh/sshd_config', 'r') as f:
-		ports = []
-		t = f.readlines()
-		for line in t:
-			s = line.split()
+		for line in f:
+			s = line.rstrip().split()
 			if len(s) == 2 and s[0] == 'Port':
-				ports = ports + [s[1]]
-	# the keys are the same at each port, so we only need to get
-	# them at the first port found (may not be port 22)
-	keys = shell("check_output", ["ssh-keyscan", "-t", "rsa,dsa,ecdsa,ed25519", "-p", ports[0], "localhost"])
+				try:
+					port = int(s[1])
+				except ValueError:
+					pass
+				break
+	keys = shell("check_output", ["ssh-keyscan", "-t", "rsa,dsa,ecdsa,ed25519", "-p", str(port), "localhost"])
 	for key in sorted(keys.split("\n")):
 		if key.strip() == "" or key[0] == "#": continue
 		try:

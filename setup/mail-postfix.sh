@@ -48,9 +48,8 @@ source /etc/mailinabox.conf # load global vars
 # > Every user with more than 100’000 queries per day on the public nameserver
 # > infrastructure and every commercial vendor of dnswl.org data (eg through
 # > anti-spam solutions) must register with dnswl.org and purchase a subscription.
-
 echo "Installing Postfix (SMTP server)..."
-apt_install postfix postfix-pcre postgrey ca-certificates
+apt_install postfix postfix-sqlite postfix-pcre postgrey ca-certificates
 
 # ### Basic Settings
 
