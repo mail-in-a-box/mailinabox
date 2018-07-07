@@ -21,6 +21,11 @@ mkdir -p $STORAGE_ROOT/mail/dkim
 # Not quite sure why.
 echo "127.0.0.1" > /etc/opendkim/TrustedHosts
 
+# We need to at least create these files, since we reference them later.
+# Otherwise, opendkim startup will fail
+touch /etc/opendkim/KeyTable
+touch /etc/opendkim/SigningTable
+
 if grep -q "ExternalIgnoreList" /etc/opendkim.conf; then
 	true # already done #NODOC
 else
