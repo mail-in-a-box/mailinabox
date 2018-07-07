@@ -370,8 +370,8 @@ def build_sshfp_records():
         # to check for port 22 being open, but this isn't sufficient, since
         # sshd has a default of 22.  So, populate the array with "22" here, since
         # it's highly likely the default has not changed on most deployments
-        if not ports:
-		ports = ["22"]
+			if not ports:
+				ports = ["22"]
 
         # the keys are the same at each port, so we only need to get
 	# them at the first port found (may not be port 22)
