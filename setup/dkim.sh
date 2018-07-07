@@ -80,6 +80,7 @@ tools/editconf.py /etc/postfix/main.cf \
 	non_smtpd_milters=\$smtpd_milters \
 	milter_default_action=accept
 
+# We need to explicitly enable the opendmarc service, or it will not start
 hide_output systemctl enable opendmarc
 
 # Restart services.
