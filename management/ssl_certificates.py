@@ -142,17 +142,18 @@ def get_ssl_certificates(env):
 	return ret
 
 def get_domain_ssl_files(domain, ssl_certificates, env, allow_missing_cert=False, use_main_cert=True):
+	# I moved the system_certificate declaration here, since otherwise we get a 
+	# "local variable 'system_certificate' referenced before assignment" error in the 
+        # elif not allow_missing_cert block
+	ssl_private_key = os.path.join(os.path.join(env["STORAGE_ROOT"], 'ssl', 'ssl_private_key.pem'))
+	ssl_certificate = os.path.join(os.path.join(env["STORAGE_ROOT"], 'ssl', 'ssl_certificate.pem'))
+	system_certificate = {
+		"private-key": ssl_private_key,
+		"certificate": ssl_certificate,
+		"primary-domain": env['PRIMARY_HOSTNAME'],
+		"certificate_object": load_pem(load_cert_chain(ssl_certificate)[0]),
+	}
 	if use_main_cert:
-		# Get the system certificate info.
-		ssl_private_key = os.path.join(os.path.join(env["STORAGE_ROOT"], 'ssl', 'ssl_private_key.pem'))
-		ssl_certificate = os.path.join(os.path.join(env["STORAGE_ROOT"], 'ssl', 'ssl_certificate.pem'))
-		system_certificate = {
-			"private-key": ssl_private_key,
-			"certificate": ssl_certificate,
-			"primary-domain": env['PRIMARY_HOSTNAME'],
-			"certificate_object": load_pem(load_cert_chain(ssl_certificate)[0]),
-		}
-
 		if domain == env['PRIMARY_HOSTNAME']:
 			# The primary domain must use the server certificate because
 			# it is hard-coded in some service configuration files.
