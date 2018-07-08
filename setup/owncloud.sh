@@ -87,7 +87,6 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 
 	# Stop php-fpm if running. If theyre not running (which happens on a previously failed install), dont bail.
 	service php7.0-fpm stop &> /dev/null || /bin/true
-	service php7-fpm stop &> /dev/null || /bin/true
 
 	# Backup the existing ownCloud/Nextcloud.
 	# Create a backup directory to store the current installation and database to
