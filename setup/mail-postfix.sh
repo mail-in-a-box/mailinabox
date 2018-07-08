@@ -50,7 +50,7 @@ source /etc/mailinabox.conf # load global vars
 # > anti-spam solutions) must register with dnswl.org and purchase a subscription.
 
 echo "Installing Postfix (SMTP server)..."
-apt_install postfix postfix-pcre postgrey ca-certificates
+apt_install postfix postfix-sqlite postfix-pcre postgrey ca-certificates
 
 # ### Basic Settings
 
