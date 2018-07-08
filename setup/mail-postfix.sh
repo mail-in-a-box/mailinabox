@@ -48,7 +48,10 @@ source /etc/mailinabox.conf # load global vars
 # > Every user with more than 100’000 queries per day on the public nameserver
 # > infrastructure and every commercial vendor of dnswl.org data (eg through
 # > anti-spam solutions) must register with dnswl.org and purchase a subscription.
-
+#
+# Since we're not installing the mail-in-a-box ppa, we just get bare postgrey
+# We also install postfix-sqlite, since otherwise the sqlite dictionary type
+# will not work
 echo "Installing Postfix (SMTP server)..."
 apt_install postfix postfix-sqlite postfix-pcre postgrey ca-certificates
 
