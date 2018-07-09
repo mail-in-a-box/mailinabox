@@ -1,5 +1,5 @@
 [Unit]
-Description=Mail-In-A-Box System Management Service
+Description=Mail-In-A-Box Munin Startup Service
 After=multi-user.target
 
 [Service]
