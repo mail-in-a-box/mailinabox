@@ -139,7 +139,8 @@ echo "Mail-in-a-Box uses Let's Encrypt to provision free certificates"
 echo "to enable HTTPS connections to your box. You'll now be asked to agree"
 echo "to Let's Encrypt's terms of service."
 echo
-certbot register --register-unsafely-without-email --config-dir $STORAGE_ROOT/ssl/lets_encrypt
+certbot register $([ "$NONINTERACTIVE" == 1 ] && echo "--agree-tos") \
+    --register-unsafely-without-email --config-dir $STORAGE_ROOT/ssl/lets_encrypt
 fi
 
 # Done.
