@@ -32,8 +32,10 @@ elif [[ $VERSION != `cat /usr/local/lib/z-push/version` ]]; then
 fi
 if [ $needs_update == 1 ]; then
 	rm -rf /usr/local/lib/z-push
+	rm -rf /tmp/z-push
 
-	git_clone https://stash.z-hub.io/scm/zp/z-push.git $VERSION '' /tmp/z-push
+	wget -nv -O /tmp/z-push.zip "https://stash.z-hub.io/rest/api/latest/projects/ZP/repos/z-push/archive?at=refs/tags/$VERSION&format=zip"
+	unzip -q /tmp/z-push.zip -d /tmp/z-push
 
 	mkdir /usr/local/lib/z-push
 	cp -r /tmp/z-push/src/* /usr/local/lib/z-push
