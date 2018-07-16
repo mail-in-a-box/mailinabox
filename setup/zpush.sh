@@ -23,6 +23,7 @@ phpenmod -v php7.0 imap
 
 # Copy Z-Push into place.
 VERSION=2.3.9
+TARGETHASH=60087b97e4b1c73db096e252cf893c75df556907
 needs_update=0 #NODOC
 if [ ! -f /usr/local/lib/z-push/version ]; then
 	needs_update=1 #NODOC
@@ -31,15 +32,12 @@ elif [[ $VERSION != `cat /usr/local/lib/z-push/version` ]]; then
 	needs_update=1 #NODOC
 fi
 if [ $needs_update == 1 ]; then
+	wget_verify http://download.z-push.org/final/2.3/z-push-$VERSION.tar.gz $TARGETHASH /tmp/z-push.tar.gz
+
 	rm -rf /usr/local/lib/z-push
-	rm -rf /tmp/z-push
-
-	wget -nv -O /tmp/z-push.zip "https://stash.z-hub.io/rest/api/latest/projects/ZP/repos/z-push/archive?at=refs/tags/$VERSION&format=zip"
-	unzip -q /tmp/z-push.zip -d /tmp/z-push
-
-	mkdir /usr/local/lib/z-push
-	cp -r /tmp/z-push/src/* /usr/local/lib/z-push
-	rm -rf /tmp/z-push
+	tar -xzf /tmp/z-push.tar.gz -C /usr/local/lib/
+	rm /tmp/z-push.tar.gz
+	mv /usr/local/lib/z-push-$VERSION /usr/local/lib/z-push
 
 	rm -f /usr/sbin/z-push-{admin,top}
 	ln -s /usr/local/lib/z-push/z-push-admin.php /usr/sbin/z-push-admin
