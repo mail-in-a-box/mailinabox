@@ -18,8 +18,6 @@
       <string>PRIMARY_HOSTNAME</string>
       <key>CalDAVPort</key>
       <real>443</real>
-      <key>CalDAVPrincipalURL</key>
-      <string>/cloud/remote.php/caldav/calendars/</string>
       <key>CalDAVUseSSL</key>
       <true/>
       <key>PayloadDescription</key>
