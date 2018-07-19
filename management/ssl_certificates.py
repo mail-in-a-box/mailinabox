@@ -142,7 +142,7 @@ def get_ssl_certificates(env):
 	return ret
 
 def get_domain_ssl_files(domain, ssl_certificates, env, allow_missing_cert=False, use_main_cert=True):
-	if use_main_cert:
+	if use_main_cert or not allow_missing_cert:
 		# Get the system certificate info.
 		ssl_private_key = os.path.join(os.path.join(env["STORAGE_ROOT"], 'ssl', 'ssl_private_key.pem'))
 		ssl_certificate = os.path.join(os.path.join(env["STORAGE_ROOT"], 'ssl', 'ssl_certificate.pem'))
@@ -153,6 +153,7 @@ def get_domain_ssl_files(domain, ssl_certificates, env, allow_missing_cert=False
 			"certificate_object": load_pem(load_cert_chain(ssl_certificate)[0]),
 		}
 
+	if use_main_cert:
 		if domain == env['PRIMARY_HOSTNAME']:
 			# The primary domain must use the server certificate because
 			# it is hard-coded in some service configuration files.
@@ -225,7 +226,7 @@ def get_certificates_to_provision(env, limit_domains=None, show_valid_certs=True
 				# DNS is all good.
 
 				# Check for a good existing cert.
-				existing_cert = get_domain_ssl_files(domain, existing_certs, env, use_main_cert=False)
+				existing_cert = get_domain_ssl_files(domain, existing_certs, env, use_main_cert=False, allow_missing_cert=True)
 				if existing_cert:
 					existing_cert_check = check_certificate(domain, existing_cert['certificate'], existing_cert['private-key'],
 						warn_if_expiring_soon=14)
