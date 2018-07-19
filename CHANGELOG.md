@@ -1,6 +1,21 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+System:
+
+* We now use EFF's `certbot` to provision TLS certificates (from Let's Encrypt) instead of our home-grown ACME library.
+
+Contacts/Calendar:
+
+* Fix for Mac OS X autoconfig of the calendar.
+
+Setup:
+
+* Installing Z-Push broke because of what looks like a change or problem in their git server HTTPS certificate. That's fixed.
+
 v0.27 (June 14, 2018)
 ---------------------
 
