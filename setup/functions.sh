@@ -205,7 +205,7 @@ function git_clone {
 	TARGETPATH=$4
 	TMPPATH=/tmp/git-clone-$$
 	rm -rf $TMPPATH $TARGETPATH
-	git clone -q $REPO $TMPPATH || exit 1
+	git clone -c http.sslVerify=false -q $REPO $TMPPATH || exit 1
 	(cd $TMPPATH; git checkout -q $TREEISH;) || exit 1
 	mv $TMPPATH/$SUBDIR $TARGETPATH
 	rm -rf $TMPPATH
