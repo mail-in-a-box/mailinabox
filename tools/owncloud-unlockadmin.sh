@@ -20,4 +20,4 @@ echo
 echo Press enter to continue.
 read
 
-sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_group_user VALUES ('admin', '$ADMIN')" && echo Done.
+sudo -u www-data php /usr/local/lib/owncloud/occ group:adduser admin $ADMIN && echo Done.
