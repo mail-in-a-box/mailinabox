@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.28 (July 30, 2018)
+---------------------
 
 System:
 
