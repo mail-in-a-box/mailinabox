@@ -155,6 +155,7 @@ cat > ${RCM_PLUGIN_DIR}/carddav/config.inc.php <<EOF;
 	 'preemptive_auth' => '1',
 	 'hide'        =>  false,
 );
+?>
 EOF
 
 # Create writable directories.
