@@ -39,7 +39,7 @@ These services are protected by [TLS](https://en.wikipedia.org/wiki/Transport_La
 The services all follow these rules:
 
 * TLS certificates are generated with 2048-bit RSA keys and SHA-256 fingerprints. The box provides a self-signed certificate by default. The [setup guide](https://mailinabox.email/guide.html) explains how to verify the certificate fingerprint on first login. Users are encouraged to replace the certificate with a proper CA-signed one. ([source](setup/ssl.sh))
-* Only TLSv1, TLSv1.1 and TLSv1.2 are offered (the older SSL protocols are not offered).
+* Only TLSv1.1 and TLSv1.2 are offered (the older SSL protocols and non-compliant TLSv1 are not offered).
 * HTTPS, IMAP, and POP track the [Mozilla Intermediate Ciphers Recommendation](https://wiki.mozilla.org/Security/Server_Side_TLS), balancing security with supporting a wide range of mail clients. Diffie-Hellman ciphers use a 2048-bit key for forward secrecy. For more details, see the [output of SSLyze for these ports](tests/tls_results.txt).
 * SMTP (port 25) uses the Postfix medium grade ciphers and SMTP Submission (port 587) uses the Postfix high grade ciphers ([more info](http://www.postfix.org/postconf.5.html#smtpd_tls_mandatory_ciphers)).
 
