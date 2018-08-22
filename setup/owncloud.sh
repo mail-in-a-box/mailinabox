@@ -349,12 +349,14 @@ include("$STORAGE_ROOT/owncloud/config.php");
 \$CONFIG['mail_domain'] = '$PRIMARY_HOSTNAME';
 
 \$CONFIG['app.mail.accounts.default'] = array(
-    'email' => '%EMAIL%',
+    'email' => '%USERID%',
     'imapHost' => '$PRIMARY_HOSTNAME',
     'imapPort' => 993,
+    'imapUser' => '%USERID%',
     'imapSslMode' => 'ssl',
     'smtpHost' => '$PRIMARY_HOSTNAME',
     'smtpPort' => 587,
+    'smtpUser' => '%USERID%',
     'smtpSslMode' => 'tls',
 );
 
