@@ -329,6 +329,7 @@ fi
 # * We need to set the logdateformat to something that will work correctly with fail2ban
 # * mail_domain' needs to be set every time we run the setup. Making sure we are setting 
 #   the correct domain name if the domain is being change from the previous setup.
+# * Automatically add e-mail accounts in nextcloud mail
 # Use PHP to read the settings file, modify it, and write out the new settings array.
 TIMEZONE=$(cat /etc/timezone)
 CONFIG_TEMP=$(/bin/mktemp)
@@ -346,6 +347,18 @@ include("$STORAGE_ROOT/owncloud/config.php");
 \$CONFIG['logdateformat'] = 'Y-m-d H:i:s';
 
 \$CONFIG['mail_domain'] = '$PRIMARY_HOSTNAME';
+
+\$CONFIG['app.mail.accounts.default'] = array(
+    'email' => '%EMAIL%',
+    'imapHost' => '$PRIMARY_HOSTNAME',
+    'imapPort' => 993,
+    'imapUser' => '%EMAIL%',
+    'imapSslMode' => 'ssl',
+    'smtpHost' => '$PRIMARY_HOSTNAME',
+    'smtpPort' => 587,
+    'smtpUser' => '%EMAIL%',
+    'smtpSslMode' => 'tls',
+);
 
 echo "<?php\n\\\$CONFIG = ";
 var_export(\$CONFIG);
