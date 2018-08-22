@@ -352,11 +352,9 @@ include("$STORAGE_ROOT/owncloud/config.php");
     'email' => '%EMAIL%',
     'imapHost' => '$PRIMARY_HOSTNAME',
     'imapPort' => 993,
-    'imapUser' => '%EMAIL%',
     'imapSslMode' => 'ssl',
     'smtpHost' => '$PRIMARY_HOSTNAME',
     'smtpPort' => 587,
-    'smtpUser' => '%EMAIL%',
     'smtpSslMode' => 'tls',
 );
 
