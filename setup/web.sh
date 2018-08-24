@@ -94,21 +94,6 @@ if [ ! -f $STORAGE_ROOT/www/default/index.html ]; then
 fi
 chown -R $STORAGE_USER $STORAGE_ROOT/www
 
-# We previously installed a custom init script to start the PHP FastCGI daemon. #NODOC
-# Remove it now that we're using php5-fpm. #NODOC
-if [ -L /etc/init.d/php-fastcgi ]; then
-	echo "Removing /etc/init.d/php-fastcgi, php5-cgi..." #NODOC
-	rm -f /etc/init.d/php-fastcgi #NODOC
-	hide_output update-rc.d php-fastcgi remove #NODOC
-	apt-get -y purge php5-cgi #NODOC
-fi
-
-# Remove obsoleted scripts. #NODOC
-# exchange-autodiscover is now handled by Z-Push. #NODOC
-for f in webfinger exchange-autodiscover; do #NODOC
-	rm -f /usr/local/bin/mailinabox-$f.php #NODOC
-done #NODOC
-
 # Start services.
 restart_service nginx
 restart_service php7.0-fpm

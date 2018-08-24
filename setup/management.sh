@@ -87,7 +87,6 @@ rm -f /tmp/bootstrap.zip
 
 # Create an init script to start the management daemon and keep it
 # running after a reboot.
-rm -f /usr/local/bin/mailinabox-daemon /etc/init.d/mailinabox # old paths
 cat > $inst_dir/start <<EOF;
 #!/bin/bash
 source $venv/bin/activate
@@ -97,10 +96,6 @@ chmod +x $inst_dir/start
 hide_output systemctl link conf/mailinabox.service
 hide_output systemctl daemon-reload
 hide_output systemctl enable mailinabox.service
-
-# Remove old files we no longer use.
-rm -f /etc/cron.daily/mailinabox-backup
-rm -f /etc/cron.daily/mailinabox-statuschecks
 
 # Perform nightly tasks at 3am in system time: take a backup, run
 # status checks and email the administrator any changes.
