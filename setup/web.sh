@@ -19,10 +19,7 @@ fi
 
 echo "Installing Nginx (web server)..."
 
-apt_install nginx php7.0-cli php7.0-fpm
-
-# Set PHP7.0 as the default since several versions are available.
-update-alternatives --set php /usr/bin/php7.0
+apt_install nginx php-cli php-fpm
 
 rm -f /etc/nginx/sites-enabled/default
 
@@ -44,19 +41,19 @@ tools/editconf.py /etc/nginx/nginx.conf -s \
 	server_names_hash_bucket_size="128;"
 
 # Tell PHP not to expose its version number in the X-Powered-By header.
-tools/editconf.py /etc/php/7.0/fpm/php.ini -c ';' \
+tools/editconf.py /etc/php/7.2/fpm/php.ini -c ';' \
 	expose_php=Off
 
 # Set PHPs default charset to UTF-8, since we use it. See #367.
-tools/editconf.py /etc/php/7.0/fpm/php.ini -c ';' \
+tools/editconf.py /etc/php/7.2/fpm/php.ini -c ';' \
         default_charset="UTF-8"
 
 # Switch from the dynamic process manager to the ondemand manager see #1216
-tools/editconf.py /etc/php/7.0/fpm/pool.d/www.conf -c ';' \
+tools/editconf.py /etc/php/7.2/fpm/pool.d/www.conf -c ';' \
 	pm=ondemand
 
 # Bump up PHP's max_children to support more concurrent connections
-tools/editconf.py /etc/php/7.0/fpm/pool.d/www.conf -c ';' \
+tools/editconf.py /etc/php/7.2/fpm/pool.d/www.conf -c ';' \
 	pm.max_children=8
 
 # Other nginx settings will be configured by the management service
@@ -96,7 +93,7 @@ chown -R $STORAGE_USER $STORAGE_ROOT/www
 
 # Start services.
 restart_service nginx
-restart_service php7.0-fpm
+restart_service php7.2-fpm
 
 # Open ports.
 ufw_allow http
