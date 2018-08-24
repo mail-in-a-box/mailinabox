@@ -53,16 +53,14 @@ if [ -e ~/.wgetrc ]; then
 	exit
 fi
 
-# Check that we are running on x86_64 or i686, any other architecture is unsupported and
-# will fail later in the setup when we try to install the custom build lucene packages.
-#
-# Set ARM=1 to ignore this check if you have built the packages yourself. If you do this
-# you are on your own!
+# Check that we are running on x86_64 or i686 architecture, which are the only
+# ones we support / test.
 ARCHITECTURE=$(uname -m)
 if [ "$ARCHITECTURE" != "x86_64" ] && [ "$ARCHITECTURE" != "i686" ]; then
-if [ -z "$ARM" ]; then
-	echo "Mail-in-a-Box only supports x86_64 or i686 and will not work on any other architecture, like ARM."
-	echo "Your architecture is $ARCHITECTURE"
-	exit
-fi
+	echo
+	echo "WARNING:"
+	echo "Mail-in-a-Box has only been tested on x86_64 and i686 platform"
+	echo "architectures. Your architecture, $ARCHITECTURE, may not work."
+	echo "You are on your own."
+	echo
 fi
