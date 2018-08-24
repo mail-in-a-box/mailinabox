@@ -14,7 +14,7 @@ source setup/preflight.sh
 # Python may not be able to read/write files. This is also
 # in the management daemon startup script and the cron script.
 
-if [ -z `locale -a | grep en_US.utf8` ]; then
+if ! locale -a | grep en_US.utf8 > /dev/null; then
     # Generate locale if not exists
     hide_output locale-gen en_US.UTF-8
 fi
