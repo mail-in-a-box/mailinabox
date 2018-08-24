@@ -19,7 +19,7 @@ apt-get purge -qq -y owncloud*
 
 apt_install php7.0 php7.0-fpm \
 	php7.0-cli php7.0-sqlite php7.0-gd php7.0-imap php7.0-curl php-pear php-apc curl \
-        php7.0-dev php7.0-gd memcached php7.0-memcached php7.0-xml php7.0-mbstring php7.0-zip php7.0-apcu
+        php7.0-dev php7.0-gd php7.0-xml php7.0-mbstring php7.0-zip php7.0-apcu php7.0-json php7.0-intl
 
 # Migrate <= v0.10 setups that stored the ownCloud config.php in /usr/local rather than
 # in STORAGE_ROOT. Move the file to STORAGE_ROOT.
@@ -57,11 +57,11 @@ InstallNextcloud() {
 	# their github repositories.
 	mkdir -p /usr/local/lib/owncloud/apps
 
-	wget_verify https://github.com/nextcloud/contacts/releases/download/v1.5.3/contacts.tar.gz 78c4d49e73f335084feecd4853bd8234cf32615e /tmp/contacts.tgz
+	wget_verify https://github.com/nextcloud/contacts/releases/download/v2.1.5/contacts.tar.gz b7460d15f1b78d492ed502d778c0c458d503ba17 /tmp/contacts.tgz
 	tar xf /tmp/contacts.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/contacts.tgz
 
-	wget_verify https://github.com/nextcloud/calendar/releases/download/v1.5.3/calendar.tar.gz b370352d1f280805cc7128f78af4615f623827f8 /tmp/calendar.tgz
+	wget_verify https://github.com/nextcloud/calendar/releases/download/v1.6.1/calendar.tar.gz f93a247cbd18bc624f427ba2a967d93ebb941f21 /tmp/calendar.tgz
 	tar xf /tmp/calendar.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/calendar.tgz
 
@@ -154,8 +154,8 @@ InstallOwncloud() {
 	fi
 }
 
-owncloud_ver=12.0.5
-owncloud_hash=d25afbac977a4e331f5e38df50aed0844498ca86
+owncloud_ver=13.0.5
+owncloud_hash=e2b4a4bebd4fac14feae1e6e8997682f73fa8b50
 
 # Check if Nextcloud dir exist, and check if version matches owncloud_ver (if either doesn't - install/upgrade)
 if [ ! -d /usr/local/lib/owncloud/ ] \
@@ -244,6 +244,12 @@ EOF
 		if grep -q "OC_VersionString = '10\.0\.[0-9]" /usr/local/lib/owncloud/version.php; then
 			echo "We are running Nextcloud 10.0.x, upgrading to Nextcloud 11.0.7 first"
 			InstallNextcloud 11.0.7 f936ddcb2ae3dbb66ee4926eb8b2ebbddc3facbe
+		fi
+
+		# If we are upgrading from Nextcloud 11 we should go to Nextcloud 12 first.
+		if grep -q "OC_VersionString = '11\." /usr/local/lib/owncloud/version.php; then
+			echo "We are running Nextcloud 11, upgrading to Nextcloud 12.0.5 first"
+			InstallNextcloud 12.0.5 d25afbac977a4e331f5e38df50aed0844498ca86
 		fi
 	fi
 
