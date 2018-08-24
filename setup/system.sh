@@ -134,8 +134,8 @@ hide_output apt-get update
 fi
 
 # ### Suppress Upgrade Prompts
-# Since Mail-in-a-Box might jump straight to 18.04 LTS, there's no need
-# to be reminded about 16.04 on every login.
+# When Ubuntu 20 comes out, we don't want users to be prompted to upgrade,
+# because we don't yet support it.
 if [ -f /etc/update-manager/release-upgrades ]; then
 	tools/editconf.py /etc/update-manager/release-upgrades Prompt=never
 	rm -f /var/lib/ubuntu-release-upgrader/release-upgrade-available
@@ -182,7 +182,6 @@ fi
 # * DNSSEC signing keys (see `dns.sh`)
 # * our management server's API key (via Python's os.urandom method)
 # * Roundcube's SECRET_KEY (`webmail.sh`)
-# * ownCloud's administrator account password (`owncloud.sh`)
 #
 # Why /dev/urandom? It's the same as /dev/random, except that it doesn't wait
 # for a constant new stream of entropy. In practice, we only need a little

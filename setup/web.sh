@@ -21,7 +21,7 @@ echo "Installing Nginx (web server)..."
 
 apt_install nginx php7.0-cli php7.0-fpm
 
-# Set PHP7 as the default
+# Set PHP7.0 as the default since several versions are available.
 update-alternatives --set php /usr/bin/php7.0
 
 rm -f /etc/nginx/sites-enabled/default
