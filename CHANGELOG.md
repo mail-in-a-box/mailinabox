@@ -6,6 +6,7 @@ In Development
 
 * Update to Nextcloud 13.0.5.
 * Update to Roundcube 1.3.7.
+* Update to Z-Push 2.4.4.
 
 v0.28 (July 30, 2018)
 ---------------------
