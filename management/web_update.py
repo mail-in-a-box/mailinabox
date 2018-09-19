@@ -150,8 +150,12 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 			# any proxy or redirect here?
 			for path, url in yaml.get("proxies", {}).items():
 				nginx_conf_extra += "\tlocation %s {" % path
+                nginx_conf_extra += "\n\t\tproxy_set_header Host $http_host;"
+                nginx_conf_extra += "\n\t\tproxy_set_header X-Real-IP $remote_addr;"
+                nginx_conf_extra += "\n\t\tproxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;"
+                nginx_conf_extra += "\n\t\tproxy_set_header X-Forwarded-Host $http_host;"
+                nginx_conf_extra += "\n\t\tproxy_set_header X-Forwarded-Proto $scheme;"
 				nginx_conf_extra += "\n\t\tproxy_pass %s;" % url
-				nginx_conf_extra += "\n\t\tproxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;"
 				nginx_conf_extra += "\n\t}\n"
 			for path, url in yaml.get("redirects", {}).items():
 				nginx_conf_extra += "\trewrite %s %s permanent;\n" % (path, url)
