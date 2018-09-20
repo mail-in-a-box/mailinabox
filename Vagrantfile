@@ -2,8 +2,14 @@
 # vi: set ft=ruby :
 
 Vagrant.configure("2") do |config|
-  config.vm.box = "ubuntu14.04"
-  config.vm.box_url = "http://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box"
+  config.vm.provider "virtualbox" do |v|
+    config.vm.box = "ubuntu14.04"
+    config.vm.box_url = "http://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box"
+  end
+
+  config.vm.provider "parallels" do |p, override|
+    override.vm.box = "parallels/ubuntu-14.04"
+  end
 
   if Vagrant.has_plugin?("vagrant-cachier")
     # Configure cached packages to be shared between instances of the same base box.
@@ -26,7 +32,7 @@ Vagrant.configure("2") do |config|
     export PUBLIC_IP=auto
     export PUBLIC_IPV6=auto
     export PRIMARY_HOSTNAME=auto
-    #export SKIP_NETWORK_CHECKS=1
+    export SKIP_NETWORK_CHECKS=1
 
     # Start the setup script.
     cd /vagrant
