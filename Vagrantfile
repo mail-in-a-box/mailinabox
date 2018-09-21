@@ -9,6 +9,7 @@ Vagrant.configure("2") do |config|
 
   config.vm.provider "parallels" do |p, override|
     override.vm.box = "parallels/ubuntu-14.04"
+    config.vm.box_url = nil
   end
 
   if Vagrant.has_plugin?("vagrant-cachier")
