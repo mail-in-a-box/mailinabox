@@ -3,25 +3,27 @@ function hide_output {
 	# and returns a non-zero exit code.
 
 	# Get a temporary file.
-	OUTPUT=$(tempfile)
+	OUTPUT=$(mktemp)
 
 	# Execute command, redirecting stderr/stdout to the temporary file.
-	$@ &> $OUTPUT
+	"$@" &> "$OUTPUT"
 
 	# If the command failed, show the output that was captured in the temporary file.
 	E=$?
 	if [ $E != 0 ]; then
 		# Something failed.
 		echo
-		echo FAILED: $@
-		echo -----------------------------------------
-		cat $OUTPUT
-		echo -----------------------------------------
+		echo "FAILED: $*"
+		echo "-----------------------------------------"
+		cat "$OUTPUT"
+		echo "-----------------------------------------"
+		# Remove temporary file.
+		rm -f "$OUTPUT"
 		exit $E
 	fi
 
 	# Remove temporary file.
-	rm -f $OUTPUT
+	rm -f "$OUTPUT"
 }
 
 function apt_get_quiet {
@@ -44,8 +46,8 @@ function apt_install {
 	# install' for all of the packages.  Calling `dpkg` on each package is slow,
 	# and doesn't affect what we actually do, except in the messages, so let's
 	# not do that anymore.
-	PACKAGES=$@
-	apt_get_quiet install $PACKAGES
+	PACKAGES=( "$@" )
+	apt_get_quiet install "${PACKAGES[@]}"
 }
 
 function apt_add_repository_to_unattended_upgrades {
@@ -61,9 +63,9 @@ function get_default_hostname {
 	# Guess the machine's hostname. It should be a fully qualified
 	# domain name suitable for DNS. None of these calls may provide
 	# the right value, but it's the best guess we can make.
-	set -- $(hostname --fqdn      2>/dev/null ||
+	set -- "$(hostname --fqdn      2>/dev/null ||
                  hostname --all-fqdns 2>/dev/null ||
-                 hostname             2>/dev/null)
+                 hostname             2>/dev/null)"
 	printf '%s\n' "$1" # return this value
 }
 
@@ -121,28 +123,28 @@ function get_default_privateip {
 	route=$(ip -$1 -o route get $target | grep -v unreachable)
 
 	# Parse the address out of the route information.
-	address=$(echo $route | sed "s/.* src \([^ ]*\).*/\1/")
+	address=$(echo "$route" | sed "s/.* src \([^ ]*\).*/\1/")
 
 	if [[ "$1" == "6" && $address == fe80:* ]]; then
 		# For IPv6 link-local addresses, parse the interface out
 		# of the route information and append it with a '%'.
-		interface=$(echo $route | sed "s/.* dev \([^ ]*\).*/\1/")
+		interface=$(echo "$route" | sed "s/.* dev \([^ ]*\).*/\1/")
 		address=$address%$interface
 	fi
 
-	echo $address
+	echo "$address"
 		
 }
 
 function ufw_allow {
 	if [ -z "$DISABLE_FIREWALL" ]; then
-		# ufw has completely unhelpful output
-		ufw allow $1 > /dev/null;
+		# UFW has completely unhelpful output
+		ufw allow "$1" > /dev/null;
 	fi
 }
 
 function restart_service {
-	hide_output service $1 restart
+	hide_output service "$1" restart
 }
 
 ## Dialog Functions ##
@@ -167,7 +169,7 @@ function input_menu {
 	declare -n result=$4
 	declare -n result_code=$4_EXITCODE
 	local IFS=^$'\n'
-	result=$(dialog --stdout --title "$1" --menu "$2" 0 0 0 $3)
+	result=$(dialog --stdout --title "$1" --menu "$2" 0 0 0 "$3")
 	result_code=$?
 }
 
@@ -178,17 +180,17 @@ function wget_verify {
 	HASH=$2
 	DEST=$3
 	CHECKSUM="$HASH  $DEST"
-	rm -f $DEST
-	hide_output wget -O $DEST $URL
+	rm -f "$DEST"
+	hide_output wget -O "$DEST" "$URL"
 	if ! echo "$CHECKSUM" | sha1sum --check --strict > /dev/null; then
 		echo "------------------------------------------------------------"
 		echo "Download of $URL did not match expected checksum."
 		echo "Found:"
-		sha1sum $DEST
+		sha1sum "$DEST"
 		echo
 		echo "Expected:"
 		echo "$CHECKSUM"
-		rm -f $DEST
+		rm -f "$DEST"
 		exit 1
 	fi
 }
@@ -204,9 +206,9 @@ function git_clone {
 	SUBDIR=$3
 	TARGETPATH=$4
 	TMPPATH=/tmp/git-clone-$$
-	rm -rf $TMPPATH $TARGETPATH
-	git clone -q $REPO $TMPPATH || exit 1
-	(cd $TMPPATH; git checkout -q $TREEISH;) || exit 1
-	mv $TMPPATH/$SUBDIR $TARGETPATH
+	rm -rf $TMPPATH "$TARGETPATH"
+	git clone -q "$REPO" $TMPPATH || exit 1
+	(cd $TMPPATH; git checkout -q "$TREEISH";) || exit 1
+	mv "$TMPPATH/$SUBDIR" "$TARGETPATH"
 	rm -rf $TMPPATH
 }

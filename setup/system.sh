@@ -11,13 +11,12 @@ source setup/functions.sh # load our functions
 #
 # First set the hostname in the configuration file, then activate the setting
 
-echo $PRIMARY_HOSTNAME > /etc/hostname
-hostname $PRIMARY_HOSTNAME
+hostnamectl set-hostname "$PRIMARY_HOSTNAME"
 
 # ### Add swap space to the system
 
 # If the physical memory of the system is below 2GB it is wise to create a
-# swap file. This will make the system more resiliant to memory spikes and
+# swap file. This will make the system more resilient to memory spikes and
 # prevent for instance spam filtering from crashing
 
 # We will create a 1G file, this should be a good balance between disk usage
@@ -36,7 +35,7 @@ hostname $PRIMARY_HOSTNAME
 # See https://www.digitalocean.com/community/tutorials/how-to-add-swap-on-ubuntu-14-04
 # for reference
 
-SWAP_MOUNTED=$(cat /proc/swaps | tail -n+2)
+SWAP_MOUNTED=$(< /proc/swaps tail -n+2)
 SWAP_IN_FSTAB=$(grep "swap" /etc/fstab)
 ROOT_IS_BTRFS=$(grep "\/ .*btrfs" /proc/mounts)
 TOTAL_PHYSICAL_MEM=$(head -n 1 /proc/meminfo | awk '{print $2}')
@@ -46,14 +45,14 @@ if
 	[ -z "$SWAP_IN_FSTAB" ] &&
 	[ ! -e /swapfile ] &&
 	[ -z "$ROOT_IS_BTRFS" ] &&
-	[ $TOTAL_PHYSICAL_MEM -lt 1900000 ] &&
-	[ $AVAILABLE_DISK_SPACE -gt 5242880 ]
+	[ "$TOTAL_PHYSICAL_MEM" -lt 1900000 ] &&
+	[ "$AVAILABLE_DISK_SPACE" -gt 5242880 ]
 then
 	echo "Adding a swap file to the system..."
 
-	# Allocate and activate the swap file. Allocate in 1KB chuncks
+	# Allocate and activate the swap file. Allocate in 1KB chunks
 	# doing it in one go, could fail on low memory systems
-	dd if=/dev/zero of=/swapfile bs=1024 count=$[1024*1024] status=none
+	dd if=/dev/zero of=/swapfile bs=1024 count=$((1024*1024)) status=none
 	if [ -e /swapfile ]; then
 		chmod 600 /swapfile
 		hide_output mkswap /swapfile
@@ -95,9 +94,9 @@ hide_output add-apt-repository -y ppa:certbot/certbot
 # of things from Ubuntu, as well as the directory of packages provide by the
 # PPAs so we can install those packages later.
 
-echo Updating system packages...
+echo "Updating system packages..."
 hide_output apt-get update
-apt_get_quiet upgrade
+apt_get_quiet dist-upgrade
 
 # Old kernels pile up over time and take up a lot of disk space, and because of Mail-in-a-Box
 # changes there may be other packages that are no longer needed. Clear out anything apt knows
@@ -117,12 +116,12 @@ apt_get_quiet autoremove
 # * ntp: keeps the system time correct
 # * fail2ban: scans log files for repeated failed login attempts and blocks the remote IP at the firewall
 # * netcat-openbsd: `nc` command line networking tool
-# * git: we install some things directly from github
+# * git: we install some things directly from GitHub
 # * sudo: allows privileged users to execute commands as root without being root
 # * coreutils: includes `nproc` tool to report number of processors, mktemp
 # * bc: allows us to do math to compute sane defaults
 
-echo Installing system packages...
+echo "Installing system packages..."
 apt_install python3 python3-dev python3-pip \
 	netcat-openbsd wget curl git sudo coreutils bc \
 	haveged pollinate unzip \
@@ -157,13 +156,13 @@ fi
 # things (i.e. late at night in whatever timezone the user actually lives
 # in).
 #
-# However, changing the timezone once it is set seems to confuse fail2ban
-# and requires restarting fail2ban (done below in the fail2ban
+# However, changing the timezone once it is set seems to confuse Fail2Ban
+# and requires restarting Fail2Ban (done below in the Fail2Ban
 # section) and syslog (see #328). There might be other issues, and it's
 # not likely the user will want to change this, so we only ask on first
 # setup.
 if [ -z "$NONINTERACTIVE" ]; then
-	if [ ! -f /etc/timezone ] || [ ! -z $FIRST_TIME_SETUP ]; then
+	if [ ! -f /etc/timezone ] || [ -n "$FIRST_TIME_SETUP" ]; then
 		# If the file is missing or this is the user's first time running
 		# Mail-in-a-Box setup, run the interactive timezone configuration
 		# tool.
@@ -226,7 +225,7 @@ fi
 # hardware entropy to get going, by drawing from /dev/random. haveged makes this
 # less likely to stall for very long.
 
-echo Initializing system random number generator...
+echo "Initializing system random number generator..."
 dd if=/dev/random of=/dev/urandom bs=1 count=32 2> /dev/null
 
 # This is supposedly sufficient. But because we're not sure if hardware entropy
@@ -237,7 +236,7 @@ pollinate  -q -r
 
 # Between these two, we really ought to be all set.
 
-# We need an ssh key to store backups via rsync, if it doesn't exist create one
+# We need an SSH key to store backups via rsync, if it doesn't exist create one
 if [ ! -f /root/.ssh/id_rsa_miab ]; then
 	echo 'Creating SSH key for backup…'
 	ssh-keygen -t rsa -b 2048 -a 100 -f /root/.ssh/id_rsa_miab -N '' -q
@@ -270,11 +269,11 @@ if [ -z "$DISABLE_FIREWALL" ]; then
 	# settings, find the port it is supposedly running on, and open that port #NODOC
 	# too. #NODOC
 	SSH_PORT=$(sshd -T 2>/dev/null | grep "^port " | sed "s/port //") #NODOC
-	if [ ! -z "$SSH_PORT" ]; then
+	if [ -n "$SSH_PORT" ]; then
 	if [ "$SSH_PORT" != "22" ]; then
 
-	echo Opening alternate SSH port $SSH_PORT. #NODOC
-	ufw_allow $SSH_PORT #NODOC
+	echo "Opening alternate SSH port $SSH_PORT." #NODOC
+	ufw_allow "$SSH_PORT" #NODOC
 
 	fi
 	fi
@@ -328,15 +327,14 @@ restart_service resolvconf
 
 # Configure the Fail2Ban installation to prevent dumb bruce-force attacks against dovecot, postfix, ssh, etc.
 rm -f /etc/fail2ban/jail.local # we used to use this file but don't anymore
-cat conf/fail2ban/jails.conf \
-	| sed "s/PUBLIC_IP/$PUBLIC_IP/g" \
+< conf/fail2ban/jails.conf sed "s/PUBLIC_IP/$PUBLIC_IP/g" \
 	| sed "s#STORAGE_ROOT#$STORAGE_ROOT#" \
 	> /etc/fail2ban/jail.d/mailinabox.conf
 cp -f conf/fail2ban/filter.d/* /etc/fail2ban/filter.d/
 
 # On first installation, the log files that the jails look at don't all exist.
-# e.g., The roundcube error log isn't normally created until someone logs into
-# Roundcube for the first time. This causes fail2ban to fail to start. Later
-# scripts will ensure the files exist and then fail2ban is given another
+# e.g., The Roundcube error log isn't normally created until someone logs into
+# Roundcube for the first time. This causes Fail2Ban to fail to start. Later
+# scripts will ensure the files exist and then Fail2Ban is given another
 # restart at the very end of setup.
 restart_service fail2ban

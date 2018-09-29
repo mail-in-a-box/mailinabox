@@ -12,7 +12,7 @@
 # mail as defined in a "sieve" script.
 #
 # Dovecot's LDA role comes after spam filtering. Postfix hands mail off
-# to Spamassassin which in turn hands it off to Dovecot. This all happens
+# to SpamAssassin which in turn hands it off to Dovecot. This all happens
 # using the LMTP protocol.
 
 source setup/functions.sh # load our functions
@@ -23,7 +23,7 @@ source /etc/mailinabox.conf # load global vars
 # but dovecot-lucene is packaged by *us* in the Mail-in-a-Box PPA,
 # not by Ubuntu.
 
-echo "Installing Dovecot (IMAP server)..."
+echo "Installing Dovecot (POP3/IMAP server)..."
 apt_install \
 	dovecot-core dovecot-imapd dovecot-pop3d dovecot-lmtpd dovecot-sqlite sqlite3 \
 	dovecot-sieve dovecot-managesieved dovecot-lucene
@@ -45,8 +45,8 @@ apt_install \
 # - https://www.dovecot.org/list/dovecot/2012-August/137569.html
 # - https://www.dovecot.org/list/dovecot/2011-December/132455.html
 tools/editconf.py /etc/dovecot/conf.d/10-master.conf \
-	default_process_limit=$(echo "`nproc` * 250" | bc) \
-	default_vsz_limit=$(echo "`free -tm  | tail -1 | awk '{print $2}'` / 3" | bc)M \
+	default_process_limit="$((CPU_CORES * 250))" \
+	default_vsz_limit="$(($(free -tm  | tail -1 | awk '{print $2}') / 3))M" \
 	log_path=/var/log/mail.log
 
 # The inotify `max_user_instances` default is 128, which constrains
@@ -61,7 +61,7 @@ tools/editconf.py /etc/sysctl.conf \
 # username part of the user's email address. We'll ensure that no bad domains or email addresses
 # are created within the management daemon.
 tools/editconf.py /etc/dovecot/conf.d/10-mail.conf \
-	mail_location=maildir:$STORAGE_ROOT/mail/mailboxes/%d/%n \
+	mail_location="maildir:$STORAGE_ROOT/mail/mailboxes/%d/%n" \
 	mail_privileged_group=mail \
 	first_valid_uid=0
 
@@ -126,7 +126,7 @@ EOF
 # ### LDA (LMTP)
 
 # Enable Dovecot's LDA service with the LMTP protocol. It will listen
-# on port 10026, and Spamassassin will be configured to pass mail there.
+# on port 10026, and SpamAssassin will be configured to pass mail there.
 #
 # The disabled unix socket listener is normally how Postfix and Dovecot
 # would communicate (see the Postfix setup script for the corresponding
@@ -154,7 +154,7 @@ EOF
 # Setting a `postmaster_address` is required or LMTP won't start. An alias
 # will be created automatically by our management daemon.
 tools/editconf.py /etc/dovecot/conf.d/15-lda.conf \
-	postmaster_address=postmaster@$PRIMARY_HOSTNAME
+	postmaster_address="postmaster@$PRIMARY_HOSTNAME"
 
 # ### Sieve
 
@@ -163,7 +163,7 @@ tools/editconf.py /etc/dovecot/conf.d/15-lda.conf \
 sed -i "s/#mail_plugins = .*/mail_plugins = \$mail_plugins sieve/" /etc/dovecot/conf.d/20-lmtp.conf
 
 # Configure sieve. We'll create a global script that moves mail marked
-# as spam by Spamassassin into the user's Spam folder.
+# as spam by SpamAssassin into the user's Spam folder.
 #
 # * `sieve_before`: The path to our global sieve which handles moving spam to the Spam folder.
 #
@@ -202,14 +202,14 @@ chown -R mail:dovecot /etc/dovecot
 chmod -R o-rwx /etc/dovecot
 
 # Ensure mailbox files have a directory that exists and are owned by the mail user.
-mkdir -p $STORAGE_ROOT/mail/mailboxes
-chown -R mail.mail $STORAGE_ROOT/mail/mailboxes
+mkdir -p "$STORAGE_ROOT/mail/mailboxes"
+chown -R mail.mail "$STORAGE_ROOT/mail/mailboxes"
 
 # Same for the sieve scripts.
-mkdir -p $STORAGE_ROOT/mail/sieve
-mkdir -p $STORAGE_ROOT/mail/sieve/global_before
-mkdir -p $STORAGE_ROOT/mail/sieve/global_after
-chown -R mail.mail $STORAGE_ROOT/mail/sieve
+mkdir -p "$STORAGE_ROOT/mail/sieve"
+mkdir -p "$STORAGE_ROOT/mail/sieve/global_before"
+mkdir -p "$STORAGE_ROOT/mail/sieve/global_after"
+chown -R mail.mail "$STORAGE_ROOT/mail/sieve"
 
 # Allow the IMAP/POP ports in the firewall.
 ufw_allow imaps

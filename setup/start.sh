@@ -2,6 +2,11 @@
 # This is the entry point for configuring the system.
 #####################################################
 
+if [[ "$#" -ne 0 ]]; then
+	echo "Usage: sudo $0" >&2
+	exit 1
+fi
+
 source setup/functions.sh # load our functions
 
 # Check system setup: Are we running as root on Ubuntu 14.04 on a
@@ -35,7 +40,8 @@ if [ -f /etc/mailinabox.conf ]; then
 
 	# Load the old .conf file to get existing configuration options loaded
 	# into variables with a DEFAULT_ prefix.
-	cat /etc/mailinabox.conf | sed s/^/DEFAULT_/ > /tmp/mailinabox.prev.conf
+	cp /etc/mailinabox.conf /tmp/mailinabox.prev.conf
+	sed -i 's/^/DEFAULT_/' /tmp/mailinabox.prev.conf
 	source /tmp/mailinabox.prev.conf
 	rm -f /tmp/mailinabox.prev.conf
 else
@@ -46,7 +52,7 @@ fi
 # in the first dialog prompt, so we should do this before that starts.
 cat > /usr/local/bin/mailinabox << EOF;
 #!/bin/bash
-cd `pwd`
+cd $(pwd)
 source setup/start.sh
 EOF
 chmod +x /usr/local/bin/mailinabox
@@ -61,9 +67,9 @@ source setup/questions.sh
 # Skip on existing installs since we don't want this to block the ability to
 # upgrade, and these checks are also in the control panel status checks.
 if [ -z "$DEFAULT_PRIMARY_HOSTNAME" ]; then
-if [ -z "$SKIP_NETWORK_CHECKS" ]; then
-	source setup/network-checks.sh
-fi
+	if [ -z "$SKIP_NETWORK_CHECKS" ]; then
+		source setup/network-checks.sh
+	fi
 fi
 
 # Create the STORAGE_USER and STORAGE_ROOT directory if they don't already exist.
@@ -71,15 +77,15 @@ fi
 # migration (schema) number for the files stored there, assume this is a fresh
 # installation to that directory and write the file to contain the current
 # migration number for this version of Mail-in-a-Box.
-if ! id -u $STORAGE_USER >/dev/null 2>&1; then
-	useradd -m $STORAGE_USER
+if ! id -u "$STORAGE_USER" >/dev/null 2>&1; then
+	useradd -m "$STORAGE_USER"
 fi
-if [ ! -d $STORAGE_ROOT ]; then
-	mkdir -p $STORAGE_ROOT
+if [ ! -d "$STORAGE_ROOT" ]; then
+	mkdir -p "$STORAGE_ROOT"
 fi
-if [ ! -f $STORAGE_ROOT/mailinabox.version ]; then
-	echo $(setup/migrate.py --current) > $STORAGE_ROOT/mailinabox.version
-	chown $STORAGE_USER.$STORAGE_USER $STORAGE_ROOT/mailinabox.version
+if [ ! -f "$STORAGE_ROOT/mailinabox.version" ]; then
+	setup/migrate.py --current > "$STORAGE_ROOT/mailinabox.version"
+	chown "$STORAGE_USER.$STORAGE_USER" "$STORAGE_ROOT/mailinabox.version"
 fi
 
 
@@ -114,7 +120,7 @@ source setup/munin.sh
 # Wait for the management daemon to start...
 until nc -z -w 4 127.0.0.1 10222
 do
-	echo Waiting for the Mail-in-a-Box management daemon to start...
+	echo "Waiting for the Mail-in-a-Box management daemon to start..."
 	sleep 2
 done
 
@@ -123,8 +129,8 @@ done
 tools/dns_update
 tools/web_update
 
-# Give fail2ban another restart. The log files may not all have been present when
-# fail2ban was first configured, but they should exist now.
+# Give Fail2Ban another restart. The log files may not all have been present when
+# Fail2Ban was first configured, but they should exist now.
 restart_service fail2ban
 
 # If there aren't any mail users yet, create one.
@@ -134,41 +140,41 @@ source setup/firstuser.sh
 # We'd let certbot ask the user interactively, but when this script is
 # run in the recommended curl-pipe-to-bash method there is no TTY and
 # certbot will fail if it tries to ask.
-if [ ! -d $STORAGE_ROOT/ssl/lets_encrypt/accounts/acme-v02.api.letsencrypt.org/ ]; then
-echo
-echo "-----------------------------------------------"
-echo "Mail-in-a-Box uses Let's Encrypt to provision free SSL/TLS certificates"
-echo "to enable HTTPS connections to your box. We're automatically"
-echo "agreeing you to their subscriber agreement. See https://letsencrypt.org."
-echo
-certbot register --register-unsafely-without-email --agree-tos --config-dir $STORAGE_ROOT/ssl/lets_encrypt
+if [ ! -d "$STORAGE_ROOT/ssl/lets_encrypt/accounts/acme-v02.api.letsencrypt.org/" ]; then
+	echo
+	echo "-----------------------------------------------"
+	echo "Mail-in-a-Box uses Let's Encrypt to provision free SSL/TLS certificates"
+	echo "to enable HTTPS connections to your box. We're automatically"
+	echo "agreeing you to their subscriber agreement. See https://letsencrypt.org."
+	echo
+	certbot register -n --register-unsafely-without-email --agree-tos --config-dir "$STORAGE_ROOT/ssl/lets_encrypt"
 fi
 
 # Done.
 echo
 echo "-----------------------------------------------"
 echo
-echo Your Mail-in-a-Box is running.
+echo "Your Mail-in-a-Box is running."
 echo
-echo Please log in to the control panel for further instructions at:
+echo "Please log in to the control panel for further instructions at:"
 echo
 if management/status_checks.py --check-primary-hostname; then
 	# Show the nice URL if it appears to be resolving and has a valid certificate.
-	echo https://$PRIMARY_HOSTNAME/admin
+	echo "https://$PRIMARY_HOSTNAME/admin"
 	echo
 	echo "If you have a DNS problem put the box's IP address in the URL"
 	echo "(https://$PUBLIC_IP/admin) but then check the TLS fingerprint:"
-	openssl x509 -in $STORAGE_ROOT/ssl/ssl_certificate.pem -noout -fingerprint -sha256\
+	openssl x509 -in "$STORAGE_ROOT/ssl/ssl_certificate.pem" -noout -fingerprint -sha256\
         	| sed "s/SHA256 Fingerprint=//"
 else
-	echo https://$PUBLIC_IP/admin
+	echo "https://$PUBLIC_IP/admin"
 	echo
-	echo You will be alerted that the website has an invalid certificate. Check that
-	echo the certificate fingerprint matches:
+	echo "You will be alerted that the website has an invalid certificate. Check that"
+	echo "the certificate fingerprint matches:"
 	echo
-	openssl x509 -in $STORAGE_ROOT/ssl/ssl_certificate.pem -noout -fingerprint -sha256\
+	openssl x509 -in "$STORAGE_ROOT/ssl/ssl_certificate.pem" -noout -fingerprint -sha256\
         	| sed "s/SHA256 Fingerprint=//"
 	echo
-	echo Then you can confirm the security exception and continue.
+	echo "Then you can confirm the security exception and continue."
 	echo
 fi

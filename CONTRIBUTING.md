@@ -16,15 +16,17 @@ With Vagrant set up, the following should boot up Mail-in-a-Box inside a virtual
 
     $ vagrant up --provision
 
-_If you're seeing an error message about your *IP address being listed in the Spamhaus Block List*, simply uncomment the `export SKIP_NETWORK_CHECKS=1` line in `Vagrantfile`. It's normal, you're probably using a dynamic IP address assigned by your Internet provider–they're almost all listed._
+_If you are seeing an error message about your *IP address being listed in the Spamhaus Block List*, simply uncomment the `export SKIP_NETWORK_CHECKS=1` line in `Vagrantfile`. It is normal, you are probably using a dynamic IP address assigned by your Internet provider–they are almost all listed._
 
 ### Modifying your `hosts` file
 
-After a while, Mail-in-a-Box will be available at `192.168.50.4` (unless you changed that in your `Vagrantfile`). To be able to use the web-based bits, we recommend to add a hostname to your `hosts` file:
+After a while, Mail-in-a-Box will be available at `192.168.50.4` (unless you changed that in your `Vagrantfile`). To be able to use the web-based bits, we recommend adding a hostname to your `hosts` file:
 
-    $ echo "192.168.50.4 mailinabox.lan" | sudo tee -a /etc/hosts
+    $ echo -e "192.168.50.4\tmailinabox.lan" | sudo tee -a /etc/hosts
+    or
+    $ sudo sed -i "s/^127.0.1.1.*/192.168.50.4\tmailinabox.lan/" /etc/hosts
 
-You should now be able to navigate to https://mailinabox.lan/admin using your browser. There should be an initial admin user with the name `me@mailinabox.lan` and the password `12345678`.
+You should now be able to navigate to https://mailinabox.lan/admin using your browser. There should be an initial admin user with the name `me@mailinabox.lan` and the randomly generated password from the output.
 
 ### Making changes
 
@@ -43,7 +45,7 @@ Once inside the VM, you can re-run individual parts of the setup like in this ex
 
 ### Tests
 
-Mail-in-a-Box needs more tests. If you're still looking for a way to help out, writing and contributing tests would be a great start!
+Mail-in-a-Box needs more tests. If you were still looking for a way to help out, writing and contributing tests would be a great start!
 
 ## Public domain
 

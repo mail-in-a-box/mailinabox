@@ -8,7 +8,7 @@ source /etc/mailinabox.conf # load global vars
 # Some Ubuntu images start off with Apache. Remove it since we
 # will use nginx. Use autoremove to remove any Apache depenencies.
 if [ -f /usr/sbin/apache2 ]; then
-	echo Removing apache...
+	echo "Removing Apache..."
 	hide_output apt-get -y purge apache2 apache2-*
 	hide_output apt-get -y --purge autoremove
 fi
@@ -17,7 +17,7 @@ fi
 #
 # Turn off nginx's default website.
 
-echo "Installing Nginx (web server)..."
+echo "Installing nginx (web server)..."
 
 apt_install nginx php7.0-cli php7.0-fpm
 
@@ -67,8 +67,7 @@ tools/editconf.py /etc/php/7.0/fpm/pool.d/www.conf -c ';' \
 # nginx configuration at /mailinabox-mobileconfig.
 mkdir -p /var/lib/mailinabox
 chmod a+rx /var/lib/mailinabox
-cat conf/ios-profile.xml \
-	| sed "s/PRIMARY_HOSTNAME/$PRIMARY_HOSTNAME/" \
+< conf/ios-profile.xml sed "s/PRIMARY_HOSTNAME/$PRIMARY_HOSTNAME/" \
 	| sed "s/UUID1/$(cat /proc/sys/kernel/random/uuid)/" \
 	| sed "s/UUID2/$(cat /proc/sys/kernel/random/uuid)/" \
 	| sed "s/UUID3/$(cat /proc/sys/kernel/random/uuid)/" \
@@ -81,18 +80,17 @@ chmod a+r /var/lib/mailinabox/mobileconfig.xml
 # The format of the file is documented at:
 # https://wiki.mozilla.org/Thunderbird:Autoconfiguration:ConfigFileFormat
 # and https://developer.mozilla.org/en-US/docs/Mozilla/Thunderbird/Autoconfiguration/FileFormat/HowTo.
-cat conf/mozilla-autoconfig.xml \
-	| sed "s/PRIMARY_HOSTNAME/$PRIMARY_HOSTNAME/" \
+< conf/mozilla-autoconfig.xml sed "s/PRIMARY_HOSTNAME/$PRIMARY_HOSTNAME/" \
 	 > /var/lib/mailinabox/mozilla-autoconfig.xml
 chmod a+r /var/lib/mailinabox/mozilla-autoconfig.xml
 
 # make a default homepage
-if [ -d $STORAGE_ROOT/www/static ]; then mv $STORAGE_ROOT/www/static $STORAGE_ROOT/www/default; fi # migration #NODOC
-mkdir -p $STORAGE_ROOT/www/default
-if [ ! -f $STORAGE_ROOT/www/default/index.html ]; then
-	cp conf/www_default.html $STORAGE_ROOT/www/default/index.html
+if [ -d "$STORAGE_ROOT/www/static" ]; then mv "$STORAGE_ROOT/www/static" "$STORAGE_ROOT/www/default"; fi # migration #NODOC
+mkdir -p "$STORAGE_ROOT/www/default"
+if [ ! -f "$STORAGE_ROOT/www/default/index.html" ]; then
+	cp conf/www_default.html "$STORAGE_ROOT/www/default/index.html"
 fi
-chown -R $STORAGE_USER $STORAGE_ROOT/www
+chown -R "$STORAGE_USER" "$STORAGE_ROOT/www"
 
 # We previously installed a custom init script to start the PHP FastCGI daemon. #NODOC
 # Remove it now that we're using php5-fpm. #NODOC

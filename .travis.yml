@@ -1,0 +1,27 @@
+language: bash
+sudo: enabled
+
+env:
+  global:
+    - NONINTERACTIVE=1
+    - PUBLIC_IP=auto
+    - PUBLIC_IPV6=auto
+    - PRIMARY_HOSTNAME=auto
+    - SKIP_NETWORK_CHECKS=1
+
+before_script:
+    - sudo sed -i "s/^127.0.1.1.*/127.0.1.1\t$HOSTNAME.example.com\t$HOSTNAME/" /etc/hosts
+    - sudo apt-get -yqq update
+    - sudo apt-get -yqq dist-upgrade
+    - sudo rm -f /opt/jdk_switcher/jdk_switcher.sh
+
+script:
+    - sudo setup/start.sh
+    - curl -IkL "https://$HOSTNAME/"
+    - curl -IkL "https://$HOSTNAME/admin"
+    - curl -IkL "https://$HOSTNAME/mail/"
+    - curl -IkL "https://$HOSTNAME/cloud/"
+    - bash -c 'shopt -s globstar; shellcheck -s bash **/*.sh || true'
+    # - cd test
+    # - pip install -r requirements.txt
+    # - pytest

@@ -10,11 +10,11 @@
 # other servers on the Internet. It is responsible for very
 # basic email filtering such as by IP address and greylisting,
 # it checks that the destination address is valid, rewrites
-# destinations according to aliases, and passses email on to
+# destinations according to aliases, and passes email on to
 # another service for local mail delivery.
 #
-# The first hop in local mail delivery is to Spamassassin via
-# LMTP. Spamassassin then passes mail over to Dovecot for
+# The first hop in local mail delivery is to SpamAssassin via
+# LMTP. SpamAssassin then passes mail over to Dovecot for
 # storage in the user's mailbox.
 #
 # Postfix also listens on port 587 (SMTP+STARTLS) for
@@ -37,7 +37,7 @@ source /etc/mailinabox.conf # load global vars
 # * `postfix`: The SMTP server.
 # * `postfix-pcre`: Enables header filtering.
 # * `postgrey`: A mail policy service that soft-rejects mail the first time
-#   it is received. Spammers don't usually try agian. Legitimate mail
+#   it is received. Spammers don't usually try again. Legitimate mail
 #   always will.
 # * `ca-certificates`: A trust store used to squelch postfix warnings about
 #   untrusted opportunistically-encrypted connections.
@@ -46,7 +46,7 @@ source /etc/mailinabox.conf # load global vars
 # a modified version of postgrey that lets senders whitelisted by dnswl.org
 # pass through without being greylisted. So please note [dnswl's license terms](https://www.dnswl.org/?page_id=9):
 # > Every user with more than 100’000 queries per day on the public nameserver
-# > infrastructure and every commercial vendor of dnswl.org data (eg through
+# > infrastructure and every commercial vendor of dnswl.org data (e.g. through
 # > anti-spam solutions) must register with dnswl.org and purchase a subscription.
 
 echo "Installing Postfix (SMTP server)..."
@@ -63,9 +63,9 @@ apt_install postfix postfix-pcre postgrey ca-certificates
 # * Set the SMTP banner (which must have the hostname first, then anything).
 tools/editconf.py /etc/postfix/main.cf \
 	inet_interfaces=all \
-	smtp_bind_address=$PRIVATE_IP \
-	smtp_bind_address6=$PRIVATE_IPV6 \
-	myhostname=$PRIMARY_HOSTNAME\
+	smtp_bind_address="$PRIVATE_IP" \
+	smtp_bind_address6="$PRIVATE_IPV6" \
+	myhostname="$PRIMARY_HOSTNAME"\
 	smtpd_banner="\$myhostname ESMTP Hi, I'm a Mail-in-a-Box (Ubuntu/Postfix; see https://mailinabox.email/)" \
 	mydestination=localhost
 
@@ -84,7 +84,7 @@ tools/editconf.py /etc/postfix/main.cf \
 # * Do not add the OpenDMAC Authentication-Results header. That should only be added
 #   on incoming mail. Omit the OpenDMARC milter by re-setting smtpd_milters to the
 #   OpenDKIM milter only. See dkim.sh.
-# * Even though we dont allow auth over non-TLS connections (smtpd_tls_auth_only below, and without auth the client cant
+# * Even though we don't allow auth over non-TLS connections (smtpd_tls_auth_only below, and without auth the client cant
 #   send outbound mail), don't allow non-TLS mail submission on this port anyway to prevent accidental misconfiguration.
 # * Require the best ciphers for incoming connections per http://baldric.net/2013/12/07/tls-ciphers-in-postfix-and-dovecot/.
 #   By putting this setting here we leave opportunistic TLS on incoming mail at default cipher settings (any cipher is better than none).
@@ -121,9 +121,9 @@ sed -i "s/PUBLIC_IP/$PUBLIC_IP/" /etc/postfix/outgoing_mail_header_filters
 tools/editconf.py /etc/postfix/main.cf \
 	smtpd_tls_security_level=may\
 	smtpd_tls_auth_only=yes \
-	smtpd_tls_cert_file=$STORAGE_ROOT/ssl/ssl_certificate.pem \
-	smtpd_tls_key_file=$STORAGE_ROOT/ssl/ssl_private_key.pem \
-	smtpd_tls_dh1024_param_file=$STORAGE_ROOT/ssl/dh2048.pem \
+	smtpd_tls_cert_file="$STORAGE_ROOT/ssl/ssl_certificate.pem" \
+	smtpd_tls_key_file="$STORAGE_ROOT/ssl/ssl_private_key.pem" \
+	smtpd_tls_dh1024_param_file="$STORAGE_ROOT/ssl/dh2048.pem" \
 	smtpd_tls_protocols=\!SSLv2,\!SSLv3 \
 	smtpd_tls_ciphers=medium \
 	smtpd_tls_exclude_ciphers=aNULL,RC4 \
@@ -172,14 +172,14 @@ tools/editconf.py /etc/postfix/main.cf \
 
 # ### Incoming Mail
 
-# Pass any incoming mail over to a local delivery agent. Spamassassin
+# Pass any incoming mail over to a local delivery agent. SpamAssassin
 # will act as the LDA agent at first. It is listening on port 10025
-# with LMTP. Spamassassin will pass the mail over to Dovecot after.
+# with LMTP. SpamAssassin will pass the mail over to Dovecot after.
 #
 # In a basic setup we would pass mail directly to Dovecot by setting
 # virtual_transport to `lmtp:unix:private/dovecot-lmtp`.
 #
-tools/editconf.py /etc/postfix/main.cf virtual_transport=lmtp:[127.0.0.1]:10025
+tools/editconf.py /etc/postfix/main.cf virtual_transport=lmtp:\[127.0.0.1\]:10025
 
 # Who can send mail to us? Some basic filters.
 #
@@ -200,7 +200,7 @@ tools/editconf.py /etc/postfix/main.cf virtual_transport=lmtp:[127.0.0.1]:10025
 # "450 4.7.1 Client host rejected: Service unavailable". This is a retry code, so the mail doesn't properly bounce. #NODOC
 tools/editconf.py /etc/postfix/main.cf \
 	smtpd_sender_restrictions="reject_non_fqdn_sender,reject_unknown_sender_domain,reject_authenticated_sender_login_mismatch,reject_rhsbl_sender dbl.spamhaus.org" \
-	smtpd_recipient_restrictions=permit_sasl_authenticated,permit_mynetworks,"reject_rbl_client zen.spamhaus.org",reject_unlisted_recipient,"check_policy_service inet:127.0.0.1:10023"
+	smtpd_recipient_restrictions="permit_sasl_authenticated,permit_mynetworks,reject_rbl_client zen.spamhaus.org,reject_unlisted_recipient,check_policy_service inet:127.0.0.1:10023"
 
 # Postfix connects to Postgrey on the 127.0.0.1 interface specifically. Ensure that
 # Postgrey listens on the same interface (and not IPv6, for instance).

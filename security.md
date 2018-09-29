@@ -15,7 +15,7 @@ The primary goal of Mail-in-a-Box is to make deploying a good mail server easy, 
 * Do not have physical access to the box (i.e., we do not aim to protect the box from physical access).
 * Have not been given Unix accounts on the box (i.e., we assume all users with shell access are trusted).
 
-On the other hand, we do assume that adversaries are performing passive surveillance and, possibly, active man-in-the-middle attacks. And so:
+On the other hand, we do assume that adversaries are performing passive surveillance and, possibly, active man-in-the-middle attacks. Therefore:
 
 * User credentials are always sent through SSH/TLS, never in the clear, with modern TLS settings.
 * Outbound mail is sent with the highest level of TLS possible.
@@ -41,11 +41,11 @@ The services all follow these rules:
 * TLS certificates are generated with 2048-bit RSA keys and SHA-256 fingerprints. The box provides a self-signed certificate by default. The [setup guide](https://mailinabox.email/guide.html) explains how to verify the certificate fingerprint on first login. Users are encouraged to replace the certificate with a proper CA-signed one. ([source](setup/ssl.sh))
 * Only TLSv1, TLSv1.1 and TLSv1.2 are offered (the older SSL protocols are not offered).
 * HTTPS, IMAP, and POP track the [Mozilla Intermediate Ciphers Recommendation](https://wiki.mozilla.org/Security/Server_Side_TLS), balancing security with supporting a wide range of mail clients. Diffie-Hellman ciphers use a 2048-bit key for forward secrecy. For more details, see the [output of SSLyze for these ports](tests/tls_results.txt).
-* SMTP (port 25) uses the Postfix medium grade ciphers and SMTP Submission (port 587) uses the Postfix high grade ciphers ([more info](http://www.postfix.org/postconf.5.html#smtpd_tls_mandatory_ciphers)).
+* SMTP (port 25) uses the Postfix medium grade ciphers and SMTP Submission (port 587) uses the Postfix high-grade ciphers ([more info](http://www.postfix.org/postconf.5.html#smtpd_tls_mandatory_ciphers)).
 
 Additionally:
 
-* SMTP Submission (port 587) will not accept user credentials without STARTTLS (true also of SMTP on port 25 in case of client misconfiguration), and the submission port won't accept mail without encryption. The minimum cipher key length is 128 bits. (The box is of course configured not to be an open relay. User credentials are required to send outbound mail.) ([source](setup/mail-postfix.sh))
+* SMTP Submission (port 587) will not accept user credentials without STARTTLS (true also of SMTP on port 25 in case of client misconfiguration), and the submission port will not accept mail without encryption. The minimum cipher key length is 128 bits. (The box is of course configured not to be an open relay. User credentials are required to send outbound mail.) ([source](setup/mail-postfix.sh))
 * HTTPS (port 443): The HTTPS Strict Transport Security header is set. A redirect from HTTP to HTTPS is offered. The [Qualys SSL Labs test](https://www.ssllabs.com/ssltest) should report an A+ grade. ([source 1](conf/nginx-ssl.conf), [source 2](conf/nginx.conf))
 
 ### Password Storage
@@ -66,20 +66,20 @@ If DNSSEC is enabled at the box's domain name's registrar, the SSHFP record that
 
 `fail2ban` provides some protection from brute-force login attacks (repeated logins that guess account passwords) by blocking offending IP addresses at the network level.
 
-The following services are protected: SSH, IMAP (dovecot), SMTP submission (postfix), webmail (roundcube), Nextcloud/CalDAV/CardDAV (over HTTP), and the Mail-in-a-Box control panel & munin (over HTTP).
+The following services are protected: SSH, IMAP (Dovecot), SMTP submission (Postfix), webmail (Roundcube), Nextcloud/CalDAV/CardDAV (over HTTP), and the Mail-in-a-Box control panel & munin (over HTTP).
 
-Some other services running on the box may be missing fail2ban filters.
+Some other services running on the box may be missing Fail2Ban filters.
 
 `fail2ban` only blocks IPv4 addresses, however. If the box has a public IPv6 address, it is not protected from these attacks.
 
 Outbound Mail
 -------------
 
-The basic protocols of email delivery did not plan for the presence of adversaries on the network. For a number of reasons it is not possible in most cases to guarantee that a connection to a recipient server is secure.
+The basic protocols of email delivery did not plan for the presence of adversaries on the network. For a number of reasons, it is not possible in most cases to guarantee that a connection to a recipient server is secure.
 
 ### DNSSEC
 
-The first step in resolving the destination server for an email address is performing a DNS look-up for the MX record of the domain name. The box uses a locally-running [DNSSEC](https://en.wikipedia.org/wiki/DNSSEC)-aware nameserver to perform the lookup. If the domain name has DNSSEC enabled, DNSSEC guards against DNS records being tampered with.
+The first step in resolving the destination server for an email address is performing a DNS look-up for the MX record of the domain name. The box uses a locally running [DNSSEC](https://en.wikipedia.org/wiki/DNSSEC)-aware nameserver to perform the lookup. If the domain name has DNSSEC enabled, DNSSEC guards against DNS records being tampered with.
 
 ### Encryption
 
@@ -87,15 +87,15 @@ The box (along with the vast majority of mail servers) uses [opportunistic encry
 
 ### DANE
 
-If the recipient's domain name supports DNSSEC and has published a [DANE TLSA](https://en.wikipedia.org/wiki/DNS-based_Authentication_of_Named_Entities) record, then on-the-wire encryption is forced between the box and the recipient MTA and this encryption is not subject to a man-in-the-middle attack. The TLSA record contains a certificate fingerprint which the receiving MTA (server) must present to the box. ([source](setup/mail-postfix.sh))
+If the recipient's domain name supports DNSSEC and has published a [DANE TLSA](https://en.wikipedia.org/wiki/DNS-based_Authentication_of_Named_Entities) record, then on-the-wire encryption is forced between the box and the recipient MTA and this encryption is not subject to a man-in-the-middle attack. The TLSA record contains a certificate fingerprint, which the receiving MTA (server) must present to the box. ([source](setup/mail-postfix.sh))
 
 ### Domain Policy Records
 
-Domain policy records allow recipient MTAs to detect when the _domain_ part of of the sender address in incoming mail has been spoofed. All outbound mail is signed with [DKIM](https://en.wikipedia.org/wiki/DomainKeys_Identified_Mail) and "quarantine" [DMARC](https://en.wikipedia.org/wiki/DMARC) records are automatically set in DNS. Receiving MTAs that implement DMARC will automatically quarantine mail that is "From:" a domain hosted by the box but which was not sent by the box. (Strong [SPF](https://en.wikipedia.org/wiki/Sender_Policy_Framework) records are also automatically set in DNS.) ([source](management/dns_update.py))
+Domain policy records allow recipient MTAs to detect when the _domain_ part of the sender address in incoming mail has been spoofed. All outbound mail is signed with [DKIM](https://en.wikipedia.org/wiki/DomainKeys_Identified_Mail) and "quarantine" [DMARC](https://en.wikipedia.org/wiki/DMARC) records are automatically set in DNS. Receiving MTAs that implement DMARC will automatically quarantine mail that is "From:" a domain hosted by the box, but which was not sent by the box. (Strong [SPF](https://en.wikipedia.org/wiki/Sender_Policy_Framework) records are also automatically set in DNS.) ([source](management/dns_update.py))
 
 ### User Policy
 
-While domain policy records prevent other servers from sending mail with a "From:" header that matches a domain hosted on the box (see above), those policy records do not guarnatee that the user portion of the sender email address matches the actual sender. In enterprise environments where the box may host the mail of untrusted users, it is important to guard against users impersonating other users.
+While domain policy records prevent other servers from sending mail with a "From:" header that matches a domain hosted on the box (see above), those policy records do not guarantee that the user portion of the sender email address matches the actual sender. In enterprise environments where the box may host the mail of untrusted users, it is important to guard against users impersonating other users.
 
 The box restricts the envelope sender address (also called the return path or MAIL FROM address --- this is different from the "From:" header) that users may put into outbound mail. The envelope sender address must be either their own email address (their SMTP login username) or any alias that they are listed as a permitted sender of. (There is currently no restriction on the contents of the "From:" header.)
 
@@ -112,4 +112,4 @@ When DNSSEC is enabled at the box's domain name's registrar, [DANE TLSA](https:/
 
 ### Filters
 
-Incoming mail is run through several filters. Email is bounced if the sender's IP address is listed in the [Spamhaus Zen blacklist](http://www.spamhaus.org/zen/) or if the sender's domain is listed in the [Spamhaus Domain Block List](http://www.spamhaus.org/dbl/). Greylisting (with [postgrey](http://postgrey.schweikert.ch/)) is also used to cut down on spam. ([source](setup/mail-postfix.sh))
+Incoming mail is run through several filters. Email is bounced if the sender's IP address is listed in the [Spamhaus Zen blacklist](http://www.spamhaus.org/zen/) or if the sender's domain is listed in the [Spamhaus Domain Block List](http://www.spamhaus.org/dbl/). Greylisting (with [Postgrey](http://postgrey.schweikert.ch/)) is also used to cut down on spam. ([source](setup/mail-postfix.sh))
