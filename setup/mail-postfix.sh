@@ -146,7 +146,7 @@ tools/editconf.py /etc/postfix/main.cf \
 # then opportunistic TLS is used. Otherwise the server certificate must match the TLSA records
 # or else the mail bounces. TLSA also requires DNSSEC on the MX host. Postfix doesn't do DNSSEC
 # itself but assumes the system's nameserver does and reports DNSSEC status. Thus this also
-# relies on our local bind9 server being present and `smtp_dns_support_level=dnssec`.
+# relies on our local DNS server (see system.sh) and `smtp_dns_support_level=dnssec`.
 #
 # The `smtp_tls_CAfile` is superflous, but it eliminates warnings in the logs about untrusted certs,
 # which we don't care about seeing because Postfix is doing opportunistic TLS anyway. Better to encrypt,

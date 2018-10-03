@@ -264,45 +264,69 @@ fi #NODOC
 
 # ### Local DNS Service
 
-# Install a local DNS server, rather than using the DNS server provided by the
-# ISP's network configuration.
+# Install a local recursive DNS server --- i.e. for DNS queries made by
+# local services running on this machine.
 #
-# We do this to ensure that DNS queries
-# that *we* make (i.e. looking up other external domains) perform DNSSEC checks.
-# We could use Google's Public DNS, but we don't want to create a dependency on
-# Google per our goals of decentralization. `bind9`, as packaged for Ubuntu, has
-# DNSSEC enabled by default via "dnssec-validation auto".
+# (This is unrelated to the box's public, non-recursive DNS server that
+# answers remote queries about domain names hosted on this box. For that
+# see dns.sh.)
 #
-# So we'll be running `bind9` bound to 127.0.0.1 for locally-issued DNS queries
-# and `nsd` bound to the public ethernet interface for remote DNS queries asking
-# about our domain names. `nsd` is configured later.
+# The default systemd-resolved service provides local DNS name resolution. By default it
+# is a recursive stub nameserver, which means it simply relays requests to an
+# external nameserver, usually provided by your ISP or configured in /etc/systemd/resolved.conf.
+#
+# This won't work for us for three reasons.
+#
+# 1) We have higher security goals --- we want DNSSEC to be enforced on all
+#    DNS queries (some upstream DNS servers do, some don't).
+# 2) We will configure postfix to use DANE, which uses DNSSEC to find TLS
+#    certificates for remote servers. DNSSEC validation *must* be performed
+#    locally because we can't trust an unencrypted connection to an external
+#    DNS server.
+# 3) DNS-based mail server blacklists (RBLs) typically block large ISP
+#    DNS servers because they only provide free data to small users. Since
+#    we use RBLs to block incoming mail from blacklisted IP addresses,
+#    we have to run our own DNS server. See #1424.
+#
+# systemd-resolved has a setting to perform local DNSSEC validation on all
+# requests (in /etc/systemd/resolved.conf, set DNSSEC=yes), but because it's
+# a stub server the main part of a request still goes through an upstream
+# DNS server, which won't work for RBLs. So we really need a local recursive
+# nameserver.
+#
+# We'll install `bind9`, which as packaged for Ubuntu, has DNSSEC enabled by default via "dnssec-validation auto".
+# We'll have it be bound to 127.0.0.1 so that it does not interfere with
+# the public, recursive nameserver `nsd` bound to the public ethernet interfaces.
 #
 # About the settings:
 #
-# * RESOLVCONF=yes will have `bind9` take over /etc/resolv.conf to tell
-#   local services that DNS queries are handled on localhost.
 # * Adding -4 to OPTIONS will have `bind9` not listen on IPv6 addresses
 #   so that we're sure there's no conflict with nsd, our public domain
 #   name server, on IPV6.
 # * The listen-on directive in named.conf.options restricts `bind9` to
 #   binding to the loopback interface instead of all interfaces.
-apt_install bind9 resolvconf
+apt_install bind9
 tools/editconf.py /etc/default/bind9 \
-	RESOLVCONF=yes \
 	"OPTIONS=\"-u bind -4\""
 if ! grep -q "listen-on " /etc/bind/named.conf.options; then
 	# Add a listen-on directive if it doesn't exist inside the options block.
 	sed -i "s/^}/\n\tlisten-on { 127.0.0.1; };\n}/" /etc/bind/named.conf.options
 fi
-if [ -f /etc/resolvconf/resolv.conf.d/original ]; then
-	echo "Archiving old resolv.conf (was /etc/resolvconf/resolv.conf.d/original, now /etc/resolvconf/resolv.conf.original)." #NODOC
-	mv /etc/resolvconf/resolv.conf.d/original /etc/resolvconf/resolv.conf.original #NODOC
-fi
+
+# First we'll disable systemd-resolved's management of resolv.conf and its stub server.
+# Breaking the symlink to /run/systemd/resolve/stub-resolv.conf means
+# systemd-resolved will read it for DNS servers to use. Put in 127.0.0.1,
+# which is where bind9 will be running. Obviously don't do this before
+# installing bind9 or else apt won't be able to resolve a server to
+# download bind9 from.
+rm -f /etc/resolv.conf
+tools/editconf.py /etc/systemd/resolved.conf DNSStubListener=no
+echo "127.0.0.1" > /etc/resolv.conf
 
 # Restart the DNS services.
 
 restart_service bind9
-restart_service resolvconf
+systemctl restart systemd-resolved
 
 # ### Fail2Ban Service
 
