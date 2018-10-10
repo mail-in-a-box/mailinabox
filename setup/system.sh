@@ -14,6 +14,20 @@ source setup/functions.sh # load our functions
 echo $PRIMARY_HOSTNAME > /etc/hostname
 hostname $PRIMARY_HOSTNAME
 
+# ### Fix permissions
+
+# The default Ubuntu Bionic image on Scaleway throws warnings during setup about incorrect
+# permissions (group writeable) set on the following directories.
+
+chmod g-w /etc /etc/default /usr
+
+# ### Fix sudo
+
+# The default Ubuntu Bionic image on Scaleway doesn't include root in the sudoers file
+# preventing us from running commands as other users
+
+tools/editconf.py /etc/sudoers "root ALL=(ALL) ALL"
+
 # ### Add swap space to the system
 
 # If the physical memory of the system is below 2GB it is wise to create a
@@ -119,7 +133,8 @@ echo Installing system packages...
 apt_install python3 python3-dev python3-pip \
 	netcat-openbsd wget curl git sudo coreutils bc \
 	haveged pollinate unzip \
-	unattended-upgrades cron ntp fail2ban
+	unattended-upgrades cron ntp fail2ban \
+	rsyslog
 
 # ### Suppress Upgrade Prompts
 # When Ubuntu 20 comes out, we don't want users to be prompted to upgrade,
