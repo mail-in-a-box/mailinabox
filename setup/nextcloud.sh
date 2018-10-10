@@ -75,8 +75,8 @@ InstallNextcloud() {
 	fi
 }
 
-nextcloud_ver=13.0.5
-nextcloud_hash=e2b4a4bebd4fac14feae1e6e8997682f73fa8b50
+nextcloud_ver=13.0.6
+nextcloud_hash=33e41f476f0e2be5dc7cdb9d496673d9647aa3d6
 
 # Check if Nextcloud dir exist, and check if version matches nextcloud_ver (if either doesn't - install/upgrade)
 if [ ! -d /usr/local/lib/owncloud/ ] \
