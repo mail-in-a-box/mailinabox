@@ -20,20 +20,17 @@ rsync_ssh_options = [
 ]
 
 def backup_status(env):
-	# Root folder
-	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
-
-	# What is the current status of backups?
-	# Query duplicity to get a list of all backups.
-	# Use the number of volumes to estimate the size.
+	# If backups are dissbled, return no status.
 	config = get_backup_config(env)
-	now = datetime.datetime.now(dateutil.tz.tzlocal())
-
-	# Are backups dissbled?
 	if config["target"] == "off":
 		return { }
 
+	# Query duplicity to get a list of all full and incremental
+	# backups available.
+
 	backups = { }
+	now = datetime.datetime.now(dateutil.tz.tzlocal())
+	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
 	backup_cache_dir = os.path.join(backup_root, 'cache')
 
 	def reldate(date, ref, clip):
@@ -58,7 +55,7 @@ def backup_status(env):
 			"date_delta": reldate(date, now, "the future?"),
 			"full": keys[0] == "full",
 			"size": 0, # collection-status doesn't give us the size
-			"volumes": keys[2], # number of archive volumes for this backup (not really helpful)
+			"volumes": int(keys[2]), # number of archive volumes for this backup (not really helpful)
 		}
 
 	code, collection_status = shell('check_output', [
@@ -80,12 +77,20 @@ def backup_status(env):
 			backup = parse_line(line)
 			backups[backup["date"]] = backup
 
-	# Look at the target to get the sizes of each of the backups. There is more than one file per backup.
+	# Look at the target directly to get the sizes of each of the backups. There is more than one file per backup.
+	# Starting with duplicity in Ubuntu 18.04, "signatures" files have dates in their
+	# filenames that are a few seconds off the backup date and so don't line up
+	# with the list of backups we have. Track unmatched files so we know how much other
+	# space is used for those.
+	unmatched_file_size = 0
 	for fn, size in list_target_files(config):
 		m = re.match(r"duplicity-(full|full-signatures|(inc|new-signatures)\.(?P<incbase>\d+T\d+Z)\.to)\.(?P<date>\d+T\d+Z)\.", fn)
 		if not m: continue # not a part of a current backup chain
 		key = m.group("date")
-		backups[key]["size"] += size
+		if key in backups:
+			backups[key]["size"] += size
+		else:
+			unmatched_file_size += size
 
 	# Ensure the rows are sorted reverse chronologically.
 	# This is relied on by should_force_full() and the next step.
@@ -148,6 +153,7 @@ def backup_status(env):
 
 	return {
 		"backups": backups,
+		"unmatched_file_size": unmatched_file_size,
 	}
 
 def should_force_full(config, env):
@@ -556,8 +562,7 @@ if __name__ == "__main__":
 		run_duplicity_verification()
 
 	elif sys.argv[-1] == "--list":
-		# Run duplicity's verification command to check a) the backup files
-		# are readable, and b) report if they are up to date.
+		# List the saved backup files.
 		for fn, size in list_target_files(get_backup_config(load_environment())):
 			print("{}\t{}".format(fn, size))
 
@@ -565,6 +570,7 @@ if __name__ == "__main__":
 		# Show backup status.
 		ret = backup_status(load_environment())
 		print(rtyaml.dump(ret["backups"]))
+		print("Storage for unmatched files:", ret["unmatched_file_size"])
 
 	elif len(sys.argv) >= 2 and sys.argv[1] == "--restore":
 		# Run duplicity restore. Rest of command line passed as arguments
