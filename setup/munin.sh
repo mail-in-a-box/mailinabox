@@ -46,6 +46,22 @@ tools/editconf.py /etc/munin/munin-node.conf -s \
 # Update the activated plugins through munin's autoconfiguration.
 munin-node-configure --shell --remove-also 2>/dev/null | sh
 
+# Patch and enable spamstats plugin as it does not support autoconf
+plugin_file=/usr/share/munin/plugins/spamstats
+if ! grep -q "graph_category" "$plugin_file"; then
+  patch "$plugin_file" conf/munin/spamstats.patch
+fi
+cp conf/munin/spamstats.conf /etc/munin/plugin-conf.d/spamstats
+ln -sf $plugin_file /etc/munin/plugins/spamstats
+
+# Add sa-learn plugin from munin contrib
+BAYES_DIR="$STORAGE_ROOT/mail/spamassassin"
+cp conf/munin/sa-learn-plugin /usr/share/munin/plugins/sa-learn
+chmod +x /usr/share/munin/plugins/sa-learn
+patch /usr/share/munin/plugins/sa-learn conf/munin/sa-learn.patch
+sed -e "s|##BAYES_DIR##|$BAYES_DIR|g" conf/munin/sa-learn.conf > /etc/munin/plugin-conf.d/sa-learn
+ln -sf /usr/share/munin/plugins/sa-learn /etc/munin/plugins/sa-learn
+
 # Deactivate monitoring of NTP peers. Not sure why anyone would want to monitor a NTP peer. The addresses seem to change
 # (which is taken care of my munin-node-configure, but only when we re-run it.)
 find /etc/munin/plugins/ -lname /usr/share/munin/plugins/ntp_ -print0 | xargs -0 /bin/rm -f

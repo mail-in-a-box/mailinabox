@@ -1,0 +1,76 @@
+#!/bin/bash
+# https://github.com/munin-monitoring/contrib/blob/889e47197562485cf7e45eb30af160b697bbb95e/plugins/spamassasin/sa-learn
+
+: <<=cut
+=head1 NAME
+
+sa-learn - Munin plugin to monitor spamassasin bayes database size
+
+=head1 APPLICABLE SYSTEMS
+
+Any server running spamassassin
+
+=head1 CONFIGURATION
+
+This plugin assumes your Spamassassin database is in /var/lib/MailScanner.
+If it's elsewhere (or you want to use a different database) you will need
+a configuration such as:
+
+   [sa-learn]
+      env.BayesDir /path/to/bayes/directory/
+      user mail
+
+(where 'user mail' refers to a user that can read the database).
+
+=head1 MAGIC MARKERS
+
+#%# family=contrib
+
+=head1 VERSION
+
+2
+
+=head1 AUTHOR
+
+Paul Saunders L<darac+munin@darac.org.uk>
+
+=cut
+#'
+
+case $1 in
+  config)
+    cat <<'EOM'
+graph_title SA-Learn Magic
+graph_vlabel Count
+graph_args --base 1000 -l 0
+graph_category Mail
+spam.label Num Spam
+spam.type GAUGE
+ham.label Num Ham
+ham.type GAUGE
+tokens.label Num Tokens
+tokens.type GAUGE
+EOM
+    exit 0;;
+esac
+
+## Print values
+BayesDir=${BayesDir:-/var/lib/MailScanner}
+
+sa-learn --dbpath $BayesDir/ --dump magic 2>/dev/null | while read line
+do
+  case "$line" in
+    *nspam*)
+      echo -n "spam.value "
+      echo $line | awk '{print $3}'
+      ;;
+    *nham*)
+      echo -n "ham.value "
+      echo $line | awk '{print $3}'
+      ;;
+    *ntokens*)
+      echo -n "tokens.value "
+      echo $line | awk '{print $3}'
+      ;;
+  esac
+done
