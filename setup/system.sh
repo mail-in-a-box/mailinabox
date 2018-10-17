@@ -126,7 +126,7 @@ echo Installing system packages...
 apt_install python3 python3-dev python3-pip \
 	netcat-openbsd wget curl git sudo coreutils bc \
 	haveged pollinate unzip \
-	unattended-upgrades cron ntp fail2ban
+	unattended-upgrades cron ntp fail2ban gist
 
 # ### Add PHP7 PPA
 
