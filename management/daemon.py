@@ -277,13 +277,15 @@ def dns_set_record(qname, rtype="A"):
 
 		# Read the record value from the request BODY, which must be
 		# ASCII-only. Not used with GET.
-		value = request.stream.read().decode("ascii", "ignore").strip()
+		value = request.args.get("override_value", request.stream.read().decode("ascii", "ignore").strip())
 
-		if request.method == "GET":
+		method = request.args.get("override_method", request.method)
+
+		if method == "GET":
 			# Get the existing records matching the qname and rtype.
 			return dns_get_records(qname, rtype)
 
-		elif request.method in ("POST", "PUT"):
+		elif method in ("POST", "PUT"):
 			# There is a default value for A/AAAA records.
 			if rtype in ("A", "AAAA") and value == "":
 				value = request.environ.get("HTTP_X_FORWARDED_FOR") # normally REMOTE_ADDR but we're behind nginx as a reverse proxy
@@ -292,17 +294,17 @@ def dns_set_record(qname, rtype="A"):
 			if value == '':
 				return ("No value for the record provided.", 400)
 
-			if request.method == "POST":
+			if method == "POST":
 				# Add a new record (in addition to any existing records
 				# for this qname-rtype pair).
 				action = "add"
-			elif request.method == "PUT":
+			elif method == "PUT":
 				# In REST, PUT is supposed to be idempotent, so we'll
 				# make this action set (replace all records for this
 				# qname-rtype pair) rather than add (add a new record).
 				action = "set"
 
-		elif request.method == "DELETE":
+		elif method == "DELETE":
 			if value == '':
 				# Delete all records for this qname-type pair.
 				value = None
