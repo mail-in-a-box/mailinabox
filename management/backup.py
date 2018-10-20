@@ -226,32 +226,6 @@ def perform_backup(full_backup):
 	if config["target"] == "off":
 		return
 
-	# In an older version of this script, duplicity was called
-	# such that it did not encrypt the backups it created (in
-	# backup/duplicity), and instead openssl was called separately
-	# after each backup run, creating AES256 encrypted copies of
-	# each file created by duplicity in backup/encrypted.
-	#
-	# We detect the transition by the presence of backup/duplicity
-	# and handle it by 'dupliception': we move all the old *un*encrypted
-	# duplicity files up out of the backup/duplicity directory (as
-	# backup/ is excluded from duplicity runs) in order that it is
-	# included in the next run, and we delete backup/encrypted (which
-	# duplicity will output files directly to, post-transition).
-	old_backup_dir = os.path.join(backup_root, 'duplicity')
-	migrated_unencrypted_backup_dir = os.path.join(env["STORAGE_ROOT"], "migrated_unencrypted_backup")
-	if os.path.isdir(old_backup_dir):
-		# Move the old unencrypted files to a new location outside of
-		# the backup root so they get included in the next (new) backup.
-		# Then we'll delete them. Also so that they do not get in the
-		# way of duplicity doing a full backup on the first run after
-		# we take care of this.
-		shutil.move(old_backup_dir, migrated_unencrypted_backup_dir)
-
-		# The backup_dir (backup/encrypted) now has a new purpose.
-		# Clear it out.
-		shutil.rmtree(backup_dir)
-
 	# On the first run, always do a full backup. Incremental
 	# will fail. Otherwise do a full backup when the size of
 	# the increments since the most recent full backup are
@@ -308,10 +282,6 @@ def perform_backup(full_backup):
 		service_command("dovecot", "start", quit=False)
 		service_command("postfix", "start", quit=False)
 		service_command("php7.2-fpm", "start", quit=False)
-
-	# Once the migrated backup is included in a new backup, it can be deleted.
-	if os.path.isdir(migrated_unencrypted_backup_dir):
-		shutil.rmtree(migrated_unencrypted_backup_dir)
 
 	# Remove old backups. This deletes all backup data no longer needed
 	# from more than 3 days ago.
