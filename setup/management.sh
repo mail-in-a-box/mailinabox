@@ -24,12 +24,12 @@ done
 # S3 api used in some regions, which breaks backups to those regions.
 # See #627, #653.
 #
-# python-virtualenv is used to isolate the Python 3 packages we
+# virtualenv is used to isolate the Python 3 packages we
 # install via pip from the system-installed packages.
 #
 # certbot installs EFF's certbot which we use to
 # provision free TLS certificates.
-apt_install duplicity python-pip python-virtualenv virtualenv certbot
+apt_install duplicity python-pip virtualenv certbot
 hide_output pip2 install --upgrade boto
 
 # Create a virtualenv for the installation of Python 3 packages
