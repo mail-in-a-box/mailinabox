@@ -8,6 +8,7 @@ In Development
 * Update to Nextcloud 13.0.6.
 * Update to Roundcube 1.3.7.
 * Update to Z-Push 2.4.4.
+* Backup dates listed in the control panel now use an internationalized format.
 
 v0.28 (July 30, 2018)
 ---------------------
@@ -34,7 +35,6 @@ Mail:
 
 Control Panel:
 
-* We now use EFF's `certbot` tool to provision HTTPS certificates instead of our home-grown free_tls_certificates package.
 * The undocumented feature for proxying web requests to another server now sets X-Forwarded-For.
 
 v0.26c (February 13, 2018)
