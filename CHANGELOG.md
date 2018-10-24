@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.29 (October 25, 2018)
+------------------------
 
 * Starting with v0.28, TLS certificate provisioning wouldn't work on new boxes until the mailinabox setup command was run a second time because of a problem with the non-interactive setup.
 * Update to Nextcloud 13.0.6.
