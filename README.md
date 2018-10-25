@@ -60,7 +60,7 @@ _Optional:_ Download my PGP key and then verify that I signed the sources:
 	$ curl -s https://keybase.io/joshdata/key.asc | gpg --import
 	gpg: key C10BDD81: public key "Joshua Tauberer <jt@occams.info>" imported
 
-	$ git verify-tag v0.28
+	$ git verify-tag v0.29
 	gpg: Signature made ..... using RSA key ID C10BDD81
 	gpg: Good signature from "Joshua Tauberer <jt@occams.info>"
 	gpg: WARNING: This key is not certified with a trusted signature!
@@ -73,7 +73,7 @@ and on my [personal homepage](https://razor.occams.info/). (Of course, if this r
 
 Checkout the tag corresponding to the most recent release:
 
-	$ git checkout v0.28
+	$ git checkout v0.29
 
 Begin the installation.
 
