@@ -288,6 +288,14 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 			if not has_rec(qname, "SRV"):
 				records.append((qname, "SRV", "0 0 443 " + env["PRIMARY_HOSTNAME"] + ".", "Recommended. Specifies the hostname of the server that handles CardDAV/CalDAV services for email addresses on this domain."))
 
+        # Adds CNAME records for hosted email address domains (Email addresses that are added apart from the PRIMARY_HOSTNAME)
+        # autodiscover.* - Z-Push ActiveSync Autodiscover
+        # autoconfig.* - Thunderbird Autoconfig
+	if domain != env["PRIMARY_HOSTNAME"]:
+		for qname in ("autodiscover", "autoconfig"):
+			if not has_rec(qname, "CNAME"):
+				records.append((qname, "CNAME", env["PRIMARY_HOSTNAME"] + ".", "Provides autodiscovery support for hosted email address domains."))
+
 	# Sort the records. The None records *must* go first in the nsd zone file. Otherwise it doesn't matter.
 	records.sort(key = lambda rec : list(reversed(rec[0].split(".")) if rec[0] is not None else ""))
 
