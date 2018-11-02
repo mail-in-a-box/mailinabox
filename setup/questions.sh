@@ -77,7 +77,9 @@ address, so we're suggesting $DEFAULT_PRIMARY_HOSTNAME.
 		$DEFAULT_PRIMARY_HOSTNAME \
 		PRIMARY_HOSTNAME
 
+	# Regular expression to check if the hostname is of the form *.localdomain
 	RE='^.+\.localdomain$'
+	# Regular expressions to check if the hostname is a valid FQDN
 	RE1='^.{4,253}$'
 	RE2='^([[:alnum:]][[:alnum:]\-]{0,61}[[:alnum:]]\.)+[a-zA-Z]{2,63}$'
 	if [ -z "$PRIMARY_HOSTNAME" ]; then
@@ -208,7 +210,7 @@ if [ -n "$CPU" ]; then
 fi
 CPU_CORES=$(nproc --all)
 echo -e "CPU Cores:\t\t\t$CPU_CORES"
-echo -e "Architecture:\t\t\t$HOSTTYPE ($ARCHITECTURE-bit)"
+echo -e "Architecture:\t\t\t$HOSTTYPE (${ARCHITECTURE}-bit)"
 echo -e "Total memory (RAM):\t\t$(printf "%'d" $((TOTAL_PHYSICAL_MEM / 1024))) MiB ($(printf "%'d" $((((TOTAL_PHYSICAL_MEM * 1024) / 1000) / 1000))) MB)"
 echo -e "Total swap space:\t\t$(printf "%'d" $((TOTAL_SWAP / 1024))) MiB ($(printf "%'d" $((((TOTAL_SWAP * 1024) / 1000) / 1000))) MB)"
 if command -v lspci >/dev/null; then

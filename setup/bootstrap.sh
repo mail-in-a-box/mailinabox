@@ -3,6 +3,7 @@
 # This script is intended to be run like this:
 #
 #   wget https://mailinabox.email/setup.sh -qO - | sudo bash -s
+#   or
 #   curl -s https://mailinabox.email/setup.sh | sudo bash -s
 #
 #########################################################
