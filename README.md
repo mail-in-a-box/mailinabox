@@ -46,6 +46,8 @@ Installation
 
 See the [setup guide](https://mailinabox.email/guide.html) for detailed, user-friendly instructions.
 
+See the [terraform setup](terraform/README.md) for a mostly automated setup using Amazon Web Services and Terraform.
+
 For experts, start with a completely fresh (really, I mean it) Ubuntu 14.04 LTS 64-bit machine. On the machine...
 
 Clone this repository:

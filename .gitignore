@@ -5,3 +5,5 @@ tools/__pycache__/
 externals/
 .env
 .vagrant
+**/terraform.tfvars
+**/terraform.tfstate*
