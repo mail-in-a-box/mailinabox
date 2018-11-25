@@ -1,13 +1,14 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.29 (October 25, 2018)
+------------------------
 
 * Starting with v0.28, TLS certificate provisioning wouldn't work on new boxes until the mailinabox setup command was run a second time because of a problem with the non-interactive setup.
-* Update to Nextcloud 13.0.5.
+* Update to Nextcloud 13.0.6.
 * Update to Roundcube 1.3.7.
 * Update to Z-Push 2.4.4.
+* Backup dates listed in the control panel now use an internationalized format.
 
 v0.28 (July 30, 2018)
 ---------------------
@@ -34,7 +35,6 @@ Mail:
 
 Control Panel:
 
-* We now use EFF's `certbot` tool to provision HTTPS certificates instead of our home-grown free_tls_certificates package.
 * The undocumented feature for proxying web requests to another server now sets X-Forwarded-For.
 
 v0.26c (February 13, 2018)
