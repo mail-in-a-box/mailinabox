@@ -1,0 +1,142 @@
+AudioGuardian v1.0 (Beta)
+Mobile Sound Notifier
+
+Team Members
+Eric Hertz
+Brian Garfinkel
+Jeff Wang
+Torrey Umland
+Yin Lok Ho
+Mentor: Jeff Wilhelm
+
+Description
+AudioGuardian is a mobile Java application (J2ME) for use on Java-enabled mobile phones. The user's phone 
+
+records surrounding noise and triggers alerts when it identifies interesting noises such as car horns, fire 
+
+alarms, gunshots, and sirens. This application was created for people who are hearing impaired and might have 
+
+difficulty knowing when they are in a dangerous situation. The project records emergency signals that people 
+
+take for granted and makes them available to those who are hearing impaired. It was created as a part of 
+
+Project:Possibility and SS12:UCLA 2009.
+
+Challenges
+The application uses a discrete Fourier transform algorithm to convert a signal in the time domain into a 
+
+signal in the frequency domain. This distribution allows the application to identify specific sounds by 
+
+matching the measured frequency against a known sample frequency. The algorithm behind this was extremely 
+
+complicated to implement, because every microphone has a different DC offset. The application has a 
+
+calibration function that will allow the user to set the DC offset function for their specific microphone. 
+
+This alleviates any problems encountered by differences between hardware platforms. Porting Java to J2ME was 
+
+also difficult to implement. J2ME is not well documented on the Internet, so there was some difficulty in 
+
+learning how to program a mobile phone. There were some difficulties in processing the audio stream into a 
+
+byte array, since the application has to extract the sound data without having the file header in the stream 
+
+as well. The application has to remove the file header and then store the audio stream into a data structure, 
+
+otherwise the application will encounter some issues with displaying the graph of the Fourier transform. There 
+
+were also some challenges in using multithreading. The application runs in a loop that listens for commands. 
+
+However, the command thread cannot be interrupted to perform recording tasks. Thefore, the application has to 
+
+run any recording operations in a separate thread. There were some issues with integrating the separate 
+
+threads so that they worked in sync with one another.
+
+Design
+This application is implemented in J2ME, which is a subset of Java specifically designed for mobile phones.
+
+AAnalyzer class
+This class analyzes the amplitude of the sound file and returns the maximum amplitude at any point in the 
+
+sample file. It can also return the number of samples with levels above a given threshold value. It can get 
+
+the average amplitude of the entire sample. 
+
+AudioGuardian class
+This class is the driver class for the entire application. It implements a CommandListener that runs continually in a thread and executes commands as the user inputs them. It also creates new threads as needed for recording operations. It generates the GUI for the entire application and runs through the menus.
+
+CAboutScreen class
+This class displays the credit screen using the Form super class.
+
+Calibrator class
+This class reads in an arbitrary amount of sound data and takes the average of the amplitudes. It then 
+
+computes the base offset for the microphone. This is useful for the application since there are many 
+
+differences between different microphones. Without this, the graph would have no way to normalize itself.
+
+CCalibrationScreen class
+This class displays the screen that the user sees while calibration is going on. 
+
+CMatchableSound class
+This class holds the attributes of the sounds that the application is trying to match. It has a method that 
+
+will perform matching between a given sound file and a recorded stream.
+
+COptionScreen class
+This class displays the "Config" screen. It holds all the different settings that the user can select.
+
+COptionDb class
+This class encapsulates the RecordStore and provides a much nicer interface for working with RecordStores.
+
+CStartupScreen class
+This class displays the logo on start up.
+
+DFT class
+This class performs the discrete Fourier transform. It returns an array of DFT pairs. Each DFT pair contains a 
+
+frequency and its corresponding amplitude (also known as a DFTpair).
+
+DFTpair class (extends Comparable)
+This is the interface that defines what a DFT pair is.
+
+Float11 class
+This is a math class that provides functions not present in the standard J2ME API. 
+
+FloorLevel class
+This class defines a Double object that is used to store the base microphone offset.
+
+Graph class
+This class displays the waveform of the sound signal. It also displays a bar graph of the discrete Fourier 
+
+transform. It also provides functions to allow the user to find the highest level frequency and an assorted 
+
+array of frequencies based on the sound input.
+
+Monitor class
+This class listens for sound input and stores that sound input into a DFT array. It sorts the sound file by 
+
+amplitude.
+
+QuickSort class
+This class defines a QuickSort algorithm for use by the Monitor class.
+
+Schedule of Progress
+Day One: Saturday, January 31, 2009
+8:30 AM: Arrive at Boelter and prepare for the project
+9:00 AM - 1 PM: Work on design and basic implementation
+1 PM - 1:30 PM: Eat lunch
+1:30 PM - 6 PM: Finish basic implementations and work on defining the discrete Fourier transform
+6 PM - 6:30 PM: Eat dinner
+6:30 PM - 11:59 PM: Work on advanced implementations and GUI
+
+Day Two: Sunday, February 1, 2009
+12:00 AM - 3:45 AM: Preliminary integration, work on GUI, extension of the project
+3:45 AM: Walk back to dorms to sleep
+9:00 AM: Arrive at Boelter to continue work
+9:00 AM - 1 PM: Work on integration of the code, work on extending the scope of the project
+1 PM - 1:30 PM: Eat lunch
+1:30 PM - 6:00 PM: Finish integrating code, write documentation, prepare presentation and demo
+6:00 PM - 6:30 PM: Eat dinner
+6:30 PM - Close: Presentations and demonstrations
