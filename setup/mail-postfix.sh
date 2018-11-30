@@ -73,6 +73,8 @@ tools/editconf.py /etc/postfix/main.cf \
 
 # Enable the 'submission' port 587 smtpd server and tweak its settings.
 #
+# * Enable authentication. It's disabled globally so that it is disabled on port 25,
+#   so we need to explicitly enable it here.
 # * Do not add the OpenDMAC Authentication-Results header. That should only be added
 #   on incoming mail. Omit the OpenDMARC milter by re-setting smtpd_milters to the
 #   OpenDKIM milter only. See dkim.sh.
@@ -87,6 +89,7 @@ tools/editconf.py /etc/postfix/main.cf \
 #   emails but we turn this off by setting nested_header_checks empty.
 tools/editconf.py /etc/postfix/master.cf -s -w \
 	"submission=inet n       -       -       -       -       smtpd
+	  -o smtpd_sasl_auth_enable=yes
 	  -o syslog_name=postfix/submission
 	  -o smtpd_milters=inet:127.0.0.1:8891
 	  -o smtpd_tls_security_level=encrypt
