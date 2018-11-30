@@ -43,7 +43,6 @@
     <tr>
       <th width="50%">Email Address</th>
       <th>Actions</th>
-      <th>Mailbox Size</th>
     </tr>
   </thead>
   <tbody>
@@ -72,8 +71,6 @@
         <a href="#" onclick="users_remove(this); return false;" class='if_active' title="Archive Account">
           archive account
         </a>
-    </td>
-    <td class='mailboxsize'>
     </td>
   </tr>
   <tr id="user-extra-template" class="if_inactive">
@@ -156,7 +153,6 @@ function show_users() {
 
           n.attr('data-email', user.email);
           n.find('.address').text(user.email)
-          n.find('.mailboxsize').text(nice_size(user.mailbox_size))
           n2.find('.restore_info tt').text(user.mailbox);
 
           if (user.status == 'inactive') continue;

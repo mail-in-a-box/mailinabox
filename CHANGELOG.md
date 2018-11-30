@@ -11,6 +11,7 @@ Setup:
 Control Panel:
 
 * The users page now documents that passwords should only have ASCII characters to prevent character encoding mismaches between clients and the server.
+* The users page no longer shows user mailbox sizes because this was extremely slow for very large mailboxes.
 
 v0.29 (October 25, 2018)
 ------------------------
