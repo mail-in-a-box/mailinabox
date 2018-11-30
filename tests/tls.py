@@ -128,7 +128,7 @@ def sslyze(opts, port, ok_ciphers):
 			proxy_proc.terminate()
 			try:
 				proxy_proc.wait(5)
-			except TimeoutExpired:
+			except subprocess.TimeoutExpired:
 				proxy_proc.kill()
 
 # Get a list of OpenSSL cipher names.
