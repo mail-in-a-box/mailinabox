@@ -60,8 +60,8 @@ source setup/questions.sh
 # Run some network checks to make sure setup on this machine makes sense.
 # Skip on existing installs since we don't want this to block the ability to
 # upgrade, and these checks are also in the control panel status checks.
-if [ -z "$DEFAULT_PRIMARY_HOSTNAME" ]; then
-if [ -z "$SKIP_NETWORK_CHECKS" ]; then
+if [ -z "${DEFAULT_PRIMARY_HOSTNAME:-}" ]; then
+if [ -z "${SKIP_NETWORK_CHECKS:-}" ]; then
 	source setup/network-checks.sh
 fi
 fi

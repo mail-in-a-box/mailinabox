@@ -29,7 +29,7 @@ address 127.0.0.1
 
 # send alerts to the following address
 contacts admin
-contact.admin.command mail -s "Munin notification ${var:host}" administrator@$PRIMARY_HOSTNAME
+contact.admin.command mail -s "Munin notification \${var:host}" administrator@$PRIMARY_HOSTNAME
 contact.admin.always_send warning critical
 EOF
 

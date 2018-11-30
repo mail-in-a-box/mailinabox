@@ -41,7 +41,7 @@ if [ $TOTAL_PHYSICAL_MEM -lt 750000 ]; then
 fi
 
 # Check that tempfs is mounted with exec
-MOUNTED_TMP_AS_NO_EXEC=$(grep "/tmp.*noexec" /proc/mounts)
+MOUNTED_TMP_AS_NO_EXEC=$(grep "/tmp.*noexec" /proc/mounts || /bin/true)
 if [ -n "$MOUNTED_TMP_AS_NO_EXEC" ]; then
 	echo "Mail-in-a-Box has to have exec rights on /tmp, please mount /tmp with exec"
 	exit

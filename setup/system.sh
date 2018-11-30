@@ -37,9 +37,9 @@ hostname $PRIMARY_HOSTNAME
 # for reference
 
 SWAP_MOUNTED=$(cat /proc/swaps | tail -n+2)
-SWAP_IN_FSTAB=$(grep "swap" /etc/fstab)
-ROOT_IS_BTRFS=$(grep "\/ .*btrfs" /proc/mounts)
-TOTAL_PHYSICAL_MEM=$(head -n 1 /proc/meminfo | awk '{print $2}')
+SWAP_IN_FSTAB=$(grep "swap" /etc/fstab || /bin/true)
+ROOT_IS_BTRFS=$(grep "\/ .*btrfs" /proc/mounts || /bin/true)
+TOTAL_PHYSICAL_MEM=$(head -n 1 /proc/meminfo | awk '{print $2}' || /bin/true)
 AVAILABLE_DISK_SPACE=$(df / --output=avail | tail -n 1)
 if
 	[ -z "$SWAP_MOUNTED" ] &&
@@ -143,8 +143,8 @@ fi
 # section) and syslog (see #328). There might be other issues, and it's
 # not likely the user will want to change this, so we only ask on first
 # setup.
-if [ -z "$NONINTERACTIVE" ]; then
-	if [ ! -f /etc/timezone ] || [ ! -z $FIRST_TIME_SETUP ]; then
+if [ -z "${NONINTERACTIVE:-}" ]; then
+	if [ ! -f /etc/timezone ] || [ ! -z ${FIRST_TIME_SETUP:-} ]; then
 		# If the file is missing or this is the user's first time running
 		# Mail-in-a-Box setup, run the interactive timezone configuration
 		# tool.
@@ -239,7 +239,7 @@ EOF
 # Various virtualized environments like Docker and some VPSs don't provide #NODOC
 # a kernel that supports iptables. To avoid error-like output in these cases, #NODOC
 # we skip this if the user sets DISABLE_FIREWALL=1. #NODOC
-if [ -z "$DISABLE_FIREWALL" ]; then
+if [ -z "${DISABLE_FIREWALL:-}" ]; then
 	# Install `ufw` which provides a simple firewall configuration.
 	apt_install ufw
 
