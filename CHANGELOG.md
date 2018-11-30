@@ -13,6 +13,7 @@ Control Panel:
 * The users page now documents that passwords should only have ASCII characters to prevent character encoding mismaches between clients and the server.
 * The users page no longer shows user mailbox sizes because this was extremely slow for very large mailboxes.
 * The Mail-in-a-Box version is now shown in the system status checks even when the new-version check is disabled.
+* The alises page now warns that alises should not be used to forward mail off of the box. Mail filters within Roundcube are better for that.
 
 v0.29 (October 25, 2018)
 ------------------------
