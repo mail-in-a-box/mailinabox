@@ -3,7 +3,14 @@ CHANGELOG
 
 In Development
 --------------
- * Update to Roundcube 1.3.8.
+
+Setup:
+
+* Update to Roundcube 1.3.8.
+
+Control Panel:
+
+* The users page now documents that passwords should only have ASCII characters to prevent character encoding mismaches between clients and the server.
 
 v0.29 (October 25, 2018)
 ------------------------
