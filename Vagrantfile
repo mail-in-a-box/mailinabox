@@ -2,7 +2,14 @@
 # vi: set ft=ruby :
 
 Vagrant.configure("2") do |config|
-  config.vm.box = "ubuntu/bionic64"
+  # config.vm.box = "ubuntu/bionic64"
+    config.vm.box = "centos/7"
+
+  if Vagrant.has_plugin?("vagrant-cachier")
+    # Configure cached packages to be shared between instances of the same base box.
+    # More info on http://fgrehm.viewdocs.io/vagrant-cachier/usage
+    config.cache.scope = :box
+  end
 
   # Network config: Since it's a mail server, the machine must be connected
   # to the public web. However, we currently don't want to expose SSH since
