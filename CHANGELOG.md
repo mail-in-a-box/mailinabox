@@ -7,6 +7,7 @@ In Development
 Setup:
 
 * Update to Roundcube 1.3.8.
+* Add missing rsyslog package to install line since some OS images don't have it installed by default.
 
 Control Panel:
 
