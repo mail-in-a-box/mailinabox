@@ -14,6 +14,13 @@ source setup/functions.sh # load our functions
 echo $PRIMARY_HOSTNAME > /etc/hostname
 hostname $PRIMARY_HOSTNAME
 
+# ### Fix permissions
+
+# The default Ubuntu Bionic image on Scaleway throws warnings during setup about incorrect
+# permissions (group writeable) set on the following directories.
+
+chmod g-w /etc /etc/default /usr
+
 # ### Add swap space to the system
 
 # If the physical memory of the system is below 2GB it is wise to create a
