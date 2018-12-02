@@ -8,6 +8,7 @@ Setup:
 
 * Update to Roundcube 1.3.8.
 * Add missing rsyslog package to install line since some OS images don't have it installed by default.
+* A log file for nsd was added.
 
 Control Panel:
 
@@ -15,6 +16,7 @@ Control Panel:
 * The users page no longer shows user mailbox sizes because this was extremely slow for very large mailboxes.
 * The Mail-in-a-Box version is now shown in the system status checks even when the new-version check is disabled.
 * The alises page now warns that alises should not be used to forward mail off of the box. Mail filters within Roundcube are better for that.
+* The explanation of greylisting has been improved.
 
 v0.29 (October 25, 2018)
 ------------------------
