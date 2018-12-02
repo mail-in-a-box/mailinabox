@@ -6,11 +6,28 @@ This branch supports Ubuntu 18.04 **only**. When upgrading, **always** upgrade y
 In Development
 --------------
 
-* Starting with v0.28, TLS certificate provisioning wouldn't work on new boxes until the mailinabox setup command was run a second time because of a problem with the non-interactive setup.
+Setup:
 
-* Update to Nextcloud 13.0.5.
+* Update to Roundcube 1.3.8.
+* Add missing rsyslog package to install line since some OS images don't have it installed by default.
+* A log file for nsd was added.
+
+Control Panel:
+
+* The users page now documents that passwords should only have ASCII characters to prevent character encoding mismaches between clients and the server.
+* The users page no longer shows user mailbox sizes because this was extremely slow for very large mailboxes.
+* The Mail-in-a-Box version is now shown in the system status checks even when the new-version check is disabled.
+* The alises page now warns that alises should not be used to forward mail off of the box. Mail filters within Roundcube are better for that.
+* The explanation of greylisting has been improved.
+
+v0.29 (October 25, 2018)
+------------------------
+
+* Starting with v0.28, TLS certificate provisioning wouldn't work on new boxes until the mailinabox setup command was run a second time because of a problem with the non-interactive setup.
+* Update to Nextcloud 13.0.6.
 * Update to Roundcube 1.3.7.
 * Update to Z-Push 2.4.4.
+* Backup dates listed in the control panel now use an internationalized format.
 
 v0.28 (July 30, 2018)
 ---------------------
@@ -37,7 +54,6 @@ Mail:
 
 Control Panel:
 
-* We now use EFF's `certbot` tool to provision HTTPS certificates instead of our home-grown free_tls_certificates package.
 * The undocumented feature for proxying web requests to another server now sets X-Forwarded-For.
 
 v0.26c (February 13, 2018)
