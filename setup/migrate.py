@@ -149,27 +149,38 @@ def migration_11(env):
 		pass
 
 def migration_12(env):
-	# Upgrading from Carddav Roundcube plugin to version 3+ requires the carddav_
-        # tables to be dropped
-        import sqlite3
-        conn = sqlite3.connect(os.path.join(env["STORAGE_ROOT"], "mail/roundcube/roundcube.sqlite"))
-        c = conn.cursor()
-        # Get a list of all the tables that begin with 'carddav_'
-        c.execute("SELECT name FROM sqlite_master WHERE type = ? AND name LIKE ?", ('table', 'carddav_%'))
-        carddav_tables = c.fetchall()
-        # If there were tables that begin with 'carddav_', drop them
-        if carddav_tables:
-            for table in carddav_tables:
-                try:
-                    table = table[0]    
-                    c = conn.cursor()
-                    dropcmd = "DROP TABLE %s" % table
-                    c.execute(dropcmd)
-                except:
-                    print("Failed to drop table", table, e)
-        # Save.
-        conn.commit()
-        conn.close()
+	# Upgrading to Carddav Roundcube plugin to version 3+, it requires the carddav_*
+        # tables to be dropped.
+        # Checking that the roundcube database already exists.
+        if os.path.exists(os.path.join(env["STORAGE_ROOT"], "mail/roundcube/roundcube.sqlite")):
+            import sqlite3
+            conn = sqlite3.connect(os.path.join(env["STORAGE_ROOT"], "mail/roundcube/roundcube.sqlite"))
+            c = conn.cursor()
+            # Get a list of all the tables that begin with 'carddav_'
+            c.execute("SELECT name FROM sqlite_master WHERE type = ? AND name LIKE ?", ('table', 'carddav_%'))
+            carddav_tables = c.fetchall()
+            # If there were tables that begin with 'carddav_', drop them
+            if carddav_tables:
+                for table in carddav_tables:
+                    try:
+                        table = table[0]
+                        c = conn.cursor()
+                        dropcmd = "DROP TABLE %s" % table
+                        c.execute(dropcmd)
+                    except:
+                        print("Failed to drop table", table, e)
+            # Save.
+            conn.commit()
+            conn.close()
+
+            # Delete all sessions, requring users to login again to recreate carddav_*
+            # databases
+            conn = sqlite3.connect(os.path.join(env["STORAGE_ROOT"], "mail/roundcube/roundcube.sqlite"))
+            c = conn.cursor()
+            c.execute("delete from session;")
+            conn.commit()
+            conn.close()
+
 
 def get_current_migration():
 	ver = 0
