@@ -5,7 +5,6 @@
 set -euo pipefail
 trap 'rc=$?; echo "$0: Error on line $LINENO running $BASH_COMMAND which had the following exit code $rc" 1>&2' EXIT
 trap 'rc=$?; echo "$0: Error on line $LINENO running $BASH_COMMAND which had the following exit code $rc" 1>&2' ERR
-/bin/false
 function hide_output {
 	# This function hides the output of a command unless the command fails
 	# and returns a non-zero exit code.
