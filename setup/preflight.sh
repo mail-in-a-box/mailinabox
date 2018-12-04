@@ -53,13 +53,13 @@ if [ -e ~/.wgetrc ]; then
 	exit
 fi
 
-# Check that we are running on x86_64 or i686 architecture, which are the only
-# ones we support / test.
+# Check that we are running on x86_64 architecture, it is the only one
+# we support / test. As of Ubuntu 18.04, a 32-bit version is no longer available.
 ARCHITECTURE=$(uname -m)
-if [ "$ARCHITECTURE" != "x86_64" ] && [ "$ARCHITECTURE" != "i686" ]; then
+if [ "$ARCHITECTURE" != "x86_64" ]; then
 	echo
 	echo "WARNING:"
-	echo "Mail-in-a-Box has only been tested on x86_64 and i686 platform"
+	echo "Mail-in-a-Box has only been tested on x86_64 platform"
 	echo "architectures. Your architecture, $ARCHITECTURE, may not work."
 	echo "You are on your own."
 	echo
