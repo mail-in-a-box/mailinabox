@@ -3,8 +3,7 @@
 # -u: exit if we have a variable typo.
 # -o pipefail: don't ignore errors in the non-last command in a pipeline 
 set -euo pipefail
-trap 'rc=$?; echo "$0: Error on line $LINENO running $BASH_COMMAND which had the following exit code $rc" 1>&2' EXIT
-trap 'rc=$?; echo "$0: Error on line $LINENO running $BASH_COMMAND which had the following exit code $rc" 1>&2' ERR
+
 function hide_output {
 	# This function hides the output of a command unless the command fails
 	# and returns a non-zero exit code.
