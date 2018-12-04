@@ -1,7 +1,7 @@
 #!/bin/bash
 # This is the entry point for configuring the system.
 #####################################################
-
+trap 'rc=$?; echo "$0: Error on line $LINENO running $BASH_COMMAND which had the following exit code $rc" 1>&2' ERR
 source setup/functions.sh # load our functions
 
 # Check system setup: Are we running as root on Ubuntu 18.04 on a
