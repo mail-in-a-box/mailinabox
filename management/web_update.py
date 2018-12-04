@@ -29,6 +29,12 @@ def get_web_domains(env, include_www_redirects=True, exclude_dns_elsewhere=True)
 		# IP address than this box. Remove those domains from our list.
 		domains -= get_domains_with_a_records(env)
 
+		# Add Autoconfiguration domains, allowing us to serve correct SSL certs.
+		# 'autoconfig.' for Mozilla Thunderbird auto setup.
+		# 'autodiscover.' for Activesync autodiscovery.
+		domains |= set('autoconfig.' + zone for zone, zonefile in get_dns_zones(env))
+		domains |= set('autodiscover.' + zone for zone, zonefile in get_dns_zones(env))
+
 	# Ensure the PRIMARY_HOSTNAME is in the list so we can serve webmail
 	# as well as Z-Push for Exchange ActiveSync. This can't be removed
 	# by a custom A/AAAA record and is never a 'www.' redirect.
