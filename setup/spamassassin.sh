@@ -95,11 +95,6 @@ chown -R spampd:spampd $STORAGE_ROOT/mail/spamassassin
 # use the Dovecot antispam plugin to detect the message move operation and execute
 # a shell script that invokes learning.
 
-# Enable the Dovecot antispam plugin.
-# (Be careful if we use multiple plugins later.) #NODOC
-sed -i "s/#mail_plugins = .*/mail_plugins = \$mail_plugins antispam/" /etc/dovecot/conf.d/20-imap.conf
-sed -i "s/#mail_plugins = .*/mail_plugins = \$mail_plugins antispam/" /etc/dovecot/conf.d/20-pop3.conf
-
 # Configure the antispam plugin to call sa-learn-pipe.sh.
 cat > /etc/dovecot/conf.d/99-local-spampd.conf << EOF;
 plugin {
@@ -144,4 +139,3 @@ chmod 770 $STORAGE_ROOT/mail/spamassassin
 # Kick services.
 restart_service spampd
 restart_service dovecot
-
