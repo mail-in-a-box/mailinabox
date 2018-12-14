@@ -92,7 +92,7 @@ if [ -z "$PUBLIC_IP" ]; then
 
 	# On the first run, if we got an answer from the Internet then don't
 	# ask the user.
-	if [[ -z "$DEFAULT_PUBLIC_IP" && ! -z "$GUESSED_IP" ]]; then
+	if [[ -z "${DEFAULT_PUBLIC_IP:-}" && ! -z "$GUESSED_IP" ]]; then
 		PUBLIC_IP=$GUESSED_IP
 
 	# Otherwise on the first run at least provide a default.
