@@ -44,7 +44,7 @@ tools/editconf.py /etc/munin/munin-node.conf -s \
 	log_level=1
 
 # Update the activated plugins through munin's autoconfiguration.
-munin-node-configure --shell --remove-also 2>/dev/null | sh
+munin-node-configure --shell --remove-also 2>/dev/null | sh || /bin/true
 
 # Deactivate monitoring of NTP peers. Not sure why anyone would want to monitor a NTP peer. The addresses seem to change
 # (which is taken care of my munin-node-configure, but only when we re-run it.)
