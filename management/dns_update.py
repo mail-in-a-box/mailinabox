@@ -292,11 +292,10 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
         # This allows the following clients to automatically configure email addresses in the respective applications.
         # autodiscover.* - Z-Push ActiveSync Autodiscover
         # autoconfig.* - Thunderbird Autoconfig
-	if domain != env["PRIMARY_HOSTNAME"]:
-		if not has_rec("autodiscover", "A"):
-			records.append(("autodiscover", "A", env["PUBLIC_IP"], "Provides email configuration autodiscovery support for Z-Push ActiveSync Autodiscover."))
-		if not has_rec("autoconfig", "A"):
-			records.append(("autoconfig", "A", env["PUBLIC_IP"], "Provides email configuration autodiscovery support for Thunderbird Autoconfig."))
+	if not has_rec("autodiscover", "A"):
+		records.append(("autodiscover", "A", env["PUBLIC_IP"], "Provides email configuration autodiscovery support for Z-Push ActiveSync Autodiscover."))
+	if not has_rec("autoconfig", "A"):
+		records.append(("autoconfig", "A", env["PUBLIC_IP"], "Provides email configuration autodiscovery support for Thunderbird Autoconfig."))
 
 	# Sort the records. The None records *must* go first in the nsd zone file. Otherwise it doesn't matter.
 	records.sort(key = lambda rec : list(reversed(rec[0].split(".")) if rec[0] is not None else ""))
