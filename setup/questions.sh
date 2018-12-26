@@ -96,12 +96,12 @@ if [ -z "${PUBLIC_IP:-}" ]; then
 		PUBLIC_IP=$GUESSED_IP
 
 	# Otherwise on the first run at least provide a default.
-	elif [[ -z "$DEFAULT_PUBLIC_IP" ]]; then
+	elif [[ -z "${DEFAULT_PUBLIC_IP:-}" ]]; then
 		DEFAULT_PUBLIC_IP=$(get_default_privateip 4)
 
 	# On later runs, if the previous value matches the guessed value then
 	# don't ask the user either.
-	elif [ "$DEFAULT_PUBLIC_IP" == "$GUESSED_IP" ]; then
+	elif [ "${DEFAULT_PUBLIC_IP:-}" == "$GUESSED_IP" ]; then
 		PUBLIC_IP=$GUESSED_IP
 	fi
 
