@@ -6,6 +6,7 @@ In Development
 
 Setup:
 
+* Update to NextCloud 14.0.4.
 * Update to Roundcube 1.3.8.
 * Add missing rsyslog package to install line since some OS images don't have it installed by default.
 * A log file for nsd was added.
@@ -17,6 +18,13 @@ Control Panel:
 * The Mail-in-a-Box version is now shown in the system status checks even when the new-version check is disabled.
 * The alises page now warns that alises should not be used to forward mail off of the box. Mail filters within Roundcube are better for that.
 * The explanation of greylisting has been improved.
+
+Contacts/Calendar:
+
+* Upgraded Nextcloud from 13.0.6 to 14.0.4.
+* Upgraded Contacts from 2.1.5 to 2.1.8.
+* Upgraded Calendar from 1.6.1 to 1.6.4.
+
 
 v0.29 (October 25, 2018)
 ------------------------
