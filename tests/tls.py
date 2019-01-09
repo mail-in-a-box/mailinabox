@@ -17,7 +17,7 @@
 # through some other host you can ssh into (maybe the box
 # itself?):
 #
-# python3 --proxy user@ssh_host yourservername
+# python3 tls.py --proxy user@ssh_host yourservername
 #
 # (This will launch "ssh -N -L10023:yourservername:testport user@ssh_host"
 # to create a tunnel.)
