@@ -1,14 +1,19 @@
 CHANGELOG
 =========
 
-This branch supports Ubuntu 18.04 **only**. When upgrading, **always** upgrade your **existing** Ubuntu 14.04 machine to version the latest release supporting Ubuntu 14.04 --- v0.28. If you are running an older version of Mail-in-a-Box which has an old version of ownCloud or Nextcloud, you will *not* be able to upgrade your data because older versions of ownCloud and Nextcloud that are required to perform the upgrade *cannot* be run on Ubuntu 18.04.
-
 In Development
 --------------
 
+This is the first release for Ubuntu 18.04. Mail-in-a-Box can now **only** be installed on Ubuntu 18.04.
+
+When **upgrading**, you **must** upgrade your existing Ubuntu 14.04 Mail-in-a-Box box to the latest release supporting Ubuntu 14.04 --- that's v0.30 --- first. If you are running an older version of Mail-in-a-Box which has an old version of ownCloud or Nextcloud, you will *not* be able to upgrade your data because older versions of ownCloud and Nextcloud that are required to perform the upgrade *cannot* be run on Ubuntu 18.04.
+
+v0.30 (January 9, 2019)
+-----------------------
+
 Setup:
 
-* Update to Roundcube 1.3.8.
+* Update to Roundcube 1.3.8 and the CardDAV plugin to 3.0.3.
 * Add missing rsyslog package to install line since some OS images don't have it installed by default.
 * A log file for nsd was added.
 
