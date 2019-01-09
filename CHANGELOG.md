@@ -1,12 +1,12 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.30 (January 9, 2019)
+-----------------------
 
 Setup:
 
-* Update to Roundcube 1.3.8.
+* Update to Roundcube 1.3.8 and the CardDAV plugin to 3.0.3.
 * Add missing rsyslog package to install line since some OS images don't have it installed by default.
 * A log file for nsd was added.
 
