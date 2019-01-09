@@ -4,9 +4,9 @@ if [ -z "`tools/mail.py user`" ]; then
 	# aren't any yet, it'll be empty.
 
 	# If we didn't ask for an email address at the start, do so now.
-	if [ -z "$EMAIL_ADDR" ]; then
+	if [ -z "${EMAIL_ADDR:-}" ]; then
 		# In an interactive shell, ask the user for an email address.
-		if [ -z "$NONINTERACTIVE" ]; then
+		if [ -z "${NONINTERACTIVE:-}" ]; then
 			input_box "Mail Account" \
 				"Let's create your first mail account.
 				\n\nWhat email address do you want?" \
@@ -47,7 +47,7 @@ if [ -z "`tools/mail.py user`" ]; then
 	fi
 
 	# Create the user's mail account. This will ask for a password if none was given above.
-	tools/mail.py user add $EMAIL_ADDR $EMAIL_PW
+	tools/mail.py user add $EMAIL_ADDR ${EMAIL_PW:-}
 
 	# Make it an admin.
 	hide_output tools/mail.py user make-admin $EMAIL_ADDR

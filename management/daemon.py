@@ -572,7 +572,7 @@ def munin_cgi(filename):
 
 	if code != 0:
 		# nonzero returncode indicates error
-		app.logger.error("munin_cgi: munin-cgi-graph returned nonzero exit code, %s", process.returncode)
+		app.logger.error("munin_cgi: munin-cgi-graph returned nonzero exit code, %s", code)
 		return ("error processing graph image", 500)
 
 	# /usr/lib/munin/cgi/munin-cgi-graph returns both headers and binary png when successful.

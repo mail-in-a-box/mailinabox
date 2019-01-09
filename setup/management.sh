@@ -24,12 +24,12 @@ done
 # S3 api used in some regions, which breaks backups to those regions.
 # See #627, #653.
 #
-# python-virtualenv is used to isolate the Python 3 packages we
+# virtualenv is used to isolate the Python 3 packages we
 # install via pip from the system-installed packages.
 #
 # certbot installs EFF's certbot which we use to
 # provision free TLS certificates.
-apt_install duplicity python-pip python-virtualenv certbot
+apt_install duplicity python-pip virtualenv certbot
 hide_output pip2 install --upgrade boto
 
 # Create a virtualenv for the installation of Python 3 packages
@@ -87,20 +87,15 @@ rm -f /tmp/bootstrap.zip
 
 # Create an init script to start the management daemon and keep it
 # running after a reboot.
-rm -f /usr/local/bin/mailinabox-daemon # old path
 cat > $inst_dir/start <<EOF;
 #!/bin/bash
 source $venv/bin/activate
 exec python `pwd`/management/daemon.py
 EOF
 chmod +x $inst_dir/start
-rm -f /etc/init.d/mailinabox
-ln -s $(pwd)/conf/management-initscript /etc/init.d/mailinabox
-hide_output update-rc.d mailinabox defaults
-
-# Remove old files we no longer use.
-rm -f /etc/cron.daily/mailinabox-backup
-rm -f /etc/cron.daily/mailinabox-statuschecks
+hide_output systemctl link conf/mailinabox.service
+hide_output systemctl daemon-reload
+hide_output systemctl enable mailinabox.service
 
 # Perform nightly tasks at 3am in system time: take a backup, run
 # status checks and email the administrator any changes.

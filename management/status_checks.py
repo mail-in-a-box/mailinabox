@@ -28,7 +28,6 @@ def get_services():
 		{ "name": "Spamassassin", "port": 10025, "public": False, },
 		{ "name": "OpenDKIM", "port": 8891, "public": False, },
 		{ "name": "OpenDMARC", "port": 8893, "public": False, },
-		{ "name": "Memcached", "port": 11211, "public": False, },
 		{ "name": "Mail-in-a-Box Management Daemon", "port": 10222, "public": False, },
 		{ "name": "SSH Login (ssh)", "port": get_ssh_port(), "public": True, },
 		{ "name": "Public DNS (nsd4)", "port": 53, "public": True, },

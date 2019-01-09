@@ -22,15 +22,8 @@ source /etc/mailinabox.conf # load global vars
 echo "Installing Roundcube (webmail)..."
 apt_install \
 	dbconfig-common \
-	php7.0-cli php7.0-sqlite php7.0-mcrypt php7.0-intl php7.0-json php7.0-common php7.0-curl \
-	php7.0-gd php7.0-pspell tinymce libjs-jquery libjs-jquery-mousewheel libmagic1 php7.0-mbstring
-
-apt_get_quiet remove php-mail-mimedecode # no longer needed since Roundcube 1.1.3
-
-# We used to install Roundcube from Ubuntu, without triggering the dependencies #NODOC
-# on Apache and MySQL, by downloading the debs and installing them manually. #NODOC
-# Now that we're beyond that, get rid of those debs before installing from source. #NODOC
-apt-get purge -qq -y roundcube* #NODOC
+	php-cli php-sqlite3 php-intl php-json php-common php-curl \
+	php-gd php-pspell tinymce libjs-jquery libjs-jquery-mousewheel libmagic1 php-mbstring
 
 # Install Roundcube from source if it is not already present or if it is out of date.
 # Combine the Roundcube version number with the commit hash of plugins to track
@@ -200,5 +193,5 @@ chown www-data:www-data $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 chmod 664 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 
 # Enable PHP modules.
-phpenmod -v php7.0 mcrypt imap
-restart_service php7.0-fpm
+phpenmod -v php mcrypt imap
+restart_service php7.2-fpm
