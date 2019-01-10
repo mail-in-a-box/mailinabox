@@ -22,7 +22,7 @@ Additionally, this project has a [Code of Conduct](CODE_OF_CONDUCT.md), which su
 The Box
 -------
 
-Mail-in-a-Box turns a fresh Ubuntu 14.04 LTS 64-bit machine into a working mail server by installing and configuring various components.
+Mail-in-a-Box turns a fresh Ubuntu 18.04 LTS 64-bit machine into a working mail server by installing and configuring various components.
 
 It is a one-click email appliance. There are no user-configurable setup options. It "just works".
 
@@ -37,7 +37,6 @@ The components installed are:
 It also includes:
 
 * A control panel and API for adding/removing mail users, aliases, custom DNS records, etc. and detailed system monitoring.
-* Our own builds of postgrey (adding better whitelisting) and dovecot-lucene (faster search for mail) distributed via the [Mail-in-a-Box PPA](https://launchpad.net/~mail-in-a-box/+archive/ubuntu/ppa) on Launchpad.
 
 For more information on how Mail-in-a-Box handles your privacy, see the [security details page](security.md).
 
@@ -46,7 +45,7 @@ Installation
 
 See the [setup guide](https://mailinabox.email/guide.html) for detailed, user-friendly instructions.
 
-For experts, start with a completely fresh (really, I mean it) Ubuntu 14.04 LTS 64-bit machine. On the machine...
+For experts, start with a completely fresh (really, I mean it) Ubuntu 18.04 LTS 64-bit machine. On the machine...
 
 Clone this repository:
 
@@ -59,7 +58,7 @@ by me:
 	$ curl -s https://keybase.io/joshdata/key.asc | gpg --import
 	gpg: key C10BDD81: public key "Joshua Tauberer <jt@occams.info>" imported
 
-	$ git verify-tag v0.29
+	$ git verify-tag v0.30
 	gpg: Signature made ..... using RSA key ID C10BDD81
 	gpg: Good signature from "Joshua Tauberer <jt@occams.info>"
 	gpg: WARNING: This key is not certified with a trusted signature!
@@ -72,7 +71,7 @@ and on my [personal homepage](https://razor.occams.info/). (Of course, if this r
 
 Checkout the tag corresponding to the most recent release:
 
-	$ git checkout v0.29
+	$ git checkout v0.30
 
 Begin the installation.
 

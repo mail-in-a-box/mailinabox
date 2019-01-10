@@ -1,0 +1,10 @@
+[Unit]
+Description=Mail-in-a-Box System Management Service
+After=multi-user.target
+
+[Service]
+Type=idle
+ExecStart=/usr/local/lib/mailinabox/start
+
+[Install]
+WantedBy=multi-user.target

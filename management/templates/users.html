@@ -31,7 +31,7 @@
   <button type="submit" class="btn btn-primary">Add User</button>
 </form>
 <ul style="margin-top: 1em; padding-left: 1.5em; font-size: 90%;">
-  <li>Passwords must be at least eight characters and may not contain spaces. For best results, <a href="#" onclick="return generate_random_password()">generate a random password</a>.</li>
+  <li>Passwords must be at least eight characters consisting of English lettters and numbers only. For best results, <a href="#" onclick="return generate_random_password()">generate a random password</a>.</li>
   <li>Use <a href="#" onclick="return show_panel('aliases')">aliases</a> to create email addresses that forward to existing accounts.</li>
   <li>Administrators get access to this control panel.</li>
   <li>User accounts cannot contain any international (non-ASCII) characters, but <a href="#" onclick="return show_panel('aliases');">aliases</a> can.</li>
@@ -43,7 +43,6 @@
     <tr>
       <th width="50%">Email Address</th>
       <th>Actions</th>
-      <th>Mailbox Size</th>
     </tr>
   </thead>
   <tbody>
@@ -72,8 +71,6 @@
         <a href="#" onclick="users_remove(this); return false;" class='if_active' title="Archive Account">
           archive account
         </a>
-    </td>
-    <td class='mailboxsize'>
     </td>
   </tr>
   <tr id="user-extra-template" class="if_inactive">
@@ -156,7 +153,6 @@ function show_users() {
 
           n.attr('data-email', user.email);
           n.find('.address').text(user.email)
-          n.find('.mailboxsize').text(nice_size(user.mailbox_size))
           n2.find('.restore_info tt').text(user.mailbox);
 
           if (user.status == 'inactive') continue;

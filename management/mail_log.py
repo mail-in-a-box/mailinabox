@@ -257,7 +257,7 @@ def scan_mail_log(env):
 
         print(textwrap.fill(
             "The following mail was greylisted, meaning the emails were temporarily rejected. "
-            "Legitimate senders will try again within ten minutes.",
+            "Legitimate senders must try again after three minutes.",
             width=80, initial_indent=" ", subsequent_indent=" "
         ), end='\n\n')
 

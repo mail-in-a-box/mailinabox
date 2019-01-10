@@ -105,7 +105,7 @@ def get_mail_users(env):
 	users = [ row[0] for row in c.fetchall() ]
 	return utils.sort_email_addresses(users, env)
 
-def get_mail_users_ex(env, with_archived=False, with_slow_info=False):
+def get_mail_users_ex(env, with_archived=False):
 	# Returns a complex data structure of all user accounts, optionally
 	# including archived (status="inactive") accounts.
 	#
@@ -139,9 +139,6 @@ def get_mail_users_ex(env, with_archived=False, with_slow_info=False):
 		}
 		users.append(user)
 
-		if with_slow_info:
-			user["mailbox_size"] = utils.du(os.path.join(env['STORAGE_ROOT'], 'mail/mailboxes', *reversed(email.split("@"))))
-
 	# Add in archived accounts.
 	if with_archived:
 		root = os.path.join(env['STORAGE_ROOT'], 'mail/mailboxes')
@@ -158,8 +155,6 @@ def get_mail_users_ex(env, with_archived=False, with_slow_info=False):
 						"mailbox": mbox,
 					}
 					users.append(user)
-					if with_slow_info:
-						user["mailbox_size"] = utils.du(mbox)
 
 	# Group by domain.
 	domains = { }

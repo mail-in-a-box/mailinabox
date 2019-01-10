@@ -1,6 +1,42 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+This is the first release for Ubuntu 18.04. This version and versions going forward can **only** be installed on Ubuntu 18.04; however, upgrades of existing Ubuntu 14.04 boxes to the latest version supporting Ubuntu 14.04 continue to work as normal.
+
+When **upgrading**, you **must upgrade your existing Ubuntu 14.04 Mail-in-a-Box box** to the latest release supporting Ubuntu 14.04 --- that's v0.30 --- first. If you are running an older version of Mail-in-a-Box which has an old version of ownCloud or Nextcloud, you will *not* be able to upgrade your data because older versions of ownCloud and Nextcloud that are required to perform the upgrade *cannot* be run on Ubuntu 18.04. To upgrade from Ubuntu 14.04 to Ubuntu 18.04, you **must create a fresh Ubuntu 18.04 machine** before installing this version. In-place upgrades of servers are not supported. Since Ubuntu's support for Ubuntu 14.04 has almost ended, everyone is encouraged to upgrade.
+
+Setup:
+
+* Mail-in-a-Box now targets Ubuntu 18.04 LTS, which will have support from Ubuntu through 2022.
+* Some of the system packages updated in virtue of using Ubuntu 18.04 include postfix (2.11=>3.3) nsd (4.0=>4.1), nginx (1.4=>1.14), PHP (7.0=>7.2), Python (3.4=>3.6), fail2ban (0.8=>0.10), Duplicity (0.6=>0.7).
+* [Unofficial Bash Strict Mode](http://redsymbol.net/articles/unofficial-bash-strict-mode/) is turned on for setup, which might catch previously uncaught issues during setup.
+
+Mail:
+
+* IMAP server-side full text search is no longer supported because we were using a custom-built `dovecot-lucene` package that we are no longer maintaining.
+* Sending email is now disabled on port 25 --- you must log in to port 587 to send email.
+* Greylisting may delay more emails from new senders. We were using a custom-built postgrey package previously that whitelisted sending domains in dnswl.org, but we are no longer maintaining that package.
+
+v0.30 (January 9, 2019)
+-----------------------
+
+Setup:
+
+* Update to Roundcube 1.3.8 and the CardDAV plugin to 3.0.3.
+* Add missing rsyslog package to install line since some OS images don't have it installed by default.
+* A log file for nsd was added.
+
+Control Panel:
+
+* The users page now documents that passwords should only have ASCII characters to prevent character encoding mismaches between clients and the server.
+* The users page no longer shows user mailbox sizes because this was extremely slow for very large mailboxes.
+* The Mail-in-a-Box version is now shown in the system status checks even when the new-version check is disabled.
+* The alises page now warns that alises should not be used to forward mail off of the box. Mail filters within Roundcube are better for that.
+* The explanation of greylisting has been improved.
+
 v0.29 (October 25, 2018)
 ------------------------
 

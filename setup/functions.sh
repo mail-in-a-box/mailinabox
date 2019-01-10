@@ -1,3 +1,9 @@
+# Turn on "strict mode." See http://redsymbol.net/articles/unofficial-bash-strict-mode/.
+# -e: exit if any command unexpectedly fails.
+# -u: exit if we have a variable typo.
+# -o pipefail: don't ignore errors in the non-last command in a pipeline 
+set -euo pipefail
+
 function hide_output {
 	# This function hides the output of a command unless the command fails
 	# and returns a non-zero exit code.
@@ -5,11 +11,14 @@ function hide_output {
 	# Get a temporary file.
 	OUTPUT=$(tempfile)
 
-	# Execute command, redirecting stderr/stdout to the temporary file.
+	# Execute command, redirecting stderr/stdout to the temporary file. Since we
+	# check the return code ourselves, disable 'set -e' temporarily.
+	set +e
 	$@ &> $OUTPUT
+	E=$?
+	set -e
 
 	# If the command failed, show the output that was captured in the temporary file.
-	E=$?
 	if [ $E != 0 ]; then
 		# Something failed.
 		echo
@@ -75,7 +84,7 @@ function get_publicip_from_web_service {
 	#
 	# Pass '4' or '6' as an argument to this function to specify
 	# what type of address to get (IPv4, IPv6).
-	curl -$1 --fail --silent --max-time 15 icanhazip.com 2>/dev/null
+	curl -$1 --fail --silent --max-time 15 icanhazip.com 2>/dev/null || /bin/true
 }
 
 function get_default_privateip {
@@ -131,11 +140,10 @@ function get_default_privateip {
 	fi
 
 	echo $address
-		
 }
 
 function ufw_allow {
-	if [ -z "$DISABLE_FIREWALL" ]; then
+	if [ -z "${DISABLE_FIREWALL:-}" ]; then
 		# ufw has completely unhelpful output
 		ufw allow $1 > /dev/null;
 	fi
@@ -154,10 +162,13 @@ function input_box {
 	# input_box "title" "prompt" "defaultvalue" VARIABLE
 	# The user's input will be stored in the variable VARIABLE.
 	# The exit code from dialog will be stored in VARIABLE_EXITCODE.
+	# Temporarily turn off 'set -e' because we need the dialog return code.
 	declare -n result=$4
 	declare -n result_code=$4_EXITCODE
+	set +e
 	result=$(dialog --stdout --title "$1" --inputbox "$2" 0 0 "$3")
 	result_code=$?
+	set -e
 }
 
 function input_menu {
@@ -167,8 +178,10 @@ function input_menu {
 	declare -n result=$4
 	declare -n result_code=$4_EXITCODE
 	local IFS=^$'\n'
+	set +e
 	result=$(dialog --stdout --title "$1" --menu "$2" 0 0 0 $3)
 	result_code=$?
+	set -e
 }
 
 function wget_verify {
