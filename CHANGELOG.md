@@ -1,12 +1,18 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.40 (January 12, 2019)
+------------------------
 
-This is the first release for Ubuntu 18.04. This version and versions going forward can **only** be installed on Ubuntu 18.04; however, upgrades of existing Ubuntu 14.04 boxes to the latest version supporting Ubuntu 14.04 continue to work as normal.
+This is the first release for Ubuntu 18.04. This version and versions going forward can **only** be installed on Ubuntu 18.04; however, upgrades of existing Ubuntu 14.04 boxes to the latest version supporting Ubuntu 14.04 (v0.30) continue to work as normal.
 
-When **upgrading**, you **must upgrade your existing Ubuntu 14.04 Mail-in-a-Box box** to the latest release supporting Ubuntu 14.04 --- that's v0.30 --- first. If you are running an older version of Mail-in-a-Box which has an old version of ownCloud or Nextcloud, you will *not* be able to upgrade your data because older versions of ownCloud and Nextcloud that are required to perform the upgrade *cannot* be run on Ubuntu 18.04. To upgrade from Ubuntu 14.04 to Ubuntu 18.04, you **must create a fresh Ubuntu 18.04 machine** before installing this version. In-place upgrades of servers are not supported. Since Ubuntu's support for Ubuntu 14.04 has almost ended, everyone is encouraged to upgrade.
+When **upgrading**, you **must first upgrade your existing Ubuntu 14.04 Mail-in-a-Box box** to the latest release supporting Ubuntu 14.04 --- that's v0.30 --- before you migrate to Ubuntu 18.04. If you are running an older version of Mail-in-a-Box which has an old version of ownCloud or Nextcloud, you will *not* be able to upgrade your data because older versions of ownCloud and Nextcloud that are required to perform the upgrade *cannot* be run on Ubuntu 18.04. To upgrade from Ubuntu 14.04 to Ubuntu 18.04, you **must create a fresh Ubuntu 18.04 machine** before installing this version. In-place upgrades of servers are not supported. Since Ubuntu's support for Ubuntu 14.04 has almost ended, everyone is encouraged to create a new Ubuntu 18.04 machine and migrate to it.
+
+For complete upgrade instructions, see:
+
+https://discourse.mailinabox.email/t/mail-in-a-box-version-v0-40-and-moving-to-ubuntu-18-04/4289
+
+The changelog for this release follows.
 
 Setup:
 
@@ -17,7 +23,7 @@ Setup:
 Mail:
 
 * IMAP server-side full text search is no longer supported because we were using a custom-built `dovecot-lucene` package that we are no longer maintaining.
-* Sending email is now disabled on port 25 --- you must log in to port 587 to send email.
+* Sending email is now disabled on port 25 --- you must log in to port 587 to send email, per the long-standing mail instructions.
 * Greylisting may delay more emails from new senders. We were using a custom-built postgrey package previously that whitelisted sending domains in dnswl.org, but we are no longer maintaining that package.
 
 v0.30 (January 9, 2019)

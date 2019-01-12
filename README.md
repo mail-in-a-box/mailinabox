@@ -52,13 +52,13 @@ Clone this repository:
 	$ git clone https://github.com/mail-in-a-box/mailinabox
 	$ cd mailinabox
 
-_Optional:_ Download my PGP key and then verify that the sources were signed
-by me:
+_Optional:_ Download Josh's PGP key and then verify that the sources were signed
+by him:
 
 	$ curl -s https://keybase.io/joshdata/key.asc | gpg --import
 	gpg: key C10BDD81: public key "Joshua Tauberer <jt@occams.info>" imported
 
-	$ git verify-tag v0.30
+	$ git verify-tag v0.40
 	gpg: Signature made ..... using RSA key ID C10BDD81
 	gpg: Good signature from "Joshua Tauberer <jt@occams.info>"
 	gpg: WARNING: This key is not certified with a trusted signature!
@@ -67,19 +67,19 @@ by me:
 
 You'll get a lot of warnings, but that's OK. Check that the primary key fingerprint matches the
 fingerprint in the key details at [https://keybase.io/joshdata](https://keybase.io/joshdata)
-and on my [personal homepage](https://razor.occams.info/). (Of course, if this repository has been compromised you can't trust these instructions.)
+and on his [personal homepage](https://razor.occams.info/). (Of course, if this repository has been compromised you can't trust these instructions.)
 
 Checkout the tag corresponding to the most recent release:
 
-	$ git checkout v0.30
+	$ git checkout v0.40
 
 Begin the installation.
 
 	$ sudo setup/start.sh
 
-For help, DO NOT contact me directly --- I don't do tech support by email or tweet (no exceptions).
+For help, DO NOT contact Josh directly --- I don't do tech support by email or tweet (no exceptions).
 
-Post your question on the [discussion forum](https://discourse.mailinabox.email/) instead, where me and other Mail-in-a-Box users may be able to help you.
+Post your question on the [discussion forum](https://discourse.mailinabox.email/) instead, where maintainers and Mail-in-a-Box users may be able to help you.
 
 Contributing and Development
 ----------------------------
