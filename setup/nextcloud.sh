@@ -118,6 +118,12 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 			echo "We are running Nextcloud 11, upgrading to Nextcloud 12.0.5 first"
 			InstallNextcloud 12.0.5 d25afbac977a4e331f5e38df50aed0844498ca86
 		fi
+
+		# If we are upgrading from Nextcloud 12 we should go to Nextcloud 13 first.
+		if grep -q "OC_VersionString = '12\." /usr/local/lib/owncloud/version.php; then
+			echo "We are running Nextcloud 12, upgrading to Nextcloud 13.0.6 first"
+			InstallNextcloud 13.0.6 33e41f476f0e2be5dc7cdb9d496673d9647aa3d6
+		fi
 	fi
 
 	InstallNextcloud $nextcloud_ver $nextcloud_hash
