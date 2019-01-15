@@ -39,11 +39,11 @@ InstallNextcloud() {
 	# their github repositories.
 	mkdir -p /usr/local/lib/owncloud/apps
 
-	wget_verify https://github.com/nextcloud/contacts/releases/download/v2.1.5/contacts.tar.gz b7460d15f1b78d492ed502d778c0c458d503ba17 /tmp/contacts.tgz
+	wget_verify https://github.com/nextcloud/contacts/releases/download/v2.1.8/contacts.tar.gz b5d5bbee33f0c32b124b46cb6aaab90c695ac170 /tmp/contacts.tgz
 	tar xf /tmp/contacts.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/contacts.tgz
 
-	wget_verify https://github.com/nextcloud/calendar/releases/download/v1.6.1/calendar.tar.gz f93a247cbd18bc624f427ba2a967d93ebb941f21 /tmp/calendar.tgz
+	wget_verify https://github.com/nextcloud/calendar/releases/download/v1.6.4/calendar.tar.gz d8a7950dba14803472b6c19625a8ceb23d6fd4ef /tmp/calendar.tgz
 	tar xf /tmp/calendar.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/calendar.tgz
 
@@ -75,8 +75,8 @@ InstallNextcloud() {
 	fi
 }
 
-nextcloud_ver=13.0.6
-nextcloud_hash=33e41f476f0e2be5dc7cdb9d496673d9647aa3d6
+nextcloud_ver=14.0.6
+nextcloud_hash=4e43a57340f04c2da306c8eea98e30040399ae5a
 
 # Check if Nextcloud dir exist, and check if version matches nextcloud_ver (if either doesn't - install/upgrade)
 if [ ! -d /usr/local/lib/owncloud/ ] \

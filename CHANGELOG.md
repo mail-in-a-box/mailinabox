@@ -1,6 +1,15 @@
 CHANGELOG
 =========
 
+In development
+--------------
+
+Contacts/Calendar:
+
+* Upgraded Nextcloud from 13.0.6 to 14.0.6.
+* Upgraded Contacts from 2.1.5 to 2.1.8.
+* Upgraded Calendar from 1.6.1 to 1.6.4.
+
 v0.40 (January 12, 2019)
 ------------------------
 
