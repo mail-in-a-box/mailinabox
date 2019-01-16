@@ -209,8 +209,7 @@ tools/editconf.py /etc/postfix/main.cf \
 # There was a change from Ubuntu 14.04 to 18.04 with how postfix handles SASL checks.
 # smtpd_sasl_auth_enable=yes must be set for reject_sender_login_mismatch
 
-tools/editconf.py /etc/postfix/main.cf \
-	smtpd_sasl_auth_enable=yes
+tools/editconf.py /etc/postfix/main.cf smtpd_sasl_auth_enable=yes
 
 # Postfix connects to Postgrey on the 127.0.0.1 interface specifically. Ensure that
 # Postgrey listens on the same interface (and not IPv6, for instance).
