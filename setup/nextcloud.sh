@@ -105,24 +105,12 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 		# Database migrations from ownCloud are no longer possible because ownCloud cannot be run under
 		# PHP 7.
 		if grep -q "OC_VersionString = '[89]\." /usr/local/lib/owncloud/version.php; then
-			echo "Upgrades from Mail-in-a-Box prior to v0.26c (dated February 13, 2018) with Nextcloud < 12.0.5 (you have ownCloud 8 or 9) are not supported. Upgrade to Mail-in-a-Box version v0.28 first. Setup aborting."
+			echo "Upgrades from Mail-in-a-Box prior to v0.28 (dated July 30, 2018) with Nextcloud < 13.0.6 (you have ownCloud 8 or 9) are not supported. Upgrade to Mail-in-a-Box version v0.30 first. Setup aborting."
 			exit 1
 		fi
-		if grep -q "OC_VersionString = '10\." /usr/local/lib/owncloud/version.php; then
-			echo "Upgrades from Mail-in-a-Box prior to v0.26c (dated February 13, 2018) with Nextcloud < 12.0.5 (you have ownCloud 10) are not supported. Upgrade to Mail-in-a-Box version v0.28 first. Setup aborting."
+		if grep -q "OC_VersionString = '1[012]\." /usr/local/lib/owncloud/version.php; then
+			echo "Upgrades from Mail-in-a-Box prior to v0.28 (dated July 30, 2018) with Nextcloud < 13.0.6 (you have ownCloud 10, 11 or 12) are not supported. Upgrade to Mail-in-a-Box version v0.30 first. Setup aborting."
 			exit 1
-		fi
-
-		# If we are upgrading from Nextcloud 11 we should go to Nextcloud 12 first.
-		if grep -q "OC_VersionString = '11\." /usr/local/lib/owncloud/version.php; then
-			echo "We are running Nextcloud 11, upgrading to Nextcloud 12.0.5 first"
-			InstallNextcloud 12.0.5 d25afbac977a4e331f5e38df50aed0844498ca86
-		fi
-
-		# If we are upgrading from Nextcloud 12 we should go to Nextcloud 13 first.
-		if grep -q "OC_VersionString = '12\." /usr/local/lib/owncloud/version.php; then
-			echo "We are running Nextcloud 12, upgrading to Nextcloud 13.0.6 first"
-			InstallNextcloud 13.0.6 33e41f476f0e2be5dc7cdb9d496673d9647aa3d6
 		fi
 	fi
 
