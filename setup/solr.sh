@@ -61,3 +61,18 @@ chmod -R o-rwx /etc/dovecot
 # Restart services to reload solr schema & dovecot plugins
 restart_service tomcat8
 restart_service dovecot
+
+
+# Kickoff building the index
+
+# Per doveadm-fts manpage: Scan what mails exist in the full text search index
+# and compare those to what actually exist in mailboxes.
+# This removes mails from the index that have already been expunged  and  makes
+# sure that the next doveadm index will index all the missing mails (if any).
+doveadm fts rescan -A
+
+# Adds unindexed files to the fts database
+# * `-q`: Queues the indexing to be run by indexer process. (will background the indexing)
+# * `-A`: All users
+# * `'*'`: All folders
+doveadm index -q -A '*'
