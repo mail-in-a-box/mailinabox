@@ -185,23 +185,32 @@ tools/editconf.py /etc/postfix/main.cf virtual_transport=lmtp:[127.0.0.1]:10025
 #
 # * `reject_non_fqdn_sender`: Reject not-nice-looking return paths.
 # * `reject_unknown_sender_domain`: Reject return paths with invalid domains.
-# * `reject_authenticated_sender_login_mismatch`: Reject if mail FROM address does not match the client SASL login
+# * `reject_sender_login_mismatch`: Reject if mail FROM address does not match the client SASL login,
+#                                   Also prevents unauthenticated users from sending mail to other local users.
+#                                   reject_sender_login_mismatch was an alias for
+#                                   reject_authenticated_sender_login_mismatch & reject_unauthenticated_sender_login_mismatch
 # * `reject_rhsbl_sender`: Reject return paths that use blacklisted domains.
 # * `permit_sasl_authenticated`: Authenticated users (i.e. on port 587) can skip further checks.
 # * `permit_mynetworks`: Mail that originates locally can skip further checks.
 # * `reject_rbl_client`: Reject connections from IP addresses blacklisted in zen.spamhaus.org
 # * `reject_unlisted_recipient`: Although Postfix will reject mail to unknown recipients, it's nicer to reject such mail ahead of greylisting rather than after.
 # * `check_policy_service`: Apply greylisting using postgrey.
-# * `reject_sender_login_mismatch`: Prevents unauthenticated users from sending mail to other local users.
 #
 # Notes: #NODOC
 # permit_dnswl_client can pass through mail from whitelisted IP addresses, which would be good to put before greylisting #NODOC
 # so these IPs get mail delivered quickly. But when an IP is not listed in the permit_dnswl_client list (i.e. it is not #NODOC
 # whitelisted) then postfix does a DEFER_IF_REJECT, which results in all "unknown user" sorts of messages turning into #NODOC
 # "450 4.7.1 Client host rejected: Service unavailable". This is a retry code, so the mail doesn't properly bounce. #NODOC
+
 tools/editconf.py /etc/postfix/main.cf \
-	smtpd_sender_restrictions="reject_non_fqdn_sender,reject_unknown_sender_domain,reject_authenticated_sender_login_mismatch,reject_rhsbl_sender dbl.spamhaus.org,reject_sender_login_mismatch" \
+	smtpd_sender_restrictions="permit_mynetworks,reject_non_fqdn_sender,reject_unknown_sender_domain,reject_sender_login_mismatch,reject_rhsbl_sender dbl.spamhaus.org" \
 	smtpd_recipient_restrictions=permit_sasl_authenticated,permit_mynetworks,"reject_rbl_client zen.spamhaus.org",reject_unlisted_recipient,"check_policy_service inet:127.0.0.1:10023"
+
+# There was a change from Ubuntu 14.04 to 18.04 with how postfix handles SASL checks.
+# smtpd_sasl_auth_enable=yes must be set for reject_sender_login_mismatch
+
+tools/editconf.py /etc/postfix/main.cf \
+	smtpd_sasl_auth_enable=yes
 
 # Postfix connects to Postgrey on the 127.0.0.1 interface specifically. Ensure that
 # Postgrey listens on the same interface (and not IPv6, for instance).
