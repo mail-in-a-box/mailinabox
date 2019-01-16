@@ -93,11 +93,11 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 		echo "Upgrading Nextcloud --- backing up existing installation, configuration, and database to directory to $BACKUP_DIRECTORY..."
 		cp -r /usr/local/lib/owncloud "$BACKUP_DIRECTORY/owncloud-install"
 	fi
-	if [ -e /home/user-data/owncloud/owncloud.db ]; then
-		cp /home/user-data/owncloud/owncloud.db $BACKUP_DIRECTORY
+	if [ -e $STORAGE_ROOT/owncloud/owncloud.db ]; then
+		cp $STORAGE_ROOT/owncloud/owncloud.db $BACKUP_DIRECTORY
 	fi
-	if [ -e /home/user-data/owncloud/config.php ]; then
-		cp /home/user-data/owncloud/config.php $BACKUP_DIRECTORY
+	if [ -e $STORAGE_ROOT/owncloud/config.php ]; then
+		cp $STORAGE_ROOT/owncloud/config.php $BACKUP_DIRECTORY
 	fi
 
 	# If ownCloud or Nextcloud was previously installed....
