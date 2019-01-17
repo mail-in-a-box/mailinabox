@@ -65,15 +65,13 @@ service auth {
 }
 EOF
 
-# And have Postfix use that service. We *disable* it here
-# so that authentication is not permitted on port 25 (which
-# does not run DKIM on relayed mail, so outbound mail isn't
-# correct, see #830), but we enable it specifically for the
-# submission port.
+# And have Postfix use that service.
+# Starting with Ubuntu Bionic, smtpd_sasl_auth_enable=yes is required
+# for certain main.cf options to function.
 tools/editconf.py /etc/postfix/main.cf \
 	smtpd_sasl_type=dovecot \
 	smtpd_sasl_path=private/auth \
-	smtpd_sasl_auth_enable=no
+	smtpd_sasl_auth_enable=yes
 
 # ### Sender Validation
 

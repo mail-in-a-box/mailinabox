@@ -201,11 +201,6 @@ tools/editconf.py /etc/postfix/main.cf \
 	smtpd_sender_restrictions="permit_mynetworks,reject_non_fqdn_sender,reject_unknown_sender_domain,reject_sender_login_mismatch,reject_rhsbl_sender dbl.spamhaus.org" \
 	smtpd_recipient_restrictions=permit_sasl_authenticated,permit_mynetworks,"reject_rbl_client zen.spamhaus.org",reject_unlisted_recipient,"check_policy_service inet:127.0.0.1:10023"
 
-# There was a change from Ubuntu 14.04 to 18.04 with how postfix handles SASL checks.
-# smtpd_sasl_auth_enable=yes must be set for reject_sender_login_mismatch
-
-tools/editconf.py /etc/postfix/main.cf smtpd_sasl_auth_enable=yes
-
 # Postfix connects to Postgrey on the 127.0.0.1 interface specifically. Ensure that
 # Postgrey listens on the same interface (and not IPv6, for instance).
 # A lot of legit mail servers try to resend before 300 seconds.
