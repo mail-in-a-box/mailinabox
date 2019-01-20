@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+System:
+
+* Missing brute force login attack prevention (fail2ban) filters which stopped working on Ubuntu 18.04 were added back.
+
 v0.40 (January 12, 2019)
 ------------------------
 
