@@ -15,7 +15,7 @@ from exclusiveprocess import Lock
 from utils import load_environment, shell, wait_for_service, fix_boto
 
 rsync_ssh_options = [
-	"--ssh-options='-i /root/.ssh/id_rsa_miab'",
+	# "--ssh-options='-i /root/.ssh/id_rsa_miab'",
 	"--rsync-options=-e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
 ]
 
