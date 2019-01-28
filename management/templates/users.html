@@ -42,6 +42,7 @@
   <thead>
     <tr>
       <th width="50%">Email Address</th>
+      <th>Quota</th>
       <th>Actions</th>
     </tr>
   </thead>
@@ -54,6 +55,8 @@
   <tr id="user-template">
     <td class='address'>
     </td>
+	<td class="quota">
+	</td>
     <td class='actions'>
         <span class='privs'>
         </span>
@@ -152,7 +155,8 @@ function show_users() {
           n2.addClass("account_" + user.status);
 
           n.attr('data-email', user.email);
-          n.find('.address').text(user.email)
+          n.find('.address').text(user.email);
+          n.find('.quota').text(user.quota);
           n2.find('.restore_info tt').text(user.mailbox);
 
           if (user.status == 'inactive') continue;
