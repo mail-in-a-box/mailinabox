@@ -129,7 +129,7 @@ def get_mail_users_ex(env, with_archived=False):
 	active_accounts = set()
 	c = open_database(env)
 	c.execute('SELECT email, privileges, quota FROM users')
-	for email, privileges in c.fetchall():
+	for email, privileges, quota in c.fetchall():
 		active_accounts.add(email)
 
 		user = {
