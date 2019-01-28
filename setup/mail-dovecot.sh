@@ -70,7 +70,6 @@ cp conf/dovecot/conf.d/15-mailboxes.conf /etc/dovecot/conf.d/
 cp conf/dovecot/conf.d/20-imap.conf /etc/dovecot/conf.d/
 cp conf/dovecot/conf.d/90-quota.conf /etc/dovecot/conf.d/
 cp conf/dovecot/dovecot-sql.conf.ext /etc/dovecot/
-cp conf/roundcube/config.inc.php /usr/local/lib/roundcubemail/config/
 
 # ### IMAP/POP
 
