@@ -66,7 +66,11 @@ tools/editconf.py /etc/dovecot/conf.d/10-mail.conf \
 	first_valid_uid=0
 
 # Create, subscribe, and mark as special folders: INBOX, Drafts, Sent, Trash, Spam and Archive.
-cp conf/dovecot-mailboxes.conf /etc/dovecot/conf.d/15-mailboxes.conf
+cp conf/dovecot/conf.d/15-mailboxes.conf /etc/dovecot/conf.d/
+cp conf/dovecot/conf.d/20-imap.conf /etc/dovecot/conf.d/
+cp conf/dovecot/conf.d/90-quota.conf /etc/dovecot/conf.d/
+cp conf/dovecot/dovecot-sql.conf.ext /etc/dovecot/
+cp conf/roundcube/config.inc.php /usr/local/lib/roundcubemail/config/
 
 # ### IMAP/POP
 
