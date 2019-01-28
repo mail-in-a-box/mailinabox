@@ -135,7 +135,7 @@ def get_mail_users_ex(env, with_archived=False):
 		user = {
 			"email": email,
 			"privileges": parse_privs(privileges),
-			"quota": quota,
+			"quota": 'unlimited' if quota == '0' else quota,
 			"status": "active",
 		}
 		users.append(user)
