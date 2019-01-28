@@ -1,7 +1,7 @@
 Mail-in-a-Box with Quotas
 =========================
 
-This is an experimental implementation of Main-in-a-box with quotas.  Follow the directions below to install except
+This is an experimental implementation of Mail-in-a-box with quotas.  Follow the directions below to install except
 clone from this repository instead of the official repository.
 
 There is no support for quotas in control panel at the moment.  To set quotas for a user you need to set the `quota`
