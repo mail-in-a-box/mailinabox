@@ -20,7 +20,7 @@ db_path=$STORAGE_ROOT/mail/users.sqlite
 # Create an empty database if it doesn't yet exist.
 if [ ! -f $db_path ]; then
 	echo Creating new user database: $db_path;
-	echo "CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL UNIQUE, password TEXT NOT NULL, extra, privileges TEXT NOT NULL DEFAULT '');" | sqlite3 $db_path;
+	echo "CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL UNIQUE, password TEXT NOT NULL, extra, privileges TEXT NOT NULL DEFAULT '', quota TEXT NOT NULL DEFAULT '0');" | sqlite3 $db_path;
 	echo "CREATE TABLE aliases (id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT NOT NULL UNIQUE, destination TEXT NOT NULL, permitted_senders TEXT);" | sqlite3 $db_path;
 fi
 
@@ -49,7 +49,7 @@ driver = sqlite
 connect = $db_path
 default_pass_scheme = SHA512-CRYPT
 password_query = SELECT email as user, password FROM users WHERE email='%u';
-user_query = SELECT email AS user, "mail" as uid, "mail" as gid, "$STORAGE_ROOT/mail/mailboxes/%d/%n" as home FROM users WHERE email='%u';
+user_query = SELECT email AS user, "mail" as uid, "mail" as gid, "$STORAGE_ROOT/mail/mailboxes/%d/%n" as home, '*:bytes=' || quota AS quota_rule FROM users WHERE email='%u';
 iterate_query = SELECT email AS user FROM users;
 EOF
 chmod 0600 /etc/dovecot/dovecot-sql.conf.ext # per Dovecot instructions

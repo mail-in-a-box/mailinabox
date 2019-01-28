@@ -69,7 +69,6 @@ tools/editconf.py /etc/dovecot/conf.d/10-mail.conf \
 cp conf/dovecot/conf.d/15-mailboxes.conf /etc/dovecot/conf.d/
 cp conf/dovecot/conf.d/20-imap.conf /etc/dovecot/conf.d/
 cp conf/dovecot/conf.d/90-quota.conf /etc/dovecot/conf.d/
-cp conf/dovecot/dovecot-sql.conf.ext /etc/dovecot/
 
 # ### IMAP/POP
 
