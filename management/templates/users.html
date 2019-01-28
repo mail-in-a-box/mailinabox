@@ -41,7 +41,7 @@
 <table id="user_table" class="table" style="width: auto">
   <thead>
     <tr>
-      <th width="50%">Email Address</th>
+      <th width="35%">Email Address</th>
       <th>Quota</th>
       <th>Actions</th>
     </tr>
@@ -61,6 +61,10 @@
         <span class='privs'>
         </span>
 
+        <a href="#" onclick="users_set_quota(this); return false;" class='setquota' title="Set Quota">
+            set quota
+        </a>
+        |
         <span class="if_active">
           <a href="#" onclick="users_set_password(this); return false;" class='setpw' title="Set Password">
             set password
@@ -155,8 +159,9 @@ function show_users() {
           n2.addClass("account_" + user.status);
 
           n.attr('data-email', user.email);
+          n.attr('data-quota', user.quota);
           n.find('.address').text(user.email);
-          n.find('.quota').text(user.quota);
+          n.find('.quota').text((user.quota == '0') ? 'unlimited' : user.quota);
           n2.find('.restore_info tt').text(user.mailbox);
 
           if (user.status == 'inactive') continue;
@@ -231,6 +236,36 @@ function users_set_password(elem) {
           show_modal_error("Set Password", r);
         });
     });
+}
+
+function users_set_quota(elem) {
+    var email = $(elem).parents('tr').attr('data-email');
+    var quota = $(elem).parents('tr').attr('data-quota');
+
+    show_modal_confirm(
+        "Set Quota",
+        $("<p>Set quota for <b>" + email + "</b>?</p>" +
+            "<p>" +
+            "<label for='users_set_quota' style='display: block; font-weight: normal'>Quota:</label>" +
+            "<input type='text' id='users_set_quota' value='" + quota + "'></p>" +
+            "<p><small>Quotas may not contain any numbers or commas.  Suffixes of G (gigabytes) and M (megabytes) are allowed.</small></p>" +
+            "<p><small>For unlimited storage enter 0 (zero)</small></p>"),
+        "Set Quota",
+        function() {
+            api(
+                "/mail/users/quota",
+                "POST",
+                {
+                    email: email,
+                    quota: $('#users_set_quota').val()
+                },
+                function(r) {
+                    show_users();
+                },
+                function(r) {
+                    show_modal_error("Set Quota", r);
+                });
+        });
 }
 
 function users_remove(elem) {

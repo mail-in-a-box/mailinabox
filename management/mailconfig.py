@@ -135,7 +135,7 @@ def get_mail_users_ex(env, with_archived=False):
 		user = {
 			"email": email,
 			"privileges": parse_privs(privileges),
-			"quota": 'unlimited' if quota == '0' else quota,
+            "quota": quota,
 			"status": "active",
 		}
 		users.append(user)
@@ -332,6 +332,31 @@ def hash_password(pw):
 	# something like "{SCHEME}hashedpassworddata".
 	# http://wiki2.dovecot.org/Authentication/PasswordSchemes
 	return utils.shell('check_output', ["/usr/bin/doveadm", "pw", "-s", "SHA512-CRYPT", "-p", pw]).strip()
+
+def set_mail_quota(email, quota, env):
+    # validate that password is acceptable
+    quota = validate_quota(quota)
+
+    # update the database
+    conn, c = open_database(env, with_connection=True)
+    c.execute("UPDATE users SET quota=? WHERE email=?", (quota, email))
+    if c.rowcount != 1:
+        return ("That's not a user (%s)." % email, 400)
+    conn.commit()
+    return "OK"
+
+def validate_quota(quota):
+    # validate quota
+    quota = quota.strip().upper()
+
+    if quota == "":
+        raise ValueError("No quota provided.")
+    if re.search(r"[\s,.]", quota):
+        raise ValueError("Quotas cannot contain spaces or commas.")
+    if not re.match(r'^\d+[GM]?$', quota):
+        raise ValueError("Invalid quota.")
+
+    return quota
 
 def get_mail_password(email, env):
 	# Gets the hashed password for a user. Passwords are stored in Dovecot's

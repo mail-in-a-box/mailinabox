@@ -9,7 +9,7 @@ import auth, utils, multiprocessing.pool
 from mailconfig import get_mail_users, get_mail_users_ex, get_admins, add_mail_user, set_mail_password, remove_mail_user
 from mailconfig import get_mail_user_privileges, add_remove_mail_user_privilege
 from mailconfig import get_mail_aliases, get_mail_aliases_ex, get_mail_domains, add_mail_alias, remove_mail_alias
-
+from mailconfig import set_mail_quota
 env = utils.load_environment()
 
 auth_service = auth.KeyAuthService()
@@ -157,6 +157,14 @@ def mail_users_add():
 		return add_mail_user(request.form.get('email', ''), request.form.get('password', ''), request.form.get('privileges', ''), env)
 	except ValueError as e:
 		return (str(e), 400)
+
+@app.route('/mail/users/quota', methods=['POST'])
+@authorized_personnel_only
+def mail_users_quota():
+    try:
+        return set_mail_quota(request.form.get('email', ''), request.form.get('quota'), env)
+    except ValueError as e:
+        return (str(e), 400)
 
 @app.route('/mail/users/password', methods=['POST'])
 @authorized_personnel_only
