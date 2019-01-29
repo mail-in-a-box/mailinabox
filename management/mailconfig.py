@@ -105,6 +105,18 @@ def get_mail_users(env):
 	users = [ row[0] for row in c.fetchall() ]
 	return utils.sort_email_addresses(users, env)
 
+def sizeof_fmt(num):
+	for unit in ['','K','M','G','T']:
+		if abs(num) < 1024.0:
+			if abs(num) > 99:
+				return "%3.0f%s" % (num, unit)
+			else:
+				return "%2.1f%s" % (num, unit)
+
+		num /= 1024.0
+
+	return str(num)
+
 def get_mail_users_ex(env, with_archived=False):
 	# Returns a complex data structure of all user accounts, optionally
 	# including archived (status="inactive") accounts.
@@ -136,22 +148,24 @@ def get_mail_users_ex(env, with_archived=False):
 		box_size = 0
 		box_count = 0
 		box_quota = ''
-		# try:
-		# 	with open('/home/user-data/mail/mailboxes/%s/%s/maildirsize' % (domain, user), 'r') as f:
-		# 		box_quota = f.readline()
-		# 		for line in f.readlines():
-		# 			(size, count) = line.split(' ')
-		# 			box_size += int(size)
-		# 			box_count += int(count)
-		# except:
-		# 	box_size = '?'
+		try:
+			dirsize_file = os.path.join(env['STORAGE_ROOT'], 'mail/mailboxes/%s/%s/maildirsize' % (domain, user))
+			with open(dirsize_file, 'r') as f:
+				box_quota = f.readline()
+				for line in f.readlines():
+					(size, count) = line.split(' ')
+					box_size += int(size)
+					box_count += int(count)
+		except:
+			box_size = '?'
+			box_count = '?'
 
 		user = {
 			"email": email,
 			"privileges": parse_privs(privileges),
             "quota": quota,
 			"box_quota": box_quota,
-			"box_size": '%iK' % int(box_size / 1024),
+			"box_size": sizeof_fmt(box_size) if box_size != '?' else box_size,
 			"box_count": box_count,
 			"status": "active",
 		}

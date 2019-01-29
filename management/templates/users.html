@@ -42,7 +42,8 @@
   <thead>
     <tr>
       <th width="35%">Email Address</th>
-        <th>Box Size</th>
+      <th>Messages</th>
+      <th>Size</th>
       <th>Quota</th>
       <th>Actions</th>
     </tr>
@@ -56,6 +57,7 @@
   <tr id="user-template">
     <td class='address'>
     </td>
+    <td class="box-count"></td>
     <td class="box-size"></td>
 	<td class="quota">
 	</td>
@@ -163,6 +165,7 @@ function show_users() {
           n.attr('data-email', user.email);
           n.attr('data-quota', user.quota);
           n.find('.address').text(user.email);
+          n.find('.box-count').text(user.box_count);
           n.find('.box-size').text(user.box_size);
           n.find('.quota').text((user.quota == '0') ? 'unlimited' : user.quota);
           n2.find('.restore_info tt').text(user.mailbox);

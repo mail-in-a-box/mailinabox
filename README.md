@@ -8,6 +8,16 @@ There is baisc support for quotas in the control panel now.  To set quotas from 
 column for the user in the `users.sqlite` database.  The `quota` column is text and allows for the `M` and `G` suffixes
 for megabytes and gigabytes respectively.  No spaces should be used in the quota value (e.g. `2G` or `100M`).
 
+Todo
+----
+
+* Get `postfix` to support quotas.  See https://blog.sys4.de/postfix-dovecot-mailbox-quota-en.html for a start.  Right
+ now the quota message store size is not calculated unless the user accesses the IMAP server (Dovecot).  Right now postfix
+ does not take quotas into account before delivering a message. 
+
+* Allow Trash to have a grace percentage to allow users whose quota is full to delete messages.
+
+
 \[BEGIN Official README]
 
 Mail-in-a-Box
