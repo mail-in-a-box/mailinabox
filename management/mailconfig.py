@@ -132,10 +132,27 @@ def get_mail_users_ex(env, with_archived=False):
 	for email, privileges, quota in c.fetchall():
 		active_accounts.add(email)
 
+		(user, domain) = email.split('@')
+		box_size = 0
+		box_count = 0
+		box_quota = ''
+		try:
+			with open('/home/user-data/mail/mailboxes/%s/%s/maildirsize' % (domain, user), 'r') as f:
+				box_quota = f.readline()
+				for line in f.readlines():
+					(size, count) = line.split(' ')
+					box_size += int(size)
+					box_count += int(count)
+		except:
+			box_size = '?'
+
 		user = {
 			"email": email,
 			"privileges": parse_privs(privileges),
             "quota": quota,
+			"box_quota": box_quota,
+			"box_size": '%iK' % int(box_size / 1024),
+			"box_count": box_count,
 			"status": "active",
 		}
 		users.append(user)
