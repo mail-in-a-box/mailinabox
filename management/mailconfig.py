@@ -351,9 +351,9 @@ def validate_quota(quota):
 
     if quota == "":
         raise ValueError("No quota provided.")
-    if re.search(r"[\s,.]", quota):
+    if re.search(r"[\s,]", quota):
         raise ValueError("Quotas cannot contain spaces or commas.")
-    if not re.match(r'^\d+[GM]?$', quota):
+    if not re.match(r'^[\d\.]+[GM]?$', quota):
         raise ValueError("Invalid quota.")
 
     return quota
