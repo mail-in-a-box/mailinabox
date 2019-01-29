@@ -161,10 +161,10 @@ def mail_users_add():
 @app.route('/mail/users/quota', methods=['POST'])
 @authorized_personnel_only
 def mail_users_quota():
-    try:
-        return set_mail_quota(request.form.get('email', ''), request.form.get('quota'), env)
-    except ValueError as e:
-        return (str(e), 400)
+	try:
+		return set_mail_quota(request.form.get('email', ''), request.form.get('quota'), env)
+	except ValueError as e:
+		return (str(e), 400)
 
 @app.route('/mail/users/password', methods=['POST'])
 @authorized_personnel_only
