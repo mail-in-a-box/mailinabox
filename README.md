@@ -11,9 +11,13 @@ for megabytes and gigabytes respectively.  No spaces should be used in the quota
 Todo
 ----
 
-* Get `postfix` to support quotas.  See https://blog.sys4.de/postfix-dovecot-mailbox-quota-en.html for a start.  Right
- now the quota message store size is not calculated unless the user accesses the IMAP server (Dovecot).  Right now postfix
- does not take quotas into account before delivering a message. 
+* Get `postfix` to support quotas.  Right now the quota message store size is not calculated unless the user accesses
+ the IMAP server (Dovecot).  Right now postfix does not take quotas into account before delivering a message.
+
+    * https://blog.sys4.de/postfix-dovecot-mailbox-quota-en.html
+    * https://linuxize.com/post/install-and-configure-postfix-and-dovecot/
+
+  Initial work on support for this has been added in the `postfix-quota` branch.
 
 * Allow Trash to have a grace percentage to allow users whose quota is full to delete messages.
 
