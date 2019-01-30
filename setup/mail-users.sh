@@ -22,6 +22,10 @@ if [ ! -f $db_path ]; then
 	echo Creating new user database: $db_path;
 	echo "CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL UNIQUE, password TEXT NOT NULL, extra, privileges TEXT NOT NULL DEFAULT '', quota TEXT NOT NULL DEFAULT '0');" | sqlite3 $db_path;
 	echo "CREATE TABLE aliases (id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT NOT NULL UNIQUE, destination TEXT NOT NULL, permitted_senders TEXT);" | sqlite3 $db_path;
+else
+    set +e
+    echo "ALTER TABLE users ADD COLUMN quota TEXT NOT NULL DEFAULT '0';" | sqlite3 $db_path;
+    set -e
 fi
 
 # ### User Authentication

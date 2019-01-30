@@ -1,14 +1,16 @@
 Mail-in-a-Box with Quotas
 =========================
 
-This is an experimental implementation of Mail-in-a-box with quotas.  Follow the directions below to install except
-clone from this repository instead of the official repository.
+This is an experimental implementation of Mail-in-a-box with quotas.  Follow the directions below to install except clone from this repository instead of the official repository.
 
-There is baisc support for quotas in the control panel now.  To set quotas from the command line, set the `quota`
-column for the user in the `users.sqlite` database.  The `quota` column is text and allows for the `M` and `G` suffixes
-for megabytes and gigabytes respectively.  No spaces should be used in the quota value (e.g. `2G` or `100M`).
+There is baisc support for quotas in the control panel now.  To set quotas from the command line, either use `tools/mail.py` or set the `quota`
+column for the user in the `users.sqlite` database.  If you modify `users` table using SQL note the following:
+
+* The `quota` column is text and allows for the `M` and `G` suffixes for megabytes and gigabytes respectively.
+* No spaces should be used in the quota value (e.g. `2G` or `100M`).
 
 Please report any bugs on github.
+
 
 Todo
 ----
