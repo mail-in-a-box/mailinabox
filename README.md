@@ -8,18 +8,28 @@ There is baisc support for quotas in the control panel now.  To set quotas from 
 column for the user in the `users.sqlite` database.  The `quota` column is text and allows for the `M` and `G` suffixes
 for megabytes and gigabytes respectively.  No spaces should be used in the quota value (e.g. `2G` or `100M`).
 
+Please report any bugs on github.
+
 Todo
 ----
 
-* Get `postfix` to support quotas.  Right now the quota message store size is not calculated unless the user accesses
- the IMAP server (Dovecot). So `postfix` does not take quotas into account before delivering a message.
-
-    * https://blog.sys4.de/postfix-dovecot-mailbox-quota-en.html
-    * https://linuxize.com/post/install-and-configure-postfix-and-dovecot/
-
-  Initial work on support for this has been added in the `postfix-quota` branch.
-
 * Allow Trash to have a grace percentage to allow users whose quota is full to delete messages.
+
+
+Changes
+-------
+
+### .40-quota-0.1-alpha
+
+* First experimental release of Mail-in-a-Box for quotas.
+* Quotas are working and there is basic support in the control panel and `tools/mail.py`.
+
+
+Reference Documents
+-------------------
+
+* https://blog.sys4.de/postfix-dovecot-mailbox-quota-en.html
+* https://linuxize.com/post/install-and-configure-postfix-and-dovecot/
 
 
 \[BEGIN Official README]
