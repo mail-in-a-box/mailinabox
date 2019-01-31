@@ -345,11 +345,11 @@ function generate_random_password() {
   var charset = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789"; // confusable characters skipped
   for (var i = 0; i < 12; i++)
     pw += charset.charAt(Math.floor(Math.random() * charset.length));
-  show_modal_error("Random Password", "<p>Here, try this:</p> <p><code style='font-size: 110%'>" + pw + "</code></pr");
+  show_modal_error("Random Password", "<p>Here, try this:</p> <p><code style='font-size: 110%'>" + pw + "</code></p>");
   return false; // cancel click
 }
 
-$(document).ready(function(){
+$(function() {
     api(
         "/system/default-quota",
         "GET",
@@ -358,5 +358,5 @@ $(document).ready(function(){
             $('#adduserQuota').val(r['default-quota']);
         }
     );
-});
+})
 </script>
