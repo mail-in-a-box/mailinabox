@@ -39,7 +39,7 @@
   <li>Use <a href="#" onclick="return show_panel('aliases')">aliases</a> to create email addresses that forward to existing accounts.</li>
   <li>Administrators get access to this control panel.</li>
   <li>User accounts cannot contain any international (non-ASCII) characters, but <a href="#" onclick="return show_panel('aliases');">aliases</a> can.</li>
-  <li>Quotas may not contain any numbers or commas. Suffixes of G (gigabytes) and M (megabytes) are allowed.  For unlimited storage enter 0 (zero)</li>
+  <li>Quotas may not contain any spaces or commas. Suffixes of G (gigabytes) and M (megabytes) are allowed.  For unlimited storage enter 0 (zero)</li>
 </ul>
 
 <h3>Existing mail users</h3>
@@ -270,7 +270,7 @@ function users_set_quota(elem) {
             "<p>" +
             "<label for='users_set_quota' style='display: block; font-weight: normal'>Quota:</label>" +
             "<input type='text' id='users_set_quota' value='" + quota + "'></p>" +
-            "<p><small>Quotas may not contain any numbers or commas.  Suffixes of G (gigabytes) and M (megabytes) are allowed.</small></p>" +
+            "<p><small>Quotas may not contain any spaces or commas.  Suffixes of G (gigabytes) and M (megabytes) are allowed.</small></p>" +
             "<p><small>For unlimited storage enter 0 (zero)</small></p>"),
         "Set Quota",
         function() {
