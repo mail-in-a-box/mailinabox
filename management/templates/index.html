@@ -10,7 +10,6 @@
         <meta name="robots" content="noindex, nofollow">
 
         <link rel="stylesheet" href="/admin/assets/bootstrap/css/bootstrap.min.css">
-        <script src="/admin/assets/jquery.min.js"></script>
         <style>
 	    body {
 		overflow-y: scroll;
@@ -192,6 +191,7 @@
           </div>
         </div>
 
+        <script src="/admin/assets/jquery.min.js"></script>
         <script src="/admin/assets/bootstrap/js/bootstrap.min.js"></script>
 
         <script>
@@ -377,6 +377,15 @@ function show_panel(panelid) {
 }
 
 $(function() {
+    api(
+        "/system/default-quota",
+        "GET",
+        {},
+        function(r) {
+            $('#adduserQuota').val(r['default-quota']);
+        }
+    );
+
   // Recall saved user credentials.
   if (typeof sessionStorage != 'undefined' && sessionStorage.getItem("miab-cp-credentials"))
     api_credentials = sessionStorage.getItem("miab-cp-credentials").split(":");
