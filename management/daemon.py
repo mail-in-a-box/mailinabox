@@ -531,20 +531,22 @@ def privacy_status_set():
 @app.route('/system/default-quota', methods=["GET"])
 @authorized_personnel_only
 def default_quota_get():
-	return get_default_quota(env)
+	return json_response({
+		"default-quota": get_default_quota(env)
+	})
 
 @app.route('/system/default-quota', methods=["POST"])
 @authorized_personnel_only
 def default_quota_set():
-    config = utils.load_settings(env)
-    try:
-        config["default-quota"] = validate_quota(request.form.get('default_quota'))
-        utils.write_settings(config, env)
+	config = utils.load_settings(env)
+	try:
+		config["default-quota"] = validate_quota(request.form.get('default_quota'))
+		utils.write_settings(config, env)
 
-    except ValueError as e:
-        return ("ERROR: %s" % str(e), 400)
+	except ValueError as e:
+		return ("ERROR: %s" % str(e), 400)
 
-    return "OK"
+	return "OK"
 
 # MUNIN
 
