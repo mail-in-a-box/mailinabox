@@ -11,6 +11,20 @@ column for the user in the `users.sqlite` database.  If you modify `users` table
 
 Please report any bugs on github.
 
+Upgrading v0.40 to v.0.40-quota
+-------------------------------
+
+This is experimental software.  You have been warned.
+
+* Rename your `mailinabox` directory to something like `miab.old`
+
+* Clone this repository using:
+
+    `git clone https://github.com/jrsupplee/mailinabox.git`
+
+* cd into `mailinabox` and run `setup/start.sh` with root privileges.
+
+* On occasion there are lock errors when updating `Munin`.  Just re-run `setup/start.sh` until the error does not occur.
 
 Todo
 ----
@@ -21,7 +35,15 @@ Todo
 Changes
 -------
 
-### .40-quota-0.1-alpha
+### v0.40-quota-0.12-alpha
+
+* Update README
+
+### v0.40-quota-0.11-alpha
+
+* Read latest version from this repository not the Mail-in-a-Box master repository
+
+### v0.40-quota-0.1-alpha
 
 * First experimental release of Mail-in-a-Box for quotas.
 * Quotas are working and there is basic support in the control panel and `tools/mail.py`.
