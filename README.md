@@ -1,15 +1,22 @@
 Mail-in-a-Box with Quotas
 =========================
 
-This is an experimental implementation of Mail-in-a-box with quotas.  Follow the directions below to install except clone from this repository instead of the official repository.
+This is an experimental implementation of Mail-in-a-box with quota support.
 
 There is baisc support for quotas in the control panel now.  To set quotas from the command line, either use `tools/mail.py` or set the `quota`
-column for the user in the `users.sqlite` database.  If you modify `users` table using SQL note the following:
+column for the user in the `users.sqlite` database.  If you modify the `users` table using SQL note the following:
 
 * The `quota` column is text and allows for the `M` and `G` suffixes for megabytes and gigabytes respectively.
 * No spaces should be used in the quota value (e.g. `2G` or `100M`).
 
 Please report any bugs on github.
+
+
+Installing v0.40-quota
+----------------------
+
+Follow the directions below for installing from a repository except clone from this repository instead of the official one.
+
 
 Upgrading v0.40 to v.0.40-quota
 -------------------------------
@@ -26,11 +33,25 @@ This is experimental software.  You have been warned.
 
 * On occasion there are lock errors when updating `Munin`.  Just re-run `setup/start.sh` until the error does not occur.
 
+
+Upgrading v.0.40-quota to a New Version
+---------------------------------------
+
+* Remember that this is experimental software and review the changes in the repository.
+
+* `cd` into the `mailinabox` directory.
+
+* Execute `git pull` to download the latest changes.
+
+* Execute `setup/start.sh` with root privileges.
+
+
 Todo
 ----
 
 * Allow Trash to have a grace percentage to allow users whose quota is full to delete messages.
 
+* Allow configuration of default quota value on installation.
 
 Changes
 -------
