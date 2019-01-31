@@ -377,15 +377,6 @@ function show_panel(panelid) {
 }
 
 $(function() {
-    api(
-        "/system/default-quota",
-        "GET",
-        {},
-        function(r) {
-            $('#adduserQuota').val(r['default-quota']);
-        }
-    );
-
   // Recall saved user credentials.
   if (typeof sessionStorage != 'undefined' && sessionStorage.getItem("miab-cp-credentials"))
     api_credentials = sessionStorage.getItem("miab-cp-credentials").split(":");
