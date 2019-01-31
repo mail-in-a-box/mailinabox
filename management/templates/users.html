@@ -28,6 +28,10 @@
       <option value="admin">Administrator</option>
     </select>
   </div>
+  <div class="form-group">
+      <label class="sr-only" for="adduserQuota">Quota</label>
+      <input type="email" class="form-control" id="adduserQuota" placeholder="Quota">
+  </div>
   <button type="submit" class="btn btn-primary">Add User</button>
 </form>
 <ul style="margin-top: 1em; padding-left: 1.5em; font-size: 90%;">
@@ -196,13 +200,15 @@ function do_add_user() {
   var email = $("#adduserEmail").val();
   var pw = $("#adduserPassword").val();
   var privs = $("#adduserPrivs").val();
+  var quota = $("#adduserQuota").val();
   api(
     "/mail/users/add",
     "POST",
     {
       email: email,
       password: pw,
-      privileges: privs
+      privileges: privs,
+      quota: quota
     },
     function(r) {
       // Responses are multiple lines of pre-formatted text.

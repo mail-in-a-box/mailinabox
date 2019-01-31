@@ -298,7 +298,7 @@ def get_mail_domains(env, filter_aliases=lambda alias : True):
 		 + [get_domain(address, as_unicode=False) for address, *_ in get_mail_aliases(env) if filter_aliases(address) ]
 		 )
 
-def add_mail_user(email, pw, privs, env):
+def add_mail_user(email, pw, privs, quota, env):
 	# validate email
 	if email.strip() == "":
 		return ("No email address provided.", 400)
@@ -324,6 +324,11 @@ def add_mail_user(email, pw, privs, env):
 			validation = validate_privilege(p)
 			if validation: return validation
 
+	try:
+		quota = validate_quota(quota)
+	except ValueError as e:
+		return (str(e), 400)
+
 	# get the database
 	conn, c = open_database(env, with_connection=True)
 
@@ -332,8 +337,8 @@ def add_mail_user(email, pw, privs, env):
 
 	# add the user to the database
 	try:
-		c.execute("INSERT INTO users (email, password, privileges) VALUES (?, ?, ?)",
-			(email, pw, "\n".join(privs)))
+		c.execute("INSERT INTO users (email, password, privileges, quota) VALUES (?, ?, ?, ?)",
+			(email, pw, "\n".join(privs)), quota)
 	except sqlite3.IntegrityError:
 		return ("User already exists.", 400)
 
@@ -375,6 +380,10 @@ def set_mail_quota(email, quota, env):
         return ("That's not a user (%s)." % email, 400)
     conn.commit()
     return "OK"
+
+def get_default_quota(env):
+	config = utils.load_settings(env)
+	return config.get("default-quota", '0')
 
 def validate_quota(quota):
     # validate quota
