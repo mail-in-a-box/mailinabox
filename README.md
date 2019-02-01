@@ -49,7 +49,7 @@ Upgrading v.0.40-quota to a New Version
 
 * `cd` into the `mailinabox` directory.
 
-* Execute `git pull` to download the latest changes.
+* Execute `git pull --tags` to download the latest changes with tags.
 
 * Execute `setup/start.sh` with root privileges.
 
