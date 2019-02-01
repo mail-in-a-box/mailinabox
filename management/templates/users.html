@@ -7,6 +7,7 @@
 #user_table .account_inactive .if_active { display: none; }
 #user_table .account_active .if_inactive { display: none; }
 #user_table .account_active.if_inactive { display: none; }
+.row-center { text-align: center; }
 </style>
 
 <h3>Add a mail user</h3>
@@ -47,9 +48,10 @@
   <thead>
     <tr>
       <th width="35%">Email Address</th>
-      <th>Messages</th>
-      <th>Size</th>
-      <th>Quota</th>
+      <th class="row-center">Messages</th>
+      <th class="row-center">Size</th>
+      <th class="row-center">Used</th>
+      <th class="row-center">Quota</th>
       <th>Actions</th>
     </tr>
   </thead>
@@ -62,9 +64,10 @@
   <tr id="user-template">
     <td class='address'>
     </td>
-    <td class="box-count"></td>
-    <td class="box-size"></td>
-	<td class="quota">
+    <td class="box-count row-center"></td>
+    <td class="box-size row-center"></td>
+    <td class="percent row-center"></td>
+	<td class="quota row-center">
 	</td>
     <td class='actions'>
         <span class='privs'>
@@ -159,7 +162,7 @@ function show_users() {
     function(r) {
       $('#user_table tbody').html("");
       for (var i = 0; i < r.length; i++) {
-        var hdr = $("<tr><td colspan='3'><h4/></td></tr>");
+        var hdr = $("<tr><td colspan='6'><h4/></td></tr>");
         hdr.find('h4').text(r[i].domain);
         $('#user_table tbody').append(hdr);
 
@@ -180,7 +183,14 @@ function show_users() {
           n.attr('data-quota', user.quota);
           n.find('.address').text(user.email);
           n.find('.box-count').text(user.box_count);
+          if (user.box_count == '?') {
+            n.find('.box-count').attr('title', 'Message count is unkown')
+          }
           n.find('.box-size').text(user.box_size);
+          if (user.box_size == '?') {
+            n.find('.box-size').attr('title', 'Mailbox size is unkown')
+          }
+          n.find('.percent').text(user.percent)
           n.find('.quota').text((user.quota == '0') ? 'unlimited' : user.quota);
           n2.find('.restore_info tt').text(user.mailbox);
 

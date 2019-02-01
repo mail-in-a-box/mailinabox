@@ -57,10 +57,11 @@ def setup_key_auth(mgmt_uri):
 
 if len(sys.argv) < 2:
 	print("Usage: ")
+	print("  tools/mail.py system default-quota [new default]")
 	print("  tools/mail.py user  (lists users with quotas)")
 	print("  tools/mail.py user add user@domain.com [password]")
 	print("  tools/mail.py user password user@domain.com [password]")
-	print("  tools/mail.py user quota user@domain new-quota")
+	print("  tools/mail.py user quota user@domain [new-quota]")
 	print("  tools/mail.py user remove user@domain.com")
 	print("  tools/mail.py user make-admin user@domain.com")
 	print("  tools/mail.py user remove-admin user@domain.com")
@@ -121,6 +122,10 @@ elif sys.argv[1] == "user" and sys.argv[2] == "admins":
 			if "admin" in user['privileges']:
 				print(user['email'])
 
+elif sys.argv[1] == "user" and sys.argv[2] == "quota" and len(sys.argv) == 4:
+	# Set a user's quota
+	print(mgmt("/mail/users/quota?text=1&email=%s" % sys.argv[3]))
+
 elif sys.argv[1] == "user" and sys.argv[2] == "quota" and len(sys.argv) == 5:
 	# Set a user's quota
 	users = mgmt("/mail/users/quota", { "email": sys.argv[3], "quota": sys.argv[4] })
@@ -133,6 +138,12 @@ elif sys.argv[1] == "alias" and sys.argv[2] == "add" and len(sys.argv) == 5:
 
 elif sys.argv[1] == "alias" and sys.argv[2] == "remove" and len(sys.argv) == 4:
 	print(mgmt("/mail/aliases/remove", { "address": sys.argv[3] }))
+
+elif sys.argv[1] == "system" and sys.argv[2] == "default-quota" and len(sys.argv) == 3:
+	print(mgmt("/system/default-quota?text=1"))
+
+elif sys.argv[1] == "system" and sys.argv[2] == "default-quota" and len(sys.argv) == 4:
+	print(mgmt("/system/default-quota", { "default_quota": sys.argv[3]}))
 
 else:
 	print("Invalid command-line arguments.")

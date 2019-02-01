@@ -147,18 +147,30 @@ def get_mail_users_ex(env, with_archived=False):
 		(user, domain) = email.split('@')
 		box_size = 0
 		box_count = 0
-		box_quota = ''
+		box_quota = 0
+		percent = ''
 		try:
 			dirsize_file = os.path.join(env['STORAGE_ROOT'], 'mail/mailboxes/%s/%s/maildirsize' % (domain, user))
 			with open(dirsize_file, 'r') as f:
-				box_quota = f.readline()
+				box_quota = int(f.readline().split('S')[0])
 				for line in f.readlines():
 					(size, count) = line.split(' ')
 					box_size += int(size)
 					box_count += int(count)
+
+			try:
+				percent = (box_size / box_quota) * 100
+			except:
+				percent = 'Error'
+
 		except:
 			box_size = '?'
 			box_count = '?'
+			box_quota = '?'
+			percent = '?'
+
+		if quota == '0':
+			percent = ''
 
 		user = {
 			"email": email,
@@ -166,6 +178,7 @@ def get_mail_users_ex(env, with_archived=False):
             "quota": quota,
 			"box_quota": box_quota,
 			"box_size": sizeof_fmt(box_size) if box_size != '?' else box_size,
+			"percent": '%3.0f%%' % percent if type(percent) != str else percent,
 			"box_count": box_count,
 			"status": "active",
 		}
@@ -324,6 +337,9 @@ def add_mail_user(email, pw, privs, quota, env):
 			validation = validate_privilege(p)
 			if validation: return validation
 
+	if quota is None:
+		quota = get_default_quota()
+
 	try:
 		quota = validate_quota(quota)
 	except ValueError as e:
@@ -338,7 +354,7 @@ def add_mail_user(email, pw, privs, quota, env):
 	# add the user to the database
 	try:
 		c.execute("INSERT INTO users (email, password, privileges, quota) VALUES (?, ?, ?, ?)",
-			(email, pw, "\n".join(privs)), quota)
+			(email, pw, "\n".join(privs), quota))
 	except sqlite3.IntegrityError:
 		return ("User already exists.", 400)
 
@@ -368,6 +384,15 @@ def hash_password(pw):
 	# something like "{SCHEME}hashedpassworddata".
 	# http://wiki2.dovecot.org/Authentication/PasswordSchemes
 	return utils.shell('check_output', ["/usr/bin/doveadm", "pw", "-s", "SHA512-CRYPT", "-p", pw]).strip()
+
+def get_mail_quota(email, env):
+	conn, c = open_database(env, with_connection=True)
+	c.execute("SELECT quota FROM users WHERE email=?", (email,))
+	rows = c.fetchall()
+	if len(rows) != 1:
+		return ("That's not a user (%s)." % email, 400)
+
+	return rows[0][0]
 
 def set_mail_quota(email, quota, env):
     # validate that password is acceptable

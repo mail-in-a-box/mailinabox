@@ -9,7 +9,7 @@ import auth, utils, multiprocessing.pool
 from mailconfig import get_mail_users, get_mail_users_ex, get_admins, add_mail_user, set_mail_password, remove_mail_user
 from mailconfig import get_mail_user_privileges, add_remove_mail_user_privilege
 from mailconfig import get_mail_aliases, get_mail_aliases_ex, get_mail_domains, add_mail_alias, remove_mail_alias
-from mailconfig import set_mail_quota, get_default_quota, validate_quota
+from mailconfig import get_mail_quota, set_mail_quota, get_default_quota, validate_quota
 env = utils.load_environment()
 
 auth_service = auth.KeyAuthService()
@@ -153,10 +153,25 @@ def mail_users():
 @app.route('/mail/users/add', methods=['POST'])
 @authorized_personnel_only
 def mail_users_add():
+	quota = request.form.get('quota', get_default_quota(env))
 	try:
-		return add_mail_user(request.form.get('email', ''), request.form.get('password', ''), request.form.get('privileges', ''), request.form.get('quota', ''), env)
+		return add_mail_user(request.form.get('email', ''), request.form.get('password', ''), request.form.get('privileges', ''), quota, env)
 	except ValueError as e:
 		return (str(e), 400)
+
+@app.route('/mail/users/quota', methods=['GET'])
+@authorized_personnel_only
+def get_mail_users_quota():
+	email = request.values.get('email', '')
+	quota = get_mail_quota(email, env)
+
+	if request.values.get('text'):
+		return quota
+
+	return json_response({
+		"email": email,
+		"quota": quota
+	})
 
 @app.route('/mail/users/quota', methods=['POST'])
 @authorized_personnel_only
@@ -531,16 +546,19 @@ def privacy_status_set():
 @app.route('/system/default-quota', methods=["GET"])
 @authorized_personnel_only
 def default_quota_get():
-	return json_response({
-		"default-quota": get_default_quota(env)
-	})
+	if request.values.get('text'):
+		return get_default_quota(env)
+	else:
+		return json_response({
+			"default-quota": get_default_quota(env),
+		})
 
 @app.route('/system/default-quota', methods=["POST"])
 @authorized_personnel_only
 def default_quota_set():
 	config = utils.load_settings(env)
 	try:
-		config["default-quota"] = validate_quota(request.form.get('default_quota'))
+		config["default-quota"] = validate_quota(request.values.get('default_quota'))
 		utils.write_settings(config, env)
 
 	except ValueError as e:

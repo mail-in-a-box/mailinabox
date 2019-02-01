@@ -56,6 +56,19 @@ Todo
 Changes
 -------
 
+### v0.40-quota-0.13-alpha
+
+* Add a `default-quota` setting in `settings.yaml`
+
+* Add input for setting quota when entering a new user in control panel
+
+* Modify `tools/mail.py` to allow for setting and getting the default system quota
+
+* Modify `tools/mail.py` to allow for getting a user's quota setting
+
+* Modify the mail users list in control panel to display percentage used
+
+
 ### v0.40-quota-0.12-alpha
 
 * Update README
