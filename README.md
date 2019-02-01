@@ -59,8 +59,6 @@ Todo
 
 * Allow Trash to have a grace percentage to allow users whose quota is full to delete messages.
 
-* Allow configuration of default quota value on installation.
-
 
 Changes
 -------
