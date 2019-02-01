@@ -3,11 +3,19 @@ Mail-in-a-Box with Quotas
 
 This is an experimental implementation of Mail-in-a-box with quota support.
 
-There is baisc support for quotas in the control panel now.  To set quotas from the command line, either use `tools/mail.py` or set the `quota`
-column for the user in the `users.sqlite` database.  If you modify the `users` table using SQL note the following:
+Quotas can be set and viewed in the control panel
 
-* The `quota` column is text and allows for the `M` and `G` suffixes for megabytes and gigabytes respectively.
-* No spaces should be used in the quota value (e.g. `2G` or `100M`).
+To set quotas from the command line, use:
+ 
+    tools/mail.py user quota <email> <quota>
+
+To set the system default quota for new users, use:
+ 
+    tools/mail.py system default-quota <quota>
+
+Mailbox size recalculation by Dovecot can be forced using the command:
+
+    doveadm quota recalc -A
 
 Please report any bugs on github.
 
@@ -29,9 +37,9 @@ This is experimental software.  You have been warned.
 
     `git clone https://github.com/jrsupplee/mailinabox.git`
 
-* cd into `mailinabox` and run `setup/start.sh` with root privileges.
+* cd into `mailinabox` and run `setup/start.sh` with root privileges.  On occasion there are lock errors when updating `Munin`.  Just re-run `setup/start.sh` until the error does not occur.
 
-* On occasion there are lock errors when updating `Munin`.  Just re-run `setup/start.sh` until the error does not occur.
+* Optionally execute `sudo doveadm quota recalc -A` to calculate mailbox sizes.  If this is not done, a mailbox's size will be recalculated when mail is delivered to it.
 
 
 Upgrading v.0.40-quota to a New Version
@@ -53,20 +61,21 @@ Todo
 
 * Allow configuration of default quota value on installation.
 
+
 Changes
 -------
 
 ### v0.40-quota-0.13-alpha
 
-* Add a `default-quota` setting in `settings.yaml`
+* Add a `default-quota` setting in `settings.yaml`.
 
-* Add input for setting quota when entering a new user in control panel
+* Add input for setting quota when entering a new user in control panel.
 
-* Modify `tools/mail.py` to allow for setting and getting the default system quota
+* Modify `tools/mail.py` to allow for setting and getting the default system quota.
 
-* Modify `tools/mail.py` to allow for getting a user's quota setting
+* Modify `tools/mail.py` to allow for getting a user's quota setting.
 
-* Modify the mail users list in control panel to display percentage used
+* Modify the mail users list in control panel to display percentage of quota used.
 
 
 ### v0.40-quota-0.12-alpha
