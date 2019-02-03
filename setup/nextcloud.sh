@@ -62,6 +62,9 @@ InstallNextcloud() {
 	# If this isn't a new installation, immediately run the upgrade script.
 	# Then check for success (0=ok and 3=no upgrade needed, both are success).
 	if [ -e $STORAGE_ROOT/owncloud/owncloud.db ]; then
+		# Add missing indices. NextCloud didn't include this in the normal upgrade because it might take some time.
+		sudo -u www-data php /usr/local/lib/owncloud/occ db:add-missing-indices
+
 		# ownCloud 8.1.1 broke upgrades. It may fail on the first attempt, but
 		# that can be OK.
 		sudo -u www-data php /usr/local/lib/owncloud/occ upgrade
