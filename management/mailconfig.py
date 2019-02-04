@@ -361,6 +361,8 @@ def add_mail_user(email, pw, privs, quota, env):
 	# write databasebefore next step
 	conn.commit()
 
+	dovecot_quota_recalc(email)
+
 	# Update things in case any new domains are added.
 	return kick(env, "mail user added")
 
@@ -385,6 +387,7 @@ def hash_password(pw):
 	# http://wiki2.dovecot.org/Authentication/PasswordSchemes
 	return utils.shell('check_output', ["/usr/bin/doveadm", "pw", "-s", "SHA512-CRYPT", "-p", pw]).strip()
 
+
 def get_mail_quota(email, env):
 	conn, c = open_database(env, with_connection=True)
 	c.execute("SELECT quota FROM users WHERE email=?", (email,))
@@ -394,17 +397,31 @@ def get_mail_quota(email, env):
 
 	return rows[0][0]
 
-def set_mail_quota(email, quota, env):
-    # validate that password is acceptable
-    quota = validate_quota(quota)
 
-    # update the database
-    conn, c = open_database(env, with_connection=True)
-    c.execute("UPDATE users SET quota=? WHERE email=?", (quota, email))
-    if c.rowcount != 1:
-        return ("That's not a user (%s)." % email, 400)
-    conn.commit()
-    return "OK"
+def set_mail_quota(email, quota, env):
+	# validate that password is acceptable
+	quota = validate_quota(quota)
+
+	# update the database
+	conn, c = open_database(env, with_connection=True)
+	c.execute("UPDATE users SET quota=? WHERE email=?", (quota, email))
+	if c.rowcount != 1:
+		return ("That's not a user (%s)." % email, 400)
+	conn.commit()
+
+	dovecot_quota_recalc(email)
+
+	return "OK"
+
+def dovecot_quota_recalc(email):
+	# dovecot processes running for the user will not recognize the new quota setting
+	# a reload is necessary to reread the quota setting, but it will also shut down
+	# running dovecot processes.  Email clients generally log back in when they lose
+	# a connection.
+	subprocess.call(['doveadm', 'reload'])
+
+	# force dovecot to recalculate the quota info for the user.
+	subprocess.call(["doveadm", "quota", "recalc" "-u", "%s" % email])
 
 def get_default_quota(env):
 	config = utils.load_settings(env)
