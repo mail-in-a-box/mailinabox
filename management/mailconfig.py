@@ -428,17 +428,17 @@ def get_default_quota(env):
 	return config.get("default-quota", '0')
 
 def validate_quota(quota):
-    # validate quota
-    quota = quota.strip().upper()
+	# validate quota
+	quota = quota.strip().upper()
 
-    if quota == "":
-        raise ValueError("No quota provided.")
-    if re.search(r"[\s,]", quota):
-        raise ValueError("Quotas cannot contain spaces or commas.")
-    if not re.match(r'^[\d\.]+[GM]?$', quota):
-        raise ValueError("Invalid quota.")
+	if quota == "":
+		raise ValueError("No quota provided.")
+	if re.search(r"[\s,.]", quota):
+		raise ValueError("Quotas cannot contain spaces, commas, or decimal points.")
+	if not re.match(r'^[\d]+[GM]?$', quota):
+		raise ValueError("Invalid quota.")
 
-    return quota
+	return quota
 
 def get_mail_password(email, env):
 	# Gets the hashed password for a user. Passwords are stored in Dovecot's
