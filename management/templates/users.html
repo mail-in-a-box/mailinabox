@@ -182,7 +182,7 @@ function show_users() {
           n.attr('data-email', user.email);
           n.attr('data-quota', user.quota);
           n.find('.address').text(user.email);
-          n.find('.box-count').text(user.box_count);
+          n.find('.box-count').text((user.box_count).toLocaleString('en'));
           if (user.box_count == '?') {
             n.find('.box-count').attr('title', 'Message count is unkown')
           }
@@ -190,7 +190,7 @@ function show_users() {
           if (user.box_size == '?') {
             n.find('.box-size').attr('title', 'Mailbox size is unkown')
           }
-          n.find('.percent').text(user.percent)
+          n.find('.percent').text(user.percent);
           n.find('.quota').text((user.quota == '0') ? 'unlimited' : user.quota);
           n2.find('.restore_info tt').text(user.mailbox);
 
