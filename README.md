@@ -37,9 +37,7 @@ This is experimental software.  You have been warned.
 
     `git clone https://github.com/jrsupplee/mailinabox.git`
 
-* cd into `mailinabox` and run `setup/start.sh` with root privileges.  On occasion there are lock errors when updating `Munin`.  Just re-run `setup/start.sh` until the error does not occur.
-
-* Optionally execute `sudo doveadm quota recalc -A` to calculate mailbox sizes.  If this is not done, a mailbox's size will be recalculated when mail is delivered to it.
+* cd into `mailinabox` and run `sudo setup/start.sh`  On occasion there are lock errors when updating `Munin`.  Just re-run `sudo setup/start.sh` until the error does not occur.
 
 
 Upgrading v.0.40-quota to a New Version
@@ -49,19 +47,29 @@ Upgrading v.0.40-quota to a New Version
 
 * `cd` into the `mailinabox` directory.
 
-* Execute `git pull --tags` to download the latest changes with tags.
+* Execute `git pull` to download the latest changes.
 
-* Execute `setup/start.sh` with root privileges.
+* Execute `sudo bash setup/bootstrap.sh` to checkout the latest version and re-run setup.
 
 
-Todo
-----
+Issues
+------
 
-* Allow Trash to have a grace percentage to allow users whose quota is full to delete messages.
+* When a user's quota is changed, any IMAP session running for that user will not recognize the new quota.  To solve this a `dovecot reload` could be issued causing all current IMAP sessions to be terminated.  On a system with many users, it might not be desirable to reset all users sessions to fix the quota for one user.  Also if the administrator is setting the quota for several users it would result in the continual reset of those connections. 
 
 
 Changes
 -------
+
+### v0.40-quota-0.14-alpha
+
+* When updating a user's quota, execute `doveadm quota recalc -u <email>` to forces an immediate recalculation of the user's quota.
+
+* Add a thousands separator (,) to the messages count in the control panel user list.
+
+* Execute `doveadm quota recalc -A` to force a recalculation of all user quotas when running `start.sh`.
+
+* Get rid of the error message complaining that the `quota` column already exists when upgrading from a previous version of `v0.40-quota`.
 
 ### v0.40-quota-0.13-alpha
 
@@ -74,7 +82,6 @@ Changes
 * Modify `tools/mail.py` to allow for getting a user's quota setting.
 
 * Modify the mail users list in control panel to display percentage of quota used.
-
 
 ### v0.40-quota-0.12-alpha
 
