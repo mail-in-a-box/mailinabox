@@ -418,7 +418,7 @@ def dovecot_quota_recalc(email):
 	# a reload is necessary to reread the quota setting, but it will also shut down
 	# running dovecot processes.  Email clients generally log back in when they lose
 	# a connection.
-	subprocess.call(['doveadm', 'reload'])
+	# subprocess.call(['doveadm', 'reload'])
 
 	# force dovecot to recalculate the quota info for the user.
 	subprocess.call(["doveadm", "quota", "recalc" "-u", "%s" % email])
