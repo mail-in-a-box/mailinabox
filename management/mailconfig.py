@@ -421,7 +421,7 @@ def dovecot_quota_recalc(email):
 	# subprocess.call(['doveadm', 'reload'])
 
 	# force dovecot to recalculate the quota info for the user.
-	subprocess.call(["doveadm", "quota", "recalc" "-u", "%s" % email])
+	subprocess.call(["doveadm", "quota", "recalc", "-u", email])
 
 def get_default_quota(env):
 	config = utils.load_settings(env)
