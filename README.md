@@ -61,6 +61,10 @@ Issues
 Changes
 -------
 
+### v0.40-quota-0.15-alpha
+
+* Fix bug where quotas are not recalculated when a user's quota is changed in control panel
+
 ### v0.40-quota-0.14-alpha
 
 * When updating a user's quota, execute `doveadm quota recalc -u <email>` to forces an immediate recalculation of the user's quota.
