@@ -8,6 +8,12 @@ System:
 
 * Missing brute force login attack prevention (fail2ban) filters which stopped working on Ubuntu 18.04 were added back.
 
+Contacts/Calendar:
+
+* Upgraded Nextcloud from 13.0.6 to 14.0.6.
+* Upgraded Contacts from 2.1.5 to 2.1.8.
+* Upgraded Calendar from 1.6.1 to 1.6.4.
+
 v0.40 (January 12, 2019)
 ------------------------
 
