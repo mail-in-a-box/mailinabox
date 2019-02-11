@@ -61,6 +61,10 @@ Issues
 Changes
 -------
 
+### v0.40-quota-0.16-alpha
+
+* Fix problem with quota field on control panel that prevented adding users.
+
 ### v0.40-quota-0.15-alpha
 
 * Fix bug where quotas are not recalculated when a user's quota is changed in control panel
