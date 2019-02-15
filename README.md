@@ -23,7 +23,15 @@ Please report any bugs on github.
 Installing v0.40-quota
 ----------------------
 
-Follow the directions below for installing from a repository except clone from this repository instead of the official one.
+To install the latest version, log into your box and execute the following commands:
+
+	$ git clone https://github.com/jrsupplee/mailinabox.git
+	$ cd mailinabox
+    $ sudo bash setup/bootstrap.sh
+
+Follow the standard directions for setting up an MiaB installation.  There are no special installation steps for installing this version.
+
+The default quota is set to `0` which means unlimited.  If you want to set a different default quota, follow the directions above.
 
 
 Upgrading v0.40 to v.0.40-quota
@@ -37,7 +45,9 @@ This is experimental software.  You have been warned.
 
     `git clone https://github.com/jrsupplee/mailinabox.git`
 
-* cd into `mailinabox` and run `sudo setup/start.sh`  On occasion there are lock errors when updating `Munin`.  Just re-run `sudo setup/start.sh` until the error does not occur.
+* cd into `mailinabox` and run `sudo setup/bootstrap.sh`  On occasion there are lock errors when updating `Munin`.  Just re-run `sudo setup/start.sh` until the error does not occur.
+
+* Note: all existing users at the time of the upgrade will have there quota set to `0` (unlimited).
 
 
 Upgrading v.0.40-quota to a New Version
