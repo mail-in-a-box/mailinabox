@@ -173,8 +173,11 @@ tools/editconf.py /etc/postfix/main.cf \
 #
 # In a basic setup we would pass mail directly to Dovecot by setting
 # virtual_transport to `lmtp:unix:private/dovecot-lmtp`.
-#
 tools/editconf.py /etc/postfix/main.cf virtual_transport=lmtp:[127.0.0.1]:10025
+# Because of a spampd bug, limit the number of recipients in each connection.
+# See https://github.com/mail-in-a-box/mailinabox/issues/1523.
+tools/editconf.py /etc/postfix/main.cf lmtp_destination_recipient_limit=1
+
 
 # Who can send mail to us? Some basic filters.
 #

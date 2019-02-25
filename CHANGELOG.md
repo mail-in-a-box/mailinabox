@@ -8,6 +8,10 @@ System:
 
 * Missing brute force login attack prevention (fail2ban) filters which stopped working on Ubuntu 18.04 were added back.
 
+Mail:
+
+* Incoming messages addressed to more than one local user were rejected because of a bug in spampd packaged by Ubuntu 18.04. A workaround was added.
+
 Contacts/Calendar:
 
 * Upgraded Nextcloud from 13.0.6 to 14.0.6.
