@@ -7,6 +7,7 @@ In Development
 System:
 
 * Missing brute force login attack prevention (fail2ban) filters which stopped working on Ubuntu 18.04 were added back.
+* Upgrades would fail if Mail-in-a-Box moved to a different directory in `systemctl link`.
 
 Mail:
 

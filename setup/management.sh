@@ -93,7 +93,7 @@ source $venv/bin/activate
 exec python `pwd`/management/daemon.py
 EOF
 chmod +x $inst_dir/start
-hide_output systemctl link conf/mailinabox.service
+hide_output systemctl link -f conf/mailinabox.service
 hide_output systemctl daemon-reload
 hide_output systemctl enable mailinabox.service
 
