@@ -20,7 +20,7 @@ Mailbox size recalculation by Dovecot can be forced using the command:
 Please report any bugs on github.
 
 
-Installing v0.40-quota
+Installing v0.41-quota
 ----------------------
 
 To install the latest version, log into your box and execute the following commands:
@@ -34,7 +34,7 @@ Follow the standard directions for setting up an MiaB installation.  There are n
 The default quota is set to `0` which means unlimited.  If you want to set a different default quota, follow the directions above.
 
 
-Upgrading v0.40 to v.0.40-quota
+Upgrading v0.41 to v.0.41-quota
 -------------------------------
 
 This is experimental software.  You have been warned.
@@ -50,10 +50,8 @@ This is experimental software.  You have been warned.
 * Note: all existing users at the time of the upgrade will have there quota set to `0` (unlimited).
 
 
-Upgrading v.0.40-quota to a New Version
+Upgrading MiaB with quotas to a New Version
 ---------------------------------------
-
-* Remember that this is experimental software and review the changes in the repository.
 
 * `cd` into the `mailinabox` directory.
 
@@ -70,6 +68,14 @@ Issues
 
 Changes
 -------
+
+### v0.41-quota-0.17-alpha
+
+* Update the README
+
+### v0.41-quota-0.16-alpha
+
+* Update to v0.41 of Mail-in-a-Box
 
 ### v0.40-quota-0.16-alpha
 
