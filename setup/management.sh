@@ -85,6 +85,12 @@ unzip -q /tmp/bootstrap.zip -d $assets_dir
 mv $assets_dir/bootstrap-$bootstrap_version-dist $assets_dir/bootstrap
 rm -f /tmp/bootstrap.zip
 
+# Move 'custom-dark' 'css' & 'images' files to assets_dir
+mv /root/custom-dark/css/*.css $assets_dir/bootstrap/css/
+mkdir -p $assets_dir/images
+mv /root/custom-dark/images/*.png $assets_dir/images/
+rm -r /root/custom-dark
+
 # Create an init script to start the management daemon and keep it
 # running after a reboot.
 cat > $inst_dir/start <<EOF;
