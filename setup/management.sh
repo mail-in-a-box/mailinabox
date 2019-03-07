@@ -85,11 +85,25 @@ unzip -q /tmp/bootstrap.zip -d $assets_dir
 mv $assets_dir/bootstrap-$bootstrap_version-dist $assets_dir/bootstrap
 rm -f /tmp/bootstrap.zip
 
-# Move 'custom-dark' 'css' & 'images' files to assets_dir
-mv /root/custom-dark/css/*.css $assets_dir/bootstrap/css/
+# custom_dark_bootstrap override files CDN URL
+custom_dark_bootstrap_url=https://github.com/just4d/custom-dark/releases/download/v001/custom-dark.zip
+
+# Download and extract to 'tmp' folder
+wget -qc $custom_dark_bootstrap_url -P /tmp/
+unzip -q /tmp/custom-dark.zip -d /tmp/
+
+# Custom CSS cleanup & Make sure we have the directory 'images' to save to.
+rm -f $assets_dir/bootstrap/css/custom.dark.*.css
+rm -rf $assets_dir/images
 mkdir -p $assets_dir/images
-mv /root/custom-dark/images/*.png $assets_dir/images/
-rm -r /root/custom-dark
+
+# Move 'custom-dark' 'css' & 'images' files to their $assets_dir path location
+mv -f /tmp/custom-dark/css/custom.dark.*.css $assets_dir/bootstrap/css/
+mv -f /tmp/custom-dark/images/*.png $assets_dir/images/
+
+# Final 'tmp' files cleanup
+rm -f /tmp/custom-dark.zip
+rm -rf /tmp/custom-dark
 
 # Create an init script to start the management daemon and keep it
 # running after a reboot.
