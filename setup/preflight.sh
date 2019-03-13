@@ -26,7 +26,7 @@ fi
 #
 # Skip the check if we appear to be running inside of Vagrant, because that's really just for testing.
 TOTAL_PHYSICAL_MEM=$(head -n 1 /proc/meminfo | awk '{print $2}')
-if [ $TOTAL_PHYSICAL_MEM -lt 500000 ]; then
+if [ $TOTAL_PHYSICAL_MEM -lt 480000 ]; then
 if [ ! -d /vagrant ]; then
 	TOTAL_PHYSICAL_MEM=$(expr \( \( $TOTAL_PHYSICAL_MEM \* 1024 \) / 1000 \) / 1000)
 	echo "Your Mail-in-a-Box needs more memory (RAM) to function properly."
