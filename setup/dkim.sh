@@ -21,6 +21,11 @@ mkdir -p $STORAGE_ROOT/mail/dkim
 # Not quite sure why.
 echo "127.0.0.1" > /etc/opendkim/TrustedHosts
 
+# We need to at least create these files, since we reference them later.
+# Otherwise, opendkim startup will fail
+touch /etc/opendkim/KeyTable
+touch /etc/opendkim/SigningTable
+
 if grep -q "ExternalIgnoreList" /etc/opendkim.conf; then
 	true # already done #NODOC
 else
@@ -74,6 +79,9 @@ tools/editconf.py /etc/postfix/main.cf \
 	"smtpd_milters=inet:127.0.0.1:8891 inet:127.0.0.1:8893"\
 	non_smtpd_milters=\$smtpd_milters \
 	milter_default_action=accept
+
+# We need to explicitly enable the opendmarc service, or it will not start
+hide_output systemctl enable opendmarc
 
 # Restart services.
 restart_service opendkim

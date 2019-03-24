@@ -1,0 +1,10 @@
+[Unit]
+Description=Munin System Monitoring Startup Script
+After=multi-user.target
+
+[Service]
+Type=idle
+ExecStart=/usr/local/lib/mailinabox/munin_start.sh
+
+[Install]
+WantedBy=multi-user.target

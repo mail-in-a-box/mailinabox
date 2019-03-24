@@ -209,6 +209,7 @@ function show_system_backup() {
         total_disk_size += b.size;
       }
 
+      total_disk_size += r.unmatched_file_size;
       $('#backup-total-size').text(nice_size(total_disk_size));
     })
 }

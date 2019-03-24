@@ -22,25 +22,18 @@ source /etc/mailinabox.conf # load global vars
 echo "Installing Roundcube (webmail)..."
 apt_install \
 	dbconfig-common \
-	php7.0-cli php7.0-sqlite php7.0-mcrypt php7.0-intl php7.0-json php7.0-common php7.0-curl \
-	php7.0-gd php7.0-pspell tinymce libjs-jquery libjs-jquery-mousewheel libmagic1 php7.0-mbstring
-
-apt_get_quiet remove php-mail-mimedecode # no longer needed since Roundcube 1.1.3
-
-# We used to install Roundcube from Ubuntu, without triggering the dependencies #NODOC
-# on Apache and MySQL, by downloading the debs and installing them manually. #NODOC
-# Now that we're beyond that, get rid of those debs before installing from source. #NODOC
-apt-get purge -qq -y roundcube* #NODOC
+	php-cli php-sqlite3 php-intl php-json php-common php-curl \
+	php-gd php-pspell tinymce libjs-jquery libjs-jquery-mousewheel libmagic1 php-mbstring
 
 # Install Roundcube from source if it is not already present or if it is out of date.
 # Combine the Roundcube version number with the commit hash of plugins to track
 # whether we have the latest version of everything.
-VERSION=1.3.7
-HASH=df0e29d09aae0b7a7ae98023dcd1ae3c6be77cd0
+VERSION=1.3.8
+HASH=90c7900ccf7b2f46fe49c650d5adb9b85ee9cc22
 PERSISTENT_LOGIN_VERSION=dc5ca3d3f4415cc41edb2fde533c8a8628a94c76
 HTML5_NOTIFIER_VERSION=4b370e3cd60dabd2f428a26f45b677ad1b7118d5
-CARDDAV_VERSION=2.0.4
-CARDDAV_HASH=d93f3cfb3038a519e71c7c3212c1d16f5da609a4
+CARDDAV_VERSION=3.0.3
+CARDDAV_HASH=d1e3b0d851ffa2c6bd42bf0c04f70d0e1d0d78f8
 
 UPDATE_KEY=$VERSION:$PERSISTENT_LOGIN_VERSION:$HTML5_NOTIFIER_VERSION:$CARDDAV_VERSION
 
@@ -200,5 +193,5 @@ chown www-data:www-data $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 chmod 664 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 
 # Enable PHP modules.
-phpenmod -v php7.0 mcrypt imap
-restart_service php7.0-fpm
+phpenmod -v php mcrypt imap
+restart_service php7.2-fpm
