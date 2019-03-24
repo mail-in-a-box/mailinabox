@@ -29,7 +29,7 @@ address 127.0.0.1
 
 # send alerts to the following address
 contacts admin
-contact.admin.command mail -s "Munin notification ${var:host}" administrator@$PRIMARY_HOSTNAME
+contact.admin.command mail -s "Munin notification \${var:host}" administrator@$PRIMARY_HOSTNAME
 contact.admin.always_send warning critical
 EOF
 
@@ -44,7 +44,7 @@ tools/editconf.py /etc/munin/munin-node.conf -s \
 	log_level=1
 
 # Update the activated plugins through munin's autoconfiguration.
-munin-node-configure --shell --remove-also 2>/dev/null | sh
+munin-node-configure --shell --remove-also 2>/dev/null | sh || /bin/true
 
 # Deactivate monitoring of NTP peers. Not sure why anyone would want to monitor a NTP peer. The addresses seem to change
 # (which is taken care of my munin-node-configure, but only when we re-run it.)
@@ -60,6 +60,14 @@ done
 
 # Create a 'state' directory. Not sure why we need to do this manually.
 mkdir -p /var/lib/munin-node/plugin-state/
+
+# Create a systemd service for munin.
+ln -sf $(pwd)/management/munin_start.sh /usr/local/lib/mailinabox/munin_start.sh
+chmod 0744 /usr/local/lib/mailinabox/munin_start.sh
+hide_output systemctl link -f conf/munin.service
+hide_output systemctl daemon-reload
+hide_output systemctl unmask munin.service
+hide_output systemctl enable munin.service
 
 # Restart services.
 restart_service munin

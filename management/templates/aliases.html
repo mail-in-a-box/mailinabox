@@ -39,8 +39,9 @@
     <label for="addaliasForwardsTo" class="col-sm-1 control-label">Forwards To</label>
     <div class="col-sm-10">
       <textarea class="form-control" rows="3" id="addaliasForwardsTo"></textarea>
-      <div style="margin-top: 3px; padding-left: 3px; font-size: 90%" class="text-muted">
-        <span class="domainalias">Enter just the part of an email address starting with the @-sign.</span>
+      <div style="margin-top: 3px; padding-left: 3px; font-size: 90%">
+        <span class="domainalias text-muted">Enter just the part of an email address starting with the @-sign.</span>
+        <span class="text-danger">Only forward mail to addresses handled by this Mail-in-a-Box, since mail forwarded by aliases to other domains may be rejected or filtered by the receiver. To forward mail to other domains, create a mail user and then log into webmail for the user and create a filter rule to forward mail.</span>
       </div>
     </div>
   </div>
@@ -50,7 +51,7 @@
       <div class="radio">
         <label>
           <input id="addaliasForwardsToNotAdvanced" name="addaliasForwardsToDivToggle" type="radio" checked onclick="$('#addaliasForwardsToDiv').toggle(false)">
-          Any mail user listed in the Fowards To box can send mail claiming to be from <span class="regularalias">the alias address</span><span class="catchall domainalias">any address on the alias domain</span>.
+          Any mail user listed in the Forwards To box can send mail claiming to be from <span class="regularalias">the alias address</span><span class="catchall domainalias">any address on the alias domain</span>.
         </label>
       </div>
       <div class="radio">

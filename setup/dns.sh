@@ -26,6 +26,7 @@ cat > /etc/nsd/nsd.conf << EOF;
 # Do not edit. Overwritten by Mail-in-a-Box setup.
 server:
   hide-version: yes
+  logfile: "/var/log/nsd.log"
 
   # identify the server (CH TXT ID.SERVER entry).
   identity: ""
@@ -39,6 +40,18 @@ server:
   # See https://www.nlnetlabs.nl/projects/nsd/nsd.conf.5.html.
   ip-transparent: yes
 
+EOF
+
+# Add log rotation
+cat > /etc/logrotate.d/nsd <<EOF;
+/var/log/nsd.log {
+  weekly
+  missingok
+  rotate 12
+  compress
+  delaycompress
+  notifempty
+}
 EOF
 
 # Since we have bind9 listening on localhost for locally-generated

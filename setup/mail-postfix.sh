@@ -41,16 +41,8 @@ source /etc/mailinabox.conf # load global vars
 #   always will.
 # * `ca-certificates`: A trust store used to squelch postfix warnings about
 #   untrusted opportunistically-encrypted connections.
-#
-# postgrey is going to come in via the Mail-in-a-Box PPA, which publishes
-# a modified version of postgrey that lets senders whitelisted by dnswl.org
-# pass through without being greylisted. So please note [dnswl's license terms](https://www.dnswl.org/?page_id=9):
-# > Every user with more than 100’000 queries per day on the public nameserver
-# > infrastructure and every commercial vendor of dnswl.org data (eg through
-# > anti-spam solutions) must register with dnswl.org and purchase a subscription.
-
 echo "Installing Postfix (SMTP server)..."
-apt_install postfix postfix-pcre postgrey ca-certificates
+apt_install postfix postfix-sqlite postfix-pcre postgrey ca-certificates
 
 # ### Basic Settings
 
@@ -81,6 +73,8 @@ tools/editconf.py /etc/postfix/main.cf \
 
 # Enable the 'submission' port 587 smtpd server and tweak its settings.
 #
+# * Enable authentication. It's disabled globally so that it is disabled on port 25,
+#   so we need to explicitly enable it here.
 # * Do not add the OpenDMAC Authentication-Results header. That should only be added
 #   on incoming mail. Omit the OpenDMARC milter by re-setting smtpd_milters to the
 #   OpenDKIM milter only. See dkim.sh.
@@ -95,6 +89,7 @@ tools/editconf.py /etc/postfix/main.cf \
 #   emails but we turn this off by setting nested_header_checks empty.
 tools/editconf.py /etc/postfix/master.cf -s -w \
 	"submission=inet n       -       -       -       -       smtpd
+	  -o smtpd_sasl_auth_enable=yes
 	  -o syslog_name=postfix/submission
 	  -o smtpd_milters=inet:127.0.0.1:8891
 	  -o smtpd_tls_security_level=encrypt
@@ -154,7 +149,7 @@ tools/editconf.py /etc/postfix/main.cf \
 # then opportunistic TLS is used. Otherwise the server certificate must match the TLSA records
 # or else the mail bounces. TLSA also requires DNSSEC on the MX host. Postfix doesn't do DNSSEC
 # itself but assumes the system's nameserver does and reports DNSSEC status. Thus this also
-# relies on our local bind9 server being present and `smtp_dns_support_level=dnssec`.
+# relies on our local DNS server (see system.sh) and `smtp_dns_support_level=dnssec`.
 #
 # The `smtp_tls_CAfile` is superflous, but it eliminates warnings in the logs about untrusted certs,
 # which we don't care about seeing because Postfix is doing opportunistic TLS anyway. Better to encrypt,
@@ -178,8 +173,11 @@ tools/editconf.py /etc/postfix/main.cf \
 #
 # In a basic setup we would pass mail directly to Dovecot by setting
 # virtual_transport to `lmtp:unix:private/dovecot-lmtp`.
-#
 tools/editconf.py /etc/postfix/main.cf virtual_transport=lmtp:[127.0.0.1]:10025
+# Because of a spampd bug, limit the number of recipients in each connection.
+# See https://github.com/mail-in-a-box/mailinabox/issues/1523.
+tools/editconf.py /etc/postfix/main.cf lmtp_destination_recipient_limit=1
+
 
 # Who can send mail to us? Some basic filters.
 #

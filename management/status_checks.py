@@ -28,7 +28,6 @@ def get_services():
 		{ "name": "Spamassassin", "port": 10025, "public": False, },
 		{ "name": "OpenDKIM", "port": 8891, "public": False, },
 		{ "name": "OpenDMARC", "port": 8893, "public": False, },
-		{ "name": "Memcached", "port": 11211, "public": False, },
 		{ "name": "Mail-in-a-Box Management Daemon", "port": 10222, "public": False, },
 		{ "name": "SSH Login (ssh)", "port": get_ssh_port(), "public": True, },
 		{ "name": "Public DNS (nsd4)", "port": 53, "public": True, },
@@ -795,14 +794,14 @@ def get_latest_miab_version():
 def check_miab_version(env, output):
 	config = load_settings(env)
 
-	if config.get("privacy", True):
-		output.print_warning("Mail-in-a-Box version check disabled by privacy setting.")
-	else:
-		try:
-			this_ver = what_version_is_this(env)
-		except:
-			this_ver = "Unknown"
+	try:
+		this_ver = what_version_is_this(env)
+	except:
+		this_ver = "Unknown"
 
+	if config.get("privacy", True):
+		output.print_warning("You are running version Mail-in-a-Box %s. Mail-in-a-Box version check disabled by privacy setting." % this_ver)
+	else:
 		latest_ver = get_latest_miab_version()
 
 		if this_ver == latest_ver:
