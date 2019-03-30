@@ -69,6 +69,10 @@ Issues
 Changes
 -------
 
+### v0.41-quota-0.17-beta
+
+* Change status of project to beta.  No changes to the code
+
 ### v0.41-quota-0.17-alpha
 
 * Update the README
