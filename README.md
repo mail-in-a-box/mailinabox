@@ -69,6 +69,10 @@ Issues
 Changes
 -------
 
+### v0.41-quota-0.18-beta
+
+* Bump version to add a new annotated tag.  The last version had a plain tag which is not seen when checking for the latest version.
+
 ### v0.41-quota-0.17-beta
 
 * Change status of project to beta.  No changes to the code
