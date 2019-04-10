@@ -255,7 +255,7 @@ function check_config_agreed {
 			return 1
 		fi
 		local current_directory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-		local yaml_agreed=$(python "${current_directory}"/checkagreement.py check "${STORAGE_ROOT}/settings.yaml")
+		local yaml_agreed=$(python "${current_directory}"/agreement.py check "${STORAGE_ROOT}/settings.yaml")
 		if [ "$yaml_agreed" -eq "true"]; then
 			return 0
 		fi
@@ -274,7 +274,7 @@ function set_config_agreed {
 	fi
 
 	local current_directory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-	local yaml_agreed=$(python "${current_directory}"/checkagreement.py set "${STORAGE_ROOT}settings.yaml"; echo $?)
+	local yaml_agreed=$(python "${current_directory}"/agreement.py set "${STORAGE_ROOT}settings.yaml"; echo $?)
 	if [ "$yaml_agreed" == "true" ]; then
 		return 0
 	fi
