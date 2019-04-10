@@ -274,9 +274,5 @@ function set_config_agreed {
 	fi
 
 	local current_directory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-	local yaml_agreed=$(python "${current_directory}"/agreement.py set "${STORAGE_ROOT}settings.yaml"; echo $?)
-	if [ "$yaml_agreed" == "true" ]; then
-		return 0
-	fi
-	return 1
+	python "${current_directory}"/agreement.py set "${STORAGE_ROOT}"/settings.yaml
 }
