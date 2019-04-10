@@ -25,7 +25,8 @@ if [ -z "${NONINTERACTIVE:-}" ]; then
 	
 	if [ -z "${I_AGREE_MAILINABOX:-}" ]; then
 
-		if [ "$(check_config_agreed; echo $?)" -eq "1"]; then
+
+		if [ $(check_config_agreed; echo $?) -eq "1" ]; then
 
 			#makes sure the user is aware of our legal stuff.
 			message_box "Mail-in-a-Box Legal Notice" \
@@ -45,7 +46,7 @@ if [ -z "${NONINTERACTIVE:-}" ]; then
 	I_AGREE_MAILINABOX=$(/bin/true)
 else
 
-	if [ "$(check_config_agreed; echo $?)" -eq "0"]; then
+	if [ $(check_config_agreed; echo $?) -eq "0" ]; then
 		I_AGREE_MAILINABOX=$(/bin/true)
 	fi
 
