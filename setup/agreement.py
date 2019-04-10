@@ -16,7 +16,7 @@ def write_settings(config, env):
         f.write(rtyaml.dump(config))
 
 def load_settings(env):
-    fn = os.path.join(env['STORAGE_ROOT'], 'settings.yaml')
+    fn = os.path( sys.argv[2] )
     try:
         config = rtyaml.load(open(fn, "r"))
         if not isinstance(config, dict): raise ValueError() # caught below
@@ -29,7 +29,7 @@ env = load_environment()
 if(sys.argv[2]):
 
 	if( sys.argv[1] == "check" ):
-		yaml = rtyaml.load(open( os.path.join(env['STORAGE_ROOT'], 'settings.yaml') ))
+		yaml = rtyaml.load(open( sys.argv[2] ))
 
 		if( yaml.get("mailinabox-agreement", True) ):
 			print("true")
