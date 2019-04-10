@@ -13,7 +13,6 @@
 
 import sys
 import rtyaml
-import collections
 
 def write_settings(config):
     fn = sys.argv[2]

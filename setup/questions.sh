@@ -253,7 +253,3 @@ if [ -f /usr/bin/git ] && [ -d .git ]; then
 	echo "Mail-in-a-Box Version: " $(git describe)
 fi
 echo
-
-function get_I_AGREE_MAILINABOX(){
-	echo "$I_AGREE_MAILINABOX"
-}
