@@ -227,6 +227,7 @@ function git_clone {
 function set_storage_user {
 	# Set STORAGE_USER to default values ( user-data ), unless
 	# we've already got those values from a previous run.
+	
 	if [ -z "${STORAGE_USER:-}" ]; then
 		STORAGE_USER=$([[ -z "${DEFAULT_STORAGE_USER:-}" ]] && echo "user-data" || echo "$DEFAULT_STORAGE_USER")
 	fi
@@ -235,6 +236,7 @@ function set_storage_user {
 function set_storage_root {
 	# Set STORAGE_ROOT to default values ( /home/user-data ), unless
 	# we've already got those values from a previous run.
+
 	if [ -z "${STORAGE_USER:-}" ]; then
 		STORAGE_USER=$([[ -z "${DEFAULT_STORAGE_USER:-}" ]] && echo "user-data" || echo "$DEFAULT_STORAGE_USER")
 	fi
@@ -244,28 +246,32 @@ function set_storage_root {
 }
 
 function check_config_agreed {
+#This function has no arguments
+#This will check Mail-in-a-Box's configuration to see if the user has agreed to Mail-in-a-Box
+#The configuration is usually held in /home/user-data/settings.yaml
+
 	set_storage_user;
 	set_storage_root;
 
-	if [ -z "${I_AGREE_MAILINABOX:-}" ]; then
-		if [ ! -d $STORAGE_ROOT ]; then
-			return 1
-		fi
-		if [ ! -f $STORAGE_ROOT/settings.yaml ]; then
-			return 1
-		fi
-		local current_directory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-		local yaml_agreed=$(python "${current_directory}"/agreement.py check "${STORAGE_ROOT}/settings.yaml")
-		if [ "$yaml_agreed" -eq "true"]; then
-			return 0
-		fi
+	if [ ! -d $STORAGE_ROOT ]; then
 		return 1
-	else
+	fi
+	if [ ! -f $STORAGE_ROOT/settings.yaml ]; then
+		return 1
+	fi
+	local current_directory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+	local yaml_agreed=$(python "${current_directory}"/agreement.py check "${STORAGE_ROOT}"/settings.yaml; echo "${1:-}")
+	if [ $yaml_agreed == "true" ]; then
 		return 0
 	fi
+	return 1
 }
 
 function set_config_agreed {
+#This function has no arguments
+#This will write down in Mail-in-a-Box's configuration that the user has agreed to Mail-in-a-Box.
+#The configuration is usually held in /home/user-data/settings.yaml
+
 	set_storage_user;
 	set_storage_root;
 

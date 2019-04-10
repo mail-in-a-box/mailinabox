@@ -9,13 +9,15 @@ if [ -z "${NONINTERACTIVE:-}" ]; then
 	if [ ! -f /usr/bin/dialog ] || [ ! -f /usr/bin/python3 ] || [ ! -f /usr/bin/pip3 ]; then
 		echo Installing packages needed for setup...
 		apt-get -q -q update
-		apt_get_quiet install dialog python3 python3-pip  || exit 1
+		apt_get_quiet install dialog python3 python3-pip python-pip || exit 1
 	fi
 
 	# Installing email_validator is repeated in setup/management.sh, but in setup/management.sh
 	# we install it inside a virtualenv. In this script, we don't have the virtualenv yet
 	# so we install the python package globally.
 	hide_output pip3 install "email_validator>=1.0.0" || exit 1
+	# Installing rtyaml, so that we can check if the user has already agreed to Mail-in-a-Box.
+	hide_output pip install rtyaml || exit 1
 
 	message_box "Mail-in-a-Box Installation" \
 		"Hello and thanks for deploying a Mail-in-a-Box!
@@ -23,9 +25,11 @@ if [ -z "${NONINTERACTIVE:-}" ]; then
 		\n\nTo change your answers later, just run 'sudo mailinabox' from the command line.
 		\n\nNOTE: You should only install this on a brand new Ubuntu installation 100% dedicated to Mail-in-a-Box. Mail-in-a-Box will, for example, remove apache2."
 	
+	# Checks if there is already a variable that says the user has agreed to Mail-in-a-Box's Legal Notice.
 	if [ -z "${I_AGREE_MAILINABOX:-}" ]; then
 
 
+		# Checks if there is already a variable that says the user has agreed to Mail-in-a-Box's Legal Notice.
 		if [ $(check_config_agreed; echo $?) -eq "1" ]; then
 
 			#makes sure the user is aware of our legal stuff.
@@ -43,13 +47,20 @@ if [ -z "${NONINTERACTIVE:-}" ]; then
 		fi
 	fi
 
+	#sets I-agree variable
 	I_AGREE_MAILINABOX="$(/bin/true)"
+
+
+#what to do if we are not running interactive mode.
 else
 
+	#checks if the configuration file says the user has already agreed
 	if [ $(check_config_agreed; echo $?) -eq "0" ]; then
+		#sets I-agree variable
 		I_AGREE_MAILINABOX="$(/bin/true)"
 	fi
 
+	#Checks if I-agree variable exists.
 	#This is so a user can programmatically agree to our legal notice
 	if [ -z "${I_AGREE_MAILINABOX:-}" ]; then
 		echo "ERROR: You must agree to Mail-in-a-Box's Legal Notice. You can either:"
@@ -58,6 +69,7 @@ else
 		exit 1;
 	fi
 
+	#sets I-agree variable
 	I_AGREE_MAILINABOX=$(/bin/true)
 fi
 

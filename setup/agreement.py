@@ -1,21 +1,26 @@
+# This script deals with the Mail-in-a-Box configuration
+# (usually located at /home/user-data/settings.yaml)
+# to see if the user has agreed to Mail-in-a-Box.
+# This script can either check, or write in the configuration
+# that the user has agreed.
+
+#usage: python setup/agreement.py [set, check] [YAML file]
+#example: python setup/agreement.py set /home/user-data/settings.yaml
+#    prints: (nothing)
+#example: python setyp/agreement.py check /home/user-data/settings.yaml
+#    prints: "true" or "false"
+
+
 import sys
 import rtyaml
 import collections
-import os.path
 
-def load_environment():
-	# Load settings from a KEY=VALUE file.
-    import collections
-    env = collections.OrderedDict()
-    for line in open("/etc/mailinabox.conf"): env.setdefault(*line.strip().split("=", 1))
-    return env
-
-def write_settings(config, env):
+def write_settings(config):
     fn = sys.argv[2]
     with open(fn, "w") as f:
         f.write(rtyaml.dump(config))
 
-def load_settings(env):
+def load_settings():
     fn = sys.argv[2]
     try:
         config = rtyaml.load(open(fn, "r"))
@@ -23,8 +28,6 @@ def load_settings(env):
         return config
     except:
         return { }
-
-env = load_environment()
 
 if(sys.argv[2]):
 
@@ -38,7 +41,7 @@ if(sys.argv[2]):
 
 
 	elif( sys.argv[1] == "set" ):
-		config = load_settings(env)
+		config = load_settings()
 
 		config["mailinabox-agreement"] = True
-		write_settings( config, env )
+		write_settings( config )

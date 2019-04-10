@@ -55,17 +55,22 @@ chmod +x /usr/local/bin/mailinabox
 # if values have not already been set in environment variables. When running
 # non-interactively, be sure to set values for all! Also sets STORAGE_USER and
 # STORAGE_ROOT.
+# Also provides legal notice and consdent from user to (for example) auto-agree
+# Let's Encrypt.
 source setup/questions.sh
 
 
+# Checks configuration to see if the user has agreed to Mail-in-a-Box's legal notice.
 I_AGREE_MAILINABOX=$(check_config_agreed; echo $?)
 
+# Errors if no legal agreement was met.
 if [ -z "${I_AGREE_MAILINABOX:-}" ]; then
 	echo "ERROR: You must agree to Mail-in-a-Box's Legal Notice. You can either:"
 	echo "run this in interactive mode; or"
 	echo "set I_AGREE_MAILINABOX variable before running."
 	exit 1;
 else
+	#Writes to configuration that the user has agreed to Mail-in-a-Box's legal notice.
 	set_config_agreed;
 fi
 
