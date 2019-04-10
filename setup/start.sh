@@ -57,6 +57,15 @@ chmod +x /usr/local/bin/mailinabox
 # STORAGE_ROOT.
 source setup/questions.sh
 
+if [ -z "${I_AGREE_MAILINABOX:-}" ]; then
+	echo "ERROR: You must agree to Mail-in-a-Box's Legal Notice. You can either:"
+	echo "run this in interactive mode; or"
+	echo "set I_AGREE_MAILINABOX variable before running."
+	exit 1;
+else
+	set_config_agreed;
+fi
+
 # Run some network checks to make sure setup on this machine makes sense.
 # Skip on existing installs since we don't want this to block the ability to
 # upgrade, and these checks are also in the control panel status checks.

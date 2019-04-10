@@ -22,6 +22,46 @@ if [ -z "${NONINTERACTIVE:-}" ]; then
 		\n\nI'm going to ask you a few questions.
 		\n\nTo change your answers later, just run 'sudo mailinabox' from the command line.
 		\n\nNOTE: You should only install this on a brand new Ubuntu installation 100% dedicated to Mail-in-a-Box. Mail-in-a-Box will, for example, remove apache2."
+	
+	if [ -z "${I_AGREE_MAILINABOX:-}" ]; then
+
+		local config_agreed=$( check_config_agreed && echo "true" || echo "false")
+
+		if [ "$config_agreed" -eq "false"]; then
+
+			#makes sure the user is aware of our legal stuff.
+			message_box "Mail-in-a-Box Legal Notice" \
+				"Mail-in-a-Box, and/or its developers do not take any legal liability and/or responsibility for installations or this software.
+				\n\nPlease know this software is provided 'as-is', and users should not have any expectations from it.
+				\n\nBy installing this software, you may be automaticaly agreed to certain agreements, which you will still be legally held accountable for.
+				The legal agreements you will be automatically agreed to may include (but not limited to):
+				\n\n * Let's Encrypt Terms of Service.
+				\n\nBy continuing this installation, you agree to be legally accountable to research, read, understand and agree to any potential agreements this software
+				automatically agrees you to, or any agreements related to this software (including but not limited to: the Creative Commons Zero license in its Github
+				repository).
+				\n\nYou usually can discontinue installing this software by hitting 'ctrl + C'.
+				"
+		fi
+	fi
+
+	I_AGREE_MAILINABOX=$(/bin/true)
+else
+
+	local config_agreed=$( check_config_agreed && echo "true" || echo "false")
+
+	if [ "$config_agreed" -eq "true"]; then
+		I_AGREE_MAILINABOX=$(/bin/true)
+	fi
+
+	#This is so a user can programmatically agree to our legal notice
+	if [ -z "${I_AGREE_MAILINABOX:-}" ]; then
+		echo "ERROR: You must agree to Mail-in-a-Box's Legal Notice. You can either:"
+		echo "run this in interactive mode; or"
+		echo "set I_AGREE_MAILINABOX variable before running."
+		exit 1;
+	fi
+
+	I_AGREE_MAILINABOX=$(/bin/true)
 fi
 
 # The box needs a name.
@@ -184,14 +224,8 @@ if [ "$PRIMARY_HOSTNAME" = "auto" ]; then
 	PRIMARY_HOSTNAME=$(get_default_hostname)
 fi
 
-# Set STORAGE_USER and STORAGE_ROOT to default values (user-data and /home/user-data), unless
-# we've already got those values from a previous run.
-if [ -z "${STORAGE_USER:-}" ]; then
-	STORAGE_USER=$([[ -z "${DEFAULT_STORAGE_USER:-}" ]] && echo "user-data" || echo "$DEFAULT_STORAGE_USER")
-fi
-if [ -z "${STORAGE_ROOT:-}" ]; then
-	STORAGE_ROOT=$([[ -z "${DEFAULT_STORAGE_ROOT:-}" ]] && echo "/home/$STORAGE_USER" || echo "$DEFAULT_STORAGE_ROOT")
-fi
+set_storage_user;
+set_storage_root;
 
 # Show the configuration, since the user may have not entered it manually.
 echo

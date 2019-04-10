@@ -223,3 +223,66 @@ function git_clone {
 	mv $TMPPATH/$SUBDIR $TARGETPATH
 	rm -rf $TMPPATH
 }
+
+function set_storage_user {
+	# Set STORAGE_USER to default values ( user-data ), unless
+	# we've already got those values from a previous run.
+	if [ -z "${STORAGE_USER:-}" ]; then
+		STORAGE_USER=$([[ -z "${DEFAULT_STORAGE_USER:-}" ]] && echo "user-data" || echo "$DEFAULT_STORAGE_USER")
+	fi
+}
+
+function set_storage_root {
+	# Set STORAGE_ROOT to default values ( /home/user-data ), unless
+	# we've already got those values from a previous run.
+	if [ -z "${STORAGE_USER:-}" ]; then
+		STORAGE_USER=$([[ -z "${DEFAULT_STORAGE_USER:-}" ]] && echo "user-data" || echo "$DEFAULT_STORAGE_USER")
+	fi
+	if [ -z "${STORAGE_ROOT:-}" ]; then
+		STORAGE_ROOT=$([[ -z "${DEFAULT_STORAGE_ROOT:-}" ]] && echo "/home/$STORAGE_USER" || echo "$DEFAULT_STORAGE_ROOT")
+	fi
+}
+
+function check_config_agreed {
+	set_storage_user;
+	set_storage_root;
+
+	if [ -z "${I_AGREE_MAILINABOX:-}" ]; then
+		if [ ! -d $STORAGE_ROOT ]; then
+			return 1
+		fi
+		if [ ! -f $STORAGE_ROOT/settings.yaml ]; then
+			return 1
+		fi
+		local current_directory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+		local yaml_agreed=$(python check "${current_directory}"/checkagree.py "${STORAGE_ROOT}/settings.yaml")
+		if [ "$yaml_agreed" -eq "true"]; then
+			return 0
+		fi
+		return 1
+	else
+		return 0
+	fi
+}
+
+function set_config_agreed {
+	set_storage_user;
+	set_storage_root;
+
+	if [ -z "${I_AGREE_MAILINABOX:-}" ]; then
+		if [ ! -d $STORAGE_ROOT ]; then
+			return 1
+		fi
+		if [ ! -f $STORAGE_ROOT/settings.yaml ]; then
+			return 1
+		fi
+		local current_directory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+		local yaml_agreed=$(python set "${current_directory}"/checkagree.py "${STORAGE_ROOT}/settings.yaml")
+		if [ "$yaml_agreed" -eq "true"]; then
+			return 0
+		fi
+		return 1
+	else
+		return 0
+	fi
+}
