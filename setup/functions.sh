@@ -269,20 +269,14 @@ function set_config_agreed {
 	set_storage_user;
 	set_storage_root;
 
-	if [ -z "${I_AGREE_MAILINABOX:-}" ]; then
-		if [ ! -d $STORAGE_ROOT ]; then
-			return 1
-		fi
-		if [ ! -f $STORAGE_ROOT/settings.yaml ]; then
-			return 1
-		fi
-		local current_directory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-		local yaml_agreed=$(python set "${current_directory}"/checkagree.py "${STORAGE_ROOT}/settings.yaml")
-		if [ "$yaml_agreed" -eq "true"]; then
-			return 0
-		fi
-		return 1
-	else
+	if [ ! -d $STORAGE_ROOT ]; then
+		mkdir -p $STORAGE_ROOT
+	fi
+
+	local current_directory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+	local yaml_agreed=$(python set "${current_directory}"/checkagree.py "${STORAGE_ROOT}/settings.yaml")
+	if [ "$yaml_agreed" == "true"]; then
 		return 0
 	fi
+	return 1
 }

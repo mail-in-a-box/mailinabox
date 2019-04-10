@@ -43,11 +43,11 @@ if [ -z "${NONINTERACTIVE:-}" ]; then
 		fi
 	fi
 
-	I_AGREE_MAILINABOX=$(/bin/true)
+	I_AGREE_MAILINABOX="$(/bin/true)"
 else
 
 	if [ $(check_config_agreed; echo $?) -eq "0" ]; then
-		I_AGREE_MAILINABOX=$(/bin/true)
+		I_AGREE_MAILINABOX="$(/bin/true)"
 	fi
 
 	#This is so a user can programmatically agree to our legal notice
@@ -241,3 +241,7 @@ if [ -f /usr/bin/git ] && [ -d .git ]; then
 	echo "Mail-in-a-Box Version: " $(git describe)
 fi
 echo
+
+function get_I_AGREE_MAILINABOX(){
+	echo "$I_AGREE_MAILINABOX"
+}

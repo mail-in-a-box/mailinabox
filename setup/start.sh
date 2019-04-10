@@ -57,6 +57,9 @@ chmod +x /usr/local/bin/mailinabox
 # STORAGE_ROOT.
 source setup/questions.sh
 
+
+I_AGREE_MAILINABOX=$(check_config_agreed; echo $?)
+
 if [ -z "${I_AGREE_MAILINABOX:-}" ]; then
 	echo "ERROR: You must agree to Mail-in-a-Box's Legal Notice. You can either:"
 	echo "run this in interactive mode; or"
