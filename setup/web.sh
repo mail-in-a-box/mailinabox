@@ -168,6 +168,7 @@ chown -R $STORAGE_USER $STORAGE_ROOT/www
 # Start services.
 restart_service nginx
 restart_service php7.2-fpm
+restart_service postfix
 
 # Open ports.
 ufw_allow http
