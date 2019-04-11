@@ -23,7 +23,10 @@ def get_web_domains(env, include_www_redirects=True, exclude_dns_elsewhere=True)
 		# to the main domain for. We'll add 'www.' to any DNS zones, i.e.
 		# the topmost of each domain we serve.
 		domains |= set('www.' + zone for zone, zonefile in get_dns_zones(env))
-	 
+
+	# add the required subdomains for MTA-STS
+	domains |= set('mta-sts.' + zone for zone, zonefile in get_dns_zones(env))
+
 	if exclude_dns_elsewhere:
 		# ...Unless the domain has an A/AAAA record that maps it to a different
 		# IP address than this box. Remove those domains from our list.

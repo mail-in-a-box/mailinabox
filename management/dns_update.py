@@ -228,6 +228,10 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 	defaults = [
 		(None,  "A",    env["PUBLIC_IP"],       "Required. May have a different value. Sets the IP address that %s resolves to for web hosting and other services besides mail. The A record must be present but its value does not affect mail delivery." % domain),
 		(None,  "AAAA", env.get('PUBLIC_IPV6'), "Optional. Sets the IPv6 address that %s resolves to, e.g. for web hosting. (It is not necessary for receiving mail on this domain.)" % domain),
+		("mta-sts",  "A", env["PUBLIC_IP"], "Required. For MTA-STS verification."),
+		("mta-sts",  "AAAA", env.get('PUBLIC_IPV6'), "Required. For MTA-STS verification."),
+		("_smtp._tls", "TXT", "v=TLSRPTv1; rua=mailto:postmaster@%s" % domain, "Required. For MTA-STS verification."),
+		("_mta-sts", "TXT", "v=STSv1;id=%sZ;" % datetime.datetime.now().strftime("%Y%m%d%H%M%S"), "Required. For MTA-STS verification.")
 	]
 	if "www." + domain in www_redirect_domains:
 		defaults += [
