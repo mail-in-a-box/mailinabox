@@ -83,80 +83,6 @@ cat conf/mozilla-autoconfig.xml \
 	 > /var/lib/mailinabox/mozilla-autoconfig.xml
 chmod a+r /var/lib/mailinabox/mozilla-autoconfig.xml
 
-# create the MTA-STS policy
-cat << EOF | tee /var/lib/mailinabox/mta-sts.txt
-version: STSv1
-mode: enforce
-mx: \$PRIMARY_HOSTNAME
-max_age: 86400
-EOF
-chmod a+r /var/lib/mailinabox/mta-sts.txt
-
-# install the postfix MTA-STS resolver
-/usr/bin/pip3 install postfix-mta-sts-resolver
-# add a user to use solely for MTA-STS resolution
-useradd -c "Daemon for MTA-STS policy checks" mta-sts -s /sbin/nologin
-# create systemd services for MTA-STS
-cat > /etc/systemd/system/postfix-mta-sts-daemon@.service << EOF
-[Unit]
-Description=Postfix MTA STS daemon instance
-After=syslog.target network.target
-
-[Service]
-Type=notify
-User=mta-sts
-Group=mta-sts
-ExecStart=/usr/local/bin/mta-sts-daemon
-Restart=always
-KillMode=process
-TimeoutStartSec=10
-TimeoutStopSec=30
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-cat > /etc/systemd/system/postfix-mta-sts.service << EOF
-[Unit]
-Description=Postfix MTA STS daemon
-After=syslog.target network.target
-
-[Service]
-Type=oneshot
-RemainAfterExit=yes
-ExecStart=/bin/systemctl start postfix-mta-sts-daemon@main.service
-ExecReload=/bin/systemctl start postfix-mta-sts-daemon@backup.service ; /bin/systemctl restart postfix-mta-sts-daemon@main.service ; /bin/systemctl stop postfix-mta-sts-daemon@backup.service
-ExecStop=/bin/systemctl stop postfix-mta-sts-daemon@main.service
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# configure the MTA-STS daemon for postfix
-cat > /etc/postfix/mta-sts-daemon.yml << EOF
-host: 127.0.0.1
-port: 8461
-cache:
-  type: internal
-  options:
-    cache_size: 10000
-default_zone:
-  strict_testing: true
-  timeout: 4
-zones:
-  myzone:
-    strict_testing: false
-    timeout: 4
-EOF
-
-# add postfix configuration
-tools/editconf.py /etc/postfix/main.cf -s \
-	smtp_tls_policy_maps=socketmap:inet:127.0.0.1:8461:postfix
-
-# enable and start the MTA-STS service
-/bin/systemctl enable postfix-mta-sts.service
-/bin/systemctl start postfix-mta-sts.service
-
 # make a default homepage
 if [ -d $STORAGE_ROOT/www/static ]; then mv $STORAGE_ROOT/www/static $STORAGE_ROOT/www/default; fi # migration #NODOC
 mkdir -p $STORAGE_ROOT/www/default
@@ -168,7 +94,6 @@ chown -R $STORAGE_USER $STORAGE_ROOT/www
 # Start services.
 restart_service nginx
 restart_service php7.2-fpm
-restart_service postfix
 
 # Open ports.
 ufw_allow http

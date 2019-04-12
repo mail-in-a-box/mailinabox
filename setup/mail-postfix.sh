@@ -102,7 +102,7 @@ tools/editconf.py /etc/postfix/master.cf -s -w \
 # Install the `outgoing_mail_header_filters` file required by the new 'authclean' service.
 cp conf/postfix_outgoing_mail_header_filters /etc/postfix/outgoing_mail_header_filters
 
-# Modify the `outgoing_mail_header_filters` file to use the local machine name and ip 
+# Modify the `outgoing_mail_header_filters` file to use the local machine name and ip
 # on the first received header line.  This may help reduce the spam score of email by
 # removing the 127.0.0.1 reference.
 sed -i "s/PRIMARY_HOSTNAME/$PRIMARY_HOSTNAME/" /etc/postfix/outgoing_mail_header_filters
@@ -214,6 +214,82 @@ tools/editconf.py /etc/default/postgrey \
 # The same limit is specified in nginx.conf for mail submitted via webmail and Z-Push.
 tools/editconf.py /etc/postfix/main.cf \
 	message_size_limit=134217728
+
+# ### MTA-STS - SMTP Mail Transfer Agent Strict Transport Security - SETUP
+# See: https://github.com/mail-in-a-box/mailinabox/pull/1556
+# create the MTA-STS policy
+cat > /var/lib/mailinabox/mta-sts.txt << EOF
+version: STSv1
+mode: enforce
+mx: \$PRIMARY_HOSTNAME
+max_age: 86400
+EOF
+chmod a+r /var/lib/mailinabox/mta-sts.txt
+
+# install the postfix MTA-STS resolver
+/usr/bin/pip3 install postfix-mta-sts-resolver
+# add a user to use solely for MTA-STS resolution
+useradd -c "Daemon for MTA-STS policy checks" mta-sts -s /sbin/nologin
+# create systemd services for MTA-STS
+cat > /etc/systemd/system/postfix-mta-sts-daemon@.service << EOF
+[Unit]
+Description=Postfix MTA STS daemon instance
+After=syslog.target network.target
+
+[Service]
+Type=notify
+User=mta-sts
+Group=mta-sts
+ExecStart=/usr/local/bin/mta-sts-daemon
+Restart=always
+KillMode=process
+TimeoutStartSec=10
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+cat > /etc/systemd/system/postfix-mta-sts.service << EOF
+[Unit]
+Description=Postfix MTA STS daemon
+After=syslog.target network.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/systemctl start postfix-mta-sts-daemon@main.service
+ExecReload=/bin/systemctl start postfix-mta-sts-daemon@backup.service ; /bin/systemctl restart postfix-mta-sts-daemon@main.service ; /bin/systemctl stop postfix-mta-sts-daemon@backup.service
+ExecStop=/bin/systemctl stop postfix-mta-sts-daemon@main.service
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# configure the MTA-STS daemon for postfix
+cat > /etc/postfix/mta-sts-daemon.yml << EOF
+host: 127.0.0.1
+port: 8461
+cache:
+  type: internal
+  options:
+    cache_size: 10000
+default_zone:
+  strict_testing: true
+  timeout: 4
+zones:
+  myzone:
+    strict_testing: false
+    timeout: 4
+EOF
+
+# add postfix configuration
+tools/editconf.py /etc/postfix/main.cf -s \
+	smtp_tls_policy_maps=socketmap:inet:127.0.0.1:8461:postfix
+
+# enable and start the MTA-STS service
+/bin/systemctl enable postfix-mta-sts.service
+/bin/systemctl start postfix-mta-sts.service
 
 # Allow the two SMTP ports in the firewall.
 
