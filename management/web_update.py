@@ -25,7 +25,7 @@ def get_web_domains(env, include_www_redirects=True, exclude_dns_elsewhere=True)
 		domains |= set('www.' + zone for zone, zonefile in get_dns_zones(env))
 
 	# add the required subdomains for MTA-STS
-	domains |= set('mta-sts.' + zone for zone, zonefile in get_dns_zones(env))
+	domains |= set('mta-sts.' + zone for zone in get_mail_domains(env))
 
 	if exclude_dns_elsewhere:
 		# ...Unless the domain has an A/AAAA record that maps it to a different
