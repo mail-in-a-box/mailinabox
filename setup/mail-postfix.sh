@@ -230,7 +230,7 @@ chmod a+r /var/lib/mailinabox/mta-sts.txt
 # install the postfix MTA-STS resolver
 /usr/bin/pip3 install postfix-mta-sts-resolver
 # add a user to use solely for MTA-STS resolution
-useradd -c "Daemon for MTA-STS policy checks" mta-sts -s /sbin/nologin
+useradd -c "Daemon for MTA-STS policy checks" mta-sts -s /usr/sbin/nologin
 # create systemd services for MTA-STS
 cat > /etc/systemd/system/postfix-mta-sts-daemon@.service << EOF
 [Unit]
