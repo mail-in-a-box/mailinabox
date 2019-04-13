@@ -285,7 +285,7 @@ zones:
 EOF
 
 # add postfix configuration
-tools/editconf.py /etc/postfix/main.cf -s \
+tools/editconf.py /etc/postfix/main.cf \
 	smtp_tls_policy_maps=socketmap:inet:127.0.0.1:8461:postfix
 
 # enable and start the MTA-STS service
