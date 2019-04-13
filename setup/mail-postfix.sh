@@ -222,7 +222,7 @@ mkdir -p /var/lib/mailinabox/
 cat > /var/lib/mailinabox/mta-sts.txt << EOF
 version: STSv1
 mode: enforce
-mx: \$PRIMARY_HOSTNAME
+mx: $PRIMARY_HOSTNAME
 max_age: 86400
 EOF
 chmod a+r /var/lib/mailinabox/mta-sts.txt
