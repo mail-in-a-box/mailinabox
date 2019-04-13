@@ -218,7 +218,7 @@ tools/editconf.py /etc/postfix/main.cf \
 # ### MTA-STS - SMTP Mail Transfer Agent Strict Transport Security - SETUP
 # See: https://github.com/mail-in-a-box/mailinabox/pull/1556
 # create the MTA-STS policy
-mkdir -p /var/lib/mailinabox/
+hide_output mkdir -p /var/lib/mailinabox/
 cat > /var/lib/mailinabox/mta-sts.txt << EOF
 version: STSv1
 mode: enforce
@@ -228,7 +228,7 @@ EOF
 chmod a+r /var/lib/mailinabox/mta-sts.txt
 
 # install the postfix MTA-STS resolver
-/usr/bin/pip3 install postfix-mta-sts-resolver
+hide_output /usr/bin/pip3 install postfix-mta-sts-resolver
 # add a user to use solely for MTA-STS resolution
 useradd -c "Daemon for MTA-STS policy checks" mta-sts -s /usr/sbin/nologin
 # create systemd services for MTA-STS
@@ -289,8 +289,8 @@ tools/editconf.py /etc/postfix/main.cf \
 	smtp_tls_policy_maps=socketmap:inet:127.0.0.1:8461:postfix
 
 # enable and start the MTA-STS service
-/bin/systemctl enable postfix-mta-sts.service
-/bin/systemctl start postfix-mta-sts.service
+hide_output /bin/systemctl enable postfix-mta-sts.service
+hide_output /bin/systemctl start postfix-mta-sts.service
 
 # Allow the two SMTP ports in the firewall.
 
