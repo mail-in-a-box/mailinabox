@@ -1,0 +1,35 @@
+# #### WARNING - ONLY EDIT THIS FILE IF YOU KNOW WHAT YOU ARE DOING       #### #
+# ####           YOU HAVE BEEN WARNED!                                    #### #
+
+# this file contains a list of regular expressions that could match wanted
+# or unwanted email RECIPIENTS
+
+# after editing this file remember to use the command: "service postfix reload"
+#
+# Useful commands:
+# postconf -n (list current config)
+# postmap -q "test@example.com" regexp:/etc/postfix/sender_checks (test what would happen with test@example.com)
+
+# Example regular expressions
+# this will reject the exact email address 123@example.com:
+# /^123\@example\.com$/   REJECT
+#
+# this will reject any email addresses beginning with 123@:
+# /^123\@/   REJECT
+#
+# this will reject email addresses ending with example.com:
+# /(\.|\@)example\.com$/   REJECT
+
+# #### WARNING - ONLY EDIT THIS FILE IF YOU KNOW WHAT YOU ARE DOING       #### #
+# ####           YOU HAVE BEEN WARNED TWICE NOW AND I WON'T WARN          #### #
+# ####           YOU AGAIN!  YOU ARE ON YOUR OWN NOW.                     #### #
+
+# Let email to the following destinations bypass all the remaining
+# "reject" and "check" tests.  We always want to let email for these
+# recipients in.  These should not be altered.
+
+/^postmaster\@/ OK
+/^hostmaster\@/ OK
+/^abuse\@/      OK
+/^admin\@/      OK
+/^administrator\@/        OK

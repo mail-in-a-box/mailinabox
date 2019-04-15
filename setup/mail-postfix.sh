@@ -102,7 +102,7 @@ tools/editconf.py /etc/postfix/master.cf -s -w \
 # Install the `outgoing_mail_header_filters` file required by the new 'authclean' service.
 cp conf/postfix_outgoing_mail_header_filters /etc/postfix/outgoing_mail_header_filters
 
-# Modify the `outgoing_mail_header_filters` file to use the local machine name and ip 
+# Modify the `outgoing_mail_header_filters` file to use the local machine name and ip
 # on the first received header line.  This may help reduce the spam score of email by
 # removing the 127.0.0.1 reference.
 sed -i "s/PRIMARY_HOSTNAME/$PRIMARY_HOSTNAME/" /etc/postfix/outgoing_mail_header_filters
@@ -178,6 +178,15 @@ tools/editconf.py /etc/postfix/main.cf virtual_transport=lmtp:[127.0.0.1]:10025
 # See https://github.com/mail-in-a-box/mailinabox/issues/1523.
 tools/editconf.py /etc/postfix/main.cf lmtp_destination_recipient_limit=1
 
+# ### RECIPIENT AND SENDER BLOCKING
+# implement the rejection of email sent by certain senders or received by
+# certain email addresses
+if [ ! -f /etc/postfix/sender_checks ]; then
+    cp conf/reject.senders /etc/postfix/sender_checks
+fi
+if [ ! -f /etc/postfix/recipient_checks ]; then
+    cp conf/reject.recipients /etc/postfix/recipient_checks
+fi
 
 # Who can send mail to us? Some basic filters.
 #
@@ -198,7 +207,8 @@ tools/editconf.py /etc/postfix/main.cf lmtp_destination_recipient_limit=1
 # "450 4.7.1 Client host rejected: Service unavailable". This is a retry code, so the mail doesn't properly bounce. #NODOC
 tools/editconf.py /etc/postfix/main.cf \
 	smtpd_sender_restrictions="reject_non_fqdn_sender,reject_unknown_sender_domain,reject_authenticated_sender_login_mismatch,reject_rhsbl_sender dbl.spamhaus.org" \
-	smtpd_recipient_restrictions=permit_sasl_authenticated,permit_mynetworks,"reject_rbl_client zen.spamhaus.org",reject_unlisted_recipient,"check_policy_service inet:127.0.0.1:10023"
+	smtpd_recipient_restrictions="permit_sasl_authenticated,permit_mynetworks,reject_rbl_client zen.spamhaus.org,reject_unlisted_recipient,check_policy_service inet:127.0.0.1:10023, check_recipient_access regexp:/etc/postfix/recipient_checks, check_sender_access regexp:/etc/postfix/sender_checks"
+
 
 # Postfix connects to Postgrey on the 127.0.0.1 interface specifically. Ensure that
 # Postgrey listens on the same interface (and not IPv6, for instance).
