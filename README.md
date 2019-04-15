@@ -45,7 +45,7 @@ This is experimental software.  You have been warned.
 
     `git clone https://github.com/jrsupplee/mailinabox.git`
 
-* cd into `mailinabox` and run `sudo setup/bootstrap.sh`  On occasion there are lock errors when updating `Munin`.  Just re-run `sudo setup/start.sh` until the error does not occur.
+* cd into `mailinabox` and run `sudo bash setup/bootstrap.sh`  On occasion there are lock errors when updating `Munin`.  Just re-run `sudo setup/start.sh` until the error does not occur.
 
 * Note: all existing users at the time of the upgrade will have there quota set to `0` (unlimited).
 
