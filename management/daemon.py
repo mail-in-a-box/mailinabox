@@ -48,8 +48,8 @@ def authorized_personnel_only(viewfunc):
 			log_failed_login(request)
 
 		# Authorized to access an API view?
-		if "admin" in privs:
-			# Call view func.
+		if any(allowed_access in privs for allowed_access in [viewfunc.__name__, "admin"]):
+			# Call view function
 			return viewfunc(*args, **kwargs)
 		elif not error:
 			error = "You are not an administrator."
@@ -334,7 +334,7 @@ def ssl_get_status():
 
 	# What domains can we provision certificates for? What unexpected problems do we have?
 	provision, cant_provision = get_certificates_to_provision(env, show_valid_certs=False)
-	
+
 	# What's the current status of TLS certificates on all of the domain?
 	domains_status = get_web_domains_info(env)
 	domains_status = [

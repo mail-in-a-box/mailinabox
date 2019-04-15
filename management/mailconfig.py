@@ -391,6 +391,10 @@ def add_remove_mail_user_privilege(email, priv, action, env):
 	else:
 		return ("Invalid action.", 400)
 
+	# ensure admin is the only privilege if it exists
+	if "admin" in privs:
+		privs = ["admin"]
+
 	# commit to database
 	conn, c = open_database(env, with_connection=True)
 	c.execute("UPDATE users SET privileges=? WHERE email=?", ("\n".join(privs), email))

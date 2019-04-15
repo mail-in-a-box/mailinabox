@@ -51,34 +51,34 @@
 
 <div style="display: none">
   <table>
-  <tr id="user-template">
-    <td class='address'>
-    </td>
-    <td class='actions'>
-        <span class='privs'>
-        </span>
+    <tr id="user-template">
+      <td class='address'></td>
+      <td class='actions'>
+          <a href="#" onclick="users_remove(this); return false;" class='if_active' title="Archive Account">
+            archive account
+          </a> |
 
-        <span class="if_active">
-          <a href="#" onclick="users_set_password(this); return false;" class='setpw' title="Set Password">
-            set password
-          </a>
-          |
-        </span>
+          <span class="if_active">
+            <a href="#" onclick="users_set_password(this); return false;" class='setpw' title="Set Password">
+              set password
+            </a>
+          </span>
 
-        <span class='add-privs'>
-        </span>
+          <br>
 
-        <a href="#" onclick="users_remove(this); return false;" class='if_active' title="Archive Account">
-          archive account
-        </a>
-    </td>
-  </tr>
-  <tr id="user-extra-template" class="if_inactive">
-    <td colspan="3" style="border: 0; padding-top: 0">
-      <div class='restore_info' style='color: #888; font-size: 90%'>To restore account, create a new account with this email address. Or to permanently delete the mailbox, delete the directory <tt></tt> on the machine.</div>
-    </td>
-  </tr>
+          <span class='privs'></span>
+
+          <span class='add-privs'></span>
+
+      </td>
+    </tr>
+    <tr id="user-extra-template" class="if_inactive">
+      <td colspan="3" style="border: 0; padding-top: 0">
+        <div class='restore_info' style='color: #888; font-size: 90%'>To restore account, create a new account with this email address. Or to permanently delete the mailbox, delete the directory <tt></tt> on the machine.</div>
+      </td>
+    </tr>
   </table>
+
 </div>
 
 <h3>Mail user API (advanced)</h3>
@@ -157,20 +157,28 @@ function show_users() {
 
           if (user.status == 'inactive') continue;
 
-          var add_privs = ["admin"];
+          // this is a list of all the possible api endpoints and 'admin'
+          var add_privs = ['admin', 'backup_get_custom', 'backup_set_custom', 'backup_status', 'dns_get_dump', 'dns_get_records', 'dns_get_secondary_nameserver', 'dns_set_record', 'dns_update', 'dns_zones', 'do_reboot', 'do_updates', 'mail_aliases', 'mail_aliases_add', 'mail_aliases_random', 'mail_aliases_remove', 'mail_domains', 'mail_user_privs', 'mail_user_privs_add', 'mail_user_privs_remove', 'mail_users', 'mail_users_add', 'mail_users_password', 'mail_users_remove', 'munin', 'munin_cgi', 'needs_reboot', 'privacy_status_get', 'privacy_status_set', 'ssl_get_csr', 'ssl_get_status', 'ssl_install_cert', 'ssl_provision_certs', 'system_latest_upstream_version', 'system_status', 'system_updates', 'system_version', 'web_get_domains', 'web_update'];
 
-          for (var j = 0; j < user.privileges.length; j++) {
-            var p = $("<span><b><span class='name'></span></b> (<a href='#' onclick='mod_priv(this, \"remove\"); return false;' title='Remove Privilege'>remove privilege</a>) |</span>");
-            p.find('span.name').text(user.privileges[j]);
+          var p;
+          if (user.privileges.length > 0) {
+            p = "<select name=\"privs\" id=\"privs\" onchange=\"mod_priv(this, 'remove'); return false;\"><option disabled selected value> -- Remove a privilege -- </option></select> |";
             n.find('.privs').append(p);
-            if (add_privs.indexOf(user.privileges[j]) >= 0)
-              add_privs.splice(add_privs.indexOf(user.privileges[j]), 1);
+            for (var j = 0; j < user.privileges.length; j++) {
+              p = '<option value="' + user.privileges[j] + '">' + user.privileges[j] + '</option>';
+              n.find('#privs').append(p);
+              if (add_privs.indexOf(user.privileges[j]) >= 0)
+                add_privs.splice(add_privs.indexOf(user.privileges[j]), 1);
+            }
           }
 
-          for (var j = 0; j < add_privs.length; j++) {
-            var p = $("<span><a href='#' onclick='mod_priv(this, \"add\"); return false;' title='Add Privilege'>make <span class='name'></span></a> | </span>");
-            p.find('span.name').text(add_privs[j]);
+          if (add_privs.length > 0) {
+            p = "<select name=\"add_privs\" id=\"add_privs\" onchange=\"mod_priv(this, 'add'); return false;\"><option disabled selected value> -- Add a privilege -- </option></select>";
             n.find('.add-privs').append(p);
+            for (var j = 0; j < add_privs.length; j++) {
+              p = '<option value="' + add_privs[j] + '">' + add_privs[j] + '</option>';
+              n.find('#add_privs').append(p);
+            }
           }
         }
       }
@@ -262,7 +270,7 @@ function users_remove(elem) {
 
 function mod_priv(elem, add_remove) {
   var email = $(elem).parents('tr').attr('data-email');
-  var priv = $(elem).parents('td').find('.name').text();
+  var priv = $(elem).val();
 
   // can't remove your own admin access
   if (priv == "admin" && add_remove == "remove" && api_credentials != null && email == api_credentials[0]) {
@@ -273,7 +281,7 @@ function mod_priv(elem, add_remove) {
   var add_remove1 = add_remove.charAt(0).toUpperCase() + add_remove.substring(1);
   show_modal_confirm(
     "Modify Privileges",
-    $("<p>Are you sure you want to " + add_remove + " the " + priv + " privilege for <b>" + email + "</b>?</p>"),
+    $("<p>Are you sure you want to " + add_remove + " the <b>\"" + priv + "\"</b> privilege for <b>" + email + "</b>?</p>"),
     add_remove1,
     function() {
       api(
@@ -287,6 +295,7 @@ function mod_priv(elem, add_remove) {
           show_users();
         });
     });
+
 }
 
 function generate_random_password() {
