@@ -230,7 +230,9 @@ max_age: 86400
 EOF
 chmod a+r /var/lib/mailinabox/mta-sts.txt
 
-# install the postfix MTA-STS resolver
+# install the postfix MTA-STS resolver.  the MTA-STS resolver service is
+# used by Postfix to ensure outgoing mail uses TLS when the recipient
+# announces MTA-STS.
 hide_output /usr/bin/pip3 install postfix-mta-sts-resolver
 # add a user to use solely for MTA-STS resolution
 id -u mta-sts &>/dev/null || useradd -c "Daemon for MTA-STS policy checks" mta-sts -s /usr/sbin/nologin
