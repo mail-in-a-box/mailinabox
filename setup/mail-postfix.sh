@@ -217,7 +217,10 @@ tools/editconf.py /etc/postfix/main.cf \
 
 # ### MTA-STS - SMTP Mail Transfer Agent Strict Transport Security - SETUP
 # See: https://github.com/mail-in-a-box/mailinabox/pull/1556
-# create the MTA-STS policy
+#
+# create the MTA-STS policy; this is used to announce the local MTA-STS
+# policy to senders and the file is served by nginx on mta-sts subdomains at
+# https://example.com/.well-known/mta-sts.txt
 mkdir -p /var/lib/mailinabox/
 cat > /var/lib/mailinabox/mta-sts.txt << EOF
 version: STSv1
