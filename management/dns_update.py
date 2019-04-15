@@ -228,10 +228,10 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 	defaults = [
 		(None,  "A",    env["PUBLIC_IP"],       "Required. May have a different value. Sets the IP address that %s resolves to for web hosting and other services besides mail. The A record must be present but its value does not affect mail delivery." % domain),
 		(None,  "AAAA", env.get('PUBLIC_IPV6'), "Optional. Sets the IPv6 address that %s resolves to, e.g. for web hosting. (It is not necessary for receiving mail on this domain.)" % domain),
-		("mta-sts",  "A", env["PUBLIC_IP"], "Required. For MTA-STS verification."),
-		("mta-sts",  "AAAA", env.get('PUBLIC_IPV6'), "Required. For MTA-STS verification."),
-		("_smtp._tls", "TXT", "v=TLSRPTv1; rua=mailto:postmaster@%s" % domain, "Required. For MTA-STS verification."),
-		("_mta-sts", "TXT", "v=STSv1;id=%sZ;" % datetime.datetime.now().strftime("%Y%m%d%H%M%S"), "Required. For MTA-STS verification.")
+		("mta-sts",  "A", env["PUBLIC_IP"], "Optional. For MTA-STS verification."),
+		("mta-sts",  "AAAA", env.get('PUBLIC_IPV6'), "Optional. For MTA-STS verification."),
+		("_mta-sts", "TXT", "v=STSv1;id=%sZ;" % datetime.datetime.now().strftime("%Y%m%d%H%M%S"), "Optional. This is used for MTA-STS verification and is only necessary if the MTA-STS A and AAAA records are set.  For MTA-STS to function correctly this record must be set with the A and AAAA records."),
+		("_smtp._tls", "TXT", "v=TLSRPTv1; rua=mailto:postmaster@%s" % domain, "Optional. This is used for MTA-STS verification and is only necessary if the MTA-STS A and AAAA records are set.  Furthermore this is not compulsory for MTA-STS to function, enabling this record will result in receiving an emailed report from each mail server that has interacted with your mail server.")
 	]
 	if "www." + domain in www_redirect_domains:
 		defaults += [
