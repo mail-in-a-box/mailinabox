@@ -158,7 +158,7 @@ function show_users() {
           if (user.status == 'inactive') continue;
 
           // this is a list of all the possible api endpoints and 'admin'
-          var add_privs = ['admin', 'backup_get_custom', 'backup_set_custom', 'backup_status', 'dns_get_dump', 'dns_get_records', 'dns_get_secondary_nameserver', 'dns_set_record', 'dns_update', 'dns_zones', 'do_reboot', 'do_updates', 'mail_aliases', 'mail_aliases_add', 'mail_aliases_random', 'mail_aliases_remove', 'mail_domains', 'mail_user_privs', 'mail_user_privs_add', 'mail_user_privs_remove', 'mail_users', 'mail_users_add', 'mail_users_password', 'mail_users_remove', 'munin', 'munin_cgi', 'needs_reboot', 'privacy_status_get', 'privacy_status_set', 'ssl_get_csr', 'ssl_get_status', 'ssl_install_cert', 'ssl_provision_certs', 'system_latest_upstream_version', 'system_status', 'system_updates', 'system_version', 'web_get_domains', 'web_update'];
+          var add_privs = ['admin', 'backup_get_custom', 'backup_set_custom', 'backup_status', 'dns_get_dump', 'dns_get_records', 'dns_get_secondary_nameserver', 'dns_limited_set_record', 'dns_set_record', 'dns_update', 'dns_zones', 'do_reboot', 'do_updates', 'mail_aliases', 'mail_aliases_add', 'mail_aliases_random', 'mail_aliases_remove', 'mail_domains', 'mail_user_privs', 'mail_user_privs_add', 'mail_user_privs_remove', 'mail_users', 'mail_users_add', 'mail_users_password', 'mail_users_remove', 'munin', 'munin_cgi', 'needs_reboot', 'privacy_status_get', 'privacy_status_set', 'ssl_get_csr', 'ssl_get_status', 'ssl_install_cert', 'ssl_provision_certs', 'system_latest_upstream_version', 'system_status', 'system_updates', 'system_version', 'web_get_domains', 'web_update'];
 
           var p;
           if (user.privileges.length > 0) {

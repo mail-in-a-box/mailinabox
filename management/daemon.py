@@ -48,8 +48,8 @@ def authorized_personnel_only(viewfunc):
 			log_failed_login(request)
 
 		# Authorized to access an API view?
-		if any(allowed_access in privs for allowed_access in [viewfunc.__name__, "admin"]):
-			# Call view function
+		if "admin" in privs:
+			# Call view func.
 			return viewfunc(*args, **kwargs)
 		elif not error:
 			error = "You are not an administrator."
@@ -85,6 +85,43 @@ def unauthorized(error):
 
 def json_response(data):
 	return Response(json.dumps(data, indent=2, sort_keys=True)+'\n', status=200, mimetype='application/json')
+
+def get_rtype_and_value(rtype, req):
+	"""
+	get the rtype and value in a way we can handle cleanly
+	"""
+	# Normalize.
+	rtype = rtype.upper()
+
+	# Read the record value from the request BODY, which must be
+	# ASCII-only. Not used with GET.
+	value = req.stream.read().decode("ascii", "ignore").strip()
+	return rtype, value
+
+def get_action_type(method):
+	"""
+	get the action type for our request method
+	"""
+	if method == "POST":
+		# Add a new record (in addition to any existing records
+		# for this qname-rtype pair).
+		return "add"
+	elif method == "PUT":
+		# In REST, PUT is supposed to be idempotent, so we'll
+		# make this action set (replace all records for this
+		# qname-rtype pair) rather than add (add a new record).
+		return "set"
+	return ""
+
+
+def perform_dns_set(aqname, artype, avalue, aaction, aenv):
+	"""
+	try to perform the dns set
+	"""
+	from dns_update import do_dns_update, set_custom_dns_record
+	if set_custom_dns_record(aqname, artype, avalue, aaction, aenv):
+		return do_dns_update(aenv) or "Something isn't right."
+	return "OK"
 
 ###################################
 
@@ -270,15 +307,8 @@ def dns_get_records(qname=None, rtype=None):
 @app.route('/dns/custom/<qname>/<rtype>', methods=['GET', 'POST', 'PUT', 'DELETE'])
 @authorized_personnel_only
 def dns_set_record(qname, rtype="A"):
-	from dns_update import do_dns_update, set_custom_dns_record
 	try:
-		# Normalize.
-		rtype = rtype.upper()
-
-		# Read the record value from the request BODY, which must be
-		# ASCII-only. Not used with GET.
-		value = request.stream.read().decode("ascii", "ignore").strip()
-
+		rtype, value = get_rtype_and_value(rtype, request)
 		if request.method == "GET":
 			# Get the existing records matching the qname and rtype.
 			return dns_get_records(qname, rtype)
@@ -292,15 +322,7 @@ def dns_set_record(qname, rtype="A"):
 			if value == '':
 				return ("No value for the record provided.", 400)
 
-			if request.method == "POST":
-				# Add a new record (in addition to any existing records
-				# for this qname-rtype pair).
-				action = "add"
-			elif request.method == "PUT":
-				# In REST, PUT is supposed to be idempotent, so we'll
-				# make this action set (replace all records for this
-				# qname-rtype pair) rather than add (add a new record).
-				action = "set"
+			action = get_action_type(request.method)
 
 		elif request.method == "DELETE":
 			if value == '':
@@ -311,9 +333,47 @@ def dns_set_record(qname, rtype="A"):
 				pass
 			action = "remove"
 
-		if set_custom_dns_record(qname, rtype, value, action, env):
-			return do_dns_update(env) or "Something isn't right."
-		return "OK"
+		return perform_dns_set(qname, rtype, value, action, env)
+
+	except ValueError as e:
+		return (str(e), 400)
+
+# this is the privilege you want to give non-full administrators
+@app.route('/dns/set/<qname>/<rtype>', methods=['POST', 'PUT'])
+@authorized_personnel_only
+def dns_limited_set_record(qname, rtype="A"):
+	try:
+		rtype, value = get_rtype_and_value(rtype, request)
+
+		# CHECK AGAINST A NUMBER OF CONDITIONS BEFORE CONTINUING
+		# stop here if we are not using POST and PUT
+		if request.method not in ("POST", "PUT"):
+			return ("You must use PUT or POST.", 400)
+
+		# stop here if we are not editing an A or AAAA
+		if rtype not in ("A", "AAAA"):
+			return ("You only have permission to alter A or AAAA records.", 400)
+
+		# stop here if the record is empty
+		if not value:
+			return ("No value for the record provided.", 400)
+
+		# stop here if the request is the same as the IP for the box
+		# (don't allow any values to be set to the IP of the box)
+		if value in (env['PUBLIC_IP'], env['PUBLIC_IPV6']):
+			return ("Contact an administator with full access rights to alter this {} record.".format(rtype), 400)
+
+		# stop here is the current A/AAAA record for this qname is
+		# the same as the IP for the box
+		# (don't allow alteration of any A/AAAA records that currently
+		# have the same IP as the box)
+		current_record_value = [r[2] for r in get_custom_dns_config(env) if r[0].lower() == qname.lower() and r[2] in (env['PUBLIC_IP'], env['PUBLIC_IPV6'])]
+		if current_record_value:
+			return ("Contact an administator with full access rights to alter this {} record.".format(rtype), 400)
+
+		# WE HAVE PASSED ALL THE CONDITION CHECKS SO PERFORM THE ACTION NEEDED
+		action = get_action_type(request.method)
+		return perform_dns_set(qname, rtype, value, action, env)
 
 	except ValueError as e:
 		return (str(e), 400)
