@@ -1,6 +1,10 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+ * Update to Roundcube 1.3.9.
+
 v0.41 (February 26, 2019)
 -------------------------
 
