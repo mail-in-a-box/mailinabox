@@ -58,8 +58,14 @@ hide_output install -m 644 conf/cronjob/solr /etc/cron.d/
 chown -R mail:dovecot /etc/dovecot
 chmod -R o-rwx /etc/dovecot
 
+cat > /etc/systemd/system/tomcat9.service.d/solr-permissions.conf << EOF
+[Service]
+ReadWritePaths=/var/lib/solr/
+ReadWritePaths=/var/lib/solr/data/
+EOF
+
 # Restart services to reload solr schema & dovecot plugins
-restart_service tomcat8
+restart_service tomcat9
 restart_service dovecot
 
 
