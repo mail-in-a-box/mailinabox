@@ -24,7 +24,7 @@ source /etc/mailinabox.conf # load global vars
 echo "Installing Solr..."
 
 # Install packages
-apt_install solr-tomcat dovecot-solr
+apt_install solr-jetty dovecot-solr
 
 # Solr requires a schema to tell it how to index data, this is provided by dovecot
 cp /usr/share/dovecot/solr-schema.xml /etc/solr/conf/schema.xml
@@ -44,10 +44,6 @@ plugin {
 }
 EOF
 
-# Bump memory allocation for Solr.
-# Not needed? I'll let it sit here for a while.
-#echo 'export JAVA_OPTS=-Xms512M -Xmx1024M' > /usr/share/tomcat7/bin/setenv.sh
-
 # Install cronjobs to keep FTS up to date
 hide_output install -m 755 conf/cronjob/dovecot /etc/cron.daily/
 hide_output install -m 644 conf/cronjob/solr /etc/cron.d/
@@ -58,10 +54,20 @@ hide_output install -m 644 conf/cronjob/solr /etc/cron.d/
 chown -R mail:dovecot /etc/dovecot
 chmod -R o-rwx /etc/dovecot
 
-# Restart services to reload solr schema & dovecot plugins
-restart_service tomcat8
-restart_service dovecot
+# Newer updates to jetty9 restrict write directories, this allows for
+# jetty to write to solr database directories
+cat > /etc/systemd/system/jetty9.service.d/solr-permissions.conf << EOF
+[Service]
+ReadWritePaths=/var/lib/solr/
+ReadWritePaths=/var/lib/solr/data/
+EOF
 
+# Reload systemctl to pickup the above override
+systemctl daemon-reload
+
+# Restart services to reload solr schema & dovecot plugins
+restart_service jetty9
+restart_service dovecot
 
 # Kickoff building the index
 
