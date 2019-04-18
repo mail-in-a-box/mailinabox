@@ -65,9 +65,46 @@ EOF
 # Reload systemctl to pickup the above override
 systemctl daemon-reload
 
-# Restart services to reload solr schema & dovecot plugins
+# Fix Logging
+# Due to the new systemd security permissions placed when running jetty
+# the log file directory at /var/log/jetty9 is reset to jetty:jetty
+# at every program start.  This causes syslog to fail to add the
+# rsyslog filtered output to this folder.  We will move this up a
+# directory to /var/log/ since solr-jetty is quite noisy.
+
+# Remove package config file since it points to a folder that
+# it does not have permissions to, and is also too far down the
+# /etc/rsyslog.d/ order to work anyway
+rm -f /etc/rsyslog.d/jetty9.conf 
+
+# Create new rsyslog config for jetty9 for its new location
+cat > /etc/rsyslog.d/10-jetty9.conf <<EOF
+# Send Jetty messages to jetty.out when using systemd
+
+:programname, startswith, "jetty9" {
+ /var/log/jetty-console.log
+ stop
+}
+EOF
+
+# Also adjust logrotated to the new file and correct user
+cat > /etc/logrotate.d/jetty9.conf <<EOF
+/var/log/jetty-console.log {
+    copytruncate
+    weekly
+    rotate 52
+    compress
+    delaycompress
+    missingok
+    create 640 syslog adm
+}
+EOF
+
+
+# Restart services to reload solr schema, dovecot plugins and rsyslog changes
 restart_service jetty9
 restart_service dovecot
+restart_service rsyslog
 
 # Kickoff building the index
 
