@@ -58,6 +58,11 @@ hide_output install -m 644 conf/cronjob/solr /etc/cron.d/
 chown -R mail:dovecot /etc/dovecot
 chmod -R o-rwx /etc/dovecot
 
+# Tomcat9 uses systemd permissions restrictions, solr writes outside of the
+# Tomcat default directories, we want to allow Tomcat to access our
+# search index
+mkdir -p /etc/systemd/system/tomcat9.service.d
+
 cat > /etc/systemd/system/tomcat9.service.d/solr-permissions.conf << EOF
 [Service]
 ReadWritePaths=/var/lib/solr/
