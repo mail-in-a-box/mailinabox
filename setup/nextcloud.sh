@@ -39,13 +39,19 @@ InstallNextcloud() {
 	# their github repositories.
 	mkdir -p /usr/local/lib/owncloud/apps
 
-	wget_verify https://github.com/nextcloud/contacts/releases/download/v2.1.8/contacts.tar.gz b5d5bbee33f0c32b124b46cb6aaab90c695ac170 /tmp/contacts.tgz
+	wget_verify https://github.com/nextcloud/contacts/releases/download/v3.1.1/contacts.tar.gz a06bd967197dcb03c94ec1dbd698c037018669e5 /tmp/contacts.tgz
 	tar xf /tmp/contacts.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/contacts.tgz
 
-	wget_verify https://github.com/nextcloud/calendar/releases/download/v1.6.4/calendar.tar.gz d8a7950dba14803472b6c19625a8ceb23d6fd4ef /tmp/calendar.tgz
+	wget_verify https://github.com/nextcloud/calendar/releases/download/v1.6.5/calendar.tar.gz 79941255521a5172f7e4ce42dc7773838b5ede2f /tmp/calendar.tgz
 	tar xf /tmp/calendar.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/calendar.tgz
+
+	# Starting with Nextcloud 15, the app user_external is no longer included in Nextcloud core,
+	# we will install from their github repository.
+	wget_verify https://github.com/nextcloud/user_external/releases/download/v0.6.1/user_external-0.6.1.tar.gz 1e9c40eb9b1e2504c03edcab88f11d7d1f008df1 /tmp/user_external.tgz
+	tar -xf /tmp/user_external.tgz -C /usr/local/lib/owncloud/apps/
+	rm /tmp/user_external.tgz
 
 	# Fix weird permissions.
 	chmod 750 /usr/local/lib/owncloud/{apps,config}
@@ -78,9 +84,8 @@ InstallNextcloud() {
 	fi
 }
 
-nextcloud_ver=14.0.6
-nextcloud_hash=4e43a57340f04c2da306c8eea98e30040399ae5a
-
+nextcloud_ver=15.0.7
+nextcloud_hash=1becd99a5cbe52b94be282b845ab68f871025d94
 # Check if Nextcloud dir exist, and check if version matches nextcloud_ver (if either doesn't - install/upgrade)
 if [ ! -d /usr/local/lib/owncloud/ ] \
 		|| ! grep -q $nextcloud_ver /usr/local/lib/owncloud/version.php; then
@@ -115,6 +120,11 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 			echo "Upgrades from Mail-in-a-Box prior to v0.28 (dated July 30, 2018) with Nextcloud < 13.0.6 (you have ownCloud 10, 11 or 12) are not supported. Upgrade to Mail-in-a-Box version v0.30 first. Setup aborting."
 			exit 1
 		fi
+		# During the upgrade from Nextcloud 14 to 15, user_external may cause the upgrade to fail.
+		# We will disable it here before the upgrade and install it again after the upgrade.
+		if grep -q "OC_VersionString = '14\." /usr/local/lib/owncloud/version.php; then
+			hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:disable user_external
+		fi
 	fi
 
 	InstallNextcloud $nextcloud_ver $nextcloud_hash
@@ -142,10 +152,12 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
   'overwritewebroot' => '/cloud',
   'overwrite.cli.url' => '/cloud',
   'user_backends' => array(
-	array(
-	  'class'=>'OC_User_IMAP',
-	  'arguments'=>array('{127.0.0.1:993/imap/ssl/novalidate-cert}')
-	)
+    array(
+      'class' => 'OC_User_IMAP',
+        'arguments' => array(
+          '${PRIMARY_HOSTNAME}', 993, 'ssl', ''
+         ),
+    ),
   ),
   'memcache.local' => '\OC\Memcache\APCu',
   'mail_smtpmode' => 'sendmail',
@@ -216,6 +228,8 @@ include("$STORAGE_ROOT/owncloud/config.php");
 \$CONFIG['logdateformat'] = 'Y-m-d H:i:s';
 
 \$CONFIG['mail_domain'] = '$PRIMARY_HOSTNAME';
+
+\$CONFIG['user_backends'] = array(array('class' => 'OC_User_IMAP','arguments' => array('${PRIMARY_HOSTNAME}', 993, 'ssl', ''),),);
 
 echo "<?php\n\\\$CONFIG = ";
 var_export(\$CONFIG);
