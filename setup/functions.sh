@@ -1,7 +1,7 @@
 # Turn on "strict mode." See http://redsymbol.net/articles/unofficial-bash-strict-mode/.
 # -e: exit if any command unexpectedly fails.
 # -u: exit if we have a variable typo.
-# -o pipefail: don't ignore errors in the non-last command in a pipeline 
+# -o pipefail: don't ignore errors in the non-last command in a pipeline
 set -euo pipefail
 
 function hide_output {
@@ -127,7 +127,7 @@ function get_default_privateip {
 	if [ "$1" == "6" ]; then target=2001:4860:4860::8888; fi
 
 	# Get the route information.
-	route=$(ip -$1 -o route get $target | grep -v unreachable)
+	route=$(ip -$1 -o route get $target 2>/dev/null | grep -v unreachable)
 
 	# Parse the address out of the route information.
 	address=$(echo $route | sed "s/.* src \([^ ]*\).*/\1/")
