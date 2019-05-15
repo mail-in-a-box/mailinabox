@@ -76,4 +76,8 @@ restart_service munin-node
 # generate initial statistics so the directory isn't empty
 # (We get "Pango-WARNING **: error opening config file '/root/.config/pango/pangorc': Permission denied"
 # if we don't explicitly set the HOME directory when sudo'ing.)
-sudo -H -u munin munin-cron
+# We check to see if munin-cron is already running, if it is, there is no need to run it simultaneously
+# generating an error.
+if [ ! -f /var/run/munin/munin-update.lock ]; then
+	sudo -H -u munin munin-cron
+fi
