@@ -38,7 +38,7 @@ inst_dir=/usr/local/lib/mailinabox
 mkdir -p $inst_dir
 venv=$inst_dir/env
 if [ ! -d $venv ]; then
-	virtualenv -ppython3 $venv
+	hide_output virtualenv -ppython3 $venv
 fi
 
 # Upgrade pip because the Ubuntu-packaged version is out of date.
