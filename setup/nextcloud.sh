@@ -155,7 +155,7 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
     array(
       'class' => 'OC_User_IMAP',
         'arguments' => array(
-          '${PRIMARY_HOSTNAME}', 993, 'ssl', ''
+          '127.0.0.1', 143, '', ''
          ),
     ),
   ),
@@ -229,7 +229,7 @@ include("$STORAGE_ROOT/owncloud/config.php");
 
 \$CONFIG['mail_domain'] = '$PRIMARY_HOSTNAME';
 
-\$CONFIG['user_backends'] = array(array('class' => 'OC_User_IMAP','arguments' => array('${PRIMARY_HOSTNAME}', 993, 'ssl', ''),),);
+\$CONFIG['user_backends'] = array(array('class' => 'OC_User_IMAP','arguments' => array('127.0.0.1', 143, '', ''),),);
 
 echo "<?php\n\\\$CONFIG = ";
 var_export(\$CONFIG);
