@@ -5,6 +5,9 @@ In Development
 --------------
  * Update to Roundcube 1.3.9.
 
+Z-Push:
+ * Upgraded Z-Push from 2.4.4 to 2.5.0.
+
 v0.41 (February 26, 2019)
 -------------------------
 
