@@ -84,8 +84,8 @@ InstallNextcloud() {
 	fi
 }
 
-nextcloud_ver=15.0.7
-nextcloud_hash=1becd99a5cbe52b94be282b845ab68f871025d94
+nextcloud_ver=15.0.8
+nextcloud_hash=4129d8d4021c435f2e86876225fb7f15adf764a3
 # Check if Nextcloud dir exist, and check if version matches nextcloud_ver (if either doesn't - install/upgrade)
 if [ ! -d /usr/local/lib/owncloud/ ] \
 		|| ! grep -q $nextcloud_ver /usr/local/lib/owncloud/version.php; then
