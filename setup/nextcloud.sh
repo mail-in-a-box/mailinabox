@@ -13,7 +13,8 @@ apt-get purge -qq -y owncloud* # we used to use the package manager
 
 apt_install php php-fpm \
 	php-cli php-sqlite3 php-gd php-imap php-curl php-pear curl \
-	php-dev php-gd php-xml php-mbstring php-zip php-apcu php-json php-intl
+	php-dev php-gd php-xml php-mbstring php-zip php-apcu php-json \
+	php-intl php-imagick
 
 InstallNextcloud() {
 
@@ -81,6 +82,9 @@ InstallNextcloud() {
 
 		# Add missing indices. NextCloud didn't include this in the normal upgrade because it might take some time.
 		sudo -u www-data php /usr/local/lib/owncloud/occ db:add-missing-indices
+
+		# Run conversion to BigInt identifiers, this process may take some time on large tables.
+		sudo -u www-data php /usr/local/lib/owncloud/occ db:convert-filecache-bigint --no-interaction
 	fi
 }
 
