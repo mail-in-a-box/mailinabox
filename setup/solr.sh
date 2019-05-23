@@ -92,7 +92,7 @@ cat > /etc/logrotate.d/jetty9.conf <<EOF
 /var/log/jetty-console.log {
     copytruncate
     weekly
-    rotate 52
+    rotate 12
     compress
     delaycompress
     missingok
