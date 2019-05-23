@@ -38,7 +38,7 @@ def get_services():
 		{ "name": "Mail Filters (Sieve/dovecot)", "port": 4190, "public": True, },
 		{ "name": "HTTP Web (nginx)", "port": 80, "public": True, },
 		{ "name": "HTTPS Web (nginx)", "port": 443, "public": True, },
-	    { "name": "Solr Full Text Search (tomcat)", "port": 8080, "public": False, },
+		{ "name": "Solr Full Text Search (Jetty)", "port": 8080, "public": False, },
 	]
 
 def run_checks(rounded_values, env, output, pool):
