@@ -11,9 +11,8 @@
 # this didn't make it into the Ubuntu packages, so we use Solr instead to run
 # Lucene for us.
 #
-# Solr runs as a tomcat process. The dovecot solr plugin talks to solr via its
-# HTTP interface, causing mail to be indexed when searches occur, and getting
-# results back.
+# Solr runs as a Jetty process. The dovecot solr plugin talks to solr via its
+# HTTP interface, searching indexed mail and returning results back to dovecot.
 
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
@@ -32,7 +31,10 @@ cp /usr/share/dovecot/solr-schema.xml /etc/solr/conf/schema.xml
 # Update the dovecot plugin configuration
 #
 # Break-imap-search makes search work the way users expect, rather than the way
-# the IMAP specification expects
+# the IMAP specification expects.
+# https://wiki.dovecot.org/Plugins/FTS/Solr
+# "break-imap-search : Use Solr also for indexing TEXT and BODY searches.
+# This makes your server non-IMAP-compliant."
 tools/editconf.py /etc/dovecot/conf.d/10-mail.conf \
         mail_plugins="fts fts_solr"
 
@@ -44,7 +46,7 @@ plugin {
 }
 EOF
 
-# Install cronjobs to keep FTS up to date
+# Install cronjobs to keep FTS up to date.
 hide_output install -m 755 conf/cronjob/dovecot /etc/cron.daily/
 hide_output install -m 644 conf/cronjob/solr /etc/cron.d/
 
@@ -62,24 +64,24 @@ ReadWritePaths=/var/lib/solr/
 ReadWritePaths=/var/lib/solr/data/
 EOF
 
-# Reload systemctl to pickup the above override
+# Reload systemctl to pickup the above override.
 systemctl daemon-reload
 
 # Fix Logging
-# Due to the new systemd security permissions placed when running jetty
-# the log file directory at /var/log/jetty9 is reset to jetty:jetty
+# Due to the new systemd security permissions placed when running jetty.
+# The log file directory at /var/log/jetty9 is reset to jetty:jetty
 # at every program start.  This causes syslog to fail to add the
 # rsyslog filtered output to this folder.  We will move this up a
 # directory to /var/log/ since solr-jetty is quite noisy.
 
 # Remove package config file since it points to a folder that
 # it does not have permissions to, and is also too far down the
-# /etc/rsyslog.d/ order to work anyway
+# /etc/rsyslog.d/ order to work anyway.
 rm -f /etc/rsyslog.d/jetty9.conf 
 
 # Create new rsyslog config for jetty9 for its new location
 cat > /etc/rsyslog.d/10-jetty9.conf <<EOF
-# Send Jetty messages to jetty.out when using systemd
+# Send Jetty messages to jetty-console.log when using systemd
 
 :programname, startswith, "jetty9" {
  /var/log/jetty-console.log
