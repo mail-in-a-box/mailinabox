@@ -150,7 +150,7 @@ def get_mail_users_ex(env, with_archived=False):
 					if email in active_accounts: continue
 					user = {
 						"email": email,
-						"privileges": "",
+						"privileges": [],
 						"status": "inactive",
 						"mailbox": mbox,
 					}

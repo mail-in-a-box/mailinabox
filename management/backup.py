@@ -419,14 +419,21 @@ def list_target_files(config):
 		fix_boto() # must call prior to importing boto
 		import boto.s3
 		from boto.exception import BotoServerError
+		custom_region = False
 		for region in boto.s3.regions():
 			if region.endpoint == target.hostname:
 				break
 		else:
-			raise ValueError("Invalid S3 region/host.")
+			# If region is not found this is a custom region
+			custom_region = True
 
 		bucket = target.path[1:].split('/')[0]
 		path = '/'.join(target.path[1:].split('/')[1:]) + '/'
+
+		# Create a custom region with custom endpoint
+		if custom_region:
+			from boto.s3.connection import S3Connection
+			region = boto.s3.S3RegionInfo(name=bucket, endpoint=target.hostname, connection_cls=S3Connection)
 
 		# If no prefix is specified, set the path to '', otherwise boto won't list the files
 		if path == '/':

@@ -38,7 +38,7 @@ inst_dir=/usr/local/lib/mailinabox
 mkdir -p $inst_dir
 venv=$inst_dir/env
 if [ ! -d $venv ]; then
-	virtualenv -ppython3 $venv
+	hide_output virtualenv -ppython3 $venv
 fi
 
 # Upgrade pip because the Ubuntu-packaged version is out of date.
@@ -93,7 +93,7 @@ source $venv/bin/activate
 exec python `pwd`/management/daemon.py
 EOF
 chmod +x $inst_dir/start
-hide_output systemctl link conf/mailinabox.service
+hide_output systemctl link -f conf/mailinabox.service
 hide_output systemctl daemon-reload
 hide_output systemctl enable mailinabox.service
 

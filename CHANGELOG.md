@@ -3,10 +3,25 @@ CHANGELOG
 
 In Development
 --------------
+ * Update to Roundcube 1.3.9.
+
+v0.41 (February 26, 2019)
+-------------------------
 
 System:
 
 * Missing brute force login attack prevention (fail2ban) filters which stopped working on Ubuntu 18.04 were added back.
+* Upgrades would fail if Mail-in-a-Box moved to a different directory in `systemctl link`.
+
+Mail:
+
+* Incoming messages addressed to more than one local user were rejected because of a bug in spampd packaged by Ubuntu 18.04. A workaround was added.
+
+Contacts/Calendar:
+
+* Upgraded Nextcloud from 13.0.6 to 14.0.6.
+* Upgraded Contacts from 2.1.5 to 2.1.8.
+* Upgraded Calendar from 1.6.1 to 1.6.4.
 
 v0.40 (January 12, 2019)
 ------------------------
