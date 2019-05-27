@@ -136,6 +136,14 @@ service lmtp {
   }
 }
 
+# Enable imap-login on localhost to allow the user_external plugin
+# for Nextcloud to do imap authentication. (See #1577)
+service imap-login {
+  inet_listener imap {
+    address = 127.0.0.1
+    port = 143
+  }
+}
 protocol imap {
   mail_max_userip_connections = 20
 }
