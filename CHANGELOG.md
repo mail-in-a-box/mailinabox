@@ -14,6 +14,9 @@ Contacts/Calendar:
 * Upgraded Contacts from 2.1.8 to 3.1.1.
 * Upgraded Calendar from 1.6.4 to 1.6.5.
 
+Z-Push:
+ * Upgraded Z-Push from 2.4.4 to 2.5.0.
+
 v0.41 (February 26, 2019)
 -------------------------
 
