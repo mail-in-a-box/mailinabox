@@ -58,6 +58,7 @@ chmod -R o-rwx /etc/dovecot
 
 # Newer updates to jetty9 restrict write directories, this allows for
 # jetty to write to solr database directories
+mkdir -p /etc/systemd/system/jetty9.service.d/
 cat > /etc/systemd/system/jetty9.service.d/solr-permissions.conf << EOF
 [Service]
 ReadWritePaths=/var/lib/solr/
