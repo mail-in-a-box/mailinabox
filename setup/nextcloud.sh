@@ -47,6 +47,10 @@ InstallNextcloud() {
 	tar xf /tmp/calendar.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/calendar.tgz
 
+	wget_verify https://github.com/nextcloud/tasks/releases/download/v0.10.1/tasks.tar.gz b13f1bcf0431deb73b6e1dfaf62c549b0e0b5b5e /tmp/tasks.tgz
+	tar xf /tmp/tasks.tgz -C /usr/local/lib/owncloud/apps/
+	rm /tmp/tasks.tgz
+
 	# Fix weird permissions.
 	chmod 750 /usr/local/lib/owncloud/{apps,config}
 
@@ -232,6 +236,7 @@ hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:disable
 hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable user_external
 hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable contacts
 hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable calendar
+hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable tasks
 
 # When upgrading, run the upgrade script again now that apps are enabled. It seems like
 # the first upgrade at the top won't work because apps may be disabled during upgrade?
