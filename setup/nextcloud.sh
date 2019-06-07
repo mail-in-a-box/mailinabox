@@ -50,7 +50,7 @@ InstallNextcloud() {
 
 	# Starting with Nextcloud 15, the app user_external is no longer included in Nextcloud core,
 	# we will install from their github repository.
-	wget_verify https://github.com/nextcloud/user_external/releases/download/v0.6.1/user_external-0.6.1.tar.gz 1e9c40eb9b1e2504c03edcab88f11d7d1f008df1 /tmp/user_external.tgz
+	wget_verify https://github.com/nextcloud/user_external/releases/download/v0.6.3/user_external-0.6.3.tar.gz 0f756d35fef6b64a177d6a16020486b76ea5799c /tmp/user_external.tgz
 	tar -xf /tmp/user_external.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/user_external.tgz
 
@@ -159,7 +159,7 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
     array(
       'class' => 'OC_User_IMAP',
         'arguments' => array(
-          '127.0.0.1', 143, '', ''
+          '127.0.0.1', 143, null
          ),
     ),
   ),
@@ -233,7 +233,7 @@ include("$STORAGE_ROOT/owncloud/config.php");
 
 \$CONFIG['mail_domain'] = '$PRIMARY_HOSTNAME';
 
-\$CONFIG['user_backends'] = array(array('class' => 'OC_User_IMAP','arguments' => array('127.0.0.1', 143, '', ''),),);
+\$CONFIG['user_backends'] = array(array('class' => 'OC_User_IMAP','arguments' => array('127.0.0.1', 143, null),),);
 
 echo "<?php\n\\\$CONFIG = ";
 var_export(\$CONFIG);
