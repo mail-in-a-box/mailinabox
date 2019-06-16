@@ -3,7 +3,16 @@ CHANGELOG
 
 In Development
 --------------
- * Update to Roundcube 1.3.9.
+
+Mail:
+
+* Update to Roundcube 1.3.9.
+
+Contacts/Calendar:
+
+* Upgraded Nextcloud from 14.0.6 to 15.0.8.
+* Upgraded Contacts from 2.1.8 to 3.1.1.
+* Upgraded Calendar from 1.6.4 to 1.6.5.
 
 Z-Push:
  * Upgraded Z-Push from 2.4.4 to 2.5.0.
