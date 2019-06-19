@@ -39,6 +39,9 @@
 <div class="row">
 	<div class="col-md-push-9 col-md-3">
 
+<div id="system-uptime" style="display: none; margin-bottom: 1em;">
+</div>
+
 <div id="system-reboot-required" style="display: none; margin-bottom: 1em;">
 	<button type="button" class="btn btn-danger" onclick="confirm_reboot(); return false;">Reboot Box</button>
 	<div>No reboot is necessary.</div>
@@ -75,6 +78,15 @@ function show_system_status() {
       $('#system-privacy-setting').show();
       $('#system-privacy-setting a span').text(r ? "Enable" : "Disable");
       $('#system-privacy-setting p').toggle(r);
+    });
+
+  api(
+    "/system/uptime",
+    "GET",
+    { },
+    function(r) {
+      $('#system-uptime').text(r);
+      $('#system-uptime').show();
     });
 
   api(
