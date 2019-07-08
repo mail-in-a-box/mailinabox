@@ -23,7 +23,7 @@ except OSError:
 
 # for generating CSRs we need a list of country codes
 csr_country_codes = []
-with open(os.path.join(os.path.dirname(me), "csr_country_codes.tsv")) as f:
+with open(os.path.join(os.path.dirname(me), "csr_country_codes.tsv"), encoding="utf-8") as f:
 	for line in f:
 		if line.strip() == "" or line.startswith("#"): continue
 		code, name = line.strip().split("\t")[0:2]
