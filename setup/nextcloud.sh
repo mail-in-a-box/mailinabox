@@ -50,9 +50,11 @@ InstallNextcloud() {
 
 	# Starting with Nextcloud 15, the app user_external is no longer included in Nextcloud core,
 	# we will install from their github repository.
-	wget_verify https://github.com/nextcloud/user_external/releases/download/v0.6.3/user_external-0.6.3.tar.gz 0f756d35fef6b64a177d6a16020486b76ea5799c /tmp/user_external.tgz
-	tar -xf /tmp/user_external.tgz -C /usr/local/lib/owncloud/apps/
-	rm /tmp/user_external.tgz
+	if [[ $version =~ ^15 ]]; then
+		wget_verify https://github.com/nextcloud/user_external/releases/download/v0.6.3/user_external-0.6.3.tar.gz 0f756d35fef6b64a177d6a16020486b76ea5799c /tmp/user_external.tgz
+		tar -xf /tmp/user_external.tgz -C /usr/local/lib/owncloud/apps/
+		rm /tmp/user_external.tgz
+	fi
 
 	# Fix weird permissions.
 	chmod 750 /usr/local/lib/owncloud/{apps,config}
@@ -123,6 +125,11 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 		if grep -q "OC_VersionString = '1[012]\." /usr/local/lib/owncloud/version.php; then
 			echo "Upgrades from Mail-in-a-Box prior to v0.28 (dated July 30, 2018) with Nextcloud < 13.0.6 (you have ownCloud 10, 11 or 12) are not supported. Upgrade to Mail-in-a-Box version v0.30 first. Setup aborting."
 			exit 1
+		fi
+		# If we are running Nextcloud 13, upgrade to Nextcloud 14
+		if grep -q "OC_VersionString = '13\." /usr/local/lib/owncloud/version.php; then
+			InstallNextcloud 14.0.6 4e43a57340f04c2da306c8eea98e30040399ae5a
+
 		fi
 		# During the upgrade from Nextcloud 14 to 15, user_external may cause the upgrade to fail.
 		# We will disable it here before the upgrade and install it again after the upgrade.
