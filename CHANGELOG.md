@@ -1,21 +1,23 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.42 (July 4, 2019)
+--------------------
 
-Mail:
+Changes:
 
-* Update to Roundcube 1.3.9.
+* Decreased the minimum supported RAM to 502 Mb.
+* Improved mail client autoconfiguration.
+* Added support for S3-compatible backup services besides Amazon S3.
+* Fixed the control panel login page to let LastPass save passwords.
+* Fixed an error in the user privileges API.
+* Silenced some spurrious messages.
 
-Contacts/Calendar:
+Software updates:
 
-* Upgraded Nextcloud from 14.0.6 to 15.0.8.
-* Upgraded Contacts from 2.1.8 to 3.1.1.
-* Upgraded Calendar from 1.6.4 to 1.6.5.
-
-Z-Push:
- * Upgraded Z-Push from 2.4.4 to 2.5.0.
+* Upgraded Roundcube from 1.3.8 to 1.3.9.
+* Upgraded Nextcloud from 14.0.6 to 15.0.8 (with Contacts from 2.1.8 to 3.1.1 and Calendar from 1.6.4 to 1.6.5).
+* Upgraded Z-Push from 2.4.4 to 2.5.0.
 
 v0.41 (February 26, 2019)
 -------------------------
