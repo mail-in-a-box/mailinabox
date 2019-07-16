@@ -1,0 +1,4 @@
+/^mailgwgb\d+\.rightnowtech\.com$/
+/^mx-\d+\.reddit\.com$/
+/^mta-aws\d+\.sanomacorp\.net$/
+/^mail.*\.mandrillapp\.com$/
