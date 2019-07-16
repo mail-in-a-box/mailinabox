@@ -2,3 +2,4 @@
 /^mx-\d+\.reddit\.com$/
 /^mta-aws\d+\.sanomacorp\.net$/
 /^mail.*\.mandrillapp\.com$/
+/^mail\d+\.ikea.com$/
