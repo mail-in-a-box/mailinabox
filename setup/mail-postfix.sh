@@ -254,7 +254,9 @@ if [ ! -f /etc/postgrey/whitelist_clients ] || find /etc/postgrey/whitelist_clie
         # before moving it into place
         if [ \$(file -b --mime-type /tmp/postgrey_whitelist_clients) == "text/plain" ]; then
             mv /tmp/postgrey_whitelist_clients /etc/postgrey/whitelist_clients
-            cat /root/mailinabox/conf/postgrey_whitelist_clients >> /etc/postgrey/whitelist_clients
+            if [ -f /root/mailinabox/conf/postgrey_whitelist_clients ] ; then
+               cat /root/mailinabox/conf/postgrey_whitelist_clients >> /etc/postgrey/whitelist_clients
+            fi
 	else
             rm /tmp/postgrey_whitelist_clients
         fi
