@@ -215,7 +215,7 @@ tools/editconf.py /etc/default/postgrey \
 cat > /etc/cron.monthly/mailinabox-postgrey-whitelist << EOF;
 #!/bin/bash
 # Mail-in-a-Box
-curl http://postgrey.schweikert.ch/pub/postgrey_whitelist_clients --output /etc/postgrey/whitelist_clients -ss
+curl https://postgrey.schweikert.ch/pub/postgrey_whitelist_clients --output /etc/postgrey/whitelist_clients -sS
 EOF
 chmod +x /etc/cron.monthly/mailinabox-postgrey-whitelist
 /etc/cron.monthly/mailinabox-postgrey-whitelist
