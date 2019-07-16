@@ -210,6 +210,30 @@ tools/editconf.py /etc/postfix/main.cf \
 tools/editconf.py /etc/default/postgrey \
 	POSTGREY_OPTS=\"'--inet=127.0.0.1:10023 --delay=180'\"
 
+
+# We are going to setup a newer whitelist for postgrey, the version included in the distribution is old
+cat > /etc/cron.daily/mailinabox-postgrey-whitelist << EOF;
+#!/bin/bash
+
+# Mail-in-a-Box
+
+# check we have a postgrey_whitelist_clients file and that it is not older than 28 days
+if [ ! -f /etc/postgrey/whitelist_clients ] || find /etc/postgrey/whitelist_clients -mtime +28 ; then
+    # ok we need to update the file, so lets try to fetch it
+    if curl https://postgrey.schweikert.ch/pub/postgrey_whitelist_clients --output /tmp/postgrey_whitelist_clients -sS --fail > /dev/null 2>&1 ; then
+        # if fetching hasn't failed yet then check it is a plain text file
+        # curl manual states that --fail sometimes still produces output
+        # this final check will at least check the output is not html
+        # before moving it into place
+        if [ $( file -b --mime-type /tmp/postgrey_whitelist_clients) == "text/plain" ]; then
+            mv /tmp/postgrey_whitelist_clients /etc/postgrey/whitelist_clients
+        fi
+    fi
+fi
+EOF
+chmod +x /etc/cron.daily/mailinabox-postgrey-whitelist
+/etc/cron.daily/mailinabox-postgrey-whitelist
+
 # Increase the message size limit from 10MB to 128MB.
 # The same limit is specified in nginx.conf for mail submitted via webmail and Z-Push.
 tools/editconf.py /etc/postfix/main.cf \
