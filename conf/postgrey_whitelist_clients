@@ -4,3 +4,4 @@
 /^mail.*\.mandrillapp\.com$/
 /^mail\d+\.ikea.com$/
 /^webgride\d+\.emsecure.net$/
+/^mail.*.linkedin.com$/
