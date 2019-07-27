@@ -81,7 +81,7 @@ address, so we're suggesting $DEFAULT_PRIMARY_HOSTNAME.
 	RE='^.+\.localdomain$'
 	# Regular expressions to check if the hostname is a valid FQDN
 	RE1='^.{4,253}$'
-	RE2='^([[:alnum:]][[:alnum:]\-]{0,61}[[:alnum:]]\.)+[a-zA-Z]{2,63}$'
+	RE2='^((xn--)?[[:alnum:]][[:alnum:]\-]{0,61}[[:alnum:]]\.)+(xn--)?[a-zA-Z]{2,63}$'
 	if [ -z "$PRIMARY_HOSTNAME" ]; then
 		# user hit ESC/cancel
 		exit 1
@@ -203,18 +203,21 @@ if [ -z "${STORAGE_ROOT:-}" ]; then
 fi
 
 # Show the configuration, since the user may have not entered it manually.
+# Adapted from: https://github.com/tdulcet/Linux-System-Information/blob/master/info.sh
 echo -e "\nLinux Distribution:\t\t${PRETTY_NAME:-$ID-$VERSION_ID}"
-CPU=( $(sed -n 's/^model name[[:space:]]*: *//p' /proc/cpuinfo | uniq) )
+echo -e "Linux Kernel:\t\t\t$KERNEL"
+mapfile -t CPU < <(sed -n 's/^model name[[:space:]]*: *//p' /proc/cpuinfo | uniq)
 if [ -n "$CPU" ]; then
 	echo -e "Processor (CPU):\t\t${CPU[*]}"
 fi
-CPU_CORES=$(nproc --all)
-echo -e "CPU Cores:\t\t\t$CPU_CORES"
+CPU_THREADS=$(nproc --all)
+CPU_CORES=$(( CPU_THREADS / $(lscpu | grep -i '^thread(s) per core' | sed -n 's/^.\+:[[:blank:]]*//p') ))
+echo -e "CPU Cores/Threads:\t\t$CPU_CORES/$CPU_THREADS"
 echo -e "Architecture:\t\t\t$HOSTTYPE (${ARCHITECTURE}-bit)"
 echo -e "Total memory (RAM):\t\t$(printf "%'d" $((TOTAL_PHYSICAL_MEM / 1024))) MiB ($(printf "%'d" $((((TOTAL_PHYSICAL_MEM * 1024) / 1000) / 1000))) MB)"
 echo -e "Total swap space:\t\t$(printf "%'d" $((TOTAL_SWAP / 1024))) MiB ($(printf "%'d" $((((TOTAL_SWAP * 1024) / 1000) / 1000))) MB)"
 if command -v lspci >/dev/null; then
-	GPU=( $(lspci 2>/dev/null | grep -i 'vga\|3d\|2d' | sed -n 's/^.*: //p') )
+	mapfile -t GPU < <(lspci 2>/dev/null | grep -i 'vga\|3d\|2d' | sed -n 's/^.*: //p')
 fi
 if [ -n "$GPU" ]; then
 	echo -e "Graphics Processor (GPU):\t${GPU[*]}"
@@ -239,7 +242,7 @@ else
 		echo -e "Private IP Address:\t\t$PRIVATE_IP"
 	fi
 fi
-TIME_ZONE=$(timedatectl 2>/dev/null | grep -i 'time zone\|timezone' | sed -n 's/^.*: //p')
+TIME_ZONE=$(timedatectl 2>/dev/null | grep -i 'time zone:\|timezone:' | sed -n 's/^.*: //p')
 echo -e "Time zone:\t\t\t$TIME_ZONE\n"
 if command -v systemd-detect-virt >/dev/null && CONTAINER=$(systemd-detect-virt -c); then
 	echo -e "Virtualization container:\t$CONTAINER\n"

@@ -25,7 +25,8 @@ if ! echo "$ID" | grep -iq "ubuntu" || ! echo "$VERSION_ID" | grep -iq "18.04"; 
 fi
 
 # Check for the Windows Subsystem for Linux (WSL)
-if uname -r | grep -iq "microsoft"; then
+KERNEL=$(uname -r)
+if echo "$KERNEL" | grep -iq "microsoft"; then
 	echo "Warning: The Windows Subsystem for Linux (WSL) is not yet fully supported by this script."
 fi
 
