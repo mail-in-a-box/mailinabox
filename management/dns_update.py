@@ -903,8 +903,12 @@ def set_secondary_dns(hostnames, env):
 			else:
 				# Validate IP address.
 				try:
-					v = ipaddress.ip_address(item[4:]) # raises a ValueError if there's a problem
-					if not isinstance(v, ipaddress.IPv4Address): raise ValueError("That's an IPv6 address.")
+                    if "/" in item[4:]:
+                        v = ipaddress.ip_network(item[4:] # raises a ValueError if there's a problem
+                        if not isinstance(v, ipaddress.IPv4Network): raise ValueError("That's an IPv6 subnet.")
+                    else:
+					    v = ipaddress.ip_address(item[4:]) # raises a ValueError if there's a problem
+					    if not isinstance(v, ipaddress.IPv4Address): raise ValueError("That's an IPv6 address.")
 				except ValueError:
 					raise ValueError("'%s' is not an IPv4 address." % item[4:])
 
