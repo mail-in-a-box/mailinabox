@@ -406,7 +406,7 @@ def list_target_files(config):
 				reason = "Provided path {} is invalid.".format(target_path)
 			elif 'Network is unreachable' in listing:
 				reason = "The IP address {} is unreachable.".format(target.hostname)
-			elif 'Could not resolve hostname':
+			elif 'Could not resolve hostname' in listing:
 				reason = "The hostname {} cannot be resolved.".format(target.hostname)
 			else:
 				reason = "Unknown error." \
