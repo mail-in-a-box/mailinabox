@@ -406,7 +406,7 @@ def list_target_files(config):
 				reason = "Provided path {} is invalid.".format(target_path)
 			elif 'Network is unreachable' in listing:
 				reason = "The IP address {} is unreachable.".format(target.hostname)
-			elif 'Could not resolve hostname':
+			elif 'Could not resolve hostname' in listing:
 				reason = "The hostname {} cannot be resolved.".format(target.hostname)
 			else:
 				reason = "Unknown error." \
@@ -473,8 +473,8 @@ def backup_set_custom(env, target, target_user, target_pass, min_age):
 	config["target_pass"] = target_pass
 	config["min_age_in_days"] = min_age
 
-    write_backup_config(env, config)
-        
+	write_backup_config(env, config)
+  
 	# Validate.
 	try:
 		if config["target"] not in ("off", "local"):
