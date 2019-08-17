@@ -10,3 +10,7 @@
 /^pro-mail-smtp-\d+\-vip\d+\.bol.com$/
 /^posta-mx\d+\.parallels.com$/
 /^mx\d+\.ns.nl$/
+/^mx\d+\.slc\.paypal\.com$/
+/^o\d+\.email\.londontrustmedia.com$/
+/^o\d+\.support\.privateinternetaccess.com$/
+/^o\d+\.outbound-mail\.sendgrid.net$/
