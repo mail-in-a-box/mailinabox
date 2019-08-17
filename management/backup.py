@@ -15,8 +15,8 @@ from exclusiveprocess import Lock
 from utils import load_environment, shell, wait_for_service, fix_boto
 
 rsync_ssh_options = [
-	"--ssh-options='-i /root/.ssh/id_rsa_miab'",
-	"--rsync-options=-e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
+	"--ssh-options= -i /root/.ssh/id_rsa_miab",
+	"--rsync-options= -e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
 ]
 
 def backup_status(env):
@@ -406,7 +406,7 @@ def list_target_files(config):
 				reason = "Provided path {} is invalid.".format(target_path)
 			elif 'Network is unreachable' in listing:
 				reason = "The IP address {} is unreachable.".format(target.hostname)
-			elif 'Could not resolve hostname':
+			elif 'Could not resolve hostname' in listing:
 				reason = "The hostname {} cannot be resolved.".format(target.hostname)
 			else:
 				reason = "Unknown error." \
