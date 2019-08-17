@@ -9,3 +9,4 @@
 /^webgrid.\d+\.emsecure.net$/
 /^pro-mail-smtp-\d+\-vip\d+\.bol.com$/
 /^posta-mx\d+\.parallels.com$/
+/^mx\d+\.ns.nl$/
