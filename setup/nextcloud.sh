@@ -103,7 +103,7 @@ CURRENT_NEXTCLOUD_VER=$(php -r "include(\"$STORAGE_ROOT/owncloud/config.php\"); 
 
 # If the Nextcloud directory is missing (never been installed before, or the nextcloud version to be installed is different
 # from the version currently installed, do the install/upgrade
-if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! $nextcloud_ver =~ ^${CURRENT_NEXTCLOUD_VER} ]]; then
+if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextcloud_ver ]]; then
 
 	# Stop php-fpm if running. If theyre not running (which happens on a previously failed install), dont bail.
 	service php7.2-fpm stop &> /dev/null || /bin/true
