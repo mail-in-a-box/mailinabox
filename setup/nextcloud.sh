@@ -99,7 +99,13 @@ nextcloud_hash=4129d8d4021c435f2e86876225fb7f15adf764a3
 # $STORAGE_ROOT/owncloud is kept together even during a backup.  It is better to rely on config.php than
 # version.php since the restore procedure can leave the system in a state where you have a newer Nextcloud
 # application version than the database.
-CURRENT_NEXTCLOUD_VER=$(php -r "include(\"$STORAGE_ROOT/owncloud/config.php\"); echo(\$CONFIG['version']);")
+
+# If config.php exists, get version number, otherwise CURRENT_NEXTCLOUD_VER is empty.
+if [ -f "$STORAGE_ROOT/owncloud/config.php" ]; then
+	CURRENT_NEXTCLOUD_VER=$(php -r "include(\"$STORAGE_ROOT/owncloud/config.php\"); echo(\$CONFIG['version']);")
+else
+	CURRENT_NEXTCLOUD_VER=""
+fi
 
 # If the Nextcloud directory is missing (never been installed before, or the nextcloud version to be installed is different
 # from the version currently installed, do the install/upgrade
