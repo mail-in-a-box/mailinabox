@@ -4,9 +4,10 @@ CHANGELOG
 In Development
 --------------
 
-Security fix:
+Security fixes:
 
 * A security issue was discovered in rsync backups. If you have enabled rsync backups, the file `id_rsa_miab` may have been copied to your backup destination. This file can be used to access your backup destination. If the file was copied to your backup destination, we recommend that you delete the file on your backup destination, delete `/root/.ssh/id_rsa_miab` on your Mail-in-a-Box, then re-run Mail-in-a-Box setup, and re-configure your SSH public key at your backup destination according to the instructions in the Mail-in-a-Box control panel.
+* Brute force attack prevention was missing for the managesieve service.
 
 Setup:
 
