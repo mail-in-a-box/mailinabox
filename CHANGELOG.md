@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+* Fetch an updated whitelist for Postgrey on a monthly basis.
+
 v0.42b (August 3, 2019)
 -----------------------
 
