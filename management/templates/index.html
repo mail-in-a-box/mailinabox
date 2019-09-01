@@ -82,34 +82,40 @@
           <a class="navbar-brand" href="#">{{hostname}}</a>
         </div>
         <div class="navbar-collapse collapse">
-          <ul class="nav navbar-nav">
-            <li class="dropdown">
-              <a href="#" class="dropdown-toggle" data-toggle="dropdown">System <b class="caret"></b></a>
-              <ul class="dropdown-menu">
-                <li><a href="#system_status" onclick="return show_panel(this);">Status Checks</a></li>
-                <li><a href="#tls" onclick="return show_panel(this);">TLS (SSL) Certificates</a></li>
-                <li><a href="#system_backup" onclick="return show_panel(this);">Backup Status</a></li>
-                <li class="divider"></li>
-                <li class="dropdown-header">Advanced Pages</li>
-                <li><a href="#custom_dns" onclick="return show_panel(this);">Custom DNS</a></li>
-                <li><a href="#external_dns" onclick="return show_panel(this);">External DNS</a></li>
-                <li><a href="/admin/munin" target="_blank">Munin Monitoring</a></li>
-              </ul>
-            </li>
-            <li class="dropdown">
-              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Mail <b class="caret"></b></a>
-              <ul class="dropdown-menu">
-                <li><a href="#mail-guide" onclick="return show_panel(this);">Instructions</a></li>
-                <li><a href="#users" onclick="return show_panel(this);">Users</a></li>
-                <li><a href="#aliases" onclick="return show_panel(this);">Aliases</a></li>
-              </ul>
-            </li>
-            <li><a href="#sync_guide" onclick="return show_panel(this);">Contacts/Calendar</a></li>
-            <li><a href="#web" onclick="return show_panel(this);">Web</a></li>
-          </ul>
-          <ul class="nav navbar-nav navbar-right">
-            <li><a href="#" onclick="do_logout(); return false;" style="color: white">Log out</a></li>
-          </ul>
+          {% if is_logged_in %}
+            <ul class="nav navbar-nav">
+              <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">System <b class="caret"></b></a>
+                <ul class="dropdown-menu">
+                  <li><a href="#system_status" onclick="return show_panel(this);">Status Checks</a></li>
+                  <li><a href="#tls" onclick="return show_panel(this);">TLS (SSL) Certificates</a></li>
+                  <li><a href="#system_backup" onclick="return show_panel(this);">Backup Status</a></li>
+                  <li class="divider"></li>
+                  <li class="dropdown-header">Advanced Pages</li>
+                  <li><a href="#custom_dns" onclick="return show_panel(this);">Custom DNS</a></li>
+                  <li><a href="#external_dns" onclick="return show_panel(this);">External DNS</a></li>
+                  <li><a href="/admin/munin" target="_blank">Munin Monitoring</a></li>
+                </ul>
+              </li>
+              <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">Mail <b class="caret"></b></a>
+                <ul class="dropdown-menu">
+                  <li><a href="#mail-guide" onclick="return show_panel(this);">Instructions</a></li>
+                  <li><a href="#users" onclick="return show_panel(this);">Users</a></li>
+                  <li><a href="#aliases" onclick="return show_panel(this);">Aliases</a></li>
+                </ul>
+              </li>
+              <li><a href="#sync_guide" onclick="return show_panel(this);">Contacts/Calendar</a></li>
+              <li><a href="#web" onclick="return show_panel(this);">Web</a></li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+              <li><a href="#" onclick="do_logout(); return false;" style="color: white">Log out</a></li>
+            </ul>
+          {% else %}
+            <ul class="nav navbar-nav navbar-right">
+              <li><a href="#" onclick="return show_panel('login');" style="color: white">Log in</a></li>
+            </ul>
+          {% endif %}
         </div><!--/.navbar-collapse -->
       </div>
     </div>

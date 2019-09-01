@@ -31,6 +31,9 @@ with open(os.path.join(os.path.dirname(me), "csr_country_codes.tsv")) as f:
 
 app = Flask(__name__, template_folder=os.path.abspath(os.path.join(os.path.dirname(me), "templates")))
 
+# Variable to determine if the user is logged in, for UI
+is_logged_in = False
+
 # Decorator to protect views that require a user with 'admin' privileges.
 def authorized_personnel_only(viewfunc):
 	@wraps(viewfunc)
@@ -49,6 +52,8 @@ def authorized_personnel_only(viewfunc):
 
 		# Authorized to access an API view?
 		if "admin" in privs:
+			# User is now logged in
+			is_logged_in = True
 			# Call view func.
 			return viewfunc(*args, **kwargs)
 		elif not error:
@@ -108,6 +113,8 @@ def index():
 
 		no_users_exist=no_users_exist,
 		no_admins_exist=no_admins_exist,
+
+		is_logged_in=is_logged_in
 
 		backup_s3_hosts=backup_s3_hosts,
 		csr_country_codes=csr_country_codes,
@@ -334,7 +341,7 @@ def ssl_get_status():
 
 	# What domains can we provision certificates for? What unexpected problems do we have?
 	provision, cant_provision = get_certificates_to_provision(env, show_valid_certs=False)
-	
+
 	# What's the current status of TLS certificates on all of the domain?
 	domains_status = get_web_domains_info(env)
 	domains_status = [
