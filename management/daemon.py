@@ -53,6 +53,7 @@ def authorized_personnel_only(viewfunc):
 		# Authorized to access an API view?
 		if "admin" in privs:
 			# User is now logged in
+			global is_logged_in
 			is_logged_in = True
 			# Call view func.
 			return viewfunc(*args, **kwargs)
@@ -114,7 +115,7 @@ def index():
 		no_users_exist=no_users_exist,
 		no_admins_exist=no_admins_exist,
 
-		is_logged_in=is_logged_in
+		is_logged_in=is_logged_in,
 
 		backup_s3_hosts=backup_s3_hosts,
 		csr_country_codes=csr_country_codes,
@@ -142,6 +143,9 @@ def me():
 
 	# Is authorized as admin? Return an API key for future use.
 	if "admin" in privs:
+		# User is now logged in
+		global is_logged_in
+		is_logged_in = True
 		resp["api_key"] = auth_service.create_user_key(email, env)
 
 	# Return.
