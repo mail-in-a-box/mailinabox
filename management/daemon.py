@@ -151,6 +151,23 @@ def me():
 	# Return.
 	return json_response(resp)
 
+@app.route('/logout')
+def user_logout():
+	global is_logged_in
+
+	# Is the caller logged in?
+	if is_logged_in == True:
+		# User is now logged out
+		is_logged_in = False
+		return json_response({
+			"status": "ok"
+		})
+
+	# Return.
+	return json_response({
+		"status": "invalid"
+	})
+
 # MAIL
 
 @app.route('/mail/users')

@@ -117,7 +117,10 @@ function do_login() {
       // Open the next panel the user wants to go to. Do this after the XHR response
       // is over so that we don't start a new XHR request while this one is finishing,
       // which confuses the loading indicator.
-      setTimeout(function() { show_panel(!switch_back_to_panel || switch_back_to_panel == "login" ? 'system_status' : switch_back_to_panel) }, 300);
+      setTimeout(function() {
+          window.location = "/admin";
+          show_panel(!switch_back_to_panel || switch_back_to_panel == "login" ? 'system_status' : switch_back_to_panel)
+        }, 300);
     }
   })
 }
@@ -128,7 +131,19 @@ function do_logout() {
     localStorage.removeItem("miab-cp-credentials");
   if (typeof sessionStorage != 'undefined')
     sessionStorage.removeItem("miab-cp-credentials");
-  show_panel('login');
+
+  api(
+    "/logout",
+    "GET",
+    {},
+    function (response) {
+      // This API call always succeeds. It returns a JSON object
+      // with a status based on whether or not the user was actually logged in.
+      if (response.status == "ok") {
+        window.location = "/admin";
+        show_panel('login');
+      }
+  })
 }
 
 function show_login() {
