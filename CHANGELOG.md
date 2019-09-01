@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.43 (September 1, 2019)
+-------------------------
 
 Security fixes:
 
