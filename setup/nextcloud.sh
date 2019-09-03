@@ -13,7 +13,8 @@ apt-get purge -qq -y owncloud* # we used to use the package manager
 
 apt_install php php-fpm \
 	php-cli php-sqlite3 php-gd php-imap php-curl php-pear curl \
-	php-dev php-gd php-xml php-mbstring php-zip php-apcu php-json php-intl
+	php-dev php-gd php-xml php-mbstring php-zip php-apcu php-json \
+	php-intl php-imagick
 
 InstallNextcloud() {
 
@@ -24,11 +25,11 @@ InstallNextcloud() {
 	echo "Upgrading to Nextcloud version $version"
 	echo
 
+        # Download and verify
+        wget_verify https://download.nextcloud.com/server/releases/nextcloud-$version.zip $hash /tmp/nextcloud.zip
+
 	# Remove the current owncloud/Nextcloud
 	rm -rf /usr/local/lib/owncloud
-
-	# Download and verify
-	wget_verify https://download.nextcloud.com/server/releases/nextcloud-$version.zip $hash /tmp/nextcloud.zip
 
 	# Extract ownCloud/Nextcloud
 	unzip -q /tmp/nextcloud.zip -d /usr/local/lib
@@ -39,13 +40,21 @@ InstallNextcloud() {
 	# their github repositories.
 	mkdir -p /usr/local/lib/owncloud/apps
 
-	wget_verify https://github.com/nextcloud/contacts/releases/download/v2.1.5/contacts.tar.gz b7460d15f1b78d492ed502d778c0c458d503ba17 /tmp/contacts.tgz
+	wget_verify https://github.com/nextcloud/contacts/releases/download/v3.1.1/contacts.tar.gz a06bd967197dcb03c94ec1dbd698c037018669e5 /tmp/contacts.tgz
 	tar xf /tmp/contacts.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/contacts.tgz
 
-	wget_verify https://github.com/nextcloud/calendar/releases/download/v1.6.1/calendar.tar.gz f93a247cbd18bc624f427ba2a967d93ebb941f21 /tmp/calendar.tgz
+	wget_verify https://github.com/nextcloud/calendar/releases/download/v1.6.5/calendar.tar.gz 79941255521a5172f7e4ce42dc7773838b5ede2f /tmp/calendar.tgz
 	tar xf /tmp/calendar.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/calendar.tgz
+
+	# Starting with Nextcloud 15, the app user_external is no longer included in Nextcloud core,
+	# we will install from their github repository.
+	if [[ $version =~ ^15 ]]; then
+		wget_verify https://github.com/nextcloud/user_external/releases/download/v0.6.3/user_external-0.6.3.tar.gz 0f756d35fef6b64a177d6a16020486b76ea5799c /tmp/user_external.tgz
+		tar -xf /tmp/user_external.tgz -C /usr/local/lib/owncloud/apps/
+		rm /tmp/user_external.tgz
+	fi
 
 	# Fix weird permissions.
 	chmod 750 /usr/local/lib/owncloud/{apps,config}
@@ -72,15 +81,35 @@ InstallNextcloud() {
 			sudo -u www-data php /usr/local/lib/owncloud/occ maintenance:mode --off
 			echo "...which seemed to work."
 		fi
+
+		# Add missing indices. NextCloud didn't include this in the normal upgrade because it might take some time.
+		sudo -u www-data php /usr/local/lib/owncloud/occ db:add-missing-indices
+
+		# Run conversion to BigInt identifiers, this process may take some time on large tables.
+		sudo -u www-data php /usr/local/lib/owncloud/occ db:convert-filecache-bigint --no-interaction
 	fi
 }
 
-nextcloud_ver=13.0.6
-nextcloud_hash=33e41f476f0e2be5dc7cdb9d496673d9647aa3d6
+# Nextcloud Version to install. Checks are done down below to step through intermediate versions.
+nextcloud_ver=15.0.8
+nextcloud_hash=4129d8d4021c435f2e86876225fb7f15adf764a3
 
-# Check if Nextcloud dir exist, and check if version matches nextcloud_ver (if either doesn't - install/upgrade)
-if [ ! -d /usr/local/lib/owncloud/ ] \
-		|| ! grep -q $nextcloud_ver /usr/local/lib/owncloud/version.php; then
+# Current Nextcloud Version, #1623
+# Checking /usr/local/lib/owncloud/version.php shows version of the Nextcloud application, not the DB
+# $STORAGE_ROOT/owncloud is kept together even during a backup.  It is better to rely on config.php than
+# version.php since the restore procedure can leave the system in a state where you have a newer Nextcloud
+# application version than the database.
+
+# If config.php exists, get version number, otherwise CURRENT_NEXTCLOUD_VER is empty.
+if [ -f "$STORAGE_ROOT/owncloud/config.php" ]; then
+	CURRENT_NEXTCLOUD_VER=$(php -r "include(\"$STORAGE_ROOT/owncloud/config.php\"); echo(\$CONFIG['version']);")
+else
+	CURRENT_NEXTCLOUD_VER=""
+fi
+
+# If the Nextcloud directory is missing (never been installed before, or the nextcloud version to be installed is different
+# from the version currently installed, do the install/upgrade
+if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextcloud_ver ]]; then
 
 	# Stop php-fpm if running. If theyre not running (which happens on a previously failed install), dont bail.
 	service php7.2-fpm stop &> /dev/null || /bin/true
@@ -93,30 +122,30 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 		echo "Upgrading Nextcloud --- backing up existing installation, configuration, and database to directory to $BACKUP_DIRECTORY..."
 		cp -r /usr/local/lib/owncloud "$BACKUP_DIRECTORY/owncloud-install"
 	fi
-	if [ -e /home/user-data/owncloud/owncloud.db ]; then
-		cp /home/user-data/owncloud/owncloud.db $BACKUP_DIRECTORY
+	if [ -e $STORAGE_ROOT/owncloud/owncloud.db ]; then
+		cp $STORAGE_ROOT/owncloud/owncloud.db $BACKUP_DIRECTORY
 	fi
-	if [ -e /home/user-data/owncloud/config.php ]; then
-		cp /home/user-data/owncloud/config.php $BACKUP_DIRECTORY
+	if [ -e $STORAGE_ROOT/owncloud/config.php ]; then
+		cp $STORAGE_ROOT/owncloud/config.php $BACKUP_DIRECTORY
 	fi
 
 	# If ownCloud or Nextcloud was previously installed....
-	if [ -e /usr/local/lib/owncloud/version.php ]; then
+	if [ ! -z ${CURRENT_NEXTCLOUD_VER} ]; then
 		# Database migrations from ownCloud are no longer possible because ownCloud cannot be run under
 		# PHP 7.
-		if grep -q "OC_VersionString = '[89]\." /usr/local/lib/owncloud/version.php; then
-			echo "Upgrades from Mail-in-a-Box prior to v0.26c (dated February 13, 2018) with Nextcloud < 12.0.5 (you have ownCloud 8 or 9) are not supported. Upgrade to Mail-in-a-Box version v0.28 first. Setup aborting."
+		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^[89] ]]; then
+			echo "Upgrades from Mail-in-a-Box prior to v0.28 (dated July 30, 2018) with Nextcloud < 13.0.6 (you have ownCloud 8 or 9) are not supported. Upgrade to Mail-in-a-Box version v0.30 first. Setup aborting."
 			exit 1
-		fi
-		if grep -q "OC_VersionString = '10\." /usr/local/lib/owncloud/version.php; then
-			echo "Upgrades from Mail-in-a-Box prior to v0.26c (dated February 13, 2018) with Nextcloud < 12.0.5 (you have ownCloud 10) are not supported. Upgrade to Mail-in-a-Box version v0.28 first. Setup aborting."
+		elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^1[012] ]]; then
+			echo "Upgrades from Mail-in-a-Box prior to v0.28 (dated July 30, 2018) with Nextcloud < 13.0.6 (you have ownCloud 10, 11 or 12) are not supported. Upgrade to Mail-in-a-Box version v0.30 first. Setup aborting."
 			exit 1
-		fi
-
-		# If we are upgrading from Nextcloud 11 we should go to Nextcloud 12 first.
-		if grep -q "OC_VersionString = '11\." /usr/local/lib/owncloud/version.php; then
-			echo "We are running Nextcloud 11, upgrading to Nextcloud 12.0.5 first"
-			InstallNextcloud 12.0.5 d25afbac977a4e331f5e38df50aed0844498ca86
+		elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^13 ]]; then
+			# If we are running Nextcloud 13, upgrade to Nextcloud 14
+			InstallNextcloud 14.0.6 4e43a57340f04c2da306c8eea98e30040399ae5a
+		elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^14 ]]; then
+			# During the upgrade from Nextcloud 14 to 15, user_external may cause the upgrade to fail.
+			# We will disable it here before the upgrade and install it again after the upgrade.
+			hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:disable user_external
 		fi
 	fi
 
@@ -145,10 +174,12 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
   'overwritewebroot' => '/cloud',
   'overwrite.cli.url' => '/cloud',
   'user_backends' => array(
-	array(
-	  'class'=>'OC_User_IMAP',
-	  'arguments'=>array('{127.0.0.1:993/imap/ssl/novalidate-cert}')
-	)
+    array(
+      'class' => 'OC_User_IMAP',
+        'arguments' => array(
+          '127.0.0.1', 143, null
+         ),
+    ),
   ),
   'memcache.local' => '\OC\Memcache\APCu',
   'mail_smtpmode' => 'sendmail',
@@ -219,6 +250,8 @@ include("$STORAGE_ROOT/owncloud/config.php");
 \$CONFIG['logdateformat'] = 'Y-m-d H:i:s';
 
 \$CONFIG['mail_domain'] = '$PRIMARY_HOSTNAME';
+
+\$CONFIG['user_backends'] = array(array('class' => 'OC_User_IMAP','arguments' => array('127.0.0.1', 143, null),),);
 
 echo "<?php\n\\\$CONFIG = ";
 var_export(\$CONFIG);

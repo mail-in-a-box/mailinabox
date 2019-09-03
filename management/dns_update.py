@@ -288,6 +288,21 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 			if not has_rec(qname, "SRV"):
 				records.append((qname, "SRV", "0 0 443 " + env["PRIMARY_HOSTNAME"] + ".", "Recommended. Specifies the hostname of the server that handles CardDAV/CalDAV services for email addresses on this domain."))
 
+	# Adds autoconfiguration A records for all domains.
+	# This allows the following clients to automatically configure email addresses in the respective applications.
+	# autodiscover.* - Z-Push ActiveSync Autodiscover
+	# autoconfig.* - Thunderbird Autoconfig
+	autodiscover_records = [
+		("autodiscover", "A", env["PUBLIC_IP"], "Provides email configuration autodiscovery support for Z-Push ActiveSync Autodiscover."),
+		("autodiscover", "AAAA", env["PUBLIC_IPV6"], "Provides email configuration autodiscovery support for Z-Push ActiveSync Autodiscover."),
+		("autoconfig", "A", env["PUBLIC_IP"], "Provides email configuration autodiscovery support for Thunderbird Autoconfig."),
+		("autoconfig", "AAAA", env["PUBLIC_IPV6"], "Provides email configuration autodiscovery support for Thunderbird Autoconfig.")
+	]
+	for qname, rtype, value, explanation in autodiscover_records:
+		if value is None or value.strip() == "": continue # skip IPV6 if not set
+		if not has_rec(qname, rtype):
+			records.append((qname, rtype, value, explanation))
+
 	# Sort the records. The None records *must* go first in the nsd zone file. Otherwise it doesn't matter.
 	records.sort(key = lambda rec : list(reversed(rec[0].split(".")) if rec[0] is not None else ""))
 
@@ -888,10 +903,14 @@ def set_secondary_dns(hostnames, env):
 			else:
 				# Validate IP address.
 				try:
-					v = ipaddress.ip_address(item[4:]) # raises a ValueError if there's a problem
-					if not isinstance(v, ipaddress.IPv4Address): raise ValueError("That's an IPv6 address.")
+					if "/" in item[4:]:
+						v = ipaddress.ip_network(item[4:]) # raises a ValueError if there's a problem
+						if not isinstance(v, ipaddress.IPv4Network): raise ValueError("That's an IPv6 subnet.")
+					else:
+						v = ipaddress.ip_address(item[4:]) # raises a ValueError if there's a problem
+						if not isinstance(v, ipaddress.IPv4Address): raise ValueError("That's an IPv6 address.")
 				except ValueError:
-					raise ValueError("'%s' is not an IPv4 address." % item[4:])
+					raise ValueError("'%s' is not an IPv4 address or subnet." % item[4:])
 
 		# Set.
 		set_custom_dns_record("_secondary_nameserver", "A", " ".join(hostnames), "set", env)

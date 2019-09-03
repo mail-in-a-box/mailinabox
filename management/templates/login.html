@@ -17,13 +17,13 @@ sudo tools/mail.py user make-admin me@{{hostname}}</pre>
   {% endif %}
   <hr>
 </div>
-</div>  
+</div>
 {% endif %}
 
 <p style="margin: 2em; text-align: center;">Log in here for your Mail-in-a-Box control panel.</p>
 
 <div style="margin: 0 auto; max-width: 32em;">
-  <form class="form-horizontal" role="form" onsubmit="do_login(); return false;">
+  <form class="form-horizontal" role="form" onsubmit="do_login(); return false;" method="get">
     <div class="form-group">
       <label for="inputEmail3" class="col-sm-3 control-label">Email</label>
       <div class="col-sm-9">
@@ -76,7 +76,7 @@ function do_login() {
   "/me",
   "GET",
   { },
-  function(response){ 
+  function(response){
     // This API call always succeeds. It returns a JSON object indicating
     // whether the request was authenticated or not.
     if (response.status != "ok") {

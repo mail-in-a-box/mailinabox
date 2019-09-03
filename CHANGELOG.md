@@ -1,6 +1,67 @@
 CHANGELOG
 =========
 
+v0.43 (September 1, 2019)
+-------------------------
+
+Security fixes:
+
+* A security issue was discovered in rsync backups. If you have enabled rsync backups, the file `id_rsa_miab` may have been copied to your backup destination. This file can be used to access your backup destination. If the file was copied to your backup destination, we recommend that you delete the file on your backup destination, delete `/root/.ssh/id_rsa_miab` on your Mail-in-a-Box, then re-run Mail-in-a-Box setup, and re-configure your SSH public key at your backup destination according to the instructions in the Mail-in-a-Box control panel.
+* Brute force attack prevention was missing for the managesieve service.
+
+Setup:
+
+* Nextcloud was not upgraded properly after restoring Mail-in-a-Box from a backup from v0.40 or earlier.
+
+Mail:
+
+* Upgraded Roundcube to 1.3.10.
+* Fetch an updated whitelist for greylisting on a monthly basis to reduce the number of delayed incoming emails.
+
+Control panel:
+
+* When using secondary DNS, it is now possible to specify a subnet range with the `xfr:` option.
+* Fixed an issue when the secondary DNS option is used and the secondary DNS hostname resolves to multiple IP addresses.
+* Fix a bug in how a backup configuration error is shown.
+
+v0.42b (August 3, 2019)
+-----------------------
+
+Changes:
+
+* Decreased the minimum supported RAM to 502 Mb.
+* Improved mail client autoconfiguration.
+* Added support for S3-compatible backup services besides Amazon S3.
+* Fixed the control panel login page to let LastPass save passwords.
+* Fixed an error in the user privileges API.
+* Silenced some spurrious messages.
+
+Software updates:
+
+* Upgraded Roundcube from 1.3.8 to 1.3.9.
+* Upgraded Nextcloud from 14.0.6 to 15.0.8 (with Contacts from 2.1.8 to 3.1.1 and Calendar from 1.6.4 to 1.6.5).
+* Upgraded Z-Push from 2.4.4 to 2.5.0.
+
+Note that v0.42 (July 4, 2019) was pulled shortly after it was released to fix a Nextcloud upgrade issue.
+
+v0.41 (February 26, 2019)
+-------------------------
+
+System:
+
+* Missing brute force login attack prevention (fail2ban) filters which stopped working on Ubuntu 18.04 were added back.
+* Upgrades would fail if Mail-in-a-Box moved to a different directory in `systemctl link`.
+
+Mail:
+
+* Incoming messages addressed to more than one local user were rejected because of a bug in spampd packaged by Ubuntu 18.04. A workaround was added.
+
+Contacts/Calendar:
+
+* Upgraded Nextcloud from 13.0.6 to 14.0.6.
+* Upgraded Contacts from 2.1.5 to 2.1.8.
+* Upgraded Calendar from 1.6.1 to 1.6.4.
+
 v0.40 (January 12, 2019)
 ------------------------
 
