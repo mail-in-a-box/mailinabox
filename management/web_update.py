@@ -23,17 +23,17 @@ def get_web_domains(env, include_www_redirects=True, exclude_dns_elsewhere=True)
 		# to the main domain for. We'll add 'www.' to any DNS zones, i.e.
 		# the topmost of each domain we serve.
 		domains |= set('www.' + zone for zone, zonefile in get_dns_zones(env))
-	 
-	if exclude_dns_elsewhere:
-		# ...Unless the domain has an A/AAAA record that maps it to a different
-		# IP address than this box. Remove those domains from our list.
-		domains -= get_domains_with_a_records(env)
 
 	# Add Autoconfiguration domains, allowing us to serve correct SSL certs.
 	# 'autoconfig.' for Mozilla Thunderbird auto setup.
 	# 'autodiscover.' for Activesync autodiscovery.
 	domains |= set('autoconfig.' + maildomain for maildomain in get_mail_domains(env))
 	domains |= set('autodiscover.' + maildomain for maildomain in get_mail_domains(env))
+
+	if exclude_dns_elsewhere:
+		# ...Unless the domain has an A/AAAA record that maps it to a different
+		# IP address than this box. Remove those domains from our list.
+		domains -= get_domains_with_a_records(env)
 
 	# Ensure the PRIMARY_HOSTNAME is in the list so we can serve webmail
 	# as well as Z-Push for Exchange ActiveSync. This can't be removed
