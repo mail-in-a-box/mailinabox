@@ -225,11 +225,13 @@ class EditConf(Grammar):
 		conffile = self[1]
 		options = []
 		eq = "="
-		if self[3] and "-s" in self[3].string: eq = " "    ##   try  except   #  else err
-		for opt in re.split("\s+", self[4].string):
-			k, v = opt.split("=", 1)
+		if self[3] and "-s" in self[3].string: eq = " "    
+        try:
+		  for opt in re.split("\s+", self[4].string):
+			k, v = opt.split("=", 1)                # try  except   ,  else err:  1 arg missing
 			v = re.sub(r"\n+", "", fixup_tokens(v)) # not sure why newlines are getting doubled
 			options.append("%s%s%s" % (k, eq, v))
+        except: pass
 		return "<div class='write-to'><div class='filename'>" + self[1].string + " <span>(change settings)</span></div><pre>" + "\n".join(cgi.escape(s) for s in options) + "</pre></div>\n"
 
 class CaptureOutput(Grammar):
