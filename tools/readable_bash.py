@@ -225,7 +225,7 @@ class EditConf(Grammar):
 		conffile = self[1]
 		options = []
 		eq = "="
-		if self[3] and "-s" in self[3].string: eq = " "
+		if self[3] and "-s" in self[3].string: eq = " "    ##   try  except   #  else err
 		for opt in re.split("\s+", self[4].string):
 			k, v = opt.split("=", 1)
 			v = re.sub(r"\n+", "", fixup_tokens(v)) # not sure why newlines are getting doubled
