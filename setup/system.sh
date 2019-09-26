@@ -341,14 +341,14 @@ systemctl restart systemd-resolved
 rm -f /etc/fail2ban/jail.local # we used to use this file but don't anymore
 rm -f /etc/fail2ban/jail.d/defaults-debian.conf # removes default config so we can manage all of fail2ban rules in one config
 
-if [ ${DISABLE_NEXTCLOUD} != "1"]; then
+if [ ${DISABLE_NEXTCLOUD} == "1"]; then
 
-	cat conf/fail2ban/jails.conf \
+	cat conf/fail2ban/jails_no_nextcloud.conf \
 		| sed "s/PUBLIC_IP/$PUBLIC_IP/g" \
 		| sed "s#STORAGE_ROOT#$STORAGE_ROOT#" \
 		> /etc/fail2ban/jail.d/mailinabox.conf
 else
-	cat conf/fail2ban/jails_no_nextcloud.conf \
+	cat conf/fail2ban/jails.conf \
 		| sed "s/PUBLIC_IP/$PUBLIC_IP/g" \
 		| sed "s#STORAGE_ROOT#$STORAGE_ROOT#" \
 		> /etc/fail2ban/jail.d/mailinabox.conf
