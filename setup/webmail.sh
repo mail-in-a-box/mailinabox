@@ -79,9 +79,9 @@ if [ $needs_update == 1 ]; then
 		unzip -q /tmp/carddav.zip -d ${RCM_PLUGIN_DIR}
 		rm -f /tmp/carddav.zip
 	
-		# record the version we've installed
-		echo $UPDATE_KEY > ${RCM_DIR}/version
 	fi
+	# record the version we've installed
+	echo $UPDATE_KEY > ${RCM_DIR}/version
 fi
 
 # ### Configuring Roundcube
