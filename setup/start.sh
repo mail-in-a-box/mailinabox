@@ -106,7 +106,13 @@ source setup/dkim.sh
 source setup/spamassassin.sh
 source setup/web.sh
 source setup/webmail.sh
-source setup/nextcloud.sh
+
+if [ "${DISABLE_NEXTCLOUD} == "1" ]; then
+	echo Skipping Nextcloud installation
+else 
+	source setup/nextcloud.sh
+fi
+
 source setup/zpush.sh
 source setup/management.sh
 source setup/munin.sh
