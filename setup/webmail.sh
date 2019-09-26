@@ -130,23 +130,20 @@ EOF
 if [ "${DISABLE_NEXTCLOUD}" == "0" ]; then
 	cat >> $RCM_CONFIG <<EOF;
 	\$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'persistent_login');
-	\$config['skin'] = 'larry';
-	\$config['login_autocomplete'] = 2;
-	\$config['password_charset'] = 'UTF-8';
-	\$config['junk_mbox'] = 'Spam';
-	?>
 	EOF
 else
 	cat >> $RCM_CONFIG <<EOF;
 	\$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'persistent_login', 'carddav');
-	\$config['skin'] = 'larry';
-	\$config['login_autocomplete'] = 2;
-	\$config['password_charset'] = 'UTF-8';
-	\$config['junk_mbox'] = 'Spam';
-	?>
 	EOF
 fi
 	
+cat >> $RCM_CONFIG <<EOF;
+\$config['skin'] = 'larry';
+\$config['login_autocomplete'] = 2;
+\$config['password_charset'] = 'UTF-8';
+\$config['junk_mbox'] = 'Spam';
+?>
+EOF
 
 # Configure CardDav
 if [ "${DISABLE_NEXTCLOUD}" != "0" ]; then
