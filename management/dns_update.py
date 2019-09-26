@@ -11,6 +11,7 @@ import dns.resolver
 
 from mailconfig import get_mail_domains
 from utils import shell, load_env_vars_from_file, safe_domain_name, sort_domains
+from os import environ
 
 # From https://stackoverflow.com/questions/3026957/how-to-validate-a-domain-name-using-regex-php/16491074#16491074
 # This regular expression matches domain names according to RFCs, it also accepts fqdn with an leading dot,
@@ -280,14 +281,15 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 		if not has_rec(dmarc_qname, "TXT", prefix="v=DMARC1; "):
 			records.append((dmarc_qname, "TXT", 'v=DMARC1; p=reject', "Recommended. Prevents use of this domain name for outbound mail by specifying that the SPF rule should be honoured for mail from @%s." % (qname + "." + domain)))
 
-	# Add CardDAV/CalDAV SRV records on the non-primary hostname that points to the primary hostname.
-	# The SRV record format is priority (0, whatever), weight (0, whatever), port, service provider hostname (w/ trailing dot).
-	if domain != env["PRIMARY_HOSTNAME"]:
-		for dav in ("card", "cal"):
-			qname = "_" + dav + "davs._tcp"
-			if not has_rec(qname, "SRV"):
-				records.append((qname, "SRV", "0 0 443 " + env["PRIMARY_HOSTNAME"] + ".", "Recommended. Specifies the hostname of the server that handles CardDAV/CalDAV services for email addresses on this domain."))
-
+        if environ.get('DISABLE_NEXTCLOUD') != '1':
+        	# Add CardDAV/CalDAV SRV records on the non-primary hostname that points to the primary hostname.
+        	# The SRV record format is priority (0, whatever), weight (0, whatever), port, service provider hostname (w/ trailing dot).
+        	if domain != env["PRIMARY_HOSTNAME"]:
+        		for dav in ("card", "cal"):
+        			qname = "_" + dav + "davs._tcp"
+        			if not has_rec(qname, "SRV"):
+        				records.append((qname, "SRV", "0 0 443 " + env["PRIMARY_HOSTNAME"] + ".", "Recommended. Specifies the hostname of the server that handles CardDAV/CalDAV services for email addresses on this domain."))
+        
 	# Adds autoconfiguration A records for all domains.
 	# This allows the following clients to automatically configure email addresses in the respective applications.
 	# autodiscover.* - Z-Push ActiveSync Autodiscover
