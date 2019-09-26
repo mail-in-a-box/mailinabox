@@ -68,17 +68,20 @@ if [ $needs_update == 1 ]; then
 	git_clone https://github.com/kitist/html5_notifier.git $HTML5_NOTIFIER_VERSION '' ${RCM_PLUGIN_DIR}/html5_notifier
 
 	# download and verify the full release of the carddav plugin
-	wget_verify \
-		https://github.com/blind-coder/rcmcarddav/releases/download/v${CARDDAV_VERSION}/carddav-${CARDDAV_VERSION}.zip \
-		$CARDDAV_HASH \
-		/tmp/carddav.zip
 
-	# unzip and cleanup
-	unzip -q /tmp/carddav.zip -d ${RCM_PLUGIN_DIR}
-	rm -f /tmp/carddav.zip
-
-	# record the version we've installed
-	echo $UPDATE_KEY > ${RCM_DIR}/version
+	if [ "${DISABLE_NEXTCLOUD}" != "1" ]; then
+		wget_verify \
+			https://github.com/blind-coder/rcmcarddav/releases/download/v${CARDDAV_VERSION}/carddav-${CARDDAV_VERSION}.zip \
+			$CARDDAV_HASH \
+			/tmp/carddav.zip
+	
+		# unzip and cleanup
+		unzip -q /tmp/carddav.zip -d ${RCM_PLUGIN_DIR}
+		rm -f /tmp/carddav.zip
+	
+		# record the version we've installed
+		echo $UPDATE_KEY > ${RCM_DIR}/version
+	fi
 fi
 
 # ### Configuring Roundcube
@@ -122,13 +125,28 @@ cat > $RCM_CONFIG <<EOF;
 \$config['support_url'] = 'https://mailinabox.email/';
 \$config['product_name'] = '$PRIMARY_HOSTNAME Webmail';
 \$config['des_key'] = '$SECRET_KEY';
-\$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'persistent_login', 'carddav');
-\$config['skin'] = 'larry';
-\$config['login_autocomplete'] = 2;
-\$config['password_charset'] = 'UTF-8';
-\$config['junk_mbox'] = 'Spam';
-?>
 EOF
+
+if [ "${DISABLE_NEXTCLOUD}" != "1" ]; then
+	cat >> $RCM_CONFIG <<EOF;
+	\$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'persistent_login');
+	\$config['skin'] = 'larry';
+	\$config['login_autocomplete'] = 2;
+	\$config['password_charset'] = 'UTF-8';
+	\$config['junk_mbox'] = 'Spam';
+	?>
+	EOF
+else
+	cat >> $RCM_CONFIG <<EOF;
+	\$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'persistent_login', 'carddav');
+	\$config['skin'] = 'larry';
+	\$config['login_autocomplete'] = 2;
+	\$config['password_charset'] = 'UTF-8';
+	\$config['junk_mbox'] = 'Spam';
+	?>
+	EOF
+fi
+	
 
 # Configure CardDav
 if [ "${DISABLE_NEXTCLOUD}" != "1" ]; then
@@ -185,10 +203,12 @@ chmod 775 $STORAGE_ROOT/mail
 chown root.www-data $STORAGE_ROOT/mail/users.sqlite
 chmod 664 $STORAGE_ROOT/mail/users.sqlite
 
-# Fix Carddav permissions:
-chown -f -R root.www-data ${RCM_PLUGIN_DIR}/carddav
-# root.www-data need all permissions, others only read
-chmod -R 774 ${RCM_PLUGIN_DIR}/carddav
+if [ "${DISABLE_NEXTCLOUD}" != "1" ]; then
+	# Fix Carddav permissions:
+	chown -f -R root.www-data ${RCM_PLUGIN_DIR}/carddav
+	# root.www-data need all permissions, others only read
+	chmod -R 774 ${RCM_PLUGIN_DIR}/carddav
+fi
 
 # Run Roundcube database migration script (database is created if it does not exist)
 ${RCM_DIR}/bin/updatedb.sh --dir ${RCM_DIR}/SQL --package roundcube
