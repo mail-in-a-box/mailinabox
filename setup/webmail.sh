@@ -127,7 +127,7 @@ cat > $RCM_CONFIG <<EOF;
 \$config['des_key'] = '$SECRET_KEY';
 EOF
 
-if [ "${DISABLE_NEXTCLOUD}" != "1" ]; then
+if [ "${DISABLE_NEXTCLOUD}" == "1" ]; then
 	cat >> $RCM_CONFIG <<EOF;
 	\$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'persistent_login');
 	\$config['skin'] = 'larry';
