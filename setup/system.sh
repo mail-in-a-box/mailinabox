@@ -340,10 +340,20 @@ systemctl restart systemd-resolved
 # Configure the Fail2Ban installation to prevent dumb bruce-force attacks against dovecot, postfix, ssh, etc.
 rm -f /etc/fail2ban/jail.local # we used to use this file but don't anymore
 rm -f /etc/fail2ban/jail.d/defaults-debian.conf # removes default config so we can manage all of fail2ban rules in one config
-cat conf/fail2ban/jails.conf \
-	| sed "s/PUBLIC_IP/$PUBLIC_IP/g" \
-	| sed "s#STORAGE_ROOT#$STORAGE_ROOT#" \
-	> /etc/fail2ban/jail.d/mailinabox.conf
+
+if [ ${DISABLE_NEXTCLOUD} != "1"]; then
+
+	cat conf/fail2ban/jails.conf \
+		| sed "s/PUBLIC_IP/$PUBLIC_IP/g" \
+		| sed "s#STORAGE_ROOT#$STORAGE_ROOT#" \
+		> /etc/fail2ban/jail.d/mailinabox.conf
+else
+	cat conf/fail2ban/jails_no_nextcloud.conf \
+		| sed "s/PUBLIC_IP/$PUBLIC_IP/g" \
+		| sed "s#STORAGE_ROOT#$STORAGE_ROOT#" \
+		> /etc/fail2ban/jail.d/mailinabox.conf
+fi	
+
 cp -f conf/fail2ban/filter.d/* /etc/fail2ban/filter.d/
 
 # On first installation, the log files that the jails look at don't all exist.
