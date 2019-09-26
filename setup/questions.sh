@@ -83,6 +83,12 @@ address, so we're suggesting $DEFAULT_PRIMARY_HOSTNAME.
 	fi
 fi
 
+# Ask the user if he/she wants to disable Nextcloud
+yesno_box "Disable Nextcloud?"\
+	"Nextcloud offers the Contacts and Calendar features in Mail-in-a-box\
+	\n\nWould you like to disable it?"\
+	DISABLE_NEXTCLOUD
+
 # If the machine is behind a NAT, inside a VM, etc., it may not know
 # its IP address on the public network / the Internet. Ask the Internet
 # and possibly confirm with user.
