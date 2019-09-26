@@ -64,7 +64,7 @@ rm -f /usr/local/lib/z-push/backend/imap/config.php
 cp conf/zpush/backend_imap.php /usr/local/lib/z-push/backend/imap/config.php
 sed -i "s%STORAGE_ROOT%$STORAGE_ROOT%" /usr/local/lib/z-push/backend/imap/config.php
 
-if [ "${DISABLE_NEXTCLOUD}" != "1" ]; then
+if [ "${DISABLE_NEXTCLOUD}" != "0" ]; then
 	
 	# Configure CardDav
 	rm -f /usr/local/lib/z-push/backend/carddav/config.php

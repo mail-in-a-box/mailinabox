@@ -107,7 +107,7 @@ source setup/spamassassin.sh
 source setup/web.sh
 source setup/webmail.sh
 
-if [ "${DISABLE_NEXTCLOUD}" == "1" ]; then
+if [ "${DISABLE_NEXTCLOUD}" == "0" ]; then
 	echo Skipping Nextcloud installation
 else 
 	source setup/nextcloud.sh

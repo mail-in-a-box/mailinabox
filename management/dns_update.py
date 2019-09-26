@@ -281,7 +281,7 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 		if not has_rec(dmarc_qname, "TXT", prefix="v=DMARC1; "):
 			records.append((dmarc_qname, "TXT", 'v=DMARC1; p=reject', "Recommended. Prevents use of this domain name for outbound mail by specifying that the SPF rule should be honoured for mail from @%s." % (qname + "." + domain)))
 
-        if environ.get('DISABLE_NEXTCLOUD') != '1':
+        if environ.get('DISABLE_NEXTCLOUD') != '0':
         	# Add CardDAV/CalDAV SRV records on the non-primary hostname that points to the primary hostname.
         	# The SRV record format is priority (0, whatever), weight (0, whatever), port, service provider hostname (w/ trailing dot).
         	if domain != env["PRIMARY_HOSTNAME"]:

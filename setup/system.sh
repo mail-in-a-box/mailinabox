@@ -343,7 +343,7 @@ rm -f /etc/fail2ban/jail.d/defaults-debian.conf # removes default config so we c
 
 # Check if the user wants to enable Nextcloud, if the user wants it
 # the relevant firejail configuration will be added
-if [ ${DISABLE_NEXTCLOUD} != "1"]; then
+if [ ${DISABLE_NEXTCLOUD} != "0"]; then
 	cat conf/fail2ban/nextcloud-jail.conf >> conf/fail2ban/jails.conf
 fi
 

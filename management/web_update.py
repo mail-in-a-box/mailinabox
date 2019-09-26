@@ -79,7 +79,7 @@ def do_web_update(env):
 	template0 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx.conf")).read()
 	template1 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-alldomains.conf")).read()
         # Check if the user doesn't want Nextcloud.
-        if environ.get('DISABLE_NEXTCLOUD') == '1':
+        if environ.get('DISABLE_NEXTCLOUD') == '0':
 	    template2 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-primaryonly-no-nextcloud.conf")).read()
         else:
 	    template2 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-primaryonly.conf")).read()

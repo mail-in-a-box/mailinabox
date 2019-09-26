@@ -69,7 +69,7 @@ if [ $needs_update == 1 ]; then
 
 	# download and verify the full release of the carddav plugin
 
-	if [ "${DISABLE_NEXTCLOUD}" != "1" ]; then
+	if [ "${DISABLE_NEXTCLOUD}" != "0" ]; then
 		wget_verify \
 			https://github.com/blind-coder/rcmcarddav/releases/download/v${CARDDAV_VERSION}/carddav-${CARDDAV_VERSION}.zip \
 			$CARDDAV_HASH \
@@ -127,7 +127,7 @@ cat > $RCM_CONFIG <<EOF;
 \$config['des_key'] = '$SECRET_KEY';
 EOF
 
-if [ "${DISABLE_NEXTCLOUD}" == "1" ]; then
+if [ "${DISABLE_NEXTCLOUD}" == "0" ]; then
 	cat >> $RCM_CONFIG <<EOF;
 	\$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'persistent_login');
 	\$config['skin'] = 'larry';
@@ -149,7 +149,7 @@ fi
 	
 
 # Configure CardDav
-if [ "${DISABLE_NEXTCLOUD}" != "1" ]; then
+if [ "${DISABLE_NEXTCLOUD}" != "0" ]; then
 
 	cat > ${RCM_PLUGIN_DIR}/carddav/config.inc.php <<EOF;
 	<?php
@@ -203,7 +203,7 @@ chmod 775 $STORAGE_ROOT/mail
 chown root.www-data $STORAGE_ROOT/mail/users.sqlite
 chmod 664 $STORAGE_ROOT/mail/users.sqlite
 
-if [ "${DISABLE_NEXTCLOUD}" != "1" ]; then
+if [ "${DISABLE_NEXTCLOUD}" != "0" ]; then
 	# Fix Carddav permissions:
 	chown -f -R root.www-data ${RCM_PLUGIN_DIR}/carddav
 	# root.www-data need all permissions, others only read
