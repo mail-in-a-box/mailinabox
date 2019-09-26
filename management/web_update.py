@@ -76,17 +76,17 @@ def do_web_update(env):
 	nginx_conf = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-top.conf")).read()
 
 	# Load the templates.
+        template2_nextcloud = ""
 	template0 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx.conf")).read()
 	template1 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-alldomains.conf")).read()
+	template2 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-primaryonly.conf")).read()
         # Check if the user doesn't want Nextcloud.
-        if environ.get('DISABLE_NEXTCLOUD') == '0':
-	    template2 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-primaryonly-no-nextcloud.conf")).read()
-        else:
-	    template2 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-primaryonly.conf")).read()
+        if environ.get('DISABLE_NEXTCLOUD') != '0':
+	    template2_nextcloud = open(os.path.join(os.path.dirname(__file__), "../conf/nextcloud-conf.conf")).read()
 	template3 = "\trewrite ^(.*) https://$REDIRECT_DOMAIN$1 permanent;\n"
 
 	# Add the PRIMARY_HOST configuration first so it becomes nginx's default server.
-	nginx_conf += make_domain_config(env['PRIMARY_HOSTNAME'], [template0, template1, template2], ssl_certificates, env)
+	nginx_conf += make_domain_config(env['PRIMARY_HOSTNAME'], [template0, template1, template2_nextcloud, template2], ssl_certificates, env)
 
 	# Add configuration all other web domains.
 	has_root_proxy_or_redirect = get_web_domains_with_root_overrides(env)
