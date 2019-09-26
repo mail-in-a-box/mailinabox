@@ -131,25 +131,28 @@ cat > $RCM_CONFIG <<EOF;
 EOF
 
 # Configure CardDav
-cat > ${RCM_PLUGIN_DIR}/carddav/config.inc.php <<EOF;
-<?php
-/* Do not edit. Written by Mail-in-a-Box. Regenerated on updates. */
-\$prefs['_GLOBAL']['hide_preferences'] = true;
-\$prefs['_GLOBAL']['suppress_version_warning'] = true;
-\$prefs['ownCloud'] = array(
-	 'name'         =>  'ownCloud',
-	 'username'     =>  '%u', // login username
-	 'password'     =>  '%p', // login password
-	 'url'          =>  'https://${PRIMARY_HOSTNAME}/cloud/remote.php/carddav/addressbooks/%u/contacts',
-	 'active'       =>  true,
-	 'readonly'     =>  false,
-	 'refresh_time' => '02:00:00',
-	 'fixed'        =>  array('username','password'),
-	 'preemptive_auth' => '1',
-	 'hide'        =>  false,
-);
-?>
-EOF
+if [ "${DISABLE_NEXTCLOUD}" != "1" ]; then
+
+	cat > ${RCM_PLUGIN_DIR}/carddav/config.inc.php <<EOF;
+	<?php
+	/* Do not edit. Written by Mail-in-a-Box. Regenerated on updates. */
+	\$prefs['_GLOBAL']['hide_preferences'] = true;
+	\$prefs['_GLOBAL']['suppress_version_warning'] = true;
+	\$prefs['ownCloud'] = array(
+		 'name'         =>  'ownCloud',
+		 'username'     =>  '%u', // login username
+		 'password'     =>  '%p', // login password
+		 'url'          =>  'https://${PRIMARY_HOSTNAME}/cloud/remote.php/carddav/addressbooks/%u/contacts',
+		 'active'       =>  true,
+		 'readonly'     =>  false,
+		 'refresh_time' => '02:00:00',
+		 'fixed'        =>  array('username','password'),
+		 'preemptive_auth' => '1',
+		 'hide'        =>  false,
+	);
+	?>
+	EOF
+fi
 
 # Create writable directories.
 mkdir -p /var/log/roundcubemail /var/tmp/roundcubemail $STORAGE_ROOT/mail/roundcube
