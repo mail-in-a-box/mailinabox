@@ -202,14 +202,17 @@ if [ ! -d $STORAGE_ROOT/owncloud ]; then
 		\nIt also offers other features like file sharing, gallery, todos, and more.\ 
 		\n\nWould you like to disable it?"\
 		DISABLE_NEXTCLOUD
-fi
-if [ -d $STORAGE_ROOT/owncloud ]; then
+else
+	# Ask the user if he wants to remove Nextcloud
 	yesno_box "Remove Nextcloud?"\
 		"It seems that you already have Nextcloud installed previous\
 		\n\nNextcloud offers the Contacts and Calendar features in Mail-in-a-box\
 		\nIt also offers other features like file sharing, gallery, todos, and more.\ 
 		\n\nWould you like to remove it?"\
 		REMOVE_NEXTCLOUD	
+	if [ "${REMOVE_NEXTCLOUD}" == "0" ]; then
+		DISABLE_NEXTCLOUD="0"	
+	fi
 fi
 # Show the configuration, since the user may have not entered it manually.
 echo
