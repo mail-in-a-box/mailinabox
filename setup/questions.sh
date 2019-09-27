@@ -199,6 +199,7 @@ if [ ! -d $STORAGE_ROOT/owncloud ]; then
 	# Ask the user if he/she wants to disable Nextcloud
 	yesno_box "Disable Nextcloud?"\
 		"Nextcloud offers the Contacts and Calendar features in Mail-in-a-box\
+		\nIt also offers other features like file sharing, gallery, todos, and more.\ 
 		\n\nWould you like to disable it?"\
 		DISABLE_NEXTCLOUD
 fi
