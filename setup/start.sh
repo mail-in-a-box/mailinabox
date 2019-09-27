@@ -108,7 +108,7 @@ source setup/web.sh
 source setup/webmail.sh
 
 if [ "${DISABLE_NEXTCLOUD}" == "0" ]; then
-	echo Nextcloud installation was skipped due to a configuration choice
+	echo "Nextcloud installation was skipped due to a configuration choice"
 else 
 	source setup/nextcloud.sh
 fi
