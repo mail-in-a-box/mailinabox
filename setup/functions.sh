@@ -47,6 +47,12 @@ function apt_get_quiet {
 	DEBIAN_FRONTEND=noninteractive hide_output apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" "$@"
 }
 
+function apt_purge {
+	# Remove a bunch of packages.
+	PACKAGES=$@
+	apt_get_quiet --purge remove $PACKAGES
+}
+
 function apt_install {
 	# Install a bunch of packages. We used to report which packages were already
 	# installed and which needed installing, before just running an 'apt-get
