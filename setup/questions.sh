@@ -203,7 +203,14 @@ if [ ! -d $STORAGE_ROOT/owncloud ]; then
 		\n\nWould you like to disable it?"\
 		DISABLE_NEXTCLOUD
 fi
-
+if [ -d $STORAGE_ROOT/owncloud ]; then
+	yesno_box "Remove Nextcloud?"\
+		"It seems that you already have Nextcloud installed previous\
+		\n\nNextcloud offers the Contacts and Calendar features in Mail-in-a-box\
+		\nIt also offers other features like file sharing, gallery, todos, and more.\ 
+		\n\nWould you like to remove it?"\
+		REMOVE_NEXTCLOUD	
+fi
 # Show the configuration, since the user may have not entered it manually.
 echo
 echo "Primary Hostname: $PRIMARY_HOSTNAME"
