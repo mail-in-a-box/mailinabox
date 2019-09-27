@@ -205,7 +205,7 @@ if [ ! -d $STORAGE_ROOT/owncloud ]; then
 else
 	# Ask the user if he wants to remove Nextcloud
 	yesno_box "Remove Nextcloud?"\
-		"It seems that you already have Nextcloud installed previous\
+		"It seems that you already have Nextcloud installed\
 		\n\nNextcloud offers the Contacts and Calendar features in Mail-in-a-box\
 		\nIt also offers other features like file sharing, gallery, todos, and more.\ 
 		\n\nWould you like to remove it?"\
