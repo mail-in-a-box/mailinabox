@@ -129,12 +129,12 @@ EOF
 
 if [ "${DISABLE_NEXTCLOUD}" == "0" ]; then
 	cat >> $RCM_CONFIG <<EOF;
-	\$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'persistent_login');
-	EOF
+\$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'persistent_login');
+EOF
 else
 	cat >> $RCM_CONFIG <<EOF;
-	\$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'persistent_login', 'carddav');
-	EOF
+\$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'persistent_login', 'carddav');
+EOF
 fi
 	
 cat >> $RCM_CONFIG <<EOF;
@@ -149,24 +149,24 @@ EOF
 if [ "${DISABLE_NEXTCLOUD}" != "0" ]; then
 
 	cat > ${RCM_PLUGIN_DIR}/carddav/config.inc.php <<EOF;
-	<?php
-	/* Do not edit. Written by Mail-in-a-Box. Regenerated on updates. */
-	\$prefs['_GLOBAL']['hide_preferences'] = true;
-	\$prefs['_GLOBAL']['suppress_version_warning'] = true;
-	\$prefs['ownCloud'] = array(
-		 'name'         =>  'ownCloud',
-		 'username'     =>  '%u', // login username
-		 'password'     =>  '%p', // login password
-		 'url'          =>  'https://${PRIMARY_HOSTNAME}/cloud/remote.php/carddav/addressbooks/%u/contacts',
-		 'active'       =>  true,
-		 'readonly'     =>  false,
-		 'refresh_time' => '02:00:00',
-		 'fixed'        =>  array('username','password'),
-		 'preemptive_auth' => '1',
-		 'hide'        =>  false,
-	);
-	?>
-	EOF
+<?php
+/* Do not edit. Written by Mail-in-a-Box. Regenerated on updates. */
+\$prefs['_GLOBAL']['hide_preferences'] = true;
+\$prefs['_GLOBAL']['suppress_version_warning'] = true;
+\$prefs['ownCloud'] = array(
+	 'name'         =>  'ownCloud',
+	 'username'     =>  '%u', // login username
+	 'password'     =>  '%p', // login password
+	 'url'          =>  'https://${PRIMARY_HOSTNAME}/cloud/remote.php/carddav/addressbooks/%u/contacts',
+	 'active'       =>  true,
+	 'readonly'     =>  false,
+	 'refresh_time' => '02:00:00',
+	 'fixed'        =>  array('username','password'),
+	 'preemptive_auth' => '1',
+	 'hide'        =>  false,
+);
+?>
+EOF
 fi
 
 # Create writable directories.
