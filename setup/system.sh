@@ -341,9 +341,9 @@ systemctl restart systemd-resolved
 rm -f /etc/fail2ban/jail.local # we used to use this file but don't anymore
 rm -f /etc/fail2ban/jail.d/defaults-debian.conf # removes default config so we can manage all of fail2ban rules in one config
 
-# Check if the user wants to enable Nextcloud, if the user wants it
-# the relevant firejail configuration will be added
-if [ "${DISABLE_NEXTCLOUD}" != "0"]; then
+# Check if the user wants to enable Nextcloud and its rules aren't configured yet
+# if both conditions are true, the relevant firejail configuration will be added
+if [ "${DISABLE_NEXTCLOUD}" != "0"] && ! grep -q owncloud conf/fail2ban/jails.conf; then
 	cat conf/fail2ban/nextcloud-jail.conf >> conf/fail2ban/jails.conf
 fi
 
