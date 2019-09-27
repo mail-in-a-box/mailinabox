@@ -94,6 +94,14 @@ SECRET_KEY=$(dd if=/dev/urandom bs=1 count=18 2>/dev/null | base64 | fold -w 24 
 # For security, temp and log files are not stored in the default locations
 # which are inside the roundcube sources directory. We put them instead
 # in normal places.
+
+PLUGINS="'html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'persistent_login'"
+
+# Add the carddav plugin if the user wants to install Nextcloud
+if [ "${DISABLE_NEXTCLOUD}" != "0" ]; then
+	PLUGINS="$PLUGINS, 'carddav'"
+fi
+
 cat > $RCM_CONFIG <<EOF;
 <?php
 /*
@@ -125,19 +133,7 @@ cat > $RCM_CONFIG <<EOF;
 \$config['support_url'] = 'https://mailinabox.email/';
 \$config['product_name'] = '$PRIMARY_HOSTNAME Webmail';
 \$config['des_key'] = '$SECRET_KEY';
-EOF
-
-if [ "${DISABLE_NEXTCLOUD}" == "0" ]; then
-	cat >> $RCM_CONFIG <<EOF;
-\$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'persistent_login');
-EOF
-else
-	cat >> $RCM_CONFIG <<EOF;
-\$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'persistent_login', 'carddav');
-EOF
-fi
-	
-cat >> $RCM_CONFIG <<EOF;
+\$config['plugins'] = array($PLUGINS);
 \$config['skin'] = 'larry';
 \$config['login_autocomplete'] = 2;
 \$config['password_charset'] = 'UTF-8';
