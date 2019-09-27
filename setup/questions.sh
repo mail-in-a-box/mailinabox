@@ -83,12 +83,6 @@ address, so we're suggesting $DEFAULT_PRIMARY_HOSTNAME.
 	fi
 fi
 
-# Ask the user if he/she wants to disable Nextcloud
-yesno_box "Disable Nextcloud?"\
-	"Nextcloud offers the Contacts and Calendar features in Mail-in-a-box\
-	\n\nWould you like to disable it?"\
-	DISABLE_NEXTCLOUD
-
 # If the machine is behind a NAT, inside a VM, etc., it may not know
 # its IP address on the public network / the Internet. Ask the Internet
 # and possibly confirm with user.
@@ -197,6 +191,16 @@ if [ -z "${STORAGE_USER:-}" ]; then
 fi
 if [ -z "${STORAGE_ROOT:-}" ]; then
 	STORAGE_ROOT=$([[ -z "${DEFAULT_STORAGE_ROOT:-}" ]] && echo "/home/$STORAGE_USER" || echo "$DEFAULT_STORAGE_ROOT")
+fi
+
+# Check if Nextcloud is already installed
+# If it isn't, ask the user if Nextcloud should be disabled 
+if [ ! -d $STORAGE_ROOT/owncloud ]; then
+	# Ask the user if he/she wants to disable Nextcloud
+	yesno_box "Disable Nextcloud?"\
+		"Nextcloud offers the Contacts and Calendar features in Mail-in-a-box\
+		\n\nWould you like to disable it?"\
+		DISABLE_NEXTCLOUD
 fi
 
 # Show the configuration, since the user may have not entered it manually.
