@@ -14,3 +14,5 @@
 /^o\d+\.email\.londontrustmedia.com$/
 /^o\d+\.support\.privateinternetaccess.com$/
 /^o\d+\.outbound-mail\.sendgrid.net$/
+/^box.kroes.email$/
+/^.*.hes.trendmicro.eu$/
