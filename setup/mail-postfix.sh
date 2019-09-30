@@ -217,7 +217,7 @@ cat > /etc/cron.daily/mailinabox-postgrey-whitelist << EOF;
 # Mail-in-a-Box
 
 # check we have a postgrey_whitelist_clients file and that it is not older than 28 days
-if [ ! -f /etc/postgrey/whitelist_clients ] || find /etc/postgrey/whitelist_clients -mtime +28 ; then
+if [ ! -f /etc/postgrey/whitelist_clients ] || find /etc/postgrey/whitelist_clients -mtime +28 | grep -q '.' ; then
     # ok we need to update the file, so lets try to fetch it
     if curl https://postgrey.schweikert.ch/pub/postgrey_whitelist_clients --output /tmp/postgrey_whitelist_clients -sS --fail > /dev/null 2>&1 ; then
         # if fetching hasn't failed yet then check it is a plain text file

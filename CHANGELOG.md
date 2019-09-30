@@ -1,11 +1,29 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.43 (September 1, 2019)
+-------------------------
 
-Postgrey:
-* Fetch an updated whitelist for Postgrey on a monthly basis
+Security fixes:
+
+* A security issue was discovered in rsync backups. If you have enabled rsync backups, the file `id_rsa_miab` may have been copied to your backup destination. This file can be used to access your backup destination. If the file was copied to your backup destination, we recommend that you delete the file on your backup destination, delete `/root/.ssh/id_rsa_miab` on your Mail-in-a-Box, then re-run Mail-in-a-Box setup, and re-configure your SSH public key at your backup destination according to the instructions in the Mail-in-a-Box control panel.
+* Brute force attack prevention was missing for the managesieve service.
+
+Setup:
+
+* Nextcloud was not upgraded properly after restoring Mail-in-a-Box from a backup from v0.40 or earlier.
+
+Mail:
+
+* Upgraded Roundcube to 1.3.10.
+* Fetch an updated whitelist for greylisting on a monthly basis to reduce the number of delayed incoming emails.
+
+Control panel:
+
+* When using secondary DNS, it is now possible to specify a subnet range with the `xfr:` option.
+* Fixed an issue when the secondary DNS option is used and the secondary DNS hostname resolves to multiple IP addresses.
+* Fix a bug in how a backup configuration error is shown.
+>>>>>>> upstream/master
 
 v0.42b (August 3, 2019)
 -----------------------

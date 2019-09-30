@@ -487,10 +487,12 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 	if custom_secondary_ns and not probably_external_dns:
 		for ns in custom_secondary_ns:
 			# We must first resolve the nameserver to an IP address so we can query it.
-			ns_ip = query_dns(ns, "A")
-			if not ns_ip:
+			ns_ips = query_dns(ns, "A")
+			if not ns_ips:
 				output.print_error("Secondary nameserver %s is not valid (it doesn't resolve to an IP address)." % ns)
 				continue
+			# Choose the first IP if nameserver returns multiple
+			ns_ip = ns_ips.split('; ')[0]
 
 			# Now query it to see what it says about this domain.
 			ip = query_dns(domain, "A", at=ns_ip, nxdomain=None)
