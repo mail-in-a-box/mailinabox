@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+Under Development
+-----------------
+
+Software updates:
+
+* Upgraded Nextcloud from 15.0.8 to 16.0.5 (with Contacts from 3.1.1 to 3.1.4 and Calendar from 1.6.5 to 1.7.1)
+
 v0.43 (September 1, 2019)
 -------------------------
 
@@ -23,7 +30,6 @@ Control panel:
 * When using secondary DNS, it is now possible to specify a subnet range with the `xfr:` option.
 * Fixed an issue when the secondary DNS option is used and the secondary DNS hostname resolves to multiple IP addresses.
 * Fix a bug in how a backup configuration error is shown.
->>>>>>> upstream/master
 
 v0.42b (August 3, 2019)
 -----------------------
