@@ -1,2 +1,0 @@
-#!/bin/bash
-/usr/bin/doveadm fts rescan -A
