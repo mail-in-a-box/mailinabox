@@ -89,6 +89,9 @@ fi
 # Install the certbot PPA.
 hide_output add-apt-repository -y ppa:certbot/certbot
 
+# Ensure the universe repository is enabled
+hide_output add-apt-repository -y universe
+
 # ### Update Packages
 
 # Update system packages to make sure we have the latest upstream versions
