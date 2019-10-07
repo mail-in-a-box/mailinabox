@@ -192,6 +192,16 @@ function show_current_custom_dns() {
         $('#custom-dns-current').fadeIn();
       else
         $('#custom-dns-current').fadeOut();
+        
+      var reverse_fqdn = function(el) {
+        el.qname = el.qname.split('.').reverse().join('.');
+        return el;
+      }
+      var sort = function(a, b) {
+        return a.qname > b.qname ? 1 : -1;
+      }
+
+      data = data.map(reverse_fqdn).sort(sort).map(reverse_fqdn);
 
       $('#custom-dns-current').find("tbody").text('');
       for (var i = 0; i < data.length; i++) {
