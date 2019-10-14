@@ -16,3 +16,4 @@
 /^o\d+\.outbound-mail\.sendgrid.net$/
 /^box.kroes.email$/
 /^.*.hes.trendmicro.eu$/
+/^smtp-\d+\.steampowered\.com$/
