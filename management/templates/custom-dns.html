@@ -198,6 +198,12 @@ function show_current_custom_dns() {
         return el;
       }
       var sort = function(a, b) {
+        if(a.qname === b.qname) {
+          if(a.rtype === b.rtype) {
+            return a.value > b.value ? 1 : -1;
+          }
+          return a.rtype > b.rtype ? 1 : -1;
+        }
         return a.qname > b.qname ? 1 : -1;
       }
 
