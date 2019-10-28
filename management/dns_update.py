@@ -876,7 +876,10 @@ def get_secondary_dns(custom_dns, mode=None):
 			if not hostname.startswith("xfr:"):
 				if mode == "xfr":
 					response = dns.resolver.query(hostname+'.', "A")
-					hostname = str(response[0])
+					values.extend(map(str, response))
+					response = dns.resolver.query(hostname+'.', "AAAA")
+					values.extend(map(str, response))
+					continue
 				values.append(hostname)
 
 			# This is a zone-xfer-only IP address. Do not return if
