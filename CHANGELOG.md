@@ -7,10 +7,25 @@ Under Development
 Software updates:
 
 * Upgraded Nextcloud from 15.0.8 to 16.0.5 (with Contacts from 3.1.1 to 3.1.4 and Calendar from 1.6.5 to 1.7.1)
+* Upgraded Z-Push to 2.5.1.
+
+Control panel:
+
+* The Custom DNS list of records is now sorted.
+* The emails that report TLS provisioning results now has a less scary subject line.
 
 Mail:
 
 * Fetching of updated whitelist for greylisting was fetching each day instead of every month.
+
+DNS:
+
+* Automatic autoconfig.* subdomains can now be suppressed with custom DNS records.
+* DNS zone transfer now works with IPv6 addresses.
+
+Setup:
+
+* An Ubuntu package source was missing on systems where it defaults off.
 
 v0.43 (September 1, 2019)
 -------------------------
