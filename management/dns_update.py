@@ -523,9 +523,11 @@ zone:
 """ % (domain, zonefile)
 
 		# If custom secondary nameservers have been set, allow zone transfers
-		# and notifies to them.
+		# and, if not a subnet, notifies to them.
 		for ipaddr in get_secondary_dns(additional_records, mode="xfr"):
-			nsdconf += "\n\tnotify: %s NOKEY\n\tprovide-xfr: %s NOKEY\n" % (ipaddr, ipaddr)
+			if "/" not in ipaddr:
+				nsdconf += "\n\tnotify: %s NOKEY" % (ipaddr)
+			nsdconf += "\n\tprovide-xfr: %s NOKEY\n" % (ipaddr)
 
 	# Check if the file is changing. If it isn't changing,
 	# return False to flag that no change was made.
