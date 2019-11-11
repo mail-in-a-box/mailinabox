@@ -51,6 +51,11 @@ elif [[ "$UPDATE_KEY" != `cat /usr/local/lib/roundcubemail/version` ]]; then
 	needs_update=1 #NODOC
 fi
 if [ $needs_update == 1 ]; then
+  # if upgrading from 1.3.x, clear the temp_dir
+  if [ "$(cat /usr/local/lib/roundcubemail/version | cut -c1-3)" == '1.3' ]; then
+    find /var/tmp/roundcubemail/ -type f ! -name 'RCMTEMP*' -delete
+  fi
+
 	# install roundcube
 	wget_verify \
 		https://github.com/roundcube/roundcubemail/releases/download/$VERSION/roundcubemail-$VERSION-complete.tar.gz \
