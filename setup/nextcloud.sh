@@ -40,7 +40,7 @@ InstallNextcloud() {
 	# their github repositories.
 	mkdir -p /usr/local/lib/owncloud/apps
 
-	wget_verify https://github.com/nextcloud/contacts/releases/download/v3.1.4/contacts.tar.gz 297cb38c0ba9ba7ad7b8b61108033af8d7eccd96 /tmp/contacts.tgz
+	wget_verify https://github.com/nextcloud/contacts/releases/download/v3.1.6/contacts.tar.gz d331dc6db2ecf7c8e6166926a055dfa3b59722c3 /tmp/contacts.tgz
 	tar xf /tmp/contacts.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/contacts.tgz
 
@@ -91,8 +91,8 @@ InstallNextcloud() {
 }
 
 # Nextcloud Version to install. Checks are done down below to step through intermediate versions.
-nextcloud_ver=16.0.5
-nextcloud_hash=46e8ec989de9aad9967a5a54ddb84ce8b8e2c54c
+nextcloud_ver=16.0.6
+nextcloud_hash=0bb3098455ec89f5af77a652aad553ad40a88819
 
 # Current Nextcloud Version, #1623
 # Checking /usr/local/lib/owncloud/version.php shows version of the Nextcloud application, not the DB
