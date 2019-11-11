@@ -22,7 +22,7 @@ source /etc/mailinabox.conf # load global vars
 echo "Installing Roundcube (webmail)..."
 apt_install \
 	dbconfig-common \
-	php-cli php-sqlite3 php-intl php-json php-common php-curl \
+	php-cli php-sqlite3 php-intl php-json php-common php-curl php-ldap \
 	php-gd php-pspell tinymce libjs-jquery libjs-jquery-mousewheel libmagic1 php-mbstring
 
 # Install Roundcube from source if it is not already present or if it is out of date.
@@ -194,5 +194,4 @@ chmod 664 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 
 # Enable PHP modules.
 phpenmod -v php mcrypt imap
-apt install -y php7.2-ldap
 restart_service php7.2-fpm
