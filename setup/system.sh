@@ -86,6 +86,10 @@ if [ ! -f /usr/bin/add-apt-repository ]; then
 	apt_install software-properties-common
 fi
 
+# Ensure the universe repository is enabled since some of our packages
+# come from there and minimal Ubuntu installs may have it turned off.
+hide_output add-apt-repository -y universe
+
 # Install the certbot PPA.
 hide_output add-apt-repository -y ppa:certbot/certbot
 

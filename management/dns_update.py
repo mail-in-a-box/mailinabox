@@ -523,9 +523,11 @@ zone:
 """ % (domain, zonefile)
 
 		# If custom secondary nameservers have been set, allow zone transfers
-		# and notifies to them.
+		# and, if not a subnet, notifies to them.
 		for ipaddr in get_secondary_dns(additional_records, mode="xfr"):
-			nsdconf += "\n\tnotify: %s NOKEY\n\tprovide-xfr: %s NOKEY\n" % (ipaddr, ipaddr)
+			if "/" not in ipaddr:
+				nsdconf += "\n\tnotify: %s NOKEY" % (ipaddr)
+			nsdconf += "\n\tprovide-xfr: %s NOKEY\n" % (ipaddr)
 
 	# Check if the file is changing. If it isn't changing,
 	# return False to flag that no change was made.
@@ -876,7 +878,10 @@ def get_secondary_dns(custom_dns, mode=None):
 			if not hostname.startswith("xfr:"):
 				if mode == "xfr":
 					response = dns.resolver.query(hostname+'.', "A")
-					hostname = str(response[0])
+					values.extend(map(str, response))
+					response = dns.resolver.query(hostname+'.', "AAAA")
+					values.extend(map(str, response))
+					continue
 				values.append(hostname)
 
 			# This is a zone-xfer-only IP address. Do not return if

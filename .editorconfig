@@ -13,7 +13,7 @@ trim_trailing_whitespace = true
 insert_final_newline = true
 
 [Makefile]
-indent_style = tabs
+indent_style = tab
 indent_size = 4
 
 [Vagrantfile]
@@ -23,7 +23,7 @@ indent_size = 2
 indent_size = 2
 
 [*.py]
-indent_style = tabs
+indent_style = tab
 
 [*.js]
 indent_size = 2
