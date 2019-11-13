@@ -210,6 +210,7 @@ tools/editconf.py /etc/postfix/main.cf \
 tools/editconf.py /etc/default/postgrey \
 	POSTGREY_OPTS=\"'--inet=127.0.0.1:10023 --delay=180 --whitelist-recipients=/etc/postgrey/whitelist_clients'\"
 
+
 # We are going to setup a newer whitelist for postgrey, the version included in the distribution is old
 cat > /etc/cron.daily/mailinabox-postgrey-whitelist << EOF;
 #!/bin/bash
@@ -226,9 +227,6 @@ if [ ! -f /etc/postgrey/whitelist_clients ] || find /etc/postgrey/whitelist_clie
         # before moving it into place
         if [ "\$(file -b --mime-type /tmp/postgrey_whitelist_clients)" == "text/plain" ]; then
             mv /tmp/postgrey_whitelist_clients /etc/postgrey/whitelist_clients
-            if [ -f /root/mailinabox/conf/postgrey_whitelist_clients ] ; then
-               cat /root/mailinabox/conf/postgrey_whitelist_clients >> /etc/postgrey/whitelist_clients
-            fi
             service postgrey restart
 	else
             rm /tmp/postgrey_whitelist_clients

@@ -48,12 +48,6 @@ tools/editconf.py /etc/php/7.2/fpm/php.ini -c ';' \
 tools/editconf.py /etc/php/7.2/fpm/php.ini -c ';' \
         default_charset="UTF-8"
 
-# Set higher timeout since searches with Roundcube and Solr may take longer
-# than the default 60 seconds. We will also match Roundcube's timeout to the
-# same value
-tools/editconf.py /etc/php/7.2/fpm/php.ini -c ';' \
-        default_socket_timeout=180
-
 # Switch from the dynamic process manager to the ondemand manager see #1216
 tools/editconf.py /etc/php/7.2/fpm/pool.d/www.conf -c ';' \
 	pm=ondemand
