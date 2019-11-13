@@ -208,7 +208,7 @@ tools/editconf.py /etc/postfix/main.cf \
 # e-mails really latter, delay of greylisting has been set to
 # 180 seconds (default is 300 seconds).
 tools/editconf.py /etc/default/postgrey \
-	POSTGREY_OPTS=\"'--inet=127.0.0.1:10023 --delay=180 --whitelist-recipients=/etc/postgrey/whitelist_clients'\"
+	POSTGREY_OPTS=\"'--inet=127.0.0.1:10023 --delay=180'\"
 
 
 # We are going to setup a newer whitelist for postgrey, the version included in the distribution is old
