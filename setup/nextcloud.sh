@@ -91,8 +91,8 @@ InstallNextcloud() {
 }
 
 # Nextcloud Version to install. Checks are done down below to step through intermediate versions.
-nextcloud_ver=16.0.6
-nextcloud_hash=0bb3098455ec89f5af77a652aad553ad40a88819
+nextcloud_ver=17.0.1
+nextcloud_hash=81e47f2288377927346a4b4cbbb2ecf1b6f4a0e1
 
 # Current Nextcloud Version, #1623
 # Checking /usr/local/lib/owncloud/version.php shows version of the Nextcloud application, not the DB
@@ -151,6 +151,10 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 			InstallNextCloud 15.0.8 4129d8d4021c435f2e86876225fb7f15adf764a3
 			CURRENT_NEXTCLOUD_VER="15.0.8"
 		fi
+		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^15 ]]; then
+                        InstallNextCloud 16.0.6 0bb3098455ec89f5af77a652aad553ad40a88819
+                        CURRENT_NEXTCLOUD_VER="16.0.6"
+                fi
 	fi
 
 	InstallNextcloud $nextcloud_ver $nextcloud_hash
