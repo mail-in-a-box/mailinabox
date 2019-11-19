@@ -875,11 +875,13 @@ def get_secondary_dns(custom_dns, mode=None):
 
 			# This is a hostname. Before including in zone xfr lines,
 			# resolve to an IP address. Otherwise just return the hostname.
+			# It may not resolve to IPv6, so don't throw an exception if it
+			# doesn't.
 			if not hostname.startswith("xfr:"):
 				if mode == "xfr":
-					response = dns.resolver.query(hostname+'.', "A")
+					response = dns.resolver.query(hostname+'.', "A", raise_on_no_answer=False)
 					values.extend(map(str, response))
-					response = dns.resolver.query(hostname+'.', "AAAA")
+					response = dns.resolver.query(hostname+'.', "AAAA", raise_on_no_answer=False)
 					values.extend(map(str, response))
 					continue
 				values.append(hostname)
