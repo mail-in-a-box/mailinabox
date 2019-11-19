@@ -303,48 +303,6 @@ tools/editconf.py /etc/php/7.2/cli/conf.d/10-opcache.ini -c ';' \
 	opcache.save_comments=1 \
 	opcache.revalidate_freq=1
 
-# Configure php-fpm based on the amount of memory the machine has
-# This is based on the nextcloud manual for performance tuning: https://docs.nextcloud.com/server/17/admin_manual/installation/server_tuning.html
-# Some synchronisation issues can occur when many people access the site at once.
-# The pm=ondemand setting is used for memory constrained machines < 2GB, this is copied over from PR: 1216
-TOTAL_PHYSICAL_MEM=$(head -n 1 /proc/meminfo | awk '{print $2}' || /bin/true)
-if [ $TOTAL_PHYSICAL_MEM -lt 1000000 ]
-then
-        tools/editconf.py /etc/php/7.2/fpm/pool.d/www.conf -c ';' \
-                env[PATH]=/usr/local/bin:/usr/bin:/bin \
-                pm=ondemand \
-                pm.max_children=8 \
-                pm.start_servers=2 \
-                pm.min_spare_servers=1 \
-                pm.max_spare_servers=3
-elif [ $TOTAL_PHYSICAL_MEM -lt 2000000 ]
-then
-        tools/editconf.py /etc/php/7.2/fpm/pool.d/www.conf -c ';' \
-                env[PATH]=/usr/local/bin:/usr/bin:/bin \
-                pm=ondemand \
-                pm.max_children=16 \
-                pm.start_servers=4 \
-                pm.min_spare_servers=1 \
-                pm.max_spare_servers=6
-elif [ $TOTAL_PHYSICAL_MEM -lt 3000000 ]
-then
-        tools/editconf.py /etc/php/7.2/fpm/pool.d/www.conf -c ';' \
-                env[PATH]=/usr/local/bin:/usr/bin:/bin \
-                pm=dynamic \
-                pm.max_children=60 \
-                pm.start_servers=6 \
-                pm.min_spare_servers=3 \
-                pm.max_spare_servers=9
-else
-        tools/editconf.py /etc/php/7.2/fpm/pool.d/www.conf -c ';' \
-                env[PATH]=/usr/local/bin:/usr/bin:/bin \
-                pm=dynamic \
-                pm.max_children=120 \
-                pm.start_servers=12 \
-                pm.min_spare_servers=6 \
-                pm.max_spare_servers=18
-fi
-
 # If apc is explicitly disabled we need to enable it
 if grep -q apc.enabled=0 /etc/php/7.2/mods-available/apcu.ini; then
 	tools/editconf.py /etc/php/7.2/mods-available/apcu.ini -c ';' \
