@@ -310,12 +310,15 @@ if grep -q apc.enabled=0 /etc/php/7.2/mods-available/apcu.ini; then
 fi
 
 # Set up a cron job for Nextcloud.
-cat > /etc/cron.hourly/mailinabox-owncloud << EOF;
+cat > /etc/cron.d/mailinabox-nextcloud << EOF;
 #!/bin/bash
 # Mail-in-a-Box
-sudo -u www-data php -f /usr/local/lib/owncloud/cron.php
+*/5 * * * *	root	sudo -u www-data php -f /usr/local/lib/owncloud/cron.php
 EOF
-chmod +x /etc/cron.hourly/mailinabox-owncloud
+chmod +x /etc/cron.d/mailinabox-nextcloud
+
+# Remove previous hourly cronjob
+rm -f /etc/cron.hourly/mailinabox-owncloud
 
 # There's nothing much of interest that a user could do as an admin for Nextcloud,
 # and there's a lot they could mess up, so we don't make any users admins of Nextcloud.
