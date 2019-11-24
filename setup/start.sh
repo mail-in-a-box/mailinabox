@@ -104,9 +104,18 @@ source setup/mail-dovecot.sh
 source setup/mail-users.sh
 source setup/dkim.sh
 source setup/spamassassin.sh
+if [ "${REMOVE_NEXTCLOUD}" == "0" ] {
+	source setup/nextcloud-remove.sh
+}
 source setup/web.sh
 source setup/webmail.sh
-source setup/nextcloud.sh
+
+if [ "${DISABLE_NEXTCLOUD}" == "0" ]; then
+	echo "Nextcloud installation was skipped due to a configuration choice"
+else 
+	source setup/nextcloud.sh
+fi
+
 source setup/zpush.sh
 source setup/management.sh
 source setup/munin.sh

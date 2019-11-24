@@ -8,6 +8,7 @@ from mailconfig import get_mail_domains
 from dns_update import get_custom_dns_config, get_dns_zones
 from ssl_certificates import get_ssl_certificates, get_domain_ssl_files, check_certificate
 from utils import shell, safe_domain_name, sort_domains
+from os import environ
 
 def get_web_domains(env, include_www_redirects=True, exclude_dns_elsewhere=True):
 	# What domains should we serve HTTP(S) for?
@@ -75,13 +76,17 @@ def do_web_update(env):
 	nginx_conf = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-top.conf")).read()
 
 	# Load the templates.
+        template2_nextcloud = ""
 	template0 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx.conf")).read()
 	template1 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-alldomains.conf")).read()
 	template2 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-primaryonly.conf")).read()
+        # Check if the user doesn't want Nextcloud.
+        if environ.get('DISABLE_NEXTCLOUD') != '0':
+	    template2_nextcloud = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-nextcloud.conf")).read()
 	template3 = "\trewrite ^(.*) https://$REDIRECT_DOMAIN$1 permanent;\n"
 
 	# Add the PRIMARY_HOST configuration first so it becomes nginx's default server.
-	nginx_conf += make_domain_config(env['PRIMARY_HOSTNAME'], [template0, template1, template2], ssl_certificates, env)
+	nginx_conf += make_domain_config(env['PRIMARY_HOSTNAME'], [template0, template1, template2, template2_nextcloud], ssl_certificates, env)
 
 	# Add configuration all other web domains.
 	has_root_proxy_or_redirect = get_web_domains_with_root_overrides(env)

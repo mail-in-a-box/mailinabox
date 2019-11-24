@@ -344,10 +344,19 @@ systemctl restart systemd-resolved
 # Configure the Fail2Ban installation to prevent dumb bruce-force attacks against dovecot, postfix, ssh, etc.
 rm -f /etc/fail2ban/jail.local # we used to use this file but don't anymore
 rm -f /etc/fail2ban/jail.d/defaults-debian.conf # removes default config so we can manage all of fail2ban rules in one config
+
+# Check if the user wants to enable Nextcloud and its rules aren't configured yet
+# if both conditions are true, the relevant fail2ban configuration will be added
+if [ "${DISABLE_NEXTCLOUD}" != "0"] && ! grep -q owncloud conf/fail2ban/jails.conf; then
+	cat conf/fail2ban/nextcloud-jail.conf >> conf/fail2ban/jails.conf
+fi
+
 cat conf/fail2ban/jails.conf \
 	| sed "s/PUBLIC_IP/$PUBLIC_IP/g" \
 	| sed "s#STORAGE_ROOT#$STORAGE_ROOT#" \
 	> /etc/fail2ban/jail.d/mailinabox.conf
+
+
 cp -f conf/fail2ban/filter.d/* /etc/fail2ban/filter.d/
 
 # On first installation, the log files that the jails look at don't all exist.

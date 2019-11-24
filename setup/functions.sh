@@ -47,6 +47,12 @@ function apt_get_quiet {
 	DEBIAN_FRONTEND=noninteractive hide_output apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" "$@"
 }
 
+function apt_purge {
+	# Remove a bunch of packages.
+	PACKAGES=$@
+	apt_get_quiet --purge remove $PACKAGES
+}
+
 function apt_install {
 	# Install a bunch of packages. We used to report which packages were already
 	# installed and which needed installing, before just running an 'apt-get
@@ -156,6 +162,17 @@ function restart_service {
 ## Dialog Functions ##
 function message_box {
 	dialog --title "$1" --msgbox "$2" 0 0
+}
+
+function yesno_box {
+	# yesno_box "title" "prompt" VARIABLE
+	# The exit code resembles the user's input and will be stored in the variable VARIABLE
+	# Temporarily turn off 'set -e' because we need the dialog return code
+	declare -n result=$3
+	set +e
+	dialog --stdout --title "$1" --yesno "$2" 0 0
+	result=$?
+	set -e
 }
 
 function input_box {

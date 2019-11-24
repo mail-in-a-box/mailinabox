@@ -64,13 +64,16 @@ rm -f /usr/local/lib/z-push/backend/imap/config.php
 cp conf/zpush/backend_imap.php /usr/local/lib/z-push/backend/imap/config.php
 sed -i "s%STORAGE_ROOT%$STORAGE_ROOT%" /usr/local/lib/z-push/backend/imap/config.php
 
-# Configure CardDav
-rm -f /usr/local/lib/z-push/backend/carddav/config.php
-cp conf/zpush/backend_carddav.php /usr/local/lib/z-push/backend/carddav/config.php
-
-# Configure CalDav
-rm -f /usr/local/lib/z-push/backend/caldav/config.php
-cp conf/zpush/backend_caldav.php /usr/local/lib/z-push/backend/caldav/config.php
+if [ "${DISABLE_NEXTCLOUD}" != "0" ]; then
+	
+	# Configure CardDav
+	rm -f /usr/local/lib/z-push/backend/carddav/config.php
+	cp conf/zpush/backend_carddav.php /usr/local/lib/z-push/backend/carddav/config.php
+	
+	# Configure CalDav
+	rm -f /usr/local/lib/z-push/backend/caldav/config.php
+	cp conf/zpush/backend_caldav.php /usr/local/lib/z-push/backend/caldav/config.php
+fi
 
 # Configure Autodiscover
 rm -f /usr/local/lib/z-push/autodiscover/config.php

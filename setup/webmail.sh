@@ -68,15 +68,18 @@ if [ $needs_update == 1 ]; then
 	git_clone https://github.com/kitist/html5_notifier.git $HTML5_NOTIFIER_VERSION '' ${RCM_PLUGIN_DIR}/html5_notifier
 
 	# download and verify the full release of the carddav plugin
-	wget_verify \
-		https://github.com/blind-coder/rcmcarddav/releases/download/v${CARDDAV_VERSION}/carddav-${CARDDAV_VERSION}.zip \
-		$CARDDAV_HASH \
-		/tmp/carddav.zip
 
-	# unzip and cleanup
-	unzip -q /tmp/carddav.zip -d ${RCM_PLUGIN_DIR}
-	rm -f /tmp/carddav.zip
-
+	if [ "${DISABLE_NEXTCLOUD}" != "0" ]; then
+		wget_verify \
+			https://github.com/blind-coder/rcmcarddav/releases/download/v${CARDDAV_VERSION}/carddav-${CARDDAV_VERSION}.zip \
+			$CARDDAV_HASH \
+			/tmp/carddav.zip
+	
+		# unzip and cleanup
+		unzip -q /tmp/carddav.zip -d ${RCM_PLUGIN_DIR}
+		rm -f /tmp/carddav.zip
+	
+	fi
 	# record the version we've installed
 	echo $UPDATE_KEY > ${RCM_DIR}/version
 fi
@@ -91,6 +94,14 @@ SECRET_KEY=$(dd if=/dev/urandom bs=1 count=18 2>/dev/null | base64 | fold -w 24 
 # For security, temp and log files are not stored in the default locations
 # which are inside the roundcube sources directory. We put them instead
 # in normal places.
+
+PLUGINS="'html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'persistent_login'"
+
+# Add the carddav plugin if the user wants to install Nextcloud
+if [ "${DISABLE_NEXTCLOUD}" != "0" ]; then
+	PLUGINS="$PLUGINS, 'carddav'"
+fi
+
 cat > $RCM_CONFIG <<EOF;
 <?php
 /*
@@ -122,7 +133,7 @@ cat > $RCM_CONFIG <<EOF;
 \$config['support_url'] = 'https://mailinabox.email/';
 \$config['product_name'] = '$PRIMARY_HOSTNAME Webmail';
 \$config['des_key'] = '$SECRET_KEY';
-\$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'persistent_login', 'carddav');
+\$config['plugins'] = array($PLUGINS);
 \$config['skin'] = 'larry';
 \$config['login_autocomplete'] = 2;
 \$config['password_charset'] = 'UTF-8';
@@ -131,7 +142,9 @@ cat > $RCM_CONFIG <<EOF;
 EOF
 
 # Configure CardDav
-cat > ${RCM_PLUGIN_DIR}/carddav/config.inc.php <<EOF;
+if [ "${DISABLE_NEXTCLOUD}" != "0" ]; then
+
+	cat > ${RCM_PLUGIN_DIR}/carddav/config.inc.php <<EOF;
 <?php
 /* Do not edit. Written by Mail-in-a-Box. Regenerated on updates. */
 \$prefs['_GLOBAL']['hide_preferences'] = true;
@@ -150,6 +163,7 @@ cat > ${RCM_PLUGIN_DIR}/carddav/config.inc.php <<EOF;
 );
 ?>
 EOF
+fi
 
 # Create writable directories.
 mkdir -p /var/log/roundcubemail /var/tmp/roundcubemail $STORAGE_ROOT/mail/roundcube
@@ -182,10 +196,12 @@ chmod 775 $STORAGE_ROOT/mail
 chown root.www-data $STORAGE_ROOT/mail/users.sqlite
 chmod 664 $STORAGE_ROOT/mail/users.sqlite
 
-# Fix Carddav permissions:
-chown -f -R root.www-data ${RCM_PLUGIN_DIR}/carddav
-# root.www-data need all permissions, others only read
-chmod -R 774 ${RCM_PLUGIN_DIR}/carddav
+if [ "${DISABLE_NEXTCLOUD}" != "0" ]; then
+	# Fix Carddav permissions:
+	chown -f -R root.www-data ${RCM_PLUGIN_DIR}/carddav
+	# root.www-data need all permissions, others only read
+	chmod -R 774 ${RCM_PLUGIN_DIR}/carddav
+fi
 
 # Run Roundcube database migration script (database is created if it does not exist)
 ${RCM_DIR}/bin/updatedb.sh --dir ${RCM_DIR}/SQL --package roundcube

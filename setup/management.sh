@@ -85,6 +85,12 @@ unzip -q /tmp/bootstrap.zip -d $assets_dir
 mv $assets_dir/bootstrap-$bootstrap_version-dist $assets_dir/bootstrap
 rm -f /tmp/bootstrap.zip
 
+# Remove the Contacts/Calendar section from the admin page if the user didn't enable Nextcloud
+if [ "${DISABLE_NEXTCLOUD}" == 0 ]; then
+	sed -i '/sync_guide/d' ../management/templates/index.html
+	rm ../management/templates/sync-guide.html
+fi
+
 # Create an init script to start the management daemon and keep it
 # running after a reboot.
 cat > $inst_dir/start <<EOF;
