@@ -64,8 +64,8 @@ tools/editconf.py /etc/default/spampd \
 # the X-Spam-Status & X-Spam-Score mail headers and related headers.
 tools/editconf.py /etc/spamassassin/local.cf -s \
 	report_safe=0 \
-	add_header="all Report _REPORT_" \
-    add_header="all Score _SCORE_"
+	"add_header all Report"=_REPORT_ \
+	"add_header all Score"=_SCORE_
 
 # Bayesean learning
 # -----------------
