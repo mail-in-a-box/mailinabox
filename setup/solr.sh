@@ -28,6 +28,9 @@ apt_install solr-jetty dovecot-solr
 # Solr requires a schema to tell it how to index data, this is provided by dovecot
 cp /usr/share/dovecot/solr-schema.xml /etc/solr/conf/schema.xml
 
+# Default config has an error with our config, placing our custom version
+cp conf/solr-jetty.xml  /etc/solr/solr-jetty.xml
+
 # Update the dovecot plugin configuration
 #
 # Break-imap-search makes search work the way users expect, rather than the way
