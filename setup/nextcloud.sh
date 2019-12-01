@@ -303,10 +303,6 @@ tools/editconf.py /etc/php/7.2/cli/conf.d/10-opcache.ini -c ';' \
 	opcache.save_comments=1 \
 	opcache.revalidate_freq=1
 
-# Configure the path environment for php-fpm
-tools/editconf.py /etc/php/7.2/fpm/pool.d/www.conf -c ';' \
-		env[PATH]=/usr/local/bin:/usr/bin:/bin
-
 # If apc is explicitly disabled we need to enable it
 if grep -q apc.enabled=0 /etc/php/7.2/mods-available/apcu.ini; then
 	tools/editconf.py /etc/php/7.2/mods-available/apcu.ini -c ';' \
