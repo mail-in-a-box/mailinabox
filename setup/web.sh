@@ -31,14 +31,19 @@ sed "s#STORAGE_ROOT#$STORAGE_ROOT#" \
 	conf/nginx-ssl.conf > /etc/nginx/conf.d/ssl.conf
 
 # Fix some nginx defaults.
+#
 # The server_names_hash_bucket_size seems to prevent long domain names!
 # The default, according to nginx's docs, depends on "the size of the
 # processor’s cache line." It could be as low as 32. We fixed it at
 # 64 in 2014 to accommodate a long domain name (20 characters?). But
 # even at 64, a 58-character domain name won't work (#93), so now
 # we're going up to 128.
+#
+# Drop TLSv1.0, TLSv1.1, following the Mozilla "Intermediate" recommendations
+# at https://ssl-config.mozilla.org/#server=nginx&server-version=1.17.0&config=intermediate&openssl-version=1.1.1.
 tools/editconf.py /etc/nginx/nginx.conf -s \
-	server_names_hash_bucket_size="128;"
+	server_names_hash_bucket_size="128;" \
+	ssl_protocols="TLSv1.2 TLSv1.3;"
 
 # Tell PHP not to expose its version number in the X-Powered-By header.
 tools/editconf.py /etc/php/7.2/fpm/php.ini -c ';' \
