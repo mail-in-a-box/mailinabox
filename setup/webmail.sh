@@ -22,14 +22,14 @@ source /etc/mailinabox.conf # load global vars
 echo "Installing Roundcube (webmail)..."
 apt_install \
 	dbconfig-common \
-	php-cli php-sqlite3 php-intl php-json php-common php-curl \
+	php-cli php-sqlite3 php-intl php-json php-common php-curl php-ldap \
 	php-gd php-pspell tinymce libjs-jquery libjs-jquery-mousewheel libmagic1 php-mbstring
 
 # Install Roundcube from source if it is not already present or if it is out of date.
 # Combine the Roundcube version number with the commit hash of plugins to track
 # whether we have the latest version of everything.
-VERSION=1.3.10
-HASH=431625fc737e301f9b7e502cccc61e50a24786b8
+VERSION=1.4.1
+HASH=f4ecc63185b8f7b4ce5bccdc9fc689571e82c489
 PERSISTENT_LOGIN_VERSION=dc5ca3d3f4415cc41edb2fde533c8a8628a94c76
 HTML5_NOTIFIER_VERSION=4b370e3cd60dabd2f428a26f45b677ad1b7118d5
 CARDDAV_VERSION=3.0.3
@@ -51,6 +51,13 @@ elif [[ "$UPDATE_KEY" != `cat /usr/local/lib/roundcubemail/version` ]]; then
 	needs_update=1 #NODOC
 fi
 if [ $needs_update == 1 ]; then
+  # if upgrading from 1.3.x, clear the temp_dir
+  if [ -f /usr/local/lib/roundcubemail/version ]; then
+    if [ "$(cat /usr/local/lib/roundcubemail/version | cut -c1-3)" == '1.3' ]; then
+      find /var/tmp/roundcubemail/ -type f ! -name 'RCMTEMP*' -delete
+    fi
+  fi
+
 	# install roundcube
 	wget_verify \
 		https://github.com/roundcube/roundcubemail/releases/download/$VERSION/roundcubemail-$VERSION-complete.tar.gz \
@@ -110,9 +117,6 @@ cat > $RCM_CONFIG <<EOF;
  );
 \$config['imap_timeout'] = 15;
 \$config['smtp_server'] = 'tls://127.0.0.1';
-\$config['smtp_port'] = 587;
-\$config['smtp_user'] = '%u';
-\$config['smtp_pass'] = '%p';
 \$config['smtp_conn_options'] = array(
   'ssl'         => array(
      'verify_peer'  => false,
@@ -123,7 +127,7 @@ cat > $RCM_CONFIG <<EOF;
 \$config['product_name'] = '$PRIMARY_HOSTNAME Webmail';
 \$config['des_key'] = '$SECRET_KEY';
 \$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'persistent_login', 'carddav');
-\$config['skin'] = 'larry';
+\$config['skin'] = 'elastic';
 \$config['login_autocomplete'] = 2;
 \$config['password_charset'] = 'UTF-8';
 \$config['junk_mbox'] = 'Spam';
