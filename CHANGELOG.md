@@ -9,7 +9,7 @@ WebMail:
 
 Software updates:
 
-* Upgraded Nextcloud from 15.0.8 to 16.0.5 (with Contacts from 3.1.1 to 3.1.4 and Calendar from 1.6.5 to 1.7.1)
+* Upgraded Nextcloud from 15.0.8 to 17.0.1 (with Contacts from 3.1.1 to 3.1.6 and Calendar from 1.6.5 to 1.7.1)
 * Upgraded Z-Push to 2.5.1.
 * Upgraded Roundcube from 1.3.10 to 1.4.1.
 
