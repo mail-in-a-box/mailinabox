@@ -4,6 +4,10 @@ CHANGELOG
 Under Development
 -----------------
 
+System:
+
+* TLS settings have been upgraded following Mozilla's recommendations for servers. TLS1.2 and 1.3 are now the only supported protocols for web, IMAP, and SMTP (submission).
+
 WebMail:
 * Set the default Roundcube skin to the new "Elastic" theme.
 
