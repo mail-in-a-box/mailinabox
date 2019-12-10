@@ -148,11 +148,11 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 			# During the upgrade from Nextcloud 14 to 15, user_external may cause the upgrade to fail.
 			# We will disable it here before the upgrade and install it again after the upgrade.
 			hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:disable user_external
-			InstallNextCloud 15.0.8 4129d8d4021c435f2e86876225fb7f15adf764a3
+			InstallNextcloud 15.0.8 4129d8d4021c435f2e86876225fb7f15adf764a3
 			CURRENT_NEXTCLOUD_VER="15.0.8"
 		fi
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^15 ]]; then
-                        InstallNextCloud 16.0.6 0bb3098455ec89f5af77a652aad553ad40a88819
+                        InstallNextcloud 16.0.6 0bb3098455ec89f5af77a652aad553ad40a88819
                         CURRENT_NEXTCLOUD_VER="16.0.6"
                 fi
 	fi
