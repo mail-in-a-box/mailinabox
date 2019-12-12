@@ -125,11 +125,12 @@ apt_get_quiet autoremove
 # * sudo: allows privileged users to execute commands as root without being root
 # * coreutils: includes `nproc` tool to report number of processors, mktemp
 # * bc: allows us to do math to compute sane defaults
+# * openssh-client: provides ssh-keygen
 
 echo Installing system packages...
 apt_install python3 python3-dev python3-pip \
 	netcat-openbsd wget curl git sudo coreutils bc \
-	haveged pollinate unzip \
+	haveged pollinate openssh-client unzip \
 	unattended-upgrades cron ntp fail2ban rsyslog
 
 # ### Suppress Upgrade Prompts
