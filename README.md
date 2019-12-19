@@ -13,7 +13,7 @@ Our goals are to:
 
 * Make deploying a good mail server easy.
 * Promote [decentralization](http://redecentralize.org/), innovation, and privacy on the web.
-* Have automated, auditable, and [idempotent](https://sharknet.us/2014/02/01/automated-configuration-management-challenges-with-idempotency/) configuration.
+* Have automated, auditable, and [idempotent](https://web.archive.org/web/20190518072631/https://sharknet.us/2014/02/01/automated-configuration-management-challenges-with-idempotency/) configuration.
 * **Not** make a totally unhackable, NSA-proof server.
 * **Not** make something customizable by power users.
 
