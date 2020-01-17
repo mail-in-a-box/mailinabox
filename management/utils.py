@@ -1,4 +1,5 @@
-import os.path
+# -*- indent-tabs-mode: nil; -*-
+import os.path, collections
 
 # DO NOT import non-standard modules. This module is imported by
 # migrate.py which runs on fresh machines before anything is installed
@@ -6,15 +7,32 @@ import os.path
 
 # THE ENVIRONMENT FILE AT /etc/mailinabox.conf
 
+class Environment(collections.OrderedDict):
+    # subclass OrderedDict and provide attribute lookups to the
+    # underlying dictionary
+    def __getattr__(self, attr):
+        return self[attr]
+
 def load_environment():
     # Load settings from /etc/mailinabox.conf.
-    return load_env_vars_from_file("/etc/mailinabox.conf")
+    env = load_env_vars_from_file("/etc/mailinabox.conf")
 
-def load_env_vars_from_file(fn):
+    # Load settings from STORAGE_ROOT/ldap/miab_ldap.conf
+    # It won't exist exist until migration 13 completes...
+    if os.path.exists(os.path.join(env["STORAGE_ROOT"],"ldap/miab_ldap.conf")):
+        load_env_vars_from_file(os.path.join(env["STORAGE_ROOT"],"ldap/miab_ldap.conf"), strip_quotes=True, merge_env=env)
+    
+    return env
+
+def load_env_vars_from_file(fn, strip_quotes=False, merge_env=None):
     # Load settings from a KEY=VALUE file.
-    import collections
-    env = collections.OrderedDict()
-    for line in open(fn): env.setdefault(*line.strip().split("=", 1))
+    env = Environment()
+    for line in open(fn):
+        env.setdefault(*line.strip().split("=", 1))
+    if strip_quotes:
+        for k in env: env[k]=env[k].strip('"')
+    if merge_env is not None:
+        for k in env: merge_env[k]=env[k]
     return env
 
 def save_environment(env):

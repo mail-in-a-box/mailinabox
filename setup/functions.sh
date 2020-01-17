@@ -1,3 +1,4 @@
+# -*- indent-tabs-mode: t; tab-width: 4; -*-
 # Turn on "strict mode." See http://redsymbol.net/articles/unofficial-bash-strict-mode/.
 # -e: exit if any command unexpectedly fails.
 # -u: exit if we have a variable typo.
@@ -223,3 +224,23 @@ function git_clone {
 	mv $TMPPATH/$SUBDIR $TARGETPATH
 	rm -rf $TMPPATH
 }
+
+function generate_password() {
+	# output a randomly generated password of the length specified as
+	# the first argument. If no length is given, a password of 64
+	# characters is generated.
+	#
+	# The actual returned password may be longer than requested to
+	# avoid base64 padding characters
+	#
+	local input_len extra pw_length="${1:-64}"
+	# choose a length (longer) that will avoid padding chars
+	let extra="4 - $pw_length % 4"
+	[ $extra -eq 4 ] && extra=0
+	let input_len="($pw_length + $extra) / 4 * 3"
+	# change forward slash to comma because forward slash causes problems
+	# when used in regular expressions (for instance sed) or curl using
+	# basic auth supplied in the url (https://user:pass@host)
+	dd if=/dev/urandom bs=1 count=$input_len 2>/dev/null | base64 --wrap=0 | awk '{ gsub("/", ",", $0); print $0}'
+}
+

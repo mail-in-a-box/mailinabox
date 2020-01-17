@@ -99,6 +99,7 @@ EOF
 source setup/system.sh
 source setup/ssl.sh
 source setup/dns.sh
+source setup/ldap.sh
 source setup/mail-postfix.sh
 source setup/mail-dovecot.sh
 source setup/mail-users.sh

@@ -5,54 +5,86 @@
 #
 # This script configures user authentication for Dovecot
 # and Postfix (which relies on Dovecot) and destination
-# validation by quering an Sqlite3 database of mail users.
+# validation by quering a ldap database of mail users.
+
+# LDAP helpful links:
+#   http://www.postfix.org/LDAP_README.html
+#   http://www.postfix.org/postconf.5.html
+#   http://www.postfix.org/ldap_table.5.html
+#
 
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
+source ${STORAGE_ROOT}/ldap/miab_ldap.conf # user-data specific vars
 
-# ### User and Alias Database
-
-# The database of mail users (i.e. authenticated users, who have mailboxes)
-# and aliases (forwarders).
-
-db_path=$STORAGE_ROOT/mail/users.sqlite
-
-# Create an empty database if it doesn't yet exist.
-if [ ! -f $db_path ]; then
-	echo Creating new user database: $db_path;
-	echo "CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL UNIQUE, password TEXT NOT NULL, extra, privileges TEXT NOT NULL DEFAULT '');" | sqlite3 $db_path;
-	echo "CREATE TABLE aliases (id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT NOT NULL UNIQUE, destination TEXT NOT NULL, permitted_senders TEXT);" | sqlite3 $db_path;
-fi
 
 # ### User Authentication
 
 # Have Dovecot query our database, and not system users, for authentication.
 sed -i "s/#*\(\!include auth-system.conf.ext\)/#\1/"  /etc/dovecot/conf.d/10-auth.conf
-sed -i "s/#\(\!include auth-sql.conf.ext\)/\1/"  /etc/dovecot/conf.d/10-auth.conf
+sed -i "s/#*\(\!include auth-sql.conf.ext\)/#\1/"  /etc/dovecot/conf.d/10-auth.conf
+sed -i "s/#\(\!include auth-ldap.conf.ext\)/\1/"  /etc/dovecot/conf.d/10-auth.conf
+
 
 # Specify how the database is to be queried for user authentication (passdb)
 # and where user mailboxes are stored (userdb).
-cat > /etc/dovecot/conf.d/auth-sql.conf.ext << EOF;
+cat > /etc/dovecot/conf.d/auth-ldap.conf.ext << EOF;
 passdb {
-  driver = sql
-  args = /etc/dovecot/dovecot-sql.conf.ext
+  driver = ldap
+  args = /etc/dovecot/dovecot-ldap.conf.ext
 }
 userdb {
-  driver = sql
-  args = /etc/dovecot/dovecot-sql.conf.ext
+  driver = ldap
+  args = /etc/dovecot/dovecot-userdb-ldap.conf.ext
+  default_fields = uid=mail gid=mail home=$STORAGE_ROOT/mail/mailboxes/%d/%n
 }
 EOF
 
-# Configure the SQL to query for a user's metadata and password.
-cat > /etc/dovecot/dovecot-sql.conf.ext << EOF;
-driver = sqlite
-connect = $db_path
-default_pass_scheme = SHA512-CRYPT
-password_query = SELECT email as user, password FROM users WHERE email='%u';
-user_query = SELECT email AS user, "mail" as uid, "mail" as gid, "$STORAGE_ROOT/mail/mailboxes/%d/%n" as home FROM users WHERE email='%u';
-iterate_query = SELECT email AS user FROM users;
+# Dovecot ldap configuration
+cat > /etc/dovecot/dovecot-ldap.conf.ext << EOF;
+# LDAP server(s) to connect to
+uris = ${LDAP_URL}
+tls = ${LDAP_SERVER_TLS}
+
+# Credentials dovecot uses to perform searches
+dn = ${LDAP_DOVECOT_DN}
+dnpass = ${LDAP_DOVECOT_PASSWORD}
+
+# Use ldap authentication binding for verifying users' passwords
+# otherwise we have to give dovecot admin access to the database
+# so it can read userPassword, which is less secure
+auth_bind = yes
+# default_pass_scheme = SHA512-CRYPT
+
+# Search base (subtree)
+base = ${LDAP_USERS_BASE}
+
+# Find the user:
+#   Dovecot uses its service account to search for the user using the
+#   filter below. If found, the user is authenticated against this dn
+#   (a bind is attempted as that user). The attribute 'mail' is
+#   multi-valued and contains all the user's email addresses. We use
+#   maildrop as the dovecot mailbox address and forbid then from using
+#   it for authentication by excluding maildrop from the filter.
+pass_filter = (&(objectClass=mailUser)(mail=%u))
+pass_attrs = maildrop=user
+
+# Apply per-user settings:
+#   Post-login information specific to the user (eg. quotas).  For
+#   lmtp delivery, pass_filter is not used, and postfix has already
+#   rewritten the envelope using the maildrop address.
+user_filter = (&(objectClass=mailUser)(|(mail=%u)(maildrop=%u)))
+user_attrs = maildrop=user
+
+# Account iteration for various dovecot tools (doveadm)
+iterate_filter = (objectClass=mailUser)
+iterate_attrs = maildrop=user
+
 EOF
-chmod 0600 /etc/dovecot/dovecot-sql.conf.ext # per Dovecot instructions
+chmod 0600 /etc/dovecot/dovecot-ldap.conf.ext # per Dovecot instructions
+
+# symlink userdb ext file per dovecot instructions
+ln -sf /etc/dovecot/dovecot-ldap.conf.ext /etc/dovecot/dovecot-userdb-ldap.conf.ext
 
 # Have Dovecot provide an authorization service that Postfix can access & use.
 cat > /etc/dovecot/conf.d/99-local-auth.conf << EOF;
@@ -65,6 +97,7 @@ service auth {
 }
 EOF
 
+#
 # And have Postfix use that service. We *disable* it here
 # so that authentication is not permitted on port 25 (which
 # does not run DKIM on relayed mail, so outbound mail isn't
@@ -81,44 +114,97 @@ tools/editconf.py /etc/postfix/main.cf \
 # prevent intra-domain spoofing by logged in but untrusted users in outbound
 # email. In all outbound mail (the sender has authenticated), the MAIL FROM
 # address (aka envelope or return path address) must be "owned" by the user
-# who authenticated. An SQL query will find who are the owners of any given
-# address.
+# who authenticated.
+#
+# sender-login-maps is given a FROM address (%s), which it uses to
+# obtain all the users that are permitted to MAIL FROM that address
+# (from the docs: "Optional lookup table with the SASL login names
+# that own the sender (MAIL FROM) addresses")
+# see: http://www.postfix.org/postconf.5.html
+#
+# With multiple lookup tables specified, the first matching lookup
+# ends the search. So, if there is a permitted-senders ldap group,
+# alias group memberships are not considered for inclusion that may
+# MAIL FROM the FROM address being searched for.
 tools/editconf.py /etc/postfix/main.cf \
-	smtpd_sender_login_maps=sqlite:/etc/postfix/sender-login-maps.cf
+	smtpd_sender_login_maps="ldap:/etc/postfix/sender-login-maps-explicit.cf, ldap:/etc/postfix/sender-login-maps-aliases.cf"
 
-# Postfix will query the exact address first, where the priority will be alias
-# records first, then user records. If there are no matches for the exact
-# address, then Postfix will query just the domain part, which we call
-# catch-alls and domain aliases. A NULL permitted_senders column means to
-# take the value from the destination column.
-cat > /etc/postfix/sender-login-maps.cf << EOF;
-dbpath=$db_path
-query = SELECT permitted_senders FROM (SELECT permitted_senders, 0 AS priority FROM aliases WHERE source='%s' AND permitted_senders IS NOT NULL UNION SELECT destination AS permitted_senders, 1 AS priority FROM aliases WHERE source='%s' AND permitted_senders IS NULL UNION SELECT email as permitted_senders, 2 AS priority FROM users WHERE email='%s') ORDER BY priority LIMIT 1;
+
+# FROM addresses with an explicit list of "permitted senders"
+cat > /etc/postfix/sender-login-maps-explicit.cf <<EOF
+server_host = ${LDAP_URL}
+bind = yes
+bind_dn = ${LDAP_POSTFIX_DN}
+bind_pw = ${LDAP_POSTFIX_PASSWORD}
+version = 3
+search_base = ${LDAP_PERMITTED_SENDERS_BASE}
+query_filter = (mail=%s)
+result_attribute = maildrop
+special_result_attribute = member
 EOF
+# protect the password
+chgrp postfix /etc/postfix/sender-login-maps-explicit.cf
+chmod 0640 /etc/postfix/sender-login-maps-explicit.cf
+
+# Users may MAIL FROM any of their own aliases
+cat > /etc/postfix/sender-login-maps-aliases.cf <<EOF
+server_host = ${LDAP_URL}
+bind = yes
+bind_dn = ${LDAP_POSTFIX_DN}
+bind_pw = ${LDAP_POSTFIX_PASSWORD}
+version = 3
+search_base = ${LDAP_USERS_BASE}
+query_filter = (mail=%s)
+result_attribute = maildrop
+special_result_attribute = member
+EOF
+chgrp postfix /etc/postfix/sender-login-maps-aliases.cf
+chmod 0640 /etc/postfix/sender-login-maps-aliases.cf
+
 
 # ### Destination Validation
 
-# Use a Sqlite3 database to check whether a destination email address exists,
-# and to perform any email alias rewrites in Postfix.
+# Check whether a destination email address exists, and to perform any
+# email alias rewrites in Postfix.
 tools/editconf.py /etc/postfix/main.cf \
-	virtual_mailbox_domains=sqlite:/etc/postfix/virtual-mailbox-domains.cf \
-	virtual_mailbox_maps=sqlite:/etc/postfix/virtual-mailbox-maps.cf \
-	virtual_alias_maps=sqlite:/etc/postfix/virtual-alias-maps.cf \
+	virtual_mailbox_domains=ldap:/etc/postfix/virtual-mailbox-domains.cf \
+	virtual_mailbox_maps=ldap:/etc/postfix/virtual-mailbox-maps.cf \
+	virtual_alias_maps=ldap:/etc/postfix/virtual-alias-maps.cf \
 	local_recipient_maps=\$virtual_mailbox_maps
 
-# SQL statement to check if we handle incoming mail for a domain, either for users or aliases.
-cat > /etc/postfix/virtual-mailbox-domains.cf << EOF;
-dbpath=$db_path
-query = SELECT 1 FROM users WHERE email LIKE '%%@%s' UNION SELECT 1 FROM aliases WHERE source LIKE '%%@%s'
-EOF
 
-# SQL statement to check if we handle incoming mail for a user.
-cat > /etc/postfix/virtual-mailbox-maps.cf << EOF;
-dbpath=$db_path
-query = SELECT 1 FROM users WHERE email='%s'
+# the domains we handle mail for
+cat > /etc/postfix/virtual-mailbox-domains.cf << EOF
+server_host = ${LDAP_URL}
+bind = yes
+bind_dn = ${LDAP_POSTFIX_DN}
+bind_pw = ${LDAP_POSTFIX_PASSWORD}
+version = 3
+search_base = ${LDAP_DOMAINS_BASE}
+query_filter = (&(dc=%s)(businessCategory=mail))
+result_attribute = dc
 EOF
+chgrp postfix /etc/postfix/virtual-mailbox-domains.cf
+chmod 0640 /etc/postfix/virtual-mailbox-domains.cf
 
-# SQL statement to rewrite an email address if an alias is present.
+# check if we handle incoming mail for a user.
+# (this doesn't seem to ever be used by postfix)
+cat > /etc/postfix/virtual-mailbox-maps.cf << EOF
+server_host = ${LDAP_URL}
+bind = yes
+bind_dn = ${LDAP_POSTFIX_DN}
+bind_pw = ${LDAP_POSTFIX_PASSWORD}
+version = 3
+search_base = ${LDAP_USERS_BASE}
+query_filter = (&(objectClass=mailUser)(mail=%s)(!(|(maildrop="*|*")(maildrop="*:*")(maildrop="*/*"))))
+result_attribute = maildrop
+EOF
+chgrp postfix /etc/postfix/virtual-mailbox-maps.cf
+chmod 0640 /etc/postfix/virtual-mailbox-maps.cf
+
+
+
+# Rewrite an email address if an alias is present.
 #
 # Postfix makes multiple queries for each incoming mail. It first
 # queries the whole email address, then just the user part in certain
@@ -142,15 +228,30 @@ EOF
 # Since we might have alias records with an empty destination because
 # it might have just permitted_senders, skip any records with an
 # empty destination here so that other lower priority rules might match.
-cat > /etc/postfix/virtual-alias-maps.cf << EOF;
-dbpath=$db_path
-query = SELECT destination from (SELECT destination, 0 as priority FROM aliases WHERE source='%s' AND destination<>'' UNION SELECT email as destination, 1 as priority FROM users WHERE email='%s') ORDER BY priority LIMIT 1;
+
+
+#
+# This is the ldap version of aliases(5) but for virtual
+# addresses. Postfix queries this recursively to determine delivery
+# addresses. Aliases may be addresses, domains, and catch-alls.
+# 
+cat > /etc/postfix/virtual-alias-maps.cf <<EOF
+server_host = ${LDAP_URL}
+bind = yes
+bind_dn = ${LDAP_POSTFIX_DN}
+bind_pw = ${LDAP_POSTFIX_PASSWORD}
+version = 3
+search_base = ${LDAP_USERS_BASE}
+query_filter = (mail=%s)
+result_attribute = maildrop, rfc822MailMember
+special_result_attribute = member
 EOF
+chgrp postfix /etc/postfix/virtual-alias-maps.cf
+chmod 0640 /etc/postfix/virtual-alias-maps.cf
 
 # Restart Services
 ##################
 
 restart_service postfix
 restart_service dovecot
-
 

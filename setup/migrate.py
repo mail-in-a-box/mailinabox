@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+# -*- indent-tabs-mode: t; tab-width: 8; python-indent-offset: 8; -*-
 
 # Migrates any file structures, database schemas, etc. between versions of Mail-in-a-Box.
 
@@ -8,7 +9,7 @@
 import sys, os, os.path, glob, re, shutil
 
 sys.path.insert(0, 'management')
-from utils import load_environment, save_environment, shell
+from utils import load_environment, load_env_vars_from_file, save_environment, shell
 
 def migration_1(env):
 	# Re-arrange where we store SSL certificates. There was a typo also.
@@ -181,6 +182,65 @@ def migration_12(env):
             conn.commit()
             conn.close()
 
+def migration_13(env):
+	# This migration step moves users from sqlite3 to openldap
+
+	# users table:
+	# for each row create an ldap entry of the form:
+	#   dn: uid=[uuid],ou=Users,dc=mailinabox
+	#   objectClass: inetOrgPerson, mailUser, shadowAccount
+	#   mail: [email]
+	#   maildrop: [email]
+	#   userPassword: [password]
+	#   mailaccess: [privilege]   # multi-valued
+	# 
+	# aliases table:
+	# for each row create an ldap entry of the form:
+	#   dn: cn=[uuid],ou=aliases,ou=Users,dc=mailinabox
+	#   objectClass: mailGroup
+	#   mail: [source]
+	#   member: [destination-dn]   # multi-valued
+	#   rfc822MailMember: [email]  # multi-values
+	#
+	# if the alias has permitted_senders, create:
+	#   dn: cn=[uuid],ou=permitted-senders,ou=Config,dc=mailinabox
+	#   objectClass: mailGroup
+	#   mail: [source]
+	#   member: [user-dn]         # multi-valued
+
+	print("Migrating users and aliases from sqlite to ldap")
+	
+	# Get the ldap server up and running
+	shell("check_call", ["setup/ldap.sh", "-v"])
+	
+	import sqlite3, ldap3
+	import migration_13 as m13
+				
+	# 2. get ldap site details (miab_ldap.conf was created by ldap.sh)
+	ldapvars = load_env_vars_from_file(os.path.join(env["STORAGE_ROOT"], "ldap/miab_ldap.conf"), strip_quotes=True)
+	ldap_base = ldapvars.LDAP_BASE
+	ldap_domains_base = ldapvars.LDAP_DOMAINS_BASE
+	ldap_permitted_senders_base = ldapvars.LDAP_PERMITTED_SENDERS_BASE
+	ldap_users_base = ldapvars.LDAP_USERS_BASE
+	ldap_aliases_base = ldapvars.LDAP_ALIASES_BASE
+	ldap_services_base = ldapvars.LDAP_SERVICES_BASE
+	ldap_admin_dn = ldapvars.LDAP_ADMIN_DN
+	ldap_admin_pass = ldapvars.LDAP_ADMIN_PASSWORD
+
+	# 3. connect
+	conn = sqlite3.connect(os.path.join(env["STORAGE_ROOT"], "mail/users.sqlite"))
+	ldap = ldap3.Connection('127.0.0.1', ldap_admin_dn, ldap_admin_pass, raise_exceptions=True)
+	ldap.bind()
+	
+	# 4. perform the migration
+	users=m13.create_users(env, conn, ldap, ldap_base, ldap_users_base, ldap_domains_base)
+	aliases=m13.create_aliases(conn, ldap, ldap_aliases_base)
+	permitted=m13.create_permitted_senders(conn, ldap, ldap_users_base, ldap_permitted_senders_base)
+	m13.populate_aliases(conn, ldap, users, aliases)
+		
+	ldap.unbind()
+	conn.close()
+	
 
 def get_current_migration():
 	ver = 0

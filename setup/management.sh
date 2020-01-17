@@ -50,7 +50,7 @@ hide_output $venv/bin/pip install --upgrade pip
 hide_output $venv/bin/pip install --upgrade \
 	rtyaml "email_validator>=1.0.0" "exclusiveprocess" \
 	flask dnspython python-dateutil \
-	"idna>=2.0.0" "cryptography==2.2.2" boto psutil
+	"idna>=2.0.0" "cryptography==2.2.2" boto psutil ldap3
 
 # CONFIGURATION
 

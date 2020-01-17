@@ -42,7 +42,7 @@ source /etc/mailinabox.conf # load global vars
 # * `ca-certificates`: A trust store used to squelch postfix warnings about
 #   untrusted opportunistically-encrypted connections.
 echo "Installing Postfix (SMTP server)..."
-apt_install postfix postfix-sqlite postfix-pcre postgrey ca-certificates
+apt_install postfix postfix-sqlite postfix-pcre postgrey ca-certificates postfix-ldap postfix-policyd-spf-python
 
 # ### Basic Settings
 
@@ -53,6 +53,7 @@ apt_install postfix postfix-sqlite postfix-pcre postgrey ca-certificates
 # * Set our name (the Debian default seems to be "localhost" but make it our hostname).
 # * Set the name of the local machine to localhost, which means xxx@localhost is delivered locally, although we don't use it.
 # * Set the SMTP banner (which must have the hostname first, then anything).
+# * Extend the SPF time limit to avoid timeouts chasing SPF records
 tools/editconf.py /etc/postfix/main.cf \
 	inet_interfaces=all \
 	smtp_bind_address=$PRIVATE_IP \
@@ -67,7 +68,8 @@ tools/editconf.py /etc/postfix/main.cf \
 tools/editconf.py /etc/postfix/main.cf \
 	delay_warning_time=3h \
 	maximal_queue_lifetime=2d \
-	bounce_queue_lifetime=1d
+	bounce_queue_lifetime=1d \
+	policy-spf_time_limit=3600
 
 # ### Outgoing Mail
 
@@ -96,6 +98,16 @@ tools/editconf.py /etc/postfix/master.cf -s -w \
 	"authclean=unix  n       -       -       -       0       cleanup
 	  -o header_checks=pcre:/etc/postfix/outgoing_mail_header_filters
 	  -o nested_header_checks="
+
+# enable the SPF service
+tools/editconf.py /etc/postfix/master.cf -s -w \
+		"policy-spf=unix  y       n       n       -       0       spawn user=policyd-spf argv=/usr/bin/policyd-spf"
+
+# configure policyd-spf configuration
+# * reject SPF softfail (eg ~all) for some domains that are configured
+#   not to reject
+tools/editconf.py /etc/postfix-policyd-spf-python/policyd-spf.conf \
+	"Reject_Not_Pass_Domains=gmail.com,google.com"
 
 # Install the `outgoing_mail_header_filters` file required by the new 'authclean' service.
 cp conf/postfix_outgoing_mail_header_filters /etc/postfix/outgoing_mail_header_filters
@@ -208,7 +220,7 @@ tools/editconf.py /etc/postfix/main.cf lmtp_destination_recipient_limit=1
 # "450 4.7.1 Client host rejected: Service unavailable". This is a retry code, so the mail doesn't properly bounce. #NODOC
 tools/editconf.py /etc/postfix/main.cf \
 	smtpd_sender_restrictions="reject_non_fqdn_sender,reject_unknown_sender_domain,reject_authenticated_sender_login_mismatch,reject_rhsbl_sender dbl.spamhaus.org" \
-	smtpd_recipient_restrictions=permit_sasl_authenticated,permit_mynetworks,"reject_rbl_client zen.spamhaus.org",reject_unlisted_recipient,"check_policy_service inet:127.0.0.1:10023"
+	smtpd_recipient_restrictions=permit_sasl_authenticated,permit_mynetworks,"reject_rbl_client zen.spamhaus.org",reject_unlisted_recipient,"check_policy_service unix:private/policy-spf","check_policy_service inet:127.0.0.1:10023"
 
 # Postfix connects to Postgrey on the 127.0.0.1 interface specifically. Ensure that
 # Postgrey listens on the same interface (and not IPv6, for instance).

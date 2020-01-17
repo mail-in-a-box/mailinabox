@@ -1,3 +1,4 @@
+# -*- indent-tabs-mode: t; tab-width: 4; python-indent-offset: 4; -*-
 # Creates an nginx configuration file so we serve HTTP/HTTPS on all
 # domains for which a mail account has been set up.
 ########################################################################
@@ -9,14 +10,15 @@ from dns_update import get_custom_dns_config, get_dns_zones
 from ssl_certificates import get_ssl_certificates, get_domain_ssl_files, check_certificate
 from utils import shell, safe_domain_name, sort_domains
 
-def get_web_domains(env, include_www_redirects=True, exclude_dns_elsewhere=True):
+def get_web_domains(env, include_www_redirects=True, exclude_dns_elsewhere=True, categories=['mail', 'ssl']):
 	# What domains should we serve HTTP(S) for?
 	domains = set()
 
 	# Serve web for all mail domains so that we might at least
 	# provide auto-discover of email settings, and also a static website
 	# if the user wants to make one.
-	domains |= get_mail_domains(env)
+	for category in categories:
+		domains |= get_mail_domains(env, category=category)
 
 	if include_www_redirects:
 		# Add 'www.' subdomains that we want to provide default redirects
@@ -27,8 +29,9 @@ def get_web_domains(env, include_www_redirects=True, exclude_dns_elsewhere=True)
 	# Add Autoconfiguration domains, allowing us to serve correct SSL certs.
 	# 'autoconfig.' for Mozilla Thunderbird auto setup.
 	# 'autodiscover.' for Activesync autodiscovery.
-	domains |= set('autoconfig.' + maildomain for maildomain in get_mail_domains(env))
-	domains |= set('autodiscover.' + maildomain for maildomain in get_mail_domains(env))
+	if 'mail' in categories:
+		domains |= set('autoconfig.' + maildomain for maildomain in get_mail_domains(env, category='mail'))
+		domains |= set('autodiscover.' + maildomain for maildomain in get_mail_domains(env, category='mail'))
 
 	if exclude_dns_elsewhere:
 		# ...Unless the domain has an A/AAAA record that maps it to a different
@@ -85,8 +88,8 @@ def do_web_update(env):
 
 	# Add configuration all other web domains.
 	has_root_proxy_or_redirect = get_web_domains_with_root_overrides(env)
-	web_domains_not_redirect = get_web_domains(env, include_www_redirects=False)
-	for domain in get_web_domains(env):
+	web_domains_not_redirect = get_web_domains(env, include_www_redirects=False, categories=['mail'])
+	for domain in get_web_domains(env, categories=['mail']):
 		if domain == env['PRIMARY_HOSTNAME']:
 			# PRIMARY_HOSTNAME is handled above.
 			continue

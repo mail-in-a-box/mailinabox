@@ -434,10 +434,10 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 	check_alias_exists("Hostmaster contact address", "hostmaster@" + domain, env, output)
 
 def check_alias_exists(alias_name, alias, env, output):
-	mail_aliases = dict([(address, receivers) for address, receivers, *_ in get_mail_aliases(env)])
+	mail_aliases = get_mail_aliases(env, as_map=True)
 	if alias in mail_aliases:
-		if mail_aliases[alias]:
-			output.print_ok("%s exists as a mail alias. [%s ↦ %s]" % (alias_name, alias, mail_aliases[alias]))
+		if mail_aliases[alias]["forward_tos"]:
+			output.print_ok("%s exists as a mail alias. [%s ↦ %s]" % (alias_name, alias, ",".join(mail_aliases[alias]["forward_tos"])))
 		else:
 			output.print_error("""You must set the destination of the mail alias for %s to direct email to you or another administrator.""" % alias)
 	else:
@@ -618,7 +618,7 @@ def check_mail_domain(domain, env, output):
 
 	# Check that the postmaster@ email address exists. Not required if the domain has a
 	# catch-all address or domain alias.
-	if "@" + domain not in [address for address, *_ in get_mail_aliases(env)]:
+	if "@" + domain not in get_mail_aliases(env, as_map=True):
 		check_alias_exists("Postmaster contact address", "postmaster@" + domain, env, output)
 
 	# Stop if the domain is listed in the Spamhaus Domain Block List.

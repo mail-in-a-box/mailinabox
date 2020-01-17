@@ -105,6 +105,9 @@ def get_ssl_certificates(env):
 			# prefer one that is not self-signed
 			cert.issuer != cert.subject,
 
+                        # prefer one that is not our temporary ca
+			"Temporary-Mail-In-A-Box-CA" not in "%s" % cert.issuer.rdns,
+
 			###########################################################
 			# The above lines ensure that valid certificates are chosen
 			# over invalid certificates. The lines below choose between
@@ -453,7 +456,7 @@ def post_install_func(env):
 
 	# Symlink the best cert for PRIMARY_HOSTNAME to the system
 	# certificate path, which is hard-coded for various purposes, and then
-	# restart postfix and dovecot.
+	# restart postfix, dovecot and openldap.
 	system_ssl_certificate = os.path.join(os.path.join(env["STORAGE_ROOT"], 'ssl', 'ssl_certificate.pem'))
 	if cert and os.readlink(system_ssl_certificate) != cert['certificate']:
 		# Update symlink.
@@ -463,6 +466,7 @@ def post_install_func(env):
 		os.symlink(ssl_certificate, system_ssl_certificate)
 
 		# Restart postfix and dovecot so they pick up the new file.
+		shell('check_call', ["/usr/sbin/service", "slapd", "restart"])
 		shell('check_call', ["/usr/sbin/service", "postfix", "restart"])
 		shell('check_call', ["/usr/sbin/service", "dovecot", "restart"])
 		ret.append("mail services restarted")
@@ -529,6 +533,9 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 
 	# Third, check if the certificate is self-signed. Return a special flag string.
 	if cert.issuer == cert.subject:
+		return ("SELF-SIGNED", None)
+
+	elif "Temporary-Mail-In-A-Box-CA" in "%s" % cert.issuer.rdns:
 		return ("SELF-SIGNED", None)
 
 	# When selecting which certificate to use for non-primary domains, we check if the primary
