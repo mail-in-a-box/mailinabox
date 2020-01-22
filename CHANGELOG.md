@@ -7,6 +7,8 @@ Under Development
 System:
 
 * TLS settings have been upgraded following Mozilla's recommendations for servers. TLS1.2 and 1.3 are now the only supported protocols for web, IMAP, and SMTP (submission).
+* Fixed an issue starting services when Mail-in-a-Box isn't on the root filesystem.
+* Changed some performance options affecting Roundcube and Nextcloud.
 
 Software updates:
 
@@ -22,6 +24,7 @@ Control panel:
 Mail:
 
 * Fetching of updated whitelist for greylisting was fetching each day instead of every month.
+* OpenDKIM signing has been changed to 'relaxed' mode so that some old mail lists that forward mail can do so.
 
 DNS:
 
