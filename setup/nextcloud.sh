@@ -69,14 +69,7 @@ InstallNextcloud() {
         wget --directory-prefix=/tmp/ https://github.com/nextcloud/calendar/releases/download/v1.6.6/calendar.tar.gz 
         tar -xf /tmp/calendar.tar.gz -C /usr/local/lib/owncloud/apps/
         rm /tmp/calendar.tar.gz
-        elif [[$version =~ ^13]] then
-          wget --directory-prefix=/tmp/ https://github.com/nextcloud/contacts/releases/download/v3.1.6/contacts.tar.gz
-        tar -xf /tmp/contacts.tar.gz -C /usr/local/lib/owncloud/apps/
-        rm /tmp/contacts.tar.gz
-
-        wget --directory-prefix=/tmp/ https://github.com/nextcloud/calendar/releases/download/v1.7.2/calendar.tar.gz 
-        tar -xf /tmp/calendar.tar.gz -C /usr/local/lib/owncloud/apps/
-        rm /tmp/calendar.tar.gz
+        fi
         # Starting with Nextcloud 15, the app user_external is no longer included in Nextcloud core,
         # we will install from their github repository.
         if [[ $version =~ ^15 ]]; then
@@ -164,7 +157,7 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
                         echo "Upgrades from Mail-in-a-Box prior to v0.28 (dated July 30, 2018) with Nextcloud < 13.0.6 (you have ownCloud 8 or 9) are not supported. Upgrade to Mail-in-a--in-a-Box version v0.30 first. Setup aborting."
                         exit 1
                 elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^1[012] ]]; then
-                        echo "Upgrades from Mail-in-a-Box prior to v0.28 (dated July 30, 2018) with Nextcloud < 13.0.6 (you have ownCloud 10, 11 or 12) are not supported. Upgrade to Mail$
+                        echo "Upgrades from Mail-in-a-Box prior to v0.28 (dated July 30, 2018) with Nextcloud < 13.0.6 (you have ownCloud 10, 11 or 12) are not supported. Upgrade to Mail-in-a-box v0.30 first. Setup aborting."
                         exit 1
                 elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^13 ]]; then
                         # If we are running Nextcloud 13, upgrade to Nextcloud 14
@@ -299,6 +292,7 @@ chown www-data.www-data $STORAGE_ROOT/owncloud/config.php
 hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:disable firstrunwizard
 hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable user_external
 hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable contacts
+hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable calendar
 
 # When upgrading, run the upgrade script again now that apps are enabled. It seems like
 # the first upgrade at the top won't work because apps may be disabled during upgrade?
