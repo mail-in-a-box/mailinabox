@@ -40,13 +40,18 @@ InstallNextcloud() {
 	# their github repositories.
 	mkdir -p /usr/local/lib/owncloud/apps
 
-	wget_verify https://github.com/nextcloud/contacts/releases/download/v3.1.6/contacts.tar.gz d331dc6db2ecf7c8e6166926a055dfa3b59722c3 /tmp/contacts.tgz
+	wget_verify https://github.com/nextcloud/contacts/releases/download/v3.1.8/contacts.tar.gz 402337327e62a49c0635796f2ba6f778904c9f3d /tmp/contacts.tgz
 	tar xf /tmp/contacts.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/contacts.tgz
 
-	wget_verify https://github.com/nextcloud/calendar/releases/download/v1.7.1/calendar.tar.gz bd7c846bad06da6d6ba04280f6fbf37ef846c2ad /tmp/calendar.tgz
+	wget_verify https://github.com/nextcloud/calendar/releases/download/v2.0.1/calendar.tar.gz f0f372516535bfc4b012584c31d7435a46480e24 /tmp/calendar.tgz
 	tar xf /tmp/calendar.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/calendar.tgz
+
+	#Nextcloud Talk, for video chatting, text chatting--good to privately keep up with family or privately host online meetings
+	wget_verify https://github.com/nextcloud/spreed/releases/download/v8.0.4/spreed-8.0.4.tar.gz 4c1fe4cff3cc155a06f03225fc1316d29ba39288 /tmp/spreed.tgz
+	tar xf /tmp/spreed.tgz -C /usr/local/lib/owncloud/apps/
+	rm /tmp/spreed.tgz
 
 	# Starting with Nextcloud 15, the app user_external is no longer included in Nextcloud core,
 	# we will install from their github repository.
@@ -91,8 +96,9 @@ InstallNextcloud() {
 }
 
 # Nextcloud Version to install. Checks are done down below to step through intermediate versions.
-nextcloud_ver=17.0.2
-nextcloud_hash=8095fb46e9e0c536163708aee3d17fab8b498ad6
+# hash uses SHA1 for speed, security, and quality.
+nextcloud_ver=18.0.0
+nextcloud_hash=635604ede74c9919b6bab150c5da564f329dfbcd
 
 # Current Nextcloud Version, #1623
 # Checking /usr/local/lib/owncloud/version.php shows version of the Nextcloud application, not the DB
@@ -152,9 +158,13 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 			CURRENT_NEXTCLOUD_VER="15.0.8"
 		fi
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^15 ]]; then
-                        InstallNextcloud 16.0.6 0bb3098455ec89f5af77a652aad553ad40a88819
-                        CURRENT_NEXTCLOUD_VER="16.0.6"
-                fi
+			InstallNextcloud 16.0.6 0bb3098455ec89f5af77a652aad553ad40a88819
+			CURRENT_NEXTCLOUD_VER="16.0.6"
+		fi
+		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^16 ]]; then
+			InstallNextcloud 17.0.2 8095fb46e9e0c536163708aee3d17fab8b498ad6
+			CURRENT_NEXTCLOUD_VER="17.0.2"
+		fi
 	fi
 
 	InstallNextcloud $nextcloud_ver $nextcloud_hash
@@ -276,6 +286,7 @@ hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:disable
 hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable user_external
 hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable contacts
 hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable calendar
+hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable spreed
 
 # When upgrading, run the upgrade script again now that apps are enabled. It seems like
 # the first upgrade at the top won't work because apps may be disabled during upgrade?
@@ -331,3 +342,4 @@ rm -f /etc/cron.hourly/mailinabox-owncloud
 
 # Enable PHP modules and restart PHP.
 restart_service php7.2-fpm
+
