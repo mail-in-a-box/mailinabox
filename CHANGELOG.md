@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-Under Development
------------------
+v0.44 (February 15, 2020)
+-------------------------
 
 System:
 
