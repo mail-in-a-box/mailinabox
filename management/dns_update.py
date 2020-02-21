@@ -382,7 +382,7 @@ def build_sshfp_records():
 				except ValueError:
 					pass
 				break
-	keys = shell("check_output", ["ssh-keyscan", "-t", "rsa,dsa,ecdsa,ed25519", "-p", str(port), "localhost"])
+	keys = shell("check_output", ["ssh-keyscan", "-t", "rsa,dsa,ecdsa,ed25519", "-p", str(port), "localhost"], capture_stderr=True)
 	for key in sorted(keys.split("\n")):
 		if key.strip() == "" or key[0] == "#": continue
 		try:
