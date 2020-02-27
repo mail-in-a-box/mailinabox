@@ -303,6 +303,22 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 		if not has_rec(qname, rtype):
 			records.append((qname, rtype, value, explanation))
 
+	# Adds autoconfiguration A records for all domains.
+	# This allows the following clients to automatically configure email addresses in the respective applications.
+	# autodiscover.* - Z-Push ActiveSync Autodiscover
+	# autoconfig.* - Thunderbird Autoconfig
+	mta_sts_records = [
+		("mta-sts", "A", env["PUBLIC_IP"], "Provides mta-sts support"),
+		("mta-sts", "AAAA", env["PUBLIC_IPV6"], "Provides mta-sts support"),
+		("_mta-sts", "TXT", "v=STSv1; id=202022022043", "Provides mta-sts support"),
+		("_smtp._tls", "TXT", "v=TLSRPTv1;", "extend with rua=mailto:email@addres for reporting")
+
+	]
+	for qname, rtype, value, explanation in mta_sts_records:
+		if value is None or value.strip() == "": continue # skip IPV6 if not set
+		if not has_rec(qname, rtype):
+			records.append((qname, rtype, value, explanation))
+
 	# Sort the records. The None records *must* go first in the nsd zone file. Otherwise it doesn't matter.
 	records.sort(key = lambda rec : list(reversed(rec[0].split(".")) if rec[0] is not None else ""))
 

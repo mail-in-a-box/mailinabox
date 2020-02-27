@@ -122,6 +122,16 @@ cat conf/mozilla-autoconfig.xml \
 	 > /var/lib/mailinabox/mozilla-autoconfig.xml
 chmod a+r /var/lib/mailinabox/mozilla-autoconfig.xml
 
+# Create a generic mta-sts.txt file which is exposed via the
+# nginx configuration at /.well-known/mta-sts.txt
+# more documentation is available on: 
+# https://www.digitalocean.com/community/tutorials/how-to-configure-mta-sts-and-tls-reporting-for-your-domain-using-apache-on-ubuntu-18-04
+
+cat conf/mta-sts.txt \
+        | sed "s/PRIMARY_HOSTNAME/$PRIMARY_HOSTNAME/" \
+         > /var/lib/mailinabox/mta-sts.txt
+chmod a+r /var/lib/mailinabox/mta-sts.txt
+
 # make a default homepage
 if [ -d $STORAGE_ROOT/www/static ]; then mv $STORAGE_ROOT/www/static $STORAGE_ROOT/www/default; fi # migration #NODOC
 mkdir -p $STORAGE_ROOT/www/default
