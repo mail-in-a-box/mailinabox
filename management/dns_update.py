@@ -307,7 +307,7 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 	# mta-sts.* - required A record for mta-sts (serving the policy)
 	mta_sts_records = [
 		("mta-sts", "A", env["PUBLIC_IP"], "Provides MTA-STS support"),
-		("mta-sts", "AAAA", env["PUBLIC_IPV6"], "Provides MTA-STS support"),
+		("mta-sts", "AAAA", env.get('PUBLIC_IPV6'), "Provides MTA-STS support"),
 		("_mta-sts", "TXT", "v=STSv1; id="+datetime.datetime.now().strftime("%Y%m%d%H%M%S")+"Z", "Enables MTA-STS support")
 	]
 
