@@ -304,15 +304,16 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 			records.append((qname, rtype, value, explanation))
 
 	# Adds autoconfiguration A records for all domains.
-	# This allows the following clients to automatically configure email addresses in the respective applications.
-	# autodiscover.* - Z-Push ActiveSync Autodiscover
-	# autoconfig.* - Thunderbird Autoconfig
+	# mta-sts.* - required A record for mta-sts (serving the policy)
 	mta_sts_records = [
 		("mta-sts", "A", env["PUBLIC_IP"], "Provides MTA-STS support"),
 		("mta-sts", "AAAA", env["PUBLIC_IPV6"], "Provides MTA-STS support"),
-		("_mta-sts", "TXT", "v=STSv1; id="+datetime.datetime.now().strftime("%Y%m%d%H%M%S")+"Z", "Enables MTA-STS support"),
-		("_smtp._tls", "TXT", "v=TLSRPTv1", "change to  with v=TLSRPTv1; rua=mailto:email@addres for reporting")
+		("_mta-sts", "TXT", "v=STSv1; id="+datetime.datetime.now().strftime("%Y%m%d%H%M%S")+"Z", "Enables MTA-STS support")
 	]
+
+	# Skip if the user has set a custom _smtp._tls record.
+	if not has_rec("_smtp._tls", "TXT", prefix="v=TLSRPTv1;"):
+		mta_sts_records.append(("_smtp._tls",  "TXT", "v=TLSRPTv1;", "change to a custom record like 'v=TLSRPTv1; rua=mailto:email@address' for reporting"))
 
 	for qname, rtype, value, explanation in mta_sts_records:
 		if value is None or value.strip() == "": continue # skip IPV6 if not set
