@@ -308,12 +308,11 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 	mta_sts_records = [
 		("mta-sts", "A", env["PUBLIC_IP"], "Provides MTA-STS support"),
 		("mta-sts", "AAAA", env.get('PUBLIC_IPV6'), "Provides MTA-STS support"),
-		("_mta-sts", "TXT", "v=STSv1; id="+datetime.datetime.now().strftime("%Y%m%d%H%M%S")+"Z", "Enables MTA-STS support")
+		("_mta-sts", "TXT", "v=STSv1; id=%sZ" % datetime.datetime.now().strftime("%Y%m%d%H%M%S"), "Enables MTA-STS support")
 	]
-
 	# Skip if the user has set a custom _smtp._tls record.
 	if not has_rec("_smtp._tls", "TXT", prefix="v=TLSRPTv1;"):
-		mta_sts_records.append(("_smtp._tls",  "TXT", "v=TLSRPTv1;", "change to a custom record like 'v=TLSRPTv1; rua=mailto:email@address' for reporting"))
+		mta_sts_records.append(("_smtp._tls",  "TXT", "v=TLSRPTv1;", "For reporting, add an mail alias, for example 'tlsrpt@%s' and a custom TXT record like 'v=TLSRPTv1; rua=mailto:tlsrpt@%s' for reporting" % (env["PRIMARY_HOSTNAME"], env["PRIMARY_HOSTNAME"]) ))
 
 	for qname, rtype, value, explanation in mta_sts_records:
 		if value is None or value.strip() == "": continue # skip IPV6 if not set

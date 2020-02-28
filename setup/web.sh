@@ -125,8 +125,7 @@ chmod a+r /var/lib/mailinabox/mozilla-autoconfig.xml
 # Create a generic mta-sts.txt file which is exposed via the
 # nginx configuration at /.well-known/mta-sts.txt
 # more documentation is available on: 
-# https://www.digitalocean.com/community/tutorials/how-to-configure-mta-sts-and-tls-reporting-for-your-domain-using-apache-on-ubuntu-18-04
-
+# https://www.uriports.com/blog/mta-sts-explained/
 cat conf/mta-sts.txt \
         | sed "s/PRIMARY_HOSTNAME/$PRIMARY_HOSTNAME/" \
          > /var/lib/mailinabox/mta-sts.txt
