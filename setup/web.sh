@@ -126,7 +126,9 @@ chmod a+r /var/lib/mailinabox/mozilla-autoconfig.xml
 # nginx configuration at /.well-known/mta-sts.txt
 # more documentation is available on: 
 # https://www.uriports.com/blog/mta-sts-explained/
+
 cat conf/mta-sts.txt \
+        | sed "s/MODE/$MTA_STS/" \
         | sed "s/PRIMARY_HOSTNAME/$PRIMARY_HOSTNAME/" \
          > /var/lib/mailinabox/mta-sts.txt
 chmod a+r /var/lib/mailinabox/mta-sts.txt

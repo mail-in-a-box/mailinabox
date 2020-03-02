@@ -1,4 +1,4 @@
 version: STSv1
-mode: testing
+mode: MODE
 mx: PRIMARY_HOSTNAME
 max_age: 86400
