@@ -11,6 +11,7 @@ import dns.resolver
 
 from mailconfig import get_mail_domains, get_mail_aliases
 from utils import shell, load_env_vars_from_file, safe_domain_name, sort_domains
+from ssl_certificates import get_ssl_certificates, check_certificate
 
 # From https://stackoverflow.com/questions/3026957/how-to-validate-a-domain-name-using-regex-php/16491074#16491074
 # This regular expression matches domain names according to RFCs, it also accepts fqdn with an leading dot,
@@ -306,25 +307,27 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 	# Adds autoconfiguration A records for all domains.
 	# mta-sts.* - required A record for mta-sts (serving the policy)
 
+	primary_cert = get_ssl_certificates(env)[env['PRIMARY_HOSTNAME']]
+	response = check_certificate(env['PRIMARY_HOSTNAME'], primary_cert['certificate'],primary_cert['private-key'])
+	if response[0] == 'OK':
+		mta_sts_records = [
+			("mta-sts", "A", env["PUBLIC_IP"], "Provides MTA-STS support"),
+			("mta-sts", "AAAA", env.get('PUBLIC_IPV6'), "Provides MTA-STS support"),
+			("_mta-sts", "TXT", "v=STSv1; id=%sZ" % datetime.datetime.now().strftime("%Y%m%d%H%M%S"), "Enables MTA-STS support")
+		]
+		# Skip if the user has set a custom _smtp._tls record.
+		if not has_rec("_smtp._tls", "TXT", prefix="v=TLSRPTv1;"):
+			tls_rpt_email = "tlsrpt@%s" % env['PRIMARY_HOSTNAME'] 
+			tls_rpt_string = "";
+			for alias in get_mail_aliases(env):
+				if alias[0] == tls_rpt_email: tls_rpt_string = " rua:%s" % tls_rpt_email
 
-	mta_sts_records = [
-		("mta-sts", "A", env["PUBLIC_IP"], "Provides MTA-STS support"),
-		("mta-sts", "AAAA", env.get('PUBLIC_IPV6'), "Provides MTA-STS support"),
-		("_mta-sts", "TXT", "v=STSv1; id=%sZ" % datetime.datetime.now().strftime("%Y%m%d%H%M%S"), "Enables MTA-STS support")
-	]
-	# Skip if the user has set a custom _smtp._tls record.
-	if not has_rec("_smtp._tls", "TXT", prefix="v=TLSRPTv1;"):
-		tls_rpt_email = "tlsrpt@%s" % env['PRIMARY_HOSTNAME'] 
-		tls_rpt_string = "";
-		for alias in get_mail_aliases(env):
-			if alias[0] == tls_rpt_email: tls_rpt_string = " rua:%s" % tls_rpt_email
+			mta_sts_records.append(("_smtp._tls",  "TXT", "v=TLSRPTv1;%s" % tls_rpt_string, "For reporting, add an mail alias: 'tlsrpt@%s' or add a custom TXT record like 'v=TLSRPTv1; rua=mailto:[youremail]@%s' for reporting" % (env["PRIMARY_HOSTNAME"], env["PRIMARY_HOSTNAME"]) ))
 
-		mta_sts_records.append(("_smtp._tls",  "TXT", "v=TLSRPTv1;%s" % tls_rpt_string, "For reporting, add an mail alias: 'tlsrpt@%s' or add a custom TXT record like 'v=TLSRPTv1; rua=mailto:[youremail]@%s' for reporting" % (env["PRIMARY_HOSTNAME"], env["PRIMARY_HOSTNAME"]) ))
-
-	for qname, rtype, value, explanation in mta_sts_records:
-		if value is None or value.strip() == "": continue # skip IPV6 if not set
-		if not has_rec(qname, rtype):
-			records.append((qname, rtype, value, explanation))
+		for qname, rtype, value, explanation in mta_sts_records:
+			if value is None or value.strip() == "": continue # skip IPV6 if not set
+			if not has_rec(qname, rtype):
+				records.append((qname, rtype, value, explanation))
 
 	# Sort the records. The None records *must* go first in the nsd zone file. Otherwise it doesn't matter.
 	records.sort(key = lambda rec : list(reversed(rec[0].split(".")) if rec[0] is not None else ""))
