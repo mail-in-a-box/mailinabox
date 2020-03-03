@@ -344,10 +344,16 @@ def scan_mail_log_line(line, collector):
 
     # Replaced the dateutil parser for a less clever way of parser that is roughly 4 times faster.
     # date = dateutil.parser.parse(date)
-    date = datetime.datetime.strptime(date, '%b %d %H:%M:%S')
-    date = date.replace(START_DATE.year)
+
+    # date = datetime.datetime.strptime(date, '%b %d %H:%M:%S')
+    # date = date.replace(START_DATE.year)
+
+    # strptime fails on Feb 29 if correct year is not provided. See https://bugs.python.org/issue26460
+    date = datetime.datetime.strptime(str(START_DATE.year) + ' ' + date, '%Y %b %d %H:%M:%S')
+    # print("date:", date)
 
     # Check if the found date is within the time span we are scanning
+    # END_DATE < START_DATE
     if date > START_DATE:
         # Don't process, and halt
         return False
