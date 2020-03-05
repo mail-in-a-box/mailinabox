@@ -307,8 +307,10 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 	# Adds autoconfiguration A records for all domains.
 	# mta-sts.* - required A record for mta-sts (serving the policy)
 
-	primary_cert = get_ssl_certificates(env)[env['PRIMARY_HOSTNAME']]
-	response = check_certificate(env['PRIMARY_HOSTNAME'], primary_cert['certificate'],primary_cert['private-key'])
+	get_prim_cert = get_ssl_certificates(env)[env['PRIMARY_HOSTNAME']]
+	response = check_certificate(env['PRIMARY_HOSTNAME'], get_prim_cert['certificate'],get_prim_cert['private-key'])
+	# we don't want those records on the primary hostname 
+	# and we only want these records if the certificate is valid
 	if response[0] == 'OK':
 		mta_sts_records = [
 			("mta-sts", "A", env["PUBLIC_IP"], "Provides MTA-STS support"),
@@ -318,12 +320,11 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 		# Skip if the user has set a custom _smtp._tls record.
 		if not has_rec("_smtp._tls", "TXT", prefix="v=TLSRPTv1;"):
 			tls_rpt_email = "tlsrpt@%s" % env['PRIMARY_HOSTNAME'] 
-			tls_rpt_string = "";
+			tls_rpt_string = ""
 			for alias in get_mail_aliases(env):
-				if alias[0] == tls_rpt_email: tls_rpt_string = " rua:%s" % tls_rpt_email
-
+				if alias[0] == tls_rpt_email: 
+					tls_rpt_string = " rua=mailto:%s" % tls_rpt_email
 			mta_sts_records.append(("_smtp._tls",  "TXT", "v=TLSRPTv1;%s" % tls_rpt_string, "For reporting, add an mail alias: 'tlsrpt@%s' or add a custom TXT record like 'v=TLSRPTv1; rua=mailto:[youremail]@%s' for reporting" % (env["PRIMARY_HOSTNAME"], env["PRIMARY_HOSTNAME"]) ))
-
 		for qname, rtype, value, explanation in mta_sts_records:
 			if value is None or value.strip() == "": continue # skip IPV6 if not set
 			if not has_rec(qname, rtype):
