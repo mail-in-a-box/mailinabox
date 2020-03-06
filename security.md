@@ -98,7 +98,12 @@ While domain policy records prevent other servers from sending mail with a "From
 
 The box restricts the envelope sender address (also called the return path or MAIL FROM address --- this is different from the "From:" header) that users may put into outbound mail. The envelope sender address must be either their own email address (their SMTP login username) or any alias that they are listed as a permitted sender of. (There is currently no restriction on the contents of the "From:" header.)
 
-Incoming Mail
+### MTA-STS
+
+SMTP MTA Strict Transport Security ([SMTP MTA-STS for short](https://en.wikipedia.org/wiki/Simple_Mail_Transfer_Protocol#SMTP_MTA_Strict_Transport_Security)). 
+
+MTA-STS is a mechanism that instructs an SMTP server that the communication with the other SMTP server MUST be encrypted and that the domain name on the certificate should match the domain in the policy. It uses a combination of DNS and HTTPS to publish a policy that tells the sending party what to do when an encrypted channel can not be negotiated.
+
 -------------
 
 ### Encryption
