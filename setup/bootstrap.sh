@@ -35,14 +35,14 @@ if [ -z "$TAG" ]; then
 
 	else
 		echo "This script must be run on a system running Ubuntu 18.04 or Ubuntu 14.04."
-		exit
+		exit 1
 	fi
 fi
 
 # Are we running as root?
 if [[ $EUID -ne 0 ]]; then
 	echo "This script must be run as root. Did you leave out sudo?"
-	exit
+	exit 1
 fi
 
 # Clone the Mail-in-a-Box repository if it doesn't exist.
@@ -73,7 +73,7 @@ if [ "$TAG" != `git describe` ]; then
 	git fetch --depth 1 --force --prune origin tag $TAG
 	if ! git checkout -q $TAG; then
 		echo "Update failed. Did you modify something in `pwd`?"
-		exit
+		exit 1
 	fi
 	echo
 fi
