@@ -22,7 +22,7 @@ fi
 
 if [ ! -f $1/config.php ]; then
 	echo "This isn't a valid backup location"
-	exit
+	exit 1
 fi
 
 echo "Restoring backup from $1"
