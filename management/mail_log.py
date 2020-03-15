@@ -18,13 +18,13 @@ import utils
 
 
 LOG_FILES = (
-    '/var/log/mail.log',
-    '/var/log/mail.log.1',
-    '/var/log/mail.log.2.gz',
-    '/var/log/mail.log.3.gz',
-    '/var/log/mail.log.4.gz',
-    '/var/log/mail.log.5.gz',
     '/var/log/mail.log.6.gz',
+    '/var/log/mail.log.5.gz',
+    '/var/log/mail.log.4.gz',
+    '/var/log/mail.log.3.gz',
+    '/var/log/mail.log.2.gz',
+    '/var/log/mail.log.1',
+    '/var/log/mail.log',
 )
 
 TIME_DELTAS = OrderedDict([
@@ -80,7 +80,7 @@ def scan_files(collector):
             print("Processing file", fn, "...")
         fn = tmp_file.name if tmp_file else fn
 
-        for line in reverse_readline(fn):
+        for line in readline(fn):
             if scan_mail_log_line(line.strip(), collector) is False:
                 if stop_scan:
                     return
@@ -346,16 +346,22 @@ def scan_mail_log_line(line, collector):
 
     # Replaced the dateutil parser for a less clever way of parser that is roughly 4 times faster.
     # date = dateutil.parser.parse(date)
-    date = datetime.datetime.strptime(date, '%b %d %H:%M:%S')
-    date = date.replace(START_DATE.year)
+
+    # date = datetime.datetime.strptime(date, '%b %d %H:%M:%S')
+    # date = date.replace(START_DATE.year)
+
+    # strptime fails on Feb 29 if correct year is not provided. See https://bugs.python.org/issue26460
+    date = datetime.datetime.strptime(str(START_DATE.year) + ' ' + date, '%Y %b %d %H:%M:%S')
+    # print("date:", date)
 
     # Check if the found date is within the time span we are scanning
+    # END_DATE < START_DATE
     if date > START_DATE:
-        # Don't process, but continue
-        return True
-    elif date < END_DATE:
         # Don't process, and halt
         return False
+    elif date < END_DATE:
+        # Don't process, but continue
+        return True
 
     if service == "postfix/submission/smtpd":
         if SCAN_OUT:
@@ -455,9 +461,9 @@ def scan_postfix_smtpd_line(date, log, collector):
                     if m:
                         message = "domain blocked: " + m.group(2)
 
-                if data["latest"] is None:
-                    data["latest"] = date
-                data["earliest"] = date
+                if data["earliest"] is None:
+                    data["earliest"] = date
+                data["latest"] = date
                 data["blocked"].append((date, sender, message))
 
                 collector["rejected"][user] = data
@@ -489,9 +495,9 @@ def add_login(user, date, protocol_name, host, collector):
                 }
             )
 
-            if data["latest"] is None:
-                data["latest"] = date
-            data["earliest"] = date
+            if data["earliest"] is None:
+                data["earliest"] = date
+            data["latest"] = date
 
             data["totals_by_protocol"][protocol_name] += 1
             data["totals_by_protocol_and_host"][(protocol_name, host)] += 1
@@ -530,9 +536,9 @@ def scan_postfix_lmtp_line(date, log, collector):
             data["received_count"] += 1
             data["activity-by-hour"][date.hour] += 1
 
-            if data["latest"] is None:
-                data["latest"] = date
-            data["earliest"] = date
+            if data["earliest"] is None:
+                data["earliest"] = date
+            data["latest"] = date
 
             collector["received_mail"][user] = data
 
@@ -569,9 +575,9 @@ def scan_postfix_submission_line(date, log, collector):
             data["hosts"].add(client)
             data["activity-by-hour"][date.hour] += 1
 
-            if data["latest"] is None:
-                data["latest"] = date
-            data["earliest"] = date
+            if data["earliest"] is None:
+                data["earliest"] = date
+            data["latest"] = date
 
             collector["sent_mail"][user] = data
 
@@ -580,42 +586,15 @@ def scan_postfix_submission_line(date, log, collector):
 
 # Utility functions
 
-def reverse_readline(filename, buf_size=8192):
-    """ A generator that returns the lines of a file in reverse order
-
-    http://stackoverflow.com/a/23646049/801870
-
+def readline(filename):
+    """ A generator that returns the lines of a file
     """
-
-    with open(filename) as fh:
-        segment = None
-        offset = 0
-        fh.seek(0, os.SEEK_END)
-        file_size = remaining_size = fh.tell()
-        while remaining_size > 0:
-            offset = min(file_size, offset + buf_size)
-            fh.seek(file_size - offset)
-            buff = fh.read(min(remaining_size, buf_size))
-            remaining_size -= buf_size
-            lines = buff.split('\n')
-            # the first line of the buffer is probably not a complete line so
-            # we'll save it and append it to the last line of the next buffer
-            # we read
-            if segment is not None:
-                # if the previous chunk starts right from the beginning of line
-                # do not concat the segment to the last line of new chunk
-                # instead, yield the segment first
-                if buff[-1] is not '\n':
-                    lines[-1] += segment
-                else:
-                    yield segment
-            segment = lines[0]
-            for index in range(len(lines) - 1, 0, -1):
-                if len(lines[index]):
-                    yield lines[index]
-        # Don't yield None if the file was empty
-        if segment is not None:
-            yield segment
+    with open(filename) as file:
+        while True:
+          line = file.readline()
+          if not line:
+              break
+          yield line
 
 
 def user_match(user):
