@@ -304,9 +304,18 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 		if not has_rec(qname, rtype):
 			records.append((qname, rtype, value, explanation))
 
-	# Adds autoconfiguration A records for all domains.
-	# mta-sts.* - required A record for mta-sts (serving the policy)
-
+	# If this is a domain name that there are email addresses configured for, i.e. "something@" 
+	# this domain name, then the domain name is a MTA-STS (https://tools.ietf.org/html/rfc8461) 
+	# Policy Domain. 
+	#
+	# A "_mta-sts" TXT record signals the presence of a MTA-STS policy, and an effectively random policy 
+	# ID is used to signal that a new policy may (or may not) be deployed any time the DNS is 
+	# updated. 
+	# 
+	# The policy itself is served at the "mta-sts" (no underscore) subdomain over HTTPS. The 
+	# TLS certificate used by Postfix for STARTTLS must be a valid certificate for the MX 
+	# name (PRIMARY_HOSTNAME), so we do not set an MTA-STS policy if the certificate is not 
+	# valid (e.g. because it is self-signed and a valid certificate has not yet been provisioned).
 	get_prim_cert = get_ssl_certificates(env)[env['PRIMARY_HOSTNAME']]
 	response = check_certificate(env['PRIMARY_HOSTNAME'], get_prim_cert['certificate'],get_prim_cert['private-key'])
 	# we don't want those records on the primary hostname 
@@ -317,8 +326,10 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 			("mta-sts", "AAAA", env.get('PUBLIC_IPV6'), "Provides MTA-STS support"),
 			("_mta-sts", "TXT", "v=STSv1; id=%sZ" % datetime.datetime.now().strftime("%Y%m%d%H%M%S"), "Enables MTA-STS support")
 		]
-		# Skip if the user has set a custom _smtp._tls record.
+		# Rules can be custom configured accoring to https://tools.ietf.org/html/rfc8460.
+		# Skip if the rules below if the user has set a custom _smtp._tls record.
 		if not has_rec("_smtp._tls", "TXT", prefix="v=TLSRPTv1;"):
+			# if the alias 'tlsrpt@PRIMARY_HOSTNAME' is configured, automaticly, reporting will be enabled to this email address
 			tls_rpt_email = "tlsrpt@%s" % env['PRIMARY_HOSTNAME'] 
 			tls_rpt_string = ""
 			for alias in get_mail_aliases(env):
