@@ -77,9 +77,18 @@ address, so we're suggesting $DEFAULT_PRIMARY_HOSTNAME.
 		$DEFAULT_PRIMARY_HOSTNAME \
 		PRIMARY_HOSTNAME
 
+	# Regular expression to check if the hostname is of the form *.localdomain
+	RE='^.+\.localdomain$'
+	# Regular expressions to check if the hostname is a valid FQDN
+	RE1='^.{4,253}$'
+	RE2='^((xn--)?[[:alnum:]][[:alnum:]\-]{0,61}[[:alnum:]]\.)+(xn--)?[a-zA-Z]{2,63}$'
 	if [ -z "$PRIMARY_HOSTNAME" ]; then
 		# user hit ESC/cancel
-		exit
+		exit 1
+	elif [[ $PRIMARY_HOSTNAME =~ $RE ]]; then
+		echo "Warning: Hostname cannot be *.localdomain."
+	elif ! [[ $PRIMARY_HOSTNAME =~ $RE1 && $PRIMARY_HOSTNAME =~ $RE2 ]]; then
+		echo "Warning: Hostname is not a valid fully qualified domain name (FQDN)."
 	fi
 fi
 
@@ -194,19 +203,53 @@ if [ -z "${STORAGE_ROOT:-}" ]; then
 fi
 
 # Show the configuration, since the user may have not entered it manually.
-echo
-echo "Primary Hostname: $PRIMARY_HOSTNAME"
-echo "Public IP Address: $PUBLIC_IP"
-if [ ! -z "$PUBLIC_IPV6" ]; then
-	echo "Public IPv6 Address: $PUBLIC_IPV6"
+# Adapted from: https://github.com/tdulcet/Linux-System-Information/blob/master/info.sh
+echo -e "\nLinux Distribution:\t\t${PRETTY_NAME:-$ID-$VERSION_ID}"
+echo -e "Linux Kernel:\t\t\t$KERNEL"
+mapfile -t CPU < <(sed -n 's/^model name[[:space:]]*: *//p' /proc/cpuinfo | uniq)
+if [ -n "$CPU" ]; then
+	echo -e "Processor (CPU):\t\t${CPU[*]}"
 fi
-if [ "$PRIVATE_IP" != "$PUBLIC_IP" ]; then
-	echo "Private IP Address: $PRIVATE_IP"
+CPU_THREADS=$(nproc --all)
+CPU_CORES=$(( CPU_THREADS / $(lscpu | grep -i '^thread(s) per core' | sed -n 's/^.\+:[[:blank:]]*//p') ))
+echo -e "CPU Cores/Threads:\t\t$CPU_CORES/$CPU_THREADS"
+echo -e "Architecture:\t\t\t$HOSTTYPE (${ARCHITECTURE}-bit)"
+echo -e "Total memory (RAM):\t\t$(printf "%'d" $((TOTAL_PHYSICAL_MEM / 1024))) MiB ($(printf "%'d" $((((TOTAL_PHYSICAL_MEM * 1024) / 1000) / 1000))) MB)"
+echo -e "Total swap space:\t\t$(printf "%'d" $((TOTAL_SWAP / 1024))) MiB ($(printf "%'d" $((((TOTAL_SWAP * 1024) / 1000) / 1000))) MB)"
+if command -v lspci >/dev/null; then
+	mapfile -t GPU < <(lspci 2>/dev/null | grep -i 'vga\|3d\|2d' | sed -n 's/^.*: //p')
 fi
-if [ "$PRIVATE_IPV6" != "$PUBLIC_IPV6" ]; then
-	echo "Private IPv6 Address: $PRIVATE_IPV6"
+if [ -n "$GPU" ]; then
+	echo -e "Graphics Processor (GPU):\t${GPU[*]}"
 fi
-if [ -f /usr/bin/git ] && [ -d .git ]; then
-	echo "Mail-in-a-Box Version: " $(git describe)
+echo -e "Computer name:\t\t\t$HOSTNAME"
+echo -e "Primary Hostname:\t\t$PRIMARY_HOSTNAME"
+if [ -n "$PUBLIC_IPV6" ]; then
+	echo -e "Public IPv4 Address:\t\t$PUBLIC_IP"
+	echo -e "Public IPv6 Address:\t\t$PUBLIC_IPV6"
+else
+	echo -e "Public IP Address:\t\t$PUBLIC_IP"
 fi
-echo
+if [ -n "$PRIVATE_IPV6" ]; then
+	if [ "$PRIVATE_IP" != "$PUBLIC_IP" ]; then
+		echo -e "Private IPv4 Address:\t\t$PRIVATE_IP"
+	fi
+	if [ "$PRIVATE_IPV6" != "$PUBLIC_IPV6" ]; then
+		echo -e "Private IPv6 Address:\t\t$PRIVATE_IPV6"
+	fi
+else
+	if [ "$PRIVATE_IP" != "$PUBLIC_IP" ]; then
+		echo -e "Private IP Address:\t\t$PRIVATE_IP"
+	fi
+fi
+TIME_ZONE=$(timedatectl 2>/dev/null | grep -i 'time zone:\|timezone:' | sed -n 's/^.*: //p')
+echo -e "Time zone:\t\t\t$TIME_ZONE\n"
+if command -v systemd-detect-virt >/dev/null && CONTAINER=$(systemd-detect-virt -c); then
+	echo -e "Virtualization container:\t$CONTAINER\n"
+fi
+if command -v systemd-detect-virt >/dev/null && VM=$(systemd-detect-virt -v); then
+	echo -e "Virtual Machine (VM) hypervisor:$VM\n"
+fi
+if command -v git >/dev/null && [ -d .git ]; then
+	echo -e "Mail-in-a-Box Version:\t\t$(git describe)\n"
+fi

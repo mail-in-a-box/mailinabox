@@ -35,9 +35,10 @@ if [ -z "`tools/mail.py user`" ]; then
 		else
 			# Use me@PRIMARY_HOSTNAME
 			EMAIL_ADDR=me@$PRIMARY_HOSTNAME
-			EMAIL_PW=12345678
+			EMAIL_PW=$(openssl rand -base64 8)
 			echo
-			echo "Creating a new administrative mail account for $EMAIL_ADDR with password $EMAIL_PW."
+			echo -e "Creating a new administrative mail account for: $EMAIL_ADDR\n\t\t\t\t with password: $EMAIL_PW"
+			echo "Warning: This is a security risk. Please change the password after your first login."
 			echo
 		fi
 	else

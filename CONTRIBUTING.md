@@ -20,11 +20,13 @@ _If you're seeing an error message about your *IP address being listed in the Sp
 
 ### Modifying your `hosts` file
 
-After a while, Mail-in-a-Box will be available at `192.168.50.4` (unless you changed that in your `Vagrantfile`). To be able to use the web-based bits, we recommend to add a hostname to your `hosts` file:
+After a while, Mail-in-a-Box will be available at `192.168.50.4` (unless you changed that in your `Vagrantfile`). To be able to use the web-based bits, we recommend adding a hostname to your `hosts` file:
 
-    $ echo "192.168.50.4 mailinabox.lan" | sudo tee -a /etc/hosts
+    $ echo -e "192.168.50.4\tmailinabox.lan" | sudo tee -a /etc/hosts
+    or
+    $ sudo sed -i "s/^127.0.1.1.*/192.168.50.4\tmailinabox.lan/" /etc/hosts
 
-You should now be able to navigate to https://mailinabox.lan/admin using your browser. There should be an initial admin user with the name `me@mailinabox.lan` and the password `12345678`.
+You should now be able to navigate to https://mailinabox.lan/admin using your browser. There should be an initial admin user with the name `me@mailinabox.lan` and the randomly generated password from the output.
 
 ### Making changes
 

@@ -2,7 +2,9 @@
 #########################################################
 # This script is intended to be run like this:
 #
-#   curl https://mailinabox.email/setup.sh | sudo bash
+#   wget https://mailinabox.email/setup.sh -qO - | sudo bash -s
+#   or
+#   curl -s https://mailinabox.email/setup.sh | sudo bash -s
 #
 #########################################################
 
@@ -39,10 +41,27 @@ if [ -z "$TAG" ]; then
 	fi
 fi
 
+if [[ "$#" -ne 0 ]]; then
+	echo "Usage: \"wget https://mailinabox.email/setup.sh -qO - | sudo bash -s\" or \"curl -s https://mailinabox.email/setup.sh | sudo bash -s\"" >&2
+	exit 1
+fi
+
 # Are we running as root?
 if [[ $EUID -ne 0 ]]; then
-	echo "This script must be run as root. Did you leave out sudo?"
-	exit
+	echo "This script must be run as root. Did you leave out sudo?" >&2
+	exit 1
+fi
+
+# Check if on Linux
+if ! echo "$OSTYPE" | grep -iq "linux"; then
+	echo "Error: This script must be run on Linux." >&2
+	exit 1
+fi
+
+# Check connectivity
+if ! ping -q -c 3 mailinabox.email > /dev/null 2>&1; then
+	echo "Error: Could not reach mailinabox.email, please check your internet connection and run this script again." >&2
+	exit 1
 fi
 
 # Clone the Mail-in-a-Box repository if it doesn't exist.

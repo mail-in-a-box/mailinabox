@@ -2,6 +2,11 @@
 # This is the entry point for configuring the system.
 #####################################################
 
+if [[ "$#" -ne 0 ]]; then
+	echo "Usage: sudo $0" >&2
+	exit 1
+fi
+
 source setup/functions.sh # load our functions
 
 # Check system setup: Are we running as root on Ubuntu 18.04 on a
