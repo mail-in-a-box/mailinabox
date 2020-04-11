@@ -214,3 +214,5 @@ function git_clone {
 	mv $TMPPATH/$SUBDIR $TARGETPATH
 	rm -rf $TMPPATH
 }
+
+export PHP_VERSION="7.3" # Expected php version

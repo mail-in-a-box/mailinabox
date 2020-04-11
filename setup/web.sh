@@ -2,8 +2,6 @@
 # HTTP: Turn on a web server serving static files
 #################################################
 
-PHP_VERSION="7.3" # Expected php version
-
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
