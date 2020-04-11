@@ -4,7 +4,7 @@ if [[ $EUID -ne 0 ]]; then
 	echo
 	echo "sudo $0"
 	echo
-	exit
+	exit 1
 fi
 
 # Check that we are running on Ubuntu 18.04 LTS (or 18.04.xx).
@@ -14,7 +14,7 @@ if [ "`lsb_release -d | sed 's/.*:\s*//' | sed 's/18\.04\.[0-9]/18.04/' `" != "U
 	lsb_release -d | sed 's/.*:\s*//'
 	echo
 	echo "We can't write scripts that run on every possible setup, sorry."
-	exit
+	exit 1
 fi
 
 # Check that we have enough memory.
