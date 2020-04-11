@@ -7,9 +7,9 @@ if [[ $EUID -ne 0 ]]; then
 	exit
 fi
 
-# Check that we are running on Ubuntu 18.04 LTS (or 18.04.xx).
-if [ "`lsb_release -d | sed 's/.*:\s*//' | sed 's/18\.04\.[0-9]/18.04/' `" != "Ubuntu 18.04 LTS" ]; then
-	echo "Mail-in-a-Box only supports being installed on Ubuntu 18.04, sorry. You are running:"
+# Check that we are running on Debian GNU/Linux
+if [ "`lsb_release -d | sed 's/.*:\s*//' | sed -r 's/ [[:digit:]]+ (.*)//' `" != "Debian GNU/Linux" ]; then
+	echo "Mail-in-a-Box only supports being installed on Debian (ideally, 10 or later), sorry. You are running:"
 	echo
 	lsb_release -d | sed 's/.*:\s*//'
 	echo

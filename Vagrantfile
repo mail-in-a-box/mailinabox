@@ -2,7 +2,12 @@
 # vi: set ft=ruby :
 
 Vagrant.configure("2") do |config|
-  config.vm.box = "ubuntu/bionic64"
+  # Recreate our conditions
+  config.vm.box = "generic/debian10"
+  config.vm.provider "hyperv" do |v|
+    v.memory = 1024
+    v.cpus = 1
+  end
 
   # Network config: Since it's a mail server, the machine must be connected
   # to the public web. However, we currently don't want to expose SSH since
