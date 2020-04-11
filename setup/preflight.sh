@@ -4,7 +4,7 @@ if [[ $EUID -ne 0 ]]; then
 	echo
 	echo "sudo $0"
 	echo
-	exit
+	exit 1
 fi
 
 # Check that we are running on Debian GNU/Linux
@@ -14,7 +14,7 @@ if [ "`lsb_release -d | sed 's/.*:\s*//' | sed -r 's/ [[:digit:]]+ (.*)//' `" !=
 	lsb_release -d | sed 's/.*:\s*//'
 	echo
 	echo "We can't write scripts that run on every possible setup, sorry."
-	exit
+	exit 1
 fi
 
 # Check that we have enough memory.
