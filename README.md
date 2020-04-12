@@ -1,5 +1,32 @@
-Mail-in-a-Box
-=============
+(Power) Mail-in-a-Box
+=====================
+
+This is a fork of MiaB (duh), hacked and tuned to my needs:
+
+✅ - **Done**
+
+👨‍💻 - **Not there yet, but soon!**
+
+💤 - **I did not begin this part yet!**
+
+- ✅ Proper support for Debian (I recommend Debian Buster or later, but if it works on your machine, it works!);
+
+- - I changed the pre-flight checks to accept Debian and Debian only. If you think you can also make this fork Ubuntu-compatible, shoot a PR or something.
+
+- 💤 Native support for SMTP relays (For example: SendGrid);
+
+- 💤 Ability for "static" pages to use PHP (e.g. host a domain shortener);
+
+- 💤 Custom pages should not have their pages defaulting to the MiaB services (`/admin`, `/mail`, etc.);
+
+- 💤 Possibility of disabling some services (\*cough\* NextCloud \*cough\*);
+
+- 💤 Anything else I might need to use;
+
+All in all, I think I should rename this to something like "Central [Clown Computing](https://www.urbandictionary.com/define.php?term=clown%20computing)", since I'm trying to cram as many services as possible into that poor machine (Spending 5$ is better than spending 10$)
+
+Original Documentation
+======================
 
 By [@JoshData](https://github.com/JoshData) and [contributors](https://github.com/mail-in-a-box/mailinabox/graphs/contributors).
 
@@ -15,7 +42,7 @@ Our goals are to:
 * Promote [decentralization](http://redecentralize.org/), innovation, and privacy on the web.
 * Have automated, auditable, and [idempotent](https://web.archive.org/web/20190518072631/https://sharknet.us/2014/02/01/automated-configuration-management-challenges-with-idempotency/) configuration.
 * **Not** make a totally unhackable, NSA-proof server.
-* **Not** make something customizable by power users.
+* ~~**Not** make something customizable by power users.~~
 
 Additionally, this project has a [Code of Conduct](CODE_OF_CONDUCT.md), which supersedes the goals above. Please review it when joining our community.
 
@@ -84,7 +111,7 @@ Post your question on the [discussion forum](https://discourse.mailinabox.email/
 Contributing and Development
 ----------------------------
 
-Mail-in-a-Box is an open source project. Your contributions and pull requests are welcome. See [CONTRIBUTING](CONTRIBUTING.md) to get started. 
+Mail-in-a-Box is an open source project. Your contributions and pull requests are welcome. See [CONTRIBUTING](CONTRIBUTING.md) to get started.
 
 
 The Acknowledgements
