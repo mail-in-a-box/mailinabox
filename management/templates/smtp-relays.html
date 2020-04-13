@@ -1,6 +1,14 @@
 <style>
 </style>
 
+<script>
+	function checklocks() {
+		let use_auth = document.getElementById("relay_use_auth").checked
+		document.getElementById("relay_auth_user").disabled = !use_auth
+		document.getElementById("relay_auth_pass").disabled = !use_auth
+	}
+</script>
+
 <h2>SMTP Relays</h2>
 
 <p>SMTP Relays are third-party services you can hand off the responsability of getting the mail delivered. They
@@ -23,6 +31,13 @@
 							<input type="text" class="form-control" id="relay_host" placeholder="host.domain.tld">
 						</div>
 					</td>
+					<td style="padding: 0 1em; font-weight: bold;">:587</td>
+				</tr>
+
+				<tr>
+					<label for="vehicle1"> Use authentication</label>
+					<input type="checkbox" id="relay_use_auth" name="relay_use_auth" value="true"
+						onclick="checklocks();">
 				</tr>
 
 				<tr>
