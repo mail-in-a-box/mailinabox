@@ -278,9 +278,9 @@ def run_network_checks(env, output):
 	if ret == 0:
 		output.print_ok("Outbound mail (SMTP port 25) is not blocked.")
 	else:
-		output.print_error("""Outbound mail (SMTP port 25) seems to be blocked by your network. You
-			will not be able to send any mail. Many residential networks block port 25 to prevent hijacked
-			machines from being able to send spam. A quick connection test to Google's mail server on port 25
+		output.print_warning("""Outbound mail (SMTP port 25) seems to be blocked by your network. You
+			will not be able to send any mail without a SMTP relay. Many residential networks block port 25 to prevent
+			hijacked machines from being able to send spam. A quick connection test to Google's mail server on port 25
 			failed.""")
 
 	# Stop if the IPv4 address is listed in the ZEN Spamhaus Block List.
