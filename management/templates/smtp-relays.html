@@ -3,4 +3,22 @@
 
 <h2>SMTP Relays</h2>
 
-<p>Coming Soon™</p>
+<p>SMTP Relays are third-party services you can hand off the responsability of getting the mail delivered. They
+	can be useful when, for example, port 25 is blocked.</p>
+
+<p>Here, you can configure an authenticated SMTP relay (for example, <a href="https://letsencrypt.org/"
+		target="_blank">SendGrid</a>) over port 587.</p>
+
+<div id="smtp_relay_config">
+	<p3>SMTP Relay Configuration</p3>
+	<form class="form-horizontal" role="form" onsubmit="return false;">
+		<div class="form-group">
+			<label for="relay_host" class="col-sm-1 control-label">Relay Host</label>
+			<input type="text" class="form-control" id="relay_host" placeholder="subdomain">
+		</div>
+
+		<div class="col-sm-offset-1 col-sm-11">
+			<button type="submit" class="btn btn-primary">Update</button>
+		</div>
+	</form>
+</div>
