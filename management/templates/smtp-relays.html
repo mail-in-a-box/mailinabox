@@ -10,11 +10,23 @@
 		target="_blank">SendGrid</a>) over port 587.</p>
 
 <div id="smtp_relay_config">
-	<p3>SMTP Relay Configuration</p3>
+	<h3>SMTP Relay Configuration</h3>
 	<form class="form-horizontal" role="form" onsubmit="return false;">
 		<div class="form-group">
 			<label for="relay_host" class="col-sm-1 control-label">Relay Host</label>
-			<input type="text" class="form-control" id="relay_host" placeholder="subdomain">
+			<div class="col-sm-10">
+				<input type="text" class="form-control" id="relay_host" placeholder="host.domain.tld">
+			</div>
+
+			<label for="relay_auth_user" class="col-sm-1 control-label">Relay Host</label>
+			<div class="col-sm-10">
+				<input type="text" class="form-control" id="relay_auth_user" placeholder="user">
+			</div>
+
+			<label for="relay_auth_pass" class="col-sm-1 control-label">Relay Host</label>
+			<div class="col-sm-10">
+				<input type="password" class="form-control" id="relay_auth_pass" placeholder="password">
+			</div>
 		</div>
 
 		<div class="col-sm-offset-1 col-sm-11">
