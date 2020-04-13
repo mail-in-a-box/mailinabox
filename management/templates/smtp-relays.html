@@ -13,26 +13,38 @@
 	<h3>SMTP Relay Configuration</h3>
 	<form class="form-horizontal" role="form" onsubmit="return false;">
 		<div class="form-group">
-			<table>
+			<table style="max-width: 400px">
 				<tr>
-					<label for="relay_host" class="col-sm-1 control-label">Relay Host</label>
-					<div class="col-sm-10">
-						<input type="text" class="form-control" id="relay_host" placeholder="host.domain.tld">
-					</div>
+					<td>
+						<label for="relay_host" class="col-sm-1 control-label">Relay Host</label>
+					</td>
+					<td>
+						<div class="col-sm-10">
+							<input type="text" class="form-control" id="relay_host" placeholder="host.domain.tld">
+						</div>
+					</td>
 				</tr>
 
 				<tr>
-					<label for="relay_auth_user" class="col-sm-1 control-label">Relay Host</label>
-					<div class="col-sm-10">
-						<input type="text" class="form-control" id="relay_auth_user" placeholder="user">
-					</div>
+					<td>
+						<label for="relay_auth_user" class="col-sm-1 control-label">Host Username</label>
+					</td>
+					<td>
+						<div class="col-sm-10">
+							<input type="text" class="form-control" id="relay_auth_user" placeholder="user">
+						</div>
+					</td>
 				</tr>
 
 				<tr>
-					<label for="relay_auth_pass" class="col-sm-1 control-label">Relay Host</label>
-					<div class="col-sm-10">
-						<input type="password" class="form-control" id="relay_auth_pass" placeholder="password">
-					</div>
+					<td>
+						<label for="relay_auth_pass" class="col-sm-1 control-label">Host Password/Key</label>
+					</td>
+					<td>
+						<div class="col-sm-10">
+							<input type="password" class="form-control" id="relay_auth_pass" placeholder="password">
+						</div>
+					</td>
 				</tr>
 			</table>
 		</div>
