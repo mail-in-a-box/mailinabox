@@ -334,7 +334,7 @@ def ssl_get_status():
 
 	# What domains can we provision certificates for? What unexpected problems do we have?
 	provision, cant_provision = get_certificates_to_provision(env, show_valid_certs=False)
-	
+
 	# What's the current status of TLS certificates on all of the domain?
 	domains_status = get_web_domains_info(env)
 	domains_status = [
@@ -519,6 +519,16 @@ def privacy_status_set():
 	config["privacy"] = (request.form.get('value') == "private")
 	utils.write_settings(config, env)
 	return "OK"
+
+@app.route('/system/smtp/relay', methods=["GET"])
+@authorized_personnel_only
+def smtp_relay_get():
+	pass
+
+@app.route('/system/smtp/relay', methods=["POST"])
+@authorized_personnel_only
+def smtp_relay_set():
+	pass
 
 # MUNIN
 
