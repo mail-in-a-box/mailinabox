@@ -13,7 +13,7 @@ This is a fork of MiaB (duh), hacked and tuned to my needs:
 
 - - I changed the pre-flight checks to accept Debian and Debian only. If you think you can also make this fork Ubuntu-compatible, shoot a PR or something.
 
-- 💤 Native support for SMTP relays (For example: SendGrid);
+- 👨‍💻 Native support for SMTP relays (For example: SendGrid);
 
 - 💤 Ability for "static" pages to use PHP (e.g. host a domain shortener);
 
