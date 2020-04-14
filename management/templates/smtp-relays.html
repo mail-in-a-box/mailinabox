@@ -2,15 +2,34 @@
 </style>
 
 <script>
-	function checkfields() {
-		let use_relay = document.getElementById("use_relay").checked
-		let use_auth = document.getElementById("relay_use_auth").checked
+	const use_relay = document.getElementById("use_relay")
+	const relay_host = document.getElementById("relay_host")
+	const relay_use_auth = document.getElementById("relay_use_auth")
+	const relay_auth_user = document.getElementById("relay_auth_user")
+	const relay_auth_pass = document.getElementById("relay_auth_pass")
 
-		document.getElementById("relay_host").disabled = !use_relay
-		document.getElementById("relay_use_auth").disabled = !use_relay
-		document.getElementById("relay_auth_user").disabled = !(use_relay && use_auth)
-		document.getElementById("relay_auth_pass").disabled = !(use_relay && use_auth)
+	api(
+		"/system/smtp/relay",
+		"GET",
+		{},
+		data => {
+
+		}
+	)
+
+	function checkfields() {
+		let relay_enabled = use_relay.checked
+		let auth_enabled = relay_use_auth.checked
+
+		relay_host.disabled = !relay_enabled
+		relay_use_auth.disabled = !relay_enabled
+		relay_auth_auth.disabled = !(relay_enabled && auth_enabled)
+		relay_auth_pass.disabled = !(relay_enabled && auth_enabled)
 	}
+
+	checkfields()
+
+
 </script>
 
 <h2>SMTP Relays</h2>

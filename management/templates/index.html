@@ -376,9 +376,10 @@
 		var current_panel = null;
 		var switch_back_to_panel = null;
 		function show_panel(panelid) {
-			if (panelid.getAttribute)
+			if (panelid.getAttribute) {
 				// we might be passed an HTMLElement <a>.
 				panelid = panelid.getAttribute('href').substring(1);
+			}
 
 			$('.admin_panel').hide();
 			$('#panel_' + panelid).show();
