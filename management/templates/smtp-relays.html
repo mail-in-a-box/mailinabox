@@ -8,15 +8,6 @@
 	const relay_auth_user = document.getElementById("relay_auth_user")
 	const relay_auth_pass = document.getElementById("relay_auth_pass")
 
-	api(
-		"/system/smtp/relay",
-		"GET",
-		{},
-		data => {
-
-		}
-	)
-
 	function checkfields() {
 		let relay_enabled = use_relay.checked
 		let auth_enabled = relay_use_auth.checked
@@ -27,8 +18,20 @@
 		relay_auth_pass.disabled = !(relay_enabled && auth_enabled)
 	}
 
-	checkfields()
+	api(
+		"/system/smtp/relay",
+		"GET",
+		{},
+		data => {
+			use_relay.checked = data.enabled
+			relay_host.value = data.host
+			relay_use_auth.checked = data.auth_enabled
+			relay_auth_user.value = data.user
+			relay_auth_pass.value = ""
 
+			checkfields()
+		}
+	)
 
 </script>
 
