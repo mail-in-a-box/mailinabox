@@ -1,40 +1,6 @@
 <style>
 </style>
 
-<script>
-	const use_relay = document.getElementById("use_relay")
-	const relay_host = document.getElementById("relay_host")
-	const relay_use_auth = document.getElementById("relay_use_auth")
-	const relay_auth_user = document.getElementById("relay_auth_user")
-	const relay_auth_pass = document.getElementById("relay_auth_pass")
-
-	function checkfields() {
-		let relay_enabled = use_relay.checked
-		let auth_enabled = relay_use_auth.checked
-
-		relay_host.disabled = !relay_enabled
-		relay_use_auth.disabled = !relay_enabled
-		relay_auth_auth.disabled = !(relay_enabled && auth_enabled)
-		relay_auth_pass.disabled = !(relay_enabled && auth_enabled)
-	}
-
-	api(
-		"/system/smtp/relay",
-		"GET",
-		{},
-		data => {
-			use_relay.checked = data.enabled
-			relay_host.value = data.host
-			relay_use_auth.checked = data.auth_enabled
-			relay_auth_user.value = data.user
-			relay_auth_pass.value = ""
-
-			checkfields()
-		}
-	)
-
-</script>
-
 <h2>SMTP Relays</h2>
 
 <p>SMTP Relays are third-party services you can hand off the responsability of getting the mail delivered. They
@@ -113,3 +79,36 @@
 		</div>
 	</form>
 </div>
+
+<script>
+	const use_relay = document.getElementById("use_relay")
+	const relay_host = document.getElementById("relay_host")
+	const relay_use_auth = document.getElementById("relay_use_auth")
+	const relay_auth_user = document.getElementById("relay_auth_user")
+	const relay_auth_pass = document.getElementById("relay_auth_pass")
+
+	function checkfields() {
+		let relay_enabled = use_relay.checked
+		let auth_enabled = relay_use_auth.checked
+
+		relay_host.disabled = !relay_enabled
+		relay_use_auth.disabled = !relay_enabled
+		relay_auth_auth.disabled = !(relay_enabled && auth_enabled)
+		relay_auth_pass.disabled = !(relay_enabled && auth_enabled)
+	}
+
+	api(
+		"/system/smtp/relay",
+		"GET",
+		{},
+		data => {
+			use_relay.checked = data.enabled
+			relay_host.value = data.host
+			relay_use_auth.checked = data.auth_enabled
+			relay_auth_user.value = data.user
+			relay_auth_pass.value = ""
+
+			checkfields()
+		}
+	)
+</script>
