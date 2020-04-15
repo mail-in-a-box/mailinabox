@@ -93,7 +93,7 @@
 
 		relay_host.disabled = !relay_enabled
 		relay_use_auth.disabled = !relay_enabled
-		relay_auth_auth.disabled = !(relay_enabled && auth_enabled)
+		relay_auth_user.disabled = !(relay_enabled && auth_enabled)
 		relay_auth_pass.disabled = !(relay_enabled && auth_enabled)
 	}
 
@@ -102,6 +102,7 @@
 		"GET",
 		{},
 		data => {
+			console.log("Hi!")
 			use_relay.checked = data.enabled
 			relay_host.value = data.host
 			relay_use_auth.checked = data.auth_enabled
