@@ -97,7 +97,7 @@
 		relay_auth_pass.disabled = !(relay_enabled && auth_enabled)
 	}
 
-	api(
+	$(api(
 		"/system/smtp/relay",
 		"GET",
 		{},
@@ -111,5 +111,5 @@
 
 			checkfields()
 		}
-	)
+	))
 </script>
