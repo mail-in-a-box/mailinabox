@@ -523,11 +523,12 @@ def privacy_status_set():
 @app.route('/system/smtp/relay', methods=["GET"])
 @authorized_personnel_only
 def smtp_relay_get():
+	config = utils.load_settings(env)
 	return {
-		"enabled": (env["SMTP_RELAY_ENABLED"] == "true"),
-		"host": env["SMTP_RELAY_HOST"],
-		"auth_enabled": (env["SMTP_RELAY_AUTH"] == "true"),
-		"user": env["SMTP_RELAY_USER"]
+		"enabled": (config.get("SMTP_RELAY_ENABLED", "true") == "true"),
+		"host": config.get("SMTP_RELAY_HOST", ""),
+		"auth_enabled": (config.get("SMTP_RELAY_AUTH", "false") == "true"),
+		"user": config.get("SMTP_RELAY_USER", "")
 	}
 
 @app.route('/system/smtp/relay', methods=["POST"])
@@ -544,7 +545,7 @@ def smtp_relay_set():
 		config["SMTP_RELAY_USER"] = newconf.get("user")
 		utils.write_settings(config, env)
 		# Restart Postfix
-		return "OK"
+		return utils.shell("check_output", ["/usr/bin/systemctl", "restart", "postfix"], capture_stderr=True)
 	except Exception as e:
 		return (str(e), 500)
 

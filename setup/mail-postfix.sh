@@ -273,13 +273,6 @@ touch /etc/postfix/sasl_passwd
 chmod 600 /etc/postfix/sasl_passwd
 postmap /etc/postfix/sasl_passwd
 
-# Store those configurations in the mailinabox.conf file
-tools/editconf.py /etc/mailinabox.conf \
-	SMTP_RELAY_ENABLED=false \
-	SMTP_RELAY_HOST="" \
-	SMTP_RELAY_AUTH=false \
-	SMTP_RELAY_USER=""
-
 # Allow the two SMTP ports in the firewall.
 
 ufw_allow smtp
