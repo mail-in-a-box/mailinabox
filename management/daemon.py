@@ -523,18 +523,31 @@ def privacy_status_set():
 @app.route('/system/smtp/relay', methods=["GET"])
 @authorized_personnel_only
 def smtp_relay_get():
-	# Just return something for now.
 	return {
-		"enabled": False,
-		"host": "",
-		"auth_enabled": True,
-		"user": ""
+		"enabled": (env["SMTP_RELAY_ENABLED"] == "true"),
+		"host": env["SMTP_RELAY_HOST"],
+		"auth_enabled": (env["SMTP_RELAY_AUTH"] == "true"),
+		"user": env["SMTP_RELAY_USER"]
 	}
 
 @app.route('/system/smtp/relay', methods=["POST"])
 @authorized_personnel_only
 def smtp_relay_set():
-	pass
+	config = utils.load_settings(env)
+	newconf = request.form
+	try
+		# Write on Postfix config
+		# Write on daemon env
+		config["SMTP_RELAY_ENABLED"] = "true" if newconf.get("enabled") else "false"
+		config["SMTP_RELAY_HOST"] = newconf.get("host")
+		config["SMTP_RELAY_AUTH"] = "true" if newconf.get("auth_enabled") else "false"
+		config["SMTP_RELAY_USER"] = newconf.get("user")
+		utils.write_settings(config, env)
+		# Restart Postfix
+		return "OK"
+	except Exception e:
+		return (str(e), 500)
+
 
 # MUNIN
 

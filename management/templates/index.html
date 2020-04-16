@@ -341,7 +341,7 @@
 				return output;
 			}
 
-			function default_error(text, xhr) {
+			function default_error(_, xhr) {
 				if (xhr.status != 403) // else handled below
 					show_modal_error("Error", "Something went wrong, sorry.")
 			}
@@ -371,7 +371,8 @@
 						// Credentials are no longer valid. Try to login again.
 						var p = current_panel;
 						show_panel('login');
-						switch_back_to_panel = p;
+						// No use of going back
+						switch_back_to_panel = current_panel;
 					}
 				}
 			})
