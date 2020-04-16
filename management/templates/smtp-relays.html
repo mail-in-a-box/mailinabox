@@ -11,7 +11,7 @@
 
 <div id="smtp_relay_config">
 	<h3>SMTP Relay Configuration</h3>
-	<form class="form-horizontal" role="form" onsubmit="return false;">
+	<form class="form-horizontal" role="form" onsubmit="set_smtp_relay_config(); return false;">
 		<div class="form-group">
 			<table id="smtp-relays" class="table" style="width: 600px">
 				<tr>
@@ -103,7 +103,6 @@
 			"GET",
 			{},
 			data => {
-				console.log("Hi!")
 				use_relay.checked = data.enabled
 				relay_host.value = data.host
 				relay_use_auth.checked = data.auth_enabled
@@ -111,6 +110,25 @@
 				relay_auth_pass.value = ""
 
 				checkfields()
+			}
+		)
+	}
+
+	function set_smtp_relay_config() {
+		api(
+			"/system/smtp/relay",
+			"POST",
+			{
+				enabled: use_relay.checked,
+				host: relay_host.value,
+				auth_enabled: relay_use_auth.checked,
+				user: relay_auth_user.value,
+				key: relay_auth_pass.value
+			},
+			() => {
+				show_modal_error("Done!", "The configuration has been updated and Postfix was restarted successfully. Please make sure everything is functioning as intended.", () => {
+					return false
+				})
 			}
 		)
 	}
