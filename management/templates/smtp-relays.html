@@ -13,7 +13,7 @@
 	<h3>SMTP Relay Configuration</h3>
 	<form class="form-horizontal" role="form" onsubmit="return false;">
 		<div class="form-group">
-			<table style="width: 600px">
+			<table id="smtp-relays" class="table" style="width: 600px">
 				<tr>
 					<td>
 						<label for="use_relay" class="col-sm-1 control-label">Use Relay?</label>
@@ -97,19 +97,22 @@
 		relay_auth_pass.disabled = !(relay_enabled && auth_enabled)
 	}
 
-	$(api(
-		"/system/smtp/relay",
-		"GET",
-		{},
-		data => {
-			console.log("Hi!")
-			use_relay.checked = data.enabled
-			relay_host.value = data.host
-			relay_use_auth.checked = data.auth_enabled
-			relay_auth_user.value = data.user
-			relay_auth_pass.value = ""
+	function show_smtp_relays() {
+		$('#smtp-relays tbody').html("<tr><td colspan='2' class='text-muted'>Loading...</td></tr>")
+		api(
+			"/system/smtp/relay",
+			"GET",
+			{},
+			data => {
+				console.log("Hi!")
+				use_relay.checked = data.enabled
+				relay_host.value = data.host
+				relay_use_auth.checked = data.auth_enabled
+				relay_auth_user.value = data.user
+				relay_auth_pass.value = ""
 
-			checkfields()
-		}
-	))
+				checkfields()
+			}
+		)
+	}
 </script>
