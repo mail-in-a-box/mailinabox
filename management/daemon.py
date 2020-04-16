@@ -525,10 +525,10 @@ def privacy_status_set():
 def smtp_relay_get():
 	# Just return something for now.
 	return {
-		enabled = False,
-		host = "",
-		auth_enabled = True,
-		user = ""
+		"enabled": False,
+		"host": "",
+		"auth_enabled": True,
+		"user": ""
 	}
 
 @app.route('/system/smtp/relay', methods=["POST"])
