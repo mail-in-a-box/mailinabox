@@ -260,6 +260,26 @@ chmod +x /etc/cron.daily/mailinabox-postgrey-whitelist
 tools/editconf.py /etc/postfix/main.cf \
 	message_size_limit=134217728
 
+# Store default configurations for SMTP relays:
+tools/editconf.py /etc/postfix/main.cf \
+	smtp_sasl_auth_enable=no \
+	smtp_sasl_password_maps="hash:/etc/postfix/sasl_passwd" \
+	smtp_sasl_security_options=anonymous \
+	smtp_sasl_tls_security_options=anonymous \
+	smtp_tls_security_level=encrypt \
+	header_size_limit=4096000
+
+touch /etc/postfix/sasl_passwd
+chmod 600 /etc/postfix/sasl_passwd
+postmap /etc/postfix/sasl_passwd
+
+# Store those configurations in the mailinabox.conf file
+tools/editconf.py /etc/mailinabox.conf \
+	SMTP_RELAY_ENABLED=false \
+	SMTP_RELAY_HOST="" \
+	SMTP_RELAY_AUTH=false \
+	SMTP_RELAY_USER=""
+
 # Allow the two SMTP ports in the firewall.
 
 ufw_allow smtp
