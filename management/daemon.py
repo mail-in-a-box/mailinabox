@@ -535,7 +535,7 @@ def smtp_relay_get():
 def smtp_relay_set():
 	config = utils.load_settings(env)
 	newconf = request.form
-	try
+	try:
 		# Write on Postfix config
 		# Write on daemon env
 		config["SMTP_RELAY_ENABLED"] = "true" if newconf.get("enabled") else "false"
@@ -545,7 +545,7 @@ def smtp_relay_set():
 		utils.write_settings(config, env)
 		# Restart Postfix
 		return "OK"
-	except Exception e:
+	except Exception as e:
 		return (str(e), 500)
 
 
