@@ -21,6 +21,8 @@ This is a fork of MiaB (duh), hacked and tuned to my needs:
 
 - 💤 Possibility of disabling some services (\*cough\* NextCloud \*cough\*);
 
+- ✅ Bumped the bootstrap and jQuery dependencies' versions - and we've got a brand new admin panel now!
+
 - 💤 Anything else I might need to use;
 
 All in all, I think I should rename this to something like "Central [Clown Computing](https://www.urbandictionary.com/define.php?term=clown%20computing)", since I'm trying to cram as many services as possible into that poor machine (Spending 5$ is better than spending 10$)

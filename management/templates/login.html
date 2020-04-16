@@ -2,142 +2,142 @@
 
 {% if no_users_exist or no_admins_exist %}
 <div class="row">
-<div class="col-md-offset-2 col-md-8">
-  {% if no_users_exist %}
-  <p class="text-danger">There are no users on this system! To make an administrative user,
-  log into this machine using SSH (like when you first set it up) and run:</p>
-  <pre>cd mailinabox
+	<div class="col-md-offset-2 col-md-8">
+		{% if no_users_exist %}
+		<p class="text-danger">There are no users on this system! To make an administrative user,
+			log into this machine using SSH (like when you first set it up) and run:</p>
+		<pre>cd mailinabox
 sudo tools/mail.py user add me@{{hostname}}
 sudo tools/mail.py user make-admin me@{{hostname}}</pre>
-  {% else %}
-  <p class="text-danger">There are no administrative users on this system! To make an administrative user,
-  log into this machine using SSH (like when you first set it up) and run:</p>
-  <pre>cd mailinabox
+		{% else %}
+		<p class="text-danger">There are no administrative users on this system! To make an administrative user,
+			log into this machine using SSH (like when you first set it up) and run:</p>
+		<pre>cd mailinabox
 sudo tools/mail.py user make-admin me@{{hostname}}</pre>
-  {% endif %}
-  <hr>
-</div>
+		{% endif %}
+		<hr>
+	</div>
 </div>
 {% endif %}
 
 <p style="margin: 2em; text-align: center;">Log in here for your Mail-in-a-Box control panel.</p>
 
 <div style="margin: 0 auto; max-width: 32em;">
-  <form class="form-horizontal" role="form" onsubmit="do_login(); return false;" method="get">
-    <div class="form-group">
-      <label for="inputEmail3" class="col-sm-3 control-label">Email</label>
-      <div class="col-sm-9">
-        <input name="email" type="email" class="form-control" id="loginEmail" placeholder="Email">
-      </div>
-    </div>
-    <div class="form-group">
-      <label for="inputPassword3" class="col-sm-3 control-label">Password</label>
-      <div class="col-sm-9">
-        <input name="password" type="password" class="form-control" id="loginPassword" placeholder="Password">
-      </div>
-    </div>
-    <div class="form-group">
-      <div class="col-sm-offset-3 col-sm-9">
-        <div class="checkbox">
-          <label>
-            <input name='remember' type="checkbox" id="loginRemember"> Remember me
-          </label>
-        </div>
-      </div>
-    </div>
-    <div class="form-group">
-      <div class="col-sm-offset-3 col-sm-9">
-        <button type="submit" class="btn btn-default">Sign in</button>
-      </div>
-    </div>
-  </form>
+	<form class="form-horizontal" role="form" onsubmit="do_login(); return false;" method="get">
+		<div class="form-group">
+			<label for="inputEmail3" class="col-sm-3 control-label">Email</label>
+			<div class="col-sm-12">
+				<input name="email" type="email" class="form-control" id="loginEmail" placeholder="Email">
+			</div>
+		</div>
+		<div class="form-group">
+			<label for="inputPassword3" class="col-sm-3 control-label">Password</label>
+			<div class="col-sm-12">
+				<input name="password" type="password" class="form-control" id="loginPassword" placeholder="Password">
+			</div>
+		</div>
+		<div class="form-group">
+			<div class="col-sm-offset-3 col-sm-9">
+				<div class="checkbox">
+					<label>
+						<input name='remember' type="checkbox" id="loginRemember"> Remember me
+					</label>
+				</div>
+			</div>
+		</div>
+		<div class="form-group">
+			<div class="col-sm-offset-3 col-sm-9">
+				<button type="submit" class="btn btn-default">Sign in</button>
+			</div>
+		</div>
+	</form>
 </div>
 
 
 <script>
-function do_login() {
-  if ($('#loginEmail').val() == "") {
-    show_modal_error("Login Failed", "Enter your email address.", function() {
-	$('#loginEmail').focus();
-    });
-    return false;
-  }
-  if ($('#loginPassword').val() == "") {
-    show_modal_error("Login Failed", "Enter your email password.", function() {
-        $('#loginPassword').focus();
-    });
-    return false;
-  }
+	function do_login() {
+		if ($('#loginEmail').val() == "") {
+			show_modal_error("Login Failed", "Enter your email address.", function () {
+				$('#loginEmail').focus();
+			});
+			return false;
+		}
+		if ($('#loginPassword').val() == "") {
+			show_modal_error("Login Failed", "Enter your email password.", function () {
+				$('#loginPassword').focus();
+			});
+			return false;
+		}
 
-  // Exchange the email address & password for an API key.
-  api_credentials = [$('#loginEmail').val(), $('#loginPassword').val()]
+		// Exchange the email address & password for an API key.
+		api_credentials = [$('#loginEmail').val(), $('#loginPassword').val()]
 
-  api(
-  "/me",
-  "GET",
-  { },
-  function(response){
-    // This API call always succeeds. It returns a JSON object indicating
-    // whether the request was authenticated or not.
-    if (response.status != "ok") {
-      // Show why the login failed.
-      show_modal_error("Login Failed", response.reason)
+		api(
+			"/me",
+			"GET",
+			{},
+			function (response) {
+				// This API call always succeeds. It returns a JSON object indicating
+				// whether the request was authenticated or not.
+				if (response.status != "ok") {
+					// Show why the login failed.
+					show_modal_error("Login Failed", response.reason)
 
-      // Reset any saved credentials.
-      do_logout();
+					// Reset any saved credentials.
+					do_logout();
 
-    } else if (!("api_key" in response)) {
-      // Login succeeded but user might not be authorized!
-      show_modal_error("Login Failed", "You are not an administrator on this system.")
+				} else if (!("api_key" in response)) {
+					// Login succeeded but user might not be authorized!
+					show_modal_error("Login Failed", "You are not an administrator on this system.")
 
-      // Reset any saved credentials.
-      do_logout();
+					// Reset any saved credentials.
+					do_logout();
 
-    } else {
-      // Login succeeded.
+				} else {
+					// Login succeeded.
 
-      // Save the new credentials.
-      api_credentials = [response.email, response.api_key];
+					// Save the new credentials.
+					api_credentials = [response.email, response.api_key];
 
-      // Try to wipe the username/password information.
-      $('#loginEmail').val('');
-      $('#loginPassword').val('');
+					// Try to wipe the username/password information.
+					$('#loginEmail').val('');
+					$('#loginPassword').val('');
 
-      // Remember the credentials.
-      if (typeof localStorage != 'undefined' && typeof sessionStorage != 'undefined') {
-        if ($('#loginRemember').val()) {
-          localStorage.setItem("miab-cp-credentials", api_credentials.join(":"));
-          sessionStorage.removeItem("miab-cp-credentials");
-        } else {
-          localStorage.removeItem("miab-cp-credentials");
-          sessionStorage.setItem("miab-cp-credentials", api_credentials.join(":"));
-        }
-      }
+					// Remember the credentials.
+					if (typeof localStorage != 'undefined' && typeof sessionStorage != 'undefined') {
+						if ($('#loginRemember').val()) {
+							localStorage.setItem("miab-cp-credentials", api_credentials.join(":"));
+							sessionStorage.removeItem("miab-cp-credentials");
+						} else {
+							localStorage.removeItem("miab-cp-credentials");
+							sessionStorage.setItem("miab-cp-credentials", api_credentials.join(":"));
+						}
+					}
 
-      // Open the next panel the user wants to go to. Do this after the XHR response
-      // is over so that we don't start a new XHR request while this one is finishing,
-      // which confuses the loading indicator.
-      setTimeout(function() { show_panel(!switch_back_to_panel || switch_back_to_panel == "login" ? 'system_status' : switch_back_to_panel) }, 300);
-    }
-  })
-}
+					// Open the next panel the user wants to go to. Do this after the XHR response
+					// is over so that we don't start a new XHR request while this one is finishing,
+					// which confuses the loading indicator.
+					setTimeout(function () { show_panel(!switch_back_to_panel || switch_back_to_panel == "login" ? 'system_status' : switch_back_to_panel) }, 300);
+				}
+			})
+	}
 
-function do_logout() {
-  api_credentials = ["", ""];
-  if (typeof localStorage != 'undefined')
-    localStorage.removeItem("miab-cp-credentials");
-  if (typeof sessionStorage != 'undefined')
-    sessionStorage.removeItem("miab-cp-credentials");
-  show_panel('login');
-}
+	function do_logout() {
+		api_credentials = ["", ""];
+		if (typeof localStorage != 'undefined')
+			localStorage.removeItem("miab-cp-credentials");
+		if (typeof sessionStorage != 'undefined')
+			sessionStorage.removeItem("miab-cp-credentials");
+		show_panel('login');
+	}
 
-function show_login() {
-  $('#loginEmail,#loginPassword').each(function() {
-    var input = $(this);
-    if (!$.trim(input.val())) {
-      input.focus();
-      return false;
-    }
-  });
-}
+	function show_login() {
+		$('#loginEmail,#loginPassword').each(function () {
+			var input = $(this);
+			if (!$.trim(input.val())) {
+				input.focus();
+				return false;
+			}
+		});
+	}
 </script>
