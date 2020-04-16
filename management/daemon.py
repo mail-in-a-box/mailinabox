@@ -7,7 +7,7 @@ from flask import Flask, request, render_template, abort, Response, send_from_di
 
 import auth, utils, multiprocessing.pool
 from mailconfig import get_mail_users, get_mail_users_ex, get_admins, add_mail_user, set_mail_password, remove_mail_user
-from mailconfig import get_mail_user_privileges, add_remove_mail_user_privilege
+from mailconfig import get_mail_user_privileges, add_remove_mail_user_privilege, open_database
 from mailconfig import get_mail_aliases, get_mail_aliases_ex, get_mail_domains, add_mail_alias, remove_mail_alias
 
 env = utils.load_environment()
@@ -523,7 +523,13 @@ def privacy_status_set():
 @app.route('/system/smtp/relay', methods=["GET"])
 @authorized_personnel_only
 def smtp_relay_get():
-	pass
+	# Just return something for now.
+	return {
+		enabled = False,
+		host = "",
+		auth_enabled = True,
+		user = ""
+	}
 
 @app.route('/system/smtp/relay', methods=["POST"])
 @authorized_personnel_only
