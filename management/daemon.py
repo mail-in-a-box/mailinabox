@@ -525,9 +525,9 @@ def privacy_status_set():
 def smtp_relay_get():
 	config = utils.load_settings(env)
 	return {
-		"enabled": (config.get("SMTP_RELAY_ENABLED", "true") == "true"),
+		"enabled": config.get("SMTP_RELAY_ENABLED", True),
 		"host": config.get("SMTP_RELAY_HOST", ""),
-		"auth_enabled": (config.get("SMTP_RELAY_AUTH", "false") == "true"),
+		"auth_enabled": config.get("SMTP_RELAY_AUTH", False),
 		"user": config.get("SMTP_RELAY_USER", "")
 	}
 
@@ -539,9 +539,9 @@ def smtp_relay_set():
 	try:
 		# Write on Postfix config
 		# Write on daemon env
-		config["SMTP_RELAY_ENABLED"] = "true" if newconf.get("enabled") else "false"
+		config["SMTP_RELAY_ENABLED"] = newconf.get("enabled")
 		config["SMTP_RELAY_HOST"] = newconf.get("host")
-		config["SMTP_RELAY_AUTH"] = "true" if newconf.get("auth_enabled") else "false"
+		config["SMTP_RELAY_AUTH"] = newconf.get("auth_enabled")
 		config["SMTP_RELAY_USER"] = newconf.get("user")
 		utils.write_settings(config, env)
 		# Restart Postfix
