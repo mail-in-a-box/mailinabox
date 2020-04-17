@@ -539,10 +539,10 @@ def smtp_relay_set():
 	try:
 		# Write on Postfix config
 		# Write on daemon env
-		config["SMTP_RELAY_ENABLED"] = newconf.get("enabled")
-		config["SMTP_RELAY_HOST"] = (newconf.get("host") == "true")
-		config["SMTP_RELAY_AUTH"] = newconf.get("auth_enabled")
-		config["SMTP_RELAY_USER"] = (newconf.get("user") == "true")
+		config["SMTP_RELAY_ENABLED"] = (newconf.get("enabled") == "true")
+		config["SMTP_RELAY_HOST"] = newconf.get("host")
+		config["SMTP_RELAY_AUTH"] = (newconf.get("auth_enabled") == "true")
+		config["SMTP_RELAY_USER"] = newconf.get("user") == "true"
 		utils.write_settings(config, env)
 		# Restart Postfix
 		return utils.shell("check_output", ["/usr/bin/systemctl", "restart", "postfix"], capture_stderr=True)
