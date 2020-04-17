@@ -550,7 +550,7 @@ def smtp_relay_set():
 			("smtp_sasl_auth_enable", "yes" if config["SMTP_RELAY_AUTH"] else "no"),
 			("smtp_sasl_security_options", "noanonymous" if config["SMTP_RELAY_AUTH"] else "anonymous"),
 			("smtp_sasl_tls_security_options", "noanonymous" if config["SMTP_RELAY_AUTH"] else "anonymous"),
-		))
+		), False, False)
 		if config["SMTP_RELAY_AUTH"]:
 			# Edit the sasl password
 			with open("/etc/postfix/sasl_passwd", "w") as f:

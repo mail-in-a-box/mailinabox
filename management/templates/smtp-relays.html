@@ -129,11 +129,6 @@
 				show_modal_error("Done!", "The configuration has been updated and Postfix was restarted successfully. Please make sure everything is functioning as intended.", () => {
 					return false
 				})
-			},
-			(text, xhr) => {
-				if (xhr.status != 403) {
-					show_modal_error("Error", `<h5>${xhr}</h5><br><pre>${text}</pre><br>Welp, oof`)
-				}
 			}
 		)
 	}
