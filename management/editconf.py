@@ -26,7 +26,7 @@
 
 import sys, re
 
-def edit_conf(filename, settings, delimiter_re, comment_char, folded_lines = False, testing = False):
+def edit_conf(filename, settings, delimiter_re, delimiter, comment_char, folded_lines = False, testing = False):
 	found = set()
 	buf = ""
 	input_lines = list(open(filename, "r+"))
@@ -140,4 +140,4 @@ if __name__ == "__main__":
 			print("Invalid command line: ", subprocess.list2cmdline(sys.argv))
 			sys.exit(1)
 
-	edit_conf(filename, settings, delimiter_re, comment_char, folded_lines, testing)
+	edit_conf(filename, settings, delimiter_re, delimiter, comment_char, folded_lines, testing)
