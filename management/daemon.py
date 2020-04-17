@@ -543,7 +543,7 @@ def smtp_relay_set():
 		config["SMTP_RELAY_ENABLED"] = (newconf.get("enabled") == "true")
 		config["SMTP_RELAY_HOST"] = newconf.get("host")
 		config["SMTP_RELAY_AUTH"] = (newconf.get("auth_enabled") == "true")
-		config["SMTP_RELAY_USER"] = newconf.get("user") == "true"
+		config["SMTP_RELAY_USER"] = newconf.get("user")
 		utils.write_settings(config, env)
 		# Write on Postfix config
 		edit_conf("/etc/postfix/main.cf", [
