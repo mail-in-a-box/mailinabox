@@ -534,6 +534,7 @@ def smtp_relay_get():
 @app.route('/system/smtp/relay', methods=["POST"])
 @authorized_personnel_only
 def smtp_relay_set():
+	import re
 	from editconf import edit_conf
 	config = utils.load_settings(env)
 	newconf = request.form
@@ -550,7 +551,7 @@ def smtp_relay_set():
 			"smtp_sasl_auth_enable=" + "yes" if config["SMTP_RELAY_AUTH"] else "no",
 			"smtp_sasl_security_options=" + "noanonymous" if config["SMTP_RELAY_AUTH"] else "anonymous",
 			"smtp_sasl_tls_security_options=" + "noanonymous" if config["SMTP_RELAY_AUTH"] else "anonymous"
-		], False, False)
+		], r"\s*=\s*", "#")
 		if config["SMTP_RELAY_AUTH"]:
 			# Edit the sasl password
 			with open("/etc/postfix/sasl_passwd", "w") as f:

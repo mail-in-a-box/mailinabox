@@ -24,7 +24,9 @@
 
 # create the new config file in memory
 
-def edit_conf(filename, settings, folded_lines, testing):
+import sys, re
+
+def edit_conf(filename, settings, delimiter_re, comment_char, folded_lines = False, testing = False):
 	found = set()
 	buf = ""
 	input_lines = list(open(filename, "r+"))
@@ -97,8 +99,6 @@ def edit_conf(filename, settings, folded_lines, testing):
 
 # Run standalone
 if __name__ == "__main__":
-	import sys, re
-
 	# sanity check
 	if len(sys.argv) < 3:
 		print("usage: python3 editconf.py /etc/file.conf [-s] [-w] [-c <CHARACTER>] [-t] NAME=VAL [NAME=VAL ...]")
@@ -140,4 +140,4 @@ if __name__ == "__main__":
 			print("Invalid command line: ", subprocess.list2cmdline(sys.argv))
 			sys.exit(1)
 
-	edit_conf(filename, settings, folded_lines, testing)
+	edit_conf(filename, settings, delimiter_re, comment_char, folded_lines, testing)
