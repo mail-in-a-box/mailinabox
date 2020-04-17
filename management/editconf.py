@@ -27,7 +27,7 @@
 def edit_conf(filename, settings, folded_lines, testing):
 	found = set()
 	buf = ""
-	input_lines = list(open(filename))
+	input_lines = list(open(filename, "r+"))
 
 	while len(input_lines) > 0:
 		line = input_lines.pop(0)
@@ -138,5 +138,6 @@ if __name__ == "__main__":
 		except:
 			import subprocess
 			print("Invalid command line: ", subprocess.list2cmdline(sys.argv))
+			sys.exit(1)
 
 	edit_conf(filename, settings, folded_lines, testing)
