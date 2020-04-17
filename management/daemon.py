@@ -534,16 +534,29 @@ def smtp_relay_get():
 @app.route('/system/smtp/relay', methods=["POST"])
 @authorized_personnel_only
 def smtp_relay_set():
+	from editconf import edit_conf
 	config = utils.load_settings(env)
 	newconf = request.form
 	try:
-		# Write on Postfix config
 		# Write on daemon env
 		config["SMTP_RELAY_ENABLED"] = (newconf.get("enabled") == "true")
 		config["SMTP_RELAY_HOST"] = newconf.get("host")
 		config["SMTP_RELAY_AUTH"] = (newconf.get("auth_enabled") == "true")
 		config["SMTP_RELAY_USER"] = newconf.get("user") == "true"
 		utils.write_settings(config, env)
+		# Write on Postfix config
+		edit_conf("/etc/postfix/main.cf", (
+			("relay_host", f"[{config['SMTP_RELAY_HOST']}]:587" if config["SMTP_RELAY_ENABLED"] else ""),
+			("smtp_sasl_auth_enable", "yes" if config["SMTP_RELAY_AUTH"] else "no"),
+			("smtp_sasl_security_options", "noanonymous" if config["SMTP_RELAY_AUTH"] else "anonymous"),
+			("smtp_sasl_tls_security_options", "noanonymous" if config["SMTP_RELAY_AUTH"] else "anonymous"),
+		))
+		if config["SMTP_RELAY_AUTH"]:
+			# Edit the sasl password
+			with open("/etc/postfix/sasl_passwd", "w") as f:
+				f.write(f"[{config['SMTP_RELAY_HOST']}]:587 {config['SMTP_RELAY_USER']}:{newconf.get('pass')}")
+			utils.shell("check_output", ["/usr/bin/chmod", "600", "/etc/postfix/sasl_passwd"], capture_stderr=True)
+			utils.shell("check_output", ["postma", "/etc/postfix/sasl_passwd"], capture_stderr=True)
 		# Restart Postfix
 		return utils.shell("check_output", ["/usr/bin/systemctl", "restart", "postfix"], capture_stderr=True)
 	except Exception as e:
