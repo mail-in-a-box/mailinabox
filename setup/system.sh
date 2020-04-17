@@ -134,7 +134,7 @@ apt_install python3 python3-dev python3-pip \
 # When Ubuntu 20 comes out, we don't want users to be prompted to upgrade,
 # because we don't yet support it.
 if [ -f /etc/update-manager/release-upgrades ]; then
-	tools/editconf.py /etc/update-manager/release-upgrades Prompt=never
+	management/editconf.py /etc/update-manager/release-upgrades Prompt=never
 	rm -f /var/lib/ubuntu-release-upgrader/release-upgrade-available
 fi
 
@@ -315,7 +315,7 @@ fi #NODOC
 # * The listen-on directive in named.conf.options restricts `bind9` to
 #   binding to the loopback interface instead of all interfaces.
 apt_install bind9
-tools/editconf.py /etc/default/bind9 \
+management/editconf.py /etc/default/bind9 \
 	"OPTIONS=\"-u bind -4\""
 if ! grep -q "listen-on " /etc/bind/named.conf.options; then
 	# Add a listen-on directive if it doesn't exist inside the options block.
@@ -329,7 +329,7 @@ fi
 # installing bind9 or else apt won't be able to resolve a server to
 # download bind9 from.
 rm -f /etc/resolv.conf
-tools/editconf.py /etc/systemd/resolved.conf DNSStubListener=no
+management/editconf.py /etc/systemd/resolved.conf DNSStubListener=no
 echo "nameserver 127.0.0.1" > /etc/resolv.conf
 
 # Restart the DNS services.

@@ -60,7 +60,7 @@ fi
 chown -R opendkim:opendkim $STORAGE_ROOT/mail/dkim
 chmod go-rwx $STORAGE_ROOT/mail/dkim
 
-tools/editconf.py /etc/opendmarc.conf -s \
+management/editconf.py /etc/opendmarc.conf -s \
 	"Syslog=true" \
 	"Socket=inet:8893@[127.0.0.1]"
 
@@ -76,7 +76,7 @@ tools/editconf.py /etc/opendmarc.conf -s \
 # The OpenDMARC milter is skipped in the SMTP submission listener by
 # configuring smtpd_milters there to only list the OpenDKIM milter
 # (see mail-postfix.sh).
-tools/editconf.py /etc/postfix/main.cf \
+management/editconf.py /etc/postfix/main.cf \
 	"smtpd_milters=inet:127.0.0.1:8891 inet:127.0.0.1:8893"\
 	non_smtpd_milters=\$smtpd_milters \
 	milter_default_action=accept
