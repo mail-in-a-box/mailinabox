@@ -556,7 +556,7 @@ def smtp_relay_set():
 			with open("/etc/postfix/sasl_passwd", "w") as f:
 				f.write(f"[{config['SMTP_RELAY_HOST']}]:587 {config['SMTP_RELAY_USER']}:{newconf.get('pass')}")
 			utils.shell("check_output", ["/usr/bin/chmod", "600", "/etc/postfix/sasl_passwd"], capture_stderr=True)
-			utils.shell("check_output", ["postma", "/etc/postfix/sasl_passwd"], capture_stderr=True)
+			utils.shell("check_output", ["/usr/sbin/postmap", "/etc/postfix/sasl_passwd"], capture_stderr=True)
 		# Restart Postfix
 		return utils.shell("check_output", ["/usr/bin/systemctl", "restart", "postfix"], capture_stderr=True)
 	except Exception as e:
