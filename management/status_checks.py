@@ -296,6 +296,19 @@ def run_network_checks(env, output):
 			which may prevent recipients from receiving your email. See http://www.spamhaus.org/query/ip/%s."""
 			% (env['PUBLIC_IP'], zen, env['PUBLIC_IP']))
 
+	# Check if a SMTP relay is set up. It's not strictly required, but on some providers
+	# it might be needed.
+	config = load_settings(env)
+	if config.get("SMTP_RELAY_ENABLED"):
+		if config.get("SMTP_RELAY_AUTH"):
+			output.print_ok("An authenticated SMTP relay has been set up via port 587.")
+		else:
+			output.print_warning("A SMTP relay has been set up, but it is not authenticated.")
+	elif ret == 0:
+		output.print_ok("No SMTP relay has been set up (but that's ok since port 25 is not blocked).")
+	else:
+		output.print_error("No SMTP relay has been set up. Since port 25 is blocked, you will probably not be able to send any mail.")
+
 def run_domain_checks(rounded_time, env, output, pool):
 	# Get the list of domains we handle mail for.
 	mail_domains = get_mail_domains(env)
