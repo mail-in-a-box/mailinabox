@@ -17,13 +17,15 @@ This is a fork of MiaB (duh), hacked and tuned to my needs:
 
 - ✅ Native support for SMTP relays (For example: SendGrid);
 
-- 💤 Ability for "static" pages to use PHP (e.g. host a domain shortener);
+- ✅ Bumped the bootstrap and jQuery dependencies' versions - and we've got a brand new admin panel now!
 
-- 💤 Custom pages should not have their pages defaulting to the MiaB services (`/admin`, `/mail`, etc.);
+- 👨‍💻 Per-domain `nginx` configuration support. This will allow you to:
+
+- - Use PHP (e.g. host a domain shortener);
+
+- - Custom pages will no longer have their pages defaulting to the MiaB services (`/admin`, `/mail`, etc.);
 
 - 💤 Possibility of disabling some services (\*cough\* NextCloud \*cough\*);
-
-- ✅ Bumped the bootstrap and jQuery dependencies' versions - and we've got a brand new admin panel now!
 
 - 💤 Anything else I might need to use;
 
