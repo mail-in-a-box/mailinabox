@@ -100,7 +100,7 @@ def do_web_update(env):
 					local_conf = f.read()
 
 			if domain not in has_root_proxy_or_redirect:
-				local_conf = make_domain_config(domain, [template0, template1], ssl_certificates, env)
+				local_conf = make_domain_config(domain, [template0, template4], ssl_certificates, env)
 			else:
 				local_conf = make_domain_config(domain, [template0], ssl_certificates, env)
 			nginx_conf += local_conf
