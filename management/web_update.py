@@ -105,7 +105,7 @@ def do_web_update(env):
 				local_conf = make_domain_config(domain, [template0], ssl_certificates, env)
 			nginx_conf += local_conf
 
-			with open(nginx_conf, "r+") as f:
+			with open(nginx_conf, "w+") as f:
 				f.write(local_conf)
 		else:
 			# Add default 'www.' redirect.
