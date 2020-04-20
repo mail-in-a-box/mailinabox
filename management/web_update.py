@@ -94,7 +94,7 @@ def do_web_update(env):
 		if domain in web_domains_not_redirect:
 			# This is a regular domain.
 			local_conf = ""
-			nginx_conf_custom = os.path.join(env["STORAGE_ROOT"], "www", safe_domain_name(domain), ".nginx.conf")
+			nginx_conf_custom = os.path.join(get_web_root(domain), ".nginx.conf")
 			if os.path.exists(nginx_conf_custom):
 				with open(nginx_conf_custom, "r") as f:
 					local_conf = f.read()
