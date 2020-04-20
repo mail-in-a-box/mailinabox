@@ -396,7 +396,10 @@ def web_get_domains():
 @authorized_personnel_only
 def web_update():
 	from web_update import do_web_update
-	return do_web_update(env)
+	try:
+		return do_web_update(env)
+	except Exception as e:
+		return (str(e), 500)
 
 # System
 
