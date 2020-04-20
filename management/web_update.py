@@ -83,6 +83,11 @@ def do_web_update(env):
 
 	# Add the PRIMARY_HOST configuration first so it becomes nginx's default server.
 	nginx_conf += make_domain_config(env['PRIMARY_HOSTNAME'], [template0, template1, template2], ssl_certificates, env)
+	default_conf_file = os.path.join(get_web_root(env['PRIMARY_HOSTNAME']), ".nginx.conf")
+	if not os.path.exists(default_conf_file):
+		with open(default_conf_file, "w") as f:
+			f.write(nginx_conf)
+
 
 	# Add configuration all other web domains.
 	has_root_proxy_or_redirect = get_web_domains_with_root_overrides(env)
