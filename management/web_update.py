@@ -76,9 +76,10 @@ def do_web_update(env):
 
 	# Load the templates.
 	template0 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx.conf")).read()
-	template1 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-alldomains.conf")).read()
+	template1 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-default.conf")).read()
 	template2 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-primaryonly.conf")).read()
-	template3 = "\trewrite ^(.*) https://$REDIRECT_DOMAIN$1 permanent;\n"
+	template3 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-custom.conf")).read()
+	template4 = "\trewrite ^(.*) https://$REDIRECT_DOMAIN$1 permanent;\n"
 
 	# Add the PRIMARY_HOST configuration first so it becomes nginx's default server.
 	nginx_conf += make_domain_config(env['PRIMARY_HOSTNAME'], [template0, template1, template2], ssl_certificates, env)
@@ -98,7 +99,7 @@ def do_web_update(env):
 				nginx_conf += make_domain_config(domain, [template0], ssl_certificates, env)
 		else:
 			# Add default 'www.' redirect.
-			nginx_conf += make_domain_config(domain, [template0, template3], ssl_certificates, env)
+			nginx_conf += make_domain_config(domain, [template0, template4], ssl_certificates, env)
 
 	# Did the file change? If not, don't bother writing & restarting nginx.
 	nginx_conf_fn = "/etc/nginx/conf.d/local.conf"
