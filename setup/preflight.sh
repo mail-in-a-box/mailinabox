@@ -8,8 +8,8 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 # Check that we are running on Debian GNU/Linux
-if [ "`lsb_release -d | sed 's/.*:\s*//' | sed -r 's/ [[:digit:]]+ (.*)//' `" != "Debian GNU/Linux" ]; then
-	echo "Mail-in-a-Box only supports being installed on Debian (ideally, 10 or later), sorry. You are running:"
+if [ "`lsb_release -d | sed 's/.*:\s*//' `" != "Debian GNU/Linux 10 (buster)" ]; then
+	echo "Mail-in-a-Box only supports being installed on Debian 10, sorry. You are running:"
 	echo
 	lsb_release -d | sed 's/.*:\s*//'
 	echo

@@ -1,7 +1,7 @@
 (Power) Mail-in-a-Box
 =====================
 
-## Current Version: v0.44.POWER.1 (Tracking v0.44)
+## Current Version: v0.44.POWER.2 (Tracking v0.44)
 
 This is a fork of MiaB (duh), hacked and tuned to my needs:
 
@@ -19,7 +19,7 @@ This is a fork of MiaB (duh), hacked and tuned to my needs:
 
 - ✅ Bumped the bootstrap and jQuery dependencies' versions - and we've got a brand new admin panel now!
 
-- 👨‍💻 Per-domain `nginx` configuration support. This will allow you to:
+- ✅ Per-domain `nginx` configuration support. This will allow you to:
 
 - - Use PHP (e.g. host a domain shortener);
 
