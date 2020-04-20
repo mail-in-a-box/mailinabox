@@ -82,11 +82,13 @@ def do_web_update(env):
 	template4 = "\trewrite ^(.*) https://$REDIRECT_DOMAIN$1 permanent;\n"
 
 	# Add the PRIMARY_HOST configuration first so it becomes nginx's default server.
-	nginx_conf += make_domain_config(env['PRIMARY_HOSTNAME'], [template0, template1, template2], ssl_certificates, env)
+	default_conf = make_domain_config(env['PRIMARY_HOSTNAME'], [template0, template1, template2], ssl_certificates, env)
 	default_conf_file = os.path.join(get_web_root(env['PRIMARY_HOSTNAME'], env), ".nginx.conf")
 	if not os.path.exists(default_conf_file):
 		with open(default_conf_file, "w") as f:
-			f.write(nginx_conf)
+			f.write(default_conf)
+
+	nginx_conf += default_conf
 
 
 	# Add configuration all other web domains.
