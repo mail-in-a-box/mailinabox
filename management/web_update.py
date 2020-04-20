@@ -93,10 +93,20 @@ def do_web_update(env):
 			continue
 		if domain in web_domains_not_redirect:
 			# This is a regular domain.
+			local_conf = ""
+			nginx_conf_custom = os.path.join(env["STORAGE_ROOT"], "www", safe_domain_name(domain), ".nginx.conf")
+			if os.path.exists(nginx_conf_custom):
+				with open(nginx_conf_custom, "r") as f:
+					local_conf = f.read()
+
 			if domain not in has_root_proxy_or_redirect:
-				nginx_conf += make_domain_config(domain, [template0, template1], ssl_certificates, env)
+				local_conf = make_domain_config(domain, [template0, template1], ssl_certificates, env)
 			else:
-				nginx_conf += make_domain_config(domain, [template0], ssl_certificates, env)
+				local_conf = make_domain_config(domain, [template0], ssl_certificates, env)
+			nginx_conf += local_conf
+
+			with open(nginx_conf, "r+") as f:
+				f.write(local_conf)
 		else:
 			# Add default 'www.' redirect.
 			nginx_conf += make_domain_config(domain, [template0, template4], ssl_certificates, env)
