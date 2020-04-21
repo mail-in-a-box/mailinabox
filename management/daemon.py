@@ -549,10 +549,10 @@ def smtp_relay_set():
 		utils.write_settings(config, env)
 		# Write on Postfix configs
 		edit_conf("/etc/postfix/main.cf", [
-			"relayhost=" + f"[{config['SMTP_RELAY_HOST']}]:587" if config["SMTP_RELAY_ENABLED"] else "",
-			"smtp_sasl_auth_enable=" + "yes" if config["SMTP_RELAY_AUTH"] else "no",
-			"smtp_sasl_security_options=" + "noanonymous" if config["SMTP_RELAY_AUTH"] else "anonymous",
-			"smtp_sasl_tls_security_options=" + "noanonymous" if config["SMTP_RELAY_AUTH"] else "anonymous"
+			"relayhost=" + (f"[{config['SMTP_RELAY_HOST']}]:587" if config["SMTP_RELAY_ENABLED"] else ""),
+			"smtp_sasl_auth_enable=" + ("yes" if config["SMTP_RELAY_AUTH"] else "no"),
+			"smtp_sasl_security_options=" + ("noanonymous" if config["SMTP_RELAY_AUTH"] else "anonymous"),
+			"smtp_sasl_tls_security_options=" + ("noanonymous" if config["SMTP_RELAY_AUTH"] else "anonymous")
 		], delimiter_re=r"\s*=\s*", delimiter="=", comment_char="#")
 		if config["SMTP_RELAY_AUTH"]:
 			# Edit the sasl password
