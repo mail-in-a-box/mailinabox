@@ -75,19 +75,6 @@ then
 	fi
 fi
 
-# ### Add PPAs.
-
-# We install some non-standard Ubuntu packages maintained by other
-# third-party providers. First ensure add-apt-repository is installed.
-
-if [ ! -f /usr/bin/add-apt-repository ]; then
-	echo "Installing add-apt-repository..."
-	hide_output apt-get update
-	apt_install software-properties-common
-fi
-
-# N/A to Debian
-
 # Certbot doesn't require a PPA in Debian
 
 # ### Update Packages
