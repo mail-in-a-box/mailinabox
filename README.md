@@ -1,7 +1,7 @@
 (Power) Mail-in-a-Box
 =====================
 
-## Current Version: v0.44.POWER.2 (Tracking v0.44)
+## Current Version: v0.44.POWER.3 (Tracking v0.44)
 
 This is a fork of MiaB (duh), hacked and tuned to my needs:
 

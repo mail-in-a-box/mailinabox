@@ -20,7 +20,7 @@ if [ -z "$TAG" ]; then
 	# want to display in status checks.
 	if [ "`lsb_release -d | sed 's/.*:\s*//' `" == "Debian GNU/Linux 10 (buster)" ]; then
 		# This machine is running Ubuntu 18.04.
-		TAG=v0.44.POWER.2
+		TAG=v0.44.POWER.3
 
 	else
 		echo "This script must be run on a system running Debian 10."
@@ -61,7 +61,7 @@ fi
 cd $HOME/mailinabox
 
 # Update it.
-if [ "$TAG" != `git describe --tags` ]; then
+if [ "$TAG" != "`git describe --tags`" ]; then
 	echo Updating Mail-in-a-Box to $TAG . . .
 	git fetch --depth 1 --force --prune origin tag $TAG
 	if ! git checkout -q $TAG; then
