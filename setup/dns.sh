@@ -23,6 +23,7 @@ apt_install ldnsutils openssh-client
 mkdir -p /var/run/nsd
 mkdir -p /etc/nsd
 mkdir -p /etc/nsd/zones
+touch /etc/nsd/zones.conf
 touch /etc/nsd/nsd.conf
 
 cat > /etc/nsd/nsd.conf << EOF;

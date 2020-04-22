@@ -20,7 +20,7 @@ if [ -z "$TAG" ]; then
 	# want to display in status checks.
 	if [ "`lsb_release -d | sed 's/.*:\s*//' `" == "Debian GNU/Linux 10 (buster)" ]; then
 		# This machine is running Ubuntu 18.04.
-		TAG=v0.44.POWER.4
+		TAG=v0.44.POWER.5
 
 	else
 		echo "This script must be run on a system running Debian 10."
