@@ -20,7 +20,7 @@ if [ -z "$TAG" ]; then
 	# want to display in status checks.
 	if [ "`lsb_release -d | sed 's/.*:\s*//' `" == "Debian GNU/Linux 10 (buster)" ]; then
 		# This machine is running Ubuntu 18.04.
-		TAG=v0.44.POWER.3
+		TAG=v0.44.POWER.4
 
 	else
 		echo "This script must be run on a system running Debian 10."
@@ -39,13 +39,9 @@ if [ ! -d $HOME/mailinabox ]; then
 	if [ ! -f /usr/bin/git ]; then
 		echo Installing git . . .
 		apt-get -q -q update
-		DEBIAN_FRONTEND=noninteractive apt-get -q -q install -y git locales < /dev/null
+		DEBIAN_FRONTEND=noninteractive apt-get -q -q install -y git < /dev/null
 		echo
 	fi
-
-	echo Setting locales . . .
-	locale-gen en_US.UTF-8
-	echo "LANG=en_US.UTF-8" > /etc/default/locale
 
 	echo Downloading Mail-in-a-Box $TAG. . .
 	git clone \
