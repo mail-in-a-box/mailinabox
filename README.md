@@ -1,6 +1,27 @@
 (Power) Mail-in-a-Box
 =====================
 
+## Installation
+
+- **PRE-REQUISITES:** Debian 10 (Buster) fresh installation
+
+Update packages:
+```sh
+sudo apt update
+sudo apt full-upgrade
+```
+
+Make sure that the `en_US.UTF-8` locale exists and is set as primary
+```sh
+sudo apt install locales
+sudo dpkg-reconfigure locales
+```
+
+Install Power-Mail-in-a-Box (short link)
+```sh
+curl -L https://dvn.pt/powermiab | sudo bash
+```
+
 ## Current Version: v0.44.POWER.5 (Tracking v0.44)
 
 This is a fork of MiaB (duh), hacked and tuned to my needs:
@@ -55,7 +76,7 @@ Additionally, this project has a [Code of Conduct](CODE_OF_CONDUCT.md), which su
 The Box
 -------
 
-Mail-in-a-Box turns a fresh Ubuntu 18.04 LTS 64-bit machine into a working mail server by installing and configuring various components.
+Mail-in-a-Box turns a fresh ~~Ubuntu 18.04 LTS~~ Debian 10 (Buster) 64-bit machine into a working mail server by installing and configuring various components.
 
 It is a one-click email appliance. There are no user-configurable setup options. It "just works".
 
