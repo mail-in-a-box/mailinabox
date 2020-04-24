@@ -309,14 +309,15 @@ fi #NODOC
 #
 # About the settings:
 #
-# * Adding -4 to OPTIONS will have `bind9` not listen on IPv6 addresses
-#   so that we're sure there's no conflict with nsd, our public domain
-#   name server, on IPV6.
+# * Changing listen-on-v6 to `none` from `any` will stop `bind9` from listen on IPv6 addresses
+#   so that we're sure there's no conflict with nsd, our public domain name server, on IPV6.
 # * The listen-on directive in named.conf.options restricts `bind9` to
 #   binding to the loopback interface instead of all interfaces.
 apt_install bind9
-tools/editconf.py /etc/default/bind9 \
-	"OPTIONS=\"-u bind -4\""
+tools/editconf.py /etc/bind/named.conf.options \
+	-s -c '//' \
+	'	listen-on-v6={ none; };'
+# Unable to use editconfig.py here as `listen-on` should go inside the options `{}` block
 if ! grep -q "listen-on " /etc/bind/named.conf.options; then
 	# Add a listen-on directive if it doesn't exist inside the options block.
 	sed -i "s/^}/\n\tlisten-on { 127.0.0.1; };\n}/" /etc/bind/named.conf.options
