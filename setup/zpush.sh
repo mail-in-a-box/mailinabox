@@ -102,7 +102,7 @@ EOF
 
 # Restart service.
 
-restart_service php7.2-fpm
+restart_service php8.0-fpm
 
 # Fix states after upgrade
 
