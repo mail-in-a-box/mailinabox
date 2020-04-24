@@ -7,11 +7,11 @@ if [[ $EUID -ne 0 ]]; then
 	exit 1
 fi
 
-# Check that we are running on Ubuntu 18.04 LTS (or 18.04.xx).
-if [ "`lsb_release -d | sed 's/.*:\s*//' | sed 's/18\.04\.[0-9]/18.04/' `" != "Ubuntu 18.04 LTS" ]; then
-	echo "Mail-in-a-Box only supports being installed on Ubuntu 18.04, sorry. You are running:"
+# Check that we are running on Ubuntu 20.04 LTS (or 20.04.xx).
+if [ "$( lsb_release --id --short )" != "Ubuntu" ] || [ "$( lsb_release --release --short )" != "20.04" ]; then
+	echo "Mail-in-a-Box only supports being installed on Ubuntu 20.04, sorry. You are running:"
 	echo
-	lsb_release -d | sed 's/.*:\s*//'
+	lsb_release --description --short
 	echo
 	echo "We can't write scripts that run on every possible setup, sorry."
 	exit 1

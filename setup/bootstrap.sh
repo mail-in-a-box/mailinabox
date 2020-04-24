@@ -18,11 +18,22 @@ if [ -z "$TAG" ]; then
 	# space, but if we put it in a comment it would confuse the status checks!)
 	# to get the latest version, so the first such line must be the one that we
 	# want to display in status checks.
-	if [ "`lsb_release -d | sed 's/.*:\s*//' | sed 's/18\.04\.[0-9]/18.04/' `" == "Ubuntu 18.04 LTS" ]; then
+	distribution=$( lsb_release --id --short )
+	release=$( lsb_release --release --short )
+	if [ "${distribution}" == "Ubuntu" ] && [ "${release}" == "20.04" ]; then
+		# This machine is running Ubuntu 20.04.
+		TAG=v0.50
+	elif [ "${distribution}" == "Ubuntu" ] && [ "${release}" == "18.04"  ]; then
 		# This machine is running Ubuntu 18.04.
+		echo "You are installing the last version of Mail-in-a-Box that will"
+		echo "support Ubuntu 18.04. If this is a new installation of Mail-in-a-Box,"
+		echo "stop now and switch to a machine running Ubuntu 20.04. If you are"
+		echo "upgrading an existing Mail-in-a-Box --- great. After upgrading this"
+		echo "box, please visit https://mailinabox.email for notes on how to upgrade"
+		echo "to Ubuntu 20.04."
+		echo ""
 		TAG=v0.44
-
-	elif [ "`lsb_release -d | sed 's/.*:\s*//' | sed 's/14\.04\.[0-9]/14.04/' `" == "Ubuntu 14.04 LTS" ]; then
+	elif [ "${distribution}" == "Ubuntu" ] && [ "${release}" == "14.04" ]; then
 		# This machine is running Ubuntu 14.04.
 		echo "You are installing the last version of Mail-in-a-Box that will"
 		echo "support Ubuntu 14.04. If this is a new installation of Mail-in-a-Box,"
@@ -32,9 +43,8 @@ if [ -z "$TAG" ]; then
 		echo "to Ubuntu 18.04."
 		echo ""
 		TAG=v0.30
-
 	else
-		echo "This script must be run on a system running Ubuntu 18.04 or Ubuntu 14.04."
+		echo "This script must be run on a system running Ubuntu LTS versions 20.04, 18.04, or 14.04"
 		exit 1
 	fi
 fi
