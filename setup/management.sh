@@ -29,8 +29,8 @@ done
 #
 # certbot installs EFF's certbot which we use to
 # provision free TLS certificates.
-apt_install duplicity python-pip virtualenv certbot
-hide_output pip2 install --upgrade boto
+apt_install duplicity python3-pip virtualenv certbot
+hide_output pip3 install --upgrade boto
 
 # Create a virtualenv for the installation of Python 3 packages
 # used by the management daemon.
