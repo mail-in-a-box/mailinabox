@@ -102,7 +102,7 @@ def do_web_update(env):
 			# This is a regular domain.
 			local_conf = ""
 			nginx_conf_custom = os.path.join(get_web_root(domain, env), ".nginx.conf")
-			if os.path.exists(nginx_conf_custom):
+			if os.path.exists(nginx_conf_custom) and not is_default_web_root(domain, env):
 				with open(nginx_conf_custom, "r") as f:
 					local_conf = f.read()
 			elif domain not in has_root_proxy_or_redirect:
@@ -111,8 +111,9 @@ def do_web_update(env):
 				local_conf = make_domain_config(domain, [template0], ssl_certificates, env)
 			nginx_conf += local_conf
 
-			with open(nginx_conf_custom, "w+") as f:
-				f.write(local_conf)
+			if not is_default_web_root(domain, env):
+				with open(nginx_conf_custom, "w+") as f:
+					f.write(local_conf)
 		else:
 			# Add default 'www.' redirect.
 			nginx_conf += make_domain_config(domain, [template0, template4], ssl_certificates, env)
@@ -220,6 +221,10 @@ def get_web_root(domain, env, test_exists=True):
 		root = os.path.join(env["STORAGE_ROOT"], "www", safe_domain_name(test_domain))
 		if os.path.exists(root) or not test_exists: break
 	return root
+
+def is_default_web_root(domain, env):
+	root = os.path.join(env["STORAGE_ROOT"], "www", safe_domain_name(domain))
+	return not os.path.exists(root)
 
 def get_web_domains_info(env):
 	www_redirects = set(get_web_domains(env)) - set(get_web_domains(env, include_www_redirects=False))
