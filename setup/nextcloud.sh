@@ -25,8 +25,8 @@ InstallNextcloud() {
 	echo "Upgrading to Nextcloud version $version"
 	echo
 
-        # Download and verify
-        wget_verify https://download.nextcloud.com/server/releases/nextcloud-$version.zip $hash /tmp/nextcloud.zip
+	# Download and verify
+	wget_verify https://download.nextcloud.com/server/releases/nextcloud-$version.zip $hash /tmp/nextcloud.zip
 
 	# Remove the current owncloud/Nextcloud
 	rm -rf /usr/local/lib/owncloud
@@ -40,18 +40,18 @@ InstallNextcloud() {
 	# their github repositories.
 	mkdir -p /usr/local/lib/owncloud/apps
 
-	wget_verify https://github.com/nextcloud/contacts/releases/download/v3.1.6/contacts.tar.gz d331dc6db2ecf7c8e6166926a055dfa3b59722c3 /tmp/contacts.tgz
+	wget_verify https://github.com/nextcloud/contacts/releases/download/v3.3.0/contacts.tar.gz e55d0357c6785d3b1f3b5f21780cb6d41d32443a /tmp/contacts.tgz
 	tar xf /tmp/contacts.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/contacts.tgz
 
-	wget_verify https://github.com/nextcloud/calendar/releases/download/v1.7.1/calendar.tar.gz bd7c846bad06da6d6ba04280f6fbf37ef846c2ad /tmp/calendar.tgz
+	wget_verify https://github.com/nextcloud/calendar/releases/download/v2.0.3/calendar.tar.gz 9d9717b29337613b72c74e9914c69b74b346c466 /tmp/calendar.tgz
 	tar xf /tmp/calendar.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/calendar.tgz
 
 	# Starting with Nextcloud 15, the app user_external is no longer included in Nextcloud core,
 	# we will install from their github repository.
-	if [[ $version =~ ^1[567] ]]; then
-		wget_verify https://github.com/nextcloud/user_external/releases/download/v0.7.0/user_external-0.7.0.tar.gz 555a94811daaf5bdd336c5e48a78aa8567b86437 /tmp/user_external.tgz
+	if [[ $version =~ ^1[5678] ]]; then
+		wget_verify https://github.com/nextcloud/user_external/releases/download/v0.9.1/user_external-0.9.1.tar.gz 947c953803654520064af2c15f0f5c2a2f1ed6b7 /tmp/user_external.tgz
 		tar -xf /tmp/user_external.tgz -C /usr/local/lib/owncloud/apps/
 		rm /tmp/user_external.tgz
 	fi
@@ -91,8 +91,8 @@ InstallNextcloud() {
 }
 
 # Nextcloud Version to install. Checks are done down below to step through intermediate versions.
-nextcloud_ver=17.0.2
-nextcloud_hash=8095fb46e9e0c536163708aee3d17fab8b498ad6
+nextcloud_ver=18.0.3
+nextcloud_hash=d37d3f44760328a439954dd79d345ff58a03af7c
 
 # Current Nextcloud Version, #1623
 # Checking /usr/local/lib/owncloud/version.php shows version of the Nextcloud application, not the DB
@@ -239,7 +239,7 @@ fi
 # * We need to set the timezone to the system timezone to allow fail2ban to ban
 #   users within the proper timeframe
 # * We need to set the logdateformat to something that will work correctly with fail2ban
-# * mail_domain' needs to be set every time we run the setup. Making sure we are setting 
+# * mail_domain' needs to be set every time we run the setup. Making sure we are setting
 #   the correct domain name if the domain is being change from the previous setup.
 # Use PHP to read the settings file, modify it, and write out the new settings array.
 TIMEZONE=$(cat /etc/timezone)
