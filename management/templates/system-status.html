@@ -109,9 +109,9 @@
 						n.addClass(r[i].type)
 					else
 						n.addClass("status-" + r[i].type)
-					if (r[i].type == "ok") n.find('td.status').text("✓")
-					if (r[i].type == "error") n.find('td.status').text("✖")
-					if (r[i].type == "warning") n.find('td.status').text("?")
+					if (r[i].type == "ok") n.find('td.status').text("✔️")
+					if (r[i].type == "error") n.find('td.status').text("❌")
+					if (r[i].type == "warning") n.find('td.status').text("⚠️")
 					n.find('td.message p').text(r[i].text)
 					$('#system-checks tbody').append(n);
 
