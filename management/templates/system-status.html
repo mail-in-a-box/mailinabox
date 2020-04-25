@@ -31,7 +31,7 @@
 		word-wrap: break-word;
 	}
 
-	#system-checks a.showhide {
+	#system-checks .showhide {
 		display: none;
 		font-size: 85%;
 	}
@@ -103,7 +103,7 @@
 			function (r) {
 				$('#system-checks tbody').html("");
 				for (var i = 0; i < r.length; i++) {
-					var n = $("<tr><td class='status'/><td class='message'><p style='margin: 0'/><a class='showhide' href='#'/><div class='extra'></div></tr>");
+					var n = $("<tr><td class='status'/><td class='message'><p style='margin: 0'/><p class='showhide' href='#'/><div class='extra'></div></tr>");
 					if (i == 0) n.addClass('first')
 					if (r[i].type == "heading")
 						n.addClass(r[i].type)
@@ -116,7 +116,7 @@
 					$('#system-checks tbody').append(n);
 
 					if (r[i].extra.length > 0) {
-						n.find('a.showhide').show().text("show more").click(function () {
+						n.find('.showhide').show().text("show more").click(function () {
 							$(this).hide();
 							$(this).parent().find('.extra').fadeIn();
 							return false;
