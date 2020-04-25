@@ -103,7 +103,7 @@
 			function (r) {
 				$('#system-checks tbody').html("");
 				for (var i = 0; i < r.length; i++) {
-					var n = $("<tr><td class='status'/><td class='message'><p style='margin: 0'/><div class='extra'/><a class='showhide' href='#'/></tr>");
+					var n = $("<tr><td class='status'/><td class='message'><p style='margin: 0'/><a class='showhide' href='#'></a><div class='extra'></div></tr>");
 					if (i == 0) n.addClass('first')
 					if (r[i].type == "heading")
 						n.addClass(r[i].type)
