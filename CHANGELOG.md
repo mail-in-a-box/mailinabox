@@ -12,6 +12,7 @@ Software updates:
 
 System:
 
+* Nightly backups now occur on a random minute in the 3am hour (in the system time zone). The minute is chosen during Mail-in-a-Box installation/upgrade and remains the same until the next upgrade.
 * Fix for mail log statistics report on leap days.
 * Fix Mozilla autoconfig useGlobalPreferredServer setting.
 
