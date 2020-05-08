@@ -335,7 +335,7 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 			for alias in get_mail_aliases(env):
 				if alias[0] == tls_rpt_email: 
 					tls_rpt_string = " rua=mailto:%s" % tls_rpt_email
-			mta_sts_records.append(("_smtp._tls",  "TXT", "v=TLSRPTv1;%s" % tls_rpt_string, "For reporting, add an mail alias: 'tlsrpt@%s' or add a custom TXT record like 'v=TLSRPTv1; rua=mailto:[youremail]@%s' for reporting" % (env["PRIMARY_HOSTNAME"], env["PRIMARY_HOSTNAME"]) ))
+			mta_sts_records.append(("_smtp._tls", "TXT", "v=TLSRPTv1;%s" % tls_rpt_string, "For reporting, add an email alias: 'tlsrpt@%s' or add a custom TXT record like 'v=TLSRPTv1; rua=mailto:[youremail]@%s' for reporting" % (env["PRIMARY_HOSTNAME"], env["PRIMARY_HOSTNAME"])))
 		for qname, rtype, value, explanation in mta_sts_records:
 			if value is None or value.strip() == "": continue # skip IPV6 if not set
 			if not has_rec(qname, rtype):
