@@ -320,7 +320,7 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 	response = check_certificate(env['PRIMARY_HOSTNAME'], get_prim_cert['certificate'],get_prim_cert['private-key'])
 	# we don't want those records on the primary hostname 
 	# and we only want these records if the certificate is valid
-	if response[0] == 'OK':
+	if response[0] == 'OK' and domain in get_mail_domains(env):
 		mta_sts_records = [
 			("mta-sts", "A", env["PUBLIC_IP"], "Provides MTA-STS support"),
 			("mta-sts", "AAAA", env.get('PUBLIC_IPV6'), "Provides MTA-STS support"),
