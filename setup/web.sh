@@ -129,7 +129,7 @@ chmod a+r /var/lib/mailinabox/mozilla-autoconfig.xml
 
 cat conf/mta-sts.txt \
         | sed "s/MODE/$MTA_STS/" \
-        | sed "s/PRIMARY_HOSTNAME/$PRIMARY_HOSTNAME/" \
+        | sed "s/PRIMARY_HOSTNAME/$PUNY_PRIMARY_HOSTNAME/" \
          > /var/lib/mailinabox/mta-sts.txt
 chmod a+r /var/lib/mailinabox/mta-sts.txt
 
@@ -148,4 +148,3 @@ restart_service php7.2-fpm
 # Open ports.
 ufw_allow http
 ufw_allow https
-
