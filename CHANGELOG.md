@@ -10,6 +10,19 @@ Software updates:
 * Upgraded Nextcloud from 17.0.2 to 17.0.6 (with Contacts from 3.1.6 to 3.3.0 and Calendar from 1.7.1 to v2.0.3)
 * Upgraded Z-Push to 2.5.2.
 
+System:
+
+* Fix for mail log statistics report on leap days.
+* Fix Mozilla autoconfig useGlobalPreferredServer setting.
+
+Web:
+
+* Add a new hidden feature to set nginx alias in www/custom.yaml.
+
+Setup:
+
+* Improved error handling.
+
 v0.44 (February 15, 2020)
 -------------------------
 
