@@ -1,6 +1,15 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+Software updates:
+
+* Upgraded Roundcube from 1.4.2 to 1.4.4.
+* Upgraded Nextcloud from 17.0.2 to 17.0.6 (with Contacts from 3.1.6 to 3.3.0 and Calendar from 1.7.1 to v2.0.3)
+* Upgraded Z-Push to 2.5.2.
+
 v0.44 (February 15, 2020)
 -------------------------
 
