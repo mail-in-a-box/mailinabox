@@ -1,6 +1,29 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+Software updates:
+
+* Upgraded Roundcube from 1.4.2 to 1.4.4.
+* Upgraded Nextcloud from 17.0.2 to 17.0.6 (with Contacts from 3.1.6 to 3.3.0 and Calendar from 1.7.1 to v2.0.3)
+* Upgraded Z-Push to 2.5.2.
+
+System:
+
+* Nightly backups now occur on a random minute in the 3am hour (in the system time zone). The minute is chosen during Mail-in-a-Box installation/upgrade and remains the same until the next upgrade.
+* Fix for mail log statistics report on leap days.
+* Fix Mozilla autoconfig useGlobalPreferredServer setting.
+
+Web:
+
+* Add a new hidden feature to set nginx alias in www/custom.yaml.
+
+Setup:
+
+* Improved error handling.
+
 v0.44 (February 15, 2020)
 -------------------------
 
