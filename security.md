@@ -99,7 +99,6 @@ While domain policy records prevent other servers from sending mail with a "From
 The box restricts the envelope sender address (also called the return path or MAIL FROM address --- this is different from the "From:" header) that users may put into outbound mail. The envelope sender address must be either their own email address (their SMTP login username) or any alias that they are listed as a permitted sender of. (There is currently no restriction on the contents of the "From:" header.)
 
 Incoming Mail
-
 -------------
 
 ### Encryption
