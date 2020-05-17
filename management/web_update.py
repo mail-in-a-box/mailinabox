@@ -30,6 +30,9 @@ def get_web_domains(env, include_www_redirects=True, exclude_dns_elsewhere=True)
 	domains |= set('autoconfig.' + maildomain for maildomain in get_mail_domains(env))
 	domains |= set('autodiscover.' + maildomain for maildomain in get_mail_domains(env))
 
+	# Add webmail. domains, for domains that have their hosting on different machines.
+	domains |= set('webmail.' + zone for zone, zonefile in get_dns_zones(env))
+
 	if exclude_dns_elsewhere:
 		# ...Unless the domain has an A/AAAA record that maps it to a different
 		# IP address than this box. Remove those domains from our list.
@@ -78,10 +81,11 @@ def do_web_update(env):
 	template0 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx.conf")).read()
 	template1 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-alldomains.conf")).read()
 	template2 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-primaryonly.conf")).read()
-	template3 = "\trewrite ^(.*) https://$REDIRECT_DOMAIN$1 permanent;\n"
+	template3 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-webmail.conf")).read()
+	template4 = "\trewrite ^(.*) https://$REDIRECT_DOMAIN$1 permanent;\n"
 
 	# Add the PRIMARY_HOST configuration first so it becomes nginx's default server.
-	nginx_conf += make_domain_config(env['PRIMARY_HOSTNAME'], [template0, template1, template2], ssl_certificates, env)
+	nginx_conf += make_domain_config(env['PRIMARY_HOSTNAME'], [template0, template1, template2, template3], ssl_certificates, env)
 
 	# Add configuration all other web domains.
 	has_root_proxy_or_redirect = get_web_domains_with_root_overrides(env)
@@ -91,14 +95,18 @@ def do_web_update(env):
 			# PRIMARY_HOSTNAME is handled above.
 			continue
 		if domain in web_domains_not_redirect:
-			# This is a regular domain.
-			if domain not in has_root_proxy_or_redirect:
-				nginx_conf += make_domain_config(domain, [template0, template1], ssl_certificates, env)
-			else:
+			# This is a domain that is redirected to another host
+			if domain in has_root_proxy_or_redirect:
 				nginx_conf += make_domain_config(domain, [template0], ssl_certificates, env)
+			# This is a webmail domain.
+			elif is_webmail_domain(domain):
+				nginx_conf += make_domain_config(domain, [template0, template3], ssl_certificates, env)
+			# This is a regular domain.
+			else:
+				nginx_conf += make_domain_config(domain, [template0, template1, template3], ssl_certificates, env)
 		else:
 			# Add default 'www.' redirect.
-			nginx_conf += make_domain_config(domain, [template0, template3], ssl_certificates, env)
+			nginx_conf += make_domain_config(domain, [template0, template4], ssl_certificates, env)
 
 	# Did the file change? If not, don't bother writing & restarting nginx.
 	nginx_conf_fn = "/etc/nginx/conf.d/local.conf"
@@ -118,6 +126,9 @@ def do_web_update(env):
 	shell('check_call', ["/usr/sbin/service", "nginx", "reload"])
 
 	return "web updated\n"
+
+def is_webmail_domain(domain):
+	return domain.startswith('webmail.')
 
 def make_domain_config(domain, templates, ssl_certificates, env):
 	# GET SOME VARIABLES
@@ -194,6 +205,7 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 	nginx_conf = nginx_conf.replace("$SSL_KEY", tls_cert["private-key"])
 	nginx_conf = nginx_conf.replace("$SSL_CERTIFICATE", tls_cert["certificate"])
 	nginx_conf = nginx_conf.replace("$REDIRECT_DOMAIN", re.sub(r"^www\.", "", domain)) # for default www redirects to parent domain
+	nginx_conf = nginx_conf.replace("$WEBMAIL_PATH", ("" if is_webmail_domain(domain) else "/mail"))
 
 	return nginx_conf
 
@@ -230,7 +242,7 @@ def get_web_domains_info(env):
 			"root": get_web_root(domain, env),
 			"custom_root": get_web_root(domain, env, test_exists=False),
 			"ssl_certificate": check_cert(domain),
-			"static_enabled": domain not in (www_redirects | has_root_proxy_or_redirect),
+			"static_enabled": domain not in (www_redirects | has_root_proxy_or_redirect) and not is_webmail_domain(domain),
 		}
 		for domain in get_web_domains(env)
 	]
