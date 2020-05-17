@@ -18,6 +18,8 @@ if [ "$OS" != "Debian GNU/Linux 10 (buster)" -a "$OS" != "Ubuntu 20.04 LTS" ]; t
 	exit 1
 fi
 
+sed -i "s/__OSTAG__/$OS/g" management/templates/index.html
+
 # Check that we have enough memory.
 #
 # /proc/meminfo reports free memory in kibibytes. Our baseline will be 512 MB,
