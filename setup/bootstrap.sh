@@ -20,7 +20,7 @@ if [ -z "$TAG" ]; then
 	# want to display in status checks.
 	if [ "`lsb_release -d | sed 's/.*:\s*//' | sed 's/18\.04\.[0-9]/18.04/' `" == "Ubuntu 18.04 LTS" ]; then
 		# This machine is running Ubuntu 18.04.
-		TAG=v0.44
+		TAG=v0.45
 
 	elif [ "`lsb_release -d | sed 's/.*:\s*//' | sed 's/14\.04\.[0-9]/14.04/' `" == "Ubuntu 14.04 LTS" ]; then
 		# This machine is running Ubuntu 14.04.
@@ -35,14 +35,14 @@ if [ -z "$TAG" ]; then
 
 	else
 		echo "This script must be run on a system running Ubuntu 18.04 or Ubuntu 14.04."
-		exit
+		exit 1
 	fi
 fi
 
 # Are we running as root?
 if [[ $EUID -ne 0 ]]; then
 	echo "This script must be run as root. Did you leave out sudo?"
-	exit
+	exit 1
 fi
 
 # Clone the Mail-in-a-Box repository if it doesn't exist.
@@ -73,7 +73,7 @@ if [ "$TAG" != `git describe` ]; then
 	git fetch --depth 1 --force --prune origin tag $TAG
 	if ! git checkout -q $TAG; then
 		echo "Update failed. Did you modify something in `pwd`?"
-		exit
+		exit 1
 	fi
 	echo
 fi
