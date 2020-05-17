@@ -1,6 +1,14 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+Mail:
+
+* An MTA-STS policy for incoming mail is now published (in DNS and over HTTPS) when the primary hostname and email address domain both have a signed TLS certificate installed.
+* MTA-STS reporting is enabled with reports sent to administrator@ the primary hostname.
+
 v0.45 (May 16, 2020)
 --------------------
 
@@ -23,12 +31,6 @@ System:
 Web:
 
 * Add a new hidden feature to set nginx alias in www/custom.yaml.
-
-MTA-STS:
-
-* Added support for client side MTA-STS when there is a valid SSL Certificate on the primary domain
-* Automatically adds reporting when alias "tlsrpt@<primary-domain>" is added.
-* Starts default on 'testing', but changes will be kept between MiaB Upgrades.
 
 Setup:
 

@@ -82,14 +82,10 @@ if [ ! -f $STORAGE_ROOT/mailinabox.version ]; then
 	chown $STORAGE_USER.$STORAGE_USER $STORAGE_ROOT/mailinabox.version
 fi
 
-# Default policy (initial) for MTA_STS = testing in the current state of inclusion.
-# it can be changed to "none", "testing" or "enforce". With this extention, this is preserved by
-# future upgrades
-
-MTA_STS="${DEFAULT_MTA_STS:-testing}"
-
 # Save the global options in /etc/mailinabox.conf so that standalone
-# tools know where to look for data.
+# tools know where to look for data. The default MTA_STS_MODE setting
+# is blank unless set by an environment variable, but see web.sh for
+# how that is interpreted.
 cat > /etc/mailinabox.conf << EOF;
 STORAGE_USER=$STORAGE_USER
 STORAGE_ROOT=$STORAGE_ROOT
@@ -98,7 +94,7 @@ PUBLIC_IP=$PUBLIC_IP
 PUBLIC_IPV6=$PUBLIC_IPV6
 PRIVATE_IP=$PRIVATE_IP
 PRIVATE_IPV6=$PRIVATE_IPV6
-MTA_STS=$MTA_STS
+MTA_STS_MODE=${MTA_STS_MODE-}
 EOF
 
 # Start service configuration.

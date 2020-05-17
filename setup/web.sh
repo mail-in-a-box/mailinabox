@@ -126,12 +126,13 @@ chmod a+r /var/lib/mailinabox/mozilla-autoconfig.xml
 # nginx configuration at /.well-known/mta-sts.txt
 # more documentation is available on: 
 # https://www.uriports.com/blog/mta-sts-explained/
-# default mode is "testing", which means: "Messages will be delivered as 
-# though there was no failure but a report will be sent if TLS-RPT is configured"
-# other valid modes are: "enforce" and "none".
+# default mode is "enforce". Change to "testing" which means
+# "Messages will be delivered as though there was no failure
+# but a report will be sent if TLS-RPT is configured" if you
+# are not sure you want this yet. Or "none".
 PUNY_PRIMARY_HOSTNAME=$(echo "$PRIMARY_HOSTNAME" | idn2)
 cat conf/mta-sts.txt \
-        | sed "s/MODE/$MTA_STS/" \
+        | sed "s/MODE/${MTA_STS_MODE:-enforce}/" \
         | sed "s/PRIMARY_HOSTNAME/$PUNY_PRIMARY_HOSTNAME/" \
          > /var/lib/mailinabox/mta-sts.txt
 chmod a+r /var/lib/mailinabox/mta-sts.txt

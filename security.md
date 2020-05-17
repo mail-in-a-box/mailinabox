@@ -101,19 +101,17 @@ The box restricts the envelope sender address (also called the return path or MA
 Incoming Mail
 -------------
 
-### Encryption
+### Encryption Settings
 
-As discussed above, there is no way to require on-the-wire encryption of mail. When the box receives an incoming email (SMTP on port 25), it offers encryption (STARTTLS) but cannot require that senders use it because some senders may not support STARTTLS at all and other senders may support STARTTLS but not with the latest protocols/ciphers. To give senders the best chance at making use of encryption, the box offers protocols back to TLSv1 and ciphers with key lengths as low as 112 bits. Modern clients (senders) will make use of the 256-bit ciphers and Diffie-Hellman ciphers with a 2048-bit key for perfect forward secrecy, however. ([source](setup/mail-postfix.sh))
+As with outbound email, there is no way to require on-the-wire encryption of incoming mail from all senders. When the box receives an incoming email (SMTP on port 25), it offers encryption (STARTTLS) but cannot require that senders use it because some senders may not support STARTTLS at all and other senders may support STARTTLS but not with the latest protocols/ciphers. To give senders the best chance at making use of encryption, the box offers protocols back to TLSv1 and ciphers with key lengths as low as 112 bits. Modern clients (senders) will make use of the 256-bit ciphers and Diffie-Hellman ciphers with a 2048-bit key for perfect forward secrecy, however. ([source](setup/mail-postfix.sh))
+
+### MTA-STS
+
+The box publishes a SMTP MTA Strict Transport Security ([SMTP MTA-STS](https://en.wikipedia.org/wiki/Simple_Mail_Transfer_Protocol#SMTP_MTA_Strict_Transport_Security)) policy (via DNS and HTTPS) in "enforce" mode. Senders that support MTA-STS will use a secure SMTP connection. (MTA-STS tells senders to connect and expect a signed TLS certificate for the "MX" domain without permitting a fallback to an unencrypted connection.)
 
 ### DANE
 
 When DNSSEC is enabled at the box's domain name's registrar, [DANE TLSA](https://en.wikipedia.org/wiki/DNS-based_Authentication_of_Named_Entities) records are automatically published in DNS. Senders supporting DANE will enforce encryption on-the-wire between them and the box --- see the section on DANE for outgoing mail above. ([source](management/dns_update.py))
-
-### MTA-STS
-
-SMTP MTA Strict Transport Security ([SMTP MTA-STS for short](https://en.wikipedia.org/wiki/Simple_Mail_Transfer_Protocol#SMTP_MTA_Strict_Transport_Security)). 
-
-MTA-STS is a mechanism that instructs an SMTP server that the communication with the other SMTP server MUST be encrypted and that the domain name on the certificate should match the domain in the policy. It uses a combination of DNS and HTTPS to publish a policy that tells the sending party what to do when an encrypted channel can not be negotiated.
 
 ### Filters
 

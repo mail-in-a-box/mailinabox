@@ -304,37 +304,47 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 		if not has_rec(qname, rtype):
 			records.append((qname, rtype, value, explanation))
 
-	# If this is a domain name that there are email addresses configured for, i.e. "something@" 
-	# this domain name, then the domain name is a MTA-STS (https://tools.ietf.org/html/rfc8461) 
-	# Policy Domain. 
+	# If this is a domain name that there are email addresses configured for, i.e. "something@"
+	# this domain name, then the domain name is a MTA-STS (https://tools.ietf.org/html/rfc8461)
+	# Policy Domain.
 	#
-	# A "_mta-sts" TXT record signals the presence of a MTA-STS policy, and an effectively random policy 
-	# ID is used to signal that a new policy may (or may not) be deployed any time the DNS is 
-	# updated. 
-	# 
-	# The policy itself is served at the "mta-sts" (no underscore) subdomain over HTTPS. The 
-	# TLS certificate used by Postfix for STARTTLS must be a valid certificate for the MX 
-	# name (PRIMARY_HOSTNAME), so we do not set an MTA-STS policy if the certificate is not 
-	# valid (e.g. because it is self-signed and a valid certificate has not yet been provisioned).
-	get_prim_cert = get_ssl_certificates(env)[env['PRIMARY_HOSTNAME']]
-	response = check_certificate(env['PRIMARY_HOSTNAME'], get_prim_cert['certificate'],get_prim_cert['private-key'])
-	
-	if response[0] == 'OK' and domain in get_mail_domains(env):
+	# A "_mta-sts" TXT record signals the presence of a MTA-STS policy, and an effectively random policy
+	# ID is used to signal that a new policy may (or may not) be deployed any time the DNS is
+	# updated.
+	#
+	# The policy itself is served at the "mta-sts" (no underscore) subdomain over HTTPS. Therefore
+	# the TLS certificate used by Postfix for STARTTLS must be a valid certificate for the MX
+	# domain name (PRIMARY_HOSTNAME) *and* the TLS certificate used by nginx for HTTPS on the mta-sts
+	# subdomain must be valid certificate for that domain. Do not set an MTA-STS policy if either
+	# certificate in use is not valid (e.g. because it is self-signed and a valid certificate has not
+	# yet been provisioned).
+	mta_sts_enabled = False
+	if domain in get_mail_domains(env):
+		# Check that PRIMARY_HOSTNAME and the mta_sts domain both have valid certificates.
+		for d in (env['PRIMARY_HOSTNAME'], "mta-sts." + domain):
+			cert = get_ssl_certificates(env).get(d)
+			if not cert:
+				break # no certificate provisioned for this domain
+			cert_status = check_certificate(d, cert['certificate'], cert['private-key'])
+			if cert_status[0] != 'OK':
+				break # certificate is not valid
+		else:
+			# 'break' was not encountered above, so both domains are good
+			mta_sts_enabled = True
+	if mta_sts_enabled:
 		mta_sts_records = [
-			("mta-sts", "A", env["PUBLIC_IP"], "Provides MTA-STS support"),
-			("mta-sts", "AAAA", env.get('PUBLIC_IPV6'), "Provides MTA-STS support"),
-			("_mta-sts", "TXT", "v=STSv1; id=%sZ" % datetime.datetime.now().strftime("%Y%m%d%H%M%S"), "Enables MTA-STS support")
+			("mta-sts", "A", env["PUBLIC_IP"], "Optional. MTA-STS Policy Host serving /.well-known/mta-sts.txt."),
+			("mta-sts", "AAAA", env.get('PUBLIC_IPV6'), "Optional. MTA-STS Policy Host serving /.well-known/mta-sts.txt."),
+			("_mta-sts", "TXT", "v=STSv1; id=%sZ" % datetime.datetime.now().strftime("%Y%m%d%H%M%S"), "Optional. Part of the MTA-STS policy for incoming mail. If set, a MTA-STS policy must also be published.")
 		]
 		# Rules can be custom configured accoring to https://tools.ietf.org/html/rfc8460.
 		# Skip if the rules below if the user has set a custom _smtp._tls record.
 		if not has_rec("_smtp._tls", "TXT", prefix="v=TLSRPTv1;"):
-			# if the alias 'tlsrpt@PRIMARY_HOSTNAME' is configured, automaticly, reporting will be enabled to this email address
-			tls_rpt_email = "tlsrpt@%s" % env['PRIMARY_HOSTNAME'] 
 			tls_rpt_string = ""
-			for alias in get_mail_aliases(env):
-				if alias[0] == tls_rpt_email: 
-					tls_rpt_string = " rua=mailto:%s" % tls_rpt_email
-			mta_sts_records.append(("_smtp._tls", "TXT", "v=TLSRPTv1;%s" % tls_rpt_string, "For reporting, add an email alias: 'tlsrpt@%s' or add a custom TXT record like 'v=TLSRPTv1; rua=mailto:[youremail]@%s' for reporting" % (env["PRIMARY_HOSTNAME"], env["PRIMARY_HOSTNAME"])))
+			tls_rpt_email = env.get("MTA_STS_TLSRPT_EMAIL", "postmaster@%s" % env['PRIMARY_HOSTNAME'])
+			if tls_rpt_email: # if a reporting address is not cleared
+				tls_rpt_string = " rua=mailto:%s" % tls_rpt_email
+			mta_sts_records.append(("_smtp._tls", "TXT", "v=TLSRPTv1;%s" % tls_rpt_string, "Optional. Enables MTA-STS reporting."))
 		for qname, rtype, value, explanation in mta_sts_records:
 			if value is None or value.strip() == "": continue # skip IPV6 if not set
 			if not has_rec(qname, rtype):
