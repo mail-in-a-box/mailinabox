@@ -1,8 +1,12 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.45 (May 16, 2020)
+--------------------
+
+Security fixes:
+
+* Fix missing brute force login protection for Roundcube logins.
 
 Software updates:
 

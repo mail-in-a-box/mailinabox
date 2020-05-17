@@ -20,7 +20,7 @@ if [ -z "$TAG" ]; then
 	# want to display in status checks.
 	if [ "`lsb_release -d | sed 's/.*:\s*//' | sed 's/18\.04\.[0-9]/18.04/' `" == "Ubuntu 18.04 LTS" ]; then
 		# This machine is running Ubuntu 18.04.
-		TAG=v0.44
+		TAG=v0.45
 
 	elif [ "`lsb_release -d | sed 's/.*:\s*//' | sed 's/14\.04\.[0-9]/14.04/' `" == "Ubuntu 14.04 LTS" ]; then
 		# This machine is running Ubuntu 14.04.
