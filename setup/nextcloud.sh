@@ -91,8 +91,8 @@ InstallNextcloud() {
 }
 
 # Nextcloud Version to install. Checks are done down below to step through intermediate versions.
-nextcloud_ver=17.0.6
-nextcloud_hash=50b98d2c2f18510b9530e558ced9ab51eb4f11b0
+nextcloud_ver=18.0.4
+nextcloud_hash=6a1c671600d6a839d53cbcfac64eb3858936bbad
 
 # Current Nextcloud Version, #1623
 # Checking /usr/local/lib/owncloud/version.php shows version of the Nextcloud application, not the DB
