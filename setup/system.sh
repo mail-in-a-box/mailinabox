@@ -302,6 +302,7 @@ fi #NODOC
 # * The listen-on directive in named.conf.options restricts `bind9` to
 #   binding to the loopback interface instead of all interfaces.
 apt_install bind9
+touch /etc/default/bind9
 management/editconf.py /etc/default/bind9 \
 	"OPTIONS=\"-u bind -4\""
 if ! grep -q "listen-on " /etc/bind/named.conf.options; then
