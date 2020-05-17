@@ -7,23 +7,13 @@
 #########################################################
 
 if [ -z "$TAG" ]; then
-	# If a version to install isn't explicitly given as an environment
-	# variable, then install the latest version. But the latest version
-	# depends on the operating system. Existing Ubuntu 14.04 users need
-	# to be able to upgrade to the latest version supporting Ubuntu 14.04,
-	# in part because an upgrade is required before jumping to Ubuntu 18.04.
-	# New users on Ubuntu 18.04 need to get the latest version number too.
-	#
-	# Also, the system status checks read this script for TAG = (without the
-	# space, but if we put it in a comment it would confuse the status checks!)
-	# to get the latest version, so the first such line must be the one that we
-	# want to display in status checks.
-	if [ "`lsb_release -d | sed 's/.*:\s*//' `" == "Debian GNU/Linux 10 (buster)" ]; then
+	# Make s
+	OS=`lsb_release -d | sed 's/.*:\s*//'`
+	if [ "$OS" == "Debian GNU/Linux 10 (buster)" -o "$OS" == "Ubuntu 20.04 LTS"]; then
 		# This machine is running Ubuntu 18.04.
 		TAG=v0.44.POWER.5
-
 	else
-		echo "This script must be run on a system running Debian 10."
+		echo "This script must be run on a system running Debian 10 OR Ubuntu 20.04 LTS."
 		exit 1
 	fi
 fi

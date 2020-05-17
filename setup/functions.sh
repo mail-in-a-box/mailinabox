@@ -215,4 +215,11 @@ function git_clone {
 	rm -rf $TMPPATH
 }
 
-export PHP_VERSION="7.3" # Expected php version
+OS=`lsb_release -d | sed 's/.*:\s*//' `
+
+# Expected php version
+if [ "$OS" == "Debian GNU/Linux 10 (buster)" ]; then
+	export PHP_VERSION="7.3"
+elif [ "$OS" == "Ubuntu 20.04 LTS" ]; then
+	export PHP_VERSION="7.4"
+fi
