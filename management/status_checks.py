@@ -4,7 +4,7 @@
 # TLS certificates have been signed, etc., and if not tells the user
 # what to do next.
 
-import sys, os, os.path, re, subprocess, datetime, multiprocessing.pool
+import sys, os, os.path, re, subprocess, datetime, multiprocessing.pool, time
 
 import dns.reversename, dns.resolver
 import dateutil.parser, dateutil.tz
@@ -400,19 +400,9 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 			issues listed above."""
 			% (my_ips, ip + ((" / " + ipv6) if ipv6 is not None else "")))
 
-
 	# Check reverse DNS matches the PRIMARY_HOSTNAME. Note that it might not be
 	# a DNS zone if it is a subdomain of another domain we have a zone for.
-	existing_rdns_v4 = query_dns(dns.reversename.from_address(env['PUBLIC_IP']), "PTR")
-	existing_rdns_v6 = query_dns(dns.reversename.from_address(env['PUBLIC_IPV6']), "PTR") if env.get("PUBLIC_IPV6") else None
-	if existing_rdns_v4 == domain and existing_rdns_v6 in (None, domain):
-		output.print_ok("Reverse DNS is set correctly at ISP. [%s ↦ %s]" % (my_ips, env['PRIMARY_HOSTNAME']))
-	elif existing_rdns_v4 == existing_rdns_v6 or existing_rdns_v6 is None:
-		output.print_error("""Your box's reverse DNS is currently %s, but it should be %s. Your ISP or cloud provider will have instructions
-			on setting up reverse DNS for your box.""" % (existing_rdns_v4, domain) )
-	else:
-		output.print_error("""Your box's reverse DNS is currently %s (IPv4) and %s (IPv6), but it should be %s. Your ISP or cloud provider will have instructions
-			on setting up reverse DNS for your box.""" % (existing_rdns_v4, existing_rdns_v6, domain) )
+	check_reverse_dns(domain, my_ips, output, env)
 
 	# Check the TLSA record.
 	tlsa_qname = "_25._tcp." + domain
@@ -432,6 +422,42 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 
 	# Check that the hostmaster@ email address exists.
 	check_alias_exists("Hostmaster contact address", "hostmaster@" + domain, env, output)
+
+def check_reverse_dns(domain, my_ips, output, env):
+	existing_rdns_v4 = query_dns_ptr(dns.reversename.from_address(env['PUBLIC_IP']))
+	existing_rdns_v6 = query_dns_ptr(dns.reversename.from_address(env['PUBLIC_IPV6'])) if env.get(
+		"PUBLIC_IPV6") else None
+	if existing_rdns_v4 == domain and existing_rdns_v6 in (None, domain):
+		output.print_ok("Reverse DNS is set correctly at ISP. [%s ↦ %s]" % (my_ips, env['PRIMARY_HOSTNAME']))
+	elif existing_rdns_v4 == existing_rdns_v6 or existing_rdns_v6 is None:
+		output.print_error("""Your box's reverse DNS is currently %s, but it should be %s. Your ISP or cloud provider will have instructions
+			on setting up reverse DNS for your box.""" % (existing_rdns_v4, domain))
+	else:
+		output.print_error("""Your box's reverse DNS is currently %s (IPv4) and %s (IPv6), but it should be %s. Your ISP or cloud provider will have instructions
+			on setting up reverse DNS for your box.""" % (existing_rdns_v4, existing_rdns_v6, domain))
+
+
+def query_dns_ptr(qname):
+	# When looking up PTR records bind will contact the authoritative servers for a response.
+	# Sometimes these servers don't respond properly, we will give these servers 3 chances
+	# with a 2 second pause in between. These servers don't take a long time to fail, so it 
+	# shouldn't slow the checks down to much.
+	for attempt in range(3):
+		result=query_dns(qname, "PTR")
+
+		# Check if the authoritative servers respond properly
+		if result == "[nonameservers]":
+			time.sleep(2)
+		else:
+			# There might still be an error, like a timeout, but we will continue
+			# chances of recovering from those are slim.
+			break
+
+	# Display a slighty more meaningful message to the end users
+	if result == "[nonameservers]":
+		return "[bad response from authoritative nameservers]"
+
+	return result
 
 def check_alias_exists(alias_name, alias, env, output):
 	mail_aliases = dict([(address, receivers) for address, receivers, *_ in get_mail_aliases(env)])
@@ -681,10 +707,12 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None):
 	# Do the query.
 	try:
 		response = resolver.query(qname, rtype)
-	except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
-		# Host did not have an answer for this query; not sure what the
-		# difference is between the two exceptions.
+	except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+		# No response was received
 		return nxdomain
+	except dns.resolver.NoNameservers:
+		# No non-broken nameservers were available to respond to the request
+		return "[nonameservers]"
 	except dns.exception.Timeout:
 		return "[timeout]"
 
@@ -977,6 +1005,13 @@ if __name__ == "__main__":
 
 	elif sys.argv[1] == "--show-changes":
 		run_and_output_changes(env, pool)
+
+	elif sys.argv[1] == "--check-ptr":
+		# See if the reverse dns of the box is configured properly
+		shell('check_call', ["/usr/sbin/rndc", "flush"], trap=True)
+		output = ConsoleOutput()
+		my_ips = env['PUBLIC_IP'] + ((" / "+env['PUBLIC_IPV6']) if env.get("PUBLIC_IPV6") else "")
+		check_reverse_dns(env["PRIMARY_HOSTNAME"], my_ips, output, env)
 
 	elif sys.argv[1] == "--check-primary-hostname":
 		# See if the primary hostname appears resolvable and has a signed certificate.
