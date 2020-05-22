@@ -256,7 +256,7 @@ if [ -z "${DISABLE_FIREWALL:-}" ]; then
 	apt_install ufw
 
 	# Allow incoming connections to SSH.
-	ufw_allow ssh;
+	ufw_limit ssh;
 
 	# ssh might be running on an alternate port. Use sshd -T to dump sshd's #NODOC
 	# settings, find the port it is supposedly running on, and open that port #NODOC
@@ -266,7 +266,7 @@ if [ -z "${DISABLE_FIREWALL:-}" ]; then
 	if [ "$SSH_PORT" != "22" ]; then
 
 	echo Opening alternate SSH port $SSH_PORT. #NODOC
-	ufw_allow $SSH_PORT #NODOC
+	ufw_limit $SSH_PORT #NODOC
 
 	fi
 	fi
