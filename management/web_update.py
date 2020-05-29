@@ -30,6 +30,9 @@ def get_web_domains(env, include_www_redirects=True, exclude_dns_elsewhere=True)
 	domains |= set('autoconfig.' + maildomain for maildomain in get_mail_domains(env))
 	domains |= set('autodiscover.' + maildomain for maildomain in get_mail_domains(env))
 
+	# 'mta-sts.' for MTA-STS support.
+	domains |= set('mta-sts.' + maildomain for maildomain in get_mail_domains(env))
+
 	if exclude_dns_elsewhere:
 		# ...Unless the domain has an A/AAAA record that maps it to a different
 		# IP address than this box. Remove those domains from our list.

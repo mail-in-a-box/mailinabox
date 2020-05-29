@@ -109,6 +109,12 @@ As discussed above, there is no way to require on-the-wire encryption of mail. W
 
 When DNSSEC is enabled at the box's domain name's registrar, [DANE TLSA](https://en.wikipedia.org/wiki/DNS-based_Authentication_of_Named_Entities) records are automatically published in DNS. Senders supporting DANE will enforce encryption on-the-wire between them and the box --- see the section on DANE for outgoing mail above. ([source](management/dns_update.py))
 
+### MTA-STS
+
+SMTP MTA Strict Transport Security ([SMTP MTA-STS for short](https://en.wikipedia.org/wiki/Simple_Mail_Transfer_Protocol#SMTP_MTA_Strict_Transport_Security)). 
+
+MTA-STS is a mechanism that instructs an SMTP server that the communication with the other SMTP server MUST be encrypted and that the domain name on the certificate should match the domain in the policy. It uses a combination of DNS and HTTPS to publish a policy that tells the sending party what to do when an encrypted channel can not be negotiated.
+
 ### Filters
 
 Incoming mail is run through several filters. Email is bounced if the sender's IP address is listed in the [Spamhaus Zen blacklist](http://www.spamhaus.org/zen/) or if the sender's domain is listed in the [Spamhaus Domain Block List](http://www.spamhaus.org/dbl/). Greylisting (with [postgrey](http://postgrey.schweikert.ch/)) is also used to cut down on spam. ([source](setup/mail-postfix.sh))
