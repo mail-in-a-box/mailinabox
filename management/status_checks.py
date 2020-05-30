@@ -5,11 +5,13 @@
 # what to do next.
 
 import sys, os, os.path, re, subprocess, datetime, multiprocessing.pool
+import asyncio
 
 import dns.reversename, dns.resolver
 import dateutil.parser, dateutil.tz
 import idna
 import psutil
+import postfix_mta_sts_resolver.resolver
 
 from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, get_secondary_dns, get_custom_dns_records
 from web_update import get_web_domains, get_domains_with_a_records
@@ -309,6 +311,17 @@ def run_domain_checks(rounded_time, env, output, pool):
 
 	domains_to_check = mail_domains | dns_domains | web_domains
 
+	# Remove "www", "autoconfig", "autodiscover", and "mta-sts" subdomains, which we group with their parent,
+	# if their parent is in the domains to check list.
+	domains_to_check = [
+		d for d in domains_to_check
+		if not (
+		   d.split(".", 1)[0] in ("www", "autoconfig", "autodiscover", "mta-sts")
+		   and len(d.split(".", 1)) == 2
+		   and d.split(".", 1)[1] in domains_to_check
+		)
+	]
+
 	# Get the list of domains that we don't serve web for because of a custom CNAME/A record.
 	domains_with_a_records = get_domains_with_a_records(env)
 
@@ -326,6 +339,11 @@ def run_domain_checks(rounded_time, env, output, pool):
 
 def run_domain_checks_on_domain(domain, rounded_time, env, dns_domains, dns_zonefiles, mail_domains, web_domains, domains_with_a_records):
 	output = BufferedOutput()
+
+	# When running inside Flask, the worker threads don't get a thread pool automatically.
+	# Also this method is called in a forked worker pool, so creating a new loop is probably
+	# a good idea.
+	asyncio.set_event_loop(asyncio.new_event_loop())
 
 	# we'd move this up, but this returns non-pickleable values
 	ssl_certificates = get_ssl_certificates(env)
@@ -353,6 +371,26 @@ def run_domain_checks_on_domain(domain, rounded_time, env, dns_domains, dns_zone
 
 	if domain in dns_domains:
 		check_dns_zone_suggestions(domain, env, output, dns_zonefiles, domains_with_a_records)
+
+	# Check auto-configured subdomains. See run_domain_checks.
+	# Skip mta-sts because we check the policy directly.
+	for label in ("www", "autoconfig", "autodiscover"):
+		subdomain = label + "." + domain
+		if subdomain in web_domains or subdomain in mail_domains:
+			# Run checks.
+			subdomain_output = run_domain_checks_on_domain(subdomain, rounded_time, env, dns_domains, dns_zonefiles, mail_domains, web_domains, domains_with_a_records)
+
+			# Prepend the domain name to the start of each check line, and then add to the
+			# checks for this domain.
+			for attr, args, kwargs in subdomain_output[1].buf:
+				if attr == "add_heading":
+					# Drop the heading, but use its text as the subdomain name in
+					# each line since it is in Unicode form.
+					subdomain = args[0]
+					continue
+				if len(args) == 1 and isinstance(args[0], str):
+					args = [ subdomain + ": " + args[0] ]
+				getattr(output, attr)(*args, **kwargs)
 
 	return (domain, output)
 
@@ -611,6 +649,19 @@ def check_mail_domain(domain, env, output):
 		if mx != recommended_mx:
 			good_news += "  This configuration is non-standard.  The recommended configuration is '%s'." % (recommended_mx,)
 		output.print_ok(good_news)
+
+		# Check MTA-STS policy.
+		loop = asyncio.get_event_loop()
+		sts_resolver = postfix_mta_sts_resolver.resolver.STSResolver(loop=loop)
+		valid, policy = loop.run_until_complete(sts_resolver.resolve(domain))
+		if valid == postfix_mta_sts_resolver.resolver.STSFetchResult.VALID:
+			if policy[1].get("mx") == [env['PRIMARY_HOSTNAME']] and policy[1].get("mode") == "enforce": # policy[0] is the policyid
+				output.print_ok("MTA-STS policy is present.")
+			else:
+				output.print_error("MTA-STS policy is present but has unexpected settings. [{}]".format(policy[1]))
+		else:
+			output.print_error("MTA-STS policy is missing: {}".format(valid))
+
 	else:
 		output.print_error("""This domain's DNS MX record is incorrect. It is currently set to '%s' but should be '%s'. Mail will not
 			be delivered to this box. It may take several hours for public DNS to update after a change. This problem may result from
