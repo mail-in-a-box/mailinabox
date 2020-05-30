@@ -308,17 +308,23 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 	# this domain name, then the domain name is a MTA-STS (https://tools.ietf.org/html/rfc8461)
 	# Policy Domain.
 	#
-	# A "_mta-sts" TXT record signals the presence of a MTA-STS policy, and an effectively random policy
-	# ID is used to signal that a new policy may (or may not) be deployed any time the DNS is
-	# updated.
+	# A "_mta-sts" TXT record signals the presence of a MTA-STS policy. The id field helps clients
+	# cache the policy. It should be stable so we don't update DNS unnecessarily but change when
+	# the policy changes. It must be at most 32 letters and numbers, so we compute a hash of the
+	# policy file.
 	#
 	# The policy itself is served at the "mta-sts" (no underscore) subdomain over HTTPS. Therefore
 	# the TLS certificate used by Postfix for STARTTLS must be a valid certificate for the MX
 	# domain name (PRIMARY_HOSTNAME) *and* the TLS certificate used by nginx for HTTPS on the mta-sts
 	# subdomain must be valid certificate for that domain. Do not set an MTA-STS policy if either
 	# certificate in use is not valid (e.g. because it is self-signed and a valid certificate has not
-	# yet been provisioned).
+	# yet been provisioned). Since we cannot provision a certificate without A/AAAA records, we
+	# always set them --- only the TXT records depend on there being valid certificates.
 	mta_sts_enabled = False
+	mta_sts_records = [
+		("mta-sts", "A", env["PUBLIC_IP"], "Optional. MTA-STS Policy Host serving /.well-known/mta-sts.txt."),
+		("mta-sts", "AAAA", env.get('PUBLIC_IPV6'), "Optional. MTA-STS Policy Host serving /.well-known/mta-sts.txt."),
+	]
 	if domain in get_mail_domains(env):
 		# Check that PRIMARY_HOSTNAME and the mta_sts domain both have valid certificates.
 		for d in (env['PRIMARY_HOSTNAME'], "mta-sts." + domain):
@@ -332,11 +338,15 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 			# 'break' was not encountered above, so both domains are good
 			mta_sts_enabled = True
 	if mta_sts_enabled:
-		mta_sts_records = [
-			("mta-sts", "A", env["PUBLIC_IP"], "Optional. MTA-STS Policy Host serving /.well-known/mta-sts.txt."),
-			("mta-sts", "AAAA", env.get('PUBLIC_IPV6'), "Optional. MTA-STS Policy Host serving /.well-known/mta-sts.txt."),
-			("_mta-sts", "TXT", "v=STSv1; id=%sZ" % datetime.datetime.now().strftime("%Y%m%d%H%M%S"), "Optional. Part of the MTA-STS policy for incoming mail. If set, a MTA-STS policy must also be published.")
-		]
+		# Compute a up-to-32-character hash of the policy file. We'll take a SHA-1 hash of the policy
+		# file (20 bytes) and encode it as base-64 (60 bytes) but then just take its first 20 bytes
+		# which should be sufficient to change whenever the policy file changes.
+		with open("/var/lib/mailinabox/mta-sts.txt", "rb") as f:
+			mta_sts_policy_id = base64.b64encode(hashlib.sha1(f.read()).digest()).decode("ascii")[0:20]
+		mta_sts_records.extend([
+			("_mta-sts", "TXT", "v=STSv1; id=" + mta_sts_policy_id, "Optional. Part of the MTA-STS policy for incoming mail. If set, a MTA-STS policy must also be published.")
+		])
+
 		# Rules can be custom configured accoring to https://tools.ietf.org/html/rfc8460.
 		# Skip if the rules below if the user has set a custom _smtp._tls record.
 		if not has_rec("_smtp._tls", "TXT", prefix="v=TLSRPTv1;"):
@@ -345,10 +355,10 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 			if tls_rpt_email: # if a reporting address is not cleared
 				tls_rpt_string = " rua=mailto:%s" % tls_rpt_email
 			mta_sts_records.append(("_smtp._tls", "TXT", "v=TLSRPTv1;%s" % tls_rpt_string, "Optional. Enables MTA-STS reporting."))
-		for qname, rtype, value, explanation in mta_sts_records:
-			if value is None or value.strip() == "": continue # skip IPV6 if not set
-			if not has_rec(qname, rtype):
-				records.append((qname, rtype, value, explanation))
+	for qname, rtype, value, explanation in mta_sts_records:
+		if value is None or value.strip() == "": continue # skip IPV6 if not set
+		if not has_rec(qname, rtype):
+			records.append((qname, rtype, value, explanation))
 
 	# Sort the records. The None records *must* go first in the nsd zone file. Otherwise it doesn't matter.
 	records.sort(key = lambda rec : list(reversed(rec[0].split(".")) if rec[0] is not None else ""))
