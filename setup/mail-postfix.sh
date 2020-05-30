@@ -260,6 +260,81 @@ chmod +x /etc/cron.daily/mailinabox-postgrey-whitelist
 tools/editconf.py /etc/postfix/main.cf \
 	message_size_limit=134217728
 
+# install the postfix MTA-STS resolver.  the MTA-STS resolver service is
+# used by Postfix to ensure outgoing mail uses TLS when the recipient
+# announces MTA-STS.
+hide_output /usr/bin/pip3 install --upgrade postfix-mta-sts-resolver aiosqlite
+
+# add a user to use solely for MTA-STS resolution
+id -u mta-sts &>/dev/null || useradd -c "Daemon for MTA-STS policy checks" mta-sts -s /usr/sbin/nologin
+
+# create systemd services for MTA-STS
+cat > /etc/systemd/system/postfix-mta-sts-daemon@.service << EOF
+[Unit]
+Description=Postfix MTA STS daemon instance
+After=syslog.target network.target
+
+[Service]
+Type=notify
+User=mta-sts
+Group=mta-sts
+ExecStart=/usr/local/bin/mta-sts-daemon
+Restart=always
+KillMode=process
+TimeoutStartSec=10
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+cat > /etc/systemd/system/postfix-mta-sts.service << EOF
+[Unit]
+Description=Postfix MTA STS daemon
+After=syslog.target network.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/systemctl start postfix-mta-sts-daemon@main.service
+ExecReload=/bin/systemctl start postfix-mta-sts-daemon@backup.service ; /bin/systemctl restart postfix-mta-sts-daemon@main.service ; /bin/systemctl stop postfix-mta-sts-daemon@backup.service
+ExecStop=/bin/systemctl stop postfix-mta-sts-daemon@main.service
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# create the cache directory for the MTA-STS daemon
+mkdir -p $STORAGE_ROOT/mta-sts
+chown -R mta-sts:mta-sts $STORAGE_ROOT/mta-sts
+
+# configure the MTA-STS daemon for postfix
+cat > /etc/mta-sts-daemon.yml << EOF
+host: 127.0.0.1
+port: 8461
+reuse_port: true
+shutdown_timeout: 20
+cache:
+  type: sqlite
+  options:
+    filename: "$STORAGE_ROOT/mta-sts/mta-sts-cache.db"
+default_zone:
+  strict_testing: false
+  timeout: 4
+zones:
+  myzone:
+    strict_testing: false
+    timeout: 4
+EOF
+
+# add postfix configuration
+tools/editconf.py /etc/postfix/main.cf \
+	smtp_tls_policy_maps=socketmap:inet:127.0.0.1:8461:postfix
+
+# enable and start the MTA-STS service
+hide_output /bin/systemctl enable postfix-mta-sts.service
+restart_service postfix-mta-sts
+
 # Allow the two SMTP ports in the firewall.
 
 ufw_allow smtp
