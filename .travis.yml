@@ -21,8 +21,9 @@ before_install:
   # Do not run 'upgrade'
   - sudo apt-get update
   #
-  - echo "==== Install QA/test data ===="
-  # python3-dnspython is used by the python scripts in 'tests'
+  - echo "==== Install QA/test prerequisites ===="
+  # python3-dnspython is used by the python scripts in 'tests' and is
+  # not installed by setup
   - sudo apt-get -y install python3-dnspython
   # avoid the lengthy generation of DH params by copying in a prebuilt file
   - sudo mkdir -p /home/user-data/ssl
@@ -44,6 +45,7 @@ script:
   - sudo $SHELL -c 'cat ./tests/assets/nsd/nsd-extra.conf >> /etc/nsd/nsd.conf'
   - sudo systemctl restart nsd
   - sudo systemctl status -l nsd
+  - sudo cat /etc/nsd/nsd.conf
   - sudo cat /var/log/nsd.log
   - sudo ss -lp "sport = 8952"
   - sudo ss -lp "sport = :domain"
