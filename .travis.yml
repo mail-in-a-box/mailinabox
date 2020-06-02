@@ -2,6 +2,7 @@
 env:
   global:
   - NONINTERACTIVE=1
+  - SKIP_NETWORK_CHECKS=1
   - PRIMARY_HOSTNAME=box.abc.com
 
 language: shell
