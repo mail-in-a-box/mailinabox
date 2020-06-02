@@ -41,4 +41,4 @@ install:
   - sudo ./setup/start.sh -v
 
 script:
-  - sudo ./tests/runner.sh -dumpoutput
+  - sudo ./tests/runner.sh -dumpoutput -no-smtp-remote

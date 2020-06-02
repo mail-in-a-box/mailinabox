@@ -31,8 +31,9 @@ usage() {
 	echo "If no suite-name(s) given, all suites are run"
 	echo ""
 	echo "Options:"
-	echo "  -failfatal	   The runner will stop if any test fails"
-	echo "  -dumpoutput   After all tests have run, dump all failed test output"
+	echo "  -failfatal	    The runner will stop if any test fails"
+	echo "  -dumpoutput     After all tests have run, dump all failed test output"
+	echo "  -no-smtp-remote Skip tests requiring a remote SMTP server"
 	echo ""
 	echo "Output directory: $(dirname $0)/${base_outputdir}"
 	echo ""
@@ -48,6 +49,9 @@ while [ $# -gt 0 ]; do
 			;;
 		-dumpoutput )
 			DUMP_FAILED_TESTS_OUTPUT="yes"
+			;;
+		-no-smtp-remote )
+			SKIP_REMOTE_SMTP_TESTS="yes"
 			;;
 		-* )
 			echo "Invalid argument $1" 1>&2
@@ -76,7 +80,7 @@ fi
 
 echo ""
 echo "Done"
-echo "$OVERALL_COUNT tests ($OVERALL_SUCCESSES success/$OVERALL_FAILURES failures) in $OVERALL_COUNT_SUITES test suites"
+echo "$OVERALL_COUNT tests ($OVERALL_SUCCESSES success/$OVERALL_FAILURES failures/$OVERALL_SKIPPED skipped) in $OVERALL_COUNT_SUITES test suites"
 
 
 if [ $OVERALL_FAILURES -gt 0 ]; then

@@ -30,6 +30,10 @@ test_trial_send_remote() {
 	# use sendmail -bv to test mail delivery without actually mailing
 	# anything
 	test_start "trial_send_remote"
+	if skip_test remote-smtp; then
+		test_end
+		return 0
+	fi
 	start_log_capture
 	sendmail_bv_send "test@google.com" 120
 	assert_check_logs

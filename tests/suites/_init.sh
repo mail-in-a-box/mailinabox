@@ -15,6 +15,7 @@ BASE_OUTPUTDIR="out"
 PYMAIL="./test_mail.py"
 declare -i OVERALL_SUCCESSES=0
 declare -i OVERALL_FAILURES=0
+declare -i OVERALL_SKIPPED=0
 declare -i OVERALL_COUNT=0
 declare -i OVERALL_COUNT_SUITES=0
 
@@ -26,6 +27,7 @@ F_RESET=$(echo -e "\033[39m")
 # options
 FAILURE_IS_FATAL=no
 DUMP_FAILED_TESTS_OUTPUT=no
+SKIP_REMOTE_SMTP_TESTS=no
 
 # record a list of output files for failed tests
 FAILED_TESTS_MANIFEST="$BASE_OUTPUTDIR/failed_tests_manifest.txt"
@@ -36,6 +38,7 @@ suite_start() {
 	let TEST_NUM=1
 	let SUITE_COUNT_SUCCESS=0
 	let SUITE_COUNT_FAILURE=0
+	let SUITE_COUNT_SKIPPED=0
 	let SUITE_COUNT_TOTAL=0
 	SUITE_NAME="$1"
 	OUTDIR="$BASE_OUTPUTDIR/$SUITE_NAME"
@@ -50,6 +53,7 @@ suite_end() {
 	echo "Suite $SUITE_NAME finished"
 	let OVERALL_SUCCESSES+=$SUITE_COUNT_SUCCESS
 	let OVERALL_FAILURES+=$SUITE_COUNT_FAILURE
+	let OVERALL_SKIPPED+=$SUITE_COUNT_SKIPPED
 	let OVERALL_COUNT+=$SUITE_COUNT_TOTAL
 	let OVERALL_COUNT_SUITES+=1
 }
@@ -110,6 +114,17 @@ test_end() {
 				exit 1
 			fi
 			;;
+		SKIPPED )
+			record "[SKIPPED]"
+			echo "SKIPPED"
+			local idx=0
+			while [ $idx -lt ${#TEST_STATE_MSG[*]} ]; do
+				record "${TEST_STATE_MSG[$idx]}"
+				echo "	   why: ${TEST_STATE_MSG[$idx]}"
+				let idx+=1
+			done
+			let SUITE_COUNT_SKIPPED+=1
+			;;
 		* )
 			record "[INVALID TEST STATE '$TEST_STATE']"
 			echo "Invalid TEST_STATE=$TEST_STATE"
@@ -130,6 +145,25 @@ test_failure() {
 	TEST_STATE="FAILURE"
 	TEST_STATE_MSG+=( "$why" )
 }
+
+test_skip() {
+	local why="$1"
+	TEST_STATE="SKIPPED"
+	TEST_STATE_MSG+=( "$why" )
+}
+
+skip_test() {
+	# return 0 if we should skip the current test
+	if [ "$SKIP_REMOTE_SMTP_TESTS" == "yes" ] &&
+		   array_contains "remote-smtp" "$@";
+	then
+		test_skip "-no-smtp-remote option given"
+		return 0
+	fi
+	
+	return 1
+}
+
 
 have_test_failures() {
 	[ "$TEST_STATE" == "FAILURE" ] && return 0
