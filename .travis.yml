@@ -15,7 +15,7 @@ before_install:
   - echo "==== DUMP AppArmor Status ===="
   - (sudo aa-status; true)
   - echo "==== DUMP Other ===="
-  - echo "UMASK: $(umask)"
+  - echo "UMASK=$(umask)"
   - echo "==== System update ===="
   - sudo apt-get update
   - echo "==== Install test/qa packages ===="
