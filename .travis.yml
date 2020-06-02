@@ -10,11 +10,11 @@ os: linux
 dist: bionic
   
 before_install:
-  - echo "Updating system"
+  - sudo aa-status
   - sudo apt-get update
   
 install:
-  - sudo ./setup/start.sh
+  - sudo ./setup/start.sh -v
 
 script:
   - sudo ./tests/runner.sh

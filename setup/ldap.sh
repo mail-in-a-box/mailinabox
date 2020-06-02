@@ -632,8 +632,10 @@ update_apparmor() {
 EOF
 	chmod 0644 /etc/apparmor.d/local/usr.sbin.slapd
 
-	# Load settings into the kernel
-	apparmor_parser -r /etc/apparmor.d/usr.sbin.slapd
+	# Load settings into the kernel only if AppArmor is enabled
+	if aa-status --enabled; then
+		apparmor_parser -r /etc/apparmor.d/usr.sbin.slapd
+	fi
 }
 
 
