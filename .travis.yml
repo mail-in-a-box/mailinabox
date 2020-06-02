@@ -11,7 +11,7 @@ dist: bionic
   
 before_install:
   - echo "Check the status of AppArmor"
-  - ! sudo aa-status && sudo mount -tsecurityfs securityfs /sys/kernel/security
+  - sudo mount -tsecurityfs securityfs /sys/kernel/security
   - sudo apt-get update
   
 install:
