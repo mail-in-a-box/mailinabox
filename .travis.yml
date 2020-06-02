@@ -11,11 +11,10 @@ dist: bionic
   
 before_install:
   - echo "==== DUMP ENVIRONMENT ===="
-  - env
+  - env | sort
+  - echo "UMASK=$(umask)"
   - echo "==== DUMP AppArmor Status ===="
   - (sudo aa-status; true)
-  - echo "==== DUMP Other ===="
-  - echo "UMASK=$(umask)"
   - echo "==== System update ===="
   - sudo apt-get update
   - echo "==== Install QA/test data ===="
@@ -23,7 +22,8 @@ before_install:
   - sudo mkdir -p /home/user-data/ssl
   - sudo cp ./tests/assets/ssl/dh2048.pem /home/user-data/ssl
   - echo "==== Add the PRIMARY_HOSTNAME to /etc/hosts ===="
-  - sudo echo "$(source setup/functions.sh; get_default_privateip 4) $PRIMARY_HOSTNAME" >> /etc/hosts
+  - echo "$(source setup/functions.sh; get_default_privateip 4)   $PRIMARY_HOSTNAME" > /tmp/hosts_add.tmp
+  - sudo cat /tmp/hosts_add.tmp >>/etc/hosts
   
 install:
   - sudo ./setup/start.sh -v
