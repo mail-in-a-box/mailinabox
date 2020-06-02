@@ -80,10 +80,21 @@ mgmt_rest() {
 	return 0	
 }
 
+systemctl_reset() {
+	local service="${1:-nsd.service}"
+	# for travis-ci: reset nsd to avoid "nsd.service: Start request
+	# repeated too quickly", which occurs inside kick() of the
+	# management flask app when "system restart nsd" is called on
+	# detection of a new mail domain
+	record "[systemctl reset-failed $service]"
+	systemctl reset-failed $service 2>&1 >>$TEST_OF
+}
+
 mgmt_create_user() {
 	local email="$1"
 	local pass="${2:-$email}"
 	local delete_first="${3:-yes}"
+	local rc=0
 
 	# ensure the user is deleted (clean test run)
 	if [ "$delete_first" == "yes" ]; then
@@ -91,7 +102,11 @@ mgmt_create_user() {
 	fi
 	record "[create user $email]"
 	mgmt_rest POST /admin/mail/users/add "email=$email" "password=$pass"
-	return $?
+	rc=$?
+	if echo "$REST_OUTPUT" | grep "updated DNS:" >/dev/null; then
+		systemctl_reset
+	fi
+	return $rc
 }
 
 mgmt_assert_create_user() {

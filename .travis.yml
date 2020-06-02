@@ -13,15 +13,27 @@ before_install:
   - echo "==== DUMP ENVIRONMENT ===="
   - env | sort
   - echo "UMASK=$(umask)"
+  #
   - echo "==== DUMP AppArmor Status ===="
   - (sudo aa-status; true)
+  #
   - echo "==== System update ===="
+  # Do not run 'upgrade'
   - sudo apt-get update
+  #
   - echo "==== Install QA/test data ===="
+  # python3-dnspython is used by the python scripts in 'tests'
   - sudo apt-get -y install python3-dnspython
+  # avoid the lengthy generation of DH params by copying in a prebuilt file
   - sudo mkdir -p /home/user-data/ssl
   - sudo cp ./tests/assets/ssl/dh2048.pem /home/user-data/ssl
+  #
   - echo "==== Add the PRIMARY_HOSTNAME to /etc/hosts ===="
+  # The PRIMARY_HOSTNAME should point to the interface address not
+  # loopback.  That is because of the way MiaB resolves - the local
+  # resolver is bind9, which requires valid NS records, which would
+  # point back to the local nsd authoritative name server for the
+  # domain. We don't have those in QA, so we need the hosts entry.
   - echo "$(source setup/functions.sh; get_default_privateip 4)   $PRIMARY_HOSTNAME" > /tmp/hosts_add.tmp
   - sudo $SHELL -c 'cat /tmp/hosts_add.tmp >>/etc/hosts'
   

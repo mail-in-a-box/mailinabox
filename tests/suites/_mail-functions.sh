@@ -105,6 +105,7 @@ detect_syslog_error() {
 !/postfix\/qmgr/ && /warning:/	{ exit 1 }
 /(fatal|reject|error):/	 { exit 1 }
 /Error in /			{ exit 1 }
+/Exception on /     { exit 1 }
 /named\[\d+\]:.* verify failed/ { exit 1 }
 ' \
 				>>$TEST_OF 2>&1 <<< "$line"
