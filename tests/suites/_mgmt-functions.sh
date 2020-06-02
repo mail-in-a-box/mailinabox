@@ -111,8 +111,6 @@ mgmt_create_user() {
 		systemctl status nsd.service >>$TEST_OF
 		record "[NSD LOG]"
 		cat /var/log/nsd.log >>$TEST_OF
-		netstat -alnp | grep 8952 >>$TEST_OF
-		ps -ejH >>$TEST_OF
 	fi
 	return $rc
 }
