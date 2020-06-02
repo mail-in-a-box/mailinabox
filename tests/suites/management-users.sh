@@ -202,6 +202,9 @@ test_intl_domains() {
 
 suite_start "management-users" mgmt_start
 
+# for travis-ci
+systemctl_reset "nsd.service"
+
 test_mixed_case_users
 test_mixed_case_domains
 test_intl_domains

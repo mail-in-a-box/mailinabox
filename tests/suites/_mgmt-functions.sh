@@ -81,7 +81,7 @@ mgmt_rest() {
 }
 
 systemctl_reset() {
-	local service="${1:-nsd.service}"
+	local service="$1"
 	# for travis-ci: reset nsd to avoid "nsd.service: Start request
 	# repeated too quickly", which occurs inside kick() of the
 	# management flask app when "system restart nsd" is called on
@@ -104,7 +104,7 @@ mgmt_create_user() {
 	mgmt_rest POST /admin/mail/users/add "email=$email" "password=$pass"
 	rc=$?
 	if echo "$REST_OUTPUT" | grep "updated DNS:" >/dev/null; then
-		systemctl_reset
+		systemctl_reset "nsd.service"
 	fi
 	return $rc
 }
