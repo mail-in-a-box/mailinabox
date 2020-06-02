@@ -23,7 +23,7 @@ before_install:
   - sudo cp ./tests/assets/ssl/dh2048.pem /home/user-data/ssl
   - echo "==== Add the PRIMARY_HOSTNAME to /etc/hosts ===="
   - echo "$(source setup/functions.sh; get_default_privateip 4)   $PRIMARY_HOSTNAME" > /tmp/hosts_add.tmp
-  - sudo cat /tmp/hosts_add.tmp >>/etc/hosts
+  - sudo $SHELL -c 'cat /tmp/hosts_add.tmp >>/etc/hosts'
   
 install:
   - sudo ./setup/start.sh -v
