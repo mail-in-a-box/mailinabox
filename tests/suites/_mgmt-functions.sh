@@ -103,9 +103,6 @@ mgmt_create_user() {
 	record "[create user $email]"
 	mgmt_rest POST /admin/mail/users/add "email=$email" "password=$pass"
 	rc=$?
-	if echo "$REST_OUTPUT" | grep "updated DNS:" >/dev/null; then
-		systemctl_reset "nsd.service"
-	fi
 	return $rc
 }
 
