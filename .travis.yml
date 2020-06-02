@@ -43,7 +43,7 @@ install:
 script:
   - ip add
   - sudo cat /var/log/nsd.log
-  - sudo $SHELL -c 'echo do-ip6:no >> /etc/nsd/nsd.conf'
+  - sudo sed -i 's/ip-transparent. yes/do-ip6: no/' /etc/nsd/nsd.conf
   - sudo systemctl restart nsd
   - sudo systemctl status nsd
   - sudo cat /var/log/nsd.log
