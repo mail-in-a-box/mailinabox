@@ -43,8 +43,10 @@ install:
 script:
   - ip add
   - sudo cat /var/log/nsd.log
-  - sudo sed -i 's/ip-transparent. yes/do-ip6: no/' /etc/nsd/nsd.conf
+  - sudo sed -i 's/ip-transparent. yes/do-ip6\: no/' /etc/nsd/nsd.conf
   - sudo systemctl restart nsd
-  - sudo systemctl status nsd
+  - sudo systemctl status -l nsd
   - sudo cat /var/log/nsd.log
+  - sudo ss -lp "sport = 8952"
+  - sudo ss -lp "sport = :domain"
   - sudo ./tests/runner.sh -dumpoutput -no-smtp-remote
