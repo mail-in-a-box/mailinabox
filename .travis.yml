@@ -10,12 +10,22 @@ os: linux
 dist: bionic
   
 before_install:
-  - echo "Check the status of AppArmor"
+  - echo "==== DUMP: ENVIRONMENT ===="
+  - env
+  - echo "==== DUMP: AppArmor Status ===="
   - (sudo aa-status; true)
+  - echo "==== DUMP: Other ===="
+  - echo "UMASK: $(umask)"
+  - echo "==== System update ===="
   - sudo apt-get update
+  - echo "==== Install test/qa packages ===="
+  - sudo apt-get -y install python3-dnspython
+  - echo "==== Copy pre-built files ===="
+  - sudo mkdir -p /home/user-data/ssl
+  - sudo cp ./tests/assets/ssl/dh2048.pem /home/user-data/ssl
   
 install:
   - sudo ./setup/start.sh -v
 
 script:
-  - sudo ./tests/runner.sh
+  - sudo ./tests/runner.sh -dumpoutput

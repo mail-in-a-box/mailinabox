@@ -25,6 +25,11 @@ F_RESET=$(echo -e "\033[39m")
 
 # options
 FAILURE_IS_FATAL=no
+DUMP_FAILED_TESTS_OUTPUT=no
+
+# record a list of output files for failed tests
+FAILED_TESTS_MANIFEST="$BASE_OUTPUTDIR/failed_tests_manifest.txt"
+rm -f "$FAILED_TESTS_MANIFEST"
 
 
 suite_start() {
@@ -95,11 +100,13 @@ test_end() {
 				echo "	   why: ${TEST_STATE_MSG[$idx]}"
 				let idx+=1
 			done
+			echo "$TEST_OF" >>$FAILED_TESTS_MANIFEST
 			echo "	   see: $(dirname $0)/$TEST_OF"
 			let SUITE_COUNT_FAILURE+=1
 			if [ "$FAILURE_IS_FATAL" == "yes" ]; then
 				record "FATAL: failures are fatal option enabled"
 				echo "FATAL: failures are fatal option enabled"
+				dump_failed_tests_output
 				exit 1
 			fi
 			;;
@@ -142,6 +149,7 @@ die() {
 	test_failure "a fatal error occurred"
 	test_end
 	echo "FATAL: $@"
+	dump_failed_tests_output
 	exit 1
 }
 
@@ -163,6 +171,22 @@ python_error() {
 	[ $? -eq 1 ] && echo "$output"
 }
 
+dump_failed_tests_output() {
+	if [ "$DUMP_FAILED_TESTS_OUTPUT" == "yes" ]; then
+		echo ""
+		echo "============================================================"
+		echo "OUTPUT OF FAILED TESTS"
+		echo "============================================================"
+		for file in $(cat $FAILED_TESTS_MANIFEST); do
+			echo ""
+			echo ""
+			echo "--------"
+			echo "-------- $file"
+			echo "--------"
+			cat "$file"
+		done
+	fi
+}
 
 
 ##

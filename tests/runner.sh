@@ -31,7 +31,8 @@ usage() {
 	echo "If no suite-name(s) given, all suites are run"
 	echo ""
 	echo "Options:"
-	echo "	 -failfatal	   The runner will stop if any test fails"
+	echo "  -failfatal	   The runner will stop if any test fails"
+	echo "  -dumpoutput   After all tests have run, dump all failed test output"
 	echo ""
 	echo "Output directory: $(dirname $0)/${base_outputdir}"
 	echo ""
@@ -44,6 +45,9 @@ while [ $# -gt 0 ]; do
 		-failfatal )
 			# failure is fatal (via global option, see _init.sh)
 			FAILURE_IS_FATAL=yes
+			;;
+		-dumpoutput )
+			DUMP_FAILED_TESTS_OUTPUT="yes"
 			;;
 		-* )
 			echo "Invalid argument $1" 1>&2
@@ -74,8 +78,11 @@ echo ""
 echo "Done"
 echo "$OVERALL_COUNT tests ($OVERALL_SUCCESSES success/$OVERALL_FAILURES failures) in $OVERALL_COUNT_SUITES test suites"
 
+
 if [ $OVERALL_FAILURES -gt 0 ]; then
+	dump_failed_tests_output
 	exit 1
+	
 else
 	exit 0
 fi
