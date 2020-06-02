@@ -1,0 +1,18 @@
+env:
+  global:
+  - NONINTERACTIVE=1
+  - PRIMARY_HOSTNAME=box.abc.com
+
+language: shell
+os: linux
+dist: bionic
+  
+before_install:
+  - echo "Updating system"
+  - sudo apt-get update
+  
+install:
+  - ./setup/start.sh
+
+script:
+  - ./tests/runner.sh
