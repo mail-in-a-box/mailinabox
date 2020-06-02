@@ -103,6 +103,13 @@ mgmt_create_user() {
 	record "[create user $email]"
 	mgmt_rest POST /admin/mail/users/add "email=$email" "password=$pass"
 	rc=$?
+	if echo "$REST_OUTPUT" | grep "updated DNS:" >/dev/null; then
+		record "[Detected dns update]"
+		systemctl status nsd.service >>$TEST_OF
+		record "Sleeping 5 seconds for services to start"
+		sleep 5
+		systemctl status nsd.service >>$TEST_OF
+	fi
 	return $rc
 }
 
