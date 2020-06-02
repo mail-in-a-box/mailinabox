@@ -10,11 +10,11 @@ os: linux
 dist: bionic
   
 before_install:
-  - echo "==== DUMP: ENVIRONMENT ===="
+  - echo "==== DUMP ENVIRONMENT ===="
   - env
-  - echo "==== DUMP: AppArmor Status ===="
+  - echo "==== DUMP AppArmor Status ===="
   - (sudo aa-status; true)
-  - echo "==== DUMP: Other ===="
+  - echo "==== DUMP Other ===="
   - echo "UMASK: $(umask)"
   - echo "==== System update ===="
   - sudo apt-get update
