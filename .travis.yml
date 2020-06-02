@@ -12,7 +12,7 @@ before_install:
   - sudo apt-get update
   
 install:
-  - ./setup/start.sh
+  - sudo ./setup/start.sh
 
 script:
-  - ./tests/runner.sh
+  - sudo ./tests/runner.sh
