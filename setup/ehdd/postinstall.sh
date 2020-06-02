@@ -1,6 +1,7 @@
 #!/bin/bash
 
-EHDD_IMG="$(setup/ehdd/create_hdd.sh -location)"
+. "setup/ehdd/ehdd_funcs.sh" || exit 1
+
 if [ -e "$EHDD_IMG" ]; then
     
     if [ -s /etc/mailinabox.conf ]; then

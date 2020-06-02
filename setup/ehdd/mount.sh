@@ -1,31 +1,31 @@
 #!/bin/bash
 
-hdd="$(setup/ehdd/create_hdd.sh -location)"
-mountpoint="$(setup/ehdd/create_hdd.sh -mountpoint)"
+. "setup/ehdd/ehdd_funcs.sh" || exit 1
 
-if [ ! -e "$hdd" ]; then
-    echo "NOTE: ecrypted HDD not found at $hdd, not mounting"
+if [ ! -e "$EHDD_IMG" ]; then
+    echo "Warning: ecrypted HDD not found at $EHDD_IMG, not mounting"
     exit 0
 fi
 
-if mount | grep "^/dev/mapper/c1 on $mountpoint" >/dev/null; then
-    echo "$hdd already mounted"
+if mount | grep "^/dev/mapper/$EHDD_LUKS_NAME on $EHDD_MOUNTPOINT" >/dev/null; then
+    echo "$EHDD_IMG already mounted"
     exit 0
 fi
 
-losetup /dev/loop0 "$hdd" || exit 1
-# map device to /dev/mapper/c1
-cryptsetup luksOpen /dev/loop0 c1
+loop=$(find_unused_loop)
+losetup $loop "$EHDD_IMG" || exit 1
+# map device to /dev/mapper/NAME
+cryptsetup luksOpen $loop $EHDD_LUKS_NAME
 code=$?
 if [ $code -ne 0 ]; then
-    echo "luksOpen failed ($code) - is $hdd luks formatted?"
-    losetup -d /dev/loop0
+    echo "luksOpen failed ($code) - is $EHDD_IMG luks formatted?"
+    losetup -d $loop
     exit 1
 fi
 
-if [ ! -e "$mountpoint" ]; then
-   echo "Creating mount point directory: $mountpoint"
-   mkdir -p "$mountpoint" || exit 1
+if [ ! -e "$EHDD_MOUNTPOINT" ]; then
+   echo "Creating mount point directory: $EHDD_MOUNTPOINT"
+   mkdir -p "$EHDD_MOUNTPOINT" || exit 1
 fi
-mount /dev/mapper/c1 "$mountpoint" || exit 1
-echo "Success: mounted $mountpoint"
+mount /dev/mapper/$EHDD_LUKS_NAME "$EHDD_MOUNTPOINT" || exit 1
+echo "Success: mounted $EHDD_MOUNTPOINT"

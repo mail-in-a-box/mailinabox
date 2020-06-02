@@ -1,11 +1,11 @@
 #!/bin/bash
 
-mountpoint="$(setup/ehdd/create_hdd.sh -mountpoint)"
+. "setup/ehdd/ehdd_funcs.sh" || exit 1
 
-if ! mount | grep "$mountpoint" >/dev/null; then
+if ! mount | grep "$EHDD_MOUNTPOINT" >/dev/null; then
     # not mounted
     exit 0
 fi
-umount "$mountpoint" || exit 1
-cryptsetup luksClose c1
-losetup -d /dev/loop0
+umount "$EHDD_MOUNTPOINT" || exit 1
+cryptsetup luksClose $EHDD_LUKS_NAME
+losetup -d $(find_inuse_loop)
