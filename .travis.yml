@@ -43,7 +43,7 @@ install:
   - sudo ./setup/start.sh -v
 
 script:
-  - sudo sed -i 's|-d|-d -4 -p 5053|' /etc/systemd/system/multi-user.target.wants/nsd.service
+  - sudo sed -i 's|-d|-d -4 -a 0.0.0.0@5053 -p 5053 -c /etc/nsd/nsd.conf|' /etc/systemd/system/multi-user.target.wants/nsd.service
   - sudo systemctl daemon-reload
   - sudo sed -i 's/ip-address\(.\).*/&\n  port\1 5053/' /etc/nsd/nsd.conf
   - sudo systemctl restart nsd
