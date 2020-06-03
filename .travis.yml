@@ -43,7 +43,9 @@ install:
   - sudo ./setup/start.sh -v
 
 script:
-  - sudo sed -i 's|-d|-d -6 -N 1 -n 1|' /etc/systemd/system/multi-user.target.wants/nsd.service
+  - sudo find / -name nsd.service
+  - sudo sed -i 's|-d|-d -4 -p 5053|' /etc/systemd/system/multi-user.target.wants/nsd.service
+  - sudo sed -i 's|-d|-d -4 -p 5053|' /lib/systemd/system/nsd.service
   - sudo systemctl daemon-reload
   - sudo systemctl restart nsd
   - sudo systemctl status -l nsd

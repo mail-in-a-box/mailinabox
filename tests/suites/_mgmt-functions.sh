@@ -63,7 +63,13 @@ mgmt_rest() {
 	[ -z "$REST_HTTP_CODE" ] && REST_HTTP_CODE="000"
 
 	if [ $code -ne 0 ]; then
-		if [ $code -ne 16 -o $REST_HTTP_CODE -ne 200 ]; then
+		if [ $code -eq 56 -a $REST_HTTP_CODE -eq 200 ]; then
+			# this is okay, I guess. happens sometimes during
+			# POST /admin/mail/aliases/remove
+			# 56=Unexpected EOF
+			record "Ignoring curl return code 56 due to 200 status"
+			
+		elif [ $code -ne 16 -o $REST_HTTP_CODE -ne 200 ]; then
 			REST_ERROR="CURL failed with code $code"
 			record "${F_DANGER}$REST_ERROR${F_RESET}"
 			record "$output"
