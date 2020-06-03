@@ -43,19 +43,18 @@ install:
   - sudo ./setup/start.sh -v
 
 script:
-  - (sudo systemctl status -l nsd; true)
-  - sudo cat /var/log/nsd.log
-  - sudo $SHELL -c 'cat ./tests/assets/nsd/nsd-extra.conf >> /etc/nsd/nsd.conf'
-  - sudo sed -i 's/\(.\) yes/\1 yes\n  port\1 1053/' /etc/nsd/nsd.conf
+  - sudo sed -i 's|-d|-d -4|' /etc/systemd/system/multi-user.target.wants/nsd.service
+  - sudo systemctl daemon-reload
+#  - sudo $SHELL -c 'cat ./tests/assets/nsd/nsd-extra.conf >> /etc/nsd/nsd.conf'
+#  - sudo sed -i 's/\(.\) yes/\1 yes\n  port\1 1053/' /etc/nsd/nsd.conf
   - sudo systemctl restart nsd
   - sudo systemctl status -l nsd
   - sudo tail -100 /var/log/syslog
   - sudo cat /var/log/nsd.log
   - sudo cat /etc/nsd/nsd.conf
   - sudo nsd-checkconf -o port /etc/nsd/nsd.conf
+  - sudo cat /etc/systemd/system/multi-user.target.wants/nsd.service
   - sudo ps -ef
   - sudo ss -lp "sport = 8952"
   - sudo ss -lp "sport = :domain"
-  - sudo find / -name nsd.conf
-  - ip add
   - sudo ./tests/runner.sh -dumpoutput -no-smtp-remote
