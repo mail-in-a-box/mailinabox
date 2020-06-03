@@ -70,6 +70,9 @@ mgmt_rest() {
 			record "Ignoring curl return code 56 due to 200 status"
 			
 		elif [ $code -ne 16 -o $REST_HTTP_CODE -ne 200 ]; then
+			# any error code will fail the rest call except for a 16
+			# with a 200 HTTP status.
+			# 16="a problem was detected in the HTTP2 framing layer. This is somewhat generic and can be one out of several problems"
 			REST_ERROR="CURL failed with code $code"
 			record "${F_DANGER}$REST_ERROR${F_RESET}"
 			record "$output"
@@ -86,15 +89,6 @@ mgmt_rest() {
 	return 0	
 }
 
-systemctl_reset() {
-	local service="$1"
-	# for travis-ci: reset nsd to avoid "nsd.service: Start request
-	# repeated too quickly", which occurs inside kick() of the
-	# management flask app when "system restart nsd" is called on
-	# detection of a new mail domain
-	record "[systemctl reset-failed $service]"
-	systemctl reset-failed $service 2>&1 >>$TEST_OF
-}
 
 mgmt_create_user() {
 	local email="$1"
@@ -109,15 +103,6 @@ mgmt_create_user() {
 	record "[create user $email]"
 	mgmt_rest POST /admin/mail/users/add "email=$email" "password=$pass"
 	rc=$?
-	if echo "$REST_OUTPUT" | grep "updated DNS:" >/dev/null; then
-		record "[Detected dns update]"
-		systemctl status nsd.service >>$TEST_OF
-		record "Sleeping 5 seconds for services to start"
-		sleep 5
-		systemctl status nsd.service >>$TEST_OF
-		record "[NSD LOG]"
-		cat /var/log/nsd.log >>$TEST_OF
-	fi
 	return $rc
 }
 
