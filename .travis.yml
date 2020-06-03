@@ -43,18 +43,17 @@ install:
   - sudo ./setup/start.sh -v
 
 script:
-  - sudo sed -i 's|-d|-d -4 -a 0.0.0.0@5053 -p 5053 -c /etc/nsd/nsd.conf|' /etc/systemd/system/multi-user.target.wants/nsd.service
+  - sudo sed -i 's|-d|-d -6 -N 1 -n 1|' /etc/systemd/system/multi-user.target.wants/nsd.service
   - sudo systemctl daemon-reload
-  - sudo sed -i 's/ip-address\(.\).*/&\n  port\1 5053/' /etc/nsd/nsd.conf
   - sudo systemctl restart nsd
   - sudo systemctl status -l nsd
   - sudo cat /var/log/nsd.log
   - sudo cat /etc/nsd/nsd.conf
   - sudo nsd-checkconf -o port /etc/nsd/nsd.conf
+  - sudo nsd-checkconf -o ip-address /etc/nsd/nsd.conf
   - sudo cat /etc/systemd/system/multi-user.target.wants/nsd.service
   - sudo tail -100 /var/log/syslog
-  - sudo ps -efww
+  - sudo ps -efww | grep nsd
   - sudo ss -lp "sport = 8952"
   - sudo ss -lp "sport = :domain"
-  - sudo ss -lp "sport = 5053"
   - sudo ./tests/runner.sh -dumpoutput -no-smtp-remote
