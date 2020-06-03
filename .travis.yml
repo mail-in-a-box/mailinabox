@@ -44,8 +44,9 @@ install:
 
 script:
   - sudo find / -name nsd.service
-  - sudo sed -i 's|-d|-d -4 -a 127.0.0.1@5053 -p 5053|' /etc/systemd/system/multi-user.target.wants/nsd.service
-  - sudo sed -i 's|-d|-d -4 -a 127.0.0.1@5053 -p 5053|' /lib/systemd/system/nsd.service
+  - sudo sed -i 's|-d|-d -4 -a 127.0.0.1@5053 -p 5053 -V 999|' /etc/systemd/system/multi-user.target.wants/nsd.service
+  - sudo sed -i 's|-d|-d -4 -a 127.0.0.1@5053 -p 5053 -V 999|' /lib/systemd/system/nsd.service
+  - sudo sed -i 's/ip-address\(.\).*/ip-address\1 127.0.0.1@5053/' /etc/nsd/nsd.conf
   - sudo systemctl daemon-reload
   - sudo systemctl restart nsd
   - sudo systemctl status -l nsd
