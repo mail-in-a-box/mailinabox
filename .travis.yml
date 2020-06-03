@@ -43,10 +43,11 @@ install:
   - sudo ./setup/start.sh -v
 
 script:
-  - sudo sed -i 's|-d|-d -4|' /etc/systemd/system/multi-user.target.wants/nsd.service
+  - sudo sed -i 's|-d|-d -V 9|' /etc/systemd/system/multi-user.target.wants/nsd.service
   - sudo systemctl daemon-reload
 #  - sudo $SHELL -c 'cat ./tests/assets/nsd/nsd-extra.conf >> /etc/nsd/nsd.conf'
 #  - sudo sed -i 's/\(.\) yes/\1 yes\n  port\1 1053/' /etc/nsd/nsd.conf
+  - sudo sed -i 's/ip-address\(.\).*/\n  port\1 1053\n  ip-address\1 0.0.0.0/' /etc/nsd/nsd.conf
   - sudo systemctl restart nsd
   - sudo systemctl status -l nsd
   - sudo tail -100 /var/log/syslog
