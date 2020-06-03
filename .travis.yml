@@ -54,8 +54,7 @@ script:
   # changes, the sed command below may need to be adjusted.
   - sudo sed -i 's/ip-address\(.\)\(.*\)/ip-address\1\2\n  do-ip4\1 yes\n  do-ip6\1 no\n  verbosity\1 3\nremote-control\1\n  control-enable\1 no/' /etc/nsd/nsd.conf
   - sudo cat /etc/nsd/nsd.conf
-  - sudo systemctl restart nsd
-  - sudo systemctl status nsd
+  - sudo systemctl restart --wait nsd
   #
   # launch automated tests, but skip tests that require remote
   # smtp support because Travis-CI blocks outgoing port 25
