@@ -37,7 +37,6 @@ before_install:
   # domain. We don't have those in QA, so we need the hosts entry.
   - echo "$(source setup/functions.sh; get_default_privateip 4)   $PRIMARY_HOSTNAME" > /tmp/hosts_add.tmp
   - sudo $SHELL -c 'cat /tmp/hosts_add.tmp >>/etc/hosts'
-  - (sudo systemctl status -l nsd; true)
   
 install:
   - sudo ./setup/start.sh -v
