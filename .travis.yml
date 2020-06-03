@@ -43,6 +43,7 @@ install:
 
 script:
   - sudo $SHELL -c 'cat ./tests/assets/nsd/nsd-extra.conf >> /etc/nsd/nsd.conf'
+  - sudo sed -i 's/yes/\n  port: 1053/' /etc/nsd/nsd/conf
   - sudo systemctl restart nsd
   - sudo systemctl status -l nsd
   - sudo cat /etc/nsd/nsd.conf
