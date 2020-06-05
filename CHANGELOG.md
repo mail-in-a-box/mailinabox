@@ -9,6 +9,10 @@ Mail:
 * An MTA-STS policy for incoming mail is now published (in DNS and over HTTPS) when the primary hostname and email address domain both have a signed TLS certificate installed.
 * MTA-STS reporting is enabled with reports sent to administrator@ the primary hostname.
 
+DNS:
+
+* autoconfig and autodiscover subdomains and CalDAV/CardDAV SRV records are no longer generated for domains that don't have user accounts since they are unnecessary.
+
 v0.45 (May 16, 2020)
 --------------------
 

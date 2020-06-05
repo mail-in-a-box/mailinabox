@@ -281,28 +281,30 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 		if not has_rec(dmarc_qname, "TXT", prefix="v=DMARC1; "):
 			records.append((dmarc_qname, "TXT", 'v=DMARC1; p=reject', "Recommended. Prevents use of this domain name for outbound mail by specifying that the SPF rule should be honoured for mail from @%s." % (qname + "." + domain)))
 
-	# Add CardDAV/CalDAV SRV records on the non-primary hostname that points to the primary hostname.
+	# Add CardDAV/CalDAV SRV records on the non-primary hostname that points to the primary hostname
+	# for autoconfiguration of mail clients (so only domains hosting user accounts need it).
 	# The SRV record format is priority (0, whatever), weight (0, whatever), port, service provider hostname (w/ trailing dot).
-	if domain != env["PRIMARY_HOSTNAME"]:
+	if domain != env["PRIMARY_HOSTNAME"] and domain in get_mail_domains(env, users_only=True):
 		for dav in ("card", "cal"):
 			qname = "_" + dav + "davs._tcp"
 			if not has_rec(qname, "SRV"):
 				records.append((qname, "SRV", "0 0 443 " + env["PRIMARY_HOSTNAME"] + ".", "Recommended. Specifies the hostname of the server that handles CardDAV/CalDAV services for email addresses on this domain."))
 
-	# Adds autoconfiguration A records for all domains.
+	# Adds autoconfiguration A records for all domains that there are user accounts at.
 	# This allows the following clients to automatically configure email addresses in the respective applications.
 	# autodiscover.* - Z-Push ActiveSync Autodiscover
 	# autoconfig.* - Thunderbird Autoconfig
-	autodiscover_records = [
-		("autodiscover", "A", env["PUBLIC_IP"], "Provides email configuration autodiscovery support for Z-Push ActiveSync Autodiscover."),
-		("autodiscover", "AAAA", env["PUBLIC_IPV6"], "Provides email configuration autodiscovery support for Z-Push ActiveSync Autodiscover."),
-		("autoconfig", "A", env["PUBLIC_IP"], "Provides email configuration autodiscovery support for Thunderbird Autoconfig."),
-		("autoconfig", "AAAA", env["PUBLIC_IPV6"], "Provides email configuration autodiscovery support for Thunderbird Autoconfig.")
-	]
-	for qname, rtype, value, explanation in autodiscover_records:
-		if value is None or value.strip() == "": continue # skip IPV6 if not set
-		if not has_rec(qname, rtype):
-			records.append((qname, rtype, value, explanation))
+	if domain in get_mail_domains(env, users_only=True):
+		autodiscover_records = [
+			("autodiscover", "A", env["PUBLIC_IP"], "Provides email configuration autodiscovery support for Z-Push ActiveSync Autodiscover."),
+			("autodiscover", "AAAA", env["PUBLIC_IPV6"], "Provides email configuration autodiscovery support for Z-Push ActiveSync Autodiscover."),
+			("autoconfig", "A", env["PUBLIC_IP"], "Provides email configuration autodiscovery support for Thunderbird Autoconfig."),
+			("autoconfig", "AAAA", env["PUBLIC_IPV6"], "Provides email configuration autodiscovery support for Thunderbird Autoconfig.")
+		]
+		for qname, rtype, value, explanation in autodiscover_records:
+			if value is None or value.strip() == "": continue # skip IPV6 if not set
+			if not has_rec(qname, rtype):
+				records.append((qname, rtype, value, explanation))
 
 	# If this is a domain name that there are email addresses configured for, i.e. "something@"
 	# this domain name, then the domain name is a MTA-STS (https://tools.ietf.org/html/rfc8461)
