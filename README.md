@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/downtownallday/mailinabox-ldap.svg?branch=ldap)](https://travis-ci.com/downtownallday/mailinabox-ldap)
+[![Build Status](https://travis-ci.com/downtownallday/mailinabox-ldap.svg?branch=master)](https://travis-ci.com/downtownallday/mailinabox-ldap)
 
 Mail-in-a-Box LDAP
 ===================
