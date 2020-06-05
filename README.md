@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/downtownallday/mailinabox-ldap.svg?branch=ldap)](https://travis-ci.com/downtownallday/mailinabox-ldap)
+
 Mail-in-a-Box LDAP
 ===================
 This is a version of [Mail-in-a-Box](https://mailinabox.email) with LDAP used as the user account database instead of sqlite.
@@ -28,7 +30,7 @@ See `conf/postfix.schema` for more details on the LDAP schema.
 
 LDAP server access logs are stored in `/var/log/ldap/slapd.log` and rotated daily.
 
-To perform general command-line searches against your LDAP database, run setup/ldap -search "\<query\>" as root, where _query_ can be a distinguished name to show all attributes of that dn, or an LDAP search enclosed in parenthesis. Some examples:
+To perform general command-line searches against your LDAP database, run `setup/ldap -search "\<query\>"` as root, where _query_ can be a distinguished name to show all attributes of that dn, or an LDAP search enclosed in parenthesis. Some examples:
   * `setup/ldap.sh -search "(mail=alice@mydomain.com)"` (show alice)
   * `setup/ldap.sh -search "(|(mail=alice.*)(mail=bruce.*))"` (show all alices and bruces)
   * `setup/ldap.sh -search "(objectClass=mailuser)"` (show all users)
@@ -36,7 +38,7 @@ To perform general command-line searches against your LDAP database, run setup/l
 
 This is a convenient way to run ldapsearch to with all the correct command line arguments.
 
-Cation: do not make LDAP database changes, such as adding users or groups directly using ldapmodify or any other LDAP database tools. Use the MiaB admin interface or REST API! Adding or removing a user or group with the admin interface may trigger additional database and system changes by the management daemon, such as updating DNS zones for new email domains, updating group memberships, etc.
+Caution: do not make LDAP database changes, such as adding users or groups directly using ldapmodify or any other LDAP database tools. Use the MiaB admin interface or REST API! Adding or removing a user or group with the admin interface may trigger additional database and system changes by the management daemon, such as updating DNS zones for new email domains, updating group memberships, etc.
 
 
 Migration
