@@ -23,7 +23,8 @@ def get_dns_domains(env):
 	# Add all domain names in use by email users and mail aliases and ensure
 	# PRIMARY_HOSTNAME is in the list.
 	domains = set()
-	domains |= get_mail_domains(env)
+	domains |= get_mail_domains(env, category="mail")
+	domains |= get_mail_domains(env, category="ssl")
 	domains.add(env['PRIMARY_HOSTNAME'])
 	return domains
 

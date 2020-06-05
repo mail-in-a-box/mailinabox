@@ -3,7 +3,7 @@ import base64, os, os.path, hmac
 from flask import make_response
 
 import utils
-from mailconfig import get_mail_password, get_mail_user_privileges
+from mailconfig import validate_login, get_mail_password, get_mail_user_privileges
 
 DEFAULT_KEY_PATH   = '/var/lib/mailinabox/api.key'
 DEFAULT_AUTH_REALM = 'Mail-in-a-Box Management Server'
@@ -96,19 +96,7 @@ class KeyAuthService:
 		else:
 			# Get the hashed password of the user. Raise a ValueError if the
 			# email address does not correspond to a user.
-			pw_hash = get_mail_password(email, env)
-
-			# Authenticate.
-			try:
-				# Use 'doveadm pw' to check credentials. doveadm will return
-				# a non-zero exit status if the credentials are no good,
-				# and check_call will raise an exception in that case.
-				utils.shell('check_call', [
-					"/usr/bin/doveadm", "pw",
-					"-p", pw,
-					"-t", pw_hash,
-					])
-			except:
+			if not validate_login(email, pw, env):
 				# Login failed.
 				raise ValueError("Invalid password.")
 
@@ -130,7 +118,7 @@ class KeyAuthService:
 		# a user's password is reset, the HMAC changes and they will correctly need to log
 		# in to the control panel again. This method raises a ValueError if the user does
 		# not exist, due to get_mail_password.
-		msg = b"AUTH:" + email.encode("utf8") + b" " + get_mail_password(email, env).encode("utf8")
+		msg = b"AUTH:" + email.encode("utf8") + b" " + ";".join(get_mail_password(email, env)).encode("utf8")
 		return hmac.new(self.key.encode('ascii'), msg, digestmod="sha256").hexdigest()
 
 	def _generate_key(self):

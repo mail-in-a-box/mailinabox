@@ -4,6 +4,7 @@
 
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
+source ${STORAGE_ROOT}/ldap/miab_ldap.conf
 
 # ### Installing Roundcube
 
@@ -131,6 +132,33 @@ cat > $RCM_CONFIG <<EOF;
 \$config['login_autocomplete'] = 2;
 \$config['password_charset'] = 'UTF-8';
 \$config['junk_mbox'] = 'Spam';
+\$config['ldap_public']['public'] = array(
+    'name'              => 'Directory',
+    'hosts'             => array('${LDAP_SERVER}'),
+    'port'              => ${LDAP_SERVER_PORT},
+    'user_specific'     => false,
+    'scope'             => 'sub',
+    'base_dn'           => '${LDAP_USERS_BASE}',
+    'bind_dn'           => '${LDAP_WEBMAIL_DN}',
+    'bind_pass'         => '${LDAP_WEBMAIL_PASSWORD}',
+    'writable'          => false,
+    'ldap_version'      => 3,
+    'search_fields'     => array( 'mail' ),
+    'name_field'        => 'mail',
+    'email_field'       => 'mail',
+    'sort'              => 'mail',
+    'filter'            => '(objectClass=mailUser)',
+    'fuzzy_search'      => false,
+    'global_search'     => true,
+    # 'groups'            => array(
+    #     'base_dn'         => '${LDAP_ALIASES_BASE}',
+    #     'filter'          => '(objectClass=mailGroup)',
+    # 	'member_attr'     => 'member',
+    # 	'scope'           => 'sub',
+    # 	'name_attr'       => 'mail',
+    # 	'member_filter'   => '(|(objectClass=mailGroup)(objectClass=mailUser))',
+    # )
+);
 ?>
 EOF
 
@@ -160,7 +188,7 @@ mkdir -p /var/log/roundcubemail /var/tmp/roundcubemail $STORAGE_ROOT/mail/roundc
 chown -R www-data.www-data /var/log/roundcubemail /var/tmp/roundcubemail $STORAGE_ROOT/mail/roundcube
 
 # Ensure the log file monitored by fail2ban exists, or else fail2ban can't start.
-sudo -u www-data touch /var/log/roundcubemail/errors
+sudo -u www-data touch /var/log/roundcubemail/errors.log
 
 # Password changing plugin settings
 # The config comes empty by default, so we need the settings
@@ -169,22 +197,21 @@ cp ${RCM_PLUGIN_DIR}/password/config.inc.php.dist \
 	${RCM_PLUGIN_DIR}/password/config.inc.php
 
 tools/editconf.py ${RCM_PLUGIN_DIR}/password/config.inc.php \
-	"\$config['password_minimum_length']=8;" \
-	"\$config['password_db_dsn']='sqlite:///$STORAGE_ROOT/mail/users.sqlite';" \
-	"\$config['password_query']='UPDATE users SET password=%D WHERE email=%u';" \
-	"\$config['password_dovecotpw']='/usr/bin/doveadm pw';" \
-	"\$config['password_dovecotpw_method']='SHA512-CRYPT';" \
-	"\$config['password_dovecotpw_with_method']=true;"
-
-# so PHP can use doveadm, for the password changing plugin
-usermod -a -G dovecot www-data
-
-# set permissions so that PHP can use users.sqlite
-# could use dovecot instead of www-data, but not sure it matters
-chown root.www-data $STORAGE_ROOT/mail
-chmod 775 $STORAGE_ROOT/mail
-chown root.www-data $STORAGE_ROOT/mail/users.sqlite
-chmod 664 $STORAGE_ROOT/mail/users.sqlite
+	"\$config['password_driver']='ldap';" \
+	"\$config['password_ldap_host']='${LDAP_SERVER}';" \
+	"\$config['password_ldap_port']=${LDAP_SERVER_PORT};" \
+	"\$config['password_ldap_starttls']=$([ ${LDAP_SERVER_STARTTLS} == yes ] && echo true || echo false);" \
+	"\$config['password_ldap_basedn']='${LDAP_BASE}';" \
+	"\$config['password_ldap_userDN_mask']=null;" \
+	"\$config['password_ldap_searchDN']='${LDAP_WEBMAIL_DN}';" \
+	"\$config['password_ldap_searchPW']='${LDAP_WEBMAIL_PASSWORD}';" \
+	"\$config['password_ldap_search_base']='${LDAP_USERS_BASE}';" \
+	"\$config['password_ldap_search_filter']='(&(objectClass=mailUser)(mail=%login))';" \
+	"\$config['password_ldap_encodage']='default';" \
+	"\$config['password_ldap_lchattr']='shadowLastChange';" \
+	"\$config['password_algorithm']='sha512-crypt';" \
+	"\$config['password_algorithm_prefix']='{CRYPT}';" \
+	"\$config['password_minimum_length']=8;"
 
 # Fix Carddav permissions:
 chown -f -R root.www-data ${RCM_PLUGIN_DIR}/carddav
@@ -197,5 +224,5 @@ chown www-data:www-data $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 chmod 664 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 
 # Enable PHP modules.
-phpenmod -v php mcrypt imap
+phpenmod -v php mcrypt imap ldap
 restart_service php7.2-fpm
