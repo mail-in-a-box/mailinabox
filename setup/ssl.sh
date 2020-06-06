@@ -123,14 +123,20 @@ if [ ! -f $STORAGE_ROOT/ssl/ca_certificate.pem ]; then
 	  -passin 'pass:SECRET-PASSWORD' \
 	  -out $CERT \
 	  -subj '/CN=Temporary-Mail-In-A-Box-CA'
+fi
 
-	# add the certificate to the system's trusted root ca list
+if [ ! -e /usr/local/share/ca-certificates/mailinabox.crt ]; then
+	# add the CA certificate to the system's trusted root ca list
 	# this is required for openldap's TLS implementation
+    # do this as a separate step in case a CA certificate is manually
+    # copied onto the machine for QA/test
+	CERT=$STORAGE_ROOT/ssl/ca_certificate.pem
 	hide_output \
 	  cp $CERT /usr/local/share/ca-certificates/mailinabox.crt
 	hide_output \
 	  update-ca-certificates
 fi
+
 
 # Generate a signed SSL certificate because things like nginx, dovecot,
 # etc. won't even start without some certificate in place, and we need nginx

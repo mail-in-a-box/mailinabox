@@ -147,6 +147,13 @@ echo
 certbot register --register-unsafely-without-email --agree-tos --config-dir $STORAGE_ROOT/ssl/lets_encrypt
 fi
 
+#
+# Run setup mods 
+#
+for mod in $(ls setup/mods.d | grep -v '~$'); do
+    setup/mods.d/$mod
+done
+
 # Done.
 echo
 echo "-----------------------------------------------"
