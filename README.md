@@ -36,12 +36,12 @@ To perform general command-line searches against your LDAP database, run `setup/
   * `setup/ldap.sh -search "(objectClass=mailuser)"` (show all users)
   * etc.
 
-This is a convenient way to run ldapsearch to with all the correct command line arguments.
+This is a convenient way to run ldapsearch having all the correct command line arguments.
 
-Caution: do not make LDAP database changes, such as adding users or groups directly using ldapmodify or any other LDAP database tools. Use the MiaB admin interface or REST API! Adding or removing a user or group with the admin interface may trigger additional database and system changes by the management daemon, such as updating DNS zones for new email domains, updating group memberships, etc.
+Caution: do not make direct LDAP database changes, such as adding users or groups using ldapmodify or other LDAP database tool. Instead, use the MiaB admin interface or REST API. Adding or removing a user or group with the admin interface may trigger additional database and system changes by the management daemon, such as updating DNS zones for new email domains, updating group memberships, etc, that would not be performed with a direct change.
 
 
 Migration
 ---------
-When installing MiaB-LDAP by running any of the setup scripts (`miab`, `setup/bootstrap.sh`, `setup/start.sh`, etc) will automatically migrate your current installation to LDAP. Make a backup before running!
+Running any of the setup scripts to install MiaB-LDAP (`miab`, `setup/bootstrap.sh`, `setup/start.sh`, etc) will automatically migrate your current installation from sqlite to LDAP. Make a full MiaB backup before running!
 
