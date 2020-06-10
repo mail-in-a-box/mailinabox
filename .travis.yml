@@ -16,11 +16,12 @@ before_install:
   - (sudo aa-status; true)
   #
   - echo "==== DUMP NETWORK INFO ===="
-  - (hostname -I; true)
-  - (hostname -i; true)
-  - (hostname; true)
-  - (hostname --fqdn; true)
-  - (ip add; true)
+  - hostname -I
+  - hostname -i
+  - hostname
+  - hostname --fqdn
+  - ip add
+  - cat /etc/hosts
   
 install:
   - sudo tests/assets/system-setup/remote-nextcloud-docker.sh
