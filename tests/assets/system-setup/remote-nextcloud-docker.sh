@@ -108,8 +108,8 @@ miab_install() {
             dump_log "/etc/mailinabox.conf"
             H2 "Apply Travis-CI nsd fix"
             travis_fix_nsd || die "Could not fix NSD startup issue"
-            H2 "Re-run firstuser.sh"
-            if setup/firstuser.sh; then
+            H2 "Re-run firstuser.sh and mods.d/remote-nextcloud.sh"
+            if setup/firstuser.sh && setup/mods.d/remote-nextcloud.sh; then
                 failure="false"
             fi
         fi
