@@ -59,6 +59,9 @@ before_miab_install() {
     H2 "Update /etc/hosts"
     update_hosts_for_private_ip || die "Could not update /etc/hosts"
 
+    # update package lists before installing anything
+    apt-get update || die "apt-get update failed!"
+    
     # install prerequisites
     H2 "QA prerequisites"
     install_qa_prerequisites || die "Error installing QA prerequisites"
