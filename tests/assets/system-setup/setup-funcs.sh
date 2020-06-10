@@ -9,13 +9,19 @@ die() {
 H1() {
     local msg="$1"
     echo "----------------------------------------------"
-    echo "           $msg"
-    echo "----------------------------------------------"
+    if [ ! -z "$msg" ]; then
+        echo "           $msg"
+        echo "----------------------------------------------"
+    fi
 }
 
 H2() {
     local msg="$1"
-    echo "*** $msg ***"
+    if [ -z "$msg" ]; then
+        echo "***"
+    else
+        echo "*** $msg ***"
+    fi
 }
 
 dump_log() {
@@ -25,7 +31,7 @@ dump_log() {
     echo ""
     echo "--------"
     echo -n "-------- $log_file"
-    if [ -z "$lines" ]; then
+    if [ ! -z "$lines" ]; then
         echo " (last $line lines)"
     else
         echo ""
@@ -37,6 +43,12 @@ dump_log() {
     else
         cat "$log_file"
     fi
+}
+
+dump_conf_files() {
+    dump_log "/etc/mailinabox.conf"
+    dump_log "/etc/nsd/nsd.conf"
+    dump_log "/etc/postfix/main.cf"
 }
 
 install_qa_prerequisites() {

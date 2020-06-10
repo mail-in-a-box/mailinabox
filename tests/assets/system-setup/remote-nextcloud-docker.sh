@@ -61,7 +61,7 @@ before_miab_install() {
 
     # update package lists before installing anything
     H2 "apt-get update"
-    apt-get update || die "apt-get update failed!"
+    apt-get update -qq || die "apt-get update failed!"
     
     # install prerequisites
     H2 "QA prerequisites"
@@ -99,23 +99,17 @@ before_miab_install() {
 }
 
 
-debug_output_conf_files() {
-    dump_log "/etc/mailinabox.conf"
-    dump_log "/etc/nsd/nsd.conf"
-    dump_log "/etc/postfix/main.cf"
-}
-
 miab_install() {
     H1 "MIAB-LDAP INSTALL"
     if ! setup/start.sh; then
         H1 "OUTPUT OF SELECT FILES"
         dump_log "/var/log/syslog" 100
-        debug_output_conf_files
+        dump_conf_files
         H2; H2 "End"; H2
         die "setup/start.sh failed!"
     fi
     H1 "OUTPUT OF SELECT FILES"
-    debug_output_conf_files
+    dump_conf_files
     H2; H2 "End"; H2
 }
 

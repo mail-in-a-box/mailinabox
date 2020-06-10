@@ -113,7 +113,7 @@ detect_syslog_error() {
 				let ec+=1
 				record "$F_DANGER[ERROR] $line$F_RESET"
 			else
-				record "[	OK] $line"
+				record "[   OK] $line"
 			fi
 		done
 		[ $ec -gt 0 ] && exit 0
