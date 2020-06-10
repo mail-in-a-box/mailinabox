@@ -104,6 +104,7 @@ miab_install() {
     if ! setup/start.sh; then
         dump_log "/var/log/syslog" 100
         dump_log "/etc/mailinabox.conf"
+        [ "$TRAVIS" == "true" ] && dump_log "/etc/nsd/nsd.conf"
         die "setup/start.sh failed!"
     fi
 }
