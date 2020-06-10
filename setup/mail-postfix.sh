@@ -56,7 +56,6 @@ apt_install postfix postfix-sqlite postfix-pcre postgrey ca-certificates postfix
 # * Extend the SPF time limit to avoid timeouts chasing SPF records
 tools/editconf.py /etc/postfix/main.cf \
 	inet_interfaces=all \
-	smtp_address_preference=any \
 	smtp_bind_address=$PRIVATE_IP \
 	smtp_bind_address6=$PRIVATE_IPV6 \
 	myhostname=$PRIMARY_HOSTNAME\
