@@ -6,6 +6,7 @@ die() {
     exit 1
 }
 
+
 H1() {
     local msg="$1"
     echo "----------------------------------------------"
@@ -46,6 +47,7 @@ dump_log() {
 }
 
 is_true() {
+    # empty string is not true
     if [ "$1" == "true" \
               -o "$1" == "TRUE" \
               -o "$1" == "True" \
@@ -59,7 +61,28 @@ is_true() {
         return 1
     fi
 }
-    
+
+is_false() {
+    if is_true $@; then return 1; fi
+    return 0
+}
+
+wait_for_apt() {
+    local count=0
+    while fuser /var/lib/dpkg/lock >/dev/null 2>&1 || fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+        sleep 6
+        let count+=1
+        if [ $count -eq 1 ]; then
+            echo -n "Waiting for other package manager to finish..."
+        elif [ $count -gt 100 ]; then
+            echo -n "FAILED"
+            return 1
+        else
+            echo -n "${count}.."
+        fi
+    done
+    [ $count -ge 1 ] && echo ""
+}
 
 dump_conf_files() {
     local skip
@@ -82,16 +105,12 @@ dump_conf_files() {
     fi
 }
 
-install_qa_prerequisites() {
-    # python3-dnspython: is used by the python scripts in 'tests' and is
-    #   not installed by setup
-    # ntpdate: is used by this script
-    apt-get install -y \
-            ntpdate \
-            python3-dnspython
-}
 
 update_system_time() {
+    if [ ! -x /usr/sbin/ntpdate ]; then
+        wait_for_apt
+        apt-get install -y -qq ntpdate || return 1
+    fi
     ntpdate -s ntp.ubuntu.com && echo "System time updated"
 }
 
@@ -119,13 +138,26 @@ update_hosts_for_private_ip() {
     update_hosts "$PRIMARY_HOSTNAME" "$ip4" "$ip6" || return 1
 }
 
+set_system_hostname() {
+    # set the system hostname to the FQDN specified or
+    # PRIMARY_HOSTNAME if no FQDN was given
+    local fqdn="${1:-$PRIMARY_HOSTNAME}"
+    local host="$(awk -F. '{print $1}' <<< "$fqdn")"
+    sed -i 's/^127\.0\.1\.1[ \t].*/127.0.1.1 '"$fqdn $host ip4-loopback/" /etc/hosts || return 1
+    #hostname "$host" || return 1
+    #echo "$host" > /etc/hostname
+    return 0
+}
+
+
 install_docker() {
     if [ -x /usr/bin/docker ]; then
         echo "Docker already installed"
         return 0
     fi
     
-    apt-get install -y \
+    wait_for_apt
+    apt-get install -y -qq \
             apt-transport-https \
             ca-certificates \
             curl \
@@ -133,18 +165,57 @@ install_docker() {
             software-properties-common \
         || return 1
        
+    wait_for_apt
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - \
         || return 2
     
+    wait_for_apt
     apt-key fingerprint 0EBFCD88 || return 3
     
+    wait_for_apt
     add-apt-repository -y --update "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" || return 4
     
-    apt-get install -y \
+    wait_for_apt
+    apt-get install -y -qq \
             docker-ce \
             docker-ce-cli \
             containerd.io \
         || return 5
+}
+
+
+install_qa_prerequisites() {
+    [ -z "$STORAGE_ROOT" ] \
+        && echo "Error: STORAGE_ROOT not set" 1>&2 \
+        && return 1
+
+    local rc=0
+    
+    # python3-dnspython: is used by the python scripts in 'tests' and is
+    #   not installed by setup
+    wait_for_apt
+    apt-get install -y -qq python3-dnspython
+    
+    # copy in pre-built MiaB-LDAP ssl files
+    #   1. avoid the lengthy generation of DH params
+    mkdir -p $STORAGE_ROOT/ssl \
+        || (echo "Unable to create $STORAGE_ROOT/ssl ($?)" && rc=1)
+    cp tests/assets/ssl/dh2048.pem $STORAGE_ROOT/ssl \
+        || (echo "Copy dhparams failed ($?)" && rc=1)
+
+    # create miab_ldap.conf to specify what the Nextcloud LDAP service
+    # account password will be to avoid a random one created by start.sh
+    if [ ! -z "$LDAP_NEXTCLOUD_PASSWORD" ]; then
+        mkdir -p $STORAGE_ROOT/ldap \
+            || (echo "Could not create $STORAGE_ROOT/ldap" && rc=1)
+        [ -e $STORAGE_ROOT/ldap/miab_ldap.conf ] && \
+            echo "Warning: exists: $STORAGE_ROOT/ldap/miab_ldap.conf" 1>&2
+        touch $STORAGE_ROOT/ldap/miab_ldap.conf || rc=1
+        if ! grep "^LDAP_NEXTCLOUD_PASSWORD=" $STORAGE_ROOT/ldap/miab_ldap.conf >/dev/null; then
+            echo "LDAP_NEXTCLOUD_PASSWORD=\"$LDAP_NEXTCLOUD_PASSWORD\"" >> $STORAGE_ROOT/ldap/miab_ldap.conf
+        fi
+    fi
+    return $rc
 }
 
 

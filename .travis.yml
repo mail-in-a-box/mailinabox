@@ -23,7 +23,7 @@ before_install:
   - ip add
   
 install:
-  - sudo tests/assets/system-setup/remote-nextcloud-docker.sh
+  - sudo tests/system-setup/remote-nextcloud-docker.sh
 
 script:
   #

@@ -7,7 +7,7 @@
 #   on a fresh Ubuntu:
 #      1. checkout or copy the MiaB-LDAP code to ~/mailinabox
 #      2. cd ~/mailinabox
-#      3. sudo tests/assets/system-setup/remote-nextcloud-docker.sh
+#      3. sudo tests/system-setup/remote-nextcloud-docker.sh
 #
 # when complete you should have a working MiaB-LDAP and Nextcloud
 #
@@ -34,15 +34,15 @@ usage() {
 }
 
 # ensure working directory
-if [ ! -d "tests/assets/system-setup" ]; then
+if [ ! -d "tests/system-setup" ]; then
     echo "This script must be run from the MiaB root directory"
     exit 1
 fi
 
 # load helper scripts
-. "tests/assets/system-setup/setup-defaults.sh" \
+. "tests/system-setup/setup-defaults.sh" \
     || die "Could not load setup-defaults"
-. "tests/assets/system-setup/setup-funcs.sh" \
+. "tests/system-setup/setup-funcs.sh" \
     || die "Could not load setup-funcs"
 
 # ensure running as root
@@ -55,35 +55,32 @@ fi
 before_miab_install() {
     H1 "BEFORE MIAB-LDAP INSTALL"
 
-    # create /etc/hosts entry for PRIVATE_IP
     H2 "Update /etc/hosts"
-    update_hosts_for_private_ip || die "Could not update /etc/hosts"
+    #update_hosts_for_private_ip || die "Could not update /etc/hosts"
+    set_system_hostname || die "Could not set hostname"
 
+    # update system time
+    H2 "Set system time"
+    update_system_time || echo "Ignoring error..."
+    
     # update package lists before installing anything
     H2 "apt-get update"
+    wait_for_apt
     apt-get update -qq || die "apt-get update failed!"
+
+    # upgrade packages - if we don't do this and something like bind
+    # is upgraded through automatic upgrades (because maybe MiaB was
+    # previously installed), it may cause problems with the rest of
+    # the setup, such as with name resolution failures
+    if is_false "$TRAVIS"; then
+        H2 "apt-get upgrade"
+        wait_for_apt
+        apt-get upgrade -qq || die "apt-get upgrade failed!"
+    fi
     
     # install prerequisites
     H2 "QA prerequisites"
     install_qa_prerequisites || die "Error installing QA prerequisites"
-
-    # update system time (ignore errors)
-    H2 "Set system time"
-    update_system_time
-
-    # copy in pre-built MiaB-LDAP ssl files
-    #   1. avoid the lengthy generation of DH params
-    H2 "Install QA pre-built"
-    mkdir -p $STORAGE_ROOT/ssl || die "Unable to create $STORAGE_ROOT/ssl"
-    cp tests/assets/ssl/dh2048.pem $STORAGE_ROOT/ssl \
-        || die "Copy dhparams failed"
-
-    # create miab_ldap.conf to specify what the Nextcloud LDAP service
-    # account password will be to avoid a random one created by start.sh
-    mkdir -p $STORAGE_ROOT/ldap
-    [ -e $STORAGE_ROOT/ldap/miab_ldap.conf ] && \
-        echo "Warning: exists: $STORAGE_ROOT/ldap/miab_ldap.conf" 1>&2
-    echo "LDAP_NEXTCLOUD_PASSWORD=\"$LDAP_NEXTCLOUD_PASSWORD\"" >> $STORAGE_ROOT/ldap/miab_ldap.conf
 
     # enable the remote Nextcloud setup mod, which tells MiaB-LDAP to use
     # the remote Nextcloud for calendar and contacts instead of the
@@ -118,10 +115,6 @@ after_miab_install() {
     H1 "AFTER MIAB-LDAP INSTALL"
     
     . /etc/mailinabox.conf || die "Could not load /etc/mailinabox.conf"
-
-    # TRAVIS: fix nsd startup problem
-    #H2 "Apply Travis-CI nsd fix"
-    #travis_fix_nsd || die "Could not fix NSD startup issue for TRAVIS-CI"
     
     # run Nextcloud docker image
     H2 "Start Nextcloud docker container"
