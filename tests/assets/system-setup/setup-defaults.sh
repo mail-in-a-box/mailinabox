@@ -12,7 +12,7 @@ export PUBLIC_IP="${PUBLIC_IP:-$(source setup/functions.sh; get_default_privatei
 if [ "$TRAVIS" == "true" ]; then
     export PRIMARY_HOSTNAME=${PRIMARY_HOSTNAME:-box.abc.com}
 elif [ -z "$PRIMARY_HOSTNAME" ]; then
-    export PRIMARY_HOSTNAME=$(hostname --fqdn || hostname)
+    export PRIMARY_HOSTNAME=${PRIMARY_HOSTNAME:-$(hostname --fqdn || hostname)}
 fi
 
 
