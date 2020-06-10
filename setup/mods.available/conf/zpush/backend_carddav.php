@@ -6,9 +6,9 @@
 ************************************************/
 
 
-define('CARDDAV_PROTOCOL', 'https'); /* http or https */
-define('CARDDAV_SERVER', '127.0.0.1');
-define('CARDDAV_PORT', '443');
+define('CARDDAV_PROTOCOL', 'NC_PROTO'); /* http or https */
+define('CARDDAV_SERVER', 'NC_HOST');
+define('CARDDAV_PORT', 'NC_PORT');
 define('CARDDAV_PATH', 'NC_PREFIX/remote.php/dav/addressbooks/users/%u/');
 define('CARDDAV_DEFAULT_PATH', 'NC_PREFIX/remote.php/dav/addressbooks/users/%u/contacts/'); /* subdirectory of the main path */
 define('CARDDAV_GAL_PATH', ''); /* readonly, searchable, not syncd */

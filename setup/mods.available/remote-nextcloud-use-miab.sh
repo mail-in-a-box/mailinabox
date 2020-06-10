@@ -12,6 +12,7 @@
 #
 VERBOSE=0
 
+
 usage() {
     cat <<EOF
 Usage: $0 <NCDIR> <NC_ADMIN_USER> <NC_ADMIN_PASSWORD> <MIAB_HOSTNAME> <LDAP_NEXTCLOUD_PASS> [ <SSMTP_ALERTS_EMAIL> <SSMTP_AUTH_USER> <SSMTP_AUTH_PASS> ]
@@ -45,8 +46,8 @@ Arguments:
         1000. SSMTP_AUTH_USER / SSMTP_AUTH_PASS is the email address
         that will be used to authenticate with MiaB-LDAP (the sender
         or envelope FROM address). You probably want a new/dedicated
-        email address for this - create on in the MiaB-LDAP admin
-        interface. More information on ssmtp is available at
+        email address for this - create a new account in the MiaB-LDAP
+        admin interface. More information on ssmtp is available at
         https://help.ubuntu.com/community/EmailAlerts.
 
 The script must be run as root.
@@ -140,6 +141,25 @@ LDAP_BASE="dc=mailinabox"
 LDAP_USERS_BASE="ou=Users,dc=mailinabox"
 PRIMARY_HOSTNAME="$(hostname --fqdn)"
 
+#
+# get the url used to access nextcloud as NC_ADMIN_USER
+#
+NC_CONFIG_CLI_URL="$(cd "$NCDIR/config"; php -n -r 'include "config.php"; print $CONFIG["overwrite.cli.url"];')"
+case "$NC_CONFIG_CLI_URL" in
+    http:* | https:* )
+        urlproto=$(awk -F/ '{print $1}' <<< "$NC_CONFIG_CLI_URL")
+        urlhost=$(awk -F/ '{print $3}'  <<< "$NC_CONFIG_CLI_URL")
+        urlprefix=$(awk -F/ "{ print substr(\$0,length(\"$urlproto\")+length(\"\
+$urlhost\")+4) }" <<<"$NC_CONFIG_CLI_URL")
+        NC_AUTH_URL="$urlproto//${NC_ADMIN_USER}:${NC_ADMIN_PASSWORD}@$urlhost/\
+$urlprefix"
+        ;;
+    * )
+        NC_AUTH_URL="https://${NC_ADMIN_USER}:${NC_ADMIN_PASSWORD}@$PRIMARY_HOS\
+TNAME${NC_CONFIG_CLI_URL:-/}"
+        ;;
+esac
+
 
 say() {
     echo "$@"
@@ -159,7 +179,7 @@ die() {
 
 
 #
-# configure nextcloud's user-ldap to access the local ldap server
+# configure Nextcloud's user-ldap for MiaB-LDAP
 #
 # See: https://docs.nextcloud.com/server/17/admin_manual/configuration_user/user_auth_ldap_api.html
 #
@@ -181,6 +201,7 @@ config_user_ldap() {
         "--data-urlencode configData[ldapUserDisplayName]=cn"
         "--data-urlencode configData[ldapUserDisplayName2]="
         "--data-urlencode configData[ldapUserFilter]=(&(objectClass=inetOrgPerson)(objectClass=mailUser))"
+        "--data-urlencode configData[ldapUserFilterMode]=1"
         "--data-urlencode configData[ldapLoginFilter]=(&(objectClass=inetOrgPerson)(objectClass=mailUser)(|(mail=%uid)(uid=%uid)))"
         "--data-urlencode configData[ldapEmailAttribute]=mail"
         
@@ -200,26 +221,30 @@ config_user_ldap() {
     # apply the settings - note: we can't use localhost because nginx
     # will route to the wrong virtual host
     local xml
-    say_verbose "curl \"https://${NC_ADMIN_USER}:${NC_ADMIN_PASSWORD}@$PRIMARY_HOSTNAME/ocs/v2.php/apps/user_ldap/api/v1/config/$id\""
-    xml="$(curl -s -S --insecure -X PUT "https://${NC_ADMIN_USER}:${NC_ADMIN_PASSWORD}@$PRIMARY_HOSTNAME/ocs/v2.php/apps/user_ldap/api/v1/config/$id" -H "OCS-APIREQUEST: true" ${c[@]})"
+    say_verbose "curl \"${NC_AUTH_URL%/}/ocs/v2.php/apps/user_ldap/api/v1/config/$id\""
+    xml="$(curl -s -S --insecure -X PUT "${NC_AUTH_URL%/}/ocs/v2.php/apps/user_ldap/api/v1/config/$id" -H "OCS-APIREQUEST: true" ${c[@]})"
     [ $? -ne 0 ] &&
-        die "Unable to issue a REST call as $NC_ADMIN_USER to nextcloud"
+        die "Unable to issue a REST call as $NC_ADMIN_USER to nextcloud. url=$NC_AUTH_URL/ocs/v2.php/apps/user_ldap/api/v1/config/$id"
 
     # did it work?
+    if [ -z "$xml" ]; then
+        die "Invalid response from Nextcloud using url '$NC_AUTH_URL'. reponse was '$xml'. Cannot continue."
+    fi
+        
     local statuscode
-    statuscode=$(python3 -c "import xml.etree.ElementTree as ET; print(ET.fromstring('''$xml''').findall('meta')[0].findall('statuscode')[0].text)")
+    statuscode=$(python3 -c "import xml.etree.ElementTree as ET; print(ET.fromstring(r'''$xml''').findall('meta')[0].findall('statuscode')[0].text)")
     
     if [ "$statuscode" == "404" -a "$first_call" == "yes" ]; then
         # got a 404 so maybe this is the first time -- we have to create
         # an initial blank ldap configuration and try again
-        xml="$(curl -s -S --insecure -X POST "https://${NC_ADMIN_USER}:${NC_ADMIN_PASSWORD}@$PRIMARY_HOSTNAME/ocs/v2.php/apps/user_ldap/api/v1/config" -H "OCS-APIREQUEST: true")"
+        xml="$(curl -s -S --insecure -X POST "${NC_AUTH_URL%/}/ocs/v2.php/apps/user_ldap/api/v1/config" -H "OCS-APIREQUEST: true")"
         [ $? -ne 0 ] &&
             die "Unable to issue a REST call as $NC_ADMIN_USER to nextcloud: $xml"
-        statuscode=$(python3 -c "import xml.etree.ElementTree as ET; print(ET.fromstring('''$xml''').findall('meta')[0].findall('statuscode')[0].text)")
+        statuscode=$(python3 -c "import xml.etree.ElementTree as ET; print(ET.fromstring(r'''$xml''').findall('meta')[0].findall('statuscode')[0].text)")
         [ $? -ne 0 -o "$statuscode" != "200" ] &&
             die "Error creating initial ldap configuration: $xml"
         
-        id=$(python3 -c "import xml.etree.ElementTree as ET; print(ET.fromstring('''$xml''').findall('data')[0].findall('configID')[0].text)" 2>/dev/null)
+        id=$(python3 -c "import xml.etree.ElementTree as ET; print(ET.fromstring(r'''$xml''').findall('data')[0].findall('configID')[0].text)" 2>/dev/null)
         [ $? -ne 0 ] &&
             die "Error creating initial ldap configuration: $xml"
         
@@ -238,19 +263,31 @@ config_user_ldap() {
 
 
 enable_user_ldap() {
-    # install prerequisite package
-    say_verbose "Installing system package php-ldap"
-    apt-get install -y -qq php-ldap || die "Could not install php-ldap package"
-    #restart_service php7.2-fpm
+    # install prerequisite package php-ldap
+    # if using Docker Hub's php image, don't install at all
+    if [ ! -e /etc/apt/preferences.d/no-debian-php ]; then
+        say_verbose "Installing system package php-ldap"
+        apt-get install -y -qq php-ldap || die "Could not install php-ldap package"
+        #restart_service php7.2-fpm
+    fi
     
     # enable user_ldap
-    sudo -E -u www-data php $NCDIR/occ app:enable user_ldap -q
-    [ $? -ne 0 ] && die "Unable to enable user_ldap nextcloud app"
+    if [ ! -x /usr/bin/sudo ]; then
+        say "WARNING: sudo is not installed: Unable to run occ to check and/or enable Nextcloud app \"user-ldap\"."
+    else
+        say_verbose "Enable user-ldap"
+        sudo -E -u www-data php $NCDIR/occ app:enable user_ldap -q
+        [ $? -ne 0 ] && die "Unable to enable user_ldap nextcloud app"
+    fi
 }
 
 install_app() {
     local app="$1"
-    if [ -z "$(sudo -E -u www-data php $NCDIR/occ app:list | grep $app)" ]; then
+    if [ ! -x /usr/bin/sudo ]; then
+        say "WARNING: sudo is not installed: Unable to run occ to check and/or install Nextcloud app \"$app\"."
+        
+    elif [ -z "$(sudo -E -u www-data php $NCDIR/occ app:list | grep $app)" ]; then
+        say_verbose "Install app '$app'"
         sudo -E -u www-data php $NCDIR/occ app:install $app
         [ $? -ne 0 ] && die "Unable to install Nextcloud app '$app'"
     fi
@@ -260,6 +297,11 @@ install_app() {
 setup_ssmtp() {
     # sendmail-like mailer with a mailhub to remote mail-in-a-box
     # see: https://help.ubuntu.com/community/EmailAlerts
+
+    if [ "$(. /etc/os-release; echo $NAME)" != "Ubuntu" ]; then
+        die "Sorry, ssmtp is only supported on Ubuntu"
+    fi
+    
     say_verbose "Installing system package ssmtp"
     apt-get install -y -qq ssmtp
 
@@ -291,16 +333,18 @@ EOF
 
 
 remote_mailinabox_handler() {
-
     say_verbose "Installing system package ldap-utils"
-    apt-get install -y -qq ldap-utils || die "Could not install ldap-utils package"
+    apt-get install -y -qq ldap-utils python3 || die "Could not install required packages"
+    
+    local count=0
+    local ldap_debug=""
     
     while /bin/true; do
         # ensure we can search
         local output
         say ""
         say "Testing MiaB-LDAP connection..."
-        output="$(ldapsearch -H $LDAP_URL -x -D "$LDAP_NEXTCLOUD_DN" -w "$LDAP_NEXTCLOUD_PASSWORD" -b "$LDAP_BASE" -s base 2>&1)"
+        output="$(ldapsearch $ldap_debug -v -H $LDAP_URL -x -D "$LDAP_NEXTCLOUD_DN" -w "$LDAP_NEXTCLOUD_PASSWORD" -b "$LDAP_BASE" -s base 2>&1)"
         local code=$?
         if [ $code -ne 0 ]; then
             say "Unable to contact $LDAP_URL"
@@ -316,10 +360,16 @@ remote_mailinabox_handler() {
                 say "   \$ ufw allow proto tcp from $ip to any port ldaps"
             done
             say ""
+            let count+=1
+            if [ $count -gt 5 ]; then
+                die "Giving up"
+            fi
             read -p "Press [enter] when ready, or \"no\" to quit: " ans
             [ "$ans" == "no" ] && die "Quit"
+            ldap_debug="-d 9"
             
         else
+            say "Test successful - able to bind and search as $LDAP_NEXTCLOUD_DN"
             break
         fi
     done

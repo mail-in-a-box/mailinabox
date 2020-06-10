@@ -18,29 +18,22 @@ ZPUSH_DIR=/usr/local/lib/z-push
 configure_zpush() {
     # have zpush use the remote nextcloud for carddav/caldav
     # instead of the nextcloud that comes with mail-in-a-box
-    local nc_host="$1"
-    local nc_prefix="$2"
-    [ "$nc_prefix" == "/" ] && nc_prefix=""
     
-    # Configure CardDav
-    if [ ! -z "$nc_host" ]
-    then
-        cp setup/mods.available/conf/zpush/backend_carddav.php $ZPUSH_DIR/backend/carddav/config.php
-        cp setup/mods.available/conf/zpush/backend_caldav.php $ZPUSH_DIR/backend/caldav/config.php
-        sed -i "s/127\.0\.0\.1/$nc_host/g" $ZPUSH_DIR/backend/carddav/config.php
-        sed -i "s^NC_PREFIX^$nc_prefix^g" $ZPUSH_DIR/backend/carddav/config.php
-        sed -i "s/127\.0\.0\.1/$nc_host/g" $ZPUSH_DIR/backend/caldav/config.php
-        sed -i "s^NC_PREFIX^$nc_prefix^g" $ZPUSH_DIR/backend/caldav/config.php
-    fi
+    cp setup/mods.available/conf/zpush/backend_carddav.php $ZPUSH_DIR/backend/carddav/config.php
+    cp setup/mods.available/conf/zpush/backend_caldav.php $ZPUSH_DIR/backend/caldav/config.php
+    local var val
+    for var in NC_PROTO NC_HOST NC_PORT NC_PREFIX; do
+        eval "val=\$$var"
+        sed -i "s^$var^${val%/}^g" $ZPUSH_DIR/backend/carddav/config.php
+        sed -i "s^$var^${val%/}^g" $ZPUSH_DIR/backend/caldav/config.php
+    done    
 }
 
 
 configure_roundcube() {
     # replace the plugin configuration from the default Mail-In-A-Box
-    local name="$1"
-    local nc_host="$2"
-    local nc_prefix="$3"
-    [ "$nc_prefix" == "/" ] && nc_prefix=""
+    local name="${1:-$NC_HOST}"
+    local baseurl="$NC_PROTO://$NC_HOST:$NC_PORT$NC_PREFIX"
     
     # Configure CardDav
     cat > ${RCM_PLUGIN_DIR}/carddav/config.inc.php <<EOF
@@ -52,7 +45,7 @@ configure_roundcube() {
 	 'name'         =>  '$name',
 	 'username'     =>  '%u', // login username
 	 'password'     =>  '%p', // login password
-	 'url'          =>  'https://${nc_host}${nc_prefix}/remote.php/carddav/addressbooks/%u/contacts',
+	 'url'          =>  '${baseurl%/}/remote.php/carddav/addressbooks/%u/contacts',
 	 'active'       =>  true,
 	 'readonly'     =>  false,
 	 'refresh_time' => '02:00:00',
@@ -67,57 +60,85 @@ EOF
 
 
 remote_nextcloud_handler() {
+    echo ""
+    echo "============================"
     echo "Configure a remote Nextcloud"
     echo "============================"
-    echo 'Enter the hostname and web prefix of your remote Nextcloud'
+    echo 'Enter the url or hostname and web prefix of your remote Nextcloud'
     echo 'For example:'
     echo '    "cloud.mydomain.com/" - Nextcloud server with no prefix'
     echo '    "cloud.mydomain.com"  - same as above'
     echo '    "www.mydomain.com/cloud"  - a Nextcloud server having a prefix /cloud'
     echo ''
+
+    local ans
+    local current_url=""
     
-    local ans_hostname
-    local ans_prefix
-        
     if [ -z "${NC_HOST:-}" ]; then
         if [ -z "${NONINTERACTIVE:-}" ]; then
-            read -p "[your Nextcloud's hostname/prefix] " ans_hostname
+            read -p "[your Nextcloud's hostname/prefix] " ans
         fi
-        [ -z "$ans_hostname" ] && return 0
+        [ -z "$ans" ] && return 0
     else
+        current_url="$NC_PROTO://$NC_HOST:$NC_PORT$NC_PREFIX"
         if [ -z "${NONINTERACTIVE:-}" ]; then
-            read -p "[$NC_HOST/$NC_PREFIX] " ans_hostname
-            if [ -z "$ans_hostname" ]; then
-                ans_hostname="$NC_HOST/$NC_PREFIX"
+            read -p "[$current_url] " ans
+            if [ -z "$ans" ]; then
+                ans="$current_url"
             
-            elif [ "$ans_hostname" == "none" ]; then
-                ans_hostname=""
+            elif [ "$ans" == "none" ]; then
+                ans=""
             fi
         else
-            ans_hostname="${NC_HOST}${NC_PREFIX}"
+            ans="$current_url"
         fi
     fi
 
-    ans_prefix="/$(awk -F/ '{print substr($0,length($1)+2)}' <<< "$ans_hostname")"
-    ans_hostname="$(awk -F/ '{print $1}' <<< "$ans_hostname")"
+    case "$ans" in
+        https://* )
+            NC_PROTO="https"
+            NC_PORT="443"
+            ans="$(awk -F: '{print substr($0,9)}' <<< "$ans")"
+            ;;
+        http://* )
+            NC_PROTO="http"
+            NC_PORT="80"
+            ans="$(awk -F: '{print substr($0,8)}' <<< "$ans")"
+            ;;
+        * )
+            NC_PROTO="https"
+            NC_PORT="443"
+            ;;
+    esac
     
+    NC_PREFIX="/$(awk -F/ '{print substr($0,length($1)+2)}' <<< "$ans")"
+    NC_HOST="$(awk -F/ '{print $1}' <<< "$ans")"
+    
+    if grep ":" <<< "$NC_HOST" >/dev/null; then
+        NC_PORT="$(awk -F: '{print $2}'  <<< "$NC_HOST")"
+        NC_HOST="$(awk -F: '{print $1}' <<< "$NC_HOST")"
+    fi
+    
+    local new_url="$NC_PROTO://$NC_HOST:$NC_PORT$NC_PREFIX"
 
-    if [ ! -z "$ans_hostname" ]; then
-        echo "Using Nextcloud ${ans_hostname}${ans_prefix}"
+    if [ ! -z "$NC_HOST" ]; then
+        echo "Using Nextcloud ${new_url}"
 
         # configure roundcube contacts
-        configure_roundcube "$ans_hostname" "$ans_hostname" "$ans_prefix"
+        configure_roundcube "$NC_HOST"
         
         # configure zpush (which links to contacts & calendar)
-        configure_zpush "$ans_hostname" "$ans_prefix"
+        configure_zpush
         
         # prevent nginx from serving any miab-installed nextcloud files
         chmod 000 /usr/local/lib/owncloud
     fi
     
     tools/editconf.py /etc/mailinabox_mods.conf \
-                      "NC_HOST=$ans_hostname" \
-                      "NC_PREFIX=$ans_prefix"
+                      "NC_PROTO=$NC_PROTO" \
+                      "NC_HOST=$NC_HOST" \
+                      "NC_PORT=$NC_PORT" \
+                      "NC_PREFIX=$NC_PREFIX"
 }
 
 remote_nextcloud_handler

@@ -5,9 +5,9 @@
 * Descr     :   CalDAV backend configuration file
 ************************************************/
 
-define('CALDAV_PROTOCOL', 'https');
-define('CALDAV_SERVER', '127.0.0.1');
-define('CALDAV_PORT', '443');
+define('CALDAV_PROTOCOL', 'NC_PROTO');
+define('CALDAV_SERVER', 'NC_HOST');
+define('CALDAV_PORT', 'NC_PORT');
 define('CALDAV_PATH', 'NC_PREFIX/remote.php/dav/calendars/%u/');
 define('CALDAV_PERSONAL', 'PRINCIPAL');
 define('CALDAV_SUPPORTS_SYNC', false);
