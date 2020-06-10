@@ -100,6 +100,7 @@ dump_conf_files() {
     if [ "$skip" == "false" ]; then
         dump_log "/etc/mailinabox.conf"
         dump_log "/etc/hosts"
+        dump_log "/etc/nsswitch.conf"
         dump_log "/etc/nsd/nsd.conf"
         dump_log "/etc/postfix/main.cf"
     fi
