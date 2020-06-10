@@ -46,9 +46,21 @@ dump_log() {
 }
 
 dump_conf_files() {
-    dump_log "/etc/mailinabox.conf"
-    dump_log "/etc/nsd/nsd.conf"
-    dump_log "/etc/postfix/main.cf"
+    local skip
+    if [ $# -eq 0 ]; then
+        skip="false"
+    else
+        skip="true"
+        for item; do
+            [ "$item" == "true" ] skip="false"
+        done
+    fi
+    if [ "$skip" == "false" ]; then
+        dump_log "/etc/mailinabox.conf"
+        dump_log "/etc/hosts"
+        dump_log "/etc/nsd/nsd.conf"
+        dump_log "/etc/postfix/main.cf"
+    fi
 }
 
 install_qa_prerequisites() {

@@ -104,12 +104,12 @@ miab_install() {
     if ! setup/start.sh; then
         H1 "OUTPUT OF SELECT FILES"
         dump_log "/var/log/syslog" 100
-        dump_conf_files
+        dump_conf_files "$TRAVIS"
         H2; H2 "End"; H2
         die "setup/start.sh failed!"
     fi
     H1 "OUTPUT OF SELECT FILES"
-    dump_conf_files
+    dump_conf_files "$TRAVIS"
     H2; H2 "End"; H2
 }
 

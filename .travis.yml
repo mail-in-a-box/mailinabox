@@ -8,20 +8,19 @@ os: linux
 dist: bionic
   
 before_install:
-  - echo "==== DUMP ENVIRONMENT ===="
+  - echo "==== ENVIRONMENT ===="
   - env | sort
   - echo "UMASK=$(umask)"
   #
-  - echo "==== DUMP AppArmor Status ===="
+  - echo "==== AppArmor Status ===="
   - (sudo aa-status; true)
   #
-  - echo "==== DUMP NETWORK INFO ===="
+  - echo "==== NETWORK INFO ===="
   - hostname -I
   - hostname -i
   - hostname
   - hostname --fqdn
   - ip add
-  - cat /etc/hosts
   
 install:
   - sudo tests/assets/system-setup/remote-nextcloud-docker.sh
