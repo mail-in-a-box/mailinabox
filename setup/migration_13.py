@@ -5,7 +5,7 @@
 # helper functions for migration #13
 #
 
-import uuid, os, sqlite3, ldap3
+import uuid, os, sqlite3, ldap3, hashlib
 
 
 def add_user(env, ldapconn, search_base, users_base, domains_base, email, password, privs, cn=None):
@@ -29,9 +29,13 @@ def add_user(env, ldapconn, search_base, users_base, domains_base, email, passwo
 		print("user already exists: %s" % email)
 		return ldapconn.response[0]['dn']
 
-	# Generate a unique id for uid
-	uid = '%s' % uuid.uuid4()
-
+	## Generate a unique id for uid
+	#uid = '%s' % uuid.uuid4()
+	# use a sha-1 hash of the email address for uid
+	m = hashlib.sha1()
+	m.update(bytearray(email.lower(),'utf-8'))
+	uid = m.hexdigest()
+	
 	# Attributes to apply to the new ldap entry
 	attrs = {
 		"mail" : email,

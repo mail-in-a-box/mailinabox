@@ -10,7 +10,7 @@
 # Python 3 in setup/questions.sh to validate the email
 # address entered by the user.
 
-import subprocess, shutil, os, sqlite3, re, ldap3, uuid
+import subprocess, shutil, os, sqlite3, re, ldap3, uuid, hashlib
 import utils, backend
 from email_validator import validate_email as validate_email_, EmailNotValidError
 import idna
@@ -637,8 +637,12 @@ def add_mail_user(email, pw, privs, env):
 	if conn.wait(id).count() > 0:
 		return ("An alias exists with that address.", 400)
 	
-	# Generate a unique id for uid
-	uid = '%s' % uuid.uuid4()
+	## Generate a unique id for uid
+	#uid = '%s' % uuid.uuid4()
+	# use a sha-1 hash of maildrop for uid
+	m = hashlib.sha1()
+	m.update(bytearray(email.lower(),'utf-8'))
+	uid = m.hexdigest()
 
 	# choose a common name and surname (required attributes)
 	cn = email.split("@")[0].replace('.',' ').replace('_',' ')
