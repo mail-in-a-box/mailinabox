@@ -45,6 +45,22 @@ dump_log() {
     fi
 }
 
+is_true() {
+    if [ "$1" == "true" \
+              -o "$1" == "TRUE" \
+              -o "$1" == "True" \
+              -o "$1" == "yes" \
+              -o "$1" == "YES" \
+              -o "$1" == "Yes" \
+              -o "$1" == "1" ]
+    then
+        return 0
+    else
+        return 1
+    fi
+}
+    
+
 dump_conf_files() {
     local skip
     if [ $# -eq 0 ]; then
@@ -52,7 +68,10 @@ dump_conf_files() {
     else
         skip="true"
         for item; do
-            [ "$item" == "true" ] skip="false"
+            if is_true "$item"; then
+                skip="false"
+                break
+            fi
         done
     fi
     if [ "$skip" == "false" ]; then
@@ -78,19 +97,26 @@ update_system_time() {
 
 update_hosts() {
     local host="$1"
-    local ip="$2"
-    local line="$ip $host"
-    if ! grep -F "$line" /etc/hosts 1>/dev/null; then
-        echo "$line" >>/etc/hosts
-    fi
+    shift
+    local ip
+    for ip; do
+        if [ ! -z "$ip" ]; then
+            local line="$ip $host"
+            if ! grep -F "$line" /etc/hosts 1>/dev/null; then
+                echo "$line" >>/etc/hosts
+            fi
+        fi
+    done
 }
 
 update_hosts_for_private_ip() {
-    # create /etc/hosts entry for PRIVATE_IP
+    # create /etc/hosts entry for PRIVATE_IP and PRIVATE_IPV6
     # PRIMARY_HOSTNAME must already be set
-    local ip=$(source setup/functions.sh; get_default_privateip 4)
-    [ -z "$ip" ] && return 1
-    update_hosts "$PRIMARY_HOSTNAME" "$ip" || return 1
+    local ip4=$(source setup/functions.sh; get_default_privateip 4)
+    local ip6=$(source setup/functions.sh; get_default_privateip 6)
+    [ -z "$ip4" -a -z "$ip6" ] && return 1
+    [ -z "$ip6" ] && ip6="::1"
+    update_hosts "$PRIMARY_HOSTNAME" "$ip4" "$ip6" || return 1
 }
 
 install_docker() {
