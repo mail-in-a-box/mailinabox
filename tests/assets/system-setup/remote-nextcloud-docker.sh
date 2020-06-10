@@ -60,6 +60,7 @@ before_miab_install() {
     update_hosts_for_private_ip || die "Could not update /etc/hosts"
 
     # update package lists before installing anything
+    H2 "apt-get update"
     apt-get update || die "apt-get update failed!"
     
     # install prerequisites
@@ -87,10 +88,10 @@ before_miab_install() {
     # enable the remote Nextcloud setup mod, which tells MiaB-LDAP to use
     # the remote Nextcloud for calendar and contacts instead of the
     # MiaB-installed one
+    H2 "Create setup/mod.d/remote-nextcloud.sh symbolic link"
     if [ ! -e "setup/mods.d/remote-nextcloud.sh" ]; then
         ln -s "../mods.available/remote-nextcloud.sh" "setup/mods.d/remote-nextcloud.sh" || die "Could not create remote-nextcloud.sh symlink"
     fi
-
     
     # install Docker
     H2 "Install Docker"
@@ -100,7 +101,10 @@ before_miab_install() {
 
 miab_install() {
     H1 "MIAB-LDAP INSTALL"
-    setup/start.sh -v || die "setup/start.sh failed!"
+    if ! setup/start.sh; then
+        dump_log "/var/log/syslog" 200
+        die "setup/start.sh failed!"
+    fi
 }
 
 

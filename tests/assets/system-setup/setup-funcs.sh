@@ -17,6 +17,19 @@ H2() {
     echo "*** $msg ***"
 }
 
+dump_log() {
+    local log_file="$1"
+    local lines="$2"
+    local title="DUMP OF $log_file"
+    if [ ! -z "$lines" ]; then
+        H1 "$title (last $lines lines)"
+        tail -$lines "$log_file"
+    else
+        H1 "$title"
+        tail "$log_file"
+    fi
+}
+
 install_qa_prerequisites() {
     # python3-dnspython: is used by the python scripts in 'tests' and is
     #   not installed by setup
