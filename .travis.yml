@@ -21,6 +21,8 @@ before_install:
   - hostname
   - hostname --fqdn
   - ip add
+  #
+  - sysctl -a | grep -i ipv6 | grep disable
   
 install:
   - sudo tests/system-setup/remote-nextcloud-docker.sh
