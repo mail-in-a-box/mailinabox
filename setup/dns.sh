@@ -62,6 +62,20 @@ for ip in $PRIVATE_IP $PRIVATE_IPV6; do
 	echo "  ip-address: $ip" >> /etc/nsd/nsd.conf;
 done
 
+# Deal with a failure for nsd to start on Travis-CI by disabling ip6
+# and setting control-enable to "no". Even though the nsd docs say the
+# default value for control-enable is no, running "nsd-checkconf -o
+# control-enable /etc/nsd/nsd.conf" returns "yes", so we explicitly
+# set it here.
+if [ -z "$PRIVATE_IPV6" -a "$TRAVIS" == "true" ]; then
+    cat >> /etc/nsd.conf <<EOF
+  do-ip4: yes
+  do-ip6: no
+remote-control:
+  control-enable: no
+EOF
+fi
+
 echo "include: /etc/nsd/zones.conf" >> /etc/nsd/nsd.conf;
 
 # Create DNSSEC signing keys.

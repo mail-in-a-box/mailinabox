@@ -28,6 +28,7 @@ dump_log() {
         H1 "$title"
         cat "$log_file"
     fi
+    H1 "END $title"
 }
 
 install_qa_prerequisites() {

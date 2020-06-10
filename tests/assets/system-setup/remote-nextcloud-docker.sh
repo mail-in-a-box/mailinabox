@@ -102,22 +102,9 @@ before_miab_install() {
 miab_install() {
     H1 "MIAB-LDAP INSTALL"
     if ! setup/start.sh; then
-        local failure="true"
-        
-        if [ "$TRAVIS" == "true" ] && tail -10 /var/log/syslog | grep "Exception on /mail/users/add" >/dev/null; then
-            dump_log "/etc/mailinabox.conf"
-            H2 "Apply Travis-CI nsd fix"
-            travis_fix_nsd || die "Could not fix NSD startup issue"
-            H2 "Re-run firstuser.sh and mods.d/remote-nextcloud.sh"
-            if setup/firstuser.sh && setup/mods.d/remote-nextcloud.sh; then
-                failure="false"
-            fi
-        fi
-        
-        if [ "$failure" == "true" ]; then
-            dump_log "/var/log/syslog" 100
-            die "setup/start.sh failed!"
-        fi
+        dump_log "/var/log/syslog" 100
+        dump_log "/etc/mailinabox.conf"
+        die "setup/start.sh failed!"
     fi
 }
 
@@ -128,8 +115,8 @@ after_miab_install() {
     . /etc/mailinabox.conf || die "Could not load /etc/mailinabox.conf"
 
     # TRAVIS: fix nsd startup problem
-    H2 "Apply Travis-CI nsd fix"
-    travis_fix_nsd || die "Could not fix NSD startup issue for TRAVIS-CI"
+    #H2 "Apply Travis-CI nsd fix"
+    #travis_fix_nsd || die "Could not fix NSD startup issue for TRAVIS-CI"
     
     # run Nextcloud docker image
     H2 "Start Nextcloud docker container"
