@@ -67,7 +67,7 @@ done
 # default value for control-enable is no, running "nsd-checkconf -o
 # control-enable /etc/nsd/nsd.conf" returns "yes", so we explicitly
 # set it here.
-if [ -z "$PRIVATE_IPV6" -a "$TRAVIS" == "true" ]; then
+if [ -z "$PRIVATE_IPV6" -a "${TRAVIS:-}" == "true" ]; then
     cat >> /etc/nsd/nsd.conf <<EOF
   do-ip4: yes
   do-ip6: no
