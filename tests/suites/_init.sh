@@ -6,12 +6,13 @@
 set +eu
 
 # load test suite helper functions
+. suites/_locations.sh      || exit 1
 . suites/_ldap-functions.sh || exit 1
 . suites/_mail-functions.sh || exit 1
 . suites/_mgmt-functions.sh || exit 1
 
 # globals - all global variables are UPPERCASE
-BASE_OUTPUTDIR="out"
+BASE_OUTPUTDIR="$(realpath out)"
 PYMAIL="./test_mail.py"
 declare -i OVERALL_SUCCESSES=0
 declare -i OVERALL_FAILURES=0
@@ -45,11 +46,12 @@ suite_start() {
 	mkdir -p "$OUTDIR"
 	echo ""
 	echo "Starting suite: $SUITE_NAME"
-	suite_setup "$2"
+	shift
+	suite_setup "$@"
 }
 
 suite_end() {
-	suite_cleanup "$1"
+	suite_cleanup "$@"
 	echo "Suite $SUITE_NAME finished"
 	let OVERALL_SUCCESSES+=$SUITE_COUNT_SUCCESS
 	let OVERALL_FAILURES+=$SUITE_COUNT_FAILURE
@@ -61,14 +63,16 @@ suite_end() {
 suite_setup() {
 	[ -z "$1" ] && return 0
 	TEST_OF="$OUTDIR/setup"
-	eval "$1"
+	local script
+	for script; do eval "$script";	done
 	TEST_OF=""
 }
 
 suite_cleanup() {
 	[ -z "$1" ] && return 0
 	TEST_OF="$OUTDIR/cleanup"
-	eval "$1"
+	local script
+	for script; do eval "$script"; done
 	TEST_OF=""
 }
 
@@ -105,7 +109,7 @@ test_end() {
 				let idx+=1
 			done
 			echo "$TEST_OF" >>$FAILED_TESTS_MANIFEST
-			echo "	   see: $(dirname $0)/$TEST_OF"
+			echo "	   see: $TEST_OF"
 			let SUITE_COUNT_FAILURE+=1
 			if [ "$FAILURE_IS_FATAL" == "yes" ]; then
 				record "FATAL: failures are fatal option enabled"
@@ -203,6 +207,12 @@ python_error() {
 	local output="$1"
 	awk 'BEGIN { TB=0; FOUND=0 } TB==0 && /^Traceback/ { TB=1; FOUND=1; next } TB==1 && /^[^ ]/ { print $0; TB=0 } END { if (FOUND==0) exit 1 }' <<< "$output"
 	[ $? -eq 1 ] && echo "$output"
+}
+
+copy_or_die() {
+	local src="$1"
+	local dst="$2"
+	cp "$src" "$dst" || die "Unable to copy '$src' => '$dst'"
 }
 
 dump_failed_tests_output() {

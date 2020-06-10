@@ -7,6 +7,11 @@ generate_uuid() {
 	echo "$uuid"
 }
 
+sha1() {
+	local txt="$1"
+	python3 -c "import hashlib; m=hashlib.sha1(); m.update(bytearray(r'''$txt''','utf-8')); print(m.hexdigest());" || die "Unable to generate sha1 hash"
+}
+
 delete_user() {
 	local email="$1"
 	local domainpart="$(awk -F@ '{print $2}' <<< "$email")"
@@ -32,12 +37,13 @@ create_user() {
 	local priv="${3:-test}"
 	local localpart="$(awk -F@ '{print $1}' <<< "$email")"
 	local domainpart="$(awk -F@ '{print $2}' <<< "$email")"
-	local uid="$localpart"
+	#local uid="$localpart"
+	local uid="$(sha1 "$email")"
 	local dn="uid=${uid},${LDAP_USERS_BASE}"
 	
 	delete_user "$email"
 
-	record "[create user $email]"
+	record "[create user $email ($dn)]"
 	delete_dn "$dn"
 	
 	ldapadd -H "$LDAP_URL" -x -D "$LDAP_ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" >>$TEST_OF 2>&1 <<EOF
