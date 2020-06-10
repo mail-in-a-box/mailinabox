@@ -88,7 +88,7 @@ before_miab_install() {
     # enable the remote Nextcloud setup mod, which tells MiaB-LDAP to use
     # the remote Nextcloud for calendar and contacts instead of the
     # MiaB-installed one
-    H2 "Create setup/mod.d/remote-nextcloud.sh symbolic link"
+    H2 "Create setup/mods.d/remote-nextcloud.sh symbolic link"
     if [ ! -e "setup/mods.d/remote-nextcloud.sh" ]; then
         ln -s "../mods.available/remote-nextcloud.sh" "setup/mods.d/remote-nextcloud.sh" || die "Could not create remote-nextcloud.sh symlink"
     fi
@@ -102,8 +102,22 @@ before_miab_install() {
 miab_install() {
     H1 "MIAB-LDAP INSTALL"
     if ! setup/start.sh; then
-        dump_log "/var/log/syslog" 200
-        die "setup/start.sh failed!"
+        local failure="true"
+        
+        if [ "$TRAVIS" == "true" ] && tail -10 /var/log/syslog | grep "Exception on /mail/users/add" >/dev/null; then
+            dump_log "/etc/mailinabox.conf"
+            H2 "Apply Travis-CI nsd fix"
+            travis_fix_nsd || die "Could not fix NSD startup issue"
+            H2 "Re-run firstuser.sh"
+            if setup/firstuser.sh; then
+                failure="false"
+            fi
+        fi
+        
+        if [ "$failure" == "true" ]; then
+            dump_log "/var/log/syslog" 100
+            die "setup/start.sh failed!"
+        fi
     fi
 }
 

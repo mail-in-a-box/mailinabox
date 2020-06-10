@@ -26,7 +26,7 @@ dump_log() {
         tail -$lines "$log_file"
     else
         H1 "$title"
-        tail "$log_file"
+        cat "$log_file"
     fi
 }
 
@@ -95,7 +95,7 @@ travis_fix_nsd() {
     fi
     
     # nsd won't start on Travis-CI without the changes below: ip6 off and
-    # control-enable set to no. Even though the nsd docs says the
+    # control-enable set to no. Even though the nsd docs say the
     # default value for control-enable is no, running "nsd-checkconf -o
     # control-enable /etc/nsd/nsd.conf" returns "yes", so we explicitly
     # set it here.
