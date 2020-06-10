@@ -168,11 +168,11 @@ detect_slapd_log_error() {
 				record "$F_DANGER[ERROR] $line$F_RESET"
 			elif [ $r -eq 2 ]; then
 				let wc+=1
-				record "$F_WARN[WARN ] $line$F_RESET"
+				record "$F_WARN[ WARN] $line$F_RESET"
 			elif [ $r -eq 3 ]; then
 				let ignored+=1
 			else
-				record "[OK   ] $line"
+				record "[   OK] $line"
 			fi
 		done
 		record "$ignored unreported/ignored log lines"
@@ -214,7 +214,7 @@ detect_dovecot_log_error() {
 			elif [ $r -eq 2 ]; then
 				let ignored+=1
 			else
-				record "[	OK] $line"
+				record "[   OK] $line"
 			fi
 		done
 		record "$ignored unreported/ignored log lines"

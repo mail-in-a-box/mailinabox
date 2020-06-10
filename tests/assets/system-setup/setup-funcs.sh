@@ -1,8 +1,4 @@
 
-# ansi escapes for hilighting text
-F_DIMTEXT=$(echo -e "\037[31m")
-F_RESET=$(echo -e "\033[39m")
-
 
 die() {
     local msg="$1"
@@ -26,16 +22,21 @@ dump_log() {
     local log_file="$1"
     local lines="$2"
     local title="DUMP OF $log_file"
-    echo -n "$F_DIMTEXT"
+    echo ""
+    echo "--------"
+    echo -n "-------- $log_file"
+    if [ -z "$lines" ]; then
+        echo " (last $line lines)"
+    else
+        echo ""
+    fi
+    echo "--------"
+      
     if [ ! -z "$lines" ]; then
-        H1 "$title (last $lines lines)"
         tail -$lines "$log_file"
     else
-        H1 "$title"
         cat "$log_file"
     fi
-    H1 "END $title"
-    echo -n "$F_RESET"
 }
 
 install_qa_prerequisites() {
