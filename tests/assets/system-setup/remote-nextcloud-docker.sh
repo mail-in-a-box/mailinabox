@@ -3,7 +3,28 @@
 # setup MiaB-LDAP with a remote Nextcloud running on the same
 # host under Docker exposed as localhost:8000
 #
-# this script must be run with the working directory set to 'tests'
+# to use:
+#   on a fresh Ubuntu:
+#      1. checkout or copy the MiaB-LDAP code to ~/mailinabox
+#      2. cd ~/mailinabox
+#      3. sudo tests/assets/system-setup/remote-nextcloud-docker.sh
+#
+# when complete you should have a working MiaB-LDAP and Nextcloud
+#
+# You can access MiaB-LDAP using your browser to the Ubuntu system in
+# the normal way, (eg: https://<ubuntu-box>/admin).
+#
+# Nextcloud is running under Docker on the ubuntu box, so to access it
+# you'll first need to ssh into the ubuntu box with port-forrwarding
+# enabled.
+#
+# eg: ssh -L 8000:localhost:8000 user@<ubuntu-box>
+#
+# Then, in your browser visit http://localhost:8000/.
+#
+# See setup-defaults.sh for usernames and passwords.
+#
+
 
 usage() {
     echo "Usage: $(basename "$0") [\"before-miab-install\"|\"miab-install\"|\"after-miab-install\"]"
