@@ -20,7 +20,7 @@ before_install:
   - (hostname -i; true)
   - (hostname; true)
   - (hostname --fqdn; true)
-  - (if add; true)
+  - (ip add; true)
   
 install:
   - sudo tests/assets/system-setup/remote-nextcloud-docker.sh
