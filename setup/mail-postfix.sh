@@ -61,16 +61,6 @@ tools/editconf.py /etc/postfix/main.cf \
 	myhostname=$PRIMARY_HOSTNAME\
 	smtpd_banner="\$myhostname ESMTP Hi, I'm a Mail-in-a-Box (Ubuntu/Postfix; see https://mailinabox.email/)" \
 	mydestination=localhost
-
-# when ipv6 is disabled on the loopback adapter and a mail message
-# delivery attempt fails because the recipient doesn't exist, postfix
-# returns reason "Host or domain name not found. Name service error
-# for name=abc.com type=AAAA: Host not found", instead of the actual
-# reason "User doesn't exist." The sysadmin's intent is probably that
-# ipv6 is not desired at all, so disable ipv6.
-if kernel_ipv6_lo_disabled; then
-	tools/editconf.py /etc/postfix/main.cf inet_protocols=ipv4
-fi
     
 # Tweak some queue settings:
 # * Inform users when their e-mail delivery is delayed more than 3 hours (default is not to warn).
