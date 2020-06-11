@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+v0.46 (June 11, 2020)
+---------------------
+
+Security fixes:
+
+* Roundcube is updated to version 1.4.6 (https://roundcube.net/news/2020/06/02/security-updates-1.4.5-and-1.3.12).
+
 v0.45 (May 16, 2020)
 --------------------
 
