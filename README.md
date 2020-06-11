@@ -30,7 +30,6 @@ On MiaB-LDAP, a one-time change must be applied manually to allow the remote Nex
 
 
 ## Under-the-Hood Details
--------
 
 **Additional directory in user-data**
 

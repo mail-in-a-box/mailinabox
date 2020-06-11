@@ -432,7 +432,7 @@ def get_domain(emailaddr, as_unicode=True):
 			pass
 	return ret
 
-def get_mail_domains(env, as_map=False, filter_aliases=None, category=None):
+def get_mail_domains(env, as_map=False, filter_aliases=None, category=None, users_only=False):
 	# Retrieves all domains, IDNA-encoded, we accept mail for.
 	#
 	# If as_map is False, the function returns the lowercase domain
@@ -453,7 +453,12 @@ def get_mail_domains(env, as_map=False, filter_aliases=None, category=None):
 	# category is another type of filter. Set to a string value to
 	# return only those domains of that category. ie. the
 	# "businessCategory" attribute of the domain must include this
-	# category.
+	# category. [TODO: this doesn't really belong there, it is here to
+	# make it easy for dns_update to get ssl domains]
+	#
+	# If users_only is True, only return domains with email addresses
+	# that correspond to user accounts. [TODO: This currently has no
+	# effect - this function only returns user mail domains]
 	#
 	conn = open_database(env)
 	filter = "(&(objectClass=domain)(businessCategory=mail))"
