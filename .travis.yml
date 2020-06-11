@@ -25,11 +25,8 @@ before_install:
   
 install:
   - sudo tests/system-setup/remote-nextcloud-docker.sh
-  - hostname -I || true
-  - hostname -i || true
   - hostname || true
   - hostname --fqdn || true
-  - nslookup box.abc.com || true
   - getent hosts box.abc.com || true
 
 script:

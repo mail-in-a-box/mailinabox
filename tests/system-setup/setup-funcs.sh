@@ -186,7 +186,7 @@ install_docker() {
 }
 
 
-install_qa_prerequisites() {
+install_pre_setup_qa_prerequisites() {
     [ -z "$STORAGE_ROOT" ] \
         && echo "Error: STORAGE_ROOT not set" 1>&2 \
         && return 1

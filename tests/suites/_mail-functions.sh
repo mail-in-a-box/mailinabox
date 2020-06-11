@@ -10,14 +10,14 @@ ensure_root_user() {
 	# ensure there is a local email account for root.
 	#
 	# on exit, ROOT, ROOT_MAILDROP, and ROOT_DN are set, and if no
-	# account exists, a new root@$(hostname) is created having a
+	# account exists, a new root@$(hostname --fqdn) is created having a
 	# random password
 	#
 	if [ ! -z "$ROOT_MAILDROP" ]; then
 		# already have it
 		return
 	fi
-	ROOT="${USER}@$(hostname)"
+	ROOT="${USER}@$(hostname --fqdn || hostname)"
 	record "[Find user $ROOT]"
 	get_attribute "$LDAP_USERS_BASE" "mail=$ROOT" "maildrop"
 	ROOT_MAILDROP="$ATTR_VALUE"
