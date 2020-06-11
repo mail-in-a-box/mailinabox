@@ -6,7 +6,7 @@
 #    - Nextcloud is already installed and MiaB-LDAP is already
 #      configured to use it.
 #
-#      ie. remote-nextcloud.sh was run on MiaB-LDAP.sh by
+#      ie. remote-nextcloud.sh was run on MiaB-LDAP by
 #          setup/start.sh because there was a symbolic link from
 #          setup/mods.d/remote-nextcloud.sh to the script in
 #          mods.available
@@ -14,7 +14,7 @@
 #    - The remote Nextcloud has been configured to use MiaB-LDAP
 #      for users and groups.
 #
-#      eg. remote-nextcloud-use-miab.sh was copied to the remote Nextcloud
+#      ie. remote-nextcloud-use-miab.sh was copied to the remote Nextcloud
 #      server and was run successfully there
 #
 
@@ -247,9 +247,9 @@ test_mail_from_nextcloud() {
 test_nextcloud_contacts() {
     test_start "nextcloud_contacts"
 
-    assert_is_configured || (test_end && return)
+    assert_is_configured || test_end && return
 
-    local alice="alice3@somedomain.com"
+    local alice="alice.nc@somedomain.com"
     local alice_pw="$(generate_password 16)"
 
 	# create local user alice

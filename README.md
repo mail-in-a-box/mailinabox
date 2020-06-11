@@ -1,34 +1,50 @@
 [![Build Status](https://travis-ci.com/downtownallday/mailinabox-ldap.svg?branch=master)](https://travis-ci.com/downtownallday/mailinabox-ldap)
 
-Mail-in-a-Box LDAP
-===================
+# Mail-in-a-Box LDAP
 This is a version of [Mail-in-a-Box](https://mailinabox.email) with LDAP used as the user account database instead of sqlite.
 
 All features are supported - you won't find many visible differences. It's only an under-the-hood change.
 
-However it will allow a remote Nextcloud installation to authenticate users against Mail-in-a-Box using [Nextcloud's official LDAP support](https://nextcloud.com/usermanagement/). A single user account database shared with Nextcloud was originally the goal of the project which would simplify deploying a private mail and cloud service for a home or small business. But, there could be many other use cases as well. 
+However, it will allow a remote Nextcloud installation to authenticate users against Mail-in-a-Box using [Nextcloud's official LDAP support](https://nextcloud.com/usermanagement/). A single user account database shared with Nextcloud was originally the goal of the project which would simplify deploying a private mail and cloud service for a home or small business. But, there could be many other use cases as well. 
 
 To add a new account to Nextcloud, you'd simply add a new email account with MiaB-LDAP's admin interface. Quotas and other account settings are made within Nextcloud.
 
-How to connect a remote Nextcloud
+## How to connect to a remote Nextcloud
 ---------------------------------
 
-To fully integrate Mail-in-a-Box w/LDAP (MiaB-LDAP) with Nextcloud, changes must be made on both sides.
+To integrate Mail-in-a-Box w/LDAP (MiaB-LDAP) with Nextcloud, changes must be made on both sides.  These changes are automated.
 
-1. MiaB-LDAP
-  * Remote LDAPS access: the default MiaB-LDAP installation doesn't allow any remote LDAP access, so for Nextcloud to access MiaB-LDAP, firewall rules must be loosened to the LDAPS port (636). This is a one-time change.  Run something like this as root on MiaB-LDAP, where $ip is the ip-address of your Nextcloud server:  `ufw allow proto tcp from $ip to any port ldaps`
-  * Roundcube and Z-Push (ActiveSync) changes: modify the MiaB-LDAP configuration to use the remote Nextcloud for contacts and calendar. A script to do this automatically will be available soon.
-2. Remote Nextcloud
-  * Use MiaB-LDAP for user acccounts: on Nextcloud, enable user-ldap (in Apps, enable "LDAP user and group backend". Then in Settings click on "LDAP / AD integration". There are quite a few settings to make in there and more information on this will be forthcoming, including a script that will use the user-ldap API to configure the LDAP parameters in Nextcloud for you.
+**On MiaB-LDAP**
 
-Details
+Enable the setup mod `remote-nextcloud.sh` by creating a symbolic link to it in setup/mods.d. Do this by running this command from the mailinabox directory: `ln -s ../mods.available/remote-nextcloud.sh setup/mods.d/remote-nextcloud.sh`. *During setup you will be prompted for the hostname and web prefix of your remote Nextcloud box.*
+
+The setup mod will configure Roundcube and Z-Push (ActiveSync) to use the remote Nextcloud for contacts and calendar instead of the local Nextcloud, which will be disabled (browsing to /cloud will fail).
+
+**On the remote Nextcloud**
+
+Copy the file `setup/mods.available/remote-nextcloud-use-miab.sh` to the Nextcloud box and run it. This will configure Nextcloud's "LDAP user and group backend" with the MiaB-LDAP details and ensure the contacts and calendar apps are installed. *This does not replace or alter your ability to log into Nextcloud with any existing local Nextcloud accounts. It only allows MiaB-LDAP users to log into Nextcloud using their MiaB-LDAP credentials.*
+
+**Additional Firewall Rule**
+
+On MiaB-LDAP, a one-time change must be applied manually to allow the remote Nextcloud to query the LDAP server because the default MiaB-LDAP installation doesn't allow any remote LDAP access. As root, run the following: `ufw allow proto tcp from $ip to any port ldaps`, where $ip is the ip-address of your Nextcloud server.
+
+
+## Under-the-Hood Details
 -------
 
-Once installed, you will find all LDAP service account credentials in `/home/user-data/ldap/miab_ldap.conf`, such as those for Nextcloud. Service accounts have limited rights to make changes and should be preferred over the use of the LDAP admin account.
+**Additional directory in user-data**
+
+A new ldap directory is created by setup under STORAGE_ROOT (/home/user-data/ldap) that holds the LDAP database, so that it gets backed up by the normal backup process. In there, you will also find all LDAP service account credentials created by setup in `/home/user-data/ldap/miab_ldap.conf`, such as those for Nextcloud. Service accounts have limited rights to make changes and should be preferred over the use of the LDAP admin account.
+
+**LDAP schema for postfix and dovecot**
 
 See `conf/postfix.schema` for more details on the LDAP schema.
 
-LDAP server access logs are stored in `/var/log/ldap/slapd.log` and rotated daily.
+**LDAP logs**
+
+LDAP server logs are stored in `/var/log/ldap/slapd.log` and rotated daily.
+
+**Command line queries**
 
 To perform general command-line searches against your LDAP database, run `setup/ldap -search "\<query\>"` as root, where _query_ can be a distinguished name to show all attributes of that dn, or an LDAP search enclosed in parenthesis. Some examples:
   * `setup/ldap.sh -search "(mail=alice@mydomain.com)"` (show alice)
@@ -36,12 +52,14 @@ To perform general command-line searches against your LDAP database, run `setup/
   * `setup/ldap.sh -search "(objectClass=mailuser)"` (show all users)
   * etc.
 
-This is a convenient way to run ldapsearch having all the correct command line arguments.
+This is a convenient way to run ldapsearch having all the correct command line arguments, but any LDAP tool will also work.
 
-Caution: do not make direct LDAP database changes, such as adding users or groups using ldapmodify or other LDAP database tool. Instead, use the MiaB admin interface or REST API. Adding or removing a user or group with the admin interface may trigger additional database and system changes by the management daemon, such as updating DNS zones for new email domains, updating group memberships, etc, that would not be performed with a direct change.
+**Caution**
+
+*Do not make direct LDAP database changes, such as adding users or groups using ldapmodify or other LDAP database tools. Instead, use the MiaB admin interface or REST API. Adding or removing a user or group with the admin interface may trigger additional database and system changes by the management daemon, such as updating DNS zones for new email domains, updating group memberships, etc, that would not be performed with a direct change.*
 
 
-Migration
+## Migration
 ---------
 Running any of the setup scripts to install MiaB-LDAP (`miab`, `setup/bootstrap.sh`, `setup/start.sh`, etc) will automatically migrate your current installation from sqlite to LDAP. Make a full MiaB backup before running!
 
