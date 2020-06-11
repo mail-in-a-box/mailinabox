@@ -235,3 +235,9 @@ function generate_password() {
 	dd if=/dev/urandom bs=1 count=$input_len 2>/dev/null | base64 --wrap=0 | awk '{ gsub("/", ",", $0); print $0}'
 }
 
+function kernel_ipv6_lo_disabled() {
+	# Returns 0 if ipv6 is disabled on the loopback adapter
+	local v="$(sysctl -n net.ipv6.conf.lo.disable_ipv6)"
+	[ "$v" == "1" ] && return 0
+	return 0
+}

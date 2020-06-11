@@ -62,12 +62,16 @@ for ip in $PRIVATE_IP $PRIVATE_IPV6; do
 	echo "  ip-address: $ip" >> /etc/nsd/nsd.conf;
 done
 
-# Deal with a failure for nsd to start on Travis-CI by disabling ip6
-# and setting control-enable to "no". Even though the nsd docs say the
-# default value for control-enable is no, running "nsd-checkconf -o
-# control-enable /etc/nsd/nsd.conf" returns "yes", so we explicitly
-# set it here.
-if [ -z "$PRIVATE_IPV6" -a "${TRAVIS:-}" == "true" ]; then
+# nsd fails to start when ipv6 is disabled by the kernel on certain
+# interfaces without "do-ip6" set to "no" and "control-enable" to "no"
+# [confirm]. Even though the nsd docs say the default value for
+# control-enable is no, running "nsd-checkconf -o control-enable
+# /etc/nsd/nsd.conf" returns "yes", so we explicitly set it here.
+#
+# For instance, on Travis-CI, ipv6 is disabled on the lo and docker
+# interfaces, but enabled on the primary interface ens4. nsd fails to
+# start without these additions.
+if kernel_ipv6_lo_disabled; then
     cat >> /etc/nsd/nsd.conf <<EOF
   do-ip4: yes
   do-ip6: no
