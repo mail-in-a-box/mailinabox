@@ -197,6 +197,9 @@ after_miab_install() {
            "$PRIMARY_HOSTNAME" \
            "$LDAP_NEXTCLOUD_PASSWORD" \
         || die "docker: error running remote-nextcloud-use-miab.sh"
+
+    # re-add systemd name resolver as a secondary nameserver
+    echo "nameserver 127.0.0.53" >> /etc/resolv.conf
 }
 
 

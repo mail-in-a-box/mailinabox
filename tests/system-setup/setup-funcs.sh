@@ -101,6 +101,7 @@ dump_conf_files() {
         dump_log "/etc/mailinabox.conf"
         dump_log "/etc/hosts"
         dump_log "/etc/nsswitch.conf"
+        dump_log "/etc/resolv.conf"
         dump_log "/etc/nsd/nsd.conf"
         dump_log "/etc/postfix/main.cf"
     fi
