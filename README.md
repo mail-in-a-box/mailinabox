@@ -16,7 +16,7 @@ To integrate Mail-in-a-Box w/LDAP (MiaB-LDAP) with Nextcloud, changes must be ma
 
 **On MiaB-LDAP**
 
-Enable the setup mod `remote-nextcloud.sh` by creating a symbolic link to it in setup/mods.d. Do this by running this command from the mailinabox directory: `ln -s ../mods.available/remote-nextcloud.sh setup/mods.d/remote-nextcloud.sh`. *During setup you will be prompted for the hostname and web prefix of your remote Nextcloud box.*
+Enable the setup mod `remote-nextcloud.sh` by creating the directory `local` and creating a symbolic link to it. Do this by running this command from the mailinabox directory: `ln -s ../setup/mods.available/remote-nextcloud.sh local/remote-nextcloud.sh`. *During setup you will be prompted for the hostname and web prefix of your remote Nextcloud box.*
 
 The setup mod will configure Roundcube and Z-Push (ActiveSync) to use the remote Nextcloud for contacts and calendar instead of the local Nextcloud, which will be disabled (browsing to /cloud will fail).
 

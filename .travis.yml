@@ -33,6 +33,5 @@ script:
   #
   # launch automated tests, but skip tests that require remote
   # smtp support because Travis-CI blocks outgoing port 25
-  - sudo ls -al /etc/dovecot
   - sudo touch /etc/dovecot/sieve-spam.svbin
   - sudo tests/runner.sh -dumpoutput -no-smtp-remote default remote-nextcloud

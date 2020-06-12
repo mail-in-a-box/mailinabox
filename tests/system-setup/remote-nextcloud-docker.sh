@@ -56,7 +56,6 @@ before_miab_install() {
     H1 "BEFORE MIAB-LDAP INSTALL"
 
     H2 "Update /etc/hosts"
-    #update_hosts_for_private_ip || die "Could not update /etc/hosts"
     set_system_hostname || die "Could not set hostname"
 
     # update system time
@@ -86,9 +85,10 @@ before_miab_install() {
     # enable the remote Nextcloud setup mod, which tells MiaB-LDAP to use
     # the remote Nextcloud for calendar and contacts instead of the
     # MiaB-installed one
-    H2 "Create setup/mods.d/remote-nextcloud.sh symbolic link"
-    if [ ! -e "setup/mods.d/remote-nextcloud.sh" ]; then
-        ln -s "../mods.available/remote-nextcloud.sh" "setup/mods.d/remote-nextcloud.sh" || die "Could not create remote-nextcloud.sh symlink"
+    H2 "Create local/remote-nextcloud.sh symbolic link"
+    if [ ! -e "local/remote-nextcloud.sh" ]; then
+        mkdir -p local
+        ln -s "../setup/mods.available/remote-nextcloud.sh" "local/remote-nextcloud.sh" || die "Could not create remote-nextcloud.sh symlink"
     fi
     
     # install Docker

@@ -2,15 +2,15 @@
 #	
 # Test the setup modification script setup/mods.available/remote-nextcloud.sh
 # Prerequisites:
-
+#
 #    - Nextcloud is already installed and MiaB-LDAP is already
 #      configured to use it.
 #
 #      ie. remote-nextcloud.sh was run on MiaB-LDAP by
 #          setup/start.sh because there was a symbolic link from
-#          setup/mods.d/remote-nextcloud.sh to the script in
+#          local/remote-nextcloud.sh to the script in
 #          mods.available
-
+#
 #    - The remote Nextcloud has been configured to use MiaB-LDAP
 #      for users and groups.
 #

@@ -150,9 +150,11 @@ fi
 #
 # Run setup mods 
 #
-for mod in $(ls setup/mods.d | grep -v '~$'); do
-    setup/mods.d/$mod
-done
+if [ -d local ]; then
+    for mod in $(ls local | grep -v '~$'); do
+        local/$mod
+    done
+fi
 
 # Done.
 echo
