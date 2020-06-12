@@ -320,6 +320,7 @@ def provision_certificates(env, limit_domains):
 						"certonly",
 						#"-v", # just enough to see ACME errors
 						"--non-interactive", # will fail if user hasn't registered during Mail-in-a-Box setup
+						"--agree-tos", # Automatically agrees to Let's Encrypt TOS
 
 						"-d", ",".join(domain_list), # first will be main domain
 
