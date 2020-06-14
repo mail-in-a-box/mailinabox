@@ -40,8 +40,6 @@ jobs:
   - env:
       - PRIMARY_HOSTNAME=box2.abc.com
       - UPSTREAM_TAG=master
-      - FEATURE_NEXTCLOUD=false
-      - FEATURE_MUNIN=false
     name: upgrade-from-upstream
     install:
       - sudo tests/system-setup/upgrade-from-upstream.sh

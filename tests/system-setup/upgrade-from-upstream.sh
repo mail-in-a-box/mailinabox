@@ -65,11 +65,24 @@ upstream_install() {
         H2 "Checkout $UPSTREAM_TAG"
         git checkout "$UPSTREAM_TAG" || die "git checkout $UPSTREAM_TAG failed"
     fi
+
+    if [ "$TRAVIS" == "true" ]; then
+        # Apply a patch to setup/dns.sh so nsd will start. We must do
+        # it in the script and not after setup.sh runs because part of
+        # setup includes adding a new user via the management
+        # interface and that's where the management daemon crashes:
+        #
+        # "subprocess.CalledProcessError: Command '['/usr/sbin/service', 'nsd', 'restart']' returned non-zero exit status 1"
+        #
+        H2 "Patching upstream setup/dns.sh for Travis-CI"
+        sed -i 's|\(.*include:.*zones\.conf.*\)|cat >> /etc/nsd/nsd.conf <<EOF\n  do-ip4: yes\n  do-ip6: no\nremote-control:\n  control-enable: no\nEOF\n\n\1|' setup/dns.sh \
+            || die "Couldn't patch setup/dns.sh !!"
+    fi
     
     H2 "Run upstream setup"
     if ! setup/start.sh; then
         echo "$F_WARN"
-        tail -100 /var/log/syslog
+        dump_file /var/log/syslog 100
         echo "$F_RESET"
         die "Upstream setup failed!"
     fi
@@ -116,6 +129,7 @@ add_data() {
     #
     # add users
     #
+    H2 "Add users"
     for user in "${users[@]}"; do
         if array_contains "$user" "${current_users[@]}"; then
             echo "Not adding user $user: already exists"
@@ -123,12 +137,15 @@ add_data() {
         elif ! rest_urlencoded POST /admin/mail/users/add "$EMAIL_ADDR" "$EMAIL_PW" --insecure -- "email=$user" "password=$pw" 2>/dev/null
         then
             die "Unable to add user $user: rc=$? err=$REST_ERROR"
+        else
+            echo "Add: $user"
         fi
     done
 
     #
     # add aliases
     #
+    H2 "Add aliases"
     local aliasdef
     for aliasdef in "${aliases[@]}"; do
         alias="$(awk -F'[> ]' '{print $1}' <<<"$aliasdef")"
@@ -139,6 +156,8 @@ add_data() {
         elif ! rest_urlencoded POST /admin/mail/aliases/add "$EMAIL_ADDR" "$EMAIL_PW" --insecure -- "address=$alias" "forwards_to=$forwards_to" 2>/dev/null
         then
             die "Unable to add alias $alias: rc=$? err=$REST_ERROR"
+        else
+            echo "Add: $aliasdef"
         fi
     done
 }

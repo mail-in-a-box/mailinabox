@@ -100,7 +100,9 @@ rest_urlencoded() {
 		REST_ERROR="REST status $REST_HTTP_CODE: $REST_OUTPUT"
 		echo "${F_DANGER}$REST_ERROR${F_RESET}" 1>&2
         if $is_local && [ $REST_HTTP_CODE -ge 500 ]; then
+            echo -n "$F_WARN"
             tail -100 /var/log/syslog
+            echo -n "$F_RESET"
         fi
 		return 2
 	fi
