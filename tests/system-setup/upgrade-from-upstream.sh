@@ -97,11 +97,11 @@ upstream_install() {
 add_data() {
     H1 "Add some Mail-in-a-Box data"
     local users=()
-    users+="betsy@$(email_domainpart "$EMAIL_ADDR")"
+    users+=("betsy@$(email_domainpart "$EMAIL_ADDR")")
 
     local alises=()
-    aliases+="goalias@testdom.com > ${users[0]}"
-    aliases+="nested@testdom.com > goalias@testdom.com"
+    aliases+=("goalias@testdom.com > ${users[0]}")
+    aliases+=("nested@testdom.com > goalias@testdom.com")
 
     local pw="$(generate_qa_password)"
 

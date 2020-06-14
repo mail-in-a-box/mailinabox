@@ -34,7 +34,7 @@ dump_file() {
     fi
     echo "--------"
 
-    if [ !-e "$log_file" ]; then
+    if [ ! -e "$log_file" ]; then
         echo "DOES NOT EXIST"
     elif [ ! -z "$lines" ]; then
         tail -$lines "$log_file"
