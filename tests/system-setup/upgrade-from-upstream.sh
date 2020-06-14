@@ -67,7 +67,12 @@ upstream_install() {
     fi
     
     H2 "Run upstream setup"
-    setup/start.sh || die "Upstream setup failed!"
+    if ! setup/start.sh; then
+        echo "$F_WARN"
+        tail -100 /var/log/syslog
+        echo "$F_RESET"
+        die "Upstream setup failed!"
+    fi
     popd >/dev/null
     
     H2 "Upstream info"

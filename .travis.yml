@@ -1,7 +1,7 @@
 # travisci config
 env:
   global:
-  - MIAB_LDAP=true
+  - MIAB_LDAP_PROJECT=true
 
 language: shell
 os: linux
