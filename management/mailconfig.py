@@ -321,7 +321,7 @@ def get_mail_aliases(env, as_map=False):
 	
 	# make a dict of permitted senders, key=mail(lowercase) value=members
 	permitted_senders = { rec["mail"][0].lower(): rec["member"] for rec in pager }
-	
+
 	# get all alias groups
 	pager = c.paged_search(env.LDAP_ALIASES_BASE, "(objectClass=mailGroup)", attributes=['mail','member','rfc822MailMember'])
 	
@@ -362,7 +362,7 @@ def get_mail_aliases(env, as_map=False):
 			alias = aliases[address]
 			xft = ",".join(alias["forward_tos"])
 			xas = ",".join(alias["permitted_senders"])
-			list.append( (address, xft, xas) )
+			list.append( (address, xft, None if xas is "" else xas) )
 		return list
 	
 	else:
@@ -432,7 +432,7 @@ def get_domain(emailaddr, as_unicode=True):
 			pass
 	return ret
 
-def get_mail_domains(env, as_map=False, filter_aliases=None, category=None, users_only=False):
+def get_mail_domains(env, as_map=False, filter_aliases=lambda alias: True, category=None, users_only=False):
 	# Retrieves all domains, IDNA-encoded, we accept mail for.
 	#
 	# If as_map is False, the function returns the lowercase domain
@@ -457,17 +457,18 @@ def get_mail_domains(env, as_map=False, filter_aliases=None, category=None, user
 	# make it easy for dns_update to get ssl domains]
 	#
 	# If users_only is True, only return domains with email addresses
-	# that correspond to user accounts. [TODO: This currently has no
-	# effect - this function only returns user mail domains]
+	# that correspond to user accounts.
 	#
 	conn = open_database(env)
 	filter = "(&(objectClass=domain)(businessCategory=mail))"
 	if category:
 		filter = "(&(objectClass=domain)(businessCategory=%s))" % category
+
+	domains=None
+
+	# user mail domains
 	id = conn.search(env.LDAP_DOMAINS_BASE, filter, attributes="dc")
 	response = conn.wait(id)
-	filter_candidates=[]
-	domains=None
 	if as_map:
 		domains = {}
 		for rec in response:
@@ -478,36 +479,23 @@ def get_mail_domains(env, as_map=False, filter_aliases=None, category=None, user
 			if filter_aliases: filter_candidates.append(rec['dc'][0].lower())
 	else:
 		domains = set([ rec["dc"][0].lower() for rec in response ])
-		if filter_aliases: filter_candidates += domains
-	
-	for candidate in filter_candidates:
-		# with the filter, there has to be at least one user or
-		# filtered (included) alias in the domain for the domain to be
-		# part of the returned set
 
-		# any users ?
-		response = conn.wait( conn.search(env.LDAP_USERS_BASE, "(&(objectClass=mailUser)(mail=*@%s))" % candidate, size_limit=1) )
-		if response.next():
-			# yes, that domain needs to be in the returned set
-			continue
 
-		# any filtered aliases ?
-		pager = conn.paged_search(
-			env.LDAP_ALIASES_BASE,
-			"(&(objectClass=mailGroup)(mail=*@%s))" % candidate,
-			attributes=['mail'])
+	# alias domains
+	if not users_only:
+		pager = conn.paged_search(env.LDAP_ALIASES_BASE, "(objectClass=mailGroup)", attributes="mail")
+		if as_map:
+			for rec in pager:
+				if filter_aliases(rec["mail"][0].lower()):
+					domain = get_domain(rec["mail"][0].lower(),as_unicode=False)
+					domains[domain] = {
+						"dn": None,
+						"domain": domain
+					}
 
-		remove = True
-		for rec in pager:
-			if filter_aliases(rec['mail'][0]):
-				remove = False
-				pager.abandon()
-				break
-
-		if remove:
-			if as_map: del domains[candidate]
-			else: domains.remove(candidate)
-			
+		else:
+			domains = domains.union(set([ get_domain(rec["mail"][0].lower(), as_unicode=False) for rec in pager if filter_aliases(rec["mail"][0].lower()) ]))
+					
 	return domains
 
 

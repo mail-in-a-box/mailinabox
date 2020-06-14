@@ -44,49 +44,9 @@ mgmt_rest() {
 	local uri="$2"  # eg "/mail/users/add"
 	shift; shift;   # remaining arguments are data
 
-	local auth_user="${MGMT_ADMIN_EMAIL}"
-	local auth_pass="${MGMT_ADMIN_PW}"
-	local url="https://$PRIMARY_HOSTNAME${uri}"
-	local data=()
-	local item output
-	
-	for item; do data+=("--data-urlencode" "$item"); done
-
-	record "spawn: curl -w \"%{http_code}\" -X $verb --user \"${auth_user}:xxx\" ${data[@]} $url"
-	output=$(curl -s -S -w "%{http_code}" -X $verb --user "${auth_user}:${auth_pass}" "${data[@]}" $url 2>>$TEST_OF)
-	local code=$?
-
-	# http status is last 3 characters of output, extract it
-	REST_HTTP_CODE=$(awk '{S=substr($0,length($0)-2)} END {print S}' <<<"$output")
-	REST_OUTPUT=$(awk 'BEGIN{L=""}{ if(L!="") print L; L=$0 } END { print substr(L,1,length(L)-3) }' <<<"$output")
-	REST_ERROR=""
-	[ -z "$REST_HTTP_CODE" ] && REST_HTTP_CODE="000"
-
-	if [ $code -ne 0 ]; then
-		if [ $code -eq 56 -a $REST_HTTP_CODE -eq 200 ]; then
-			# this is okay, I guess. happens sometimes during
-			# POST /admin/mail/aliases/remove
-			# 56=Unexpected EOF
-			record "Ignoring curl return code 56 due to 200 status"
-			
-		elif [ $code -ne 16 -o $REST_HTTP_CODE -ne 200 ]; then
-			# any error code will fail the rest call except for a 16
-			# with a 200 HTTP status.
-			# 16="a problem was detected in the HTTP2 framing layer. This is somewhat generic and can be one out of several problems"
-			REST_ERROR="CURL failed with code $code"
-			record "${F_DANGER}$REST_ERROR${F_RESET}"
-			record "$output"
-			return 1
-		fi
-	fi
-	if [ $REST_HTTP_CODE -lt 200 -o $REST_HTTP_CODE -ge 300 ]; then
-		REST_ERROR="REST status $REST_HTTP_CODE: $REST_OUTPUT"
-		record "${F_DANGER}$REST_ERROR${F_RESET}"
-		return 2
-	fi
-	record "CURL succeded, HTTP status $REST_HTTP_CODE"
-	record "$output"
-	return 0	
+	# call function from lib/rest.sh
+	rest_urlencoded "$verb" "$uri" "${MGMT_ADMIN_EMAIL}" "${MGMT_ADMIN_PW}" "$@" >>$TEST_OF 2>&1
+	return $?
 }
 
 

@@ -96,11 +96,6 @@ if [ ! -s $STORAGE_ROOT/ssl/ssl_private_key.pem ]; then
 	# Set the umask so the key file is never world-readable.
 	(umask 037; hide_output \
 		openssl genrsa -out $STORAGE_ROOT/ssl/ssl_private_key.pem 2048)
-
-	# Give the group 'ssl-cert' read access so slapd can read it
-	groupadd -fr ssl-cert
-	chgrp ssl-cert $STORAGE_ROOT/ssl/ssl_private_key.pem
-	chmod g+r $STORAGE_ROOT/ssl/ssl_private_key.pem
 	
 	# Remove the ssl_certificate.pem symbolic link to force a
 	# regeneration of the server certificate. It needs to be
@@ -109,6 +104,11 @@ if [ ! -s $STORAGE_ROOT/ssl/ssl_private_key.pem ]; then
 		rm -f $STORAGE_ROOT/ssl/ssl_certificate.pem
 	fi
 fi
+
+# Give the group 'ssl-cert' read access so slapd can read it
+groupadd -fr ssl-cert
+chgrp ssl-cert $STORAGE_ROOT/ssl/ssl_private_key.pem
+chmod g+r $STORAGE_ROOT/ssl/ssl_private_key.pem
 
 #
 # Generate a root CA certificate

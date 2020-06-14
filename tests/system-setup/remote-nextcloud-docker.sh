@@ -27,9 +27,9 @@
 
 
 usage() {
-    echo "Usage: $(basename "$0") [\"before-miab-install\"|\"miab-install\"|\"after-miab-install\"]"
-    echo "Install MiaB-LDAP and a remote Nextcloud running under docker exposed as localhost:8000"
-    echo "With no arguments, all three stages are run."
+    echo "Usage: $(basename "$0")"
+    echo "Install MiaB-LDAP and a remote Nextcloud running under docker"
+    echo "Nextcloud is exposed as http://localhost:8000"
     exit 1
 }
 
@@ -40,10 +40,9 @@ if [ ! -d "tests/system-setup" ]; then
 fi
 
 # load helper scripts
-. "tests/system-setup/setup-defaults.sh" \
-    || die "Could not load setup-defaults"
-. "tests/system-setup/setup-funcs.sh" \
-    || die "Could not load setup-funcs"
+. "tests/lib/all.sh" "tests/lib" || die "Could not load lib scripts"
+. "tests/system-setup/setup-defaults.sh" || die "Could not load setup-defaults"
+. "tests/system-setup/setup-funcs.sh" || die "Could not load setup-funcs"
 
 # ensure running as root
 if [ "$EUID" != "0" ]; then
@@ -54,42 +53,15 @@ fi
 
 before_miab_install() {
     H1 "BEFORE MIAB-LDAP INSTALL"
-
-    H2 "Update /etc/hosts"
-    set_system_hostname || die "Could not set hostname"
-
-    # update system time
-    H2 "Set system time"
-    update_system_time || echo "Ignoring error..."
+    system_init
+    miab_testing_init || die "Initialization failed"
     
-    # update package lists before installing anything
-    H2 "apt-get update"
-    wait_for_apt
-    apt-get update -qq || die "apt-get update failed!"
-
-    # upgrade packages - if we don't do this and something like bind
-    # is upgraded through automatic upgrades (because maybe MiaB was
-    # previously installed), it may cause problems with the rest of
-    # the setup, such as with name resolution failures
-    if is_false "$TRAVIS"; then
-        H2 "apt-get upgrade"
-        wait_for_apt
-        apt-get upgrade -qq || die "apt-get upgrade failed!"
-    fi
-    
-    # install prerequisites
-    H2 "QA pre-setup prerequisites"
-    install_pre_setup_qa_prerequisites \
-        || die "Error installing QA prerequisites"
-
     # enable the remote Nextcloud setup mod, which tells MiaB-LDAP to use
     # the remote Nextcloud for calendar and contacts instead of the
     # MiaB-installed one
-    H2 "Create local/remote-nextcloud.sh symbolic link"
-    if [ ! -e "local/remote-nextcloud.sh" ]; then
-        mkdir -p local
-        ln -s "../setup/mods.available/remote-nextcloud.sh" "local/remote-nextcloud.sh" || die "Could not create remote-nextcloud.sh symlink"
-    fi
+    H2 "Enable local mod remote-nextcloud"
+    enable_miab_mod "remote-nextcloud" \
+        || die "Could not enable remote-nextcloud mod"
     
     # install Docker
     H2 "Install Docker"
@@ -101,7 +73,7 @@ miab_install() {
     H1 "MIAB-LDAP INSTALL"
     if ! setup/start.sh; then
         H1 "OUTPUT OF SELECT FILES"
-        dump_log "/var/log/syslog" 100
+        dump_file "/var/log/syslog" 100
         dump_conf_files "$TRAVIS"
         H2; H2 "End"; H2
         die "setup/start.sh failed!"
@@ -119,22 +91,28 @@ after_miab_install() {
     
     # run Nextcloud docker image
     H2 "Start Nextcloud docker container"
-    docker run -d --name NC -p 8000:80 \
-           --env SQLITE_DATABASE=nextclouddb.sqlite \
-           --env NEXTCLOUD_ADMIN_USER="$NC_ADMIN_USER" \
-           --env NEXTCLOUD_ADMIN_PASSWORD="$NC_ADMIN_PASSWORD" \
-           --env NEXTCLOUD_TRUSTED_DOMAINS="127.0.0.1 ::1" \
-           --env NEXTCLOUD_UPDATE=1 \
-           --env SMTP_HOST="$PRIMARY_HOSTNAME" \
-           --env SMTP_SECURE="tls" \
-           --env SMTP_PORT=587 \
-           --env SMTP_AUTHTYPE="LOGIN" \
-           --env SMTP_NAME="$EMAIL_ADDR" \
-           --env SMTP_PASSWORD="$EMAIL_PW" \
-           --env SMTP_FROM_ADDRESS="$(awk -F@ '{print $1}' <<< "$EMAIL_ADDR")" \
-           --env MAIL_DOMAIN="$(awk -F@ '{print $2}' <<< "$EMAIL_ADDR")" \
-           nextcloud:latest \
-        || die "Docker run failed!"
+    local container_started="true"
+    if [ -z "$(docker ps -f NAME=NC -q)" ]; then
+        docker run -d --name NC -p 8000:80 \
+               --env SQLITE_DATABASE=nextclouddb.sqlite \
+               --env NEXTCLOUD_ADMIN_USER="$NC_ADMIN_USER" \
+               --env NEXTCLOUD_ADMIN_PASSWORD="$NC_ADMIN_PASSWORD" \
+               --env NEXTCLOUD_TRUSTED_DOMAINS="127.0.0.1 ::1" \
+               --env NEXTCLOUD_UPDATE=1 \
+               --env SMTP_HOST="$PRIMARY_HOSTNAME" \
+               --env SMTP_SECURE="tls" \
+               --env SMTP_PORT=587 \
+               --env SMTP_AUTHTYPE="LOGIN" \
+               --env SMTP_NAME="$EMAIL_ADDR" \
+               --env SMTP_PASSWORD="$EMAIL_PW" \
+               --env SMTP_FROM_ADDRESS="$(email_localpart "$EMAIL_ADDR")" \
+               --env MAIL_DOMAIN="$(email_domainpart "$EMAIL_ADDR")" \
+               nextcloud:latest \
+            || die "Docker run failed!"
+    else
+        echo "Container already running"
+        container_started="false"
+    fi
 
     H2 "docker: Update /etc/hosts so it can find MiaB-LDAP by name"
     echo "$PRIVATE_IP $PRIMARY_HOSTNAME" | \
@@ -160,32 +138,24 @@ after_miab_install() {
 
     # wait for Nextcloud installation to complete
     H2 "Wait for Nextcloud installation to complete"
-    echo -n "Waiting ..."
-    local count=0
-    while true; do
-        if [ $count -ge 10 ]; then
-            echo "FAILED"
-            die "Giving up"
-        fi
-        sleep 6
-        let count+=1
-        if [ $(docker exec NC php -n -r "include 'config/config.php'; print \$CONFIG['installed']?'true':'false';") == "true" ]; then
-            echo "ok"
-            break
-        fi
-        echo -n "${count}..."
-    done
+    wait_for_docker_nextcloud NC installed || die "Giving up"
     
-    # install and enable Nextcloud and apps
+    # install and enable Nextcloud apps
     H2 "docker: install Nextcloud calendar app"
-    docker exec -u www-data NC ./occ app:install calendar \
-        || die "docker: installing calendar app failed"
+    if ! docker exec -u www-data NC ./occ app:install calendar
+    then
+        $container_started || die "docker: installing calendar app failed"
+    fi
+    
     H2 "docker: install Nextcloud contacts app"
-    docker exec -u www-data NC ./occ app:install contacts \
-        || die "docker: installing contacts app failed"
+    if ! docker exec -u www-data NC ./occ app:install contacts
+    then
+        $container_started || die "docker: installing contacts app failed"
+    fi
+    
     H2 "docker: enable user_ldap"
     docker exec -u www-data NC ./occ app:enable user_ldap \
-        || die "docker: enabling user_ldap failed"
+        || die "docker: enabling user_ldap failed ($?)"
 
     # integrate Nextcloud with MiaB-LDAP
     H2 "docker: integrate Nextcloud with MiaB-LDAP"
@@ -201,28 +171,26 @@ after_miab_install() {
 }
 
 
-
 #
-# process command line
+# Main
 #
-
-case "$1" in
-    before-miab-install )
+case "${1:-all}" in
+    before-install )
         before_miab_install
         ;;
-    after-miab-install )
-        after_miab_install
-        ;;
-    miab-install )
+    install )
         miab_install
         ;;
-    "" )
+    after-install )
+        after_miab_install
+        ;;
+    all )
         before_miab_install
         miab_install
         after_miab_install
         ;;
     * )
-        
         usage
         ;;
 esac
+
