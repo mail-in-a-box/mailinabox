@@ -1,6 +1,7 @@
 #!/bin/bash
 # Nextcloud
 ##########################
+[ "${FEATURE_NEXTCLOUD:-true}" == "false" ] && return 0
 
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars

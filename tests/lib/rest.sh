@@ -3,7 +3,7 @@
 #
 # requirements:
 #   system packages: [ curl ]
-#   lib scripts: [ color-output.sh ]
+#   lib scripts: [ system.sh, color-output.sh ]
 #
 
 rest_urlencoded() {
@@ -26,8 +26,7 @@ rest_urlencoded() {
     #   1 curl returned with non-zero code that indicates and error
     #   2 the response status was <200 or >= 300
     #
-    # Messages, errors, and output are all sent to stderr, there is no
-    # stdout output
+    # Messages and errors are sent to stderr
     #   
 	local verb="$1" # eg "POST"
 	local uri="$2"  # eg "/mail/users/add"
@@ -36,12 +35,14 @@ rest_urlencoded() {
 	shift; shift; shift; shift  # remaining arguments are data or curl args
 
 	local url
+    local is_local="false"
     case "$uri" in
         http:* | https:* )
             url="$uri"
             ;;
         * )
             url="https://$PRIMARY_HOSTNAME${uri}"
+            is_local="true"
             ;;
     esac
     
@@ -98,6 +99,9 @@ rest_urlencoded() {
 	if [ $REST_HTTP_CODE -lt 200 -o $REST_HTTP_CODE -ge 300 ]; then
 		REST_ERROR="REST status $REST_HTTP_CODE: $REST_OUTPUT"
 		echo "${F_DANGER}$REST_ERROR${F_RESET}" 1>&2
+        if $is_local && [ $REST_HTTP_CODE -ge 500 ]; then
+            tail -100 /var/log/syslog
+        fi
 		return 2
 	fi
 	echo "CURL succeded, HTTP status $REST_HTTP_CODE" 1>&2

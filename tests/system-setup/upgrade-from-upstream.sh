@@ -51,7 +51,7 @@ upstream_install() {
             rm -rf "$upstream_dir"
             die "git clone upstream failed!"
         fi
-        if [ -z "$TAG" ]; then
+        if [ -z "$UPSTREAM_TAG" ]; then
             tag_from_readme "$upstream_dir/README.md"
             if [ $? -ne 0 ]; then
                 rm -rf "$upstream_dir"
@@ -61,9 +61,9 @@ upstream_install() {
     fi
 
     pushd "$upstream_dir" >/dev/null
-    if [ ! -z "$TAG" ]; then
-        H2 "Checkout $TAG"
-        git checkout "$TAG" || die "git checkout $TAG failed"
+    if [ ! -z "$UPSTREAM_TAG" ]; then
+        H2 "Checkout $UPSTREAM_TAG"
+        git checkout "$UPSTREAM_TAG" || die "git checkout $UPSTREAM_TAG failed"
     fi
     
     H2 "Run upstream setup"
@@ -93,7 +93,7 @@ add_data() {
     #
     local current_users=() current_aliases=()
     local user alias
-    if ! rest_urlencoded GET /admin/mail/users "$EMAIL_ADDR" "$EMAIL_PW" --insecure 2>/dev/null; then
+    if ! rest_urlencoded GET /admin/mail/users "$EMAIL_ADDR" "$EMAIL_PW" --insecure >/dev/null 2>&1; then
         die "Unable to enumerate users: rc=$? err=$REST_ERROR"
     fi
     for user in $REST_OUTPUT; do
@@ -132,7 +132,7 @@ add_data() {
             echo "Not adding alias $alias: already exists"
             
         elif ! rest_urlencoded POST /admin/mail/aliases/add "$EMAIL_ADDR" "$EMAIL_PW" --insecure -- "address=$alias" "forwards_to=$forwards_to" 2>/dev/null
-        then 
+        then
             die "Unable to add alias $alias: rc=$? err=$REST_ERROR"
         fi
     done
@@ -144,7 +144,7 @@ capture_state() {
     # tls certificates: expected CN's
 
     local state_dir="$1"
-    local infojson="$state_dir/info.json"
+    local info="$state_dir/info.txt"
 
     H1 "Capture server state to $state_dir"
     
@@ -153,9 +153,9 @@ capture_state() {
     mkdir -p "$state_dir"
 
     # create info.json
-    H2 "create info.json"
-    echo "VERSION='$(git describe --abbrev=0)'" >"$infojson"
-    echo "MIGRATION_VERSION=$(cat "$STORAGE_ROOT/mailinabox.version")" >>"$infojson"
+    H2 "create info.txt"
+    echo "VERSION='$(git describe --abbrev=0)'" >"$info"
+    echo "MIGRATION_VERSION=$(cat "$STORAGE_ROOT/mailinabox.version")" >>"$info"
 
     # record users
     H2 "record users"
@@ -173,10 +173,9 @@ capture_state() {
     H2 "record dns details"
     local file
     mkdir -p "$state_dir/zones"
-    for file in ls /etc/nsd/zones/*.signed; do
+    for file in /etc/nsd/zones/*.signed; do
         cp "$file" "$state_dir/zones"
-    done
-    
+    done    
 }
 
 miab_ldap_install() {
@@ -217,33 +216,46 @@ compare_state() {
     fi
 
     H2 "DNS - zones missing"
-    local zone
+    local zone count=0
     for zone in $(cd "$s1/zones"; ls *.signed); do
         if [ ! -e "$s2/zones/$zone" ]; then
             echo "MISSING zone: $zone"
             changed="true"
+            let count+=1
         fi
     done
+    echo "$count missing"
 
     H2 "DNS - zones added"
+    count=0
     for zone in $(cd "$s2/zones"; ls *.signed); do
         if [ ! -e "$s2/zones/$zone" ]; then
             echo "ADDED zone: $zone"
             changed="true"
+            let count+=1
         fi
     done
+    echo "$count added"
 
     H2 "DNS - zones changed"
+    count=0
     for zone in $(cd "$s1/zones"; ls *.signed); do
         if [ -e "$s2/zones/$zone" ]; then
-            output="$(diff "$s1/zones/$zone" "$s2/zones/$zone" 2>&1)"
+            # all the signatures change if we're using self-signed certs
+            local t1="/tmp/s1.$$.txt"
+            local t2="/tmp/s2.$$.txt"
+            awk '$4 == "RRSIG" || $4 == "NSEC3" { next; } $4 == "SOA" { print $1" "$2" "$3" "$4" "$5" "$6" "$8" "$9" "$10" "$11" "$12; next } { print $0 }' "$s1/zones/$zone" > "$t1" 
+            awk '$4 == "RRSIG" || $4 == "NSEC3" { next; } $4 == "SOA" { print $1" "$2" "$3" "$4" "$5" "$6" "$8" "$9" "$10" "$11" "$12; next } { print $0 }' "$s2/zones/$zone" > "$t2" 
+            output="$(diff "$t1" "$t2" 2>&1)"
             if [ $? -ne 0 ]; then
                 echo "CHANGED zone: $zone"
                 echo "$output"
                 changed="true"
+                let count+=1
             fi
         fi
     done
+    echo "$count zone files had differences"
 
     if $changed; then
         return 1
@@ -253,10 +265,15 @@ compare_state() {
 }
 
 
-if [ "$1" == "c" ]; then
+
+if [ "$1" == "cap" ]; then
     capture_state "tests/system-setup/state/miab-ldap"
     exit $?
+elif [ "$1" == "compare" ]; then
+    compare_state "tests/system-setup/state/upstream" "tests/system-setup/state/miab-ldap"
+    exit $?
 fi
+
 
 
 # install basic stuff, set the hostname, time, etc

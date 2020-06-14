@@ -142,13 +142,17 @@ after_miab_install() {
     
     # install and enable Nextcloud apps
     H2 "docker: install Nextcloud calendar app"
-    docker exec -u www-data NC ./occ app:install calendar \
-        || $container_started \
-            && die "docker: installing calendar app failed ($?)"
+    if ! docker exec -u www-data NC ./occ app:install calendar
+    then
+        $container_started || die "docker: installing calendar app failed"
+    fi
+    
     H2 "docker: install Nextcloud contacts app"
-    docker exec -u www-data NC ./occ app:install contacts \
-        || $container_started \
-            && die "docker: installing contacts app failed ($?)"
+    if ! docker exec -u www-data NC ./occ app:install contacts
+    then
+        $container_started || die "docker: installing contacts app failed"
+    fi
+    
     H2 "docker: enable user_ldap"
     docker exec -u www-data NC ./occ app:enable user_ldap \
         || die "docker: enabling user_ldap failed ($?)"

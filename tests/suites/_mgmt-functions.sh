@@ -45,7 +45,7 @@ mgmt_rest() {
 	shift; shift;   # remaining arguments are data
 
 	# call function from lib/rest.sh
-	rest_urlencoded "$verb" "$uri" "${MGMT_ADMIN_EMAIL}" "${MGMT_ADMIN_PW}" "$@" 2>>$TEST_OF
+	rest_urlencoded "$verb" "$uri" "${MGMT_ADMIN_EMAIL}" "${MGMT_ADMIN_PW}" "$@" >>$TEST_OF 2>&1
 	return $?
 }
 

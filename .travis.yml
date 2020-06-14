@@ -11,7 +11,9 @@ jobs:
   fast_finish: true
   include:
   # JOB: MiaB-LDAP connected to a remote Nextcloud
-  - env: PRIMARY_HOSTNAME=box1.abc.com
+  - env:
+      - PRIMARY_HOSTNAME=box1.abc.com
+      - FEATURE_MUNIN=false
     name: remote-nextcloud-docker
     before_install:
       - echo "==== ENVIRONMENT ===="
@@ -35,7 +37,11 @@ jobs:
       - sudo tests/runner.sh -dumpoutput -no-smtp-remote default remote-nextcloud
 
   # JOB: Upgrade from upstream install
-  - env: PRIMARY_HOSTNAME=box2.abc.com
+  - env:
+      - PRIMARY_HOSTNAME=box2.abc.com
+      - UPSTREAM_TAG=master
+      - FEATURE_NEXTCLOUD=false
+      - FEATURE_MUNIN=false
     name: upgrade-from-upstream
     install:
       - sudo tests/system-setup/upgrade-from-upstream.sh
