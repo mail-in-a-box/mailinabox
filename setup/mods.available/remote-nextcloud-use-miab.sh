@@ -6,8 +6,9 @@
 #
 # The script will:
 #   1. enable the "LDAP user and group backend" in Nextcloud
-#   2. configure Nextcloud to access MiaB-LDAP for users and groups
-#   3. optionally install and configure ssmtp so system mail is
+#   2. install calendar and contacts
+#   3. configure Nextcloud to access MiaB-LDAP for users and groups
+#   4. optionally install and configure ssmtp so system mail is
 #      sent to MiaB-LDAP
 #
 VERBOSE=0

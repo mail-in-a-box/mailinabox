@@ -1,37 +1,46 @@
 # travisci config
 env:
   global:
-  - PRIMARY_HOSTNAME=box.abc.com
+  - MIAB_LDAP=true
 
 language: shell
 os: linux
 dist: bionic
-  
-before_install:
-  - echo "==== ENVIRONMENT ===="
-  - env | sort
-  - echo "UMASK=$(umask)"
-  #
-  - echo "==== AppArmor Status ===="
-  - (sudo aa-status; true)
-  #
-  - echo "==== NETWORK INFO ===="
-  - hostname -I
-  - hostname -i
-  - hostname
-  - hostname --fqdn
-  - ip add
-  - sysctl -a 2>/dev/null | grep -i ipv6 | grep disable
-  
-install:
-  - sudo tests/system-setup/remote-nextcloud-docker.sh
-  - hostname || true
-  - hostname --fqdn || true
-  - getent hosts box.abc.com || true
 
-script:
-  #
-  # launch automated tests, but skip tests that require remote
-  # smtp support because Travis-CI blocks outgoing port 25
-  - sudo touch /etc/dovecot/sieve-spam.svbin
-  - sudo tests/runner.sh -dumpoutput -no-smtp-remote default remote-nextcloud
+jobs:
+  fast_finish: true
+  include:
+  # JOB: MiaB-LDAP connected to a remote Nextcloud
+  - env: PRIMARY_HOSTNAME=box1.abc.com
+    name: remote-nextcloud-docker
+    before_install:
+      - echo "==== ENVIRONMENT ===="
+      - env | sort
+      - echo "UMASK=$(umask)"
+      - echo "==== AppArmor Status ===="
+      - (sudo aa-status; true)
+      - echo "==== NETWORK INFO ===="
+      - hostname -I
+      - hostname -i
+      - hostname
+      - hostname --fqdn
+      - ip add
+      - sysctl -a 2>/dev/null | grep -i ipv6 | grep disable
+    install:
+      - sudo tests/system-setup/remote-nextcloud-docker.sh
+    script:
+      # launch automated tests, but skip tests that require remote
+      # smtp support because Travis-CI blocks outgoing port 25
+      - sudo touch /etc/dovecot/sieve-spam.svbin
+      - sudo tests/runner.sh -dumpoutput -no-smtp-remote default remote-nextcloud
+
+  # JOB: Upgrade from upstream install
+  - env: PRIMARY_HOSTNAME=box2.abc.com
+    name: upgrade-from-upstream
+    install:
+      - sudo tests/system-setup/upgrade-from-upstream.sh
+    script:
+      # launch automated tests, but skip tests that require remote
+      # smtp support because Travis-CI blocks outgoing port 25
+      - sudo touch /etc/dovecot/sieve-spam.svbin
+      - sudo tests/runner.sh -dumpoutput -no-smtp-remote

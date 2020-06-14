@@ -6,7 +6,7 @@
 set +eu
 
 # load test suite helper functions
-. suites/_locations.sh      || exit 1
+. lib/all.sh "lib"      || exit 1
 . suites/_ldap-functions.sh || exit 1
 . suites/_mail-functions.sh || exit 1
 . suites/_mgmt-functions.sh || exit 1
@@ -20,10 +20,6 @@ declare -i OVERALL_SKIPPED=0
 declare -i OVERALL_COUNT=0
 declare -i OVERALL_COUNT_SUITES=0
 
-# ansi escapes for hilighting text
-F_DANGER=$(echo -e "\033[31m")
-F_WARN=$(echo -e "\033[93m")
-F_RESET=$(echo -e "\033[39m")
 
 # options
 FAILURE_IS_FATAL=no
@@ -157,7 +153,12 @@ test_skip() {
 }
 
 skip_test() {
-	# return 0 if we should skip the current test
+	# call from within a test to check whether the test will be
+	# skipped
+	#
+	# returns 0 if the current test was skipped in which case your test
+	# function must immediately call 'test_end' and return
+	#
 	if [ "$SKIP_REMOTE_SMTP_TESTS" == "yes" ] &&
 		   array_contains "remote-smtp" "$@";
 	then
@@ -189,16 +190,6 @@ die() {
 	echo "FATAL: $@"
 	dump_failed_tests_output
 	exit 1
-}
-
-array_contains() {
-	local searchfor="$1"
-	shift
-	local item
-	for item; do
-		[ "$item" == "$searchfor" ] && return 0
-	done
-	return 1
 }
 
 python_error() {

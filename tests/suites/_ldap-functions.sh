@@ -1,16 +1,10 @@
 # -*- indent-tabs-mode: t; tab-width: 4; -*-
 
-generate_uuid() {
-	local uuid
-	uuid=$(python3 -c "import uuid; print(uuid.uuid4())")
-	[ $? -ne 0 ] && die "Unable to generate a uuid"
-	echo "$uuid"
-}
+# requirements:
+#   system packages: [ ldap-utils ]
+#   setup scripts:   [ functions-ldap.sh ]
+#   setup artifacts: [ miab_ldap.conf ]
 
-sha1() {
-	local txt="$1"
-	python3 -c "import hashlib; m=hashlib.sha1(); m.update(bytearray(r'''$txt''','utf-8')); print(m.hexdigest());" || die "Unable to generate sha1 hash"
-}
 
 delete_user() {
 	local email="$1"

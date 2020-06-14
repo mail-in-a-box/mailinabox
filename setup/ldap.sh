@@ -857,7 +857,13 @@ cat > /etc/logrotate.d/slapd <<EOF;
 EOF
 
 # Modify olc server config like TLS
-modify_global_config
+# Skip this step if no ca_certificate.pem exists - this indicates
+# that the system hasn't yet been migrated from sqlite
+if [ -e "$STORAGE_ROOT/ssl/ca_certificate.pem" ]; then
+	modify_global_config
+else
+	say_debug "Not enabling TLS at this time - ca_certificate hasn't been generated yet"
+fi
 
 # Add overlays and ensure mail-related attributes are indexed
 add_overlays

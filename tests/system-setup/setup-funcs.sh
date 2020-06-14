@@ -1,4 +1,9 @@
 
+#
+# requires:
+#
+#   test scripts: [ lib/misc.sh, lib/system.sh ]
+#
 
 die() {
     local msg="$1"
@@ -25,64 +30,28 @@ H2() {
     fi
 }
 
-dump_log() {
-    local log_file="$1"
-    local lines="$2"
-    local title="DUMP OF $log_file"
-    echo ""
-    echo "--------"
-    echo -n "-------- $log_file"
-    if [ ! -z "$lines" ]; then
-        echo " (last $line lines)"
-    else
-        echo ""
-    fi
-    echo "--------"
-      
-    if [ ! -z "$lines" ]; then
-        tail -$lines "$log_file"
-    else
-        cat "$log_file"
-    fi
-}
 
-is_true() {
-    # empty string is not true
-    if [ "$1" == "true" \
-              -o "$1" == "TRUE" \
-              -o "$1" == "True" \
-              -o "$1" == "yes" \
-              -o "$1" == "YES" \
-              -o "$1" == "Yes" \
-              -o "$1" == "1" ]
-    then
-        return 0
-    else
-        return 1
-    fi
-}
-
-is_false() {
-    if is_true $@; then return 1; fi
+wait_for_docker_nextcloud() {
+    local container="$1"
+    local config_key="$2"
+    echo -n "Waiting ..."
+    local count=0
+    while true; do
+        if [ $count -ge 10 ]; then
+            echo "FAILED"
+            return 1
+        fi
+        sleep 6
+        let count+=1
+        if [ $(docker exec "$container" php -n -r "include 'config/config.php'; print \$CONFIG['$config_key']?'true':'false';") == "true" ]; then
+            echo "ok"
+            break
+        fi
+        echo -n "${count}..."
+    done
     return 0
 }
 
-wait_for_apt() {
-    local count=0
-    while fuser /var/lib/dpkg/lock >/dev/null 2>&1 || fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
-        sleep 6
-        let count+=1
-        if [ $count -eq 1 ]; then
-            echo -n "Waiting for other package manager to finish..."
-        elif [ $count -gt 100 ]; then
-            echo -n "FAILED"
-            return 1
-        else
-            echo -n "${count}.."
-        fi
-    done
-    [ $count -ge 1 ] && echo ""
-}
 
 dump_conf_files() {
     local skip
@@ -98,99 +67,58 @@ dump_conf_files() {
         done
     fi
     if [ "$skip" == "false" ]; then
-        dump_log "/etc/mailinabox.conf"
-        dump_log "/etc/hosts"
-        dump_log "/etc/nsswitch.conf"
-        dump_log "/etc/resolv.conf"
-        dump_log "/etc/nsd/nsd.conf"
-        dump_log "/etc/postfix/main.cf"
+        dump_file "/etc/mailinabox.conf"
+        dump_file_if_exists "/etc/mailinabox_mods.conf"
+        dump_file "/etc/hosts"
+        dump_file "/etc/nsswitch.conf"
+        dump_file "/etc/resolv.conf"
+        dump_file "/etc/nsd/nsd.conf"
+        #dump_file "/etc/postfix/main.cf"
     fi
 }
 
 
-update_system_time() {
-    if [ ! -x /usr/sbin/ntpdate ]; then
+
+#
+# Initialize the test system
+#   hostname, time, apt update/upgrade, etc
+#
+system_init() {
+    H2 "Update /etc/hosts"
+    set_system_hostname || die "Could not set hostname"
+
+    # update system time
+    H2 "Set system time"
+    update_system_time || echo "Ignoring error..."
+    
+    # update package lists before installing anything
+    H2 "apt-get update"
+    wait_for_apt
+    apt-get update -qq || die "apt-get update failed!"
+
+    # upgrade packages - if we don't do this and something like bind
+    # is upgraded through automatic upgrades (because maybe MiaB was
+    # previously installed), it may cause problems with the rest of
+    # the setup, such as with name resolution failures
+    if is_false "$TRAVIS"; then
+        H2 "apt-get upgrade"
         wait_for_apt
-        apt-get install -y -qq ntpdate || return 1
+        apt-get upgrade -qq || die "apt-get upgrade failed!"
     fi
-    ntpdate -s ntp.ubuntu.com && echo "System time updated"
-}
-
-update_hosts() {
-    local host="$1"
-    shift
-    local ip
-    for ip; do
-        if [ ! -z "$ip" ]; then
-            local line="$ip $host"
-            if ! grep -F "$line" /etc/hosts 1>/dev/null; then
-                echo "$line" >>/etc/hosts
-            fi
-        fi
-    done
-}
-
-update_hosts_for_private_ip() {
-    # create /etc/hosts entry for PRIVATE_IP and PRIVATE_IPV6
-    # PRIMARY_HOSTNAME must already be set
-    local ip4=$(source setup/functions.sh; get_default_privateip 4)
-    local ip6=$(source setup/functions.sh; get_default_privateip 6)
-    [ -z "$ip4" -a -z "$ip6" ] && return 1
-    [ -z "$ip6" ] && ip6="::1"
-    update_hosts "$PRIMARY_HOSTNAME" "$ip4" "$ip6" || return 1
-}
-
-set_system_hostname() {
-    # set the system hostname to the FQDN specified or
-    # PRIMARY_HOSTNAME if no FQDN was given
-    local fqdn="${1:-$PRIMARY_HOSTNAME}"
-    local host="$(awk -F. '{print $1}' <<< "$fqdn")"
-    sed -i 's/^127\.0\.1\.1[ \t].*/127.0.1.1 '"$fqdn $host ip4-loopback/" /etc/hosts || return 1
-    #hostname "$host" || return 1
-    #echo "$host" > /etc/hostname
-    return 0
 }
 
 
-install_docker() {
-    if [ -x /usr/bin/docker ]; then
-        echo "Docker already installed"
-        return 0
-    fi
-    
-    wait_for_apt
-    apt-get install -y -qq \
-            apt-transport-https \
-            ca-certificates \
-            curl \
-            gnupg-agent \
-            software-properties-common \
-        || return 1
-       
-    wait_for_apt
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - \
-        || return 2
-    
-    wait_for_apt
-    apt-key fingerprint 0EBFCD88 || return 3
-    
-    wait_for_apt
-    add-apt-repository -y --update "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" || return 4
-    
-    wait_for_apt
-    apt-get install -y -qq \
-            docker-ce \
-            docker-ce-cli \
-            containerd.io \
-        || return 5
-}
-
-
-install_pre_setup_qa_prerequisites() {
+#
+# Initialize the test system with QA prerequisites
+# Anything needed to use the test runner, speed up the installation,
+# etc
+#
+miab_testing_init() {
     [ -z "$STORAGE_ROOT" ] \
         && echo "Error: STORAGE_ROOT not set" 1>&2 \
         && return 1
 
+    H2 "QA prerequisites"
     local rc=0
     
     # python3-dnspython: is used by the python scripts in 'tests' and is
@@ -221,22 +149,20 @@ install_pre_setup_qa_prerequisites() {
 }
 
 
-travis_fix_nsd() {
-    if [ "$TRAVIS" != "true" ]; then
-        return 0
+enable_miab_mod() {
+    local name="${1}.sh"
+    if [ ! -e "local/$name" ]; then
+        mkdir -p local
+        ln -s "../setup/mods.available/$name" "local/$name"
     fi
-    
-    # nsd won't start on Travis-CI without the changes below: ip6 off and
-    # control-enable set to no. Even though the nsd docs say the
-    # default value for control-enable is no, running "nsd-checkconf -o
-    # control-enable /etc/nsd/nsd.conf" returns "yes", so we explicitly
-    # set it here.
-    #
-    # we're assuming that the "ip-address" line is the last line in the
-    # "server" section of nsd.conf. if this generated file output
-    # changes, the sed command below may need to be adjusted.
-    sed -i 's/ip-address\(.\)\(.*\)/ip-address\1\2\n  do-ip4\1 yes\n  do-ip6\1 no\n  verbosity\1 3\nremote-control\1\n  control-enable\1 no/' /etc/nsd/nsd.conf || return 1
-    cat /etc/nsd/nsd.conf
-    systemctl reset-failed nsd.service || return 2
-    systemctl restart nsd.service || return 3
 }
+
+tag_from_readme() {
+    # extract the recommended TAG from README.md
+    # sets a global "TAG"
+    local readme="${1:-README.md}"
+    TAG="$(grep -F 'git checkout' "$readme" | sed 's/.*\(v[0123456789]*\.[0123456789]*\).*/\1/')"
+    [ $? -ne 0 -o -z "$TAG" ] && return 1
+    return 0
+}
+
