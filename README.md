@@ -29,7 +29,7 @@ Copy the file `setup/mods.available/remote-nextcloud-use-miab.sh` to the Nextclo
 On MiaB-LDAP, a one-time change must be applied manually to allow the remote Nextcloud to query the LDAP server because the default MiaB-LDAP installation doesn't allow any remote LDAP access. As root, run the following: `ufw allow proto tcp from $ip to any port ldaps`, where $ip is the ip-address of your Nextcloud server.
 
 
-## Under-the-Hood Details
+## Under-the-Hood
 
 **Additional directory in user-data**
 
