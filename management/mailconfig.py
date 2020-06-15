@@ -362,7 +362,7 @@ def get_mail_aliases(env, as_map=False):
 			alias = aliases[address]
 			xft = ",".join(alias["forward_tos"])
 			xas = ",".join(alias["permitted_senders"])
-			list.append( (address, xft, None if xas is "" else xas) )
+			list.append( (address, xft, None if xas == "" else xas) )
 		return list
 	
 	else:
@@ -482,11 +482,27 @@ def get_mail_domains(env, as_map=False, filter_aliases=lambda alias: True, categ
 
 
 	# alias domains
+	#
+	# Ignore aliases that have no forward-to. We don't need DNS
+	# handling in that case becuase the alias is there only for the
+	# permitted-senders. We don't accept mail locally for the alias.
+	#
+	# Aliases with only permitted-senders are useful when a server has
+	# a configured smarthost (eg. sendmail with a smarthost, or using
+	# ssmtp on Ubuntu, etc). The server drops mail off for delivery to
+	# the smarthost (MiaB) using its MiaB login but needs to MAIL FROM
+	# a host login (user@host.tld). Replies should bounce.
+	#
+	# A smarthost configuration should be a catch-all, one for each server:
+	#   Alias=@host.tld
+	#   Forward-to=<blank>
+	#   Permitted-senders:<the email that the smarthost used to authenticate with MiaB>
+	#
 	if not users_only:
-		pager = conn.paged_search(env.LDAP_ALIASES_BASE, "(objectClass=mailGroup)", attributes="mail")
+		pager = conn.paged_search(env.LDAP_ALIASES_BASE, "(objectClass=mailGroup)", attributes=["mail","member","rfc822MailMember"])
 		if as_map:
 			for rec in pager:
-				if filter_aliases(rec["mail"][0].lower()):
+				if filter_aliases(rec["mail"][0].lower()) and ( len(rec["member"]) >0 or len(rec["rfc822MailMember"]) >0 ):
 					domain = get_domain(rec["mail"][0].lower(),as_unicode=False)
 					domains[domain] = {
 						"dn": None,
@@ -494,7 +510,12 @@ def get_mail_domains(env, as_map=False, filter_aliases=lambda alias: True, categ
 					}
 
 		else:
-			domains = domains.union(set([ get_domain(rec["mail"][0].lower(), as_unicode=False) for rec in pager if filter_aliases(rec["mail"][0].lower()) ]))
+			alias_domains = set([
+				get_domain(rec["mail"][0].lower(), as_unicode=False)
+				for rec in pager if filter_aliases(rec["mail"][0].lower()) and
+				( len(rec["member"]) >0 or len(rec["rfc822MailMember"]) >0 )
+			])			
+			domains = domains.union( alias_domains )
 					
 	return domains
 
