@@ -203,6 +203,7 @@ capture_state() {
 }
 
 miab_ldap_install() {
+    H1 "INSTALL MIAB-LDAP"
     # ensure we're in a MiaB-LDAP working directory
     if [ ! -e setup/ldap.sh ]; then
         die "The working directory is not MiaB-LDAP!"
@@ -217,7 +218,7 @@ compare_state() {
     local output
     local changed="false"
 
-    H1 "COMPARE STATES $(basename "$s1") TO $(basename "$2")"
+    H1 "COMPARE STATES: $(basename "$s1") VS $(basename "$2")"
     H2 "Users"
     # users
     output="$(diff "$s1/users.json" "$s2/users.json" 2>&1)"
@@ -226,7 +227,7 @@ compare_state() {
         echo "USERS ARE DIFFERENT!"
         echo "$output"
     else
-        echo "OK"
+        echo "No change"
     fi
 
     H2 "Aliases"
@@ -236,7 +237,7 @@ compare_state() {
         echo "ALIASES ARE DIFFERENT!"
         echo "$output"
     else
-        echo "OK"
+        echo "No change"
     fi
 
     H2 "DNS - zones missing"
