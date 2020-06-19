@@ -15,7 +15,7 @@ installed_state_capture() {
     local state_dir="$1"
     local info="$state_dir/info.txt"
 
-    H1 "Capture installed estate to $state_dir"
+    H1 "Capture installed state to $state_dir"
 
     # nuke saved state, if any
     rm -rf "$state_dir"
