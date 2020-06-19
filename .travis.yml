@@ -32,7 +32,7 @@ jobs:
       # setup with 'basic' data before setting up again using
       # a remote nextcloud to verify ownCloud contacts are still
       # available
-      - sudo tests/system-setup/remote-nextcloud-docker.sh basic
+      - sudo tests/system-setup/remote-nextcloud-docker.sh upgrade basic
     script:
       # launch automated tests, but skip tests that require remote
       # smtp support because Travis-CI blocks outgoing port 25
