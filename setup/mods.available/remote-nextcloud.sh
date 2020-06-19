@@ -35,12 +35,29 @@ configure_roundcube() {
     local name="${1:-$NC_HOST}"
     local baseurl="$NC_PROTO://$NC_HOST:$NC_PORT$NC_PREFIX"
     
-    # Configure CardDav
-    cat > ${RCM_PLUGIN_DIR}/carddav/config.inc.php <<EOF
+    # Configure CardDav plugin
+    #
+    # 1. make MiaB ownCloud contacts read-only so users can still
+    #    access them, but not change them, and no sync occurs
+    #
+    # a. set 'active' to 'false'
+    #    regular expression before "bashing" it:
+    #       (['"]active['"][ \t]*=>[ \t]*)true
+    #
+    sed -i 's/\(['"'"'"]active['"'"'"][ \t]*=>[ \t]*\)true/\1false/' ${RCM_PLUGIN_DIR}/carddav/config.inc.php
+
+    # b. set 'readonly' to 'true'
+    #    regular expressions is like above
+    sed -i 's/\(['"'"'"]readonly['"'"'"][ \t]*=>[ \t]*\)false/\1true/' ${RCM_PLUGIN_DIR}/carddav/config.inc.php
+
+    #
+    # 2. add the remote Nextcloud
+    #
+    cat >> ${RCM_PLUGIN_DIR}/carddav/config.inc.php <<EOF
 <?php
-/* Do not edit. Written by Mail-in-a-Box-LDAP mods. Regenerated on updates. */
-\$prefs['_GLOBAL']['hide_preferences'] = true;
-\$prefs['_GLOBAL']['suppress_version_warning'] = true;
+/* Do not edit. Written by Mail-in-a-Box-LDAP. Regenerated on updates. */
+//\$prefs['_GLOBAL']['hide_preferences'] = true;
+//\$prefs['_GLOBAL']['suppress_version_warning'] = true;
 \$prefs['cloud'] = array(
 	 'name'         =>  '$name',
 	 'username'     =>  '%u', // login username
