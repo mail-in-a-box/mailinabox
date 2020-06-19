@@ -69,7 +69,21 @@ if ($auth['valid'] && !$auth['abort']
      _die("login failed");
    }
 
- 
+
+// ----------------------------------------------------
+// Get the user id (see deluser.sh)
+// ----------------------------------------------------
+$host = $auth['host']; # can be a url (eg: ssl://localhost)
+$host_url = parse_url($host);
+if ($host_url['host']) {
+       $host = $host_url['host'];
+}
+$user = rcube_user::query($auth['user'], $host);
+if (!$user) {
+       _die("User not found auth[host]=" . $auth['host'] . " host=" . $host . "\n");
+}
+   
+
 // ----------------------------------------------------
 // ensure the carddav tables are created and populated
 // ----------------------------------------------------
@@ -77,16 +91,22 @@ if ($auth['valid'] && !$auth['abort']
 require_once('plugins/carddav/carddav_backend.php');
 require_once('plugins/carddav/carddav.php');
 
-$c = new carddav(rcube_plugin_api::get_instance());
-$c->task .= "|cli";
-$c->init();
-print "done: init\n";
-// this ensures the carddav tables are created
-$c->checkMigrations();
-print "done: init tables\n";
-// this populates carddav_addressbooks from config
-$c->init_presets();
-print "done: init addressbooks\n";
+try {
+   $c = new carddav(rcube_plugin_api::get_instance());
+   $c->task .= "|cli";
+   $c->init();
+   print "done: init\n";
+   // this ensures the carddav tables are created
+   $c->checkMigrations();
+   print "done: init tables\n";
+   // this populates carddav_addressbooks from config
+   $c->init_presets();
+   print "done: init addressbooks\n";
+} catch(exception $e) {
+    print $e . "\n";
+    _die("failed");
+}
+
 
 // -------------------------------------------------------------
 // Set the last_updated field for addressbooks to an old date.
@@ -99,7 +119,7 @@ if (!$db->is_connected() || $db->is_error()) {
 }
 print "db connected\n";
 
-$db->query("update " . $db->table_name('carddav_addressbooks') . " set last_updated=? WHERE active=1", '2000-01-01 00:00:00');
+$db->query("update " . $db->table_name('carddav_addressbooks') . " set last_updated=? WHERE active=1 and user_id=" . $user->ID, '2000-01-01 00:00:00');
 print "update made\n";
 if ($db->is_error()) {
   _die("DB error occurred: " . $db->is_error());
@@ -107,7 +127,7 @@ if ($db->is_error()) {
 
 
 // ------------------------------------------------------
-// Update/sync all active address books
+// Update/sync all out-of-date address books
 // ------------------------------------------------------
 
 // first get all row ids
@@ -120,7 +140,7 @@ if ($db->is_error()) {
 }
    
 while ($row = $db->fetch_assoc($sql_result)) {
-  $dbid += array(intval($row['id']));
+  array_push($dbid, intval($row['id']));
   print "carddav_addressbooks id: " . $row['id'] . "\n";
 }
 
