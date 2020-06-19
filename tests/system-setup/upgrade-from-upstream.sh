@@ -32,10 +32,10 @@ if [ "$EUID" != "0" ]; then
 fi
 
 
-before_install() {
+init() {
     H1 "INIT"
-    system_init
-    miab_testing_init || die "Initialization failed"
+    init_test_system
+    init_miab_testing || die "Initialization failed"
 }
 
 upstream_install() {
@@ -94,217 +94,60 @@ upstream_install() {
 }
 
 
-add_data() {
+populate() {
+    local pw="$(static_qa_password)"
+    
     H1 "Add some Mail-in-a-Box data"
     local users=()
-    users+=("betsy@$(email_domainpart "$EMAIL_ADDR")")
+    users+=("betsy@$(email_domainpart "$EMAIL_ADDR"):$pw")
 
     local alises=()
-    aliases+=("goalias@testdom.com > ${users[0]}")
+    aliases+=("goalias@testdom.com > $(awk -F: {'print $1'} <<<"${users[0]}")")
     aliases+=("nested@testdom.com > goalias@testdom.com")
 
-    local pw="$(generate_qa_password)"
-
-
-    #
-    # get the existing users and aliases
-    #
-    local current_users=() current_aliases=()
-    local user alias
-    if ! rest_urlencoded GET /admin/mail/users "$EMAIL_ADDR" "$EMAIL_PW" --insecure >/dev/null 2>&1; then
-        die "Unable to enumerate users: rc=$? err=$REST_ERROR"
-    fi
-    for user in $REST_OUTPUT; do
-        current_users+=("$user")
-    done
-
-    if ! rest_urlencoded GET /admin/mail/aliases "$EMAIL_ADDR" "$EMAIL_PW" --insecure 2>/dev/null; then
-        die "Unable to enumerate aliases: rc=$? err=$REST_ERROR"
-    fi
-    for alias in $REST_OUTPUT; do
-        current_aliases+=("$alias")
-    done
-
-    
-    #
-    # add users
-    #
     H2 "Add users"
-    for user in "${users[@]}"; do
-        if array_contains "$user" "${current_users[@]}"; then
-            echo "Not adding user $user: already exists"
+    if ! populate_miab_users "" "" "" "${users[@]}"
+    then
+        die "Unable to add users"
+    fi
 
-        elif ! rest_urlencoded POST /admin/mail/users/add "$EMAIL_ADDR" "$EMAIL_PW" --insecure -- "email=$user" "password=$pw" 2>/dev/null
-        then
-            die "Unable to add user $user: rc=$? err=$REST_ERROR"
-        else
-            echo "Add: $user"
-        fi
-    done
-
-    #
-    # add aliases
-    #
     H2 "Add aliases"
-    local aliasdef
-    for aliasdef in "${aliases[@]}"; do
-        alias="$(awk -F'[> ]' '{print $1}' <<<"$aliasdef")"
-        local forwards_to="$(sed 's/.*> *\(.*\)/\1/' <<<"$aliasdef")"
-        if array_contains "$alias" "${current_aliases[@]}"; then
-            echo "Not adding alias $alias: already exists"
-            
-        elif ! rest_urlencoded POST /admin/mail/aliases/add "$EMAIL_ADDR" "$EMAIL_PW" --insecure -- "address=$alias" "forwards_to=$forwards_to" 2>/dev/null
-        then
-            die "Unable to add alias $alias: rc=$? err=$REST_ERROR"
-        else
-            echo "Add: $aliasdef"
-        fi
-    done
-}
-
-capture_state() {
-    # users and aliases lists
-    # dns zone files
-    # tls certificates: expected CN's
-
-    local state_dir="$1"
-    local info="$state_dir/info.txt"
-
-    H1 "Capture server state to $state_dir"
-    
-    # nuke saved state, if any
-    rm -rf "$state_dir"
-    mkdir -p "$state_dir"
-
-    # create info.json
-    H2 "create info.txt"
-    echo "VERSION='$(git describe --abbrev=0)'" >"$info"
-    echo "MIGRATION_VERSION=$(cat "$STORAGE_ROOT/mailinabox.version")" >>"$info"
-
-    # record users
-    H2 "record users"
-    rest_urlencoded GET "/admin/mail/users?format=json" "$EMAIL_ADDR" "$EMAIL_PW" --insecure 2>/dev/null \
-        || die "Unable to get users: rc=$? err=$REST_ERROR"
-    echo "$REST_OUTPUT" > "$state_dir/users.json"
-
-    # record aliases
-    H2 "record aliases"
-    rest_urlencoded GET "/admin/mail/aliases?format=json" "$EMAIL_ADDR" "$EMAIL_PW" --insecure 2>/dev/null \
-        || die "Unable to get aliases: rc=$? err=$REST_ERROR"
-    echo "$REST_OUTPUT" > "$state_dir/aliases.json"
-
-    # record dns config
-    H2 "record dns details"
-    local file
-    mkdir -p "$state_dir/zones"
-    for file in /etc/nsd/zones/*.signed; do
-        cp "$file" "$state_dir/zones"
-    done    
-}
-
-miab_ldap_install() {
-    H1 "INSTALL MIAB-LDAP"
-    # ensure we're in a MiaB-LDAP working directory
-    if [ ! -e setup/ldap.sh ]; then
-        die "The working directory is not MiaB-LDAP!"
-    fi
-    setup/start.sh -v || die "Upgrade to MiaB-LDAP failed !!!!!!"
-}
-
-compare_state() {
-    local s1="$1"
-    local s2="$2"
-    
-    local output
-    local changed="false"
-
-    H1 "COMPARE STATES: $(basename "$s1") VS $(basename "$2")"
-    H2 "Users"
-    # users
-    output="$(diff "$s1/users.json" "$s2/users.json" 2>&1)"
-    if [ $? -ne 0 ]; then
-        changed="true"
-        echo "USERS ARE DIFFERENT!"
-        echo "$output"
-    else
-        echo "No change"
-    fi
-
-    H2 "Aliases"
-    output="$(diff "$s1/aliases.json" "$s2/aliases.json" 2>&1)"
-    if [ $? -ne 0 ]; then
-        change="true"
-        echo "ALIASES ARE DIFFERENT!"
-        echo "$output"
-    else
-        echo "No change"
-    fi
-
-    H2 "DNS - zones missing"
-    local zone count=0
-    for zone in $(cd "$s1/zones"; ls *.signed); do
-        if [ ! -e "$s2/zones/$zone" ]; then
-            echo "MISSING zone: $zone"
-            changed="true"
-            let count+=1
-        fi
-    done
-    echo "$count missing"
-
-    H2 "DNS - zones added"
-    count=0
-    for zone in $(cd "$s2/zones"; ls *.signed); do
-        if [ ! -e "$s2/zones/$zone" ]; then
-            echo "ADDED zone: $zone"
-            changed="true"
-            let count+=1
-        fi
-    done
-    echo "$count added"
-
-    H2 "DNS - zones changed"
-    count=0
-    for zone in $(cd "$s1/zones"; ls *.signed); do
-        if [ -e "$s2/zones/$zone" ]; then
-            # all the signatures change if we're using self-signed certs
-            local t1="/tmp/s1.$$.txt"
-            local t2="/tmp/s2.$$.txt"
-            awk '$4 == "RRSIG" || $4 == "NSEC3" { next; } $4 == "SOA" { print $1" "$2" "$3" "$4" "$5" "$6" "$8" "$9" "$10" "$11" "$12; next } { print $0 }' "$s1/zones/$zone" > "$t1" 
-            awk '$4 == "RRSIG" || $4 == "NSEC3" { next; } $4 == "SOA" { print $1" "$2" "$3" "$4" "$5" "$6" "$8" "$9" "$10" "$11" "$12; next } { print $0 }' "$s2/zones/$zone" > "$t2" 
-            output="$(diff "$t1" "$t2" 2>&1)"
-            if [ $? -ne 0 ]; then
-                echo "CHANGED zone: $zone"
-                echo "$output"
-                changed="true"
-                let count+=1
-            fi
-        fi
-    done
-    echo "$count zone files had differences"
-
-    if $changed; then
-        return 1
-    else
-        return 0
+    if ! populate_miab_aliases "" "" "" "${aliases[@]}"
+    then
+        die "Unable to add aliases"
     fi
 }
 
 
 
-if [ "$1" == "cap" ]; then
-    capture_state "tests/system-setup/state/miab-ldap"
-    exit $?
-elif [ "$1" == "compare" ]; then
-    compare_state "tests/system-setup/state/upstream" "tests/system-setup/state/miab-ldap"
-    exit $?
-fi
+
+# these are for debugging/testing
+case "$1" in
+    capture )
+        . /etc/mailinabox.conf
+        installed_state_capture "tests/system-setup/state/miab-ldap"
+        exit $?
+        ;;
+    compare )
+        . /etc/mailinabox.conf
+        installed_state_compare "tests/system-setup/state/upstream" "tests/system-setup/state/miab-ldap"
+        exit $?
+        ;;
+    populate )
+        . /etc/mailinabox.conf
+        populate_by_name "${1:-basic}"
+        exit $?
+        ;;
+esac
+
 
 
 
 # install basic stuff, set the hostname, time, etc
-before_install
+init
 
 # if MiaB-LDAP is already migrated, do not run upstream setup
+[ -e /etc/mailinabox.conf ] && . /etc/mailinabox.conf
 if [ -e "$STORAGE_ROOT/mailinabox.version" ] &&
        [ $(cat "$STORAGE_ROOT/mailinabox.version") -ge 13 ]
 then
@@ -312,16 +155,21 @@ then
 else
     # install upstream
     upstream_install
-    add_data
-    capture_state "tests/system-setup/state/upstream"
+    . /etc/mailinabox.conf
+    
+    # populate some data
+    populate_by_name "${1:-basic}"
+
+    # capture upstream state
+    installed_state_capture "tests/system-setup/state/upstream"
 fi
 
-# install miab-ldap
+# install miab-ldap and capture state
 miab_ldap_install
-capture_state "tests/system-setup/state/miab-ldap"
+installed_state_capture "tests/system-setup/state/miab-ldap"
 
 # compare states
-if ! compare_state "tests/system-setup/state/upstream" "tests/system-setup/state/miab-ldap"; then
+if ! installed_state_compare "tests/system-setup/state/upstream" "tests/system-setup/state/miab-ldap"; then
     die "Upstream and upgraded states are different !"
 fi
 

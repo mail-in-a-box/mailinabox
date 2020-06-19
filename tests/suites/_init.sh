@@ -12,6 +12,8 @@ set +eu
 . suites/_mgmt-functions.sh || exit 1
 
 # globals - all global variables are UPPERCASE
+ASSETS_DIR="assets"
+MIAB_DIR=".."
 BASE_OUTPUTDIR="$(realpath out)"
 PYMAIL="./test_mail.py"
 declare -i OVERALL_SUCCESSES=0

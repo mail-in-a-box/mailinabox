@@ -27,6 +27,24 @@ warn() {
         * )
             echoarg=""
     esac
-    echo "${F_WARN}$1${F_RESET}"
+    echo $echoarg "${F_WARN}$1${F_RESET}"
+}
+
+H1() {
+    local msg="$1"
+    echo "----------------------------------------------"
+    if [ ! -z "$msg" ]; then
+        echo "           $msg"
+        echo "----------------------------------------------"
+    fi
+}
+
+H2() {
+    local msg="$1"
+    if [ -z "$msg" ]; then
+        echo "***"
+    else
+        echo "*** $msg ***"
+    fi
 }
 

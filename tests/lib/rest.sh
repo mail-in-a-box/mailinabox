@@ -15,7 +15,7 @@ rest_urlencoded() {
     # (https://host/mail/users/add), PRIMARY_HOSTNAME must be set!
     #
     # The function will set the following global variables regardless
-    # of exit c ode:
+    # of exit code:
     #     REST_HTTP_CODE
     #     REST_OUTPUT
     #     REST_ERROR
@@ -26,7 +26,7 @@ rest_urlencoded() {
     #   1 curl returned with non-zero code that indicates and error
     #   2 the response status was <200 or >= 300
     #
-    # Messages and errors are sent to stderr
+    # Debug messages are sent to stderr
     #   
 	local verb="$1" # eg "POST"
 	local uri="$2"  # eg "/mail/users/add"

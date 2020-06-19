@@ -23,6 +23,7 @@ default_suites=(
 
 extra_suites=(
 	remote-nextcloud
+	"upgrade-<name>"
 )
 
 usage() {
@@ -41,6 +42,7 @@ usage() {
 	echo "Extra test suites:"
 	echo "------------------"
 	echo "  remote-nextcloud   : test the setup mod for remote Nextcloud"
+	echo "  upgrade-<name>     : verify an upgrade using named populate data"
 	echo ""
 
 	echo "If no suite-name(s) are given, all default suites are run"
@@ -78,23 +80,30 @@ while [ $# -gt 0 ]; do
 			if [ $OVERALL_COUNT_SUITES -eq 0 ]; then
 				rm -rf "${BASE_OUTPUTDIR}"
 			fi
-			
-			if [ "$1" == "default" ]
-			then
-				# run all default suites
-				for suite in ${default_suites[@]}; do
-					. suites/$suite.sh
-				done
-			elif array_contains "$1" ${default_suites[@]} || \
-					array_contains "$1" ${extra_suites[@]}
-			then
-				# run specified suite
-				. "suites/$1.sh"
-			else
-				echo "Unknown suite '$1'" 1>&2
-				usage
-			fi
-			;;
+
+			case "$1" in
+				default )
+					# run all default suites
+					for suite in ${default_suites[@]}; do
+						. suites/$suite.sh
+					done
+					;;
+				upgrade-* )
+					# run upgrade suite with named populate data
+					. "suites/upgrade.sh" "$(awk -F- '{print $2}' <<< "$1")"
+					;;
+				* )
+					if array_contains "$1" "${default_suites[@]}" || \
+							array_contains "$1" "${extra_suites[@]}"
+					then
+						# run specified suite
+						. "suites/$1.sh"
+					else
+						echo "Unknown suite '$1'" 1>&2
+						usage
+					fi
+					;;
+			esac
 	esac
 	shift
 done

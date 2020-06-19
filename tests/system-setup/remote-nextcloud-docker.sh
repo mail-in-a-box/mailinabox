@@ -26,13 +26,6 @@
 #
 
 
-usage() {
-    echo "Usage: $(basename "$0")"
-    echo "Install MiaB-LDAP and a remote Nextcloud running under docker"
-    echo "Nextcloud is exposed as http://localhost:8000"
-    exit 1
-}
-
 # ensure working directory
 if [ ! -d "tests/system-setup" ]; then
     echo "This script must be run from the MiaB root directory"
@@ -51,49 +44,26 @@ fi
 
 
 
-before_miab_install() {
-    H1 "BEFORE MIAB-LDAP INSTALL"
-    system_init
-    miab_testing_init || die "Initialization failed"
-    
-    # enable the remote Nextcloud setup mod, which tells MiaB-LDAP to use
-    # the remote Nextcloud for calendar and contacts instead of the
-    # MiaB-installed one
-    H2 "Enable local mod remote-nextcloud"
-    enable_miab_mod "remote-nextcloud" \
-        || die "Could not enable remote-nextcloud mod"
-    
+init() {
+    H1 "INIT"
+    init_test_system
+    init_miab_testing || die "Initialization failed"    
+}
+
+
+install_nextcloud_docker() {
+    H1 "INSTALL NEXTCLOUD ON DOCKER"
+
     # install Docker
     H2 "Install Docker"
     install_docker || die "Could not install Docker! ($?)"
-}
 
-
-miab_install() {
-    H1 "MIAB-LDAP INSTALL"
-    if ! setup/start.sh; then
-        H1 "OUTPUT OF SELECT FILES"
-        dump_file "/var/log/syslog" 100
-        dump_conf_files "$TRAVIS"
-        H2; H2 "End"; H2
-        die "setup/start.sh failed!"
-    fi
-    H1 "OUTPUT OF SELECT FILES"
-    dump_conf_files "$TRAVIS"
-    H2; H2 "End"; H2
-}
-
-
-after_miab_install() {
-    H1 "AFTER MIAB-LDAP INSTALL"
-    
-    . /etc/mailinabox.conf || die "Could not load /etc/mailinabox.conf"
-    
     # run Nextcloud docker image
     H2 "Start Nextcloud docker container"
     local container_started="true"
     if [ -z "$(docker ps -f NAME=NC -q)" ]; then
         docker run -d --name NC -p 8000:80 \
+               --add-host "$PRIMARY_HOSTNAME:$PRIVATE_IP" \
                --env SQLITE_DATABASE=nextclouddb.sqlite \
                --env NEXTCLOUD_ADMIN_USER="$NC_ADMIN_USER" \
                --env NEXTCLOUD_ADMIN_PASSWORD="$NC_ADMIN_PASSWORD" \
@@ -114,10 +84,10 @@ after_miab_install() {
         container_started="false"
     fi
 
-    H2 "docker: Update /etc/hosts so it can find MiaB-LDAP by name"
-    echo "$PRIVATE_IP $PRIMARY_HOSTNAME" | \
-        docker exec -i NC bash -c 'cat >>/etc/hosts' \
-        || die "docker: could not update /etc/hosts"
+    # H2 "docker: Update /etc/hosts so it can find MiaB-LDAP by name"
+    # echo "$PRIVATE_IP $PRIMARY_HOSTNAME" | \
+    #     docker exec -i NC bash -c 'cat >>/etc/hosts' \
+    #     || die "docker: could not update /etc/hosts"
     
     # apt-get update
     H2 "docker: apt-get update"
@@ -171,26 +141,87 @@ after_miab_install() {
 }
 
 
-#
-# Main
-#
-case "${1:-all}" in
-    before-install )
-        before_miab_install
+
+
+do_upgrade() {
+    local populate_name="$1"
+
+    if [ -e "local/remote-nextcloud.sh" ]; then
+        # we install w/o remote nextcloud first so we can add
+        # a user w/contacts and ensure the contact exists in the
+        # new system
+        if [ ! -L "local/remote-nextcloud.sh" ]; then
+            echo "Warning: local/remote-nextcloud.sh is a regular file - should be a symlink"
+        fi
+        die "Error: local/remote-nextcloud.sh exists - delete it and try again"
+    fi
+
+    # initialize test system
+    init
+
+    # install w/o remote Nextcloud
+    miab_ldap_install
+    
+    # populate some data
+    [ ! -z "$populate_name" ] && populate_by_name "$populate_name"
+    
+    # install Nextcloud in a Docker container (MiaB must be available)
+    install_nextcloud_docker
+    
+    H1 "Enable remote-nextcloud mod"
+    enable_miab_mod "remote-nextcloud" \
+        || die "Could not enable remote-nextcloud mod"
+
+    # re-run setup to use the remote Nextcloud
+    miab_ldap_install
+}
+
+
+do_default() {
+    # initialize test system
+    init
+
+    H1 "Enable remote-nextcloud mod"
+    enable_miab_mod "remote-nextcloud" \
+        || die "Could not enable remote-nextcloud mod"
+    
+    # run setup to use the remote Nextcloud (doesn't need to be available)
+    miab_ldap_install
+
+    # install Nextcloud in a Docker container (MiaB must be available)
+    install_nextcloud_docker    
+}
+
+
+
+
+
+case "$1" in
+    upgrade )
+        # Runs this sequence:
+        #   1. setup w/o remote nextcloud
+        #   2. if an additional argument is given, populate the MiaB
+        #      installation
+        #   3. install a remote nextcloud
+        #   4. enable remote-nextcloud mod
+        #   5. re-run setup
+        #
+
+        shift
+        do_upgrade "$@"
         ;;
-    install )
-        miab_install
+
+    "" | default )
+        # Runs this sequence:
+        #   1. setup w/remote nextcloud
+        #   2. install and connect the remote nextcloud
+        do_default
         ;;
-    after-install )
-        after_miab_install
-        ;;
-    all )
-        before_miab_install
-        miab_install
-        after_miab_install
-        ;;
+    
     * )
-        usage
+        echo "Unknown option $1"
+        exit 1
         ;;
 esac
+
 

@@ -29,12 +29,15 @@ jobs:
       - ip add
       - sysctl -a 2>/dev/null | grep -i ipv6 | grep disable
     install:
-      - sudo tests/system-setup/remote-nextcloud-docker.sh
+      # setup with 'basic' data before setting up again using
+      # a remote nextcloud to verify ownCloud contacts are still
+      # available
+      - sudo tests/system-setup/remote-nextcloud-docker.sh basic
     script:
       # launch automated tests, but skip tests that require remote
       # smtp support because Travis-CI blocks outgoing port 25
       - sudo touch /etc/dovecot/sieve-spam.svbin
-      - sudo tests/runner.sh -dumpoutput -no-smtp-remote default remote-nextcloud
+      - sudo tests/runner.sh -dumpoutput -no-smtp-remote default remote-nextcloud upgrade-basic
 
   # JOB: Upgrade from upstream install
   - env:
@@ -42,9 +45,9 @@ jobs:
       - UPSTREAM_TAG=master
     name: upgrade-from-upstream
     install:
-      - sudo tests/system-setup/upgrade-from-upstream.sh
+      - sudo tests/system-setup/upgrade-from-upstream.sh basic
     script:
       # launch automated tests, but skip tests that require remote
       # smtp support because Travis-CI blocks outgoing port 25
       - sudo touch /etc/dovecot/sieve-spam.svbin
-      - sudo tests/runner.sh -dumpoutput -no-smtp-remote
+      - sudo tests/runner.sh -dumpoutput -no-smtp-remote default upgrade-basic

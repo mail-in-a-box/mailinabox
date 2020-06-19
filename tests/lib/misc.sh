@@ -55,7 +55,11 @@ generate_uuid() {
 }
 
 generate_qa_password() {
-    echo "Test1234."
+    echo "Test$(date +%s)"
+}
+
+static_qa_password() {
+    echo "Test_1234"
 }
 
 sha1() {

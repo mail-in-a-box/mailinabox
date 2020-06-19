@@ -5,29 +5,11 @@
 #   test scripts: [ lib/misc.sh, lib/system.sh ]
 #
 
+
 die() {
     local msg="$1"
     echo "$msg" 1>&2
     exit 1
-}
-
-
-H1() {
-    local msg="$1"
-    echo "----------------------------------------------"
-    if [ ! -z "$msg" ]; then
-        echo "           $msg"
-        echo "----------------------------------------------"
-    fi
-}
-
-H2() {
-    local msg="$1"
-    if [ -z "$msg" ]; then
-        echo "***"
-    else
-        echo "*** $msg ***"
-    fi
 }
 
 
@@ -83,7 +65,9 @@ dump_conf_files() {
 # Initialize the test system
 #   hostname, time, apt update/upgrade, etc
 #
-system_init() {
+# Errors are fatal
+#
+init_test_system() {
     H2 "Update /etc/hosts"
     set_system_hostname || die "Could not set hostname"
 
@@ -113,7 +97,7 @@ system_init() {
 # Anything needed to use the test runner, speed up the installation,
 # etc
 #
-miab_testing_init() {
+init_miab_testing() {
     [ -z "$STORAGE_ROOT" ] \
         && echo "Error: STORAGE_ROOT not set" 1>&2 \
         && return 1
@@ -152,8 +136,12 @@ miab_testing_init() {
 enable_miab_mod() {
     local name="${1}.sh"
     if [ ! -e "local/$name" ]; then
-        mkdir -p local
-        ln -s "../setup/mods.available/$name" "local/$name"
+        mkdir -p "local"
+        if ! ln -s "../setup/mods.available/$name" "local/$name"
+        then
+            echo "Warning: copying instead of symlinking local/$name"
+            cp "setup/mods.available/$name" "local/$name"
+        fi
     fi
 }
 
@@ -166,3 +154,34 @@ tag_from_readme() {
     return 0
 }
 
+
+miab_ldap_install() {
+    H1 "MIAB-LDAP INSTALL"
+    # ensure we're in a MiaB-LDAP working directory
+    if [ ! -e setup/ldap.sh ]; then
+        die "Cannot install: the working directory is not MiaB-LDAP!"
+    fi
+    
+    if ! setup/start.sh; then
+        H1 "OUTPUT OF SELECT FILES"
+        dump_file "/var/log/syslog" 100
+        dump_conf_files "$TRAVIS"
+        H2; H2 "End"; H2
+        die "MiaB-LDAP setup/start.sh failed!"
+    fi
+
+    # set actual STORAGE_ROOT, STORAGE_USER, PRIVATE_IP, etc
+    . /etc/mailinabox.conf || die "Could not source /etc/mailinabox.conf"
+}
+
+
+populate_by_name() {
+    local populate_name="$1"
+
+    H1 "Populate Mail-in-a-Box ($populate_name)"
+    local populate_script="tests/system-setup/populate/${populate_name}-populate.sh"
+    if [ ! -e "$populate_script" ]; then
+        die "Does not exist: $populate_script"
+    fi
+    "$populate_script" || die "Failed: $populate_script"
+}

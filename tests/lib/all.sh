@@ -12,5 +12,8 @@
 . "$1/misc.sh"         || exit 3
 . "$1/rest.sh"         || exit 4
 . "$1/system.sh"       || exit 5
+. "$1/carddav.sh"      || exit 6
 
+. "$1/populate.sh"     || exit 7
+. "$1/installed-state.sh" || exit 8
 

@@ -7,7 +7,7 @@ export STORAGE_USER="${STORAGE_USER:-user-data}"
 export STORAGE_ROOT="${STORAGE_ROOT:-/home/$STORAGE_USER}"
 export EMAIL_ADDR="${EMAIL_ADDR:-qa@abc.com}"
 export EMAIL_PW="${EMAIL_PW:-Test_1234}"
-export PUBLIC_IP="${PUBLIC_IP:-$(source setup/functions.sh; get_default_privateip 4)}"
+export PUBLIC_IP="${PUBLIC_IP:-$(source ${MIAB_DIR:-.}/setup/functions.sh; get_default_privateip 4)}"
 
 if [ "$TRAVIS" == "true" ]; then
     export PRIMARY_HOSTNAME=${PRIMARY_HOSTNAME:-box.abc.com}
