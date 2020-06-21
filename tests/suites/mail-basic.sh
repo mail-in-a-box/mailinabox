@@ -67,7 +67,7 @@ test_self_send_receive() {
 
 
 
-suite_start "mail-basic"
+suite_start "mail-basic" ensure_root_user
 
 test_trial_send_local
 test_trial_send_remote

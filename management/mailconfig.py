@@ -10,7 +10,7 @@
 # Python 3 in setup/questions.sh to validate the email
 # address entered by the user.
 
-import subprocess, shutil, os, sqlite3, re, ldap3, uuid
+import subprocess, shutil, os, sqlite3, re, ldap3, uuid, hashlib
 import utils, backend
 from email_validator import validate_email as validate_email_, EmailNotValidError
 import idna
@@ -321,7 +321,7 @@ def get_mail_aliases(env, as_map=False):
 	
 	# make a dict of permitted senders, key=mail(lowercase) value=members
 	permitted_senders = { rec["mail"][0].lower(): rec["member"] for rec in pager }
-	
+
 	# get all alias groups
 	pager = c.paged_search(env.LDAP_ALIASES_BASE, "(objectClass=mailGroup)", attributes=['mail','member','rfc822MailMember'])
 	
@@ -362,7 +362,7 @@ def get_mail_aliases(env, as_map=False):
 			alias = aliases[address]
 			xft = ",".join(alias["forward_tos"])
 			xas = ",".join(alias["permitted_senders"])
-			list.append( (address, xft, xas) )
+			list.append( (address, xft, None if xas == "" else xas) )
 		return list
 	
 	else:
@@ -432,7 +432,7 @@ def get_domain(emailaddr, as_unicode=True):
 			pass
 	return ret
 
-def get_mail_domains(env, as_map=False, filter_aliases=None, category=None):
+def get_mail_domains(env, as_map=False, filter_aliases=lambda alias: True, category=None, users_only=False):
 	# Retrieves all domains, IDNA-encoded, we accept mail for.
 	#
 	# If as_map is False, the function returns the lowercase domain
@@ -453,16 +453,22 @@ def get_mail_domains(env, as_map=False, filter_aliases=None, category=None):
 	# category is another type of filter. Set to a string value to
 	# return only those domains of that category. ie. the
 	# "businessCategory" attribute of the domain must include this
-	# category.
+	# category. [TODO: this doesn't really belong there, it is here to
+	# make it easy for dns_update to get ssl domains]
+	#
+	# If users_only is True, only return domains with email addresses
+	# that correspond to user accounts.
 	#
 	conn = open_database(env)
 	filter = "(&(objectClass=domain)(businessCategory=mail))"
 	if category:
 		filter = "(&(objectClass=domain)(businessCategory=%s))" % category
+
+	domains=None
+
+	# user mail domains
 	id = conn.search(env.LDAP_DOMAINS_BASE, filter, attributes="dc")
 	response = conn.wait(id)
-	filter_candidates=[]
-	domains=None
 	if as_map:
 		domains = {}
 		for rec in response:
@@ -473,36 +479,44 @@ def get_mail_domains(env, as_map=False, filter_aliases=None, category=None):
 			if filter_aliases: filter_candidates.append(rec['dc'][0].lower())
 	else:
 		domains = set([ rec["dc"][0].lower() for rec in response ])
-		if filter_aliases: filter_candidates += domains
-	
-	for candidate in filter_candidates:
-		# with the filter, there has to be at least one user or
-		# filtered (included) alias in the domain for the domain to be
-		# part of the returned set
 
-		# any users ?
-		response = conn.wait( conn.search(env.LDAP_USERS_BASE, "(&(objectClass=mailUser)(mail=*@%s))" % candidate, size_limit=1) )
-		if response.next():
-			# yes, that domain needs to be in the returned set
-			continue
 
-		# any filtered aliases ?
-		pager = conn.paged_search(
-			env.LDAP_ALIASES_BASE,
-			"(&(objectClass=mailGroup)(mail=*@%s))" % candidate,
-			attributes=['mail'])
+	# alias domains
+	#
+	# Ignore aliases that have no forward-to. We don't need DNS
+	# handling in that case becuase the alias is there only for the
+	# permitted-senders. We don't accept mail locally for the alias.
+	#
+	# Aliases with only permitted-senders are useful when a server has
+	# a configured smarthost (eg. sendmail with a smarthost, or using
+	# ssmtp on Ubuntu, etc). The server drops mail off for delivery to
+	# the smarthost (MiaB) using its MiaB login but needs to MAIL FROM
+	# a host login (user@host.tld). Replies should bounce.
+	#
+	# A smarthost configuration should be a catch-all, one for each server:
+	#   Alias=@host.tld
+	#   Forward-to=<blank>
+	#   Permitted-senders:<the email that the smarthost used to authenticate with MiaB>
+	#
+	if not users_only:
+		pager = conn.paged_search(env.LDAP_ALIASES_BASE, "(objectClass=mailGroup)", attributes=["mail","member","rfc822MailMember"])
+		if as_map:
+			for rec in pager:
+				if filter_aliases(rec["mail"][0].lower()) and ( len(rec["member"]) >0 or len(rec["rfc822MailMember"]) >0 ):
+					domain = get_domain(rec["mail"][0].lower(),as_unicode=False)
+					domains[domain] = {
+						"dn": None,
+						"domain": domain
+					}
 
-		remove = True
-		for rec in pager:
-			if filter_aliases(rec['mail'][0]):
-				remove = False
-				pager.abandon()
-				break
-
-		if remove:
-			if as_map: del domains[candidate]
-			else: domains.remove(candidate)
-			
+		else:
+			alias_domains = set([
+				get_domain(rec["mail"][0].lower(), as_unicode=False)
+				for rec in pager if filter_aliases(rec["mail"][0].lower()) and
+				( len(rec["member"]) >0 or len(rec["rfc822MailMember"]) >0 )
+			])			
+			domains = domains.union( alias_domains )
+					
 	return domains
 
 
@@ -637,8 +651,12 @@ def add_mail_user(email, pw, privs, env):
 	if conn.wait(id).count() > 0:
 		return ("An alias exists with that address.", 400)
 	
-	# Generate a unique id for uid
-	uid = '%s' % uuid.uuid4()
+	## Generate a unique id for uid
+	#uid = '%s' % uuid.uuid4()
+	# use a sha-1 hash of maildrop for uid
+	m = hashlib.sha1()
+	m.update(bytearray(email.lower(),'utf-8'))
+	uid = m.hexdigest()
 
 	# choose a common name and surname (required attributes)
 	cn = email.split("@")[0].replace('.',' ').replace('_',' ')

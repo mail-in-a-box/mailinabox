@@ -96,11 +96,6 @@ if [ ! -s $STORAGE_ROOT/ssl/ssl_private_key.pem ]; then
 	# Set the umask so the key file is never world-readable.
 	(umask 037; hide_output \
 		openssl genrsa -out $STORAGE_ROOT/ssl/ssl_private_key.pem 2048)
-
-	# Give the group 'ssl-cert' read access so slapd can read it
-	groupadd -fr ssl-cert
-	chgrp ssl-cert $STORAGE_ROOT/ssl/ssl_private_key.pem
-	chmod g+r $STORAGE_ROOT/ssl/ssl_private_key.pem
 	
 	# Remove the ssl_certificate.pem symbolic link to force a
 	# regeneration of the server certificate. It needs to be
@@ -109,6 +104,11 @@ if [ ! -s $STORAGE_ROOT/ssl/ssl_private_key.pem ]; then
 		rm -f $STORAGE_ROOT/ssl/ssl_certificate.pem
 	fi
 fi
+
+# Give the group 'ssl-cert' read access so slapd can read it
+groupadd -fr ssl-cert
+chgrp ssl-cert $STORAGE_ROOT/ssl/ssl_private_key.pem
+chmod g+r $STORAGE_ROOT/ssl/ssl_private_key.pem
 
 #
 # Generate a root CA certificate
@@ -123,14 +123,20 @@ if [ ! -f $STORAGE_ROOT/ssl/ca_certificate.pem ]; then
 	  -passin 'pass:SECRET-PASSWORD' \
 	  -out $CERT \
 	  -subj '/CN=Temporary-Mail-In-A-Box-CA'
+fi
 
-	# add the certificate to the system's trusted root ca list
+if [ ! -e /usr/local/share/ca-certificates/mailinabox.crt ]; then
+	# add the CA certificate to the system's trusted root ca list
 	# this is required for openldap's TLS implementation
+    # do this as a separate step in case a CA certificate is manually
+    # copied onto the machine for QA/test
+	CERT=$STORAGE_ROOT/ssl/ca_certificate.pem
 	hide_output \
 	  cp $CERT /usr/local/share/ca-certificates/mailinabox.crt
 	hide_output \
 	  update-ca-certificates
 fi
+
 
 # Generate a signed SSL certificate because things like nginx, dovecot,
 # etc. won't even start without some certificate in place, and we need nginx

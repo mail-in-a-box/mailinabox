@@ -10,14 +10,14 @@ ensure_root_user() {
 	# ensure there is a local email account for root.
 	#
 	# on exit, ROOT, ROOT_MAILDROP, and ROOT_DN are set, and if no
-	# account exists, a new root@$(hostname) is created having a
+	# account exists, a new root@$(hostname --fqdn) is created having a
 	# random password
 	#
 	if [ ! -z "$ROOT_MAILDROP" ]; then
 		# already have it
 		return
 	fi
-	ROOT="${USER}@$(hostname)"
+	ROOT="${USER}@$(hostname --fqdn || hostname)"
 	record "[Find user $ROOT]"
 	get_attribute "$LDAP_USERS_BASE" "mail=$ROOT" "maildrop"
 	ROOT_MAILDROP="$ATTR_VALUE"
@@ -113,7 +113,7 @@ detect_syslog_error() {
 				let ec+=1
 				record "$F_DANGER[ERROR] $line$F_RESET"
 			else
-				record "[	OK] $line"
+				record "[   OK] $line"
 			fi
 		done
 		[ $ec -gt 0 ] && exit 0
@@ -168,11 +168,11 @@ detect_slapd_log_error() {
 				record "$F_DANGER[ERROR] $line$F_RESET"
 			elif [ $r -eq 2 ]; then
 				let wc+=1
-				record "$F_WARN[WARN ] $line$F_RESET"
+				record "$F_WARN[ WARN] $line$F_RESET"
 			elif [ $r -eq 3 ]; then
 				let ignored+=1
 			else
-				record "[OK   ] $line"
+				record "[   OK] $line"
 			fi
 		done
 		record "$ignored unreported/ignored log lines"
@@ -214,7 +214,7 @@ detect_dovecot_log_error() {
 			elif [ $r -eq 2 ]; then
 				let ignored+=1
 			else
-				record "[	OK] $line"
+				record "[   OK] $line"
 			fi
 		done
 		record "$ignored unreported/ignored log lines"

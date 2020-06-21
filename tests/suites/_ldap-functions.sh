@@ -1,11 +1,10 @@
 # -*- indent-tabs-mode: t; tab-width: 4; -*-
 
-generate_uuid() {
-	local uuid
-	uuid=$(python3 -c "import uuid; print(uuid.uuid4())")
-	[ $? -ne 0 ] && die "Unable to generate a uuid"
-	echo "$uuid"
-}
+# requirements:
+#   system packages: [ ldap-utils ]
+#   setup scripts:   [ functions-ldap.sh ]
+#   setup artifacts: [ miab_ldap.conf ]
+
 
 delete_user() {
 	local email="$1"
@@ -32,12 +31,13 @@ create_user() {
 	local priv="${3:-test}"
 	local localpart="$(awk -F@ '{print $1}' <<< "$email")"
 	local domainpart="$(awk -F@ '{print $2}' <<< "$email")"
-	local uid="$localpart"
+	#local uid="$localpart"
+	local uid="$(sha1 "$email")"
 	local dn="uid=${uid},${LDAP_USERS_BASE}"
 	
 	delete_user "$email"
 
-	record "[create user $email]"
+	record "[create user $email ($dn)]"
 	delete_dn "$dn"
 	
 	ldapadd -H "$LDAP_URL" -x -D "$LDAP_ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" >>$TEST_OF 2>&1 <<EOF

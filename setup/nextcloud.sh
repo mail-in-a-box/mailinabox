@@ -1,6 +1,7 @@
 #!/bin/bash
 # Nextcloud
 ##########################
+[ "${FEATURE_NEXTCLOUD:-true}" == "false" ] && return 0
 
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
@@ -100,6 +101,10 @@ nextcloud_hash=50b98d2c2f18510b9530e558ced9ab51eb4f11b0
 # version.php since the restore procedure can leave the system in a state where you have a newer Nextcloud
 # application version than the database.
 
+# ensure directory is accessible
+if [ -d "/usr/local/lib/owncloud" ]; then
+    chmod u+rx /usr/local/lib/owncloud
+fi
 # If config.php exists, get version number, otherwise CURRENT_NEXTCLOUD_VER is empty.
 if [ -f "$STORAGE_ROOT/owncloud/config.php" ]; then
 	CURRENT_NEXTCLOUD_VER=$(php -r "include(\"$STORAGE_ROOT/owncloud/config.php\"); echo(\$CONFIG['version']);")

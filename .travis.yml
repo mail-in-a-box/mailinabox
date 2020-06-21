@@ -1,61 +1,53 @@
 # travisci config
 env:
   global:
-  - NONINTERACTIVE=1
-  - SKIP_NETWORK_CHECKS=1
-  - PRIMARY_HOSTNAME=box.abc.com
+  - MIAB_LDAP_PROJECT=true
 
 language: shell
 os: linux
 dist: bionic
-  
-before_install:
-  - echo "==== DUMP ENVIRONMENT ===="
-  - env | sort
-  - echo "UMASK=$(umask)"
-  #
-  - echo "==== DUMP AppArmor Status ===="
-  - (sudo aa-status; true)
-  #
-  - echo "==== System update ===="
-  # Do not run 'upgrade' - takes too long
-  - sudo apt-get update
-  #
-  - echo "==== Install QA/test prerequisites ===="
-  # python3-dnspython is used by the python scripts in 'tests' and is
-  # not installed by setup
-  - sudo apt-get -y install python3-dnspython
-  # avoid the lengthy generation of DH params by copying in a prebuilt file
-  - sudo mkdir -p /home/user-data/ssl
-  - sudo cp ./tests/assets/ssl/dh2048.pem /home/user-data/ssl
-  #
-  - echo "==== Add the PRIMARY_HOSTNAME to /etc/hosts ===="
-  # The PRIMARY_HOSTNAME should point to the interface address not
-  # loopback.  That is because of the way MiaB resolves - the local
-  # resolver is bind9, which requires valid NS records, which would
-  # point back to the local nsd authoritative name server for the
-  # domain. We don't have those in QA, so we need the hosts entry.
-  - echo "$(source setup/functions.sh; get_default_privateip 4)   $PRIMARY_HOSTNAME" > /tmp/hosts_add.tmp
-  - sudo $SHELL -c 'cat /tmp/hosts_add.tmp >>/etc/hosts'
-  
-install:
-  - sudo ./setup/start.sh -v
 
-script:
-  # nsd won't start on Travis without the changes below: ip6 off and
-  # control-enable set to no. Even though the nsd docs says the
-  # default value for control-enable is no, running "nsd-checkconf -o
-  # control-enable /etc/nsd/nsd.conf" returns "yes", so we explicitly
-  # set it here.
-  #
-  # we're assuming that the "ip-address" line is the last line in the
-  # "server" section of nsd.conf. if this generated file output
-  # changes, the sed command below may need to be adjusted.
-  - sudo sed -i 's/ip-address\(.\)\(.*\)/ip-address\1\2\n  do-ip4\1 yes\n  do-ip6\1 no\n  verbosity\1 3\nremote-control\1\n  control-enable\1 no/' /etc/nsd/nsd.conf
-  - sudo cat /etc/nsd/nsd.conf
-  - sudo systemctl reset-failed nsd.service
-  - sudo systemctl restart nsd.service
-  #
-  # launch automated tests, but skip tests that require remote
-  # smtp support because Travis-CI blocks outgoing port 25
-  - sudo ./tests/runner.sh -dumpoutput -no-smtp-remote
+jobs:
+  fast_finish: true
+  include:
+  # JOB: MiaB-LDAP connected to a remote Nextcloud
+  - env:
+      - PRIMARY_HOSTNAME=box1.abc.com
+      - FEATURE_MUNIN=false
+    name: remote-nextcloud-docker
+    before_install:
+      - echo "==== ENVIRONMENT ===="
+      - env | sort
+      - echo "UMASK=$(umask)"
+      - echo "==== AppArmor Status ===="
+      - (sudo aa-status; true)
+      - echo "==== NETWORK INFO ===="
+      - hostname -I
+      - hostname -i
+      - hostname
+      - hostname --fqdn
+      - ip add
+      - sysctl -a 2>/dev/null | grep -i ipv6 | grep disable
+    install:
+      # setup with 'basic' data before setting up again using
+      # a remote nextcloud to verify ownCloud contacts are still
+      # available
+      - sudo tests/system-setup/remote-nextcloud-docker.sh upgrade basic
+    script:
+      # launch automated tests, but skip tests that require remote
+      # smtp support because Travis-CI blocks outgoing port 25
+      - sudo touch /etc/dovecot/sieve-spam.svbin
+      - sudo tests/runner.sh -dumpoutput -no-smtp-remote default remote-nextcloud upgrade-basic
+
+  # JOB: Upgrade from upstream install
+  - env:
+      - PRIMARY_HOSTNAME=box2.abc.com
+      - UPSTREAM_TAG=master
+    name: upgrade-from-upstream
+    install:
+      - sudo tests/system-setup/upgrade-from-upstream.sh basic
+    script:
+      # launch automated tests, but skip tests that require remote
+      # smtp support because Travis-CI blocks outgoing port 25
+      - sudo touch /etc/dovecot/sieve-spam.svbin
+      - sudo tests/runner.sh -dumpoutput -no-smtp-remote default upgrade-basic

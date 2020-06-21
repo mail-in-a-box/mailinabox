@@ -71,42 +71,46 @@ wait_slapd_start() {
 	say_verbose "...ok"
 }
 
+_add_if_missing() {
+	local var="$1"
+	local val="$2"
+	local conf="$MIAB_INTERNAL_CONF_FILE"
+	if [ $(grep -c "^${var}=" "$conf") -eq 0 ]; then
+		echo "${var}=\"${val}\"" >> "$conf"
+	fi
+}
+
 create_miab_conf() {
 	# create (if non-existing) or load (existing) ldap/miab_ldap.conf
 	if [ ! -e "$MIAB_INTERNAL_CONF_FILE" ]; then
 		say_verbose "Generating a new $MIAB_INTERNAL_CONF_FILE"
 		mkdir -p "$(dirname $MIAB_INTERNAL_CONF_FILE)"
-		
-		# Use 64-character secret keys of safe characters
-		cat > "$MIAB_INTERNAL_CONF_FILE" <<EOF
-LDAP_SERVER=127.0.0.1
-LDAP_SERVER_PORT=389
-LDAP_SERVER_STARTTLS=no
-LDAP_SERVER_TLS=no
-LDAP_URL=ldap://127.0.0.1/
-LDAP_BASE="${LDAP_BASE}"
-LDAP_SERVICES_BASE="${LDAP_SERVICES_BASE}"
-LDAP_CONFIG_BASE="${LDAP_CONFIG_BASE}"
-LDAP_DOMAINS_BASE="${LDAP_DOMAINS_BASE}"
-LDAP_PERMITTED_SENDERS_BASE="${LDAP_PERMITTED_SENDERS_BASE}"
-LDAP_USERS_BASE="${LDAP_USERS_BASE}"
-LDAP_ALIASES_BASE="${LDAP_ALIASES_BASE}"
-LDAP_ADMIN_DN="${LDAP_ADMIN_DN}"
-LDAP_ADMIN_PASSWORD="$(generate_password 64)"
-EOF
+		touch "$MIAB_INTERNAL_CONF_FILE"
 	fi
+
+	# ensure all required values exist, and if not set to default values
+	_add_if_missing LDAP_SERVER 127.0.0.1
+	_add_if_missing LDAP_SERVER_PORT 389
+	_add_if_missing LDAP_SERVER_STARTTLS no
+	_add_if_missing LDAP_SERVER_TLS no
+	_add_if_missing LDAP_URL ldap://127.0.0.1/
+	_add_if_missing LDAP_BASE "${LDAP_BASE}"
+	_add_if_missing LDAP_SERVICES_BASE "${LDAP_SERVICES_BASE}"
+	_add_if_missing LDAP_CONFIG_BASE "${LDAP_CONFIG_BASE}"
+	_add_if_missing LDAP_DOMAINS_BASE "${LDAP_DOMAINS_BASE}"
+	_add_if_missing LDAP_PERMITTED_SENDERS_BASE "${LDAP_PERMITTED_SENDERS_BASE}"
+	_add_if_missing LDAP_USERS_BASE "${LDAP_USERS_BASE}"
+	_add_if_missing LDAP_ALIASES_BASE "${LDAP_ALIASES_BASE}"
+	_add_if_missing LDAP_ADMIN_DN "${LDAP_ADMIN_DN}"
+	_add_if_missing LDAP_ADMIN_PASSWORD "$(generate_password 64)"
 
 	# add service account credentials
 	local prefix
 	for prefix in ${SERVICE_ACCOUNTS[*]}
 	do
-		if [ $(grep -c "^$prefix" "$MIAB_INTERNAL_CONF_FILE") -eq 0 ]; then
-			local cn=$(awk -F_ '{print tolower($2)}' <<< $prefix)
-			cat >>"$MIAB_INTERNAL_CONF_FILE" <<EOF
-${prefix}_DN="cn=$cn,$LDAP_SERVICES_BASE"
-${prefix}_PASSWORD="$(generate_password 64)"
-EOF
-		fi
+		local cn=$(awk -F_ '{print tolower($2)}' <<< $prefix)
+		_add_if_missing "${prefix}_DN" "cn=$cn,$LDAP_SERVICES_BASE"
+		_add_if_missing "${prefix}_PASSWORD" "$(generate_password 64)"
 	done
 	
 	chmod 0640 "$MIAB_INTERNAL_CONF_FILE"
@@ -853,7 +857,13 @@ cat > /etc/logrotate.d/slapd <<EOF;
 EOF
 
 # Modify olc server config like TLS
-modify_global_config
+# Skip this step if no ca_certificate.pem exists - this indicates
+# that the system hasn't yet been migrated from sqlite
+if [ -e "$STORAGE_ROOT/ssl/ca_certificate.pem" ]; then
+	modify_global_config
+else
+	say_debug "Not enabling TLS at this time - ca_certificate hasn't been generated yet"
+fi
 
 # Add overlays and ensure mail-related attributes are indexed
 add_overlays

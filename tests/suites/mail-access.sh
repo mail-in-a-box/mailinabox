@@ -189,7 +189,7 @@ EOF
 }
 
 
-suite_start "mail-access"
+suite_start "mail-access" ensure_root_user
 
 test_greylisting
 test_relay_prohibited

@@ -203,10 +203,11 @@ class LdapConnection(ldap3.Connection):
 					existing_record,
 					values[attr])
 				if modify_op: changes[attr] = modify_op
-			self.wait ( self.modify(dn, changes) )
+			if len(changes)>0:
+				self.wait ( self.modify(dn, changes) )
 			return 'modify'
 		else:
-			# add new alias
+			# add new entry
 			self.wait ( self.add(dn, objectClasses, values) )
 			return 'add'
 

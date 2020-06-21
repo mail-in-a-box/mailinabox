@@ -6,12 +6,15 @@
 set +eu
 
 # load test suite helper functions
+. lib/all.sh "lib"      || exit 1
 . suites/_ldap-functions.sh || exit 1
 . suites/_mail-functions.sh || exit 1
 . suites/_mgmt-functions.sh || exit 1
 
 # globals - all global variables are UPPERCASE
-BASE_OUTPUTDIR="out"
+ASSETS_DIR="assets"
+MIAB_DIR=".."
+BASE_OUTPUTDIR="$(realpath out)/$(hostname | awk -F. '{print $1}')"
 PYMAIL="./test_mail.py"
 declare -i OVERALL_SUCCESSES=0
 declare -i OVERALL_FAILURES=0
@@ -19,10 +22,6 @@ declare -i OVERALL_SKIPPED=0
 declare -i OVERALL_COUNT=0
 declare -i OVERALL_COUNT_SUITES=0
 
-# ansi escapes for hilighting text
-F_DANGER=$(echo -e "\033[31m")
-F_WARN=$(echo -e "\033[93m")
-F_RESET=$(echo -e "\033[39m")
 
 # options
 FAILURE_IS_FATAL=no
@@ -45,11 +44,12 @@ suite_start() {
 	mkdir -p "$OUTDIR"
 	echo ""
 	echo "Starting suite: $SUITE_NAME"
-	suite_setup "$2"
+	shift
+	suite_setup "$@"
 }
 
 suite_end() {
-	suite_cleanup "$1"
+	suite_cleanup "$@"
 	echo "Suite $SUITE_NAME finished"
 	let OVERALL_SUCCESSES+=$SUITE_COUNT_SUCCESS
 	let OVERALL_FAILURES+=$SUITE_COUNT_FAILURE
@@ -61,14 +61,16 @@ suite_end() {
 suite_setup() {
 	[ -z "$1" ] && return 0
 	TEST_OF="$OUTDIR/setup"
-	eval "$1"
+	local script
+	for script; do eval "$script";	done
 	TEST_OF=""
 }
 
 suite_cleanup() {
 	[ -z "$1" ] && return 0
 	TEST_OF="$OUTDIR/cleanup"
-	eval "$1"
+	local script
+	for script; do eval "$script"; done
 	TEST_OF=""
 }
 
@@ -105,7 +107,7 @@ test_end() {
 				let idx+=1
 			done
 			echo "$TEST_OF" >>$FAILED_TESTS_MANIFEST
-			echo "	   see: $(dirname $0)/$TEST_OF"
+			echo "	   see: $TEST_OF"
 			let SUITE_COUNT_FAILURE+=1
 			if [ "$FAILURE_IS_FATAL" == "yes" ]; then
 				record "FATAL: failures are fatal option enabled"
@@ -153,7 +155,12 @@ test_skip() {
 }
 
 skip_test() {
-	# return 0 if we should skip the current test
+	# call from within a test to check whether the test will be
+	# skipped
+	#
+	# returns 0 if the current test was skipped in which case your test
+	# function must immediately call 'test_end' and return
+	#
 	if [ "$SKIP_REMOTE_SMTP_TESTS" == "yes" ] &&
 		   array_contains "remote-smtp" "$@";
 	then
@@ -187,22 +194,18 @@ die() {
 	exit 1
 }
 
-array_contains() {
-	local searchfor="$1"
-	shift
-	local item
-	for item; do
-		[ "$item" == "$searchfor" ] && return 0
-	done
-	return 1
-}
-
 python_error() {
 	# finds tracebacks and outputs just the final error message of
 	# each
 	local output="$1"
 	awk 'BEGIN { TB=0; FOUND=0 } TB==0 && /^Traceback/ { TB=1; FOUND=1; next } TB==1 && /^[^ ]/ { print $0; TB=0 } END { if (FOUND==0) exit 1 }' <<< "$output"
 	[ $? -eq 1 ] && echo "$output"
+}
+
+copy_or_die() {
+	local src="$1"
+	local dst="$2"
+	cp "$src" "$dst" || die "Unable to copy '$src' => '$dst'"
 }
 
 dump_failed_tests_output() {
