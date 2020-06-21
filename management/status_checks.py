@@ -983,12 +983,13 @@ if __name__ == "__main__":
 	from utils import load_environment
 
 	env = load_environment()
-	pool = multiprocessing.pool.Pool(processes=10)
 
 	if len(sys.argv) == 1:
+		pool = multiprocessing.pool.Pool(processes=10)
 		run_checks(False, env, ConsoleOutput(), pool)
 
 	elif sys.argv[1] == "--show-changes":
+		pool = multiprocessing.pool.Pool(processes=10)
 		run_and_output_changes(env, pool)
 
 	elif sys.argv[1] == "--check-primary-hostname":
