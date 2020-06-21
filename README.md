@@ -3,7 +3,7 @@
 
 ## Installation
 
-- **PRE-REQUISITES:** Debian 10 (Buster) fresh installation
+- **PRE-REQUISITES:** Debian 10 (Buster) or Ubuntu 20.04 LTS fresh installation
 
 Update packages:
 ```sh
@@ -22,7 +22,7 @@ Install Power-Mail-in-a-Box (short link)
 curl -L https://dvn.pt/powermiab | sudo bash
 ```
 
-## Current Version: v0.44.POWER.5 (Tracking v0.44)
+## Current Version: v0.44.POWER.7 (Tracking v0.44)
 
 This is a fork of MiaB (duh), hacked and tuned to my needs:
 
@@ -32,9 +32,7 @@ This is a fork of MiaB (duh), hacked and tuned to my needs:
 
 💤 - **I did not begin this part yet!**
 
-- ✅ Proper support for Debian (I recommend Debian Buster or later, but if it works on your machine, it works!);
-
-- - I changed the pre-flight checks to accept Debian and Debian only. If you think you can also make this fork Ubuntu-compatible, shoot a PR or something.
+- ✅ Proper support for Debian (I recommend Debian Buster or later, but if it works on your machine, it works!) AND Ubuntu 20.04 LTS;
 
 - ✅ Native support for SMTP relays (For example: SendGrid);
 

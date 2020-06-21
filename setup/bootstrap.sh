@@ -10,8 +10,7 @@ if [ -z "$TAG" ]; then
 	# Make s
 	OS=`lsb_release -d | sed 's/.*:\s*//'`
 	if [ "$OS" == "Debian GNU/Linux 10 (buster)" -o "$OS" == "Ubuntu 20.04 LTS" ]; then
-		# This machine is running Ubuntu 18.04.
-		TAG=v0.44.POWER.6
+		TAG=v0.44.POWER.7
 	else
 		echo "This script must be run on a system running Debian 10 OR Ubuntu 20.04 LTS."
 		exit 1
