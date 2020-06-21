@@ -67,3 +67,17 @@ sha1() {
 	python3 -c "import hashlib; m=hashlib.sha1(); m.update(bytearray(r'''$txt''','utf-8')); print(m.hexdigest());" || die "Unable to generate sha1 hash"
 }
 
+elapsed_pretty() {
+    local start_s="$1"
+    local end_s="$2"
+    local elapsed elapsed_m elapsed_s
+    if [ -z "$end_s" ]; then
+        elapsed="$start_s"
+    else
+        let elapsed="$end_s - $start_s"
+    fi
+    
+    let elapsed_m="$elapsed / 60"
+    let elapsed_s="$elapsed % 60"
+    echo "${elapsed_m}m ${elapsed_s}s"
+}

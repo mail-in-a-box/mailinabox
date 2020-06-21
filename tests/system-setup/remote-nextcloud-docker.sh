@@ -84,11 +84,6 @@ install_nextcloud_docker() {
         container_started="false"
     fi
 
-    # H2 "docker: Update /etc/hosts so it can find MiaB-LDAP by name"
-    # echo "$PRIVATE_IP $PRIMARY_HOSTNAME" | \
-    #     docker exec -i NC bash -c 'cat >>/etc/hosts' \
-    #     || die "docker: could not update /etc/hosts"
-    
     # apt-get update
     H2 "docker: apt-get update"
     docker exec NC apt-get update || die "docker: apt-get update failed"
@@ -98,6 +93,7 @@ install_nextcloud_docker() {
     ufw allow ldaps || die "Unable to modify firewall to permit ldaps"
 
     # add MiaB-LDAP's ca_certificate.pem to docker's trusted cert list
+    # (because setup/ssl.sh created its own self-signed ca)
     H2 "docker: update trusted CA list"
     docker cp \
            $STORAGE_ROOT/ssl/ca_certificate.pem \
@@ -146,14 +142,14 @@ install_nextcloud_docker() {
 do_upgrade() {
     local populate_name="$1"
 
-    if [ -e "local/remote-nextcloud.sh" ]; then
+    if [ -e "$LOCAL_MODS_DIR/remote-nextcloud.sh" ]; then
         # we install w/o remote nextcloud first so we can add
         # a user w/contacts and ensure the contact exists in the
         # new system
-        if [ ! -L "local/remote-nextcloud.sh" ]; then
-            echo "Warning: local/remote-nextcloud.sh is a regular file - should be a symlink"
+        if [ ! -L "$LOCAL_MODS_DIR/remote-nextcloud.sh" ]; then
+            echo "Warning: $LOCAL_MODS_DIR/remote-nextcloud.sh is a regular file - should be a symlink"
         fi
-        die "Error: local/remote-nextcloud.sh exists - delete it and try again"
+        die "Error: $LOCAL_MODS_DIR/remote-nextcloud.sh exists - delete it and try again"
     fi
 
     # initialize test system

@@ -135,12 +135,12 @@ init_miab_testing() {
 
 enable_miab_mod() {
     local name="${1}.sh"
-    if [ ! -e "local/$name" ]; then
-        mkdir -p "local"
-        if ! ln -s "../setup/mods.available/$name" "local/$name"
+    if [ ! -e "$LOCAL_MODS_DIR/$name" ]; then
+        mkdir -p "$LOCAL_MODS_DIR"
+        if ! ln -s "$(pwd)/setup/mods.available/$name" "$LOCAL_MODS_DIR/$name"
         then
-            echo "Warning: copying instead of symlinking local/$name"
-            cp "setup/mods.available/$name" "local/$name"
+            echo "Warning: copying instead of symlinking $LOCAL_MODS_DIR/$name"
+            cp "setup/mods.available/$name" "$LOCAL_MODS_DIR/$name"
         fi
     fi
 }

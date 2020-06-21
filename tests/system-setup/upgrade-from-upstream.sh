@@ -125,12 +125,12 @@ populate() {
 case "$1" in
     capture )
         . /etc/mailinabox.conf
-        installed_state_capture "tests/system-setup/state/miab-ldap"
+        installed_state_capture "/tmp/state/miab-ldap"
         exit $?
         ;;
     compare )
         . /etc/mailinabox.conf
-        installed_state_compare "tests/system-setup/state/upstream" "tests/system-setup/state/miab-ldap"
+        installed_state_compare "/tmp/state/upstream" "/tmp/state/miab-ldap"
         exit $?
         ;;
     populate )
@@ -161,15 +161,15 @@ else
     populate_by_name "${1:-basic}"
 
     # capture upstream state
-    installed_state_capture "tests/system-setup/state/upstream"
+    installed_state_capture "/tmp/state/upstream"
 fi
 
 # install miab-ldap and capture state
 miab_ldap_install
-installed_state_capture "tests/system-setup/state/miab-ldap"
+installed_state_capture "/tmp/state/miab-ldap"
 
 # compare states
-if ! installed_state_compare "tests/system-setup/state/upstream" "tests/system-setup/state/miab-ldap"; then
+if ! installed_state_compare "/tmp/state/upstream" "/tmp/state/miab-ldap"; then
     die "Upstream and upgraded states are different !"
 fi
 

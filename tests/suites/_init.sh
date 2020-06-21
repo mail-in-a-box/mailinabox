@@ -14,7 +14,7 @@ set +eu
 # globals - all global variables are UPPERCASE
 ASSETS_DIR="assets"
 MIAB_DIR=".."
-BASE_OUTPUTDIR="$(realpath out)"
+BASE_OUTPUTDIR="$(realpath out)/$(hostname | awk -F. '{print $1}')"
 PYMAIL="./test_mail.py"
 declare -i OVERALL_SUCCESSES=0
 declare -i OVERALL_FAILURES=0

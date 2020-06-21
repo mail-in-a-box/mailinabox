@@ -150,9 +150,9 @@ fi
 #
 # Run setup mods 
 #
-if [ -d local ]; then
-    for mod in $(ls local | grep -v '~$'); do
-        local/$mod
+if [ -d "${LOCAL_MODS_DIR:-local}" ]; then
+    for mod in $(ls "${LOCAL_MODS_DIR:-local}" | grep -v '~$'); do
+        ${LOCAL_MODS_DIR:-local}/$mod
     done
 fi
 

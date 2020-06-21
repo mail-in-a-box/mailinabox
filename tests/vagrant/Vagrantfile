@@ -1,0 +1,42 @@
+
+Vagrant.configure("2") do |config|
+
+  config.vm.synced_folder "../..", "/mailinabox", id: "mailinabox", automount: false
+  config.vm.provision "file", source:"globals.sh", destination:"globals.sh"
+
+  # remote-nextcloud-docker
+
+  config.vm.define "remote-nextcloud-docker" do |m1|
+    m1.vm.box = "ubuntu/bionic64"
+    m1.vm.provision :shell, :inline => <<-SH
+source globals.sh || exit 1
+export PRIMARY_HOSTNAME=qa1.abc.com
+export FEATURE_MUNIN=false
+cd /mailinabox
+if tests/system-setup/remote-nextcloud-docker.sh upgrade basic
+then
+   tests/runner.sh default remote-nextcloud upgrade-basic
+fi
+echo "EXITCODE: $?"
+SH
+  end
+  
+
+  # upgrade-from-upstream
+  
+  config.vm.define "upgrade-from-upstream" do |m2|
+    m2.vm.box = "ubuntu/bionic64"
+    m2.vm.provision :shell, :inline => <<-SH
+source globals.sh || exit 1
+export PRIMARY_HOSTNAME=qa2.abc.com
+export UPSTREAM_TAG=master
+cd /mailinabox
+if tests/system-setup/upgrade-from-upstream.sh basic
+then
+  tests/runner.sh default upgrade-basic
+fi
+echo "EXITCODE: $?"
+SH
+  end
+
+end
