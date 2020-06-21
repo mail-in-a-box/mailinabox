@@ -69,18 +69,18 @@ rm -rf $assets_dir
 mkdir -p $assets_dir
 
 # jQuery CDN URL
-jquery_version=3.5.0
+jquery_version=3.5.1
 jquery_url=https://code.jquery.com
 
 # Get jQuery
-wget_verify $jquery_url/jquery-$jquery_version.min.js 1d6ae46f2ffa213dede37a521b011ec1cd8d1ad3 $assets_dir/jquery.min.js
+wget_verify $jquery_url/jquery-$jquery_version.min.js c8e1c8b386dc5b7a9184c763c88d19a346eb3342 $assets_dir/jquery.min.js
 
 # Bootstrap CDN URL
-bootstrap_version=4.4.1
+bootstrap_version=4.5.0
 bootstrap_url=https://github.com/twbs/bootstrap/releases/download/v$bootstrap_version/bootstrap-$bootstrap_version-dist.zip
 
 # Get Bootstrap
-wget_verify $bootstrap_url 52759c9d307308da862ac29e1c41bfcfe81313eb /tmp/bootstrap.zip
+wget_verify $bootstrap_url 240002ac66f2f6579f266bd07277573d2ad2e63a /tmp/bootstrap.zip
 unzip -q /tmp/bootstrap.zip -d $assets_dir
 mv $assets_dir/bootstrap-$bootstrap_version-dist $assets_dir/bootstrap
 rm -f /tmp/bootstrap.zip
