@@ -223,3 +223,5 @@ if [ "$OS" == "Debian GNU/Linux 10 (buster)" ]; then
 elif [ "$OS" == "Ubuntu 20.04 LTS" ]; then
 	export PHP_VERSION="7.4"
 fi
+
+sed -i "s|!!___PHPVER___!!|${PHP_VERSION}|g" conf/nginx-top.conf
