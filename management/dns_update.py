@@ -9,8 +9,9 @@ import ipaddress
 import rtyaml
 import dns.resolver
 
-from mailconfig import get_mail_domains
+from mailconfig import get_mail_domains, get_mail_aliases
 from utils import shell, load_env_vars_from_file, safe_domain_name, sort_domains
+from ssl_certificates import get_ssl_certificates, check_certificate
 
 # From https://stackoverflow.com/questions/3026957/how-to-validate-a-domain-name-using-regex-php/16491074#16491074
 # This regular expression matches domain names according to RFCs, it also accepts fqdn with an leading dot,
@@ -280,25 +281,85 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 		if not has_rec(dmarc_qname, "TXT", prefix="v=DMARC1; "):
 			records.append((dmarc_qname, "TXT", 'v=DMARC1; p=reject', "Recommended. Prevents use of this domain name for outbound mail by specifying that the SPF rule should be honoured for mail from @%s." % (qname + "." + domain)))
 
-	# Add CardDAV/CalDAV SRV records on the non-primary hostname that points to the primary hostname.
+	# Add CardDAV/CalDAV SRV records on the non-primary hostname that points to the primary hostname
+	# for autoconfiguration of mail clients (so only domains hosting user accounts need it).
 	# The SRV record format is priority (0, whatever), weight (0, whatever), port, service provider hostname (w/ trailing dot).
-	if domain != env["PRIMARY_HOSTNAME"]:
+	if domain != env["PRIMARY_HOSTNAME"] and domain in get_mail_domains(env, users_only=True):
 		for dav in ("card", "cal"):
 			qname = "_" + dav + "davs._tcp"
 			if not has_rec(qname, "SRV"):
 				records.append((qname, "SRV", "0 0 443 " + env["PRIMARY_HOSTNAME"] + ".", "Recommended. Specifies the hostname of the server that handles CardDAV/CalDAV services for email addresses on this domain."))
 
-	# Adds autoconfiguration A records for all domains.
+	# Adds autoconfiguration A records for all domains that there are user accounts at.
 	# This allows the following clients to automatically configure email addresses in the respective applications.
 	# autodiscover.* - Z-Push ActiveSync Autodiscover
 	# autoconfig.* - Thunderbird Autoconfig
-	autodiscover_records = [
-		("autodiscover", "A", env["PUBLIC_IP"], "Provides email configuration autodiscovery support for Z-Push ActiveSync Autodiscover."),
-		("autodiscover", "AAAA", env["PUBLIC_IPV6"], "Provides email configuration autodiscovery support for Z-Push ActiveSync Autodiscover."),
-		("autoconfig", "A", env["PUBLIC_IP"], "Provides email configuration autodiscovery support for Thunderbird Autoconfig."),
-		("autoconfig", "AAAA", env["PUBLIC_IPV6"], "Provides email configuration autodiscovery support for Thunderbird Autoconfig.")
+	if domain in get_mail_domains(env, users_only=True):
+		autodiscover_records = [
+			("autodiscover", "A", env["PUBLIC_IP"], "Provides email configuration autodiscovery support for Z-Push ActiveSync Autodiscover."),
+			("autodiscover", "AAAA", env["PUBLIC_IPV6"], "Provides email configuration autodiscovery support for Z-Push ActiveSync Autodiscover."),
+			("autoconfig", "A", env["PUBLIC_IP"], "Provides email configuration autodiscovery support for Thunderbird Autoconfig."),
+			("autoconfig", "AAAA", env["PUBLIC_IPV6"], "Provides email configuration autodiscovery support for Thunderbird Autoconfig.")
+		]
+		for qname, rtype, value, explanation in autodiscover_records:
+			if value is None or value.strip() == "": continue # skip IPV6 if not set
+			if not has_rec(qname, rtype):
+				records.append((qname, rtype, value, explanation))
+
+	# If this is a domain name that there are email addresses configured for, i.e. "something@"
+	# this domain name, then the domain name is a MTA-STS (https://tools.ietf.org/html/rfc8461)
+	# Policy Domain.
+	#
+	# A "_mta-sts" TXT record signals the presence of a MTA-STS policy. The id field helps clients
+	# cache the policy. It should be stable so we don't update DNS unnecessarily but change when
+	# the policy changes. It must be at most 32 letters and numbers, so we compute a hash of the
+	# policy file.
+	#
+	# The policy itself is served at the "mta-sts" (no underscore) subdomain over HTTPS. Therefore
+	# the TLS certificate used by Postfix for STARTTLS must be a valid certificate for the MX
+	# domain name (PRIMARY_HOSTNAME) *and* the TLS certificate used by nginx for HTTPS on the mta-sts
+	# subdomain must be valid certificate for that domain. Do not set an MTA-STS policy if either
+	# certificate in use is not valid (e.g. because it is self-signed and a valid certificate has not
+	# yet been provisioned). Since we cannot provision a certificate without A/AAAA records, we
+	# always set them --- only the TXT records depend on there being valid certificates.
+	mta_sts_enabled = False
+	mta_sts_records = [
+		("mta-sts", "A", env["PUBLIC_IP"], "Optional. MTA-STS Policy Host serving /.well-known/mta-sts.txt."),
+		("mta-sts", "AAAA", env.get('PUBLIC_IPV6'), "Optional. MTA-STS Policy Host serving /.well-known/mta-sts.txt."),
 	]
-	for qname, rtype, value, explanation in autodiscover_records:
+	if domain in get_mail_domains(env):
+		# Check that PRIMARY_HOSTNAME and the mta_sts domain both have valid certificates.
+		for d in (env['PRIMARY_HOSTNAME'], "mta-sts." + domain):
+			cert = get_ssl_certificates(env).get(d)
+			if not cert:
+				break # no certificate provisioned for this domain
+			cert_status = check_certificate(d, cert['certificate'], cert['private-key'])
+			if cert_status[0] != 'OK':
+				break # certificate is not valid
+		else:
+			# 'break' was not encountered above, so both domains are good
+			mta_sts_enabled = True
+	if mta_sts_enabled:
+		# Compute an up-to-32-character hash of the policy file. We'll take a SHA-1 hash of the policy
+		# file (20 bytes) and encode it as base-64 (28 bytes, using alphanumeric alternate characters
+		# instead of '+' and '/' which are not allowed in an MTA-STS policy id) but then just take its
+		# first 20 characters, which is more than sufficient to change whenever the policy file changes
+		# (and ensures any '=' padding at the end of the base64 encoding is dropped).
+		with open("/var/lib/mailinabox/mta-sts.txt", "rb") as f:
+			mta_sts_policy_id = base64.b64encode(hashlib.sha1(f.read()).digest(), altchars=b"AA").decode("ascii")[0:20]
+		mta_sts_records.extend([
+			("_mta-sts", "TXT", "v=STSv1; id=" + mta_sts_policy_id, "Optional. Part of the MTA-STS policy for incoming mail. If set, a MTA-STS policy must also be published.")
+		])
+
+		# Rules can be custom configured accoring to https://tools.ietf.org/html/rfc8460.
+		# Skip if the rules below if the user has set a custom _smtp._tls record.
+		if not has_rec("_smtp._tls", "TXT", prefix="v=TLSRPTv1;"):
+			tls_rpt_string = ""
+			tls_rpt_email = env.get("MTA_STS_TLSRPT_EMAIL", "postmaster@%s" % env['PRIMARY_HOSTNAME'])
+			if tls_rpt_email: # if a reporting address is not cleared
+				tls_rpt_string = " rua=mailto:%s" % tls_rpt_email
+			mta_sts_records.append(("_smtp._tls", "TXT", "v=TLSRPTv1;%s" % tls_rpt_string, "Optional. Enables MTA-STS reporting."))
+	for qname, rtype, value, explanation in mta_sts_records:
 		if value is None or value.strip() == "": continue # skip IPV6 if not set
 		if not has_rec(qname, rtype):
 			records.append((qname, rtype, value, explanation))

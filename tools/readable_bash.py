@@ -58,7 +58,7 @@ def generate_documentation():
 	    	}
 
 	    	.prose {
-	    		padding-top: 1em;    	
+	    		padding-top: 1em;
 	    		padding-bottom: 1em;
 	    	}
 	    	.terminal {
@@ -261,6 +261,10 @@ class UfwAllow(Grammar):
 	grammar = (ZERO_OR_MORE(SPACE), L("ufw_allow "), REST_OF_LINE, EOL)
 	def value(self):
 		return shell_line("ufw allow " + self[2].string)
+class UfwLimit(Grammar):
+	grammar = (ZERO_OR_MORE(SPACE), L("ufw_limit "), REST_OF_LINE, EOL)
+	def value(self):
+		return shell_line("ufw limit " + self[2].string)
 class RestartService(Grammar):
 	grammar = (ZERO_OR_MORE(SPACE), L("restart_service "), REST_OF_LINE, EOL)
 	def value(self):
@@ -275,7 +279,7 @@ class OtherLine(Grammar):
 		return "<pre class='shell'><div>" + recode_bash(self.string.strip()) + "</div></pre>\n"
 
 class BashElement(Grammar):
-	grammar = Comment | CatEOF | EchoPipe | EchoLine | HideOutput | EditConf | SedReplace | AptGet | UfwAllow | RestartService | OtherLine
+	grammar = Comment | CatEOF | EchoPipe | EchoLine | HideOutput | EditConf | SedReplace | AptGet | UfwAllow | UfwLimit | RestartService | OtherLine
 	def value(self):
 		return self[0].value()
 

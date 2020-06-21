@@ -24,11 +24,14 @@ def get_web_domains(env, include_www_redirects=True, exclude_dns_elsewhere=True)
 		# the topmost of each domain we serve.
 		domains |= set('www.' + zone for zone, zonefile in get_dns_zones(env))
 
-	# Add Autoconfiguration domains, allowing us to serve correct SSL certs.
+	# Add Autoconfiguration domains for domains that there are user accounts at:
 	# 'autoconfig.' for Mozilla Thunderbird auto setup.
 	# 'autodiscover.' for Activesync autodiscovery.
-	domains |= set('autoconfig.' + maildomain for maildomain in get_mail_domains(env))
-	domains |= set('autodiscover.' + maildomain for maildomain in get_mail_domains(env))
+	domains |= set('autoconfig.' + maildomain for maildomain in get_mail_domains(env, users_only=True))
+	domains |= set('autodiscover.' + maildomain for maildomain in get_mail_domains(env, users_only=True))
+
+	# 'mta-sts.' for MTA-STS support for all domains that have email addresses.
+	domains |= set('mta-sts.' + maildomain for maildomain in get_mail_domains(env))
 
 	if exclude_dns_elsewhere:
 		# ...Unless the domain has an A/AAAA record that maps it to a different
@@ -173,9 +176,23 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 
 			# any proxy or redirect here?
 			for path, url in yaml.get("proxies", {}).items():
+				# Parse some flags in the fragment of the URL.
+				pass_http_host_header = False
+				m = re.search("#(.*)$", url)
+				if m:
+					for flag in m.group(1).split(","):
+						if flag == "pass-http-host":
+							pass_http_host_header = True
+					url = re.sub("#(.*)$", "", url)
+
 				nginx_conf_extra += "\tlocation %s {" % path
 				nginx_conf_extra += "\n\t\tproxy_pass %s;" % url
+				if pass_http_host_header:
+					nginx_conf_extra += "\n\t\tproxy_set_header Host $http_host;"
 				nginx_conf_extra += "\n\t\tproxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;"
+				nginx_conf_extra += "\n\t\tproxy_set_header X-Forwarded-Host $http_host;"
+				nginx_conf_extra += "\n\t\tproxy_set_header X-Forwarded-Proto $scheme;"
+				nginx_conf_extra += "\n\t\tproxy_set_header X-Real-IP $remote_addr;"
 				nginx_conf_extra += "\n\t}\n"
 			for path, alias in yaml.get("aliases", {}).items():
 				nginx_conf_extra += "\tlocation %s {" % path

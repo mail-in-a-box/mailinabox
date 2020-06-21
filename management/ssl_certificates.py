@@ -180,7 +180,7 @@ def get_certificates_to_provision(env, limit_domains=None, show_valid_certs=True
 	# for and subtract:
 	# * domains not in limit_domains if limit_domains is not empty
 	# * domains with custom "A" records, i.e. they are hosted elsewhere
-	# * domains with actual "A" records that point elsewhere
+	# * domains with actual "A" records that point elsewhere (misconfiguration)
 	# * domains that already have certificates that will be valid for a while
 
 	from web_update import get_web_domains
@@ -256,15 +256,41 @@ def provision_certificates(env, limit_domains):
 			"result": "skipped",
 		})
 
+	# Break into groups by DNS zone: Group every domain with its parent domain, if
+	# its parent domain is in the list of domains to request a certificate for.
+	# Start with the zones so that if the zone doesn't need a certificate itself,
+	# its children will still be grouped together. Sort the provision domains to
+	# put parents ahead of children.
+	# Since Let's Encrypt requests are limited to 100 domains at a time,
+	# we'll create a list of lists of domains where the inner lists have
+	# at most 100 items. By sorting we also get the DNS zone domain as the first
+	# entry in each list (unless we overflow beyond 100) which ends up as the
+	# primary domain listed in each certificate.
+	from dns_update import get_dns_zones
+	certs = { }
+	for zone, zonefile in get_dns_zones(env):
+		certs[zone] = [[]]
+	for domain in sort_domains(domains, env):
+		# Does the domain end with any domain we've seen so far.
+		for parent in certs.keys():
+			if domain.endswith("." + parent):
+				# Add this to the parent's list of domains.
+				# Start a new group if the list already has
+				# 100 items.
+				if len(certs[parent][-1]) == 100:
+					certs[parent].append([])
+				certs[parent][-1].append(domain)
+				break
+		else:
+			# This domain is not a child of any domain we've seen yet, so
+			# start a new group. This shouldn't happen since every zone
+			# was already added.
+			certs[domain] = [[domain]]
 
-	# Break into groups of up to 100 certificates at a time, which is Let's Encrypt's
-	# limit for a single certificate. We'll sort to put related domains together.
-	max_domains_per_group = 100
-	domains = sort_domains(domains, env)
-	certs = []
-	while len(domains) > 0:
-		certs.append( domains[:max_domains_per_group] )
-		domains = domains[max_domains_per_group:]
+	# Flatten to a list of lists of domains (from a mapping). Remove empty
+	# lists (zones with no domains that need certs).
+	certs = sum(certs.values(), [])
+	certs = [_ for _ in certs if len(_) > 0]
 
 	# Prepare to provision.
 

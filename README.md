@@ -80,15 +80,20 @@ It is a one-click email appliance. There are no user-configurable setup options.
 
 The components installed are:
 
-* SMTP ([postfix](http://www.postfix.org/)), IMAP ([dovecot](http://dovecot.org/)), CardDAV/CalDAV ([Nextcloud](https://nextcloud.com/)), Exchange ActiveSync ([z-push](http://z-push.org/))
-* Webmail ([Roundcube](http://roundcube.net/)), static website hosting ([nginx](http://nginx.org/))
-* Spam filtering ([spamassassin](https://spamassassin.apache.org/)), greylisting ([postgrey](http://postgrey.schweikert.ch/))
-* DNS ([nsd4](https://www.nlnetlabs.nl/projects/nsd/)) with [SPF](https://en.wikipedia.org/wiki/Sender_Policy_Framework), DKIM ([OpenDKIM](http://www.opendkim.org/)), [DMARC](https://en.wikipedia.org/wiki/DMARC), [DNSSEC](https://en.wikipedia.org/wiki/DNSSEC), [DANE TLSA](https://en.wikipedia.org/wiki/DNS-based_Authentication_of_Named_Entities), and [SSHFP](https://tools.ietf.org/html/rfc4255) records automatically set
-* Backups ([duplicity](http://duplicity.nongnu.org/)), firewall ([ufw](https://launchpad.net/ufw)), intrusion protection ([fail2ban](http://www.fail2ban.org/wiki/index.php/Main_Page)), system monitoring ([munin](http://munin-monitoring.org/))
+* SMTP ([postfix](http://www.postfix.org/)), IMAP ([dovecot](http://dovecot.org/)), CardDAV/CalDAV ([Nextcloud](https://nextcloud.com/)), and Exchange ActiveSync ([z-push](http://z-push.org/)) servers
+* Webmail ([Roundcube](http://roundcube.net/)), mail filter rules (also using dovecot), and email client autoconfig settings (served by [nginx](http://nginx.org/))
+* Spam filtering ([spamassassin](https://spamassassin.apache.org/)) and greylisting ([postgrey](http://postgrey.schweikert.ch/))
+* DNS ([nsd4](https://www.nlnetlabs.nl/projects/nsd/)) with [SPF](https://en.wikipedia.org/wiki/Sender_Policy_Framework), DKIM ([OpenDKIM](http://www.opendkim.org/)), [DMARC](https://en.wikipedia.org/wiki/DMARC), [DNSSEC](https://en.wikipedia.org/wiki/DNSSEC), [DANE TLSA](https://en.wikipedia.org/wiki/DNS-based_Authentication_of_Named_Entities), [MTA-STS](https://tools.ietf.org/html/rfc8461), and [SSHFP](https://tools.ietf.org/html/rfc4255) policy records automatically set
+* HTTPS TLS certificates are automatically provisioned using [Let's Encrypt](https://letsencrypt.org/) (needed for webmail, CardDAV/CalDAV, ActiveSync, MTA-STS policy, etc.).
+* Backups ([duplicity](http://duplicity.nongnu.org/)), firewall ([ufw](https://launchpad.net/ufw)), intrusion protection ([fail2ban](http://www.fail2ban.org/wiki/index.php/Main_Page)), and basic system monitoring ([munin](http://munin-monitoring.org/))
 
-It also includes:
+It also includes system management tools:
 
-* A control panel and API for adding/removing mail users, aliases, custom DNS records, etc. and detailed system monitoring.
+* Comprehensive health monitoring that checks each day that services are running, ports are open, TLS certificates are valid, and DNS records are correct
+* A control panel for adding/removing mail users, aliases, custom DNS records, configuring backups, etc.
+* An API for all of the actions on the control panel
+
+It also supports static website hosting since the box is serving HTTPS anyway.
 
 For more information on how Mail-in-a-Box handles your privacy, see the [security details page](security.md).
 
@@ -110,7 +115,7 @@ by him:
 	$ curl -s https://keybase.io/joshdata/key.asc | gpg --import
 	gpg: key C10BDD81: public key "Joshua Tauberer <jt@occams.info>" imported
 
-	$ git verify-tag v0.44
+	$ git verify-tag v0.46
 	gpg: Signature made ..... using RSA key ID C10BDD81
 	gpg: Good signature from "Joshua Tauberer <jt@occams.info>"
 	gpg: WARNING: This key is not certified with a trusted signature!
@@ -123,7 +128,7 @@ and on his [personal homepage](https://razor.occams.info/). (Of course, if this 
 
 Checkout the tag corresponding to the most recent release:
 
-	$ git checkout v0.44
+	$ git checkout v0.46
 
 Begin the installation.
 

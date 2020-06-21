@@ -4,6 +4,29 @@ CHANGELOG
 In Development
 --------------
 
+Mail:
+
+* An MTA-STS policy for incoming mail is now published (in DNS and over HTTPS) when the primary hostname and email address domain both have a signed TLS certificate installed.
+* MTA-STS reporting is enabled with reports sent to administrator@ the primary hostname.
+
+DNS:
+
+* autoconfig and autodiscover subdomains and CalDAV/CardDAV SRV records are no longer generated for domains that don't have user accounts since they are unnecessary.
+
+v0.46 (June 11, 2020)
+---------------------
+
+Security fixes:
+
+* Roundcube is updated to version 1.4.6 (https://roundcube.net/news/2020/06/02/security-updates-1.4.5-and-1.3.12).
+
+v0.45 (May 16, 2020)
+--------------------
+
+Security fixes:
+
+* Fix missing brute force login protection for Roundcube logins.
+
 Software updates:
 
 * Upgraded Roundcube from 1.4.2 to 1.4.4.
