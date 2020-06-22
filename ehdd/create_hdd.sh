@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source "setup/ehdd/ehdd_funcs.sh" || exit 1
+source "ehdd/ehdd_funcs.sh" || exit 1
 
 if [ "$1" == "" ]; then
     echo "usage: $0 <size-in-gb>"
@@ -26,14 +26,14 @@ if [ ! -e "$EHDD_IMG" ]; then
     dd if=/dev/zero of="$EHDD_IMG" bs=1M count=$count || exit 1
     loop=$(find_unused_loop)
     losetup $loop "$EHDD_IMG" || exit 1
-    if ! cryptsetup luksFormat -i 15000 $loop; then
+    if ! cryptsetup luksFormat $(keyfile_option) --batch-mode -i 15000 $loop; then
         losetup -d $loop
         rm -f "$EHDD_IMG"
         exit 1
     fi
     echo ""
-    echo "NOTE: You will need to reenter your drive encryption password a number of times"
-    cryptsetup luksOpen $loop $EHDD_LUKS_NAME  # map device to /dev/mapper/NAME
+    echo "NOTE: You will need to reenter your drive encryption password"
+    cryptsetup luksOpen $(keyfile_option) $loop $EHDD_LUKS_NAME  # map device to /dev/mapper/NAME
     mke2fs -j /dev/mapper/$EHDD_LUKS_NAME
     cryptsetup luksClose $EHDD_LUKS_NAME
     losetup -d $loop

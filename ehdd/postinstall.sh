@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. "setup/ehdd/ehdd_funcs.sh" || exit 1
+. "ehdd/ehdd_funcs.sh" || exit 1
 
 if [ -e "$EHDD_IMG" ]; then
     
@@ -20,22 +20,10 @@ if [ -e "$EHDD_IMG" ]; then
         echo ""
         echo "IMPORTANT:"
         echo "    Services have been disabled at startup because the encrypted HDD will"
-        echo "    be unavailable. Run tools/startup.sh after a reboot."
+        echo "    be unavailable. Run ehdd/startup.sh after a reboot."
     fi
 
 fi
 
-# run local modifications
-h=$(hostname --fqdn 2>/dev/null || hostname)
-count=0
-for d in local/mods.sh local/mods-${h}.sh; do
-    if [ -e $d ]; then
-        let count+=1
-        if ! ./$d; then
-            echo "Local modification script $d failed"
-            exit 1
-        fi
-    fi
-done
 
 

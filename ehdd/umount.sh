@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. "setup/ehdd/ehdd_funcs.sh" || exit 1
+. "ehdd/ehdd_funcs.sh" || exit 1
 
 if ! mount | grep "$EHDD_MOUNTPOINT" >/dev/null; then
     # not mounted

@@ -18,3 +18,9 @@ find_unused_loop() {
 find_inuse_loop() {
     losetup -l | awk "\$6 == \"$EHDD_IMG\" { print \$1 }"
 }
+
+keyfile_option() {
+    if [ ! -z "$EHDD_KEYFILE" ]; then
+        echo "--key-file $EHDD_KEYFILE"
+    fi
+}

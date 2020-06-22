@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. "setup/ehdd/ehdd_funcs.sh" || exit 1
+. "ehdd/ehdd_funcs.sh" || exit 1
 
 if [ ! -e "$EHDD_IMG" ]; then
     echo "Warning: ecrypted HDD not found at $EHDD_IMG, not mounting"
@@ -15,7 +15,7 @@ fi
 loop=$(find_unused_loop)
 losetup $loop "$EHDD_IMG" || exit 1
 # map device to /dev/mapper/NAME
-cryptsetup luksOpen $loop $EHDD_LUKS_NAME
+cryptsetup luksOpen $(keyfile_option) $loop $EHDD_LUKS_NAME
 code=$?
 if [ $code -ne 0 ]; then
     echo "luksOpen failed ($code) - is $EHDD_IMG luks formatted?"

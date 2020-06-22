@@ -1,5 +1,5 @@
 #!/bin/bash
-EHDD_IMG="$(setup/ehdd/create_hdd.sh -location)"
+EHDD_IMG="$(ehdd/create_hdd.sh -location)"
 
 [ -e /etc/mailinabox.conf ] && . /etc/mailinabox.conf
 
@@ -11,17 +11,21 @@ if [ ! -e "$EHDD_IMG" -a ! -z "$STORAGE_ROOT" -a \
 elif [ ! -e "$EHDD_IMG" ]; then
     
     echo "Creating a new encrypted HDD."
-    echo -n "How big should it be? Enter a number in gigabytes: "
-    read gb
-    setup/ehdd/create_hdd.sh "$gb" || exit 1
+    if [ -z "${NONINTERACTIVE:-}" ]; then
+        echo -n "How big should it be? Enter a number in gigabytes: "
+        read gb
+    else
+        gb="${EHDD_GB:-5}"
+    fi
+    ehdd/create_hdd.sh "$gb" || exit 1
     
 fi
 
 
-if setup/ehdd/mount.sh; then
+if ehdd/mount.sh; then
     setup/start.sh $@
     if [ $? -eq 0 ]; then
-        setup/ehdd/postinstall.sh || exit 1
+        ehdd/postinstall.sh || exit 1
     else
         echo "setup/start.sh failed"
     fi
