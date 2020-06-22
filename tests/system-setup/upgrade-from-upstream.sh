@@ -88,6 +88,8 @@ upstream_install() {
     fi
     popd >/dev/null
     
+    workaround_dovecot_sieve_bug
+
     H2 "Upstream info"
     echo "Code version: $(git describe)"
     echo "Migration version: $(cat "$STORAGE_ROOT/mailinabox.version")"

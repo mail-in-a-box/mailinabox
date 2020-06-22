@@ -4,23 +4,42 @@ Vagrant.configure("2") do |config|
   config.vm.synced_folder "../..", "/mailinabox", id: "mailinabox", automount: false
   config.vm.provision "file", source:"globals.sh", destination:"globals.sh"
 
-  # remote-nextcloud-docker
+  # fresh install with encryption-at-rest
 
-  config.vm.define "remote-nextcloud-docker" do |m1|
+  config.vm.define "remote-nextcloud-docker-ehdd" do |m1|
     m1.vm.box = "ubuntu/bionic64"
     m1.vm.provision :shell, :inline => <<-SH
 source globals.sh || exit 1
 export PRIMARY_HOSTNAME=qa1.abc.com
 export FEATURE_MUNIN=false
+export EHDD_KEYFILE=$HOME/keyfile
+echo -n "boo" >$EHDD_KEYFILE
 cd /mailinabox
-if tests/system-setup/remote-nextcloud-docker.sh upgrade basic
-then
-   tests/runner.sh default remote-nextcloud upgrade-basic
+tests/system-setup/remote-nextcloud-docker.sh; rc=$?
+if [ $rc -eq 0 ]; then
+   tests/runner.sh default remote-nextcloud; rc=$?
 fi
-echo "EXITCODE: $?"
+echo "EXITCODE: $rc"
 SH
   end
-  
+
+  # remote-nextcloud-docker w/basic data
+
+  config.vm.define "remote-nextcloud-docker" do |m1|
+    m1.vm.box = "ubuntu/bionic64"
+    m1.vm.provision :shell, :inline => <<-SH
+source globals.sh || exit 1
+export PRIMARY_HOSTNAME=qa2.abc.com
+export FEATURE_MUNIN=false
+cd /mailinabox
+tests/system-setup/remote-nextcloud-docker.sh upgrade basic; rc=$?
+if [ $rc -eq 0 ]; then
+   tests/runner.sh default remote-nextcloud upgrade-basic; rc=$?
+fi
+echo "EXITCODE: $rc"
+SH
+  end
+
 
   # upgrade-from-upstream
   
@@ -28,14 +47,14 @@ SH
     m2.vm.box = "ubuntu/bionic64"
     m2.vm.provision :shell, :inline => <<-SH
 source globals.sh || exit 1
-export PRIMARY_HOSTNAME=qa2.abc.com
+export PRIMARY_HOSTNAME=qa3.abc.com
 export UPSTREAM_TAG=master
 cd /mailinabox
-if tests/system-setup/upgrade-from-upstream.sh basic
-then
-  tests/runner.sh default upgrade-basic
+tests/system-setup/upgrade-from-upstream.sh basic; rc=$?
+if [ $rc -eq 0 ]; then
+   tests/runner.sh default upgrade-basic; rc=$?
 fi
-echo "EXITCODE: $?"
+echo "EXITCODE: $rc"
 SH
   end
 

@@ -47,7 +47,7 @@ fi
 init() {
     H1 "INIT"
     init_test_system
-    init_miab_testing || die "Initialization failed"    
+    init_miab_testing || die "Initialization failed"
 }
 
 

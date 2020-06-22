@@ -36,7 +36,6 @@ jobs:
     script:
       # launch automated tests, but skip tests that require remote
       # smtp support because Travis-CI blocks outgoing port 25
-      - sudo touch /etc/dovecot/sieve-spam.svbin
       - sudo tests/runner.sh -dumpoutput -no-smtp-remote default remote-nextcloud upgrade-basic
 
   # JOB: Upgrade from upstream install
@@ -49,5 +48,4 @@ jobs:
     script:
       # launch automated tests, but skip tests that require remote
       # smtp support because Travis-CI blocks outgoing port 25
-      - sudo touch /etc/dovecot/sieve-spam.svbin
       - sudo tests/runner.sh -dumpoutput -no-smtp-remote default upgrade-basic

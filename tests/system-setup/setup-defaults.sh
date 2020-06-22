@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Used by setup/start.sh
+export PRIMARY_HOSTNAME=${PRIMARY_HOSTNAME:-$(hostname --fqdn || hostname)}
 export NONINTERACTIVE=${NONINTERACTIVE:-1}
 export SKIP_NETWORK_CHECKS=${SKIP_NETWORK_CHECKS:-1}
 export STORAGE_USER="${STORAGE_USER:-user-data}"
@@ -10,11 +11,10 @@ export EMAIL_PW="${EMAIL_PW:-Test_1234}"
 export PUBLIC_IP="${PUBLIC_IP:-$(source ${MIAB_DIR:-.}/setup/functions.sh; get_default_privateip 4)}"
 export LOCAL_MODS_DIR="${LOCAL_MODS_DIR:-local}"
 
-if [ "$TRAVIS" == "true" ]; then
-    export PRIMARY_HOSTNAME=${PRIMARY_HOSTNAME:-box.abc.com}
-elif [ -z "$PRIMARY_HOSTNAME" ]; then
-    export PRIMARY_HOSTNAME=${PRIMARY_HOSTNAME:-$(hostname --fqdn || hostname)}
-fi
+# Used by ehdd/start-encrypted.sh
+export EHDD_KEYFILE="${EHDD_KEYFILE:-}"
+export EHDD_GB="${EHDD_GB:-2}"
+
 
 # Placing this var in STORAGE_ROOT/ldap/miab_ldap.conf before running
 # setup/start.sh will avoid a random password from being used for the

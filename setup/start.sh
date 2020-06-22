@@ -27,6 +27,9 @@ export LC_TYPE=en_US.UTF-8
 # Fix so line drawing characters are shown correctly in Putty on Windows. See #744.
 export NCURSES_NO_UTF8_ACS=1
 
+# if encryption-at-rest is enabled, make sure the drive is mounted
+ehdd/mount.sh    
+
 # Recall the last settings used if we're running this a second time.
 if [ -f /etc/mailinabox.conf ]; then
 	# Run any system migrations before proceeding. Since this is a second run,

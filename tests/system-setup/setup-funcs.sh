@@ -102,6 +102,17 @@ init_miab_testing() {
         && echo "Error: STORAGE_ROOT not set" 1>&2 \
         && return 1
 
+    # If EHDD_KEYFILE is set, use encryption-at-rest support.  The
+    # drive must be created and mounted so that our QA files can be
+    # copied there.
+    H2 "Encryption-at-rest"
+    if [ ! -z "$EHDD_KEYFILE" ]; then
+        ehdd/create_hdd.sh ${EHDD_GB} || die "create luks drive failed"
+        ehdd/mount.sh || die "unable to mount luks drive"
+    else
+        echo "Not configured for encryption-at-rest"
+    fi
+    
     H2 "QA prerequisites"
     local rc=0
     
@@ -129,6 +140,11 @@ init_miab_testing() {
             echo "LDAP_NEXTCLOUD_PASSWORD=\"$LDAP_NEXTCLOUD_PASSWORD\"" >> $STORAGE_ROOT/ldap/miab_ldap.conf
         fi
     fi
+
+    # now that we've copied our files, unmount STORAGE_ROOT if
+    # encryption-at-rest was enabled
+    ehdd/umount.sh
+    
     return $rc
 }
 
@@ -155,20 +171,41 @@ tag_from_readme() {
 }
 
 
+workaround_dovecot_sieve_bug() {
+    # Workaround a bug in dovecot/sieve that causes attempted sieve
+    # compilation when a compiled sieve has the same date as the
+    # source file. The fialure occurs with miab-installed "spam"
+    # sieve, which can't be recompiled due to the read-only /etc
+    # filesystem restriction in systemd (ProtectSystem=efull is set,
+    # see `systemctl cat dovecot.service`).
+    sleep 1
+    touch /etc/dovecot/sieve-spam.svbin
+}
+
+
 miab_ldap_install() {
     H1 "MIAB-LDAP INSTALL"
     # ensure we're in a MiaB-LDAP working directory
     if [ ! -e setup/ldap.sh ]; then
         die "Cannot install: the working directory is not MiaB-LDAP!"
     fi
+
+    # if EHDD_KEYFILE is set, use encryption-at-rest support
+    if [ ! -z "$EHDD_KEYFILE" ]; then
+        ehdd/start-encrypted.sh
+    else
+        setup/start.sh
+    fi
     
-    if ! setup/start.sh; then
+    if [ $? -ne 0 ]; then
         H1 "OUTPUT OF SELECT FILES"
         dump_file "/var/log/syslog" 100
         dump_conf_files "$TRAVIS"
         H2; H2 "End"; H2
-        die "MiaB-LDAP setup/start.sh failed!"
+        die "MiaB-LDAP setup failed!"
     fi
+
+    workaround_dovecot_sieve_bug
 
     # set actual STORAGE_ROOT, STORAGE_USER, PRIVATE_IP, etc
     . /etc/mailinabox.conf || die "Could not source /etc/mailinabox.conf"

@@ -21,13 +21,10 @@ elif [ ! -e "$EHDD_IMG" ]; then
     
 fi
 
-
-if ehdd/mount.sh; then
-    setup/start.sh $@
-    if [ $? -eq 0 ]; then
-        ehdd/postinstall.sh || exit 1
-    else
-        echo "setup/start.sh failed"
-    fi
+setup/start.sh $@
+if [ $? -eq 0 ]; then
+    ehdd/postinstall.sh || exit 1
+else
+    echo "setup/start.sh failed"
 fi
 
