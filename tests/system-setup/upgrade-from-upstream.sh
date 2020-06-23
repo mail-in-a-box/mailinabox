@@ -96,30 +96,6 @@ upstream_install() {
 }
 
 
-populate() {
-    local pw="$(static_qa_password)"
-    
-    H1 "Add some Mail-in-a-Box data"
-    local users=()
-    users+=("betsy@$(email_domainpart "$EMAIL_ADDR"):$pw")
-
-    local alises=()
-    aliases+=("goalias@testdom.com > $(awk -F: {'print $1'} <<<"${users[0]}")")
-    aliases+=("nested@testdom.com > goalias@testdom.com")
-
-    H2 "Add users"
-    if ! populate_miab_users "" "" "" "${users[@]}"
-    then
-        die "Unable to add users"
-    fi
-
-    H2 "Add aliases"
-    if ! populate_miab_aliases "" "" "" "${aliases[@]}"
-    then
-        die "Unable to add aliases"
-    fi
-}
-
 
 
 
