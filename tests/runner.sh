@@ -22,6 +22,7 @@ default_suites=(
 )
 
 extra_suites=(
+	ehdd
 	remote-nextcloud
 	"upgrade-<name>"
 )
@@ -41,6 +42,7 @@ usage() {
 	echo ""
 	echo "Extra test suites:"
 	echo "------------------"
+	echo "  ehdd               : test encryption-at-rest"
 	echo "  remote-nextcloud   : test the setup mod for remote Nextcloud"
 	echo "  upgrade-<name>     : verify an upgrade using named populate data"
 	echo ""

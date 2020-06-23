@@ -17,7 +17,7 @@ echo -n "boo" >$EHDD_KEYFILE
 cd /mailinabox
 tests/system-setup/remote-nextcloud-docker.sh; rc=$?
 if [ $rc -eq 0 ]; then
-   tests/runner.sh default remote-nextcloud; rc=$?
+   tests/runner.sh ehdd default remote-nextcloud; rc=$?
 fi
 echo "EXITCODE: $rc"
 SH
