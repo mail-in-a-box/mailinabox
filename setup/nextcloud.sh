@@ -25,8 +25,8 @@ InstallNextcloud() {
 	echo "Upgrading to Nextcloud version $version"
 	echo
 
-        # Download and verify
-        wget_verify https://download.nextcloud.com/server/releases/nextcloud-$version.zip $hash /tmp/nextcloud.zip
+	# Download and verify
+	wget_verify https://download.nextcloud.com/server/releases/nextcloud-$version.zip $hash /tmp/nextcloud.zip
 
 	# Remove the current owncloud/Nextcloud
 	rm -rf /usr/local/lib/owncloud
@@ -51,7 +51,7 @@ InstallNextcloud() {
 	# Starting with Nextcloud 15, the app user_external is no longer included in Nextcloud core,
 	# we will install from their github repository.
 	if [[ $version =~ ^1[567] ]]; then
-		wget_verify https://github.com/nextcloud/user_external/releases/download/v0.7.0/user_external-0.7.0.tar.gz 555a94811daaf5bdd336c5e48a78aa8567b86437 /tmp/user_external.tgz
+		wget_verify https://github.com/nextcloud/user_external/releases/download/v0.10.0/user_external-0.10.0.tar.gz 133c0d65aba1b09c28b21d05477c122041a9abc2 /tmp/user_external.tgz
 		tar -xf /tmp/user_external.tgz -C /usr/local/lib/owncloud/apps/
 		rm /tmp/user_external.tgz
 	fi
@@ -91,8 +91,8 @@ InstallNextcloud() {
 }
 
 # Nextcloud Version to install. Checks are done down below to step through intermediate versions.
-nextcloud_ver=18.0.4
-nextcloud_hash=6a1c671600d6a839d53cbcfac64eb3858936bbad
+nextcloud_ver=19.0.0
+nextcloud_hash=d2c631327873ce42ff6a90f9916396f1f7202ea1
 
 # Current Nextcloud Version, #1623
 # Checking /usr/local/lib/owncloud/version.php shows version of the Nextcloud application, not the DB
@@ -152,9 +152,9 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 			CURRENT_NEXTCLOUD_VER="15.0.8"
 		fi
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^15 ]]; then
-                        InstallNextcloud 16.0.6 0bb3098455ec89f5af77a652aad553ad40a88819
-                        CURRENT_NEXTCLOUD_VER="16.0.6"
-                fi
+			InstallNextcloud 16.0.6 0bb3098455ec89f5af77a652aad553ad40a88819
+			CURRENT_NEXTCLOUD_VER="16.0.6"
+		fi
 	fi
 
 	InstallNextcloud $nextcloud_ver $nextcloud_hash
