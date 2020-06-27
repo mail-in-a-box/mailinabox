@@ -22,7 +22,7 @@ Install Power-Mail-in-a-Box (short link)
 curl -L https://dvn.pt/powermiab | sudo bash
 ```
 
-## Current Version: v0.44.POWER.7 (Tracking v0.44)
+## Current Version: v0.46.POWER.1 (Tracking v0.46)
 
 This is a fork of MiaB (duh), hacked and tuned to my needs:
 
@@ -43,6 +43,8 @@ This is a fork of MiaB (duh), hacked and tuned to my needs:
 - - Use PHP (e.g. host a domain shortener);
 
 - - Custom pages will no longer have their pages defaulting to the MiaB services (`/admin`, `/mail`, etc.);
+
+- ✅ Updated NextCloud to the latest version available;
 
 - 💤 Possibility of disabling some services (\*cough\* NextCloud \*cough\*);
 

@@ -216,12 +216,12 @@ def get_certificates_to_provision(env, limit_domains=None, show_valid_certs=True
 				response = query_dns(domain, rtype)
 				if response != normalize_ip(value):
 					bad_dns.append("%s (%s)" % (response, rtype))
-	
+
 			if bad_dns:
 				domains_cant_provision[domain] = "The domain name does not resolve to this machine: " \
 					+ (", ".join(bad_dns)) \
 					+ "."
-			
+
 			else:
 				# DNS is all good.
 
@@ -347,6 +347,7 @@ def provision_certificates(env, limit_domains):
 						#"-v", # just enough to see ACME errors
 						"--non-interactive", # will fail if user hasn't registered during Mail-in-a-Box setup
 						"--agree-tos", # Automatically agrees to Let's Encrypt TOS
+						"--register-unsafely-without-email", # The daemon takes care of renewals
 
 						"-d", ",".join(domain_list), # first will be main domain
 
