@@ -123,16 +123,31 @@ init_miab_testing() {
     
     # copy in pre-built MiaB-LDAP ssl files
     #   1. avoid the lengthy generation of DH params
-    mkdir -p $STORAGE_ROOT/ssl \
-        || (echo "Unable to create $STORAGE_ROOT/ssl ($?)" && rc=1)
-    cp tests/assets/ssl/dh2048.pem $STORAGE_ROOT/ssl \
-        || (echo "Copy dhparams failed ($?)" && rc=1)
+    if ! mkdir -p $STORAGE_ROOT/ssl; then
+        echo "Unable to create $STORAGE_ROOT/ssl ($?)"
+        rc=1
+    fi
+    echo "Copy dhparams"
+    if ! cp tests/assets/ssl/dh2048.pem $STORAGE_ROOT/ssl; then
+        echo "Copy failed ($?)"
+        rc=1
+    fi
+        
+    if array_contains "--qa-ca" "$@"; then
+        echo "Copy certificate authority"
+        if ! cp tests/assets/ssl/ca_*.pem $STORAGE_ROOT/ssl; then
+            echo "Copy failed ($?)"
+            rc=1
+        fi
+    fi
 
     # create miab_ldap.conf to specify what the Nextcloud LDAP service
     # account password will be to avoid a random one created by start.sh
     if [ ! -z "$LDAP_NEXTCLOUD_PASSWORD" ]; then
-        mkdir -p $STORAGE_ROOT/ldap \
-            || (echo "Could not create $STORAGE_ROOT/ldap" && rc=1)
+        if ! mkdir -p $STORAGE_ROOT/ldap; then
+            echo "Could not create $STORAGE_ROOT/ldap"
+            rc=1
+        fi
         [ -e $STORAGE_ROOT/ldap/miab_ldap.conf ] && \
             echo "Warning: exists: $STORAGE_ROOT/ldap/miab_ldap.conf" 1>&2
         touch $STORAGE_ROOT/ldap/miab_ldap.conf || rc=1
@@ -160,6 +175,12 @@ enable_miab_mod() {
         fi
     fi
 }
+
+disable_miab_mod() {
+    local name="${1}.sh"
+    rm -f "$LOCAL_MODS_DIR/$name"
+}
+
 
 tag_from_readme() {
     # extract the recommended TAG from README.md

@@ -142,18 +142,13 @@ install_nextcloud_docker() {
 do_upgrade() {
     local populate_name="$1"
 
-    if [ -e "$LOCAL_MODS_DIR/remote-nextcloud.sh" ]; then
-        # we install w/o remote nextcloud first so we can add
-        # a user w/contacts and ensure the contact exists in the
-        # new system
-        if [ ! -L "$LOCAL_MODS_DIR/remote-nextcloud.sh" ]; then
-            echo "Warning: $LOCAL_MODS_DIR/remote-nextcloud.sh is a regular file - should be a symlink"
-        fi
-        die "Error: $LOCAL_MODS_DIR/remote-nextcloud.sh exists - delete it and try again"
-    fi
-
     # initialize test system
     init
+
+    # we install w/o remote nextcloud first so we can add
+    # a user w/contacts and ensure the contact exists in the
+    # new system
+    disable_miab_mod "remote-nextcloud"
 
     # install w/o remote Nextcloud
     miab_ldap_install
