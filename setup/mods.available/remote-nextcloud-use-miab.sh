@@ -14,6 +14,29 @@
 VERBOSE=0
 
 
+say() {
+    echo "$@"
+}
+
+say_verbose() {
+    if [ $VERBOSE -gt 0 ]; then
+        echo "$@"
+    fi
+}
+
+die() {
+    echo "$@" 1>&2
+    exit 2
+}
+
+die_with_code() {
+    code="$1"
+    shift
+    echo "$@" 1>&2
+    exit $code
+}
+
+
 usage() {
     cat <<EOF
 Usage: $0 <NCDIR> <NC_ADMIN_USER> <NC_ADMIN_PASSWORD> <MIAB_HOSTNAME> <LDAP_NEXTCLOUD_PASS> [ <SSMTP_ALERTS_EMAIL> <SSMTP_AUTH_USER> <SSMTP_AUTH_PASS> ]
@@ -57,10 +80,87 @@ EOF
     exit 1
 }
 
+miab_constants() {
+    # Hostname of the remote MiaB-LDAP
+    MAILINABOX_HOSTNAME="$1"
+
+    # LDAP service account Nextcloud uses to perform ldap searches.
+    # Values are found in mailinabox:/home/user-data/ldap/miab_ldap.conf
+    LDAP_NEXTCLOUD_DN="cn=nextcloud,ou=Services,dc=mailinabox"
+    LDAP_NEXTCLOUD_PASSWORD="$2"
+
+    LDAP_URL="ldaps://$MAILINABOX_HOSTNAME"
+    LDAP_SERVER="$MAILINABOX_HOSTNAME"
+    LDAP_SERVER_PORT="636"
+    LDAP_SERVER_STARTTLS="no"
+    LDAP_BASE="dc=mailinabox"
+    LDAP_USERS_BASE="ou=Users,dc=mailinabox"
+}
+
+
+test_ldap_connection() {
+    say_verbose "Installing system package ldap-utils"
+    apt-get install -y -qq ldap-utils || die "Could not install required packages"
+    
+    local count=0
+    local ldap_debug=""
+    
+    while /bin/true; do
+        # ensure we can search
+        local output
+        say ""
+        say "Testing MiaB-LDAP connection..."
+        output="$(ldapsearch $ldap_debug -v -H $LDAP_URL -x -D "$LDAP_NEXTCLOUD_DN" -w "$LDAP_NEXTCLOUD_PASSWORD" -b "$LDAP_BASE" -s base 2>&1)"
+        local code=$?
+        if [ $code -ne 0 ]; then
+            say "Unable to contact $LDAP_URL"
+            say "   base=$LDAP_BASE"
+            say "   user=$LDAP_NEXTCLOUD_DN"
+            say "   error code=$code"
+            say "   msg= $output"
+            say ""
+            say "You may need to permit access to the ldap server running on $LDAP_SERVER"
+            say "On $LDAP_SERVER execute:"
+            local ip
+            for ip in $(hostname -I); do
+                say "   ufw allow proto tcp from $ip to any port ldaps"
+            done
+            say ""
+            let count+=1
+            if [ $count -gt 5 ]; then
+                die "Giving up"
+            fi
+            if [ -z "$ldap_debug" ]; then
+                echo "I'll turn on more debugging output on the next attempt"
+            fi
+            read -p "Press [enter] when ready, or \"no\" to give up: " ans
+            [ "$ans" == "no" ] && die "Abandoning MiaB-LDAP integration"
+            ldap_debug="-d 9"
+            
+        else
+            say "Test successful - able to bind and search as $LDAP_NEXTCLOUD_DN"
+            break
+        fi
+    done
+}
+
+
+
+
+
 if [ "$1" == "-v" ]; then
     VERBOSE=1
     shift
 fi
+
+if [ "$1" == "--test-ldap-connection" ]; then
+    shift
+    if [ $# -ne 2 ]; then usage; fi
+    miab_constants "$1" "$2"
+    test_ldap_connection
+    exit 0
+fi
+
 
 # Directory where Nextcloud is installed (must contain occ)
 NCDIR="$1"
@@ -69,18 +169,17 @@ NCDIR="$1"
 NC_ADMIN_USER="$2"
 NC_ADMIN_PASSWORD="$3"
 
-# Hostname of the remote MiaB-LDAP
-MAILINABOX_HOSTNAME="$4"
-
-# LDAP service account Nextcloud uses to perform ldap searches.
-# Values are found in mailinabox:/home/user-data/ldap/miab_ldap.conf
-LDAP_NEXTCLOUD_DN="cn=nextcloud,ou=Services,dc=mailinabox"
-LDAP_NEXTCLOUD_PASSWORD="$5"
+# Set MiaB-LDAP constants 4=host 5=service-account-password
+miab_constants "$4" "$5"
 
 # ssmtp: the person who gets all emails for userids < 1000
 SSMTP_ALERTS_EMAIL="$6"
 SSMTP_AUTH_USER="$7"
 SSMTP_AUTH_PASS="$8"
+
+# other constants
+PRIMARY_HOSTNAME="$(hostname --fqdn || hostname)"
+
 
 #
 # validate arguments
@@ -130,17 +229,6 @@ if [ "$EUID" != "0" ]; then
 fi
 
 
-#
-# other constants
-#
-
-LDAP_URL="ldaps://$MAILINABOX_HOSTNAME"
-LDAP_SERVER="$MAILINABOX_HOSTNAME"
-LDAP_SERVER_PORT="636"
-LDAP_SERVER_STARTTLS="no"
-LDAP_BASE="dc=mailinabox"
-LDAP_USERS_BASE="ou=Users,dc=mailinabox"
-PRIMARY_HOSTNAME="$(hostname --fqdn)"
 
 #
 # get the url used to access nextcloud as NC_ADMIN_USER
@@ -162,21 +250,6 @@ TNAME${NC_CONFIG_CLI_URL:-/}"
 esac
 
 
-say() {
-    echo "$@"
-}
-
-say_verbose() {
-    if [ $VERBOSE -gt 0 ]; then
-        echo "$@"
-    fi
-}
-
-die() {
-    echo "$@" 1>&2
-    exit 2
-}
-
 
 
 #
@@ -189,7 +262,9 @@ config_user_ldap() {
     local first_call="${2:-yes}"
     local starttls=0
     [ "$LDAP_SERVER_STARTTLS" == "yes" ] && starttls=1
-    
+
+    apt-get install -y -qq python3 || die "Could not install required packages"
+
     local c=(
         "--data-urlencode configData[ldapHost]=$LDAP_URL"
         "--data-urlencode configData[ldapPort]=$LDAP_SERVER_PORT"
@@ -253,7 +328,7 @@ config_user_ldap() {
 
     elif [ "$statuscode" == "997" -a "$first_call" == "yes" ]; then
         # could not log in
-        die "Could not authenticate as $NC_ADMIN_USER to perform user-ldap API call. statuscode=$statuscode: $xml"
+        die_with_code 3 "Could not authenticate as $NC_ADMIN_USER to perform user-ldap API call. statuscode=$statuscode: $xml"
         
     elif [ "$statuscode" != "200" ]; then
         die "Unable to apply ldap configuration to nextcloud: id=$id first_call=$first_call statuscode=$statuscode: $xml"
@@ -334,57 +409,16 @@ EOF
 
 
 remote_mailinabox_handler() {
-    say_verbose "Installing system package ldap-utils"
-    apt-get install -y -qq ldap-utils python3 || die "Could not install required packages"
-    
-    local count=0
-    local ldap_debug=""
-    
-    while /bin/true; do
-        # ensure we can search
-        local output
-        say ""
-        say "Testing MiaB-LDAP connection..."
-        output="$(ldapsearch $ldap_debug -v -H $LDAP_URL -x -D "$LDAP_NEXTCLOUD_DN" -w "$LDAP_NEXTCLOUD_PASSWORD" -b "$LDAP_BASE" -s base 2>&1)"
-        local code=$?
-        if [ $code -ne 0 ]; then
-            say "Unable to contact $LDAP_URL"
-            say "   base=$LDAP_BASE"
-            say "   user=$LDAP_NEXTCLOUD_DN"
-            say "   error code=$code"
-            say "   msg= $output"
-            say ""
-            say "You may need to permit access to the ldap server running on $LDAP_SERVER"
-            say "On $LDAP_SERVER execute:"
-            local ip
-            for ip in $(hostname -I); do
-                say "   \$ ufw allow proto tcp from $ip to any port ldaps"
-            done
-            say ""
-            let count+=1
-            if [ $count -gt 5 ]; then
-                die "Giving up"
-            fi
-            read -p "Press [enter] when ready, or \"no\" to quit: " ans
-            [ "$ans" == "no" ] && die "Quit"
-            ldap_debug="-d 9"
-            
-        else
-            say "Test successful - able to bind and search as $LDAP_NEXTCLOUD_DN"
-            break
-        fi
-    done
-        
+    test_ldap_connection
     enable_user_ldap
     config_user_ldap
-
     return 0
 }
 
 
 
 echo "Integrating Nextcloud with Mail-in-a-box LDAP"
-remote_mailinabox_handler
+remote_mailinabox_handler || die "Unable to continue"
 
 # contacts and calendar are required for Roundcube and Z-Push
 install_app "calendar"
