@@ -35,6 +35,8 @@ if [ ! -e "$EHDD_IMG" ]; then
     echo "NOTE: You will need to reenter your drive encryption password"
     cryptsetup luksOpen $(keyfile_option) $loop $EHDD_LUKS_NAME  # map device to /dev/mapper/NAME
     mke2fs -j /dev/mapper/$EHDD_LUKS_NAME
+    # sleep a brief time to avoid "device busy"
+    sleep 2
     cryptsetup luksClose $EHDD_LUKS_NAME
     losetup -d $loop
 else
