@@ -11,7 +11,7 @@ sudo apt update
 sudo apt full-upgrade
 ```
 
-Make sure that the `en_US.UTF-8` locale exists and is set as primary
+Make sure that the `en_US.UTF-8` locale exists and is set as primary (this depends on the image you use)
 ```sh
 sudo apt install locales
 sudo dpkg-reconfigure locales
@@ -22,7 +22,12 @@ Install Power-Mail-in-a-Box (short link)
 curl -L https://dvn.pt/powermiab | sudo bash
 ```
 
-## Current Version: v0.46.POWER.2 (Tracking v0.46)
+If that doesn't work:
+```sh
+curl https://raw.githubusercontent.com/ddavness/power-mailinabox/master/setup/bootstrap.sh | sudo bash
+```
+
+## Current Version: v0.46.POWER.3 (Tracking v0.46)
 
 This is a fork of MiaB (duh), hacked and tuned to my needs:
 
@@ -47,6 +52,16 @@ This is a fork of MiaB (duh), hacked and tuned to my needs:
 - ✅ Updated NextCloud to the latest version available;
 
 - 💤 Possibility of disabling some services (\*cough\* NextCloud \*cough\*);
+
+### Ideas section:
+
+- 💤 AXFR Transfers using TSIG?
+
+- 💤 Expand DNS options?
+
+- 💤 More complete webmail configuration via the admin panel?
+
+- 💤 Encrypting backups using user-provided PGP keys?
 
 - 💤 Anything else I might need to use;
 
