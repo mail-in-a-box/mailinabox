@@ -232,3 +232,4 @@ elif [ "$OS" == "Ubuntu 20.04 LTS" ]; then
 fi
 
 sed -i "s|!!___PHPVER___!!|${PHP_VERSION}|g" conf/nginx-top.conf
+sed -i "s|!!___PHPVER___!!|${PHP_VERSION}|g" management/backup.py
