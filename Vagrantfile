@@ -26,8 +26,22 @@ Vagrant.configure("2") do |config|
     export PRIMARY_HOSTNAME=auto
     #export SKIP_NETWORK_CHECKS=1
 
+    if [ ! git ]
+    then
+      apt update
+      apt install git
+    fi
+
+    if [ ! -d /mailinabox ];
+    then
+      git clone https://github.com/ddavness/power-mailinabox.git /mailinabox
+    fi
+
     # Start the setup script.
-    cd /vagrant
+    cd /mailinabox
+    git checkout development
+    git pull
+
     setup/start.sh
 SH
 end
