@@ -976,12 +976,8 @@ def set_secondary_dns(hostnames, env):
 				try:
 					if "/" in item[4:]:
 						v = ipaddress.ip_network(item[4:]) # raises a ValueError if there's a problem
-						if not isinstance(v, ipaddress.IPv4Network) and not isinstance(v, ipaddress.IPv6Network):
-							raise ValueError("That's neither an IPv4 or IPv6 subnet.")
 					else:
 						v = ipaddress.ip_address(item[4:]) # raises a ValueError if there's a problem
-						if not isinstance(v, ipaddress.IPv4Address) and not isinstance(v, ipaddress.IPv6Address):
-							raise ValueError("That's neither an IPv4 or IPv6 address.")
 				except ValueError:
 					raise ValueError("'%s' is not an IPv4 or IPv6 address or subnet." % item[4:])
 
