@@ -967,6 +967,8 @@ def set_secondary_dns(hostnames, env):
 				try:
 					response = resolver.query(item, "A")
 				except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+					pass
+				try:
 					response = resolver.query(item, "AAAA")
 				except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
 					raise ValueError("Could not resolve the IP address of %s." % item)
