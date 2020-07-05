@@ -9,6 +9,8 @@ However, it will allow a remote Nextcloud installation to authenticate users aga
 
 To add a new account to Nextcloud, you'd simply add a new email account with MiaB-LDAP's admin interface. Quotas and other account settings are made within Nextcloud.
 
+**Also see companion project [Cloud-in-a-Box](https://github.com/downtownallday/cloudinabox)**
+
 ## How to connect to a remote Nextcloud
 ---------------------------------
 
