@@ -99,9 +99,11 @@ detect_syslog_error() {
 	let count="$SYS_LOG_LINECOUNT + 1"
 	tail --lines=+$count /var/log/syslog 2>>$TEST_OF | (
 		let ec=0 # error count
+		let wc=0 # warning count
 		while read line; do
 			awk '
 /status=(bounced|deferred|undeliverable)/  { exit 1 }
+/warning:/ && /spamhaus\.org: RBL lookup error:/ { exit 2 }
 !/postfix\/qmgr/ && /warning:/	{ exit 1 }
 /(fatal|reject|error):/	 { exit 1 }
 /Error in /			{ exit 1 }
@@ -112,6 +114,9 @@ detect_syslog_error() {
 			if [ $? -eq 1 ]; then
 				let ec+=1
 				record "$F_DANGER[ERROR] $line$F_RESET"
+			elif [ $? -eq 2 ]; then
+				let wc+=1
+				record "$F_WARN[ WARN] $line$F_RESET"
 			else
 				record "[   OK] $line"
 			fi
