@@ -51,17 +51,25 @@ This is a fork of MiaB (duh), hacked and tuned to my needs:
 
 - ✅ Updated NextCloud to the latest version available;
 
-- 💤 Possibility of disabling some services (\*cough\* NextCloud \*cough\*);
+- 💤 Encrypting backups using user-provided PGP keys;
+
+- 💤 Ability to download the backups from the admin panel;
 
 ### Ideas section:
 
-- 💤 AXFR Transfers using TSIG?
+- 💤 Possibility of making some services optional (if they require more software to be installed) on setup?
 
-- 💤 Expand DNS options?
+- - For example, one might simply not use NextCloud/Munin at all, and they're there... just wasting resources.
 
-- 💤 More complete webmail configuration via the admin panel?
+- 💤 Restricting access to the admin panel to certain IP's?
 
-- 💤 Encrypting backups using user-provided PGP keys?
+- 💤 Customizing MTA names? (because privacy)
+
+- 💤 AXFR Transfers (for secondary DNS) using TSIG?
+
+- 💤 Expand DNS record options?
+
+- 💤 More complete webmail configuration via the admin panel/plugin management?
 
 - 💤 Anything else I might need to use;
 
