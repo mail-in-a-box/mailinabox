@@ -968,18 +968,19 @@ def set_secondary_dns(hostnames, env):
 				try:
 					response = resolver.query(item, "A")
 				except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
-					raise ValueError("Could not resolve the IP address of %s." % item)
+					try:
+						response = resolver.query(item, "AAAA")
+					except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+						raise ValueError("Could not resolve the IP address of %s." % item)
 			else:
 				# Validate IP address.
 				try:
 					if "/" in item[4:]:
 						v = ipaddress.ip_network(item[4:]) # raises a ValueError if there's a problem
-						if not isinstance(v, ipaddress.IPv4Network): raise ValueError("That's an IPv6 subnet.")
 					else:
 						v = ipaddress.ip_address(item[4:]) # raises a ValueError if there's a problem
-						if not isinstance(v, ipaddress.IPv4Address): raise ValueError("That's an IPv6 address.")
 				except ValueError:
-					raise ValueError("'%s' is not an IPv4 address or subnet." % item[4:])
+					raise ValueError("'%s' is not an IPv4 or IPv6 address or subnet." % item[4:])
 
 		# Set.
 		set_custom_dns_record("_secondary_nameserver", "A", " ".join(hostnames), "set", env)
