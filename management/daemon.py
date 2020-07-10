@@ -509,6 +509,19 @@ def backup_set_custom():
 		request.form.get('min_age', '')
 	))
 
+@app.route('/system/backup/new', methods=["POST"])
+@authorized_personnel_only
+def backup_new():
+	from backup import perform_backup, get_backup_config
+
+	# If backups are disabled, don't perform the backup
+	config = get_backup_config(env)
+	if config["target"] == "off":
+		return "Backups are disabled in this machine. Nothing was done."
+
+	msg = perform_backup(request.form.get('full', False) == 'true', True)
+	return "OK" if msg is None else msg
+
 @app.route('/system/privacy', methods=["GET"])
 @authorized_personnel_only
 def privacy_status_get():

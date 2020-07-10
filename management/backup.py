@@ -10,7 +10,7 @@
 import os, os.path, shutil, glob, re, datetime, sys
 import dateutil.parser, dateutil.relativedelta, dateutil.tz
 import rtyaml
-from exclusiveprocess import Lock
+from exclusiveprocess import Lock, CannotAcquireLock
 
 from utils import load_environment, shell, wait_for_service, fix_boto
 
@@ -20,7 +20,7 @@ rsync_ssh_options = [
 ]
 
 def backup_status(env):
-	# If backups are dissbled, return no status.
+	# If backups are disabled, return no status.
 	config = get_backup_config(env)
 	if config["target"] == "off":
 		return { }
@@ -210,13 +210,21 @@ def get_target_type(config):
 	protocol = config["target"].split(":")[0]
 	return protocol
 
-def perform_backup(full_backup):
+def perform_backup(full_backup, user_initiated=False):
 	env = load_environment()
 
 	# Create an global exclusive lock so that the backup script
 	# cannot be run more than one.
-	Lock(die=True).forever()
-
+	lock = Lock(die=(not user_initiated))
+	if user_initiated:
+		# God forgive me for what I'm about to do
+		try:
+			lock._acquire()
+		except CannotAcquireLock:
+			return "Another backup is already being done!"
+	else:
+		lock.forever()
+		
 	config = get_backup_config(env)
 	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
 	backup_cache_dir = os.path.join(backup_root, 'cache')
@@ -329,8 +337,12 @@ def perform_backup(full_backup):
 	# backup. Since it checks that dovecot and postfix are running, block for a
 	# bit (maximum of 10 seconds each) to give each a chance to finish restarting
 	# before the status checks might catch them down. See #381.
-	wait_for_service(25, True, env, 10)
-	wait_for_service(993, True, env, 10)
+	if user_initiated:
+		# God forgive me for what I'm about to do
+		lock._release() # We don't need to restart the services
+	else:
+		wait_for_service(25, True, env, 10)
+		wait_for_service(993, True, env, 10)
 
 def run_duplicity_verification():
 	env = load_environment()
