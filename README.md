@@ -51,6 +51,8 @@ This is a fork of MiaB (duh), hacked and tuned to my needs:
 
 - ✅ Updated NextCloud to the latest version available;
 
+- 👨‍💻 Performing backups immediately from the admin panel (independently from the daily schedule);
+
 - 💤 Encrypting backups using user-provided PGP keys;
 
 - 💤 Ability to download the backups from the admin panel;
@@ -70,6 +72,10 @@ This is a fork of MiaB (duh), hacked and tuned to my needs:
 - 💤 Expand DNS record options?
 
 - 💤 More complete webmail configuration via the admin panel/plugin management?
+
+- 💤 Optional TOTP Two-Factor-Authentication for the admin panel/webmail?
+
+- - Maybe U2F one day, too, but I don't have a capable device for this just yet...
 
 - 💤 Anything else I might need to use;
 
