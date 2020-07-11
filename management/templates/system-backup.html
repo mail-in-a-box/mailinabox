@@ -141,8 +141,9 @@
   </tbody>
 </table>
 
-<button id="create-full-backup-button" class="btn btn-primary" onclick="do_backup(true)">Create Full Backup Now</button>
-<button id="create-incremental-backup-button" class="btn btn-primary" onclick="do_backup(false)">Create Incremental Backup Now</button>
+<!-- Hide these buttons until we're sure we can use them :) -->
+<button id="create-full-backup-button" class="btn btn-primary" onclick="do_backup(true)" style="display: none;">Create Full Backup Now</button>
+<button id="create-incremental-backup-button" class="btn btn-primary" onclick="do_backup(false)" style="display: none;">Create Incremental Backup Now</button>
 
 <script>
 
@@ -190,10 +191,14 @@ function show_system_backup() {
       if (typeof r.backups == "undefined") {
         var tr = $('<tr><td colspan="3">Backups are turned off.</td></tr>');
         $('#backup-status tbody').append(tr);
+        $('#create-full-backup-button').css("display","none")
+        $('#create-incremental-backup-button').css("display","none")
         return;
       } else if (r.backups.length == 0) {
         var tr = $('<tr><td colspan="3">No backups have been made yet.</td></tr>');
         $('#backup-status tbody').append(tr);
+        $('#create-full-backup-button').css("display","unset")
+        $('#create-incremental-backup-button').css("display","unset")
       }
 
       for (var i = 0; i < r.backups.length; i++) {
