@@ -215,7 +215,7 @@ def perform_backup(full_backup, user_initiated=False):
 
 	# Create an global exclusive lock so that the backup script
 	# cannot be run more than one.
-	lock = Lock(die=(not user_initiated))
+	lock = Lock(name="mailinabox_backup_daemon", die=(not user_initiated))
 	if user_initiated:
 		# God forgive me for what I'm about to do
 		try:
