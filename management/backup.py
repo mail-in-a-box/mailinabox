@@ -339,7 +339,8 @@ def perform_backup(full_backup, user_initiated=False):
 	# before the status checks might catch them down. See #381.
 	if user_initiated:
 		# God forgive me for what I'm about to do
-		lock._release() # We don't need to restart the services
+		lock._release()
+		# We don't need to wait for the services to be up in this case
 	else:
 		wait_for_service(25, True, env, 10)
 		wait_for_service(993, True, env, 10)
