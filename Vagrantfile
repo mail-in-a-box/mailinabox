@@ -3,7 +3,7 @@
 # vi: set ft=ruby :
 
 Vagrant.configure("2") do |config|
-  config.vm.box = "debian/buster64"
+  config.vm.box = "ubuntu/focal64"
   config.vm.provider :virtualbox do |vb|
     vb.customize ["modifyvm", :id, "--cpus", 1, "--memory", 1024]
   end
