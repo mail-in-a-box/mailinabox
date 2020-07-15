@@ -112,7 +112,7 @@ fi
 if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextcloud_ver ]]; then
 
 	# Stop php-fpm if running. If theyre not running (which happens on a previously failed install), dont bail.
-	service php$PHP_VERSION-fpm stop &> /dev/null || /bin/true
+	service php$(php_version)-fpm stop &> /dev/null || /bin/true
 
 	# Backup the existing ownCloud/Nextcloud.
 	# Create a backup directory to store the current installation and database to
@@ -285,7 +285,7 @@ if [ \( $? -ne 0 \) -a \( $? -ne 3 \) ]; then exit 1; fi
 
 # Set PHP FPM values to support large file uploads
 # (semicolon is the comment character in this file, hashes produce deprecation warnings)
-management/editconf.py /etc/php/$PHP_VERSION/fpm/php.ini -c ';' \
+management/editconf.py /etc/php/$(php_version)/fpm/php.ini -c ';' \
 	upload_max_filesize=16G \
 	post_max_size=16G \
 	output_buffering=16384 \
@@ -294,7 +294,7 @@ management/editconf.py /etc/php/$PHP_VERSION/fpm/php.ini -c ';' \
 	short_open_tag=On
 
 # Set Nextcloud recommended opcache settings
-management/editconf.py /etc/php/$PHP_VERSION/cli/conf.d/10-opcache.ini -c ';' \
+management/editconf.py /etc/php/$(php_version)/cli/conf.d/10-opcache.ini -c ';' \
 	opcache.enable=1 \
 	opcache.enable_cli=1 \
 	opcache.interned_strings_buffer=8 \
@@ -304,8 +304,8 @@ management/editconf.py /etc/php/$PHP_VERSION/cli/conf.d/10-opcache.ini -c ';' \
 	opcache.revalidate_freq=1
 
 # If apc is explicitly disabled we need to enable it
-if grep -q apc.enabled=0 /etc/php/$PHP_VERSION/mods-available/apcu.ini; then
-	management/editconf.py /etc/php/$PHP_VERSION/mods-available/apcu.ini -c ';' \
+if grep -q apc.enabled=0 /etc/php/$(php_version)/mods-available/apcu.ini; then
+	management/editconf.py /etc/php/$(php_version)/mods-available/apcu.ini -c ';' \
 		apc.enabled=1
 fi
 
@@ -330,4 +330,4 @@ rm -f /etc/cron.hourly/mailinabox-owncloud
 # ```
 
 # Enable PHP modules and restart PHP.
-restart_service php$PHP_VERSION-fpm
+restart_service php$(php_version)-fpm
