@@ -1136,8 +1136,6 @@ def validate_password(pw):
 	# validate password
 	if pw.strip() == "":
 		raise ValueError("No password provided.")
-	if re.search(r"[\s]", pw):
-		raise ValueError("Passwords cannot contain spaces.")
 	if len(pw) < 8:
 		raise ValueError("Passwords must be at least eight characters.")
 
