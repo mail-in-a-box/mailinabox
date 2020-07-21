@@ -197,10 +197,11 @@ function show_system_backup() {
       } else if (r.backups.length == 0) {
         var tr = $('<tr><td colspan="3">No backups have been made yet.</td></tr>');
         $('#backup-status tbody').append(tr);
-        $('#create-full-backup-button').css("display","unset")
-        $('#create-incremental-backup-button').css("display","unset")
       }
 
+      // Backups ARE enabled.
+      $('#create-full-backup-button').css("display","unset")
+      $('#create-incremental-backup-button').css("display","unset")
       for (var i = 0; i < r.backups.length; i++) {
         var b = r.backups[i];
         var tr = $('<tr/>');
