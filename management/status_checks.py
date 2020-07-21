@@ -1038,10 +1038,12 @@ if __name__ == "__main__":
 	if len(sys.argv) == 1:
 		pool = multiprocessing.pool.Pool(processes=10)
 		run_checks(False, env, ConsoleOutput(), pool)
+		pool.terminate()
 
 	elif sys.argv[1] == "--show-changes":
 		pool = multiprocessing.pool.Pool(processes=10)
 		run_and_output_changes(env, pool)
+		pool.terminate()
 
 	elif sys.argv[1] == "--check-primary-hostname":
 		# See if the primary hostname appears resolvable and has a signed certificate.
