@@ -101,9 +101,12 @@ def index():
 	utils.fix_boto() # must call prior to importing boto
 	import boto.s3
 	backup_s3_hosts = [(r.name, r.endpoint) for r in boto.s3.regions()]
+	lsb=utils.shell("check_output", ["/usr/bin/lsb_release", "-d"])
 
 	return render_template('index.html',
 		hostname=env['PRIMARY_HOSTNAME'],
+		distname=lsb[lsb.find("\t")+1:-1],
+		
 		storage_root=env['STORAGE_ROOT'],
 
 		no_users_exist=no_users_exist,
@@ -440,9 +443,8 @@ def system_status():
 			self.items[-1]["extra"].append({ "text": message, "monospace": monospace })
 	output = WebOutput()
 	# Create a temporary pool of processes for the status checks
-	pool = multiprocessing.pool.Pool(processes=5)
-	run_checks(False, env, output, pool)
-	pool.terminate()
+	with multiprocessing.pool.Pool(processes=5) as pool:
+		run_checks(False, env, output, pool)
 	return json_response(output.items)
 
 @app.route('/system/updates')
@@ -508,6 +510,19 @@ def backup_set_custom():
 		request.form.get('target_pass', ''),
 		request.form.get('min_age', '')
 	))
+
+@app.route('/system/backup/new', methods=["POST"])
+@authorized_personnel_only
+def backup_new():
+	from backup import perform_backup, get_backup_config
+
+	# If backups are disabled, don't perform the backup
+	config = get_backup_config(env)
+	if config["target"] == "off":
+		return "Backups are disabled in this machine. Nothing was done."
+
+	msg = perform_backup(request.form.get('full', False) == 'true', True)
+	return "OK" if msg is None else msg
 
 @app.route('/system/privacy', methods=["GET"])
 @authorized_personnel_only

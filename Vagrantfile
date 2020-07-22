@@ -1,12 +1,11 @@
+ 
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
 Vagrant.configure("2") do |config|
-  # Recreate our conditions
-  config.vm.box = "generic/debian10"
-  config.vm.provider "hyperv" do |v|
-    v.memory = 1024
-    v.cpus = 1
+  config.vm.box = "ubuntu/focal64"
+  config.vm.provider :virtualbox do |vb|
+    vb.customize ["modifyvm", :id, "--cpus", 1, "--memory", 1024]
   end
 
   # Network config: Since it's a mail server, the machine must be connected
@@ -24,24 +23,9 @@ Vagrant.configure("2") do |config|
     export PUBLIC_IP=auto
     export PUBLIC_IPV6=auto
     export PRIMARY_HOSTNAME=auto
-    #export SKIP_NETWORK_CHECKS=1
-
-    if [ ! git ]
-    then
-      apt update
-      apt install git
-    fi
-
-    if [ ! -d /mailinabox ];
-    then
-      git clone https://github.com/ddavness/power-mailinabox.git /mailinabox
-    fi
-
+    export SKIP_NETWORK_CHECKS=1
     # Start the setup script.
-    cd /mailinabox
-    git checkout development
-    git pull
-
+    cd /vagrant
     setup/start.sh
 SH
 end

@@ -222,14 +222,6 @@ function git_clone {
 	rm -rf $TMPPATH
 }
 
-OS=`lsb_release -d | sed 's/.*:\s*//' `
-
-# Expected php version
-if [ "$OS" == "Debian GNU/Linux 10 (buster)" ]; then
-	export PHP_VERSION="7.3"
-elif [ "$OS" == "Ubuntu 20.04 LTS" ]; then
-	export PHP_VERSION="7.4"
-fi
-
-sed -i "s|!!___PHPVER___!!|${PHP_VERSION}|g" conf/nginx-top.conf
-sed -i "s|!!___PHPVER___!!|${PHP_VERSION}|g" management/backup.py
+function php_version {
+	php --version | head -n 1 | cut -d " " -f 2 | cut -c 1-3
+}

@@ -10,9 +10,9 @@
 import os, os.path, shutil, glob, re, datetime, sys
 import dateutil.parser, dateutil.relativedelta, dateutil.tz
 import rtyaml
-from exclusiveprocess import Lock
+from exclusiveprocess import Lock, CannotAcquireLock
 
-from utils import load_environment, shell, wait_for_service, fix_boto
+from utils import load_environment, shell, wait_for_service, fix_boto, get_php_version
 
 rsync_ssh_options = [
 	"--ssh-options= -i /root/.ssh/id_rsa_miab",
@@ -20,7 +20,7 @@ rsync_ssh_options = [
 ]
 
 def backup_status(env):
-	# If backups are dissbled, return no status.
+	# If backups are disabled, return no status.
 	config = get_backup_config(env)
 	if config["target"] == "off":
 		return { }
@@ -210,13 +210,22 @@ def get_target_type(config):
 	protocol = config["target"].split(":")[0]
 	return protocol
 
-def perform_backup(full_backup):
+def perform_backup(full_backup, user_initiated=False):
 	env = load_environment()
+	php_fpm = f"php{get_php_version()}-fpm"
 
 	# Create an global exclusive lock so that the backup script
 	# cannot be run more than one.
-	Lock(die=True).forever()
-
+	lock = Lock(name="mailinabox_backup_daemon", die=(not user_initiated))
+	if user_initiated:
+		# God forgive me for what I'm about to do
+		try:
+			lock._acquire()
+		except CannotAcquireLock:
+			return "Another backup is already being done!"
+	else:
+		lock.forever()
+		
 	config = get_backup_config(env)
 	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
 	backup_cache_dir = os.path.join(backup_root, 'cache')
@@ -247,7 +256,7 @@ def perform_backup(full_backup):
 			if quit:
 				sys.exit(code)
 
-	service_command("php!!___PHPVER___!!-fpm", "stop", quit=True)
+	service_command(php_fpm, "stop", quit=True)
 	service_command("postfix", "stop", quit=True)
 	service_command("dovecot", "stop", quit=True)
 
@@ -281,7 +290,7 @@ def perform_backup(full_backup):
 		# Start services again.
 		service_command("dovecot", "start", quit=False)
 		service_command("postfix", "start", quit=False)
-		service_command("php!!___PHPVER___!!-fpm", "start", quit=False)
+		service_command(php_fpm, "start", quit=False)
 
 	# Remove old backups. This deletes all backup data no longer needed
 	# from more than 3 days ago.
@@ -329,8 +338,13 @@ def perform_backup(full_backup):
 	# backup. Since it checks that dovecot and postfix are running, block for a
 	# bit (maximum of 10 seconds each) to give each a chance to finish restarting
 	# before the status checks might catch them down. See #381.
-	wait_for_service(25, True, env, 10)
-	wait_for_service(993, True, env, 10)
+	if user_initiated:
+		# God forgive me for what I'm about to do
+		lock._release()
+		# We don't need to wait for the services to be up in this case
+	else:
+		wait_for_service(25, True, env, 10)
+		wait_for_service(993, True, env, 10)
 
 def run_duplicity_verification():
 	env = load_environment()
