@@ -27,7 +27,7 @@ If that doesn't work:
 curl https://raw.githubusercontent.com/ddavness/power-mailinabox/master/setup/bootstrap.sh | sudo bash
 ```
 
-## Current Version: v0.46.POWER.3 (Tracking v0.46)
+## Current Version: v0.46.POWER.4 (Tracking v0.46)
 
 This is a fork of MiaB (duh), hacked and tuned to my needs:
 
@@ -51,7 +51,7 @@ This is a fork of MiaB (duh), hacked and tuned to my needs:
 
 - ✅ Updated NextCloud to the latest version available;
 
-- 👨‍💻 Performing backups immediately from the admin panel (independently from the daily schedule);
+- ✅ Performing backups immediately from the admin panel (independently from the daily schedule);
 
 - 💤 Encrypting backups using user-provided PGP keys;
 
