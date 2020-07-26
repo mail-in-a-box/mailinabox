@@ -13,6 +13,14 @@ DNS:
 
 * autoconfig and autodiscover subdomains and CalDAV/CardDAV SRV records are no longer generated for domains that don't have user accounts since they are unnecessary.
 
+
+v0.47 (July 26, 2020)
+---------------------
+
+Security fixes:
+
+* Roundcube is updated to version 1.4.7 (https://roundcube.net/news/2020/07/05/security-updates-1.4.7-1.3.14-and-1.2.11).
+
 v0.46 (June 11, 2020)
 ---------------------
 
