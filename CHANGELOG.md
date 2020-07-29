@@ -6,12 +6,37 @@ In Development
 
 Mail:
 
-* An MTA-STS policy for incoming mail is now published (in DNS and over HTTPS) when the primary hostname and email address domain both have a signed TLS certificate installed.
+* An MTA-STS policy for incoming mail is now published (in DNS and over HTTPS) when the primary hostname and email address domain both have a signed TLS certificate installed, allowing senders to know that an encrypted connection should be enforced.
 * MTA-STS reporting is enabled with reports sent to administrator@ the primary hostname.
+* The per-IP connection limit to the IMAP server has been doubled to allow more devices to connect at once, especially with multiple users behind a NAT.
 
 DNS:
 
 * autoconfig and autodiscover subdomains and CalDAV/CardDAV SRV records are no longer generated for domains that don't have user accounts since they are unnecessary.
+* IPv6 addresses can now be specified for secondary DNS nameservers in the control panel.
+
+TLS:
+
+* TLS certificates are now provisioned in groups by parent domain to limit easy domain enumeration and make provisioning more resilient to errors for particular domains.
+
+Control Panel:
+
+* User passwords can now have spaces.
+* Status checks for automatic subdomains have been moved into the section for the parent domain.
+* Typo fixed.
+
+Web:
+
+* The default web page served on fresh installations now adds the `noindex` meta tag.
+* The HSTS header is revised to also be sent on non-success responses.
+
+v0.47 (July 29, 2020)
+---------------------
+
+Security fixes:
+
+* Roundcube is updated to version 1.4.7 fixing a cross-site scripting (XSS) vulnerability with HTML messages with malicious svg/namespace (CVE-2020-15562) (https://roundcube.net/news/2020/07/05/security-updates-1.4.7-1.3.14-and-1.2.11).
+* SSH connections are now rate-limited at the firewall level (in addition to fail2ban).
 
 v0.46 (June 11, 2020)
 ---------------------
