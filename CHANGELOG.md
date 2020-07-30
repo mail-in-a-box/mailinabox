@@ -1,17 +1,13 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.47 (July 29, 2020)
+---------------------
 
-Mail:
+Security fixes:
 
-* An MTA-STS policy for incoming mail is now published (in DNS and over HTTPS) when the primary hostname and email address domain both have a signed TLS certificate installed.
-* MTA-STS reporting is enabled with reports sent to administrator@ the primary hostname.
-
-DNS:
-
-* autoconfig and autodiscover subdomains and CalDAV/CardDAV SRV records are no longer generated for domains that don't have user accounts since they are unnecessary.
+* Roundcube is updated to version 1.4.7 fixing a cross-site scripting (XSS) vulnerability with HTML messages with malicious svg/namespace (CVE-2020-15562) (https://roundcube.net/news/2020/07/05/security-updates-1.4.7-1.3.14-and-1.2.11).
+* SSH connections are now rate-limited at the firewall level (in addition to fail2ban).
 
 v0.46 (June 11, 2020)
 ---------------------
