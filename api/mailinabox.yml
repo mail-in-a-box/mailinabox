@@ -178,12 +178,6 @@ paths:
             text/html:
               schema:
                 type: string
-        5XX:
-          description: Server error
-          content:
-            text/html:
-              schema:
-                type: string
   /system/privacy:
     get:
       tags:
@@ -288,12 +282,6 @@ paths:
             text/html:
               schema:
                 type: string
-        5XX:
-          description: Server error
-          content:
-            text/html:
-              schema:
-                type: string
   /system/backup/status:
     get:
       tags:
@@ -394,12 +382,6 @@ paths:
             text/html:
               schema:
                 type: string
-        5XX:
-          description: Server error
-          content:
-            text/html:
-              schema:
-                type: string
   /ssl/status:
     get:
       tags:
@@ -458,12 +440,6 @@ paths:
             text/html:
               schema:
                 type: string
-        5XX:
-          description: Server error
-          content:
-            text/html:
-              schema:
-                type: string
   /ssl/install:
     post:
       tags:
@@ -496,12 +472,6 @@ paths:
             text/html:
               schema:
                 type: string
-        5XX:
-          description: Server error
-          content:
-            text/html:
-              schema:
-                type: string
   /ssl/provision:
     post:
       tags:
@@ -518,12 +488,6 @@ paths:
                 $ref: '#/components/schemas/SSLCertificatesProvisionResponse'
         403:
           description: Forbidden
-          content:
-            text/html:
-              schema:
-                type: string
-        5XX:
-          description: Server error
           content:
             text/html:
               schema:
@@ -574,12 +538,6 @@ paths:
                 example: Could not resolve the IP address of badhostname
         403:
           description: Forbidden
-          content:
-            text/html:
-              schema:
-                type: string
-        5XX:
-          description: Server error
           content:
             text/html:
               schema:
@@ -712,12 +670,6 @@ paths:
             text/html:
               schema:
                 type: string
-        5XX:
-          description: Server error
-          content:
-            text/html:
-              schema:
-                type: string
     put:
       tags:
         - DNS
@@ -745,12 +697,6 @@ paths:
             text/html:
               schema:
                 type: string
-        5XX:
-          description: Server error
-          content:
-            text/html:
-              schema:
-                type: string
     delete:
       tags:
         - DNS
@@ -774,12 +720,6 @@ paths:
                 example: badhostname is not a domain name or a subdomain of a domain name managed by this box
         403:
           description: Forbidden
-          content:
-            text/html:
-              schema:
-                type: string
-        5XX:
-          description: Server error
           content:
             text/html:
               schema:
@@ -837,12 +777,6 @@ paths:
             text/html:
               schema:
                 type: string
-        5XX:
-          description: Server error
-          content:
-            text/html:
-              schema:
-                type: string
     put:
       tags:
         - DNS
@@ -870,12 +804,6 @@ paths:
             text/html:
               schema:
                 type: string
-        5XX:
-          description: Server error
-          content:
-            text/html:
-              schema:
-                type: string
     delete:
       tags:
         - DNS
@@ -899,12 +827,6 @@ paths:
                 example: badhostname is not a domain name or a subdomain of a domain name managed by this box
         403:
           description: Forbidden
-          content:
-            text/html:
-              schema:
-                type: string
-        5XX:
-          description: Server error
           content:
             text/html:
               schema:
@@ -1003,12 +925,6 @@ paths:
             text/html:
               schema:
                 type: string
-        5XX:
-          description: Server error
-          content:
-            text/html:
-              schema:
-                type: string
   /mail/users/remove:
     post:
       tags:
@@ -1037,12 +953,6 @@ paths:
                 example: That's not a user (invalid@example.com)
         403:
           description: Forbidden
-          content:
-            text/html:
-              schema:
-                type: string
-        5XX:
-          description: Server error
           content:
             text/html:
               schema:
@@ -1079,12 +989,6 @@ paths:
             text/html:
               schema:
                 type: string
-        5XX:
-          description: Server error
-          content:
-            text/html:
-              schema:
-                type: string
   /mail/users/privileges/remove:
     post:
       tags:
@@ -1117,12 +1021,6 @@ paths:
             text/html:
               schema:
                 type: string
-        5XX:
-          description: Server error
-          content:
-            text/html:
-              schema:
-                type: string
   /mail/users/password:
     post:
       tags:
@@ -1151,12 +1049,6 @@ paths:
                 example: Passwords must be at least eight characters
         403:
           description: Forbidden
-          content:
-            text/html:
-              schema:
-                type: string
-        5XX:
-          description: Server error
           content:
             text/html:
               schema:
@@ -1268,12 +1160,6 @@ paths:
             text/html:
               schema:
                 type: string
-        5XX:
-          description: Server error
-          content:
-            text/html:
-              schema:
-                type: string
   /mail/aliases/remove:
     post:
       tags:
@@ -1302,12 +1188,6 @@ paths:
                 example: That's not an alias (invalid@example)
         403:
           description: Forbidden
-          content:
-            text/html:
-              schema:
-                type: string
-        5XX:
-          description: Server error
           content:
             text/html:
               schema:
@@ -1348,12 +1228,6 @@ paths:
                 $ref: '#/components/schemas/WebUpdateResponse'
         403:
           description: Forbidden
-          content:
-            text/html:
-              schema:
-                type: string
-        5XX:
-          description: Server error
           content:
             text/html:
               schema:
