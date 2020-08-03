@@ -3,12 +3,11 @@ info:
   title: Mail-in-a-Box
   description: 'Mail-in-a-Box API HTTP specification.'
   contact:
-    name: Richard Willis
-    url: https://github.com/badsyntax
-    email: willis.rh@gmail.com
+    name: Mail-in-a-Box support
+    url: https://mailinabox.email/
   license:
-    name: MIT
-    url: https://badsyntax.mit-license.org/
+    name: CC0 1.0 Universal
+    url: https://creativecommons.org/publicdomain/zero/1.0/legalcode
   version: '0.46.0'
 externalDocs:
   description: Find out more about Mail-in-a-box
