@@ -24,26 +24,23 @@ security:
 tags:
   - name: User
     description: Endpoints related to user authentication.
-  - name: System
+  - name: Mail
     description: |
-      System operations, which include system status checks, new version checks
-      and reboot status.
+      Mail operations, which include getting all users, getting all aliases, adding/updating/removing users and aliases and getting all mail domains.
+  - name: DNS
+    description: |
+      DNS operations, which include adding custom records, adding a secondary nameserver and viewing all DNS records.
   - name: SSL
     description: |
       TLS (SSL) Certificates operations, which include checking certificate status
       and installing custom certificates.
-  - name: DNS
-    description: |
-      DNS operations, which include adding custom records, adding a secondary nameserver and viewing all DNS records.
-  - name: Mail Users
-    description: |
-      Mail Users operations, which include getting all users and adding/updating/removing users.
-  - name: Mail Aliases
-    description: |
-      Mail Aliases operations, which include getting all aliases and adding/updating/removing aliases.
   - name: Web
     description: |
       Static web hosting operations, which include getting domain information and updating domain root directories.
+  - name: System
+    description: |
+      System operations, which include system status checks, new version checks
+      and reboot status.
 paths:
   /me:
     get:
@@ -106,6 +103,88 @@ paths:
             text/html:
               schema:
                 type: string
+  /system/version:
+    get:
+      tags:
+        - System
+      description: Retrieve installed Mail-in-a-Box version.
+      operationId: getSystemVersion
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/SystemVersionResponse'
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /system/latest-upstream-version:
+    post:
+      tags:
+        - System
+      description: Retrieve Mail-in-a-Box upstream version.
+      operationId: getSystemUpstreamVersion
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/SystemVersionUpstreamResponse'
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /system/updates:
+    get:
+      tags:
+        - System
+      description: Retrieve system updates.
+      operationId: getSystemUpdates
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/SystemUpdatesResponse'
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /system/update-packages:
+    post:
+      tags:
+        - System
+      description: Update system packages.
+      operationId: updateSystemPackages
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/SystemUpdatePackagesResponse'
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+        5XX:
+          description: Server error
+          content:
+            text/html:
+              schema:
+                type: string
   /system/privacy:
     get:
       tags:
@@ -155,6 +234,12 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/SystemPrivacyUpdateResponse'
+        400:
+          description: Bad request
+          content:
+            text/html:
+              schema:
+                type: string
         403:
           description: Forbidden
           content:
@@ -182,6 +267,30 @@ paths:
                 $ref: '#/components/schemas/SystemRebootStatusResponse'
         403:
           description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+    post:
+      tags:
+        - System
+      description: Reboot system.
+      operationId: rebootSystem
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemRebootResponse'
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+        5XX:
+          description: Server error
           content:
             text/html:
               schema:
@@ -230,8 +339,7 @@ paths:
     post:
       tags:
         - System
-      description: |
-        Update backup config.
+      description: Update backup config.
       operationId: updateSystemBackupConfig
       requestBody:
         required: true
@@ -275,6 +383,12 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/SystemBackupConfigUpdateResponse'
+        400:
+          description: Bad request
+          content:
+            text/html:
+              schema:
+                type: string
         403:
           description: Forbidden
           content:
@@ -333,6 +447,12 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/SSLCSRGenerateResponse'
+        400:
+          description: Bad request
+          content:
+            text/html:
+              schema:
+                type: string
         403:
           description: Forbidden
           content:
@@ -365,6 +485,38 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/SSLCertificateInstallResponse'
+        400:
+          description: Bad request
+          content:
+            text/html:
+              schema:
+                type: string
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+        5XX:
+          description: Server error
+          content:
+            text/html:
+              schema:
+                type: string
+  /ssl/provision:
+    post:
+      tags:
+        - SSL
+      description: |
+        Provision certificates for all domains.
+      operationId: provisionSSLCertificates
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SSLCertificatesProvisionResponse'
         403:
           description: Forbidden
           content:
@@ -452,11 +604,42 @@ paths:
             text/html:
               schema:
                 type: string
+  /dns/update:
+    post:
+      tags:
+        - DNS
+      description: Update DNS, which involves creating zone files and restarting `nsd`.
+      operationId: updateDns
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DNSUpdateRequest'
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DNSUpdateResponse'
+        400:
+          description: Bad request
+          content:
+            text/html:
+              schema:
+                type: string
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
   /dns/custom:
     get:
       tags:
         - DNS
-      description: Retrieve custom DNS records.
+      description: Retrieve all custom DNS records.
       operationId: getDnsCustomRecords
       responses:
         200:
@@ -464,7 +647,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DNSCustomResponse'
+                $ref: '#/components/schemas/DNSCustomRecordsResponse'
         403:
           description: Forbidden
           content:
@@ -485,6 +668,24 @@ paths:
           $ref: '#/components/schemas/DNSRecordType'
         required: true
         description: Record type
+    get:
+      tags:
+        - DNS
+      description: Get DNS records for domain and type
+      operationId: getDnsCustomRecordsForDomainAndType
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/DNSCustomRecordsResponse'
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
     post:
       tags:
         - DNS
@@ -498,7 +699,40 @@ paths:
           content:
             text/html:
               schema:
-                $ref: '#/components/schemas/DNSCustomRecordAddResponse'
+                $ref: '#/components/schemas/DNSCustomRecordUpsertResponse'
+        400:
+          description: Bad request
+          content:
+            text/html:
+              schema:
+                type: string
+                example: "'badhostname' does not appear to be an IPv4 or IPv6 address"
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+        5XX:
+          description: Server error
+          content:
+            text/html:
+              schema:
+                type: string
+    put:
+      tags:
+        - DNS
+      description: Update a custom DNS record.
+      operationId: updateDnsCustomRecord
+      requestBody:
+        $ref: '#/components/requestBodies/DNSCustomRecordRequest'
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/DNSCustomRecordUpsertResponse'
         400:
           description: Bad request
           content:
@@ -523,6 +757,131 @@ paths:
         - DNS
       description: Remove a custom DNS record.
       operationId: removeDnsCustomRecord
+      requestBody:
+        $ref: '#/components/requestBodies/DNSCustomRecordRequest'
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/DNSCustomRecordRemoveResponse'
+        400:
+          description: Bad request
+          content:
+            text/html:
+              schema:
+                type: string
+                example: badhostname is not a domain name or a subdomain of a domain name managed by this box
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+        5XX:
+          description: Server error
+          content:
+            text/html:
+              schema:
+                type: string
+  /dns/custom/{domain}:
+    parameters:
+      - in: path
+        name: domain
+        schema:
+          $ref: '#/components/schemas/Hostname'
+        required: true
+        description: DNS record domain
+    get:
+      tags:
+        - DNS
+      description: Get DNS A records for domain
+      operationId: getDnsCustomRecordsForDomainAndTypeA
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/DNSCustomRecordsResponse'
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+    post:
+      tags:
+        - DNS
+      description: Add a custom DNS record.
+      operationId: addDnsCustomRecordForTypeA
+      requestBody:
+        $ref: '#/components/requestBodies/DNSCustomRecordRequest'
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/DNSCustomRecordUpsertResponse'
+        400:
+          description: Bad request
+          content:
+            text/html:
+              schema:
+                type: string
+                example: "'badhostname' does not appear to be an IPv4 or IPv6 address"
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+        5XX:
+          description: Server error
+          content:
+            text/html:
+              schema:
+                type: string
+    put:
+      tags:
+        - DNS
+      description: Update a custom DNS record.
+      operationId: updateDnsCustomRecordForTypeA
+      requestBody:
+        $ref: '#/components/requestBodies/DNSCustomRecordRequest'
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/DNSCustomRecordUpsertResponse'
+        400:
+          description: Bad request
+          content:
+            text/html:
+              schema:
+                type: string
+                example: "'badhostname' does not appear to be an IPv4 or IPv6 address"
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+        5XX:
+          description: Server error
+          content:
+            text/html:
+              schema:
+                type: string
+    delete:
+      tags:
+        - DNS
+      description: Remove a custom DNS record.
+      operationId: removeDnsCustomRecordForTypeA
       requestBody:
         $ref: '#/components/requestBodies/DNSCustomRecordRequest'
       responses:
@@ -588,7 +947,7 @@ paths:
   /mail/users:
     get:
       tags:
-        - Mail Users
+        - Mail
       description: Retrieve all mail users.
       operationId: getMailUsers
       parameters:
@@ -616,7 +975,7 @@ paths:
   /mail/users/add:
     post:
       tags:
-        - Mail Users
+        - Mail
       description: Add a new mail user.
       operationId: addMailUser
       requestBody:
@@ -654,7 +1013,7 @@ paths:
   /mail/users/remove:
     post:
       tags:
-        - Mail Users
+        - Mail
       description: Remove a mail user.
       operationId: removeMailUser
       requestBody:
@@ -692,7 +1051,7 @@ paths:
   /mail/users/privileges/add:
     post:
       tags:
-        - Mail Users
+        - Mail
       description: Add a privilege to a mail user.
       operationId: addMailUserPrivilege
       requestBody:
@@ -730,7 +1089,7 @@ paths:
   /mail/users/privileges/remove:
     post:
       tags:
-        - Mail Users
+        - Mail
       description: Remove a privilege from a mail user.
       operationId: removeMailUserPrivilege
       requestBody:
@@ -768,7 +1127,7 @@ paths:
   /mail/users/password:
     post:
       tags:
-        - Mail Users
+        - Mail
       description: Set a password for a user.
       operationId: setMailUserPassword
       requestBody:
@@ -803,10 +1162,54 @@ paths:
             text/html:
               schema:
                 type: string
+  /mail/users/privileges:
+    get:
+      tags:
+        - Mail
+      description: Retrieve privileges for a user.
+      operationId: getMailUserPrivileges
+      parameters:
+        - in: query
+          name: email
+          schema:
+            $ref: '#/components/schemas/Email'
+          description: The email you want to get privileges for.
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/MailUserPrivilegesResponse'
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /mail/domains:
+    get:
+      tags:
+        - Mail
+      description: Retrieve all mail domains.
+      operationId: getMailDomains
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/MailDomainsResponse'
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
   /mail/aliases:
     get:
       tags:
-        - Mail Aliases
+        - Mail
       description: Retrieve all mail aliases.
       operationId: getMailAliases
       parameters:
@@ -836,7 +1239,7 @@ paths:
   /mail/aliases/add:
     post:
       tags:
-        - Mail Aliases
+        - Mail
       description: |
         Add or update a mail alias. If updating, you need to set `update_if_exists: 1`.
       operationId: upsertMailAlias
@@ -875,7 +1278,7 @@ paths:
   /mail/aliases/remove:
     post:
       tags:
-        - Mail Aliases
+        - Mail
       description: Remove a mail alias.
       operationId: removeMailAlias
       requestBody:
@@ -950,6 +1353,12 @@ paths:
             text/html:
               schema:
                 type: string
+        5XX:
+          description: Server error
+          content:
+            text/html:
+              schema:
+                type: string
 components:
   securitySchemes:
     basicAuth:
@@ -1015,6 +1424,16 @@ components:
         email1@example.com
         email2@example.com
       description: Get mail users text format response.
+    MailUserPrivilegesResponse:
+      $ref: '#/components/schemas/MailUserPrivilege'
+      description: Mail user privileges response.
+      example: admin
+    MailDomainsResponse:
+      type: string
+      example: |
+        example1.com
+        example2.come
+      description: Mail domains response.
     MailUsersResponse:
       type: array
       items:
@@ -1024,7 +1443,7 @@ components:
       type: object
       required:
         - domain
-        - Mail Users
+        - users
       properties:
         domain:
           $ref: '#/components/schemas/Hostname'
@@ -1215,7 +1634,7 @@ components:
           type: string
           example: 10 example.com.
       description: Custom DNS record detail detail.
-    DNSCustomResponse:
+    DNSCustomRecordsResponse:
       type: array
       items:
         $ref: '#/components/schemas/DNSCustomRecord'
@@ -1240,10 +1659,28 @@ components:
       type: string
       example: 'updated DNS: example.com'
       description: Custom DNS record remove response.
-    DNSCustomRecordAddResponse:
+    DNSCustomRecordUpsertResponse:
       type: string
       example: 'updated DNS: example.com'
       description: Custom DNS record add response.
+    DNSUpdateRequest:
+      type: object
+      required:
+        - force
+      properties:
+        force:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 1
+          example: 1
+          description: Force an update even if mailinabox detects no changes are required.
+      description: DNS update request.
+    DNSUpdateResponse:
+      type: string
+      example: |
+        updated DNS: example1.com,example2.com
+      description: DNS update response.
     DNSSecondaryNameserverAddRequest:
       type: object
       required:
@@ -1422,6 +1859,38 @@ components:
       type: string
       example: OK
       description: Install certificate response.
+    SSLCertificatesProvisionResponse:
+      type: object
+      required:
+        - requests
+      properties:
+        requests:
+          type: array
+          items:
+            type: object
+            required:
+              - log
+              - result
+              - domains
+            properties:
+              log:
+                type: array
+                items:
+                  type: string
+                example:
+                  - 'The domain name does not resolve to this machine: [Not Set] (A), [Not Set] (AAAA).'
+              result:
+                type: string
+                enum:
+                  - installed
+                  - error
+                  - skipped
+                example: installed
+              domains:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Hostname'
+      description: SSL certificates provision response.
     SystemPrivacyStatusResponse:
       type: boolean
       description: |
@@ -1430,6 +1899,39 @@ components:
           - `true`: Private, new-version checks will not be performed
           - `false`: Not private, new-version checks will be performed
       example: false
+    SystemVersionResponse:
+      type: string
+      description: System version response.
+      example: v0.46
+    SystemVersionUpstreamResponse:
+      type: string
+      description: System version upstream response.
+      example: v0.47
+    SystemUpdatesResponse:
+      type: string
+      description: System updates response.
+      example: |
+        libgnutls30 (3.5.18-1ubuntu1.4)
+        libxau6 (1:1.0.8-1ubuntu1)
+    SystemUpdatePackagesResponse:
+      type: string
+      example: |
+        Reading package lists...
+        Building dependency tree...
+        Reading state information...
+        Calculating upgrade...
+        The following packages will be upgraded:
+          cloud-init grub-common grub-pc grub-pc-bin grub2-common libgnutls30
+          libldap-2.4-2 libldap-common libxau6 linux-firmware python3-distupgrade
+          qemu-guest-agent sosreport ubuntu-release-upgrader-core
+        14 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.
+        Need to get 79.9 MB of archives.
+        After this operation, 3893 kB of additional disk space will be used.
+        Get:1 http://archive.ubuntu.com/ubuntu bionic-updates/main amd64 libgnutls30 amd64 3.5.18-1ubuntu1.4 [645 kB]
+        Preconfiguring packages ...
+        Fetched 79.9 MB in 2s (52.4 MB/s)
+        (Reading database ... 48457 files and directories currently installed.)
+      description: System update packages response.
     SystemPrivacyUpdateResponse:
       type: string
       example: OK
@@ -1442,6 +1944,10 @@ components:
           - `true`: A reboot is required
           - `false`: A reboot is not required
       example: true
+    SystemRebootResponse:
+      type: string
+      example: No reboot is required, so it is not allowed.
+      description: System reboot response.
     SystemStatusResponse:
       type: array
       items:
