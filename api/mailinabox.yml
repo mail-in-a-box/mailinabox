@@ -845,17 +845,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/DNSDumpResponse'
               example:
-                -
-                  - example1.com
-                  -
-                    - explanation: Required. Specifies the hostname (and priority) of the machine that handles @proxima-mail.com mail.
+                - - example1.com
+                  - - explanation: Required. Specifies the hostname (and priority) of the machine that handles @proxima-mail.com mail.
                       qname: example1.com
                       rtype: MX
                       value: 10 box.example1.com.
-                -
-                  - example2.com
-                  -
-                    - explanation: Required. Specifies the hostname (and priority) of the machine that handles @proxima-mail.com mail.
+                - - example2.com
+                  - - explanation: Required. Specifies the hostname (and priority) of the machine that handles @proxima-mail.com mail.
                       qname: example2.com
                       rtype: MX
                       value: 10 box.example2.com.
