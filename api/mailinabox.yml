@@ -676,7 +676,7 @@ paths:
         200:
           description: Successful operation
           content:
-            text/html:
+            application/json:
               schema:
                 $ref: '#/components/schemas/DNSCustomRecordsResponse'
         403:
@@ -801,7 +801,7 @@ paths:
         200:
           description: Successful operation
           content:
-            text/html:
+            application/json:
               schema:
                 $ref: '#/components/schemas/DNSCustomRecordsResponse'
         403:
@@ -813,7 +813,7 @@ paths:
     post:
       tags:
         - DNS
-      description: Add a custom DNS record.
+      description: Add a custom DNS A record.
       operationId: addDnsCustomRecordForTypeA
       requestBody:
         $ref: '#/components/requestBodies/DNSCustomRecordRequest'
@@ -846,7 +846,7 @@ paths:
     put:
       tags:
         - DNS
-      description: Update a custom DNS record.
+      description: Update a custom DNS A record.
       operationId: updateDnsCustomRecordForTypeA
       requestBody:
         $ref: '#/components/requestBodies/DNSCustomRecordRequest'
@@ -879,7 +879,7 @@ paths:
     delete:
       tags:
         - DNS
-      description: Remove a custom DNS record.
+      description: Remove a custom DNS A record.
       operationId: removeDnsCustomRecordForTypeA
       requestBody:
         $ref: '#/components/requestBodies/DNSCustomRecordRequest'
@@ -922,7 +922,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DNSDumpResponse'
-              example: |
+              example:
                 -
                   - example1.com
                   -
