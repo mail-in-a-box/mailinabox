@@ -339,29 +339,29 @@ paths:
                 summary: S3 backup
                 value:
                   target: s3://s3.eu-central-1.amazonaws.com/box-example-com
-                  targetUser: ACCESS_KEY
-                  targetPassword: SECRET_ACCESS_KEY
+                  target_user: ACCESS_KEY
+                  target_pass: SECRET_ACCESS_KEY
                   minAge: 3
               local:
                 summary: Local backup
                 value:
                   target: local
-                  targetUser: ''
-                  targetPassword: ''
+                  target_user: ''
+                  target_pass: ''
                   minAge: 3
               rsync:
                 summary: Rsync backup
                 value:
                   target: rsync://username@box.example.com//backups/box.example.com
-                  targetUser: ''
-                  targetPassword: ''
+                  target_user: ''
+                  target_pass: ''
                   minAge: 3
               off:
                 summary: Disable backups
                 value:
                   target: 'off'
-                  targetUser: ''
-                  targetPassword: ''
+                  target_user: ''
+                  target_pass: ''
                   minAge: 0
       responses:
         200:
@@ -1589,6 +1589,7 @@ components:
           $ref: '#/components/schemas/Email'
         password:
           type: string
+          format: password
       description: Mail user set password request.
     MailUserAddRequest:
       type: object
@@ -1601,6 +1602,7 @@ components:
           $ref: '#/components/schemas/Email'
         password:
           type: string
+          format: password
         privileges:
           $ref: '#/components/schemas/MailUserPrivilege'
       description: Mail user add request.
@@ -1879,6 +1881,7 @@ components:
         target_pass:
           type: string
           example: password
+          format: password
         min_age:
           type: integer
           format: int32
