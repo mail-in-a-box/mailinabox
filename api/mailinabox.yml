@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Mail-in-a-Box
-  description: 'Mail-in-a-Box API HTTP specification.'
+  description: Mail-in-a-Box API HTTP specification.
   contact:
     name: Mail-in-a-Box support
     url: https://mailinabox.email/
@@ -10,14 +10,14 @@ info:
     url: https://creativecommons.org/publicdomain/zero/1.0/legalcode
   version: '0.46.0'
 externalDocs:
-  description: Find out more about Mail-in-a-box
+  description: Find out more about Mail-in-a-box.
   url: https://mailinabox.email/
 servers:
   - url: https://{host}/admin
     variables:
       host:
         default: box.example.com
-        description: The API hostname
+        description: The API hostname.
 security:
   - basicAuth: []
 tags:
@@ -414,7 +414,7 @@ paths:
           schema:
             $ref: '#/components/schemas/Hostname'
           required: true
-          description: Domain to generate CSR for
+          description: Domain to generate CSR for.
       requestBody:
         required: true
         content:
@@ -628,7 +628,7 @@ paths:
     get:
       tags:
         - DNS
-      description: Get DNS records for domain and type
+      description: Get DNS records for domain and type.
       operationId: getDnsCustomRecordsForDomainAndType
       responses:
         200:
@@ -731,11 +731,11 @@ paths:
         schema:
           $ref: '#/components/schemas/Hostname'
         required: true
-        description: DNS record domain
+        description: DNS record domain.
     get:
       tags:
         - DNS
-      description: Get DNS A records for domain
+      description: Get DNS A records for domain.
       operationId: getDnsCustomRecordsForDomainAndTypeA
       responses:
         200:
@@ -872,7 +872,7 @@ paths:
           name: format
           schema:
             $ref: '#/components/schemas/MailUsersResponseFormat'
-          description: The format of the response
+          description: The format of the response.
       responses:
         200:
           description: Successful operation
@@ -1104,7 +1104,7 @@ paths:
           name: format
           schema:
             $ref: '#/components/schemas/MailAliasesResponseFormat'
-          description: The format of the response
+          description: The format of the response.
       responses:
         200:
           description: Successful operation
@@ -1239,14 +1239,14 @@ components:
         the users password, or the `api_key` returned from the `getMe` operation.
   requestBodies:
     DNSCustomRecordRequest:
-      description: The value of the DNS record
+      description: The value of the DNS record.
       required: true
       content:
         text/plain:
           schema:
             type: string
             example: 1.2.3.4
-            description: The value of the DNS record
+            description: The value of the DNS record.
   schemas:
     MailUsersResponseFormat:
       type: string
