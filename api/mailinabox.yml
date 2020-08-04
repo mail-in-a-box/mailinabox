@@ -5,6 +5,7 @@ info:
   contact:
     name: Mail-in-a-Box support
     url: https://mailinabox.email/
+    email: contact@mailinabox.email
   license:
     name: CC0 1.0 Universal
     url: https://creativecommons.org/publicdomain/zero/1.0/legalcode
@@ -1557,7 +1558,7 @@ components:
       properties:
         hostnames:
           type: string
-          description: Hostnames separated with commas or spaces
+          description: Hostnames separated with commas or spaces.
           example: ns2.hostingcompany.com, ns3.hostingcompany.com
       description: Secondary nameserver/s add request.
     DNSSecondaryNameserverAddResponse:
@@ -1689,7 +1690,7 @@ components:
           $ref: '#/components/schemas/Hostname'
         cert:
           type: string
-          description: TLS/SSL certificate
+          description: TLS/SSL certificate.
           example: |
             -----BEGIN CERTIFICATE-----
             MIICaDCCAVACAQAwIzELMAkGA1UEBhMCQlMxFDASBgNVBAMMC2V4YW1wbGUuY29t
@@ -1708,7 +1709,7 @@ components:
             -----END CERTIFICATE-----
         chain:
           type: string
-          description: TLS/SSL intermediate chain (if provided, else empty string)
+          description: TLS/SSL intermediate chain (if provided, else empty string).
           example: |
             -----BEGIN CERTIFICATE-----
             MIICaDCCAVACAQAwIzELMAkGA1UEBhMCQlMxFDASBgNVBAMMC2V4YW1wbGUuY29t
