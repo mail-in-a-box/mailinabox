@@ -636,7 +636,7 @@ paths:
             text/html:
               schema:
                 type: string
-  /dns/custom/{qname}/{type}:
+  /dns/custom/{qname}/{rtype}:
     parameters:
       - in: path
         name: qname
@@ -645,7 +645,7 @@ paths:
         required: true
         description: DNS record query name
       - in: path
-        name: type
+        name: rtype
         schema:
           $ref: '#/components/schemas/DNSRecordType'
         required: true
@@ -1348,7 +1348,7 @@ components:
       type: string
       example: |
         example1.com
-        example2.come
+        example2.com
       description: Mail domains response.
     MailUsersResponse:
       type: array
