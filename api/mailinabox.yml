@@ -284,7 +284,7 @@ paths:
         200:
           description: Successful operation
           content:
-            application/json:
+            text/html:
               schema:
                 $ref: '#/components/schemas/SystemRebootResponse'
         403:
