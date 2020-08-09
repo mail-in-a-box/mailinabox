@@ -1021,13 +1021,14 @@ if __name__ == "__main__":
 	from utils import load_environment
 
 	env = load_environment()
-	pool = multiprocessing.pool.Pool(processes=10)
 
 	if len(sys.argv) == 1:
-		run_checks(False, env, ConsoleOutput(), pool)
+		with multiprocessing.pool.Pool(processes=10) as pool:
+			run_checks(False, env, ConsoleOutput(), pool)
 
 	elif sys.argv[1] == "--show-changes":
-		run_and_output_changes(env, pool)
+		with multiprocessing.pool.Pool(processes=10) as pool:
+			run_and_output_changes(env, pool)
 
 	elif sys.argv[1] == "--check-primary-hostname":
 		# See if the primary hostname appears resolvable and has a signed certificate.
