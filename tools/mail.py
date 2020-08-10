@@ -33,9 +33,6 @@ def read_password():
         if len(first) < 8:
             print("Passwords must be at least eight characters.")
             continue
-        if re.search(r'[\s]', first):
-            print("Passwords cannot contain spaces.")
-            continue
         second = getpass.getpass(' (again): ')
         if first != second:
             print("Passwords not the same. Try again.")

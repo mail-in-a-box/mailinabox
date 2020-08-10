@@ -144,7 +144,7 @@ service imap-login {
   }
 }
 protocol imap {
-  mail_max_userip_connections = 20
+  mail_max_userip_connections = 40
 }
 EOF
 

@@ -340,11 +340,13 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 			# 'break' was not encountered above, so both domains are good
 			mta_sts_enabled = True
 	if mta_sts_enabled:
-		# Compute a up-to-32-character hash of the policy file. We'll take a SHA-1 hash of the policy
-		# file (20 bytes) and encode it as base-64 (60 bytes) but then just take its first 20 bytes
-		# which should be sufficient to change whenever the policy file changes.
+		# Compute an up-to-32-character hash of the policy file. We'll take a SHA-1 hash of the policy
+		# file (20 bytes) and encode it as base-64 (28 bytes, using alphanumeric alternate characters
+		# instead of '+' and '/' which are not allowed in an MTA-STS policy id) but then just take its
+		# first 20 characters, which is more than sufficient to change whenever the policy file changes
+		# (and ensures any '=' padding at the end of the base64 encoding is dropped).
 		with open("/var/lib/mailinabox/mta-sts.txt", "rb") as f:
-			mta_sts_policy_id = base64.b64encode(hashlib.sha1(f.read()).digest()).decode("ascii")[0:20]
+			mta_sts_policy_id = base64.b64encode(hashlib.sha1(f.read()).digest(), altchars=b"AA").decode("ascii")[0:20]
 		mta_sts_records.extend([
 			("_mta-sts", "TXT", "v=STSv1; id=" + mta_sts_policy_id, "Optional. Part of the MTA-STS policy for incoming mail. If set, a MTA-STS policy must also be published.")
 		])
@@ -965,18 +967,19 @@ def set_secondary_dns(hostnames, env):
 				try:
 					response = resolver.query(item, "A")
 				except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
-					raise ValueError("Could not resolve the IP address of %s." % item)
+					try:
+						response = resolver.query(item, "AAAA")
+					except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+						raise ValueError("Could not resolve the IP address of %s." % item)
 			else:
 				# Validate IP address.
 				try:
 					if "/" in item[4:]:
 						v = ipaddress.ip_network(item[4:]) # raises a ValueError if there's a problem
-						if not isinstance(v, ipaddress.IPv4Network): raise ValueError("That's an IPv6 subnet.")
 					else:
 						v = ipaddress.ip_address(item[4:]) # raises a ValueError if there's a problem
-						if not isinstance(v, ipaddress.IPv4Address): raise ValueError("That's an IPv6 address.")
 				except ValueError:
-					raise ValueError("'%s' is not an IPv4 address or subnet." % item[4:])
+					raise ValueError("'%s' is not an IPv4 or IPv6 address or subnet." % item[4:])
 
 		# Set.
 		set_custom_dns_record("_secondary_nameserver", "A", " ".join(hostnames), "set", env)
