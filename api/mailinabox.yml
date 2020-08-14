@@ -10,6 +10,9 @@ info:
     name: CC0 1.0 Universal
     url: https://creativecommons.org/publicdomain/zero/1.0/legalcode
   version: 0.47.0
+  x-logo:
+    url: https://mailinabox.email/static/logo.png
+    altText: Mail-in-a-Box logo
 externalDocs:
   description: Find out more about Mail-in-a-box.
   url: https://mailinabox.email/
@@ -56,6 +59,11 @@ paths:
         If successful, a long-lived `api_key` is returned which can be used for subsequent
         requests to the API.
       operationId: getMe
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/me" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -83,6 +91,11 @@ paths:
       description: |
         Returns an array of statuses which can include headings.
       operationId: getSystemStatus
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/system/status" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -112,6 +125,11 @@ paths:
       summary: Get system version
       description: Returns installed Mail-in-a-Box version.
       operationId: getSystemVersion
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/system/version" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -132,6 +150,11 @@ paths:
       summary: Get system upstream version
       description: Returns Mail-in-a-Box upstream version.
       operationId: getSystemUpstreamVersion
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/system/latest-upstream-version" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -152,6 +175,11 @@ paths:
       summary: Get system updates
       description: Returns system (apt) updates.
       operationId: getSystemUpdates
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/system/updates" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -172,6 +200,11 @@ paths:
       summary: Update system packages
       description: Updates system (apt) packages.
       operationId: updateSystemPackages
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/system/update-packages" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -198,6 +231,11 @@ paths:
           - `true`: Private, new-version checks will not be performed
           - `false`: Not private, new-version checks will be performed
       operationId: getSystemPrivacyStatus
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/system/privacy" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -229,6 +267,21 @@ paths:
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/SystemPrivacyUpdateRequest'
+            examples:
+              enable:
+                summary: Enable new version checks
+                value:
+                  value: 'off'
+              disable:
+                summary: Disable new version checks
+                value:
+                  value: private
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/system/privacy" \
+              -d "value=<string>" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -261,6 +314,11 @@ paths:
           - `true`: A reboot is required
           - `false`: A reboot is not required
       operationId: getSystemRebootStatus
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/system/reboot" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -280,6 +338,11 @@ paths:
       summary: Reboot system
       description: Reboots the system.
       operationId: rebootSystem
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/system/reboot" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -303,6 +366,11 @@ paths:
 
         If the list of backups is empty, this implies no backups have been made yet.
       operationId: getSystemBackupStatus
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/system/backup/status" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -323,6 +391,11 @@ paths:
       summary: Get system backup config
       description: Returns the system backup config.
       operationId: getSystemBackupConfig
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/system/backup/config" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -377,6 +450,15 @@ paths:
                   target_user: ''
                   target_pass: ''
                   minAge: 0
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/system/backup/config" \
+              -d "target=<hostname>" \
+              -d "target_user=<string>" \
+              -d "target_pass=<password>" \
+              -d "min_age=<integer>" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -403,6 +485,11 @@ paths:
       summary: Get SSL status
       description: Returns the SSL status for all domains.
       operationId: getSSLStatus
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/ssl/status" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -437,6 +524,14 @@ paths:
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/SSLCSRGenerateRequest'
+            example:
+              countrycode: 'GB'
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/ssl/csr/<hostname>" \
+              -d "countrycode=<string>" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -470,6 +565,18 @@ paths:
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/SSLCertificateInstallRequest'
+            example:
+              domain: example.com
+              cert: CERT_STRING
+              chain: CHAIN_STRING
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/ssl/install" \
+              -d "domain=<hostname>" \
+              -d "cert=<string>" \
+              -d "chain=<string>" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -497,6 +604,11 @@ paths:
       description: |
         Provisions certificates for all domains.
       operationId: provisionSSLCertificates
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/ssl/provision" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -518,6 +630,11 @@ paths:
       description: |
         Returns a list of nameserver hostnames.
       operationId: getDnsSecondaryNameserver
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/dns/secondary-nameserver" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -544,6 +661,14 @@ paths:
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/DNSSecondaryNameserverAddRequest'
+            example:
+              hostnames: ns2.hostingcompany.com, ns3.hostingcompany.com
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/dns/secondary-nameserver" \
+              -d "hostnames=<string>" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -571,6 +696,11 @@ paths:
       summary: Get DNS zones
       description: Returns an array of all managed top-level domains.
       operationId: getDnsZones
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/dns/zones" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -597,6 +727,14 @@ paths:
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/DNSUpdateRequest'
+            example:
+              force: 1
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/dns/update" \
+              -d "force=<integer>" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -623,6 +761,11 @@ paths:
       summary: Get DNS custom records
       description: Returns all custom DNS records.
       operationId: getDnsCustomRecords
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/dns/custom" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -656,6 +799,11 @@ paths:
       summary: Get DNS custom records
       description: Returns all custom records for the specified query name and type.
       operationId: getDnsCustomRecordsForQNameAndType
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/dns/custom/<qname>/<rtype>" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -677,6 +825,13 @@ paths:
       operationId: addDnsCustomRecord
       requestBody:
         $ref: '#/components/requestBodies/DNSCustomRecordRequest'
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/dns/custom/<qname>/<rtype>" \
+              -H "Content-Type: text/plain" \
+              --data-raw "<string>" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -705,6 +860,13 @@ paths:
       operationId: updateDnsCustomRecord
       requestBody:
         $ref: '#/components/requestBodies/DNSCustomRecordRequest'
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -x PUT "https://{host}/admin/dns/custom/<qname>/<rtype>" \
+              -H "Content-Type: text/plain" \
+              --data-raw "<string>" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -733,6 +895,13 @@ paths:
       operationId: removeDnsCustomRecord
       requestBody:
         $ref: '#/components/requestBodies/DNSCustomRecordRequest'
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X DELETE "https://{host}/admin/dns/custom/<qname>/<rtype>" \
+              -H "Content-Type: text/plain" \
+              --data-raw "<string>" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -767,6 +936,11 @@ paths:
       summary: Get DNS custom A records
       description: Returns all custom A records for the specified query name.
       operationId: getDnsCustomARecordsForQName
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/dns/custom/<qname>" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -788,6 +962,13 @@ paths:
       operationId: addDnsCustomARecord
       requestBody:
         $ref: '#/components/requestBodies/DNSCustomRecordRequest'
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/dns/custom/<qname>" \
+              -H "Content-Type: text/plain" \
+              --data-raw "<string>" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -816,6 +997,13 @@ paths:
       operationId: updateDnsCustomARecord
       requestBody:
         $ref: '#/components/requestBodies/DNSCustomRecordRequest'
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -x PUT "https://{host}/admin/dns/custom/<qname>" \
+              -H "Content-Type: text/plain" \
+              --data-raw "<string>" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -844,6 +1032,13 @@ paths:
       operationId: removeDnsCustomARecord
       requestBody:
         $ref: '#/components/requestBodies/DNSCustomRecordRequest'
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X DELETE "https://{host}/admin/dns/custom/<qname>" \
+              -H "Content-Type: text/plain" \
+              --data-raw "<string>" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -871,6 +1066,11 @@ paths:
       summary: Get DNS dump
       description: Returns all DNS records.
       operationId: getDnsDump
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/dns/dump" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -908,6 +1108,11 @@ paths:
           schema:
             $ref: '#/components/schemas/MailUsersResponseFormat'
           description: The format of the response.
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/mail/users?format=<string>" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -937,6 +1142,27 @@ paths:
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/MailUserAddRequest'
+            examples:
+              normal:
+                summary: Normal user
+                value:
+                  email: user@example.com
+                  password: s3curE_pa5Sw0rD
+                  privileges: ''
+              admin:
+                summary: Admin user
+                value:
+                  email: user@example.com
+                  password: s3curE_pa5Sw0rD
+                  privileges: admin
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/mail/users/add" \
+              -d "email=<email>" \
+              -d "password=<password>" \
+              -d "privileges=<string>" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -970,6 +1196,14 @@ paths:
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/MailUserRemoveRequest'
+            example:
+              email: user@example.com
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/mail/users/remove" \
+              -d "email=<email>" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -1003,6 +1237,16 @@ paths:
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/MailUserAddPrivilegeRequest'
+            example:
+              email: user@example.com
+              privilege: admin
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/mail/users/privileges/add" \
+              -d "email=<email>" \
+              -d "privilege=<string>" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -1036,6 +1280,16 @@ paths:
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/MailUserRemovePrivilegeRequest'
+            example:
+              email: user@example.com
+              privilege: admin
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/mail/users/privileges/remove" \
+              -d "email=<email>" \
+              -d "privilege=<string>" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -1069,6 +1323,16 @@ paths:
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/MailUserSetPasswordRequest'
+            example:
+              email: user@example.com
+              password: s3curE_pa5Sw0rD
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/mail/users/password" \
+              -d "email=<email>" \
+              -d "password=<password>" \
+              -u "<email>:<password>" \
       responses:
         200:
           description: Successful operation
@@ -1102,6 +1366,11 @@ paths:
           schema:
             $ref: '#/components/schemas/Email'
           description: The email you want to get privileges for.
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/mail/users/privileges?email=<email>" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -1122,6 +1391,11 @@ paths:
       summary: Get mail domains
       description: Returns all mail domains.
       operationId: getMailDomains
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/mail/domains" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -1148,6 +1422,11 @@ paths:
           schema:
             $ref: '#/components/schemas/MailAliasesResponseFormat'
           description: The format of the response.
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/mail/aliases?format=<string>" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -1180,6 +1459,44 @@ paths:
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/MailAliasUpsertRequest'
+            examples:
+              regular:
+                summary: Regular alias
+                value:
+                  update_if_exists: 0
+                  address: user@example.com
+                  forwards_to: user2@example.com
+                  permitted_senders:
+              catchall:
+                summary: Catch-all
+                value:
+                  update_if_exists: 0
+                  address: '@example.com'
+                  forwards_to: user@otherexample.com
+                  permitted_senders:
+              domainalias:
+                summary: Domain alias
+                value:
+                  update_if_exists: 0
+                  address: '@example.com'
+                  forwards_to: '@otherexample.com'
+                  permitted_senders:
+              update:
+                summary: Update existing alias
+                value:
+                  update_if_exists: 1
+                  address: user@example.com
+                  forwards_to: user2@example.com
+                  permitted_senders: user3@example.com, user4@example.com
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/mail/aliases/add" \
+              -d "update_if_exists=<integer>" \
+              -d "address=<email>" \
+              -d "forwards_to=<string>" \
+              -d "permitted_senders=<string>" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -1213,6 +1530,14 @@ paths:
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/MailAliasRemoveRequest'
+            example:
+              address: user@example.com
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/mail/aliases/remove" \
+              -d "address=<email>" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -1240,6 +1565,11 @@ paths:
       summary: Get web domains
       description: Returns all static web domains.
       operationId: getWebDomains
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/web/domains" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -1262,6 +1592,11 @@ paths:
       summary: Update web
       description: Updates static websites, used for updating domain root directories.
       operationId: updateWeb
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/web/update" \
+              -u "<email>:<password>"
       responses:
         200:
           description: Successful operation
@@ -1281,12 +1616,16 @@ components:
       type: http
       scheme: basic
       description: |
-        Credentials can be supplied using the `Authorization` header in format `Authorization: Basic {access-token}`.
-        The `access-token` is comprised of the Base64 encoding of `username:password`. The `password` can either be
-        the users password, or the `api_key` returned from the `getMe` operation.
+        Credentials can be supplied using the `Authorization` header in
+        format `Authorization: Basic {access-token}`.
+
+        The `access-token` is comprised of the Base64 encoding of `username:password`.
+        The `password` can either be the users password, or the `api_key` returned from
+        the `getMe` operation.
+
+        When using `curl`, you can supply user credentials using the `-u` or `--user` parameter.
   requestBodies:
     DNSCustomRecordRequest:
-      description: The value of the DNS record.
       required: true
       content:
         text/plain:
@@ -1294,6 +1633,7 @@ components:
             type: string
             example: 1.2.3.4
             description: The value of the DNS record.
+          example: '1.2.3.4'
   schemas:
     MailUsersResponseFormat:
       type: string
@@ -1337,8 +1677,8 @@ components:
     MailUsersSimpleResponse:
       type: string
       example: |
-        email1@example.com
-        email2@example.com
+        user1@example.com
+        user2@example.com
       description: Get mail users text format response.
     MailUserPrivilegesResponse:
       $ref: '#/components/schemas/MailUserPrivilege'
@@ -1455,16 +1795,16 @@ components:
           $ref: '#/components/schemas/Email'
         forwards_to:
           type: string
-          example: email1@example.com, example2@example.com
+          example: user1@example.com, user2@example.com
           description: |
-            If adding a regular or catch-all alias, the format needs to be `email1@example.com`.
+            If adding a regular or catch-all alias, the format needs to be `user@example.com`.
             Multiple address can be separated by newlines or commas.
 
             If adding a domain alias, the format needs to be `@example.com`.
         permitted_senders:
           type: string
           nullable: true
-          example: email1@example.com, example2@example.com
+          example: user1@example.com, user2@example.com
           description: |
             Mail users that can send mail claiming to be from any address on the alias domain.
             Multiple address can be separated by newlines or commas.
@@ -1882,7 +2222,7 @@ components:
           $ref: '#/components/schemas/StatusEntryType'
         text:
           type: string
-          example: This domain's DNSSEC DS record is not set
+          example: This domain"s DNSSEC DS record is not set
         extra:
           type: array
           items:
