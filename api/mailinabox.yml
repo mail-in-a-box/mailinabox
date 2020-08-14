@@ -1,7 +1,14 @@
 openapi: 3.0.3
 info:
   title: Mail-in-a-Box
-  description: Mail-in-a-Box API HTTP specification.
+  description: |
+    Mail-in-a-Box API HTTP specification.
+
+    # Introduction
+    This API is documented in [**OpenAPI format**](http://spec.openapis.org/oas/v3.0.3).
+    ([View the full HTTP specification](https://raw.githubusercontent.com/badsyntax/mailinabox/api-spec/api/mailinabox.yml).)
+
+    All endpoints are relative to `https://{host}/admin` and are secured with [`Basic Access` authentication](https://en.wikipedia.org/wiki/Basic_access_authentication).
   contact:
     name: Mail-in-a-Box support
     url: https://mailinabox.email/
