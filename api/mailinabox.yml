@@ -12,7 +12,6 @@ info:
   contact:
     name: Mail-in-a-Box support
     url: https://mailinabox.email/
-    email: contact@mailinabox.email
   license:
     name: CC0 1.0 Universal
     url: https://creativecommons.org/publicdomain/zero/1.0/legalcode
@@ -144,6 +143,7 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/SystemVersionResponse'
+              example: v0.46
         403:
           description: Forbidden
           content:
@@ -169,6 +169,7 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/SystemVersionUpstreamResponse'
+              example: v0.47
         403:
           description: Forbidden
           content:
@@ -194,6 +195,9 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/SystemUpdatesResponse'
+              example: |
+                libgnutls30 (3.5.18-1ubuntu1.4)
+                libxau6 (1:1.0.8-1ubuntu1)
         403:
           description: Forbidden
           content:
@@ -219,6 +223,10 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/SystemUpdatePackagesResponse'
+              example: |
+                Calculating upgrade...
+                The following packages will be upgraded:
+                  cloud-init grub-common
         403:
           description: Forbidden
           content:
@@ -261,7 +269,7 @@ paths:
         - System
       summary: Update system privacy
       description: |
-        Updates system privacy (new-version) check status.
+        Updates system privacy (new-version checks).
 
         Request:
 
@@ -296,6 +304,7 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/SystemPrivacyUpdateResponse'
+              example: OK
         400:
           description: Bad request
           content:
@@ -357,6 +366,7 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/SystemRebootResponse'
+              example: No reboot is required, so it is not allowed.
         403:
           description: Forbidden
           content:
@@ -473,6 +483,7 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/SystemBackupConfigUpdateResponse'
+              example: OK
         400:
           description: Bad request
           content:
@@ -546,6 +557,12 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/SSLCSRGenerateResponse'
+              example: |
+                -----BEGIN CERTIFICATE REQUEST-----
+                MIICaDCCAVACAQAwIzELMAkGA1UEBhMCQlMxFDASBgNVBAMMC2V4YW1wbGUuY29t
+                ...
+                JmFDQESSfUxLPHLC660Wnf3GmrP/duZHpPC+qTe8b1AlQ7zDT3cOaAQ+Mb0=
+                -----END CERTIFICATE REQUEST-----
         400:
           description: Bad request
           content:
@@ -591,6 +608,7 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/SSLCertificateInstallResponse'
+              example: OK
         400:
           description: Bad request
           content:
@@ -683,6 +701,7 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/DNSSecondaryNameserverAddResponse'
+              example: 'updated DNS: example.com'
         400:
           description: Bad request
           content:
@@ -846,6 +865,7 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/DNSCustomRecordUpsertResponse'
+              example: 'updated DNS: example.com'
         400:
           description: Bad request
           content:
@@ -881,6 +901,7 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/DNSCustomRecordUpsertResponse'
+              example: 'updated DNS: example.com'
         400:
           description: Bad request
           content:
@@ -916,6 +937,7 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/DNSCustomRecordRemoveResponse'
+              example: 'updated DNS: example.com'
         400:
           description: Bad request
           content:
@@ -983,6 +1005,7 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/DNSCustomRecordUpsertResponse'
+              example: 'updated DNS: example.com'
         400:
           description: Bad request
           content:
@@ -1018,6 +1041,7 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/DNSCustomRecordUpsertResponse'
+              example: 'updated DNS: example.com'
         400:
           description: Bad request
           content:
@@ -1053,6 +1077,7 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/DNSCustomRecordRemoveResponse'
+              example: 'updated DNS: example.com'
         400:
           description: Bad request
           content:
@@ -1130,6 +1155,9 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/MailUsersSimpleResponse'
+              example: |
+                user1@example.com
+                user2@example.com
         403:
           description: Forbidden
           content:
@@ -1177,6 +1205,9 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/MailUserAddResponse'
+              example: |
+                mail user added
+                updated DNS: OpenDKIM configuration
         400:
           description: Bad request
           content:
@@ -1218,6 +1249,7 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/MailUserRemoveResponse'
+              example: OK
         400:
           description: Bad request
           content:
@@ -1261,6 +1293,7 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/MailUserAddPrivilegeResponse'
+              example: OK
         400:
           description: Bad request
           content:
@@ -1304,6 +1337,7 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/MailUserRemovePrivilegeResponse'
+              example: OK
         400:
           description: Bad request
           content:
@@ -1347,6 +1381,7 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/MailUserSetPasswordResponse'
+              example: OK
         400:
           description: Bad request
           content:
@@ -1385,6 +1420,7 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/MailUserPrivilegesResponse'
+              example: admin
         403:
           description: Forbidden
           content:
@@ -1410,6 +1446,9 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/MailDomainsResponse'
+              example: |
+                example1.com
+                example2.com
         403:
           description: Forbidden
           content:
@@ -1446,6 +1485,9 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/MailAliasesSimpleResponse'
+                example: |
+                  abuse@example.com	administrator@example.com
+                  admin@example.com	administrator@example.com
         403:
           description: Forbidden
           content:
@@ -1511,6 +1553,7 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/MailAliasUpsertResponse'
+              example: alias updated
         400:
           description: Bad request
           content:
@@ -1552,6 +1595,7 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/MailAliasRemoveResponse'
+              example: alias removed
         400:
           description: Bad request
           content:
@@ -1611,6 +1655,7 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/WebUpdateResponse'
+              example: web updated
         403:
           description: Forbidden
           content:
@@ -1627,8 +1672,8 @@ components:
         format `Authorization: Basic {access-token}`.
 
         The `access-token` is comprised of the Base64 encoding of `username:password`.
-        The `password` can either be the users password, or the `api_key` returned from
-        the `getMe` operation.
+        The `username` is the mail user's email address, and `password` can either be the mail user's
+        password, or the `api_key` returned from the `getMe` operation.
 
         When using `curl`, you can supply user credentials using the `-u` or `--user` parameter.
   requestBodies:
