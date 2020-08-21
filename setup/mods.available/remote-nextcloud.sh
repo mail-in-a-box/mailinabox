@@ -147,8 +147,10 @@ remote_nextcloud_handler() {
         # configure zpush (which links to contacts & calendar)
         configure_zpush
         
-        # prevent nginx from serving any miab-installed nextcloud files
+        # prevent nginx from serving any miab-installed nextcloud
+        # files and remove owncloud cron job
         chmod 000 /usr/local/lib/owncloud
+        rm -f /etc/cron.d/mailinabox-nextcloud
     fi
     
     tools/editconf.py /etc/mailinabox_mods.conf \
