@@ -5,3 +5,4 @@ tools/__pycache__/
 externals/
 .env
 .vagrant
+api/docs/api-docs.html
