@@ -234,7 +234,7 @@ def migration_13(env):
 	
 	# 4. perform the migration
 	users=m13.create_users(env, conn, ldap, ldap_base, ldap_users_base, ldap_domains_base)
-	aliases=m13.create_aliases(conn, ldap, ldap_aliases_base)
+	aliases=m13.create_aliases(env, conn, ldap, ldap_aliases_base)
 	permitted=m13.create_permitted_senders(conn, ldap, ldap_users_base, ldap_permitted_senders_base)
 	m13.populate_aliases(conn, ldap, users, aliases)
 		

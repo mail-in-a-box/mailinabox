@@ -36,6 +36,15 @@
     </div>
   </div>
   <div class="form-group">
+    <label for="addaliasDescription" class="col-sm-1 control-label">Comment</label>
+    <div class="col-sm-10">
+      <input type="text" class="form-control" id="addaliasDescription">
+      <div style="margin-top: 3px; padding-left: 3px; font-size: 90%" class="text-muted">
+        An optional description of the alias
+      </div>
+    </div>
+  </div>
+  <div class="form-group">
     <label for="addaliasForwardsTo" class="col-sm-1 control-label">Forwards To</label>
     <div class="col-sm-10">
       <textarea class="form-control" rows="3" id="addaliasForwardsTo"></textarea>
@@ -81,6 +90,7 @@
       <th>Alias<br></th>
       <th>Forwards To</th>
       <th>Permitted Senders</th>
+      <th>Comment</th>
     </tr>
   </thead>
   <tbody>
@@ -103,6 +113,7 @@
     <td class='address'> </td>
     <td class='forwardsTo'> </td>
     <td class='senders'> </td>
+    <td class='description'> </td>
   </tr>
   </table>
 </div>
@@ -170,6 +181,7 @@ function show_aliases() {
             n.find('td.forwardsTo').append($("<div></div>").text(alias.forwards_to[j]))
           for (var j = 0; j < (alias.permitted_senders ? alias.permitted_senders.length : 0); j++)
             n.find('td.senders').append($("<div></div>").text(alias.permitted_senders[j]))
+          n.find('td.description').append($("<div></div>").text(alias.description));
           $('#alias_table tbody').append(n);
         }
       }
@@ -208,6 +220,7 @@ var is_alias_add_update = false;
 function do_add_alias() {
   var title = (!is_alias_add_update) ? "Add Alias" : "Update Alias";
   var form_address = $("#addaliasAddress").val();
+  var form_description = $("#addaliasDescription").val();
   var form_forwardsto = $("#addaliasForwardsTo").val();
   var form_senders = ($('#addaliasForwardsToAdvanced').prop('checked') ? $("#addaliasSenders").val() : '');
   if ($('#addaliasForwardsToAdvanced').prop('checked') && !/\S/.exec($("#addaliasSenders").val())) {
@@ -220,6 +233,7 @@ function do_add_alias() {
     {
       update_if_exists: is_alias_add_update ? '1' : '0',
       address: form_address,
+      description: form_description,
       forwards_to: form_forwardsto,
       permitted_senders: form_senders
     },
@@ -237,9 +251,10 @@ function do_add_alias() {
 
 function aliases_reset_form() {
   $("#addaliasAddress").prop('disabled', false);
-  $("#addaliasAddress").val('')
-  $("#addaliasForwardsTo").val('')
-  $("#addaliasSenders").val('')
+  $("#addaliasAddress").val('');
+  $("#addaliasDescription").val('');
+  $("#addaliasForwardsTo").val('');
+  $("#addaliasSenders").val('');
   $('#alias-cancel').addClass('hidden');
   $('#add-alias-button').text('Add Alias');
   is_alias_add_update = false;
@@ -247,6 +262,7 @@ function aliases_reset_form() {
 
 function aliases_edit(elem) {
   var address = $(elem).parents('tr').attr('data-address');
+  var description = $(elem).parents('tr').find('.description div').text().trim();
   var receiverdivs = $(elem).parents('tr').find('.forwardsTo div');
   var senderdivs = $(elem).parents('tr').find('.senders div');
   var forwardsTo = "";
@@ -264,6 +280,7 @@ function aliases_edit(elem) {
   $('#alias-cancel').removeClass('hidden');
   $("#addaliasAddress").prop('disabled', true);
   $("#addaliasAddress").val(address);
+  $("#addaliasDescription").val(description);
   $("#addaliasForwardsTo").val(forwardsTo);
   $('#addaliasForwardsToAdvanced').prop('checked', senders != "");
   $('#addaliasForwardsToNotAdvanced').prop('checked', senders == "");

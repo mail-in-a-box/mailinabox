@@ -312,7 +312,8 @@ def get_mail_aliases(env, as_map=False):
 	#    { dn: {string},
 	#      mail: {string}
 	#      forward_tos: {array of string},
-	#      permited_senders: {array of string}
+	#      permited_senders: {array of string},
+	#      description: {string}
 	#    }
 	#
 	c = open_database(env)
@@ -323,7 +324,7 @@ def get_mail_aliases(env, as_map=False):
 	permitted_senders = { rec["mail"][0].lower(): rec["member"] for rec in pager }
 
 	# get all alias groups
-	pager = c.paged_search(env.LDAP_ALIASES_BASE, "(objectClass=mailGroup)", attributes=['mail','member','rfc822MailMember'])
+	pager = c.paged_search(env.LDAP_ALIASES_BASE, "(objectClass=mailGroup)", attributes=['mail','member','rfc822MailMember', 'description'])
 	
 	# make a dict of aliases
 	# key=email(lowercase), value=(email, forward-tos, permitted-senders).
@@ -352,7 +353,8 @@ def get_mail_aliases(env, as_map=False):
 			"dn": alias["dn"],
 			"mail": alias_email,
 			"forward_tos": forward_tos,
-			"permitted_senders": allowed_senders
+			"permitted_senders": allowed_senders,
+			"description": alias["description"][0]
 		}
 
 	if not as_map:
@@ -382,7 +384,8 @@ def get_mail_aliases_ex(env):
 	#         address_display: "name@domain.tld", # full Unicode
 	#         forwards_to: ["user1@domain.com", "receiver-only1@domain.com", ...],
 	#         permitted_senders: ["user1@domain.com", "sender-only1@domain.com", ...] OR null,
-	#         required: True|False
+	#         required: True|False,
+	#         description: ""
 	#       },
 	#       ...
 	#     ]
@@ -390,26 +393,37 @@ def get_mail_aliases_ex(env):
 	#   ...
 	# ]
 
+	aliases=get_mail_aliases(env, as_map=True)
 	required_aliases = get_required_aliases(env)
 	domains = {}
-	for address, forwards_to, permitted_senders in get_mail_aliases(env):
+	
+	for alias_lc in aliases:
+		alias=aliases[alias_lc]
+		address=alias_lc
+		
 		# get alias info
+		forwards_to=alias["forward_tos"]
+		permitted_senders=alias["permitted_senders"]
+		description=alias["description"]
 		domain = get_domain(address)
 		required = (address in required_aliases)
-
+		
 		# add to list
 		if not domain in domains:
 			domains[domain] = {
 				"domain": domain,
 				"aliases": [],
 			}
+
 		domains[domain]["aliases"].append({
 			"address": address,
 			"address_display": prettify_idn_email_address(address),
-			"forwards_to": [prettify_idn_email_address(r.strip()) for r in forwards_to.split(",")],
-			"permitted_senders": [prettify_idn_email_address(s.strip()) for s in permitted_senders.split(",")] if permitted_senders is not None else None,
+			"forwards_to": [prettify_idn_email_address(r.strip()) for r in forwards_to],
+			"permitted_senders": [prettify_idn_email_address(s.strip()) for s in permitted_senders] if permitted_senders is not None and len(permitted_senders)>0 else None,
 			"required": required,
+			"description": description
 		})
+
 
 	# Sort domains.
 	domains = [domains[domain] for domain in utils.sort_domains(domains.keys(), env)]
@@ -857,10 +871,11 @@ def convert_rfc822MailMember(env, conn, dn, mail):
 			pass
 
 		
-def add_mail_alias(address, forwards_to, permitted_senders, env, update_if_exists=False, do_kick=True):
+def add_mail_alias(address, description, forwards_to, permitted_senders, env, update_if_exists=False, do_kick=True):
 	# Add a new alias group with permitted senders.
 	#
 	# address: the email address of the alias
+	# description: a text description of the alias
 	# forwards_to: a string of newline and comma separated email address
 	# where mail is delivered
 	# permitted_senders: a string of newline and comma separated email addresses of local users that are permitted to MAIL FROM the alias.
@@ -958,20 +973,30 @@ def add_mail_alias(address, forwards_to, permitted_senders, env, update_if_exist
 	# save to db
 
 	conn = open_database(env)
-	existing_alias, existing_permitted_senders = find_mail_alias(env, address, ['member','rfc822MailMember'], conn)
+	existing_alias, existing_permitted_senders = find_mail_alias(env, address, ['member','rfc822MailMember', 'description'], conn)
 	if existing_alias and not update_if_exists:
 		return ("Alias already exists (%s)." % address, 400)
 	
 	cn="%s" % uuid.uuid4()
 	dn="cn=%s,%s" % (cn, env.LDAP_ALIASES_BASE)
-	if address.startswith('@') and \
-	   len(validated_forwards_to)==1 and \
-	   validated_forwards_to[0].startswith('@'):
-		description = "Domain alias %s->%s" % (address, validated_forwards_to[0])
-	elif address.startswith('@'):
-		description = "Catch-all for %s" % address
-	else:
-		description ="Mail group %s" % address
+	if not description:
+		# supply a default description for new entries that did not
+		# specify one
+		if not existing_alias:
+			if address.startswith('@') and \
+			   len(validated_forwards_to)==1 and \
+			   validated_forwards_to[0].startswith('@'):
+				description = "Domain alias %s->%s" % (address, validated_forwards_to[0])
+			elif address.startswith('@'):
+				description = "Catch-all for %s" % address
+			else:
+				description ="Mail alias %s" % address
+		
+		# when updating, ensure the description has a value because
+		# the ldap schema does not allow an empty field
+		else:
+			description=" "
+	
 	attrs = {
 		"mail": address,
 		"description": description,
@@ -980,7 +1005,7 @@ def add_mail_alias(address, forwards_to, permitted_senders, env, update_if_exist
 	}
 	
 	op = conn.add_or_modify(dn, existing_alias,
-			['member', 'rfc822MailMember' ],
+			['member', 'rfc822MailMember', 'description' ],
 			['mailGroup'],
 			attrs)
 	if op == 'modify':
@@ -1104,7 +1129,7 @@ def kick(env, mail_result=None):
 		# Doesn't exist.
 		administrator = get_system_administrator(env)
 		if address == administrator: return # don't make an alias from the administrator to itself --- this alias must be created manually
-		add_mail_alias(address, administrator, "", env, do_kick=False)
+		add_mail_alias(address, "Required alias", administrator, "", env, do_kick=False)
 		if administrator not in existing_aliases: return # don't report the alias in output if the administrator alias isn't in yet -- this is a hack to supress confusing output on initial setup
 		results.append("added alias %s (=> %s)\n" % (address, administrator))
 

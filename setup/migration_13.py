@@ -107,7 +107,7 @@ def create_users(env, conn, ldapconn, ldap_base, ldap_users_base, ldap_domains_b
 	return users
 
 
-def create_aliases(conn, ldapconn, aliases_base):
+def create_aliases(env, conn, ldapconn, aliases_base):
 	# iterate through sqlite 'aliases' table and create ldap
 	# aliases but without members.  returns a map of alias->dn
 	aliases={}
@@ -122,10 +122,19 @@ def create_aliases(conn, ldapconn, aliases_base):
 		else:
 			cn="%s" % uuid.uuid4()
 			dn="cn=%s,%s" % (cn, aliases_base)
-			print("adding alias %s" % alias)
+			description="Mail group %s" % alias
+			
+			if alias.startswith("postmaster@") or \
+			   alias.startswith("hostmaster@") or \
+			   alias.startswith("abuse@") or \
+			   alias.startswith("admin@") or \
+			   alias == "administrator@" + env['PRIMARY_HOSTNAME']:
+				description = "Required alias"
+
+			print("adding alias %s" % alias)			
 			ldapconn.add(dn, ['mailGroup'], {
 				"mail": alias,
-				"description": "Mail group %s" % alias
+				"description": description
 			})
 			aliases[alias] = dn
 	return aliases
