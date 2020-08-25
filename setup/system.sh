@@ -99,15 +99,17 @@ hide_output add-apt-repository -y ppa:certbot/certbot
 # of things from Ubuntu, as well as the directory of packages provide by the
 # PPAs so we can install those packages later.
 
-echo Updating system packages...
-hide_output apt-get update
-apt_get_quiet upgrade
+if [ "$SKIP_SYSTEM_UPDATE" != "1" ]; then
+	echo Updating system packages...
+	hide_output apt-get update
+	apt_get_quiet upgrade
 
 # Old kernels pile up over time and take up a lot of disk space, and because of Mail-in-a-Box
 # changes there may be other packages that are no longer needed. Clear out anything apt knows
 # is safe to delete.
 
-apt_get_quiet autoremove
+	apt_get_quiet autoremove
+fi
 
 # ### Install System Packages
 

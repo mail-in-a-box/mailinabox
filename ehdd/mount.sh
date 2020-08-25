@@ -3,7 +3,7 @@
 . "ehdd/ehdd_funcs.sh" || exit 1
 
 if [ ! -e "$EHDD_IMG" ]; then
-    echo "No ecrypted HDD not found at $EHDD_IMG, not mounting"
+    echo "No ecrypted HDD found at $EHDD_IMG, not mounting"
     exit 0
 fi
 
