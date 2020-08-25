@@ -39,7 +39,7 @@ init() {
 }
 
 upstream_install() {
-    local upstream_dir="$HOME/mailinabox-upstream"
+    local upstream_dir="$1"
     H1 "INSTALL UPSTREAM"
     [ ! -x /usr/bin/git ] && apt-get install -y -qq git
     
@@ -132,14 +132,17 @@ then
     echo "Warning: MiaB-LDAP is already installed! Skipping installation of upstream"
 else
     # install upstream
-    upstream_install
+    upstream_dir="$HOME/mailinabox-upstream"
+    upstream_install "$upstream_dir"
     . /etc/mailinabox.conf
     
     # populate some data
     populate_by_name "${1:-basic}"
 
     # capture upstream state
+    pushd "$upstream_dir" >/dev/null
     installed_state_capture "/tmp/state/upstream"
+    popd >/dev/null
 fi
 
 # install miab-ldap and capture state

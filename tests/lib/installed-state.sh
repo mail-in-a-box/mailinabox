@@ -25,6 +25,7 @@ installed_state_capture() {
     H2 "create info.txt"
     echo "STATE_VERSION=1" > "$info"
     echo "GIT_VERSION='$(git describe --abbrev=0)'" >>"$info"
+    echo "GIT_ORIGIN='$(git remote -v | grep ^origin | grep 'fetch)$' | awk '{print $2}')'" >>"$info"
     echo "MIGRATION_VERSION=$(cat "$STORAGE_ROOT/mailinabox.version")" >>"$info"
 
     # record users
@@ -43,8 +44,7 @@ installed_state_capture() {
         echo "Unable to get aliases: rc=$? err=$REST_ERROR" 1>&2
         return 2
     fi
-    # ignore/exclude the alias description field
-    echo "$REST_OUTPUT" | grep -v '"description":' > "$state_dir/aliases.json"
+    echo "$REST_OUTPUT" > "$state_dir/aliases.json"
 
     # record dns config
     H2 "record dns details"
@@ -71,9 +71,46 @@ installed_state_compare() {
     local changed="false"
 
     H1 "COMPARE STATES: $(basename "$s1") VS $(basename "$2")"
-    H2 "Users"
+
+    #
+    # determine compare type id (incorporating repo, branch, version, etc)
+    #
+    local compare_type="all"
+    
+    source "$s2/info.txt"
+    if grep "mailinabox-ldap.git" <<<"$GIT_ORIGIN" >/dev/null; then
+        GIT_ORIGIN=""
+        source "$s1/info.txt"
+        if ! grep "mailinabox-ldap.git" <<<"$GIT_ORIGIN" >/dev/null; then
+            compare_type="miab2miab-ldap"
+        fi
+    fi
+    echo "Compare type: $compare_type"
+
+    #
+    # filter data for compare type
+    #
+    cp "$s1/users.json" "$s1/users-cmp.json" || changed="true"
+    cp "$s1/aliases.json" "$s1/aliases-cmp.json" || changed="true"
+    cp "$s2/users.json" "$s2/users-cmp.json" || changed="true"
+    cp "$s2/aliases.json" "$s2/aliases-cmp.json" || changed="true"
+    
+    if [ "$compare_type" == "miab2miab-ldap" ]
+    then
+        # user display names is a feature added to MiaB-LDAP that is
+        # not in MiaB
+        grep -v '"display_name":' "$s2/users.json" > "$s2/users-cmp.json" || changed="true"
+
+        # alias descriptions is a feature added to MiaB-LDAP that is
+        # not in MiaB
+        grep -v '"description":' "$s2/aliases.json" > "$s2/aliases-cmp.json" || changed="true"        
+    fi    
+    
+    #
     # users
-    output="$(diff "$s1/users.json" "$s2/users.json" 2>&1)"
+    #
+    H2 "Users"
+    output="$(diff "$s1/users-cmp.json" "$s2/users-cmp.json" 2>&1)"
     if [ $? -ne 0 ]; then
         changed="true"
         echo "USERS ARE DIFFERENT!"
@@ -82,8 +119,11 @@ installed_state_compare() {
         echo "No change"
     fi
 
+    #
+    # aliases
+    #
     H2 "Aliases"
-    output="$(diff "$s1/aliases.json" "$s2/aliases.json" 2>&1)"
+    output="$(diff "$s1/aliases-cmp.json" "$s2/aliases-cmp.json" 2>&1)"
     if [ $? -ne 0 ]; then
         changed="true"
         echo "ALIASES ARE DIFFERENT!"
