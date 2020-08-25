@@ -1,0 +1,2531 @@
+openapi: 3.0.3
+info:
+  title: Mail-in-a-Box
+  description: |
+    Mail-in-a-Box API HTTP specification.
+
+    # Introduction
+    This API is documented in [**OpenAPI format**](http://spec.openapis.org/oas/v3.0.3).
+    ([View the full HTTP specification](https://raw.githubusercontent.com/mail-in-a-box/mailinabox/api-spec/api/mailinabox.yml).)
+
+    All endpoints are relative to `https://{host}/admin` and are secured with [`Basic Access` authentication](https://en.wikipedia.org/wiki/Basic_access_authentication).
+  contact:
+    name: Mail-in-a-Box support
+    url: https://mailinabox.email/
+  license:
+    name: CC0 1.0 Universal
+    url: https://creativecommons.org/publicdomain/zero/1.0/legalcode
+  version: 0.47.0
+  x-logo:
+    url: https://mailinabox.email/static/logo.png
+    altText: Mail-in-a-Box logo
+externalDocs:
+  description: Find out more about Mail-in-a-box.
+  url: https://mailinabox.email/
+servers:
+  - url: https://{host}/admin
+    variables:
+      host:
+        default: box.example.com
+        description: The API hostname.
+security:
+  - basicAuth: []
+tags:
+  - name: User
+    description: Endpoints related to user authentication.
+  - name: Mail
+    description: |
+      Mail operations, which include getting all users, getting all aliases, adding/updating/removing users and aliases and getting all mail domains.
+  - name: DNS
+    description: |
+      DNS operations, which include adding custom records, adding a secondary nameserver and viewing all DNS records.
+  - name: SSL
+    description: |
+      TLS (SSL) Certificates operations, which include checking certificate status
+      and installing custom certificates.
+  - name: Web
+    description: |
+      Static web hosting operations, which include getting domain information and updating domain root directories.
+  - name: System
+    description: |
+      System operations, which include system status checks, new version checks
+      and reboot status.
+paths:
+  /me:
+    get:
+      tags:
+        - User
+      summary: Get user information
+      description: |
+        Returns user information. Used for user authentication.
+
+        Authenticate a user by supplying the auth token as a base64 encoded string in
+        format `email:password` using basic authentication headers.
+
+        If successful, a long-lived `api_key` is returned which can be used for subsequent
+        requests to the API.
+      operationId: getMe
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/me" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeResponse'
+              examples:
+                invalid:
+                  value:
+                    reason: Incorrect username or password
+                    status: invalid
+                ok:
+                  value:
+                    api_key: 1a2b3c4d5e6f7g8h9i0j
+                    email: user@example.com
+                    privileges:
+                      - admin
+                    status: ok
+  /system/status:
+    post:
+      tags:
+        - System
+      summary: Get system status
+      description: |
+        Returns an array of statuses which can include headings.
+      operationId: getSystemStatus
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/system/status" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemStatusResponse'
+              example:
+                - type: heading
+                  text: System
+                  extra: []
+                - type: warning
+                  text: This domain's DNSSEC DS record is not set
+                  extra:
+                    - monospace: false
+                      text: 'Digest Type: 2 / SHA-25'
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /system/version:
+    get:
+      tags:
+        - System
+      summary: Get system version
+      description: Returns installed Mail-in-a-Box version.
+      operationId: getSystemVersion
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/system/version" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/SystemVersionResponse'
+              example: v0.46
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /system/latest-upstream-version:
+    post:
+      tags:
+        - System
+      summary: Get system upstream version
+      description: Returns Mail-in-a-Box upstream version.
+      operationId: getSystemUpstreamVersion
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/system/latest-upstream-version" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/SystemVersionUpstreamResponse'
+              example: v0.47
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /system/updates:
+    get:
+      tags:
+        - System
+      summary: Get system updates
+      description: Returns system (apt) updates.
+      operationId: getSystemUpdates
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/system/updates" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/SystemUpdatesResponse'
+              example: |
+                libgnutls30 (3.5.18-1ubuntu1.4)
+                libxau6 (1:1.0.8-1ubuntu1)
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /system/update-packages:
+    post:
+      tags:
+        - System
+      summary: Update system packages
+      description: Updates system (apt) packages.
+      operationId: updateSystemPackages
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/system/update-packages" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/SystemUpdatePackagesResponse'
+              example: |
+                Calculating upgrade...
+                The following packages will be upgraded:
+                  cloud-init grub-common
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /system/privacy:
+    get:
+      tags:
+        - System
+      summary: Get system privacy status
+      description: |
+        Returns system privacy (new-version check) status.
+
+        Response:
+
+          - `true`: Private, new-version checks will not be performed
+          - `false`: Not private, new-version checks will be performed
+      operationId: getSystemPrivacyStatus
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/system/privacy" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemPrivacyStatusResponse'
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+    post:
+      tags:
+        - System
+      summary: Update system privacy
+      description: |
+        Updates system privacy (new-version checks).
+
+        Request:
+
+          - `value: private`: Disable new version checks
+          - `value: off`: Enable new version checks
+      operationId: updateSystemPrivacy
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SystemPrivacyUpdateRequest'
+            examples:
+              enable:
+                summary: Enable new version checks
+                value:
+                  value: 'off'
+              disable:
+                summary: Disable new version checks
+                value:
+                  value: private
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/system/privacy" \
+              -d "value=<string>" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/SystemPrivacyUpdateResponse'
+              example: OK
+        400:
+          description: Bad request
+          content:
+            text/html:
+              schema:
+                type: string
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /system/reboot:
+    get:
+      tags:
+        - System
+      summary: Get system reboot status
+      description: |
+        Returns the system reboot status.
+
+        Response:
+
+          - `true`: A reboot is required
+          - `false`: A reboot is not required
+      operationId: getSystemRebootStatus
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/system/reboot" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemRebootStatusResponse'
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+    post:
+      tags:
+        - System
+      summary: Reboot system
+      description: Reboots the system.
+      operationId: rebootSystem
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/system/reboot" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/SystemRebootResponse'
+              example: No reboot is required, so it is not allowed.
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /system/backup/status:
+    get:
+      tags:
+        - System
+      summary: Get system backup status
+      description: |
+        Returns the system backup status.
+
+        If the list of backups is empty, this implies no backups have been made yet.
+      operationId: getSystemBackupStatus
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/system/backup/status" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemBackupStatusResponse'
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /system/backup/config:
+    get:
+      tags:
+        - System
+      summary: Get system backup config
+      description: Returns the system backup config.
+      operationId: getSystemBackupConfig
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/system/backup/config" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemBackupConfigResponse'
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+    post:
+      tags:
+        - System
+      summary: Update system backup config
+      description: Updates the system backup config.
+      operationId: updateSystemBackupConfig
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SystemBackupConfigUpdateRequest'
+            examples:
+              s3:
+                summary: S3 backup
+                value:
+                  target: s3://s3.eu-central-1.amazonaws.com/box-example-com
+                  target_user: ACCESS_KEY
+                  target_pass: SECRET_ACCESS_KEY
+                  minAge: 3
+              local:
+                summary: Local backup
+                value:
+                  target: local
+                  target_user: ''
+                  target_pass: ''
+                  minAge: 3
+              rsync:
+                summary: Rsync backup
+                value:
+                  target: rsync://username@box.example.com//backups/box.example.com
+                  target_user: ''
+                  target_pass: ''
+                  minAge: 3
+              off:
+                summary: Disable backups
+                value:
+                  target: 'off'
+                  target_user: ''
+                  target_pass: ''
+                  minAge: 0
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/system/backup/config" \
+              -d "target=<hostname>" \
+              -d "target_user=<string>" \
+              -d "target_pass=<password>" \
+              -d "min_age=<integer>" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/SystemBackupConfigUpdateResponse'
+              example: OK
+        400:
+          description: Bad request
+          content:
+            text/html:
+              schema:
+                type: string
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /ssl/status:
+    get:
+      tags:
+        - SSL
+      summary: Get SSL status
+      description: Returns the SSL status for all domains.
+      operationId: getSSLStatus
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/ssl/status" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SSLStatusResponse'
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /ssl/csr/{domain}:
+    post:
+      tags:
+        - SSL
+      summary: Generate SSL CSR
+      description: |
+        Generates a Certificate Signing Request (CSR) for a domain & country code.
+      operationId: generateSSLCSR
+      parameters:
+        - in: path
+          name: domain
+          schema:
+            $ref: '#/components/schemas/Hostname'
+          required: true
+          description: Domain to generate CSR for.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SSLCSRGenerateRequest'
+            example:
+              countrycode: 'GB'
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/ssl/csr/<hostname>" \
+              -d "countrycode=<string>" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/SSLCSRGenerateResponse'
+              example: |
+                -----BEGIN CERTIFICATE REQUEST-----
+                MIICaDCCAVACAQAwIzELMAkGA1UEBhMCQlMxFDASBgNVBAMMC2V4YW1wbGUuY29t
+                ...
+                JmFDQESSfUxLPHLC660Wnf3GmrP/duZHpPC+qTe8b1AlQ7zDT3cOaAQ+Mb0=
+                -----END CERTIFICATE REQUEST-----
+        400:
+          description: Bad request
+          content:
+            text/html:
+              schema:
+                type: string
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /ssl/install:
+    post:
+      tags:
+        - SSL
+      summary: Install SSL certificate
+      description: |
+        Installs a custom certificate. The chain certificate is optional.
+      operationId: installSSLCertificate
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SSLCertificateInstallRequest'
+            example:
+              domain: example.com
+              cert: CERT_STRING
+              chain: CHAIN_STRING
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/ssl/install" \
+              -d "domain=<hostname>" \
+              -d "cert=<string>" \
+              -d "chain=<string>" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/SSLCertificateInstallResponse'
+              example: OK
+        400:
+          description: Bad request
+          content:
+            text/html:
+              schema:
+                type: string
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /ssl/provision:
+    post:
+      tags:
+        - SSL
+      summary: Provision SSL certificates
+      description: |
+        Provisions certificates for all domains.
+      operationId: provisionSSLCertificates
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/ssl/provision" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SSLCertificatesProvisionResponse'
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /dns/secondary-nameserver:
+    get:
+      tags:
+        - DNS
+      summary: Get DNS secondary nameserver
+      description: |
+        Returns a list of nameserver hostnames.
+      operationId: getDnsSecondaryNameserver
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/dns/secondary-nameserver" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DNSSecondaryNameserverResponse'
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+    post:
+      tags:
+        - DNS
+      summary: Add DNS secondary nameserver
+      description: |
+        Adds one or more secondary nameservers.
+      operationId: addDnsSecondaryNameserver
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DNSSecondaryNameserverAddRequest'
+            example:
+              hostnames: ns2.hostingcompany.com, ns3.hostingcompany.com
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/dns/secondary-nameserver" \
+              -d "hostnames=<string>" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/DNSSecondaryNameserverAddResponse'
+              example: 'updated DNS: example.com'
+        400:
+          description: Bad request
+          content:
+            text/html:
+              schema:
+                type: string
+                example: Could not resolve the IP address of badhostname
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /dns/zones:
+    get:
+      tags:
+        - DNS
+      summary: Get DNS zones
+      description: Returns an array of all managed top-level domains.
+      operationId: getDnsZones
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/dns/zones" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DNSZonesResponse'
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /dns/update:
+    post:
+      tags:
+        - DNS
+      summary: Update DNS
+      description: Updates the DNS. Involves creating zone files and restarting `nsd`.
+      operationId: updateDns
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DNSUpdateRequest'
+            example:
+              force: 1
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/dns/update" \
+              -d "force=<integer>" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DNSUpdateResponse'
+        400:
+          description: Bad request
+          content:
+            text/html:
+              schema:
+                type: string
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /dns/custom:
+    get:
+      tags:
+        - DNS
+      summary: Get DNS custom records
+      description: Returns all custom DNS records.
+      operationId: getDnsCustomRecords
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/dns/custom" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DNSCustomRecordsResponse'
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /dns/custom/{qname}/{rtype}:
+    parameters:
+      - in: path
+        name: qname
+        schema:
+          $ref: '#/components/schemas/Hostname'
+        required: true
+        description: DNS record query name
+      - in: path
+        name: rtype
+        schema:
+          $ref: '#/components/schemas/DNSRecordType'
+        required: true
+        description: Record type
+    get:
+      tags:
+        - DNS
+      summary: Get DNS custom records
+      description: Returns all custom records for the specified query name and type.
+      operationId: getDnsCustomRecordsForQNameAndType
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/dns/custom/<qname>/<rtype>" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DNSCustomRecordsResponse'
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+    post:
+      tags:
+        - DNS
+      summary: Add DNS custom record
+      description: Adds a custom DNS record for the specified query name and type.
+      operationId: addDnsCustomRecord
+      requestBody:
+        $ref: '#/components/requestBodies/DNSCustomRecordRequest'
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/dns/custom/<qname>/<rtype>" \
+              -H "Content-Type: text/plain" \
+              --data-raw "<string>" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/DNSCustomRecordUpsertResponse'
+              example: 'updated DNS: example.com'
+        400:
+          description: Bad request
+          content:
+            text/html:
+              schema:
+                type: string
+                example: "'badhostname' does not appear to be an IPv4 or IPv6 address"
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+    put:
+      tags:
+        - DNS
+      summary: Update DNS custom record
+      description: Updates an existing DNS custom record value for the specified qname and type.
+      operationId: updateDnsCustomRecord
+      requestBody:
+        $ref: '#/components/requestBodies/DNSCustomRecordRequest'
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -x PUT "https://{host}/admin/dns/custom/<qname>/<rtype>" \
+              -H "Content-Type: text/plain" \
+              --data-raw "<string>" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/DNSCustomRecordUpsertResponse'
+              example: 'updated DNS: example.com'
+        400:
+          description: Bad request
+          content:
+            text/html:
+              schema:
+                type: string
+                example: "'badhostname' does not appear to be an IPv4 or IPv6 address"
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+    delete:
+      tags:
+        - DNS
+      summary: Remove DNS custom record
+      description: Removes a DNS custom record for the specified domain, type & value.
+      operationId: removeDnsCustomRecord
+      requestBody:
+        $ref: '#/components/requestBodies/DNSCustomRecordRequest'
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X DELETE "https://{host}/admin/dns/custom/<qname>/<rtype>" \
+              -H "Content-Type: text/plain" \
+              --data-raw "<string>" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/DNSCustomRecordRemoveResponse'
+              example: 'updated DNS: example.com'
+        400:
+          description: Bad request
+          content:
+            text/html:
+              schema:
+                type: string
+                example: badhostname is not a domain name or a subdomain of a domain name managed by this box
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /dns/custom/{qname}:
+    parameters:
+      - in: path
+        name: qname
+        schema:
+          $ref: '#/components/schemas/Hostname'
+        required: true
+        description: DNS query name.
+    get:
+      tags:
+        - DNS
+      summary: Get DNS custom A records
+      description: Returns all custom A records for the specified query name.
+      operationId: getDnsCustomARecordsForQName
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/dns/custom/<qname>" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DNSCustomRecordsResponse'
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+    post:
+      tags:
+        - DNS
+      summary: Add DNS custom A record
+      description: Adds a custom DNS A record for the specified query name.
+      operationId: addDnsCustomARecord
+      requestBody:
+        $ref: '#/components/requestBodies/DNSCustomRecordRequest'
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/dns/custom/<qname>" \
+              -H "Content-Type: text/plain" \
+              --data-raw "<string>" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/DNSCustomRecordUpsertResponse'
+              example: 'updated DNS: example.com'
+        400:
+          description: Bad request
+          content:
+            text/html:
+              schema:
+                type: string
+                example: "'badhostname' does not appear to be an IPv4 or IPv6 address"
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+    put:
+      tags:
+        - DNS
+      summary: Update DNS custom A record
+      description: Updates an existing DNS custom A record value for the specified qname.
+      operationId: updateDnsCustomARecord
+      requestBody:
+        $ref: '#/components/requestBodies/DNSCustomRecordRequest'
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -x PUT "https://{host}/admin/dns/custom/<qname>" \
+              -H "Content-Type: text/plain" \
+              --data-raw "<string>" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/DNSCustomRecordUpsertResponse'
+              example: 'updated DNS: example.com'
+        400:
+          description: Bad request
+          content:
+            text/html:
+              schema:
+                type: string
+                example: "'badhostname' does not appear to be an IPv4 or IPv6 address"
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+    delete:
+      tags:
+        - DNS
+      summary: Remove DNS custom A record
+      description: Removes a DNS custom A record for the specified domain & value.
+      operationId: removeDnsCustomARecord
+      requestBody:
+        $ref: '#/components/requestBodies/DNSCustomRecordRequest'
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X DELETE "https://{host}/admin/dns/custom/<qname>" \
+              -H "Content-Type: text/plain" \
+              --data-raw "<string>" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/DNSCustomRecordRemoveResponse'
+              example: 'updated DNS: example.com'
+        400:
+          description: Bad request
+          content:
+            text/html:
+              schema:
+                type: string
+                example: badhostname is not a domain name or a subdomain of a domain name managed by this box
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /dns/dump:
+    get:
+      tags:
+        - DNS
+      summary: Get DNS dump
+      description: Returns all DNS records.
+      operationId: getDnsDump
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/dns/dump" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DNSDumpResponse'
+              example:
+                - - example1.com
+                  - - explanation: Required. Specifies the hostname (and priority) of the machine that handles @example.com mail.
+                      qname: example1.com
+                      rtype: MX
+                      value: 10 box.example1.com.
+                - - example2.com
+                  - - explanation: Required. Specifies the hostname (and priority) of the machine that handles @example.com mail.
+                      qname: example2.com
+                      rtype: MX
+                      value: 10 box.example2.com.
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /mail/users:
+    get:
+      tags:
+        - Mail
+      summary: Get mail users
+      description: Returns all mail users.
+      operationId: getMailUsers
+      parameters:
+        - in: query
+          name: format
+          schema:
+            $ref: '#/components/schemas/MailUsersResponseFormat'
+          description: The format of the response.
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/mail/users?format=<string>" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailUsersResponse'
+            text/html:
+              schema:
+                $ref: '#/components/schemas/MailUsersSimpleResponse'
+              example: |
+                user1@example.com
+                user2@example.com
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /mail/users/add:
+    post:
+      tags:
+        - Mail
+      summary: Add mail user
+      description: Adds a new mail user.
+      operationId: addMailUser
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MailUserAddRequest'
+            examples:
+              normal:
+                summary: Normal user
+                value:
+                  email: user@example.com
+                  password: s3curE_pa5Sw0rD
+                  privileges: ''
+              admin:
+                summary: Admin user
+                value:
+                  email: user@example.com
+                  password: s3curE_pa5Sw0rD
+                  privileges: admin
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/mail/users/add" \
+              -d "email=<email>" \
+              -d "password=<password>" \
+              -d "privileges=<string>" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/MailUserAddResponse'
+              example: |
+                mail user added
+                updated DNS: OpenDKIM configuration
+        400:
+          description: Bad request
+          content:
+            text/html:
+              schema:
+                type: string
+                example: Invalid email address
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /mail/users/remove:
+    post:
+      tags:
+        - Mail
+      summary: Remove mail user
+      description: Removes an existing mail user.
+      operationId: removeMailUser
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MailUserRemoveRequest'
+            example:
+              email: user@example.com
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/mail/users/remove" \
+              -d "email=<email>" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/MailUserRemoveResponse'
+              example: OK
+        400:
+          description: Bad request
+          content:
+            text/html:
+              schema:
+                type: string
+                example: That's not a user (invalid@example.com)
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /mail/users/privileges/add:
+    post:
+      tags:
+        - Mail
+      summary: Add mail user privilege
+      description: Adds a privilege to an existing mail user.
+      operationId: addMailUserPrivilege
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MailUserAddPrivilegeRequest'
+            example:
+              email: user@example.com
+              privilege: admin
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/mail/users/privileges/add" \
+              -d "email=<email>" \
+              -d "privilege=<string>" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/MailUserAddPrivilegeResponse'
+              example: OK
+        400:
+          description: Bad request
+          content:
+            text/html:
+              schema:
+                type: string
+                example: That's not a user (invalid@example.com)
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /mail/users/privileges/remove:
+    post:
+      tags:
+        - Mail
+      summary: Remove mail user privilege
+      description: Removes a privilege from an existing mail user.
+      operationId: removeMailUserPrivilege
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MailUserRemovePrivilegeRequest'
+            example:
+              email: user@example.com
+              privilege: admin
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/mail/users/privileges/remove" \
+              -d "email=<email>" \
+              -d "privilege=<string>" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/MailUserRemovePrivilegeResponse'
+              example: OK
+        400:
+          description: Bad request
+          content:
+            text/html:
+              schema:
+                type: string
+                example: That's not a user (invalid@example.com)
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /mail/users/password:
+    post:
+      tags:
+        - Mail
+      summary: Set mail user password
+      description: Sets a password for an existing mail user.
+      operationId: setMailUserPassword
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MailUserSetPasswordRequest'
+            example:
+              email: user@example.com
+              password: s3curE_pa5Sw0rD
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/mail/users/password" \
+              -d "email=<email>" \
+              -d "password=<password>" \
+              -u "<email>:<password>" \
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/MailUserSetPasswordResponse'
+              example: OK
+        400:
+          description: Bad request
+          content:
+            text/html:
+              schema:
+                type: string
+                example: Passwords must be at least eight characters
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /mail/users/privileges:
+    get:
+      tags:
+        - Mail
+      summary: Get mail user privileges
+      description: Returns all privileges for an existing mail user.
+      operationId: getMailUserPrivileges
+      parameters:
+        - in: query
+          name: email
+          schema:
+            $ref: '#/components/schemas/Email'
+          description: The email you want to get privileges for.
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/mail/users/privileges?email=<email>" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/MailUserPrivilegesResponse'
+              example: admin
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /mail/domains:
+    get:
+      tags:
+        - Mail
+      summary: Get mail domains
+      description: Returns all mail domains.
+      operationId: getMailDomains
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/mail/domains" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/MailDomainsResponse'
+              example: |
+                example1.com
+                example2.com
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /mail/aliases:
+    get:
+      tags:
+        - Mail
+      summary: Get mail aliases
+      description: Returns all mail aliases.
+      operationId: getMailAliases
+      parameters:
+        - in: query
+          name: format
+          schema:
+            $ref: '#/components/schemas/MailAliasesResponseFormat'
+          description: The format of the response.
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/mail/aliases?format=<string>" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MailAliasByDomain'
+            text/html:
+              schema:
+                $ref: '#/components/schemas/MailAliasesSimpleResponse'
+                example: |
+                  abuse@example.com	administrator@example.com
+                  admin@example.com	administrator@example.com
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /mail/aliases/add:
+    post:
+      tags:
+        - Mail
+      summary: Upsert mail alias
+      description: |
+        Adds or updates a mail alias. If updating, you need to set `update_if_exists: 1`.
+      operationId: upsertMailAlias
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MailAliasUpsertRequest'
+            examples:
+              regular:
+                summary: Regular alias
+                value:
+                  update_if_exists: 0
+                  address: user@example.com
+                  forwards_to: user2@example.com
+                  permitted_senders:
+              catchall:
+                summary: Catch-all
+                value:
+                  update_if_exists: 0
+                  address: '@example.com'
+                  forwards_to: user@otherexample.com
+                  permitted_senders:
+              domainalias:
+                summary: Domain alias
+                value:
+                  update_if_exists: 0
+                  address: '@example.com'
+                  forwards_to: '@otherexample.com'
+                  permitted_senders:
+              update:
+                summary: Update existing alias
+                value:
+                  update_if_exists: 1
+                  address: user@example.com
+                  forwards_to: user2@example.com
+                  permitted_senders: user3@example.com, user4@example.com
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/mail/aliases/add" \
+              -d "update_if_exists=<integer>" \
+              -d "address=<email>" \
+              -d "forwards_to=<string>" \
+              -d "permitted_senders=<string>" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/MailAliasUpsertResponse'
+              example: alias updated
+        400:
+          description: Bad request
+          content:
+            text/html:
+              schema:
+                type: string
+                example: Invalid email address (invalid@example.com)
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /mail/aliases/remove:
+    post:
+      tags:
+        - Mail
+      summary: Remove mail alias
+      description: Removes a mail alias.
+      operationId: removeMailAlias
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MailAliasRemoveRequest'
+            example:
+              address: user@example.com
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/mail/aliases/remove" \
+              -d "address=<email>" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/MailAliasRemoveResponse'
+              example: alias removed
+        400:
+          description: Bad request
+          content:
+            text/html:
+              schema:
+                type: string
+                example: That's not an alias (invalid@example)
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /web/domains:
+    get:
+      tags:
+        - Web
+      summary: Get web domains
+      description: Returns all static web domains.
+      operationId: getWebDomains
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/web/domains" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WebDomain'
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /web/update:
+    post:
+      tags:
+        - Web
+      summary: Update web
+      description: Updates static websites, used for updating domain root directories.
+      operationId: updateWeb
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/web/update" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/WebUpdateResponse'
+              example: web updated
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: |
+        Credentials can be supplied using the `Authorization` header in
+        format `Authorization: Basic {access-token}`.
+
+        The `access-token` is comprised of the Base64 encoding of `username:password`.
+        The `username` is the mail user's email address, and `password` can either be the mail user's
+        password, or the `api_key` returned from the `getMe` operation.
+
+        When using `curl`, you can supply user credentials using the `-u` or `--user` parameter.
+  requestBodies:
+    DNSCustomRecordRequest:
+      required: true
+      content:
+        text/plain:
+          schema:
+            type: string
+            example: 1.2.3.4
+            description: The value of the DNS record.
+          example: '1.2.3.4'
+  schemas:
+    MailUsersResponseFormat:
+      type: string
+      enum:
+        - text
+        - json
+      example: json
+      description: Response format (`application/json` or `text/html`).
+    MailAliasesResponseFormat:
+      type: string
+      enum:
+        - text
+        - json
+      example: json
+      description: Response format (`application/json` or `text/html`).
+    MailUserSetPasswordResponse:
+      type: string
+      example: OK
+      description: Mail user set password response.
+    MailUserRemoveResponse:
+      type: string
+      example: OK
+      description: Mail user remove response.
+    MailUserAddResponse:
+      type: string
+      example: |
+        mail user added
+        updated DNS: OpenDKIM configuration
+      description: |
+        Mail user add response.
+
+        Can include information about operations related to adding new users, like updating DNS.
+    MailUserAddPrivilegeResponse:
+      type: string
+      example: OK
+      description: Mail user add admin privilege response.
+    MailUserRemovePrivilegeResponse:
+      type: string
+      example: OK
+      description: Mail user remove admin privilege response.
+    MailUsersSimpleResponse:
+      type: string
+      example: |
+        user1@example.com
+        user2@example.com
+      description: Get mail users text format response.
+    MailUserPrivilegesResponse:
+      $ref: '#/components/schemas/MailUserPrivilege'
+      description: Mail user privileges response.
+      example: admin
+    MailDomainsResponse:
+      type: string
+      example: |
+        example1.com
+        example2.com
+      description: Mail domains response.
+    MailUsersResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/MailUserByDomain'
+      description: Get mail aliases JSON format response.
+    MailUserByDomain:
+      type: object
+      required:
+        - domain
+        - users
+      properties:
+        domain:
+          $ref: '#/components/schemas/Hostname'
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/MailUser'
+      description: Mail users by domain.
+    MailUser:
+      type: object
+      required:
+        - email
+        - privileges
+        - status
+      properties:
+        email:
+          $ref: '#/components/schemas/Email'
+        privileges:
+          type: array
+          items:
+            $ref: '#/components/schemas/MailUserPrivilege'
+        status:
+          $ref: '#/components/schemas/MailUserStatus'
+        mailbox:
+          type: string
+          example: /home/user-data/mail/mailboxes/example.com/user
+      description: Mail user details.
+    MailAliasesSimpleResponse:
+      type: string
+      example: |
+        abuse@example.com	administrator@example.com
+        admin@example.com	administrator@example.com
+      description: Get mail aliases text format response.
+    MailAliasByDomain:
+      type: object
+      required:
+        - domain
+        - aliases
+      properties:
+        domain:
+          $ref: '#/components/schemas/Hostname'
+        aliases:
+          type: array
+          items:
+            $ref: '#/components/schemas/MailAlias'
+      description: Mail aliases by domain.
+    MailAlias:
+      type: object
+      required:
+        - address
+        - address_display
+        - forwards_to
+        - permitted_senders
+        - required
+      properties:
+        address:
+          $ref: '#/components/schemas/Email'
+        address_display:
+          $ref: '#/components/schemas/Email'
+        forwards_to:
+          type: array
+          items:
+            $ref: '#/components/schemas/Email'
+        permitted_senders:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/Email'
+        required:
+          type: boolean
+          example: true
+      description: Mail alias details.
+    MailAliasUpsertResponse:
+      type: string
+      example: alias updated
+      description: Mail alias add/update response.
+    MailAliasUpsertRequest:
+      type: object
+      required:
+        - update_if_exists
+        - address
+        - forwards_to
+        - permitted_senders
+      properties:
+        update_if_exists:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 1
+          example: 1
+          description: Set to `1` when updating an alias.
+        address:
+          $ref: '#/components/schemas/Email'
+        forwards_to:
+          type: string
+          example: user1@example.com, user2@example.com
+          description: |
+            If adding a regular or catch-all alias, the format needs to be `user@example.com`.
+            Multiple address can be separated by newlines or commas.
+
+            If adding a domain alias, the format needs to be `@example.com`.
+        permitted_senders:
+          type: string
+          nullable: true
+          example: user1@example.com, user2@example.com
+          description: |
+            Mail users that can send mail claiming to be from any address on the alias domain.
+            Multiple address can be separated by newlines or commas.
+
+            Leave empty to allow any mail user listed in `forwards_to` to send mail claiming to be from any address on the alias domain.
+      description: Mail alias upsert request.
+    MailAliasRemoveResponse:
+      type: string
+      example: alias removed
+      description: Mail alias remove response.
+    MailAliasRemoveRequest:
+      type: object
+      required:
+        - address
+      properties:
+        address:
+          $ref: '#/components/schemas/Email'
+      description: Mail aliases remove request.
+    DNSRecordType:
+      enum:
+        - A
+        - AAAA
+        - CAA
+        - CNAME
+        - TXT
+        - MX
+        - SRV
+        - SSHFP
+        - NS
+      example: MX
+      description: DNS record type.
+    DNSDumpResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/DNSDumpDomains'
+      description: DNS dump response.
+    DNSDumpDomains:
+      type: array
+      items:
+        oneOf:
+          - $ref: '#/components/schemas/Hostname'
+          - $ref: '#/components/schemas/DNSDumpDomainRecords'
+      description: |
+        A list of records per domain.
+
+        The first item in the list is the domain and the second item is the list of records.
+    DNSDumpDomainRecords:
+      type: array
+      items:
+        $ref: '#/components/schemas/DNSDumpDomainRecord'
+      description: List of domain records.
+    DNSDumpDomainRecord:
+      type: object
+      required:
+        - explanation
+        - qname
+        - type
+        - value
+      properties:
+        explanation:
+          type: string
+          example: Required. Specifies the hostname (and priority) of the machine that handles @example.com mail
+        qname:
+          $ref: '#/components/schemas/Hostname'
+        rtype:
+          $ref: '#/components/schemas/DNSRecordType'
+        value:
+          type: string
+          example: 10 example.com.
+      description: Domain DNS record details.
+    DNSCustomRecord:
+      type: object
+      required:
+        - qname
+        - rtype
+        - value
+      properties:
+        qname:
+          $ref: '#/components/schemas/Hostname'
+        rtype:
+          $ref: '#/components/schemas/DNSRecordType'
+        value:
+          type: string
+          example: 10 example.com.
+      description: Custom DNS record detail detail.
+    DNSCustomRecordsResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/DNSCustomRecord'
+      description: Custom DNS records response.
+    DNSZonesResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/Hostname'
+      description: DNS zones response.
+    DNSSecondaryNameserverResponse:
+      type: object
+      required:
+        - hostnames
+      properties:
+        hostnames:
+          type: array
+          items:
+            type: string
+            example: ns1.example.com
+      description: Secondary nameserver/s response.
+    DNSCustomRecordRemoveResponse:
+      type: string
+      example: 'updated DNS: example.com'
+      description: Custom DNS record remove response.
+    DNSCustomRecordUpsertResponse:
+      type: string
+      example: 'updated DNS: example.com'
+      description: Custom DNS record add response.
+    DNSUpdateRequest:
+      type: object
+      required:
+        - force
+      properties:
+        force:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 1
+          example: 1
+          description: Force an update even if mailinabox detects no changes are required.
+      description: DNS update request.
+    DNSUpdateResponse:
+      type: string
+      example: |
+        updated DNS: example1.com,example2.com
+      description: DNS update response.
+    DNSSecondaryNameserverAddRequest:
+      type: object
+      required:
+        - hostnames
+      properties:
+        hostnames:
+          type: string
+          description: Hostnames separated with commas or spaces.
+          example: ns2.hostingcompany.com, ns3.hostingcompany.com
+      description: Secondary nameserver/s add request.
+    DNSSecondaryNameserverAddResponse:
+      type: string
+      example: 'updated DNS: example.com'
+      description: Secondary nameserver/s add response.
+    SystemPrivacyUpdateRequest:
+      type: object
+      required:
+        - value
+      properties:
+        value:
+          $ref: '#/components/schemas/SystemPrivacyStatus'
+      description: Update system privacy request.
+    SystemPrivacyStatus:
+      type: string
+      enum:
+        - private
+        - 'off'
+      example: private
+      description: System privacy status.
+    MailUserSetPasswordRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          $ref: '#/components/schemas/Email'
+        password:
+          type: string
+          format: password
+      description: Mail user set password request.
+    MailUserAddRequest:
+      type: object
+      required:
+        - email
+        - password
+        - privileges
+      properties:
+        email:
+          $ref: '#/components/schemas/Email'
+        password:
+          type: string
+          format: password
+        privileges:
+          $ref: '#/components/schemas/MailUserPrivilege'
+      description: Mail user add request.
+    MailUserRemoveRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          $ref: '#/components/schemas/Email'
+      description: Mail user remove request.
+    MailUserStatus:
+      type: string
+      enum:
+        - active
+        - inactive
+      example: active
+      description: Mail user status.
+    MailUserPrivilege:
+      type: string
+      enum:
+        - admin
+        - ''
+      example: admin
+      description: Mail user privilege.
+    MailUserAddPrivilegeRequest:
+      type: object
+      required:
+        - email
+        - privilege
+      properties:
+        email:
+          $ref: '#/components/schemas/Email'
+        privilege:
+          $ref: '#/components/schemas/MailUserPrivilege'
+      description: Mail user add privilege request.
+    MailUserRemovePrivilegeRequest:
+      type: object
+      required:
+        - email
+        - privilege
+      properties:
+        email:
+          $ref: '#/components/schemas/Email'
+        privilege:
+          $ref: '#/components/schemas/MailUserPrivilege'
+      description: Mail user remove privilege request.
+    SSLCSRGenerateRequest:
+      type: object
+      required:
+        - countrycode
+      properties:
+        countrycode:
+          type: string
+          example: GB
+      description: Generate SSL CSR request.
+    SSLCSRGenerateResponse:
+      type: string
+      example: |
+        -----BEGIN CERTIFICATE REQUEST-----
+        MIICaDCCAVACAQAwIzELMAkGA1UEBhMCQlMxFDASBgNVBAMMC2V4YW1wbGUuY29t
+        MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3K6dwLM2Nk8kVhIBaZmp
+        eY6y7O0T3jrexEKlW839TVYdcH+K35V1NxilbMFKMuHeowGwFyyiqOy/OUYNeq+T
+        Rz3s4b1qG2p01dwlsXHHYmXLYTAhvqvY+CU5ksieuZbyHRTwbHViQ0xtRXwoVCnj
+        CkN7kJVpkLfVN0/BG6NBFpv/JI8F+hwp+IHdkC1gUXRrLJNC79ERqFP8HoqdQWNw
+        OGGFaOe2aQhvj2zt8wFncyKVc40UKVbSzGGzdL2MPiAJHgZ2lmeY1xDyX1lOt12R
+        IFPwtxmbxaxYaVfe2hxl7m88xV3OjYcKgwVYDusk2XJ37cGew5g+NbBvzEeEUpF9
+        5wIDAQABoAAwDQYJKoZIhvcNAQELBQADggEBAD7UPC3/Nkgpn53mT9puUonYdJg9
+        SD8vvTK/N78CzoEgPNyq+bYbqlcvVPKIdItf9TMiqfOSvW3e3NvkRisYle8Qp+0C
+        8pafXBvQ9eHt5CFeJn4sH9GnxeflOZT/P9Jnp71KtZQvOobirX4GgEWs79g+/NHb
+        Zyf8rbadt9HruNhKA5nlP8cn7Rdc/iuJU8MVSQszI1s1DEcXMPxr6iqb2g87/ifH
+        lWcK59kvRJkCcPhPzjpUy9NulucH4WFA/WqKeDNFS/oC+upV5w8EDEcfnenJFG+N
+        JmFDQESSfUxLPHLC660Wnf3GmrP/duZHpPC+qTe8b1AlQ7zDT3cOaAQ+Mb0=
+        -----END CERTIFICATE REQUEST-----
+      description: Generate SSL CSR response.
+    SSLCertificateInstallRequest:
+      type: object
+      required:
+        - domain
+        - cert
+        - chain
+      properties:
+        domain:
+          $ref: '#/components/schemas/Hostname'
+        cert:
+          type: string
+          description: TLS/SSL certificate.
+          example: |
+            -----BEGIN CERTIFICATE-----
+            MIICaDCCAVACAQAwIzELMAkGA1UEBhMCQlMxFDASBgNVBAMMC2V4YW1wbGUuY29t
+            MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3K6dwLM2Nk8kVhIBaZmp
+            eY6y7O0T3jrexEKlW839TVYdcH+K35V1NxilbMFKMuHeowGwFyyiqOy/OUYNeq+T
+            Rz3s4b1qG2p01dwlsXHHYmXLYTAhvqvY+CU5ksieuZbyHRTwbHViQ0xtRXwoVCnj
+            CkN7kJVpkLfVN0/BG6NBFpv/JI8F+hwp+IHdkC1gUXRrLJNC79ERqFP8HoqdQWNw
+            OGGFaOe2aQhvj2zt8wFncyKVc40UKVbSzGGzdL2MPiAJHgZ2lmeY1xDyX1lOt12R
+            IFPwtxmbxaxYaVfe2hxl7m88xV3OjYcKgwVYDusk2XJ37cGew5g+NbBvzEeEUpF9
+            5wIDAQABoAAwDQYJKoZIhvcNAQELBQADggEBAD7UPC3/Nkgpn53mT9puUonYdJg9
+            SD8vvTK/N78CzoEgPNyq+bYbqlcvVPKIdItf9TMiqfOSvW3e3NvkRisYle8Qp+0C
+            8pafXBvQ9eHt5CFeJn4sH9GnxeflOZT/P9Jnp71KtZQvOobirX4GgEWs79g+/NHb
+            Zyf8rbadt9HruNhKA5nlP8cn7Rdc/iuJU8MVSQszI1s1DEcXMPxr6iqb2g87/ifH
+            lWcK59kvRJkCcPhPzjpUy9NulucH4WFA/WqKeDNFS/oC+upV5w8EDEcfnenJFG+N
+            JmFDQESSfUxLPHLC660Wnf3GmrP/duZHpPC+qTe8b1AlQ7zDT3cOaAQ+Mb0=
+            -----END CERTIFICATE-----
+        chain:
+          type: string
+          description: TLS/SSL intermediate chain (if provided, else empty string).
+          example: |
+            -----BEGIN CERTIFICATE-----
+            MIICaDCCAVACAQAwIzELMAkGA1UEBhMCQlMxFDASBgNVBAMMC2V4YW1wbGUuY29t
+            MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3K6dwLM2Nk8kVhIBaZmp
+            eY6y7O0T3jrexEKlW839TVYdcH+K35V1NxilbMFKMuHeowGwFyyiqOy/OUYNeq+T
+            Rz3s4b1qG2p01dwlsXHHYmXLYTAhvqvY+CU5ksieuZbyHRTwbHViQ0xtRXwoVCnj
+            CkN7kJVpkLfVN0/BG6NBFpv/JI8F+hwp+IHdkC1gUXRrLJNC79ERqFP8HoqdQWNw
+            OGGFaOe2aQhvj2zt8wFncyKVc40UKVbSzGGzdL2MPiAJHgZ2lmeY1xDyX1lOt12R
+            IFPwtxmbxaxYaVfe2hxl7m88xV3OjYcKgwVYDusk2XJ37cGew5g+NbBvzEeEUpF9
+            5wIDAQABoAAwDQYJKoZIhvcNAQELBQADggEBAD7UPC3/Nkgpn53mT9puUonYdJg9
+            SD8vvTK/N78CzoEgPNyq+bYbqlcvVPKIdItf9TMiqfOSvW3e3NvkRisYle8Qp+0C
+            8pafXBvQ9eHt5CFeJn4sH9GnxeflOZT/P9Jnp71KtZQvOobirX4GgEWs79g+/NHb
+            Zyf8rbadt9HruNhKA5nlP8cn7Rdc/iuJU8MVSQszI1s1DEcXMPxr6iqb2g87/ifH
+            lWcK59kvRJkCcPhPzjpUy9NulucH4WFA/WqKeDNFS/oC+upV5w8EDEcfnenJFG+N
+            JmFDQESSfUxLPHLC660Wnf3GmrP/duZHpPC+qTe8b1AlQ7zDT3cOaAQ+Mb0=
+            -----END CERTIFICATE-----
+      description: Install certificate request. `chain` can be an empty string.
+    SSLCertificateInstallResponse:
+      type: string
+      example: OK
+      description: Install certificate response.
+    SSLCertificatesProvisionResponse:
+      type: object
+      required:
+        - requests
+      properties:
+        requests:
+          type: array
+          items:
+            type: object
+            required:
+              - log
+              - result
+              - domains
+            properties:
+              log:
+                type: array
+                items:
+                  type: string
+                example:
+                  - 'The domain name does not resolve to this machine: [Not Set] (A), [Not Set] (AAAA).'
+              result:
+                type: string
+                enum:
+                  - installed
+                  - error
+                  - skipped
+                example: installed
+              domains:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Hostname'
+      description: SSL certificates provision response.
+    SystemPrivacyStatusResponse:
+      type: boolean
+      description: |
+        System privacy status response.
+
+          - `true`: Private, new-version checks will not be performed
+          - `false`: Not private, new-version checks will be performed
+      example: false
+    SystemVersionResponse:
+      type: string
+      description: System version response.
+      example: v0.46
+    SystemVersionUpstreamResponse:
+      type: string
+      description: System version upstream response.
+      example: v0.47
+    SystemUpdatesResponse:
+      type: string
+      description: System updates response.
+      example: |
+        libgnutls30 (3.5.18-1ubuntu1.4)
+        libxau6 (1:1.0.8-1ubuntu1)
+    SystemUpdatePackagesResponse:
+      type: string
+      example: |
+        Reading package lists...
+        Building dependency tree...
+        Reading state information...
+        Calculating upgrade...
+        The following packages will be upgraded:
+          cloud-init grub-common grub-pc grub-pc-bin grub2-common libgnutls30
+          libldap-2.4-2 libldap-common libxau6 linux-firmware python3-distupgrade
+          qemu-guest-agent sosreport ubuntu-release-upgrader-core
+        14 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.
+        Need to get 79.9 MB of archives.
+        After this operation, 3893 kB of additional disk space will be used.
+        Get:1 http://archive.ubuntu.com/ubuntu bionic-updates/main amd64 libgnutls30 amd64 3.5.18-1ubuntu1.4 [645 kB]
+        Preconfiguring packages ...
+        Fetched 79.9 MB in 2s (52.4 MB/s)
+        (Reading database ... 48457 files and directories currently installed.)
+      description: System update packages response.
+    SystemPrivacyUpdateResponse:
+      type: string
+      example: OK
+      description: System privacy update response.
+    SystemRebootStatusResponse:
+      type: boolean
+      description: |
+        System reboot status response.
+
+          - `true`: A reboot is required
+          - `false`: A reboot is not required
+      example: true
+    SystemRebootResponse:
+      type: string
+      example: No reboot is required, so it is not allowed.
+      description: System reboot response.
+    SystemStatusResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/StatusEntry'
+      description: System status response.
+    StatusEntry:
+      type: object
+      required:
+        - type
+        - text
+        - extra
+      properties:
+        type:
+          $ref: '#/components/schemas/StatusEntryType'
+        text:
+          type: string
+          example: This domain"s DNSSEC DS record is not set
+        extra:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusEntryExtra'
+      description: System status entry.
+    StatusEntryType:
+      type: string
+      enum:
+        - heading
+        - ok
+        - warning
+        - error
+      example: warning
+      description: System status entry type.
+    StatusEntryExtra:
+      type: object
+      required:
+        - monospace
+        - text
+      properties:
+        monospace:
+          type: boolean
+          example: false
+        text:
+          type: string
+          example: 'Digest Type: 2 / SHA-256'
+      description: System entry extra information.
+    SystemBackupConfigUpdateRequest:
+      type: object
+      required:
+        - target
+        - target_user
+        - target_pass
+        - min_age
+      properties:
+        target:
+          type: string
+          format: hostname
+          example: s3://s3.eu-central-1.amazonaws.com/box-example-com
+        target_user:
+          type: string
+          example: username
+        target_pass:
+          type: string
+          example: password
+          format: password
+        min_age:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 3
+      description: Backup config update request.
+    SystemBackupConfigUpdateResponse:
+      type: string
+      example: OK
+      description: Backup config update response.
+    SystemBackupConfigResponse:
+      type: object
+      required:
+        - enc_pw_file
+        - file_target_directory
+        - min_age_in_days
+        - ssh_pub_key
+        - target
+      properties:
+        enc_pw_file:
+          type: string
+          example: /home/user-data/backup/secret_key.txt
+        file_target_directory:
+          type: string
+          example: /home/user-data/backup/encrypted
+        min_age_in_days:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 3
+        ssh_pub_key:
+          type: string
+          example: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDb root@box.example.com\n
+        target:
+          type: string
+          format: hostname
+          example: s3://s3.eu-central-1.amazonaws.com/box-example-com
+        target_user:
+          type: string
+        target_pass:
+          type: string
+      description: Backup config response.
+    SystemBackupStatusResponse:
+      type: object
+      required:
+        - unmatched_file_size
+      properties:
+        backups:
+          type: array
+          items:
+            $ref: '#/components/schemas/SystemBackupStatus'
+        unmatched_file_size:
+          type: integer
+          format: int32
+          example: 0
+        error:
+          type: string
+          example: Something is wrong with the backup
+      description: Backup status response. Lists the status for all backups.
+    SystemBackupStatus:
+      type: object
+      required:
+        - date
+        - date_delta
+        - date_str
+        - full
+        - size
+        - volumes
+      properties:
+        date:
+          type: string
+          format: date-time
+          example: 20200801T023706Z
+        date_delta:
+          type: string
+          example: 15 hours, 40 minutes
+        date_str:
+          type: string
+          example: 2020-08-01 03:37:06 BST
+        deleted_in:
+          type: string
+          example: approx. 6 days
+        full:
+          type: boolean
+          example: false
+        size:
+          type: integer
+          format: int32
+          example: 125332
+        volumes:
+          type: integer
+          format: int32
+          example: 1
+      description: Backup status details.
+    SSLStatusResponse:
+      type: object
+      required:
+        - can_provision
+        - status
+      properties:
+        can_provision:
+          type: array
+          items:
+            type: string
+        status:
+          type: array
+          items:
+            $ref: '#/components/schemas/SSLStatus'
+      description: SSL status response for all relevant domains.
+    SSLStatus:
+      type: object
+      required:
+        - domain
+        - status
+        - text
+      properties:
+        domain:
+          $ref: '#/components/schemas/Hostname'
+        status:
+          $ref: '#/components/schemas/SSLStatusType'
+        text:
+          type: string
+          example: Signed & valid. The certificate expires in 87 days on 10/28/20.
+      description: SSL status details for domain.
+    SSLStatusType:
+      type: string
+      enum:
+        - success
+        - danger
+        - not-applicable
+      example: success
+      description: SSL status type.
+    Email:
+      type: string
+      format: email
+      example: user@example.com
+      description: Email format.
+    Hostname:
+      type: string
+      format: hostname
+      example: example.com
+      description: Hostname format.
+    MeResponse:
+      type: object
+      required:
+        - status
+      properties:
+        api_key:
+          type: string
+          example: 12345abcde
+        email:
+          $ref: '#/components/schemas/Email'
+        privileges:
+          type: array
+          items:
+            $ref: '#/components/schemas/MailUserPrivilege'
+        reason:
+          type: string
+          example: Incorrect username or password
+        status:
+          $ref: '#/components/schemas/MeAuthStatus'
+      description: Me (user) response.
+    MeAuthStatus:
+      type: string
+      enum:
+        - ok
+        - invalid
+      example: invalid
+      description: Me (user) authentication result.
+    WebDomain:
+      type: object
+      required:
+        - custom_root
+        - domain
+        - root
+        - ssl_certificate
+        - static_enabled
+      properties:
+        custom_root:
+          type: string
+          example: /home/user-data/www/example.com
+        domain:
+          $ref: '#/components/schemas/Hostname'
+        root:
+          type: string
+          example: /home/user-data/www/default
+        ssl_certificate:
+          type: array
+          minItems: 2
+          maxItems: 2
+          uniqueItems: true
+          items:
+            oneOf:
+              - type: string
+                example: No certificate installed.
+              - type: string
+                enum:
+                  - danger
+                  - success
+                example: danger
+        static_enabled:
+          type: boolean
+          example: true
+      description: Web domain details.
+    WebUpdateResponse:
+      type: string
+      example: web updated
+      description: Web update response.
