@@ -84,7 +84,7 @@ init_test_system() {
     # is upgraded through automatic upgrades (because maybe MiaB was
     # previously installed), it may cause problems with the rest of
     # the setup, such as with name resolution failures
-    if is_false "$TRAVIS"; then
+    if is_false "$TRAVIS" && [ "$SKIP_SYSTEM_UPDATE" != "1" ]; then
         H2 "apt-get upgrade"
         wait_for_apt
         apt-get upgrade -qq || die "apt-get upgrade failed!"
