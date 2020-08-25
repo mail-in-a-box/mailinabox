@@ -201,14 +201,15 @@ def get_mail_users(env, as_map=False):
 	# is the user and value is a dict having, dn, maildrop and
 	# mail addresses
 	c = open_database(env)
-	pager = c.paged_search(env.LDAP_USERS_BASE, "(objectClass=mailUser)", attributes=['maildrop','mail'])
+	pager = c.paged_search(env.LDAP_USERS_BASE, "(objectClass=mailUser)", attributes=['maildrop','mail','cn'])
 	if as_map:
 		users = {}
 		for rec in pager:
 			users[rec['maildrop'][0]] = {
 				"dn":   rec['dn'],
 				"mail": rec['mail'],
-				"maildrop": rec['maildrop'][0]
+				"maildrop": rec['maildrop'][0],
+				"display_name": rec['cn'][0]
 			}
 		return users
 	else:
@@ -228,6 +229,7 @@ def get_mail_users_ex(env, with_archived=False):
 	#         email: "name@domain.tld",
 	#         privileges: [ "priv1", "priv2", ... ],
 	#         status: "active" | "inactive",
+	#         display_name: ""
 	#       },
 	#       ...
 	#     ]
@@ -239,16 +241,18 @@ def get_mail_users_ex(env, with_archived=False):
 	users = []
 	active_accounts = set()
 	c = open_database(env)
-	response = c.wait( c.search(env.LDAP_USERS_BASE, "(objectClass=mailUser)", attributes=['maildrop','mailaccess']) )
+	response = c.wait( c.search(env.LDAP_USERS_BASE, "(objectClass=mailUser)", attributes=['maildrop','mailaccess','cn']) )
 
 	for rec in response:
 		email = rec['maildrop'][0]
 		privileges = rec['mailaccess']
+		display_name = rec['cn'][0]
 		active_accounts.add(email)
 		user = {
 			"email": email,
 			"privileges": privileges,
 			"status": "active",
+			"display_name": display_name
 		}
 		users.append(user)
 
@@ -266,6 +270,7 @@ def get_mail_users_ex(env, with_archived=False):
 						"privileges": [],
 						"status": "inactive",
 						"mailbox": mbox,
+						"display_name": ""
 					}
 					users.append(user)
 
@@ -615,13 +620,14 @@ def remove_mail_domain(env, domain, validate=True):
 	return True
 
 
-def add_mail_user(email, pw, privs, env):
+def add_mail_user(email, pw, privs, display_name, env):
 	# Add a new mail user.
 	#
 	# email: the new user's email address
 	# pw: the new user's password
 	# privs: either an array of privilege strings, or a newline
 	# separated string of privilege names
+	# display_name: a string with users givenname and surname (eg "Al Woods")
 	#
 	# If an error occurs, the function returns a tuple of (message,
 	# http-status).
@@ -673,7 +679,10 @@ def add_mail_user(email, pw, privs, env):
 	uid = m.hexdigest()
 
 	# choose a common name and surname (required attributes)
-	cn = email.split("@")[0].replace('.',' ').replace('_',' ')
+	if display_name:
+		cn = display_name
+	else:
+		cn = email.split("@")[0].replace('.',' ').replace('_',' ')
 	sn = cn[cn.find(' ')+1:]
 	
 	# compile user's attributes
@@ -721,6 +730,23 @@ def set_mail_password(email, pw, env):
 	# update shadowLastChange
 	conn.modify_record(user, {'shadowLastChange': backend.get_shadowLastChanged()})
 
+	return "OK"
+
+def set_mail_display_name(email, display_name, env):
+	# validate arguments
+	if not display_name or display_name.strip() == "":
+		return ("Display name may not be empty!", 400)
+	
+	# find the user
+	conn = open_database(env)
+	user = find_mail_user(env, email, ['cn', 'sn'], conn)
+	if user is None:
+		return ("That's not a user (%s)." % email, 400)
+
+	# update cn and sn
+	sn = display_name[display_name.strip().find(' ')+1:]
+	conn.modify_record(user, {'cn': display_name.strip(), 'sn': sn})
+	
 	return "OK"
 
 def validate_login(email, pw, env):

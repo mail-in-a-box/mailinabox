@@ -15,20 +15,30 @@
 
 <form class="form-inline" role="form" onsubmit="return do_add_user(); return false;">
   <div class="form-group">
+    <div>User (email address)</div>
     <label class="sr-only" for="adduserEmail">Email address</label>
     <input type="email" class="form-control" id="adduserEmail" placeholder="Email Address">
   </div>
   <div class="form-group">
+    <div>Password</div>
     <label class="sr-only" for="adduserPassword">Password</label>
     <input type="password" class="form-control" id="adduserPassword" placeholder="Password">
   </div>
   <div class="form-group">
+    <div>Privilege</div>
     <select class="form-control" id="adduserPrivs">
       <option value="">Normal User</option>
       <option value="admin">Administrator</option>
     </select>
   </div>
-  <button type="submit" class="btn btn-primary">Add User</button>
+  <div class="form-group">
+    <div>Display Name</div>
+    <input id="adduserDisplayName" class="form-control" type="text" placeholder="eg: John Smith">
+  </div>
+  <div class="text-center">
+    <div>&nbsp;</div>    
+    <button type="submit" class="btn btn-primary">Add User</button>
+  </div>
 </form>
 <ul style="margin-top: 1em; padding-left: 1.5em; font-size: 90%;">
   <li>Passwords must be at least eight characters consisting of English lettters and numbers only. For best results, <a href="#" onclick="return generate_random_password()">generate a random password</a>.</li>
@@ -52,7 +62,8 @@
 <div style="display: none">
   <table>
   <tr id="user-template">
-    <td class='address'>
+    <td>
+      <span class="address"></span> <span class="display_name_wrapper">(<a class="display_name" href="#" onclick="users_set_displayname(this); return false;" title="Change display name"></a>)</span>
     </td>
     <td class='actions'>
         <span class='privs'>
@@ -152,7 +163,13 @@ function show_users() {
           n2.addClass("account_" + user.status);
 
           n.attr('data-email', user.email);
-          n.find('.address').text(user.email)
+          n.find('.address').text(user.email);
+          if (user.status == "inactive") {
+            n.find('.display_name_wrapper').text('[archived]');
+          }
+          else {
+            n.find('.display_name').text(user.display_name);
+          }
           n2.find('.restore_info tt').text(user.mailbox);
 
           if (user.status == 'inactive') continue;
@@ -181,13 +198,15 @@ function do_add_user() {
   var email = $("#adduserEmail").val();
   var pw = $("#adduserPassword").val();
   var privs = $("#adduserPrivs").val();
+  var display_name = $("#adduserDisplayName").val();
   api(
     "/mail/users/add",
     "POST",
     {
       email: email,
       password: pw,
-      privileges: privs
+      privileges: privs,
+      display_name: display_name
     },
     function(r) {
       // Responses are multiple lines of pre-formatted text.
@@ -227,6 +246,31 @@ function users_set_password(elem) {
           show_modal_error("Set Password", r);
         });
     });
+}
+
+function users_set_displayname(elem) {
+  var email = $(elem).parents('tr').attr('data-email');
+  var display_name = $(elem).text();
+  show_modal_confirm(
+      "Change Display Name",
+      $('<p>Change display name of ' + email + ' (' + display_name + ')?</p> <p><label for="users_set_displayname_name">New display name:</label><input type="text" id="users_set_displayname_name" value="' + display_name + '" placeholder="eg: Mary Jay" onfocus="this.select();"></p>'),
+      "Change Display Name",
+      function() {
+          api("/mail/users/display_name",
+              "POST",
+              {
+                  email: email,
+                  display_name: $('#users_set_displayname_name').val()
+              },
+              function(r) {
+                  // Responses are multiple lines of pre-formatted text.
+                  show_modal_error("Change Display Name", $("<pre/>").text(r));
+                  show_users();
+              },
+              function(r) {
+                  show_modal_error("Change Display Name", r);
+              });
+      });
 }
 
 function users_remove(elem) {
