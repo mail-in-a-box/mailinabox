@@ -43,7 +43,8 @@ installed_state_capture() {
         echo "Unable to get aliases: rc=$? err=$REST_ERROR" 1>&2
         return 2
     fi
-    echo "$REST_OUTPUT" > "$state_dir/aliases.json"
+    # ignore/exclude the alias description field
+    echo "$REST_OUTPUT" | grep -v '"description":' > "$state_dir/aliases.json"
 
     # record dns config
     H2 "record dns details"
@@ -84,7 +85,7 @@ installed_state_compare() {
     H2 "Aliases"
     output="$(diff "$s1/aliases.json" "$s2/aliases.json" 2>&1)"
     if [ $? -ne 0 ]; then
-        change="true"
+        changed="true"
         echo "ALIASES ARE DIFFERENT!"
         echo "$output"
     else

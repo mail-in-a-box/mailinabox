@@ -40,6 +40,7 @@ suite_start() {
 	let SUITE_COUNT_SKIPPED=0
 	let SUITE_COUNT_TOTAL=0
 	SUITE_NAME="$1"
+	SUITE_START=$(date +%s)
 	OUTDIR="$BASE_OUTPUTDIR/$SUITE_NAME"
 	mkdir -p "$OUTDIR"
 	echo ""
@@ -50,7 +51,8 @@ suite_start() {
 
 suite_end() {
 	suite_cleanup "$@"
-	echo "Suite $SUITE_NAME finished"
+	local SUITE_END=$(date +%s)
+	echo "Suite $SUITE_NAME finished ($(elapsed_pretty $SUITE_START $SUITE_END))"
 	let OVERALL_SUCCESSES+=$SUITE_COUNT_SUCCESS
 	let OVERALL_FAILURES+=$SUITE_COUNT_FAILURE
 	let OVERALL_SKIPPED+=$SUITE_COUNT_SKIPPED

@@ -203,6 +203,7 @@ def mail_aliases():
 def mail_aliases_add():
 	return add_mail_alias(
 		request.form.get('address', ''),
+		request.form.get('description', ''),
 		request.form.get('forwards_to', ''),
 		request.form.get('permitted_senders', ''),
 		env,
