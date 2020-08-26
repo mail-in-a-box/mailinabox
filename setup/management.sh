@@ -32,6 +32,9 @@ done
 apt_install duplicity python-pip virtualenv certbot
 hide_output pip2 install --upgrade boto
 
+# b2sdk is installed outside the pipenv, so it can be used by duplicity
+hide_output pip3 install b2sdk
+
 # Create a virtualenv for the installation of Python 3 packages
 # used by the management daemon.
 inst_dir=/usr/local/lib/mailinabox
