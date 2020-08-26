@@ -1,363 +1,360 @@
 <style>
-  #backup-status th { text-align: center; }
-  #backup-status tr.full-backup td { font-weight: bold; }
-  </style>
-  
-  <h2>Backup Status</h2>
-  
-  <p>The box makes an incremental backup each night. By default the backup is stored on the machine itself, but you can also have it stored on Amazon S3.</p>
-  
-  <h3>Configuration</h3>
-  
-  <form class="form-horizontal" role="form" onsubmit="set_custom_backup(); return false;">
-    <div class="form-group">
-      <label for="backup-target-type" class="col-sm-2 control-label">Backup to:</label>
-      <div class="col-sm-2">
-        <select class="form-control" rows="1" id="backup-target-type" onchange="toggle_form()">
-          <option value="off">Nowhere (Disable Backups)</option>
-          <option value="local">{{hostname}}</option>
-          <option value="rsync">rsync</option>
-          <option value="s3">Amazon S3</option>
-          <option value="b2">Backblaze B2</option>
-        </select>
+#backup-status th { text-align: center; }
+#backup-status tr.full-backup td { font-weight: bold; }
+</style>
+
+<h2>Backup Status</h2>
+
+<p>The box makes an incremental backup each night. By default the backup is stored on the machine itself, but you can also have it stored on Amazon S3.</p>
+
+<h3>Configuration</h3>
+
+<form class="form-horizontal" role="form" onsubmit="set_custom_backup(); return false;">
+  <div class="form-group">
+    <label for="backup-target-type" class="col-sm-2 control-label">Backup to:</label>
+    <div class="col-sm-2">
+      <select class="form-control" rows="1" id="backup-target-type" onchange="toggle_form()">
+        <option value="off">Nowhere (Disable Backups)</option>
+        <option value="local">{{hostname}}</option>
+        <option value="rsync">rsync</option>
+        <option value="s3">Amazon S3</option>
+        <option value="b2">Backblaze B2</option>
+      </select>
+    </div>
+  </div>
+  <!-- LOCAL BACKUP -->
+  <div class="form-group backup-target-local">
+    <div class="col-sm-10 col-sm-offset-2">
+      <p>Backups are stored on this machine&rsquo;s own hard disk. You are responsible for periodically using SFTP (FTP over SSH) to copy the backup files from <tt class="backup-location"></tt> to a safe location. These files are encrypted, so they are safe to store anywhere.</p>
+      <p>Separately copy the encryption password from <tt class="backup-encpassword-file"></tt> to a safe and secure location. You will need this file to decrypt backup files.</p>
+    </div>
+  </div>
+  <!-- RSYNC BACKUP -->
+  <div class="form-group backup-target-rsync">
+    <div class="col-sm-10 col-sm-offset-2">
+
+      <p>Backups synced to a remote machine using rsync over SSH, with local
+      copies in <tt class="backup-location"></tt>. These files are encrypted, so
+      they are safe to store anywhere.</p> <p>Separately copy the encryption
+      password from <tt class="backup-encpassword-file"></tt> to a safe and
+      secure location. You will need this file to decrypt backup files.</p>
+
+    </div>
+  </div>
+  <div class="form-group backup-target-rsync">
+    <label for="backup-target-rsync-host" class="col-sm-2 control-label">Hostname</label>
+    <div class="col-sm-8">
+      <input type="text" placeholder="hostname.local" class="form-control" rows="1" id="backup-target-rsync-host">
+    </div>
+  </div>
+  <div class="form-group backup-target-rsync">
+    <label for="backup-target-rsync-path" class="col-sm-2 control-label">Path</label>
+    <div class="col-sm-8">
+        <input type="text" placeholder="/backups/{{hostname}}" class="form-control" rows="1" id="backup-target-rsync-path">
+    </div>
+  </div>
+  <div class="form-group backup-target-rsync">
+    <label for="backup-target-rsync-user" class="col-sm-2 control-label">Username</label>
+    <div class="col-sm-8">
+      <input type="text" class="form-control" rows="1" id="backup-target-rsync-user">
+    </div>
+  </div>
+  <div class="form-group backup-target-rsync">
+    <label for="ssh-pub-key" class="col-sm-2 control-label">Public SSH Key</label>
+    <div class="col-sm-8">
+      <input type="text" class="form-control" rows="1" id="ssh-pub-key" readonly>
+      <div class="small" style="margin-top: 2px">
+        Copy the Public SSH Key above, and paste it within the <tt>~/.ssh/authorized_keys</tt>
+        of target user on the backup server specified above. That way you'll enable secure and
+        passwordless authentication from your mail-in-a-box server and your backup server.
       </div>
     </div>
-    <!-- LOCAL BACKUP -->
-    <div class="form-group backup-target-local">
+  </div>
+  <!-- S3 BACKUP -->
+  <div class="form-group backup-target-s3">
+    <div class="col-sm-10 col-sm-offset-2">
+      <p>Backups are stored in an Amazon Web Services S3 bucket. You must have an AWS account already.</p>
+      <p>You MUST manually copy the encryption password from <tt class="backup-encpassword-file"></tt> to a safe and secure location. You will need this file to decrypt backup files. It is NOT stored in your Amazon S3 bucket.</p>
+    </div>
+  </div>
+  <div class="form-group backup-target-s3">
+    <label for="backup-target-s3-host-select" class="col-sm-2 control-label">S3 Region</label>
+    <div class="col-sm-8">
+      <select class="form-control" rows="1" id="backup-target-s3-host-select">
+        {% for name, host in backup_s3_hosts %}
+          <option value="{{host}}">{{name}}</option>
+        {% endfor %}
+        <option value="other">Other</option>
+      </select>
+    </div>
+  </div>
+  <div class="form-group backup-target-s3">
+    <label for="backup-target-s3-host" class="col-sm-2 control-label">S3 Host / Endpoint</label>
+    <div class="col-sm-8">
+      <input type="text" placeholder="Endpoint" class="form-control" rows="1" id="backup-target-s3-host">
+    </div>
+  </div>
+  <div class="form-group backup-target-s3">
+    <label for="backup-target-s3-path" class="col-sm-2 control-label">S3 Path</label>
+    <div class="col-sm-8">
+      <input type="text" placeholder="your-bucket-name/backup-directory" class="form-control" rows="1" id="backup-target-s3-path">
+    </div>
+  </div>
+  <div class="form-group backup-target-s3">
+    <label for="backup-target-user" class="col-sm-2 control-label">S3 Access Key</label>
+    <div class="col-sm-8">
+      <input type="text" class="form-control" rows="1" id="backup-target-user">
+    </div>
+  </div>
+  <div class="form-group backup-target-s3">
+    <label for="backup-target-pass" class="col-sm-2 control-label">S3 Secret Access Key</label>
+    <div class="col-sm-8">
+      <input type="text" class="form-control" rows="1" id="backup-target-pass">
+    </div>
+  </div>
+  <!-- Backblaze -->
+  <div class="form-group backup-target-b2">
       <div class="col-sm-10 col-sm-offset-2">
-        <p>Backups are stored on this machine&rsquo;s own hard disk. You are responsible for periodically using SFTP (FTP over SSH) to copy the backup files from <tt class="backup-location"></tt> to a safe location. These files are encrypted, so they are safe to store anywhere.</p>
-        <p>Separately copy the encryption password from <tt class="backup-encpassword-file"></tt> to a safe and secure location. You will need this file to decrypt backup files.</p>
+      <p>Backups are stored in a Backblaze B2 bucket. You must have a Backblaze account already.</p>
+      <p>You MUST manually copy the encryption password from <tt class="backup-encpassword-file"></tt> to a safe and secure location. You will need this file to decrypt backup files. It is NOT stored in your Backblaze B2 bucket.</p>
       </div>
-    </div>
-    <!-- RSYNC BACKUP -->
-    <div class="form-group backup-target-rsync">
-      <div class="col-sm-10 col-sm-offset-2">
-  
-        <p>Backups synced to a remote machine using rsync over SSH, with local
-        copies in <tt class="backup-location"></tt>. These files are encrypted, so
-        they are safe to store anywhere.</p> <p>Separately copy the encryption
-        password from <tt class="backup-encpassword-file"></tt> to a safe and
-        secure location. You will need this file to decrypt backup files.</p>
-  
-      </div>
-    </div>
-    <div class="form-group backup-target-rsync">
-      <label for="backup-target-rsync-host" class="col-sm-2 control-label">Hostname</label>
-      <div class="col-sm-8">
-        <input type="text" placeholder="hostname.local" class="form-control" rows="1" id="backup-target-rsync-host">
-      </div>
-    </div>
-    <div class="form-group backup-target-rsync">
-      <label for="backup-target-rsync-path" class="col-sm-2 control-label">Path</label>
-      <div class="col-sm-8">
-          <input type="text" placeholder="/backups/{{hostname}}" class="form-control" rows="1" id="backup-target-rsync-path">
-      </div>
-    </div>
-    <div class="form-group backup-target-rsync">
-      <label for="backup-target-rsync-user" class="col-sm-2 control-label">Username</label>
-      <div class="col-sm-8">
-        <input type="text" class="form-control" rows="1" id="backup-target-rsync-user">
-      </div>
-    </div>
-    <div class="form-group backup-target-rsync">
-      <label for="ssh-pub-key" class="col-sm-2 control-label">Public SSH Key</label>
-      <div class="col-sm-8">
-        <input type="text" class="form-control" rows="1" id="ssh-pub-key" readonly>
-        <div class="small" style="margin-top: 2px">
-          Copy the Public SSH Key above, and paste it within the <tt>~/.ssh/authorized_keys</tt>
-          of target user on the backup server specified above. That way you'll enable secure and
-          passwordless authentication from your mail-in-a-box server and your backup server.
-        </div>
-      </div>
-    </div>
-    <!-- S3 BACKUP -->
-    <div class="form-group backup-target-s3">
-      <div class="col-sm-10 col-sm-offset-2">
-        <p>Backups are stored in an Amazon Web Services S3 bucket. You must have an AWS account already.</p>
-        <p>You MUST manually copy the encryption password from <tt class="backup-encpassword-file"></tt> to a safe and secure location. You will need this file to decrypt backup files. It is NOT stored in your Amazon S3 bucket.</p>
-      </div>
-    </div>
-    <div class="form-group backup-target-s3">
-      <label for="backup-target-s3-host-select" class="col-sm-2 control-label">S3 Region</label>
-      <div class="col-sm-8">
-        <select class="form-control" rows="1" id="backup-target-s3-host-select">
-          {% for name, host in backup_s3_hosts %}
-            <option value="{{host}}">{{name}}</option>
-          {% endfor %}
-          <option value="other">Other</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-group backup-target-s3">
-      <label for="backup-target-s3-host" class="col-sm-2 control-label">S3 Host / Endpoint</label>
-      <div class="col-sm-8">
-        <input type="text" placeholder="Endpoint" class="form-control" rows="1" id="backup-target-s3-host">
-      </div>
-    </div>
-    <div class="form-group backup-target-s3">
-      <label for="backup-target-s3-path" class="col-sm-2 control-label">S3 Path</label>
-      <div class="col-sm-8">
-        <input type="text" placeholder="your-bucket-name/backup-directory" class="form-control" rows="1" id="backup-target-s3-path">
-      </div>
-    </div>
-    <div class="form-group backup-target-s3">
-      <label for="backup-target-user" class="col-sm-2 control-label">S3 Access Key</label>
-      <div class="col-sm-8">
-        <input type="text" class="form-control" rows="1" id="backup-target-user">
-      </div>
-    </div>
-    <div class="form-group backup-target-s3">
-      <label for="backup-target-pass" class="col-sm-2 control-label">S3 Secret Access Key</label>
-      <div class="col-sm-8">
-        <input type="text" class="form-control" rows="1" id="backup-target-pass">
-      </div>
-    </div>
-    <!-- Backblaze -->
-    <div class="form-group backup-target-b2">
-      <div class="col-sm-10 col-sm-offset-2">
-        <p>Backups are stored in a Backblaze B2 bucket. You must have a Backblaze account already.</p>
-        <p>You MUST manually copy the encryption password from <tt class="backup-encpassword-file"></tt> to a safe and secure location. You will need this file to decrypt backup files. It is NOT stored in your Backblaze B2 bucket.</p>
-      </div>
-    </div>
-    <div class="form-group backup-target-b2">
+  </div>
+  <div class="form-group backup-target-b2">
       <label for="backup-target-b2-user" class="col-sm-2 control-label">B2 Application KeyID</label>
       <div class="col-sm-8">
-        <input type="text" class="form-control" rows="1" id="backup-target-b2-user" onchange="compute_b2_url()">
+      <input type="text" class="form-control" rows="1" id="backup-target-b2-user" onchange="compute_b2_url()">
       </div>
-    </div>
-    <div class="form-group backup-target-b2">
+  </div>
+  <div class="form-group backup-target-b2">
       <label for="backup-target-b2-pass" class="col-sm-2 control-label">B2 Application Key</label>
       <div class="col-sm-8">
-        <input type="text" class="form-control" rows="1" id="backup-target-b2-pass" onchange="compute_b2_url()">
+      <input type="text" class="form-control" rows="1" id="backup-target-b2-pass" onchange="compute_b2_url()">
       </div>
-    </div>
-    <div class="form-group backup-target-b2">
+  </div>
+  <div class="form-group backup-target-b2">
       <label for="backup-target-b2-bucket" class="col-sm-2 control-label">B2 Bucket</label>
       <div class="col-sm-8">
-        <input type="text" placeholder="B2 Bucket" class="form-control" rows="1" id="backup-target-b2-bucket" onchange="compute_b2_url()">
+      <input type="text" placeholder="B2 Bucket" class="form-control" rows="1" id="backup-target-b2-bucket" onchange="compute_b2_url()">
       </div>
-    </div>
-  
-    <div class="form-group backup-target-b2">
+  </div>
+  <div class="form-group backup-target-b2">
       <label for="backup-target-b2-url" class="col-sm-2 control-label">B2 Backup URL</label>
       <div class="col-sm-8">
-        <input type="text" placeholder="Will be filled automatically" class="form-control" rows="1" id="backup-target-b2-url" disabled>
+      <input type="text" placeholder="Will be filled automatically" class="form-control" rows="1" id="backup-target-b2-url" disabled>
       </div>
+  </div>
+  <!-- Common -->
+  <div class="form-group backup-target-local backup-target-rsync backup-target-s3">
+    <label for="min-age" class="col-sm-2 control-label">Days:</label>
+    <div class="col-sm-8">
+      <input type="number" class="form-control" rows="1" id="min-age">
+      <div class="small" style="margin-top: 2px">This is the <i>minimum</i> number of days backup data is kept for. The box makes an incremental backup, so backup data is often kept much longer. An incremental backup file that is less than this number of days old requires that all previous increments back to the most recent full backup, plus that full backup, remain available.</div>
     </div>
-    <!-- Common -->
-    <div class="form-group backup-target-local backup-target-rsync backup-target-s3">
-      <label for="min-age" class="col-sm-2 control-label">Days:</label>
-      <div class="col-sm-8">
-        <input type="number" class="form-control" rows="1" id="min-age">
-        <div class="small" style="margin-top: 2px">This is the <i>minimum</i> number of days backup data is kept for. The box makes an incremental backup, so backup data is often kept much longer. An incremental backup file that is less than this number of days old requires that all previous increments back to the most recent full backup, plus that full backup, remain available.</div>
-      </div>
+  </div>
+  <div class="form-group">
+    <div class="col-sm-offset-2 col-sm-10">
+      <button id="set-s3-backup-button" type="submit" class="btn btn-primary">Save</button>
     </div>
-    <div class="form-group">
-      <div class="col-sm-offset-2 col-sm-10">
-        <button id="set-s3-backup-button" type="submit" class="btn btn-primary">Save</button>
-      </div>
-    </div>
-  </form>
-  
-  <h3>Available backups</h3>
-  
-  <p>The backup location currently contains the backups listed below. The total size of the backups is currently <span id="backup-total-size"></span>.</p>
-  
-  <table id="backup-status" class="table" style="width: auto">
-    <thead>
-      <th colspan="2">When</th>
-      <th>Type</th>
-      <th>Size</th>
-      <th>Deleted in...</th>
-    </thead>
-    <tbody>
-    </tbody>
-  </table>
-  <script>
-  
-  function toggle_form() {
-    var target_type = $("#backup-target-type").val();
+  </div>
+</form>
+
+<h3>Available backups</h3>
+
+<p>The backup location currently contains the backups listed below. The total size of the backups is currently <span id="backup-total-size"></span>.</p>
+
+<table id="backup-status" class="table" style="width: auto">
+  <thead>
+    <th colspan="2">When</th>
+    <th>Type</th>
+    <th>Size</th>
+    <th>Deleted in...</th>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+<script>
+
+function toggle_form() {
+  var target_type = $("#backup-target-type").val();
+  $(".backup-target-local, .backup-target-rsync, .backup-target-s3, .backup-target-b2").hide();
+  $(".backup-target-" + target_type).show();
+
+  init_inputs(target_type);
+}
+
+function nice_size(bytes) {
+  var powers = ['bytes', 'KB', 'MB', 'GB', 'TB'];
+  while (true) {
+    if (powers.length == 1) break;
+    if (bytes < 1000) break;
+    bytes /= 1024;
+    powers.shift();
+  }
+  // round to have three significant figures but at most one decimal place
+  if (bytes >= 100)
+    bytes = Math.round(bytes)
+  else
+    bytes = Math.round(bytes*10)/10;
+  return bytes + " " + powers[0];
+}
+
+function show_system_backup() {
+  show_custom_backup()
+
+  $('#backup-status tbody').html("<tr><td colspan='2' class='text-muted'>Loading...</td></tr>")
+  api(
+    "/system/backup/status",
+    "GET",
+    { },
+    function(r) {
+      if (r.error) {
+          show_modal_error("Backup Error", $("<pre/>").text(r.error));
+          return;
+      }
+
+      $('#backup-status tbody').html("");
+      var total_disk_size = 0;
+
+      if (typeof r.backups == "undefined") {
+        var tr = $('<tr><td colspan="3">Backups are turned off.</td></tr>');
+        $('#backup-status tbody').append(tr);
+        return;
+      } else if (r.backups.length == 0) {
+        var tr = $('<tr><td colspan="3">No backups have been made yet.</td></tr>');
+        $('#backup-status tbody').append(tr);
+      }
+
+      for (var i = 0; i < r.backups.length; i++) {
+        var b = r.backups[i];
+        var tr = $('<tr/>');
+        if (b.full) tr.addClass("full-backup");
+        tr.append( $('<td/>').text(b.date_str) );
+        tr.append( $('<td/>').text(b.date_delta + " ago") );
+        tr.append( $('<td/>').text(b.full ? "full" : "increment") );
+        tr.append( $('<td style="text-align: right"/>').text( nice_size(b.size)) );
+        if (b.deleted_in)
+          tr.append( $('<td/>').text(b.deleted_in) );
+        else
+          tr.append( $('<td class="text-muted">unknown</td>') );
+        $('#backup-status tbody').append(tr);
+
+        total_disk_size += b.size;
+      }
+
+      total_disk_size += r.unmatched_file_size;
+      $('#backup-total-size').text(nice_size(total_disk_size));
+    })
+}
+
+function show_custom_backup() {
     $(".backup-target-local, .backup-target-rsync, .backup-target-s3, .backup-target-b2").hide();
-    $(".backup-target-" + target_type).show();
-  
-    init_inputs(target_type);
-  }
-  
-  function nice_size(bytes) {
-    var powers = ['bytes', 'KB', 'MB', 'GB', 'TB'];
-    while (true) {
-      if (powers.length == 1) break;
-      if (bytes < 1000) break;
-      bytes /= 1024;
-      powers.shift();
-    }
-    // round to have three significant figures but at most one decimal place
-    if (bytes >= 100)
-      bytes = Math.round(bytes)
-    else
-      bytes = Math.round(bytes*10)/10;
-    return bytes + " " + powers[0];
-  }
-  
-  function show_system_backup() {
-    // TODO: b3
-    show_custom_backup()
-  
-    $('#backup-status tbody').html("<tr><td colspan='2' class='text-muted'>Loading...</td></tr>")
     api(
-      "/system/backup/status",
+      "/system/backup/config",
       "GET",
       { },
       function(r) {
-        if (r.error) {
-            show_modal_error("Backup Error", $("<pre/>").text(r.error));
-            return;
+        $("#backup-target-user").val(r.target_user);
+        $("#backup-target-pass").val(r.target_pass);
+        $("#min-age").val(r.min_age_in_days);
+        $(".backup-location").text(r.file_target_directory);
+        $(".backup-encpassword-file").text(r.enc_pw_file);
+        $("#ssh-pub-key").val(r.ssh_pub_key);
+
+        if (r.target == "file://" + r.file_target_directory) {
+          $("#backup-target-type").val("local");
+        } else if (r.target == "off") {
+          $("#backup-target-type").val("off");
+        } else if (r.target.substring(0, 8) == "rsync://") {
+          $("#backup-target-type").val("rsync");
+          var path = r.target.substring(8).split('//');
+          var host_parts = path.shift().split('@');
+          $("#backup-target-rsync-user").val(host_parts[0]);
+          $("#backup-target-rsync-host").val(host_parts[1]);
+          $("#backup-target-rsync-path").val('/'+path[0]);
+        } else if (r.target.substring(0, 5) == "s3://") {
+          $("#backup-target-type").val("s3");
+          var hostpath = r.target.substring(5).split('/');
+          var host = hostpath.shift();
+          $("#backup-target-s3-host").val(host);
+          $("#backup-target-s3-path").val(hostpath.join('/'));
+        } else if (r.target.substring(0, 5) == "b2://") {
+          $("#backup-target-type").val("b2");
+          var b2_application_keyid = r.target.substring(5).split(':')[0];
+          var b2_applicationkey = r.target.substring(5).split(':')[1].split('@')[0];
+          var b2_bucket = r.target.substring(5).split('@')[1];
+          $("#backup-target-b2-user").val(b2_application_keyid);
+          $("#backup-target-b2-pass").val(b2_applicationkey);
+          $("#backup-target-b2-bucket").val(b2_bucket);
+          compute_b2_url();
         }
-  
-        $('#backup-status tbody').html("");
-        var total_disk_size = 0;
-  
-        if (typeof r.backups == "undefined") {
-          var tr = $('<tr><td colspan="3">Backups are turned off.</td></tr>');
-          $('#backup-status tbody').append(tr);
-          return;
-        } else if (r.backups.length == 0) {
-          var tr = $('<tr><td colspan="3">No backups have been made yet.</td></tr>');
-          $('#backup-status tbody').append(tr);
-        }
-  
-        for (var i = 0; i < r.backups.length; i++) {
-          var b = r.backups[i];
-          var tr = $('<tr/>');
-          if (b.full) tr.addClass("full-backup");
-          tr.append( $('<td/>').text(b.date_str) );
-          tr.append( $('<td/>').text(b.date_delta + " ago") );
-          tr.append( $('<td/>').text(b.full ? "full" : "increment") );
-          tr.append( $('<td style="text-align: right"/>').text( nice_size(b.size)) );
-          if (b.deleted_in)
-            tr.append( $('<td/>').text(b.deleted_in) );
-          else
-            tr.append( $('<td class="text-muted">unknown</td>') );
-          $('#backup-status tbody').append(tr);
-  
-          total_disk_size += b.size;
-        }
-  
-        total_disk_size += r.unmatched_file_size;
-        $('#backup-total-size').text(nice_size(total_disk_size));
+        toggle_form()
       })
+}
+
+function set_custom_backup() {
+  var target_type = $("#backup-target-type").val();
+  var target_user = $("#backup-target-user").val();
+  var target_pass = $("#backup-target-pass").val();
+
+  var target;
+  if (target_type == "local" || target_type == "off")
+    target = target_type;
+  else if (target_type == "s3")
+    target = "s3://" + $("#backup-target-s3-host").val() + "/" + $("#backup-target-s3-path").val();
+  else if (target_type == "rsync") {
+    target = "rsync://" + $("#backup-target-rsync-user").val() + "@" + $("#backup-target-rsync-host").val()
+                                                                + "/" + $("#backup-target-rsync-path").val();
+    target_user = '';
+  } else if (target_type == "b2") {
+    target = $('#backup-target-b2-url').val();
+    target_user = '';
+    target_pass = '';
   }
-  
-  function show_custom_backup() {
-      $(".backup-target-local, .backup-target-rsync, .backup-target-s3, .backup-target-b2").hide();
-      api(
-        "/system/backup/config",
-        "GET",
-        { },
-        function(r) {
-          $("#backup-target-user").val(r.target_user);
-          $("#backup-target-pass").val(r.target_pass);
-          $("#min-age").val(r.min_age_in_days);
-          $(".backup-location").text(r.file_target_directory);
-          $(".backup-encpassword-file").text(r.enc_pw_file);
-          $("#ssh-pub-key").val(r.ssh_pub_key);
-  
-          if (r.target == "file://" + r.file_target_directory) {
-            $("#backup-target-type").val("local");
-          } else if (r.target == "off") {
-            $("#backup-target-type").val("off");
-          } else if (r.target.substring(0, 8) == "rsync://") {
-            $("#backup-target-type").val("rsync");
-            var path = r.target.substring(8).split('//');
-            var host_parts = path.shift().split('@');
-            $("#backup-target-rsync-user").val(host_parts[0]);
-            $("#backup-target-rsync-host").val(host_parts[1]);
-            $("#backup-target-rsync-path").val('/'+path[0]);
-          } else if (r.target.substring(0, 5) == "s3://") {
-            $("#backup-target-type").val("s3");
-            var hostpath = r.target.substring(5).split('/');
-            var host = hostpath.shift();
-            $("#backup-target-s3-host").val(host);
-            $("#backup-target-s3-path").val(hostpath.join('/'));
-          } else if (r.target.substring(0, 5) == "b2://") {
-            $("#backup-target-type").val("b2");
-            var b2_application_keyid = r.target.substring(5).split(':')[0];
-            var b2_applicationkey = r.target.substring(5).split(':')[1].split('@')[0];
-            var b2_bucket = r.target.substring(5).split('@')[1];
-            $("#backup-target-b2-user").val(b2_application_keyid);
-            $("#backup-target-b2-pass").val(b2_applicationkey);
-            $("#backup-target-b2-bucket").val(b2_bucket);
-            compute_b2_url();
-          }
-          toggle_form()
-        })
-  }
-  
-  function set_custom_backup() {
-    var target_type = $("#backup-target-type").val();
-    var target_user = $("#backup-target-user").val();
-    var target_pass = $("#backup-target-pass").val();
-  
-    var target;
-    if (target_type == "local" || target_type == "off")
-      target = target_type;
-    else if (target_type == "s3")
-      target = "s3://" + $("#backup-target-s3-host").val() + "/" + $("#backup-target-s3-path").val();
-    else if (target_type == "rsync") {
-      target = "rsync://" + $("#backup-target-rsync-user").val() + "@" + $("#backup-target-rsync-host").val()
-                                                                  + "/" + $("#backup-target-rsync-path").val();
-      target_user = '';
-    } else if (target_type == "b2"){
-      target = $('#backup-target-b2-url').val();
-      target_user = '';
-      target_pass = '';
+
+
+  var min_age = $("#min-age").val();
+  api(
+    "/system/backup/config",
+    "POST",
+    {
+      target: target,
+      target_user: target_user,
+      target_pass: target_pass,
+      min_age: min_age
+    },
+    function(r) {
+      // use .text() --- it's a text response, not html
+      show_modal_error("Backup configuration", $("<p/>").text(r), function() { if (r == "OK") show_system_backup(); }); // refresh after modal on success
+    },
+    function(r) {
+      // use .text() --- it's a text response, not html
+      show_modal_error("Backup configuration", $("<p/>").text(r));
+    });
+  return false;
+}
+
+function init_inputs(target_type) {
+  function set_host(host) {
+    if(host !== 'other') {
+      $("#backup-target-s3-host").val(host);
+    } else {
+      $("#backup-target-s3-host").val('');
     }
-  
-  
-    var min_age = $("#min-age").val();
-    api(
-      "/system/backup/config",
-      "POST",
-      {
-        target: target,
-        target_user: target_user,
-        target_pass: target_pass,
-        min_age: min_age
-      },
-      function(r) {
-        // use .text() --- it's a text response, not html
-        show_modal_error("Backup configuration", $("<p/>").text(r), function() { if (r == "OK") show_system_backup(); }); // refresh after modal on success
-      },
-      function(r) {
-        // use .text() --- it's a text response, not html
-        show_modal_error("Backup configuration", $("<p/>").text(r));
-      });
-    return false;
   }
-  
-  function init_inputs(target_type) {
-    function set_host(host) {
-      if(host !== 'other') {
-        $("#backup-target-s3-host").val(host);
-      } else {
-        $("#backup-target-s3-host").val('');
-      }
-    }
-    if (target_type == "s3") {
-      $('#backup-target-s3-host-select').off('change').on('change', function() {
-        set_host($('#backup-target-s3-host-select').val());
-      });
+  if (target_type == "s3") {
+    $('#backup-target-s3-host-select').off('change').on('change', function() {
       set_host($('#backup-target-s3-host-select').val());
-    }
+    });
+    set_host($('#backup-target-s3-host-select').val());
   }
-  
-  function compute_b2_url(){
-    if ($('#backup-target-b2-user').val() && $('#backup-target-b2-pass').val() && $('#backup-target-b2-bucket').val()){
-      $('#backup-target-b2-url').val('b2://' + $('#backup-target-b2-user').val() + ':' + $('#backup-target-b2-pass').val()
-          + '@' + $('#backup-target-b2-bucket').val());
-    }else{
-      $('#backup-target-b2-url').val('');
-    }
+}
+
+function compute_b2_url(){
+  if ($('#backup-target-b2-user').val() && $('#backup-target-b2-pass').val() && $('#backup-target-b2-bucket').val()){
+    $('#backup-target-b2-url').val('b2://' + $('#backup-target-b2-user').val() + ':' + $('#backup-target-b2-pass').val()
+        + '@' + $('#backup-target-b2-bucket').val());
+  }else{
+    $('#backup-target-b2-url').val('');
   }
-  
-  </script>  
+}
+</script>
