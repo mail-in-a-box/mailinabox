@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.48 (August 26, 2020)
+-----------------------
 
 Security fixes:
 
