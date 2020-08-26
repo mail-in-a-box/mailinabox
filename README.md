@@ -146,7 +146,7 @@ by him:
 	$ curl -s https://keybase.io/joshdata/key.asc | gpg --import
 	gpg: key C10BDD81: public key "Joshua Tauberer <jt@occams.info>" imported
 
-	$ git verify-tag v0.47
+	$ git verify-tag v0.48
 	gpg: Signature made ..... using RSA key ID C10BDD81
 	gpg: Good signature from "Joshua Tauberer <jt@occams.info>"
 	gpg: WARNING: This key is not certified with a trusted signature!
@@ -159,7 +159,7 @@ and on his [personal homepage](https://razor.occams.info/). (Of course, if this 
 
 Checkout the tag corresponding to the most recent release:
 
-	$ git checkout v0.47
+	$ git checkout v0.48
 
 Begin the installation.
 

@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+v0.48 (August 26, 2020)
+-----------------------
+
+Security fixes:
+
+* Roundcube is updated to version 1.4.8 fixing additional cross-site scripting (XSS) vulnerabilities.
+
 v0.47 (July 29, 2020)
 ---------------------
 
