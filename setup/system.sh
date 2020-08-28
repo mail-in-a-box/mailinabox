@@ -99,7 +99,7 @@ hide_output add-apt-repository -y ppa:certbot/certbot
 # of things from Ubuntu, as well as the directory of packages provide by the
 # PPAs so we can install those packages later.
 
-if [ "$SKIP_SYSTEM_UPDATE" != "1" ]; then
+if [ "${SKIP_SYSTEM_UPDATE:-0}" != "1" ]; then
 	echo Updating system packages...
 	hide_output apt-get update
 	apt_get_quiet upgrade
