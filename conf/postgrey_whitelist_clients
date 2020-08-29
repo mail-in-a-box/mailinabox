@@ -18,3 +18,4 @@
 /^.*.hes.trendmicro.eu$/
 /^smtp-\d+\.steampowered\.com$/
 /^mail-out\d+\.unilogicnetworks\.net$/
+/^serv\d+\.emsrv\.eu$/
