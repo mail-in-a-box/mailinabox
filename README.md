@@ -14,7 +14,7 @@ To add a new account to Nextcloud, you'd simply add a new email account with Mia
 ## How to connect to a remote Nextcloud
 ---------------------------------
 
-To integrate Mail-in-a-Box w/LDAP (MiaB-LDAP) with Nextcloud, changes must be made on both sides.  These changes are automated.
+To integrate Mail-in-a-Box w/LDAP (MiaB-LDAP) with Nextcloud, changes must be made on both sides.  These changes are mostly automated, you'll just need to copy a couple of files and apply a firewall rule.
 
 **On MiaB-LDAP**
 
@@ -24,7 +24,7 @@ The setup mod will configure Roundcube and Z-Push (ActiveSync) to use the remote
 
 **On the remote Nextcloud**
 
-Copy the file `setup/mods.available/remote-nextcloud-use-miab.sh` to the Nextcloud box and run it. This will configure Nextcloud's "LDAP user and group backend" with the MiaB-LDAP details and ensure the contacts and calendar apps are installed. *This does not replace or alter your ability to log into Nextcloud with any existing local Nextcloud accounts. It only allows MiaB-LDAP users to log into Nextcloud using their MiaB-LDAP credentials.*
+Copy the file `setup/mods.available/remote-nextcloud-use-miab.sh` to the Nextcloud box and run it as root. This will configure Nextcloud's "LDAP user and group backend" with the MiaB-LDAP details and ensure the contacts and calendar apps are installed. *This does not replace or alter your ability to log into Nextcloud with any existing local Nextcloud accounts. It only allows MiaB-LDAP users to log into Nextcloud using their MiaB-LDAP credentials.*
 
 **Additional Firewall Rule**
 
@@ -57,10 +57,10 @@ This is a convenient way to run ldapsearch having all the correct command line a
 
 **Caution**
 
-*Do not make direct LDAP database changes, such as adding users or groups using ldapmodify or other LDAP database tools. Instead, use the MiaB admin interface or REST API. Adding or removing a user or group with the admin interface may trigger additional database and system changes by the management daemon, such as updating DNS zones for new email domains, updating group memberships, etc, that would not be performed with a direct change.*
+*Direct LDAP database manipulation is not recommended for things like adding users or groups using ldapmodify or other LDAP database tools. Instead, use the MiaB admin interface or REST API. Adding or removing a user or group with the admin interface will trigger additional database and system changes by the management daemon, such as updating DNS zones for new email domains, updating group memberships, etc, that would not be performed with a direct change.*
 
 
 ## Migration
 ---------
-Running any of the setup scripts to install MiaB-LDAP (`miab`, `setup/bootstrap.sh`, `setup/start.sh`, etc) will automatically migrate your current installation from sqlite to LDAP. Make a full MiaB backup before running!
+Running any of the setup scripts to install MiaB-LDAP (`miab`, `setup/bootstrap.sh`, `setup/start.sh`, etc) will automatically migrate your current installation from sqlite to LDAP. Ensure you've backed up user-data before running.
 
