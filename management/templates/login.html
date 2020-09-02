@@ -18,7 +18,7 @@
     display: none;
   }
 
-  #loginForm.twofactor #loginOtp {
+  #loginForm.is-twofactor #loginOtp {
     display: block
   }
 </style>
@@ -71,9 +71,9 @@ sudo tools/mail.py user make-admin me@{{hostname}}</pre>
       </div>
     </div>
     <div class="form-group" id="loginOtp">
-        <label for="loginOtpInput" class="col-sm-3 control-label">Two Factor Code</label>
-        <div class="col-sm-9">
-            <input type="text" class="form-control" id="loginOtpInput" placeholder="123456">
+        <div class="col-sm-offset-3 col-sm-9">
+          <label for="loginOtpInput" class="control-label">Two Factor Code</label>
+          <input type="text" class="form-control" id="loginOtpInput" placeholder="6-digit code">
         </div>
     </div>
     <div class="form-group">
@@ -88,10 +88,11 @@ sudo tools/mail.py user make-admin me@{{hostname}}</pre>
 function do_login() {
   if ($('#loginEmail').val() == "") {
     show_modal_error("Login Failed", "Enter your email address.", function() {
-	$('#loginEmail').focus();
+      $('#loginEmail').focus();
     });
     return false;
   }
+
   if ($('#loginPassword').val() == "") {
     show_modal_error("Login Failed", "Enter your email password.", function() {
         $('#loginPassword').focus();
@@ -110,10 +111,13 @@ function do_login() {
     // This API call always succeeds. It returns a JSON object indicating
     // whether the request was authenticated or not.
     if (response.status != 'ok') {
-      if (response.status === 'missing_token' && !$('#loginForm').hasClass('twofactor')) {
-        $('#loginForm').addClass('twofactor');
+      if (response.status === 'missing_token' && !$('#loginForm').hasClass('is-twofactor')) {
+        $('#loginForm').addClass('is-twofactor');
+        setTimeout(() => {
+            $('#loginOtpInput').focus();
+        });
       } else {
-        $('#loginForm').removeClass('twofactor');
+        $('#loginForm').removeClass('is-twofactor');
         // Show why the login failed.
         show_modal_error("Login Failed", response.reason)
 
@@ -137,7 +141,7 @@ function do_login() {
       $('#loginEmail').val('');
       $('#loginPassword').val('');
       $('#loginOtpInput').val('');
-      $('#loginForm').removeClass('twofactor');
+      $('#loginForm').removeClass('is-twofactor');
 
       // Remember the credentials.
       if (typeof localStorage != 'undefined' && typeof sessionStorage != 'undefined') {
@@ -172,7 +176,7 @@ function do_logout() {
 }
 
 function show_login() {
-  $('#loginForm').removeClass('twofactor');
+  $('#loginForm').removeClass('is-twofactor');
   $('#loginOtpInput').val('');
   $('#loginEmail,#loginPassword').each(function() {
     var input = $(this);
