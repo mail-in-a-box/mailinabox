@@ -1,5 +1,5 @@
 <style>
-    .twofactor #setup-2fa,
+    .twofactor #totp-setup,
     .twofactor #disable-2fa,
     .twofactor #output-2fa {
         display: none;
@@ -10,16 +10,16 @@
     }
 
     .twofactor.disabled #disable-2fa,
-    .twofactor.enabled #setup-2fa {
+    .twofactor.enabled #totp-setup {
         display: none;
     }
 
-    .twofactor.disabled #setup-2fa,
+    .twofactor.disabled #totp-setup,
     .twofactor.enabled #disable-2fa {
         display: block;
     }
 
-    .twofactor #qr-2fa img {
+    .twofactor #totp-setup-qr img {
         display: block;
         width: 256px;
         max-width: 100%;
@@ -36,23 +36,23 @@
 <div class="twofactor">
     <div class="loading-indicator">Loading...</div>
 
-    <form id="setup-2fa">
+    <form id="totp-setup">
         <div class="form-group">
             <h3>Setup</h3>
             <p>After enabling two factor authentication, any login to the admin panel will require you to enter a time-limited 6-digit number from an authenticator app after entering your normal credentials.</p>
             <p>1. Scan the QR code or enter the secret into an authenticator app (e.g. Google Authenticator)</p>
-            <div id="qr-2fa"></div>
+            <div id="totp-setup-qr"></div>
         </div>
 
         <div class="form-group">
             <label for="otp">2. Enter the code displayed in the Authenticator app</label>
-            <input type="text" id="setup-otp" class="form-control" placeholder="6-digit code" />
+            <input type="text" id="totp-setup-token" class="form-control" placeholder="6-digit code" />
         </div>
 
-        <input type="hidden" id="setup-secret" />
+        <input type="hidden" id="totp-setup-secret" />
 
         <div class="form-group">
-            <button id="setup-submit" disabled type="submit" class="btn">Enable two factor authentication</button>
+            <button id="totp-setup-submit" disabled type="submit" class="btn">Enable two factor authentication</button>
         </div>
     </form>
 
@@ -73,11 +73,11 @@
     var el = {
         disableForm: document.getElementById('disable-2fa'),
         output: document.getElementById('output-2fa'),
-        setupForm: document.getElementById('setup-2fa'),
-        setupInputOtp: document.getElementById('setup-otp'),
-        setupInputSecret: document.getElementById('setup-secret'),
-        setupQr: document.getElementById('qr-2fa'),
-        setupSubmit: document.querySelector('#setup-2fa button[type="submit"]'),
+        totpSetupForm: document.getElementById('totp-setup'),
+        totpSetupToken: document.getElementById('totp-setup-token'),
+        totpSetupSecret: document.getElementById('totp-setup-secret'),
+        totpQr: document.getElementById('totp-setup-qr'),
+        totpSetupSubmit: document.querySelector('#totp-setup-submit'),
         wrapper: document.querySelector('.twofactor')
     }
 
@@ -86,35 +86,35 @@
 
         if (
             typeof val !== 'string' ||
-            typeof el.setupInputSecret.value !== 'string' ||
+            typeof el.totpSetupSecret.value !== 'string' ||
             val.length !== 6 ||
-            el.setupInputSecret.value.length !== 32 ||
+            el.totpSetupSecret.value.length !== 32 ||
             !(/^\+?\d+$/.test(val))
         ) {
-            el.setupSubmit.setAttribute('disabled', '');
+            el.totpSetupSubmit.setAttribute('disabled', '');
         } else {
-            el.setupSubmit.removeAttribute('disabled');
+            el.totpSetupSubmit.removeAttribute('disabled');
         }
     }
 
-    function render_setup(res) {
+    function render_totp_setup(res) {
         function render_qr_code(encoded) {
             var img = document.createElement('img');
             img.src = encoded;
 
             var code = document.createElement('div');
-            code.innerHTML = `Secret: ${res.secret}`;
+            code.innerHTML = `Secret: ${res.totp_secret}`;
 
-            el.setupQr.appendChild(img);
-            el.setupQr.appendChild(code);
+            el.totpQr.appendChild(img);
+            el.totpQr.appendChild(code);
         }
 
-        el.setupInputOtp.addEventListener('input', update_setup_disabled);
-        el.setupForm.addEventListener('submit', do_setup);
+        el.totpSetupToken.addEventListener('input', update_setup_disabled);
+        el.totpSetupForm.addEventListener('submit', do_enable_totp);
 
-        el.setupInputSecret.setAttribute('value', res.secret);
+        el.totpSetupSecret.setAttribute('value', res.totp_secret);
+        render_qr_code(res.totp_qr);
 
-        render_qr_code(res.qr_code);
         el.wrapper.classList.add('disabled');
     }
 
@@ -140,27 +140,27 @@
 
         hide_error();
 
-        el.setupForm.reset();
-        el.setupForm.removeEventListener('submit', do_setup);
+        el.totpSetupForm.reset();
+        el.totpSetupForm.removeEventListener('submit', do_enable_totp);
 
-        el.setupInputSecret.setAttribute('value', '');
-        el.setupInputOtp.removeEventListener('input', update_setup_disabled);
+        el.totpSetupSecret.setAttribute('value', '');
+        el.totpSetupToken.removeEventListener('input', update_setup_disabled);
 
-        el.setupSubmit.setAttribute('disabled', '');
-        el.setupQr.innerHTML = '';
+        el.totpSetupSubmit.setAttribute('disabled', '');
+        el.totpQr.innerHTML = '';
     }
 
     function show_two_factor_auth() {
         reset_view();
 
         api(
-            '/two-factor-auth/status',
+            '/2fa/status',
             'GET',
             {},
             function(res) {
                 el.wrapper.classList.add('loaded');
-                var isEnabled = res.status === 'on'
-                return isEnabled ? render_disable(res) : render_setup(res);
+                var isTotpEnabled = res.type === 'totp'
+                return isTotpEnabled ? render_disable(res) : render_totp_setup(res);
             }
         );
     }
@@ -170,7 +170,7 @@
         hide_error();
 
         api(
-            '/two-factor-auth/disable',
+            '/2fa/totp/disable',
             'POST',
             {},
             function() { show_two_factor_auth(); }
@@ -179,16 +179,16 @@
         return false;
     }
 
-    function do_setup(evt) {
+    function do_enable_totp(evt) {
         evt.preventDefault();
         hide_error();
 
         api(
-            '/two-factor-auth/setup',
+            '/2fa/totp/enable',
             'POST',
             {
-                token: $(el.setupInputOtp).val(),
-                secret: $(el.setupInputSecret).val()
+                token: $(el.totpSetupToken).val(),
+                secret: $(el.totpSetupSecret).val()
             },
             function(res) { show_two_factor_auth(); },
             function(res) {

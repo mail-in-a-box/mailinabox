@@ -412,29 +412,31 @@ def ssl_provision_certs():
 
 # Two Factor Auth
 
-@app.route('/two-factor-auth/status', methods=['GET'])
+@app.route('/2fa/status', methods=['GET'])
 @authorized_personnel_only
 def two_factor_auth_get_status():
-	email, privs = auth_service.authenticate(request, env)
-	two_factor_secret, two_factor_token = get_two_factor_info(email, env)
+	email, _ = auth_service.authenticate(request, env)
+	two_factor_secret, _ = get_two_factor_info(email, env)
 
 	if two_factor_secret != None:
-		return json_response({ 'status': 'on' })
+		return json_response({
+			"type": 'totp'
+		})
 
 	secret = totp.get_secret()
 	secret_url = totp.get_otp_uri(secret, email)
 	secret_qr = totp.get_qr_code(secret_url)
 
 	return json_response({
-		"status": 'off',
-		"secret": secret,
-		"qr_code": secret_qr
+		"type": None,
+		"totp_secret": secret,
+		"totp_qr": secret_qr
 	})
 
-@app.route('/two-factor-auth/setup', methods=['POST'])
+@app.route('/2fa/totp/enable', methods=['POST'])
 @authorized_personnel_only
-def two_factor_auth_post_setup():
-	email, privs = auth_service.authenticate(request, env)
+def totp_post_enable():
+	email, _ = auth_service.authenticate(request, env)
 
 	secret = request.form.get('secret')
 	token = request.form.get('token')
@@ -448,10 +450,10 @@ def two_factor_auth_post_setup():
 
 	return json_response({ "error": 'token_mismatch' }, 400)
 
-@app.route('/two-factor-auth/disable', methods=['POST'])
+@app.route('/2fa/totp/disable', methods=['POST'])
 @authorized_personnel_only
-def two_factor_auth_post_disable():
-	email, privs = auth_service.authenticate(request, env)
+def totp_post_disable():
+	email, _ = auth_service.authenticate(request, env)
 	remove_two_factor_secret(email, env)
 	return json_response({})
 
