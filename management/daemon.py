@@ -1,14 +1,15 @@
 import os, os.path, re, json, time
-import subprocess
+import multiprocessing.pool, subprocess
 
 from functools import wraps
 
 from flask import Flask, request, render_template, abort, Response, send_from_directory, make_response
 
-import auth, utils, multiprocessing.pool
+import auth, utils, totp
 from mailconfig import get_mail_users, get_mail_users_ex, get_admins, add_mail_user, set_mail_password, remove_mail_user
 from mailconfig import get_mail_user_privileges, add_remove_mail_user_privilege
 from mailconfig import get_mail_aliases, get_mail_aliases_ex, get_mail_domains, add_mail_alias, remove_mail_alias
+from mailconfig import get_two_factor_info, set_two_factor_secret, remove_two_factor_secret
 
 env = utils.load_environment()
 
@@ -83,8 +84,8 @@ def authorized_personnel_only(viewfunc):
 def unauthorized(error):
 	return auth_service.make_unauthorized_response()
 
-def json_response(data):
-	return Response(json.dumps(data, indent=2, sort_keys=True)+'\n', status=200, mimetype='application/json')
+def json_response(data, status=200):
+	return Response(json.dumps(data, indent=2, sort_keys=True)+'\n', status=status, mimetype='application/json')
 
 ###################################
 
@@ -334,7 +335,7 @@ def ssl_get_status():
 
 	# What domains can we provision certificates for? What unexpected problems do we have?
 	provision, cant_provision = get_certificates_to_provision(env, show_valid_certs=False)
-	
+
 	# What's the current status of TLS certificates on all of the domain?
 	domains_status = get_web_domains_info(env)
 	domains_status = [
@@ -383,6 +384,50 @@ def ssl_provision_certs():
 	requests = provision_certificates(env, limit_domains=None)
 	return json_response({ "requests": requests })
 
+# Two Factor Auth
+
+@app.route('/two-factor-auth/status', methods=['GET'])
+@authorized_personnel_only
+def two_factor_auth_get_status():
+	email, privs = auth_service.authenticate(request, env)
+	two_factor_secret, two_factor_token = get_two_factor_info(email, env)
+
+	if two_factor_secret != None:
+		return json_response({ 'status': 'on' })
+
+	secret = totp.get_secret()
+	secret_url = totp.get_otp_uri(secret, email)
+	secret_qr = totp.get_qr_code(secret_url)
+
+	return json_response({
+		"status": 'off',
+		"secret": secret,
+		"qr_code": secret_qr
+	})
+
+@app.route('/two-factor-auth/setup', methods=['POST'])
+@authorized_personnel_only
+def two_factor_auth_post_setup():
+	email, privs = auth_service.authenticate(request, env)
+
+	secret = request.form.get('secret')
+	token = request.form.get('token')
+
+	if type(secret) != str or type(token) != str or len(token) != 6 or len(secret) != 32:
+		return json_response({ "error": 'bad_input' }, 400)
+
+	if (totp.validate(secret, token)):
+		set_two_factor_secret(email, secret, token, env)
+		return json_response({})
+
+	return json_response({ "error": 'token_mismatch' }, 400)
+
+@app.route('/two-factor-auth/disable', methods=['POST'])
+@authorized_personnel_only
+def two_factor_auth_post_disable():
+	email, privs = auth_service.authenticate(request, env)
+	remove_two_factor_secret(email, env)
+	return json_response({})
 
 # WEB
 

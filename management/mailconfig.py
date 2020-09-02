@@ -547,6 +547,41 @@ def get_required_aliases(env):
 
 	return aliases
 
+def get_two_factor_info(email, env):
+	c = open_database(env)
+
+	c.execute('SELECT two_factor_secret, two_factor_last_used_token FROM users WHERE email=?', (email,))
+	rows = c.fetchall()
+	if len(rows) != 1:
+		raise ValueError("That's not a user (%s)." % email)
+	return (rows[0][0], rows[0][1])
+
+def set_two_factor_secret(email, secret, token, env):
+	validate_two_factor_secret(secret)
+
+	conn, c = open_database(env, with_connection=True)
+	c.execute("UPDATE users SET two_factor_secret=?, two_factor_last_used_token=? WHERE email=?", (secret, token, email))
+	if c.rowcount != 1:
+		raise ValueError("That's not a user (%s)." % email)
+	conn.commit()
+	return "OK"
+
+def set_two_factor_last_used_token(email, token, env):
+	conn, c = open_database(env, with_connection=True)
+	c.execute("UPDATE users SET two_factor_last_used_token=? WHERE email=?", (token, email))
+	if c.rowcount != 1:
+		raise ValueError("That's not a user (%s)." % email)
+	conn.commit()
+	return "OK"
+
+def remove_two_factor_secret(email, env):
+	conn, c = open_database(env, with_connection=True)
+	c.execute("UPDATE users SET two_factor_secret=null, two_factor_last_used_token=null WHERE email=?", (email,))
+	if c.rowcount != 1:
+		raise ValueError("That's not a user (%s)." % email)
+	conn.commit()
+	return "OK"
+
 def kick(env, mail_result=None):
 	results = []
 
@@ -608,6 +643,11 @@ def validate_password(pw):
 	if len(pw) < 8:
 		raise ValueError("Passwords must be at least eight characters.")
 
+def validate_two_factor_secret(secret):
+	if type(secret) != str or secret.strip() == "":
+		raise ValueError("No secret provided.")
+	if len(secret) != 32:
+		raise ValueError("Secret should be a 32 characters base32 string")
 
 if __name__ == "__main__":
 	import sys
