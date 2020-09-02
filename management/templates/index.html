@@ -297,7 +297,7 @@ function ajax_with_indicator(options) {
 }
 
 var api_credentials = ["", ""];
-function api(url, method, data, callback, callback_error) {
+function api(url, method, data, callback, callback_error, headers) {
   // from http://www.webtoolkit.info/javascript-base64.html
   function base64encode(input) {
     _keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
@@ -335,7 +335,7 @@ function api(url, method, data, callback, callback_error) {
     method: method,
     cache: false,
     data: data,
-
+    headers: headers,
     // the custom DNS api sends raw POST/PUT bodies --- prevent URL-encoding
     processData: typeof data != "string",
     mimeType: typeof data == "string" ? "text/plain; charset=ascii" : null,

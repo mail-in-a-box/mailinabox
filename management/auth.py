@@ -2,11 +2,18 @@ import base64, os, os.path, hmac
 
 from flask import make_response
 
-import utils
+import utils, totp
 from mailconfig import get_mail_password, get_mail_user_privileges
+from mailconfig import get_two_factor_info, set_two_factor_last_used_token
 
 DEFAULT_KEY_PATH   = '/var/lib/mailinabox/api.key'
 DEFAULT_AUTH_REALM = 'Mail-in-a-Box Management Server'
+
+class MissingTokenError(ValueError):
+	pass
+
+class BadTokenError(ValueError):
+	pass
 
 class KeyAuthService:
 	"""Generate an API key for authenticating clients
@@ -76,23 +83,52 @@ class KeyAuthService:
 			return (None, ["admin"])
 		else:
 			# The user is trying to log in with a username and user-specific
-			# API key or password. Raises or returns privs.
-			return (username, self.get_user_credentials(username, password, env))
+			# API key or password. Raises or returns privs and an indicator
+			# whether the user is using their password or a user-specific API-key.
+			privs, is_user_key = self.get_user_credentials(username, password, env)
+
+			# If the user is using their API key to login, 2FA has been passed before
+			if is_user_key:
+				return (username, privs)
+
+			secret, last_token = get_two_factor_info(username, env)
+
+			# 2FA is not enabled, we can skip further checks
+			if secret == "" or secret == None:
+				return (username, privs)
+
+			# If 2FA is enabled, raise if:
+			# 1. no token is provided via `x-auth-token`
+			# 2. a previously supplied token is used (to counter replay attacks)
+			# 3. the token is invalid
+			# in that case, we need to raise and indicate to the client to supply a TOTP
+			token_header = request.headers.get('x-auth-token')
+			if token_header == None or token_header == "":
+				raise MissingTokenError("Two factor code missing (no x-auth-token supplied)")
+
+			# TODO: Should a token replay be handled as its own error?
+			if token_header == last_token or totp.validate(secret, token_header) != True:
+				raise BadTokenError("Two factor code incorrect")
+
+			set_two_factor_last_used_token(username, token_header, env)
+			return (username, privs)
 
 	def get_user_credentials(self, email, pw, env):
 		# Validate a user's credentials. On success returns a list of
 		# privileges (e.g. [] or ['admin']). On failure raises a ValueError
-		# with a login error message. 
+		# with a login error message.
 
 		# Sanity check.
 		if email == "" or pw == "":
 			raise ValueError("Enter an email address and password.")
 
+		is_user_key = False
+
 		# The password might be a user-specific API key. create_user_key raises
 		# a ValueError if the user does not exist.
 		if hmac.compare_digest(self.create_user_key(email, env), pw):
 			# OK.
-			pass
+			is_user_key = True
 		else:
 			# Get the hashed password of the user. Raise a ValueError if the
 			# email address does not correspond to a user.
@@ -119,7 +155,7 @@ class KeyAuthService:
 		if isinstance(privs, tuple): raise ValueError(privs[0])
 
 		# Return a list of privileges.
-		return privs
+		return (privs, is_user_key)
 
 	def create_user_key(self, email, env):
 		# Store an HMAC with the client. The hashed message of the HMAC will be the user's

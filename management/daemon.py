@@ -40,13 +40,22 @@ def authorized_personnel_only(viewfunc):
 		error = None
 		try:
 			email, privs = auth_service.authenticate(request, env)
+		except auth.MissingTokenError as e:
+			privs = []
+			error = str(e)
+		except auth.BadTokenError as e:
+			# Write a line in the log recording the failed login
+			log_failed_login(request)
+
+			privs = []
+			error = str(e)
 		except ValueError as e:
+			# Write a line in the log recording the failed login
+			log_failed_login(request)
+
 			# Authentication failed.
 			privs = []
 			error = "Incorrect username or password"
-
-			# Write a line in the log recording the failed login
-			log_failed_login(request)
 
 		# Authorized to access an API view?
 		if "admin" in privs:
@@ -119,6 +128,23 @@ def me():
 	# Is the caller authorized?
 	try:
 		email, privs = auth_service.authenticate(request, env)
+	except auth.MissingTokenError as e:
+		# Log the failed login
+		log_failed_login(request)
+
+		return json_response({
+			"status": "missing_token",
+			"reason": str(e),
+		})
+	except auth.BadTokenError as e:
+		# Log the failed login
+		log_failed_login(request)
+
+		return json_response({
+			"status": "bad_token",
+			"reason": str(e),
+		})
+
 	except ValueError as e:
 		# Log the failed login
 		log_failed_login(request)
@@ -126,7 +152,7 @@ def me():
 		return json_response({
 			"status": "invalid",
 			"reason": "Incorrect username or password",
-			})
+		})
 
 	resp = {
 		"status": "ok",
