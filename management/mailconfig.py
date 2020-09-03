@@ -576,7 +576,9 @@ def set_mru_totp_code(email, token, env):
 	c.execute('UPDATE totp_credentials SET mru_token=? WHERE user_email=?', (token, email))
 
 	if c.rowcount != 1:
+		conn.close()
 		raise ValueError("That's not a user (%s)." % email)
+
 	conn.commit()
 	return "OK"
 
