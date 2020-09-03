@@ -564,7 +564,7 @@ def get_mfa_state(email, env):
 	}
 
 def create_totp_credential(email, secret, token, env):
-	validate_two_factor_secret(secret)
+	validate_totp_secret(secret)
 
 	conn, c = open_database(env, with_connection=True)
 	c.execute('INSERT INTO totp_credentials (user_email, secret, mru_token) VALUES (?, ?, ?)', (email, secret, token))
@@ -647,7 +647,7 @@ def validate_password(pw):
 	if len(pw) < 8:
 		raise ValueError("Passwords must be at least eight characters.")
 
-def validate_two_factor_secret(secret):
+def validate_totp_secret(secret):
 	if type(secret) != str or secret.strip() == "":
 		raise ValueError("No secret provided.")
 	if len(secret) != 32:
