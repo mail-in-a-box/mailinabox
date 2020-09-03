@@ -4,16 +4,9 @@ from flask import make_response
 
 import utils, totp
 from mailconfig import get_mail_password, get_mail_user_privileges
-from mailconfig import get_two_factor_info, set_two_factor_last_used_token
 
 DEFAULT_KEY_PATH   = '/var/lib/mailinabox/api.key'
 DEFAULT_AUTH_REALM = 'Mail-in-a-Box Management Server'
-
-class MissingTokenError(ValueError):
-	pass
-
-class BadTokenError(ValueError):
-	pass
 
 class KeyAuthService:
 	"""Generate an API key for authenticating clients
@@ -91,26 +84,10 @@ class KeyAuthService:
 			if is_user_key:
 				return (username, privs)
 
-			secret, last_token = get_two_factor_info(username, env)
+			totp_strategy = totp.TOTPStrategy(email=username)
+			# this will raise `totp.MissingTokenError` or `totp.BadTokenError` for bad requests
+			totp_strategy.validate_request(request, env)
 
-			# 2FA is not enabled, we can skip further checks
-			if secret == "" or secret == None:
-				return (username, privs)
-
-			# If 2FA is enabled, raise if:
-			# 1. no token is provided via `x-auth-token`
-			# 2. a previously supplied token is used (to counter replay attacks)
-			# 3. the token is invalid
-			# in that case, we need to raise and indicate to the client to supply a TOTP
-			token_header = request.headers.get('x-auth-token')
-			if token_header == None or token_header == "":
-				raise MissingTokenError("Two factor code missing (no x-auth-token supplied)")
-
-			# TODO: Should a token replay be handled as its own error?
-			if token_header == last_token or totp.validate(secret, token_header) != True:
-				raise BadTokenError("Two factor code incorrect")
-
-			set_two_factor_last_used_token(username, token_header, env)
 			return (username, privs)
 
 	def get_user_credentials(self, email, pw, env):

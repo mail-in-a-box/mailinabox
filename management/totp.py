@@ -6,6 +6,7 @@ import struct
 import time
 import pyotp
 import qrcode
+from mailconfig import get_two_factor_info, set_two_factor_last_used_token
 
 def get_secret():
 	return base64.b32encode(os.urandom(20)).decode('utf-8')
@@ -30,4 +31,42 @@ def validate(secret, token):
 	@see https://tools.ietf.org/html/rfc4226#section-5.4
 	"""
 	totp = pyotp.TOTP(secret)
-	return totp.verify(token, valid_window=2)
+	return totp.verify(token, valid_window=1)
+
+class MissingTokenError(ValueError):
+	pass
+
+class BadTokenError(ValueError):
+	pass
+
+class TOTPStrategy():
+	def __init__(self, email):
+		self.type = 'totp'
+		self.email = email
+
+	def store_successful_login(self, token, env):
+		return set_two_factor_last_used_token(self.email, token, env)
+
+	def validate_request(self, request, env):
+		secret, mru_token = get_two_factor_info(self.email, env)
+
+		# 2FA is not enabled, we can skip further checks
+		if secret == "" or secret == None:
+			return True
+
+		# If 2FA is enabled, raise if:
+		# 1. no token is provided via `x-auth-token`
+		# 2. a previously supplied token is used (to counter replay attacks)
+		# 3. the token is invalid
+		# in that case, we need to raise and indicate to the client to supply a TOTP
+		token_header = request.headers.get('x-auth-token')
+
+		if token_header == None or token_header == "":
+			raise MissingTokenError("Two factor code missing (no x-auth-token supplied)")
+
+		# TODO: Should a token replay be handled as its own error?
+		if token_header == mru_token or validate(secret, token_header) != True:
+			raise BadTokenError("Two factor code incorrect")
+
+		self.store_successful_login(token_header, env)
+		return True
