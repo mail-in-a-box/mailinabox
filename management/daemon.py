@@ -412,7 +412,7 @@ def ssl_provision_certs():
 
 # Two Factor Auth
 
-@app.route('/2fa/status', methods=['GET'])
+@app.route('/mfa/status', methods=['GET'])
 @authorized_personnel_only
 def two_factor_auth_get_status():
 	email, _ = auth_service.authenticate(request, env)
@@ -433,11 +433,12 @@ def two_factor_auth_get_status():
 		"totp_qr": secret_qr
 	})
 
-@app.route('/2fa/totp/enable', methods=['POST'])
+@app.route('/mfa/totp/enable', methods=['POST'])
 @authorized_personnel_only
 def totp_post_enable():
 	email, _ = auth_service.authenticate(request, env)
 
+	# TODO: Handle case where user already has TOTP enabled
 	secret = request.form.get('secret')
 	token = request.form.get('token')
 
@@ -450,7 +451,7 @@ def totp_post_enable():
 
 	return json_response({ "error": 'token_mismatch' }, 400)
 
-@app.route('/2fa/totp/disable', methods=['POST'])
+@app.route('/mfa/totp/disable', methods=['POST'])
 @authorized_personnel_only
 def totp_post_disable():
 	email, _ = auth_service.authenticate(request, env)

@@ -154,7 +154,7 @@
         reset_view();
 
         api(
-            '/2fa/status',
+            '/mfa/status',
             'GET',
             {},
             function(res) {
@@ -170,7 +170,7 @@
         hide_error();
 
         api(
-            '/2fa/totp/disable',
+            '/mfa/totp/disable',
             'POST',
             {},
             function() { show_two_factor_auth(); }
@@ -184,7 +184,7 @@
         hide_error();
 
         api(
-            '/2fa/totp/enable',
+            '/mfa/totp/enable',
             'POST',
             {
                 token: $(el.totpSetupToken).val(),
