@@ -181,6 +181,10 @@ def migration_12(env):
             conn.commit()
             conn.close()
 
+def migration_13(env):
+	# Add a table for `totp_credentials`
+	db = os.path.join(env["STORAGE_ROOT"], 'mail/users.sqlite')
+	shell("check_call", ["sqlite3", db, "CREATE TABLE IF NOT EXISTS totp_credentials (id INTEGER PRIMARY KEY AUTOINCREMENT, user_email TEXT NOT NULL UNIQUE, secret TEXT NOT NULL, mru_token TEXT, FOREIGN KEY (user_email) REFERENCES users(email) ON DELETE CASCADE);"])
 
 def get_current_migration():
 	ver = 0

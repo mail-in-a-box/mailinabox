@@ -437,7 +437,6 @@ def two_factor_auth_get_status():
 def totp_post_enable():
 	email, _ = auth_service.authenticate(request, env)
 
-	# TODO: Handle case where user already has TOTP enabled
 	secret = request.form.get('secret')
 	token = request.form.get('token')
 
