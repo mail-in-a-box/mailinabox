@@ -6,7 +6,7 @@ import struct
 import time
 import pyotp
 import qrcode
-from mailconfig import get_two_factor_info, set_two_factor_last_used_token
+from mailconfig import get_mfa_state, set_mru_totp_code
 
 def get_secret():
 	return base64.b32encode(os.urandom(20)).decode('utf-8')
@@ -45,13 +45,13 @@ class TOTPStrategy():
 		self.email = email
 
 	def store_successful_login(self, token, env):
-		return set_two_factor_last_used_token(self.email, token, env)
+		return set_mru_totp_code(self.email, token, env)
 
 	def validate_request(self, request, env):
-		secret, mru_token = get_two_factor_info(self.email, env)
+		mfa_state = get_mfa_state(self.email, env)
 
 		# 2FA is not enabled, we can skip further checks
-		if secret == "" or secret == None:
+		if mfa_state['type'] != 'totp':
 			return True
 
 		# If 2FA is enabled, raise if:
@@ -65,7 +65,7 @@ class TOTPStrategy():
 			raise MissingTokenError("Two factor code missing (no x-auth-token supplied)")
 
 		# TODO: Should a token replay be handled as its own error?
-		if token_header == mru_token or validate(secret, token_header) != True:
+		if token_header == mfa_state['mru_token'] or validate(mfa_state['secret'], token_header) != True:
 			raise BadTokenError("Two factor code incorrect")
 
 		self.store_successful_login(token_header, env)

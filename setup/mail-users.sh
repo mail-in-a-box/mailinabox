@@ -20,9 +20,10 @@ db_path=$STORAGE_ROOT/mail/users.sqlite
 # Create an empty database if it doesn't yet exist.
 if [ ! -f $db_path ]; then
 	echo Creating new user database: $db_path;
-    # TODO: Add migration
-	echo "CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL UNIQUE, password TEXT NOT NULL, extra, privileges TEXT NOT NULL DEFAULT '', two_factor_secret TEXT, two_factor_last_used_token TEXT);" | sqlite3 $db_path;
+	echo "CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL UNIQUE, password TEXT NOT NULL, extra, privileges TEXT NOT NULL DEFAULT '');" | sqlite3 $db_path;
 	echo "CREATE TABLE aliases (id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT NOT NULL UNIQUE, destination TEXT NOT NULL, permitted_senders TEXT);" | sqlite3 $db_path;
+  # TODO: Add migration
+	echo "CREATE TABLE totp_credentials (id INTEGER PRIMARY KEY AUTOINCREMENT, user_email TEXT NOT NULL UNIQUE, secret TEXT NOT NULL, mru_token TEXT, FOREIGN KEY (user_email) REFERENCES users(email) ON DELETE CASCADE);" | sqlite3 $db_path;
 fi
 
 # ### User Authentication

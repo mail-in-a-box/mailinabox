@@ -9,7 +9,7 @@ import auth, utils, totp
 from mailconfig import get_mail_users, get_mail_users_ex, get_admins, add_mail_user, set_mail_password, remove_mail_user
 from mailconfig import get_mail_user_privileges, add_remove_mail_user_privilege
 from mailconfig import get_mail_aliases, get_mail_aliases_ex, get_mail_domains, add_mail_alias, remove_mail_alias
-from mailconfig import get_two_factor_info, set_two_factor_secret, remove_two_factor_secret
+from mailconfig import get_mfa_state, create_totp_credential, delete_totp_credential
 
 env = utils.load_environment()
 
@@ -410,18 +410,17 @@ def ssl_provision_certs():
 	requests = provision_certificates(env, limit_domains=None)
 	return json_response({ "requests": requests })
 
-# Two Factor Auth
+# multi-factor auth
 
 @app.route('/mfa/status', methods=['GET'])
 @authorized_personnel_only
 def two_factor_auth_get_status():
 	email, _ = auth_service.authenticate(request, env)
-	two_factor_secret, _ = get_two_factor_info(email, env)
 
-	if two_factor_secret != None:
-		return json_response({
-			"type": 'totp'
-		})
+	mfa_state = get_mfa_state(email, env)
+
+	if mfa_state['type'] == 'totp':
+		return json_response({ "type": 'totp' })
 
 	secret = totp.get_secret()
 	secret_url = totp.get_otp_uri(secret, email)
@@ -446,7 +445,7 @@ def totp_post_enable():
 		return json_response({ "error": 'bad_input' }, 400)
 
 	if (totp.validate(secret, token)):
-		set_two_factor_secret(email, secret, token, env)
+		create_totp_credential(email, secret, token, env)
 		return json_response({})
 
 	return json_response({ "error": 'token_mismatch' }, 400)
@@ -455,7 +454,7 @@ def totp_post_enable():
 @authorized_personnel_only
 def totp_post_disable():
 	email, _ = auth_service.authenticate(request, env)
-	remove_two_factor_secret(email, env)
+	delete_totp_credential(email, env)
 	return json_response({})
 
 # WEB

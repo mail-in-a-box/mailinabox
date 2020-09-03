@@ -547,38 +547,42 @@ def get_required_aliases(env):
 
 	return aliases
 
-def get_two_factor_info(email, env):
+# multi-factor auth
+
+def get_mfa_state(email, env):
 	c = open_database(env)
+	c.execute('SELECT secret, mru_token FROM totp_credentials WHERE user_email=?', (email,))
 
-	c.execute('SELECT two_factor_secret, two_factor_last_used_token FROM users WHERE email=?', (email,))
-	rows = c.fetchall()
-	if len(rows) != 1:
-		raise ValueError("That's not a user (%s)." % email)
-	return (rows[0][0], rows[0][1])
+	credential_row = c.fetchone()
+	if (credential_row == None):
+		return { 'type': None }
 
-def set_two_factor_secret(email, secret, token, env):
+	return {
+		'type': 'totp',
+		'secret': credential_row[0],
+		'mru_token': credential_row[1]
+	}
+
+def create_totp_credential(email, secret, token, env):
 	validate_two_factor_secret(secret)
 
 	conn, c = open_database(env, with_connection=True)
-	c.execute("UPDATE users SET two_factor_secret=?, two_factor_last_used_token=? WHERE email=?", (secret, token, email))
+	c.execute('INSERT INTO totp_credentials (user_email, secret, mru_token) VALUES (?, ?, ?)', (email, secret, token))
+	conn.commit()
+	return "OK"
+
+def set_mru_totp_code(email, token, env):
+	conn, c = open_database(env, with_connection=True)
+	c.execute('UPDATE totp_credentials SET mru_token=? WHERE user_email=?', (token, email))
+
 	if c.rowcount != 1:
 		raise ValueError("That's not a user (%s)." % email)
 	conn.commit()
 	return "OK"
 
-def set_two_factor_last_used_token(email, token, env):
+def delete_totp_credential(email, env):
 	conn, c = open_database(env, with_connection=True)
-	c.execute("UPDATE users SET two_factor_last_used_token=? WHERE email=?", (token, email))
-	if c.rowcount != 1:
-		raise ValueError("That's not a user (%s)." % email)
-	conn.commit()
-	return "OK"
-
-def remove_two_factor_secret(email, env):
-	conn, c = open_database(env, with_connection=True)
-	c.execute("UPDATE users SET two_factor_secret=null, two_factor_last_used_token=null WHERE email=?", (email,))
-	if c.rowcount != 1:
-		raise ValueError("That's not a user (%s)." % email)
+	c.execute('DELETE FROM totp_credentials WHERE user_email=?', (email,))
 	conn.commit()
 	return "OK"
 
