@@ -61,7 +61,7 @@ class TOTPStrategy():
 		# in that case, we need to raise and indicate to the client to supply a TOTP
 		token_header = request.headers.get('x-auth-token')
 
-		if token_header == None or token_header == "":
+		if not token_header:
 			raise MissingTokenError("Two factor code missing (no x-auth-token supplied)")
 
 		# TODO: Should a token replay be handled as its own error?

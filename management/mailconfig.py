@@ -554,7 +554,7 @@ def get_mfa_state(email, env):
 	c.execute('SELECT secret, mru_token FROM totp_credentials WHERE user_email=?', (email,))
 
 	credential_row = c.fetchone()
-	if (credential_row == None):
+	if credential_row is None:
 		return { 'type': None }
 
 	return {

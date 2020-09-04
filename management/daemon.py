@@ -38,23 +38,21 @@ def authorized_personnel_only(viewfunc):
 	def newview(*args, **kwargs):
 		# Authenticate the passed credentials, which is either the API key or a username:password pair.
 		error = None
+		privs = []
+
 		try:
 			email, privs = auth_service.authenticate(request, env)
+
 		except totp.MissingTokenError as e:
-			privs = []
 			error = str(e)
 		except totp.BadTokenError as e:
 			# Write a line in the log recording the failed login
 			log_failed_login(request)
-
-			privs = []
 			error = str(e)
 		except ValueError as e:
 			# Write a line in the log recording the failed login
 			log_failed_login(request)
-
 			# Authentication failed.
-			privs = []
 			error = "Incorrect username or password"
 
 		# Authorized to access an API view?
@@ -443,7 +441,7 @@ def totp_post_enable():
 	if type(secret) != str or type(token) != str or len(token) != 6 or len(secret) != 32:
 		return json_response({ "error": 'bad_input' }, 400)
 
-	if (totp.validate(secret, token)):
+	if totp.validate(secret, token):
 		create_totp_credential(email, secret, token, env)
 		return json_response({})
 
