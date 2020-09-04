@@ -273,9 +273,10 @@ function show_custom_backup() {
           $("#backup-target-s3-path").val(hostpath.join('/'));
         } else if (r.target.substring(0, 5) == "b2://") {
           $("#backup-target-type").val("b2");
-          var b2_application_keyid = r.target.substring(5).split(':')[0];
-          var b2_applicationkey = r.target.substring(5).split(':')[1].split('@')[0];
-          var b2_bucket = r.target.substring(5).split('@')[1];
+          var targetPath = r.target.substring(5);
+          var b2_application_keyid = targetPath.split(':')[0];
+          var b2_applicationkey = targetPath.split(':')[1].split('@')[0];
+          var b2_bucket = targetPath.split('@')[1];
           $("#backup-target-b2-user").val(b2_application_keyid);
           $("#backup-target-b2-pass").val(b2_applicationkey);
           $("#backup-target-b2-bucket").val(b2_bucket);
