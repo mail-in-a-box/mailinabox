@@ -18,11 +18,7 @@ while [ -d /usr/local/lib/python3.4/dist-packages/acme ]; do
 	pip3 uninstall -y acme;
 done
 
-# duplicity is used to make backups of user data. It uses boto
-# (via Python 2) to do backups to AWS S3. boto from the Ubuntu
-# package manager is too out-of-date -- it doesn't support the newer
-# S3 api used in some regions, which breaks backups to those regions.
-# See #627, #653.
+# duplicity is used to make backups of user data.
 #
 # virtualenv is used to isolate the Python 3 packages we
 # install via pip from the system-installed packages.
@@ -30,10 +26,11 @@ done
 # certbot installs EFF's certbot which we use to
 # provision free TLS certificates.
 apt_install duplicity python-pip virtualenv certbot
-hide_output pip2 install --upgrade boto
 
-# b2sdk is installed outside the pipenv, so it can be used by duplicity
-hide_output pip3 install b2sdk
+# b2sdk is used for backblaze backups.
+# boto is used for amazon aws backups.
+# Both are installed outside the pipenv, so they can be used by duplicity
+hide_output pip3 install --upgrade b2sdk boto
 
 # Create a virtualenv for the installation of Python 3 packages
 # used by the management daemon.
