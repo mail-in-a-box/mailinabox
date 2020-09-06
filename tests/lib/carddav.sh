@@ -240,6 +240,10 @@ roundcube_force_carddav_refresh() {
     local pass="$2"
     local assets_dir="${ASSETS_DIR:-tests/assets}"
     local code
+    if [ ! -e "$RCM_DIR/bin/carddav_refresh.sh" ]; then
+        echo "Please ignore the following errors about no such table carddav_addressbooks and carddav_migrations"
+    fi
+
     if ! cp "$assets_dir/mail/roundcube/carddav_refresh.sh" $RCM_DIR/bin
     then
         return 1
