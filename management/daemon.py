@@ -127,9 +127,6 @@ def me():
 	try:
 		email, privs = auth_service.authenticate(request, env)
 	except totp.MissingTokenError as e:
-		# Log the failed login
-		log_failed_login(request)
-
 		return json_response({
 			"status": "missing_token",
 			"reason": str(e),
