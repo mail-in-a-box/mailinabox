@@ -557,10 +557,12 @@ def get_mfa_state(email, env):
 	if credential_row is None:
 		return { 'type': None }
 
+	secret, mru_token = credential_row
+
 	return {
 		'type': 'totp',
-		'secret': credential_row[0],
-		'mru_token': credential_row[1]
+		'secret': secret,
+		'mru_token': '' if mru_token is None else mru_token
 	}
 
 def create_totp_credential(email, secret, token, env):
