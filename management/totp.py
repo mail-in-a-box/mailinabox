@@ -65,7 +65,7 @@ class TOTPStrategy():
 			raise MissingTokenError("Two factor code missing (no x-auth-token supplied)")
 
 		# TODO: Should a token replay be handled as its own error?
-		if token_header == mfa_state['mru_token'] or validate(mfa_state['secret'], token_header) != True:
+		if hmac.compare_digest(token_header, mfa_state['mru_token']) or validate(mfa_state['secret'], token_header) != True:
 			raise BadTokenError("Two factor code incorrect")
 
 		self.store_successful_login(token_header, env)
