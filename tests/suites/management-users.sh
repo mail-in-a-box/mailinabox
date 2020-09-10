@@ -204,7 +204,7 @@ test_intl_domains() {
 test_totp() {
 	test_start "totp"
 
-	# local intl alias
+	# alice
 	local alice="alice@somedomain.com"
 	local alice_pw="$(generate_password 16)"
 
@@ -271,6 +271,13 @@ test_totp() {
 		if mgmt_assert_totp_disable "$alice" "$api_key"; then
 			mgmt_assert_admin_me "$alice" "$alice_pw" "ok"
 		fi
+	fi
+
+	# check for errors in system logs
+	if ! have_test_failures; then
+		assert_check_logs
+	else
+		check_logs
 	fi
 	
 	mgmt_assert_delete_user "$alice"
