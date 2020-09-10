@@ -118,8 +118,9 @@ init_miab_testing() {
     
     # python3-dnspython: is used by the python scripts in 'tests' and is
     #   not installed by setup
+    # also install 'jq' for json processing
     wait_for_apt
-    apt-get install -y -qq python3-dnspython
+    apt-get install -y -qq python3-dnspython jq
     
     # copy in pre-built MiaB-LDAP ssl files
     #   1. avoid the lengthy generation of DH params

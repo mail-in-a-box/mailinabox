@@ -200,8 +200,88 @@ test_intl_domains() {
 }
 
 
+
+test_totp() {
+	test_start "totp"
+
+	# local intl alias
+	local alice="alice@somedomain.com"
+	local alice_pw="$(generate_password 16)"
+
+	start_log_capture
+
+	# create alice
+	mgmt_assert_create_user "$alice" "$alice_pw"
+
+	# alice must be admin to use TOTP
+	if ! have_test_failures; then
+		mgmt_assert_privileges_add "$alice" "admin"
+	fi
+
+	# add totp to alice's account (if successful, secret is in TOTP_SECRET)
+	if ! have_test_failures; then
+		mgmt_assert_totp_enable "$alice" "$alice_pw"
+		# TOTP_SECRET and TOTP_TOKEN are now set...
+	fi
+
+	# logging in with just the password should now fail
+	if ! have_test_failures; then
+		record "Expect a login failure..."
+		mgmt_assert_admin_me "$alice" "$alice_pw" "missing_token"
+	fi
+	
+
+	# logging into /admin/me with a password and a token should
+	# succeed, and an api_key generated
+	local api_key
+	if ! have_test_failures; then		
+		record "Try using a password and a token to get the user api key, we may have to wait 30 seconds to get a new token..."
+
+		local old_totp_token="$TOTP_TOKEN"
+		if ! mgmt_get_totp_token "$TOTP_SECRET" "$TOTP_TOKEN"; then
+			test_failure "Could not obtain a new TOTP token"
+			
+		else
+			# we have a new token, try logging in ...
+			# the token must be placed in the header "x-auth-token"
+			if mgmt_assert_admin_me "$alice" "$alice_pw" "ok" "--header=x-auth-token: $TOTP_TOKEN"
+			then
+				api_key="$(/usr/bin/jq -r '.api_key' <<<"$REST_OUTPUT")"
+				record "Success: login with TOTP token successful. api_key=$api_key"
+
+				# ensure the totpMruToken was changed in LDAP
+				get_attribute "$LDAP_USERS_BASE" "(mail=$alice)" "totpMruToken"
+				if [ "$ATTR_VALUE" != "$TOTP_TOKEN" ]; then
+					record_search "(mail=$alice)"
+					test_failure "totpMruToken wasn't updated in LDAP"
+				fi
+			fi
+		fi
+	fi
+
+	# we should be able to login using the user's api key
+	if ! have_test_failures; then		
+		record "Login using the user's api key"
+		mgmt_assert_admin_me "$alice" "$api_key" "ok"
+	fi
+
+	# disable totp on the account - login should work with just the password
+	# and the ldap entry should not have the 'totpUser' objectClass
+	if ! have_test_failures; then		
+		if mgmt_assert_totp_disable "$alice" "$api_key"; then
+			mgmt_assert_admin_me "$alice" "$alice_pw" "ok"
+		fi
+	fi
+	
+	mgmt_assert_delete_user "$alice"
+	test_end
+}
+
+
+
 suite_start "management-users" mgmt_start
 
+test_totp
 test_mixed_case_domains
 test_mixed_case_users
 test_intl_domains

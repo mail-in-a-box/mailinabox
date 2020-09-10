@@ -59,7 +59,15 @@ rest_urlencoded() {
                 if $onlydata; then
                     data+=("--data-urlencode" "$item");
                 else
-                    data+=("$item")
+                    # if argument is like "--header=<val>", then change to
+                    # "--header <val>" because curl wants the latter
+                    local arg="$(awk -F= '{print $1}' <<<"$item")"
+                    local val="$(awk -F= '{print substr($0,length($1)+2)}' <<<"$item")"
+                    if [ -z "$val" ]; then
+                        data+=("$item")
+                    else
+                        data+=("$arg" "$val")
+                    fi
                 fi
                 ;;
             * )
