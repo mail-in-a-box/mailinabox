@@ -195,9 +195,9 @@ mgmt_get_totp_token() {
 	local count=0
 	
 	while [ -z "$TOTP_TOKEN" -a $count -lt 10 ]; do
-		TOTP_TOKEN="$(/usr/local/lib/mailinabox/env/bin/python -c "import pyotp; totp=pyotp.TOTP(r'$secret'); print(totp.now());" 2>>"$TEST_OF")"
+		TOTP_TOKEN="$(totp_current_token "$secret" 2>>"$TEST_OF")"
 		if [ $? -ne 0 ]; then
-			record "Failed: Could not generate a TOTP token !"
+			record "Failed: Could not get the TOTP token !"
 			return 1
 		fi
 

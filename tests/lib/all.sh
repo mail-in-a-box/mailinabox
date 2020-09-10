@@ -16,4 +16,5 @@
 
 . "$1/populate.sh"     || exit 7
 . "$1/installed-state.sh" || exit 8
+. "$1/totp.sh"         || exit 9
 
