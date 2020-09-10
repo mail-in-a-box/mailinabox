@@ -192,7 +192,7 @@ class LdapConnection(ldap3.Connection):
 		#         have values for each attribute in `attrs_to_update`
 		#   attrs_to_update: an array of attribute names to update
 		#   objectClasses: a list of object classes for a new entry
-		#   values: a dict of attributes and values for a new entry
+		#   values: a dict of attributes and values for a new or modified entry
 		if existing_record:
 			# modify existing
 			changes = {}

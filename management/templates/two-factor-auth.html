@@ -1,0 +1,220 @@
+<style>
+    .twofactor #totp-setup,
+    .twofactor #disable-2fa,
+    .twofactor #output-2fa {
+        display: none;
+    }
+
+    .twofactor.loaded .loading-indicator {
+        display: none;
+    }
+
+    .twofactor.disabled #disable-2fa,
+    .twofactor.enabled #totp-setup {
+        display: none;
+    }
+
+    .twofactor.disabled #totp-setup,
+    .twofactor.enabled #disable-2fa {
+        display: block;
+    }
+
+    .twofactor #totp-setup-qr img {
+        display: block;
+        width: 256px;
+        max-width: 100%;
+        height: auto;
+    }
+
+    .twofactor #output-2fa.visible {
+        display: block;
+    }
+</style>
+
+<h2>Two-Factor Authentication</h2>
+
+<div class="twofactor">
+    <div class="loading-indicator">Loading...</div>
+
+    <form id="totp-setup">
+        <div class="form-group">
+            <h3>Setup</h3>
+            <p>After enabling two factor authentication, any login to the admin panel will require you to enter a time-limited 6-digit number from an authenticator app after entering your normal credentials.</p>
+            <p>1. Scan the QR code or enter the secret into an authenticator app (e.g. Google Authenticator)</p>
+            <div id="totp-setup-qr"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="otp">2. Enter the code displayed in the Authenticator app</label>
+            <input type="text" id="totp-setup-token" class="form-control" placeholder="6-digit code" />
+        </div>
+
+        <input type="hidden" id="totp-setup-secret" />
+
+        <div class="form-group">
+            <button id="totp-setup-submit" disabled type="submit" class="btn">Enable two factor authentication</button>
+        </div>
+    </form>
+
+    <form id="disable-2fa">
+        <div class="form-group">
+            <p>Two factor authentication is active.</p>
+        </div>
+
+        <button type="submit" class="btn btn-danger">Disable two factor authentication</button>
+    </form>
+
+    <div id="output-2fa" class="panel panel-danger">
+        <div class="panel-body"></div>
+    </div>
+</div>
+
+<script>
+    var el = {
+        disableForm: document.getElementById('disable-2fa'),
+        output: document.getElementById('output-2fa'),
+        totpSetupForm: document.getElementById('totp-setup'),
+        totpSetupToken: document.getElementById('totp-setup-token'),
+        totpSetupSecret: document.getElementById('totp-setup-secret'),
+        totpQr: document.getElementById('totp-setup-qr'),
+        totpSetupSubmit: document.querySelector('#totp-setup-submit'),
+        wrapper: document.querySelector('.twofactor')
+    }
+
+    function update_setup_disabled(evt) {
+        var val = evt.target.value.trim();
+
+        if (
+            typeof val !== 'string' ||
+            typeof el.totpSetupSecret.value !== 'string' ||
+            val.length !== 6 ||
+            el.totpSetupSecret.value.length !== 32 ||
+            !(/^\+?\d+$/.test(val))
+        ) {
+            el.totpSetupSubmit.setAttribute('disabled', '');
+        } else {
+            el.totpSetupSubmit.removeAttribute('disabled');
+        }
+    }
+
+    function render_totp_setup(res) {
+        function render_qr_code(encoded) {
+            var img = document.createElement('img');
+            img.src = encoded;
+
+            var code = document.createElement('div');
+            code.innerHTML = `Secret: ${res.totp_secret}`;
+
+            el.totpQr.appendChild(img);
+            el.totpQr.appendChild(code);
+        }
+
+        el.totpSetupToken.addEventListener('input', update_setup_disabled);
+        el.totpSetupForm.addEventListener('submit', do_enable_totp);
+
+        el.totpSetupSecret.setAttribute('value', res.totp_secret);
+        render_qr_code(res.totp_qr);
+
+        el.wrapper.classList.add('disabled');
+    }
+
+    function render_disable() {
+        el.disableForm.addEventListener('submit', do_disable);
+        el.wrapper.classList.add('enabled');
+    }
+
+    function hide_error() {
+        el.output.querySelector('.panel-body').innerHTML = '';
+        el.output.classList.remove('visible');
+    }
+
+    function render_error(msg) {
+        el.output.querySelector('.panel-body').innerHTML = msg;
+        el.output.classList.add('visible');
+    }
+
+    function reset_view() {
+        el.wrapper.classList.remove('loaded', 'disabled', 'enabled');
+
+        el.disableForm.removeEventListener('submit', do_disable);
+
+        hide_error();
+
+        el.totpSetupForm.reset();
+        el.totpSetupForm.removeEventListener('submit', do_enable_totp);
+
+        el.totpSetupSecret.setAttribute('value', '');
+        el.totpSetupToken.removeEventListener('input', update_setup_disabled);
+
+        el.totpSetupSubmit.setAttribute('disabled', '');
+        el.totpQr.innerHTML = '';
+    }
+
+    function show_two_factor_auth() {
+        reset_view();
+
+        api(
+            '/mfa/status',
+            'GET',
+            {},
+            function(res) {
+                el.wrapper.classList.add('loaded');
+                var isTotpEnabled = res.type === 'totp'
+                return isTotpEnabled ? render_disable(res) : render_totp_setup(res);
+            }
+        );
+    }
+
+    function do_disable(evt) {
+        evt.preventDefault();
+        hide_error();
+
+        api(
+            '/mfa/totp/disable',
+            'POST',
+            {},
+            function() { show_two_factor_auth(); }
+        );
+
+        return false;
+    }
+
+    function do_enable_totp(evt) {
+        evt.preventDefault();
+        hide_error();
+
+        api(
+            '/mfa/totp/enable',
+            'POST',
+            {
+                token: $(el.totpSetupToken).val(),
+                secret: $(el.totpSetupSecret).val()
+            },
+            function(res) { show_two_factor_auth(); },
+            function(res) {
+                var errorMessage = 'Something went wrong.';
+                var parsed;
+
+                try {
+                    parsed = JSON.parse(res);
+                } catch (err) {
+                    return render_error(errorMessage);
+                }
+
+                var error = parsed && parsed.error
+                    ? parsed.error
+                    : null;
+
+                if (error === 'token_mismatch') {
+                    errorMessage = 'Code does not match.';
+                } else if (error === 'bad_input') {
+                    errorMessage = 'Received request with malformed data.';
+                }
+
+                render_error(errorMessage);
+            }
+        );
+
+        return false;
+    }
+</script>

@@ -2,7 +2,7 @@ import base64, os, os.path, hmac
 
 from flask import make_response
 
-import utils
+import utils, totp
 from mailconfig import validate_login, get_mail_password, get_mail_user_privileges
 
 DEFAULT_KEY_PATH   = '/var/lib/mailinabox/api.key'
@@ -76,23 +76,36 @@ class KeyAuthService:
 			return (None, ["admin"])
 		else:
 			# The user is trying to log in with a username and user-specific
-			# API key or password. Raises or returns privs.
-			return (username, self.get_user_credentials(username, password, env))
+			# API key or password. Raises or returns privs and an indicator
+			# whether the user is using their password or a user-specific API-key.
+			privs, is_user_key = self.get_user_credentials(username, password, env)
+
+			# If the user is using their API key to login, 2FA has been passed before
+			if is_user_key:
+				return (username, privs)
+
+			totp_strategy = totp.TOTPStrategy(email=username)
+			# this will raise `totp.MissingTokenError` or `totp.BadTokenError` for bad requests
+			totp_strategy.validate_request(request, env)
+
+			return (username, privs)
 
 	def get_user_credentials(self, email, pw, env):
 		# Validate a user's credentials. On success returns a list of
 		# privileges (e.g. [] or ['admin']). On failure raises a ValueError
-		# with a login error message. 
+		# with a login error message.
 
 		# Sanity check.
 		if email == "" or pw == "":
 			raise ValueError("Enter an email address and password.")
 
+		is_user_key = False
+
 		# The password might be a user-specific API key. create_user_key raises
 		# a ValueError if the user does not exist.
 		if hmac.compare_digest(self.create_user_key(email, env), pw):
 			# OK.
-			pass
+			is_user_key = True
 		else:
 			# Get the hashed password of the user. Raise a ValueError if the
 			# email address does not correspond to a user.
@@ -107,7 +120,7 @@ class KeyAuthService:
 		if isinstance(privs, tuple): raise ValueError(privs[0])
 
 		# Return a list of privileges.
-		return privs
+		return (privs, is_user_key)
 
 	def create_user_key(self, email, env):
 		# Store an HMAC with the client. The hashed message of the HMAC will be the user's

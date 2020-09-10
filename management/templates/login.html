@@ -1,4 +1,29 @@
-<h1 style="margin: 1em; text-align: center">{{hostname}}</h1>
+<style>
+  .title {
+    margin: 1em;
+    text-align: center;
+  }
+
+  .subtitle {
+    margin: 2em;
+    text-align: center;
+  }
+
+  .login {
+    margin: 0 auto;
+    max-width: 32em;
+  }
+
+  .login #loginOtp {
+    display: none;
+  }
+
+  #loginForm.is-twofactor #loginOtp {
+    display: block
+  }
+</style>
+
+<h1 class="title">{{hostname}}</h1>
 
 {% if no_users_exist or no_admins_exist %}
 <div class="row">
@@ -20,10 +45,10 @@ sudo tools/mail.py user make-admin me@{{hostname}}</pre>
 </div>
 {% endif %}
 
-<p style="margin: 2em; text-align: center;">Log in here for your Mail-in-a-Box control panel.</p>
+<p class="subtitle">Log in here for your Mail-in-a-Box control panel.</p>
 
-<div style="margin: 0 auto; max-width: 32em;">
-  <form class="form-horizontal" role="form" onsubmit="do_login(); return false;" method="get">
+<div class="login">
+  <form id="loginForm" class="form-horizontal" role="form" onsubmit="do_login(); return false;" method="get">
     <div class="form-group">
       <label for="inputEmail3" class="col-sm-3 control-label">Email</label>
       <div class="col-sm-9">
@@ -45,6 +70,12 @@ sudo tools/mail.py user make-admin me@{{hostname}}</pre>
         </div>
       </div>
     </div>
+    <div class="form-group" id="loginOtp">
+        <div class="col-sm-offset-3 col-sm-9">
+          <label for="loginOtpInput" class="control-label">Two-Factor Code</label>
+          <input type="text" class="form-control" id="loginOtpInput" placeholder="6-digit code">
+        </div>
+    </div>
     <div class="form-group">
       <div class="col-sm-offset-3 col-sm-9">
         <button type="submit" class="btn btn-default">Sign in</button>
@@ -53,15 +84,15 @@ sudo tools/mail.py user make-admin me@{{hostname}}</pre>
   </form>
 </div>
 
-
 <script>
 function do_login() {
   if ($('#loginEmail').val() == "") {
     show_modal_error("Login Failed", "Enter your email address.", function() {
-	$('#loginEmail').focus();
+      $('#loginEmail').focus();
     });
     return false;
   }
+
   if ($('#loginPassword').val() == "") {
     show_modal_error("Login Failed", "Enter your email password.", function() {
         $('#loginPassword').focus();
@@ -75,17 +106,24 @@ function do_login() {
   api(
   "/me",
   "GET",
-  { },
-  function(response){
+  {},
+  function(response) {
     // This API call always succeeds. It returns a JSON object indicating
     // whether the request was authenticated or not.
-    if (response.status != "ok") {
-      // Show why the login failed.
-      show_modal_error("Login Failed", response.reason)
+    if (response.status != 'ok') {
+      if (response.status === 'missing_token' && !$('#loginForm').hasClass('is-twofactor')) {
+        $('#loginForm').addClass('is-twofactor');
+        setTimeout(() => {
+            $('#loginOtpInput').focus();
+        });
+      } else {
+        $('#loginForm').removeClass('is-twofactor');
+        // Show why the login failed.
+        show_modal_error("Login Failed", response.reason)
 
-      // Reset any saved credentials.
-      do_logout();
-
+        // Reset any saved credentials.
+        do_logout();
+      }
     } else if (!("api_key" in response)) {
       // Login succeeded but user might not be authorized!
       show_modal_error("Login Failed", "You are not an administrator on this system.")
@@ -102,6 +140,8 @@ function do_login() {
       // Try to wipe the username/password information.
       $('#loginEmail').val('');
       $('#loginPassword').val('');
+      $('#loginOtpInput').val('');
+      $('#loginForm').removeClass('is-twofactor');
 
       // Remember the credentials.
       if (typeof localStorage != 'undefined' && typeof sessionStorage != 'undefined') {
@@ -119,7 +159,11 @@ function do_login() {
       // which confuses the loading indicator.
       setTimeout(function() { show_panel(!switch_back_to_panel || switch_back_to_panel == "login" ? 'system_status' : switch_back_to_panel) }, 300);
     }
-  })
+  },
+  undefined,
+  {
+    'x-auth-token': $('#loginOtpInput').val()
+  });
 }
 
 function do_logout() {
@@ -132,6 +176,8 @@ function do_logout() {
 }
 
 function show_login() {
+  $('#loginForm').removeClass('is-twofactor');
+  $('#loginOtpInput').val('');
   $('#loginEmail,#loginPassword').each(function() {
     var input = $(this);
     if (!$.trim(input.val())) {

@@ -241,7 +241,6 @@ def migration_13(env):
 	ldap.unbind()
 	conn.close()
 	
-
 def get_current_migration():
 	ver = 0
 	while True:
