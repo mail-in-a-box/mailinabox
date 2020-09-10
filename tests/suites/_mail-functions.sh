@@ -106,11 +106,11 @@ detect_syslog_error() {
 /status=(bounced|deferred|undeliverable)/  { exit 1 }
 /warning:/ && /spamhaus\.org: RBL lookup error:/ { exit 2 }
 !/postfix\/qmgr/ && /warning:/	{ exit 1 }
+/named\[\d+\]:.* receive error: .*: connection reset/ { exit 2 }
 /(fatal|reject|error):/	 { exit 1 }
 /Error in /			{ exit 1 }
 /Exception on /     { exit 1 }
 /named\[\d+\]:.* verify failed/ { exit 1 }
-/named\[\d+\]:.* receive error: .*: connection reset/ { exit 2 }
 ' \
 				>>$TEST_OF 2>&1 <<< "$line"
 			if [ $? -eq 1 ]; then
