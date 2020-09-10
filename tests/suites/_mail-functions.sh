@@ -101,6 +101,7 @@ detect_syslog_error() {
 		let ec=0 # error count
 		let wc=0 # warning count
 		while read line; do
+			# named[7940]: dispatch 0x7f460c02c3a0: shutting down due to TCP receive error: 199.249.112.1#53: connection reset
 			awk '
 /status=(bounced|deferred|undeliverable)/  { exit 1 }
 /warning:/ && /spamhaus\.org: RBL lookup error:/ { exit 2 }
@@ -109,6 +110,7 @@ detect_syslog_error() {
 /Error in /			{ exit 1 }
 /Exception on /     { exit 1 }
 /named\[\d+\]:.* verify failed/ { exit 1 }
+/named\[\d+\]:.* receive error: .*: connection reset/ { exit 2 }
 ' \
 				>>$TEST_OF 2>&1 <<< "$line"
 			if [ $? -eq 1 ]; then
@@ -118,7 +120,9 @@ detect_syslog_error() {
 				let wc+=1
 				record "$F_WARN[ WARN] $line$F_RESET"
 			else
-				record "[   OK] $line"
+				if [ "$DETECT_SYSLOG_ERROR_OUTPUT" != "brief" ]; then
+					record "[   OK] $line"
+				fi
 			fi
 		done
 		[ $ec -gt 0 ] && exit 0
@@ -177,7 +181,9 @@ detect_slapd_log_error() {
 			elif [ $r -eq 3 ]; then
 				let ignored+=1
 			else
-				record "[   OK] $line"
+				if [ "$DETECT_SLAPD_LOG_ERROR_OUTPUT" != "brief" ]; then
+					record "[   OK] $line"
+				fi
 			fi
 		done
 		record "$ignored unreported/ignored log lines"
