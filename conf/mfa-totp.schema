@@ -18,8 +18,8 @@ attributetype ( MiabLDAPmfaAttributeType:1
 	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26
 	EQUALITY caseExactIA5Match )
 
-# tokens are a base-10 string of N digits - set the syntax to the string
-# representation of a decimal number
+# tokens are a base-10 string of N digits, but set the syntax to
+# IA5String anyway
 attributetype ( MiabLDAPmfaAttributeType:2
 	DESC 'TOTP last token used'
 	NAME 'totpMruToken'
