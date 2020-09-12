@@ -565,11 +565,11 @@ def get_mfa_state(email, env):
 		'mru_token': '' if mru_token is None else mru_token
 	}
 
-def create_totp_credential(email, secret, token, env):
+def create_totp_credential(email, secret, env):
 	validate_totp_secret(secret)
 
 	conn, c = open_database(env, with_connection=True)
-	c.execute('INSERT INTO totp_credentials (user_email, secret, mru_token) VALUES (?, ?, ?)', (email, secret, token))
+	c.execute('INSERT INTO totp_credentials (user_email, secret) VALUES (?, ?)', (email, secret))
 	conn.commit()
 	return "OK"
 

@@ -363,6 +363,16 @@ function api(url, method, data, callback, callback_error, headers) {
 
 var current_panel = null;
 var switch_back_to_panel = null;
+
+function do_logout() {
+  api_credentials = ["", ""];
+  if (typeof localStorage != 'undefined')
+    localStorage.removeItem("miab-cp-credentials");
+  if (typeof sessionStorage != 'undefined')
+    sessionStorage.removeItem("miab-cp-credentials");
+  show_panel('login');
+}
+
 function show_panel(panelid) {
   if (panelid.getAttribute)
     // we might be passed an HTMLElement <a>.
