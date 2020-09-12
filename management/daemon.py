@@ -448,7 +448,7 @@ def totp_post_enable():
 		return json_response({ "error": 'bad_input' }, 400)
 
 	if totp.validate(secret, token):
-		create_totp_credential(email, secret, token, env)
+		create_totp_credential(email, secret, env)
 		return json_response({})
 
 	return json_response({ "error": 'token_mismatch' }, 400)

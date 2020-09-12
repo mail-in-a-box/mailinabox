@@ -1149,20 +1149,19 @@ def get_mfa_state(email, env):
 		'mru_token': '' if mru_token is None else mru_token
 	}
 
-def create_totp_credential(email, secret, token, env):
+def create_totp_credential(email, secret, env):
 	validate_totp_secret(secret)
 	conn = open_database(env)
-	user = find_mail_user(env, email, ['objectClass','totpSecret','totpMruToken'], conn)
+	user = find_mail_user(env, email, ['objectClass','totpSecret'], conn)
 	if user is None:
 		return ("That's not a user (%s)." % email, 400)
 
 	attrs = {
 		"totpSecret": secret,
-		"totpMruToken": token
 	}
 	if 'totpUser' not in user['objectClass']:
 		attrs['objectClass'] = user['objectClass'].copy()
-		attrs['objectClass'].append('totpUser')		
+		attrs['objectClass'].append('totpUser')
 	conn.add_or_modify(user['dn'], user, attrs.keys(), None, attrs)
 	return "OK"
 

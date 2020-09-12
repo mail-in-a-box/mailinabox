@@ -166,15 +166,6 @@ function do_login() {
   });
 }
 
-function do_logout() {
-  api_credentials = ["", ""];
-  if (typeof localStorage != 'undefined')
-    localStorage.removeItem("miab-cp-credentials");
-  if (typeof sessionStorage != 'undefined')
-    sessionStorage.removeItem("miab-cp-credentials");
-  show_panel('login');
-}
-
 function show_login() {
   $('#loginForm').removeClass('is-twofactor');
   $('#loginOtpInput').val('');

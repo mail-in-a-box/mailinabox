@@ -3,7 +3,7 @@ import base64, os, os.path, hmac
 from flask import make_response
 
 import utils, totp
-from mailconfig import validate_login, get_mail_password, get_mail_user_privileges
+from mailconfig import validate_login, get_mail_password, get_mail_user_privileges, get_mfa_state
 
 DEFAULT_KEY_PATH   = '/var/lib/mailinabox/api.key'
 DEFAULT_AUTH_REALM = 'Mail-in-a-Box Management Server'
@@ -124,15 +124,22 @@ class KeyAuthService:
 
 	def create_user_key(self, email, env):
 		# Store an HMAC with the client. The hashed message of the HMAC will be the user's
-		# email address & hashed password and the key will be the master API key. The user of
-		# course has their own email address and password. We assume they do not have the master
-		# API key (unless they are trusted anyway). The HMAC proves that they authenticated
-		# with us in some other way to get the HMAC. Including the password means that when
+		# email address & hashed password and the key will be the master API key. If TOTP
+		# is active, the key will also include the TOTP secret. The user of course has their
+		# own email address and password. We assume they do not have the master API key
+		# (unless they are trusted anyway). The HMAC proves that they authenticated with us
+		# in some other way to get the HMAC. Including the password means that when
 		# a user's password is reset, the HMAC changes and they will correctly need to log
 		# in to the control panel again. This method raises a ValueError if the user does
 		# not exist, due to get_mail_password.
 		msg = b"AUTH:" + email.encode("utf8") + b" " + ";".join(get_mail_password(email, env)).encode("utf8")
-		return hmac.new(self.key.encode('ascii'), msg, digestmod="sha256").hexdigest()
+		mfa_state = get_mfa_state(email, env)
+		hash_key = self.key.encode('ascii')
+
+		if mfa_state['type'] == 'totp':
+			hash_key = hash_key + mfa_state['secret'].encode('ascii')
+
+		return hmac.new(hash_key, msg, digestmod="sha256").hexdigest()
 
 	def _generate_key(self):
 		raw_key = os.urandom(32)

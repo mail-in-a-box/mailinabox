@@ -37,31 +37,35 @@
     <div class="loading-indicator">Loading...</div>
 
     <form id="totp-setup">
+        <p>After enabling two-factor authentication, any login to the admin panel will require you to enter a time-limited 6-digit number from an authenticator app after entering your normal credentials.</p>
+
         <div class="form-group">
-            <h3>Setup</h3>
-            <p>After enabling two factor authentication, any login to the admin panel will require you to enter a time-limited 6-digit number from an authenticator app after entering your normal credentials.</p>
+            <h3>Setup Instructions</h3>
             <p>1. Scan the QR code or enter the secret into an authenticator app (e.g. Google Authenticator)</p>
             <div id="totp-setup-qr"></div>
         </div>
 
         <div class="form-group">
             <label for="otp">2. Enter the code displayed in the Authenticator app</label>
+            <p>You will have to log into the admin panel again after enabling two-factor authentication.</p>
             <input type="text" id="totp-setup-token" class="form-control" placeholder="6-digit code" />
         </div>
 
         <input type="hidden" id="totp-setup-secret" />
 
         <div class="form-group">
-            <button id="totp-setup-submit" disabled type="submit" class="btn">Enable two factor authentication</button>
+            <button id="totp-setup-submit" disabled type="submit" class="btn">Enable two-factor authentication</button>
         </div>
     </form>
 
     <form id="disable-2fa">
         <div class="form-group">
-            <p>Two factor authentication is active.</p>
+            <p>Two-factor authentication is active for your account. You can disable it by clicking below button.</p>
+            <p>You will have to log into the admin panel again after disabling two-factor authentication.</p>
         </div>
-
-        <button type="submit" class="btn btn-danger">Disable two factor authentication</button>
+        <div class="form-group">
+            <button type="submit" class="btn btn-danger">Disable two-factor authentication</button>
+        </div>
     </form>
 
     <div id="output-2fa" class="panel panel-danger">
@@ -173,7 +177,9 @@
             '/mfa/totp/disable',
             'POST',
             {},
-            function() { show_two_factor_auth(); }
+            function() {
+                do_logout();
+            }
         );
 
         return false;
@@ -190,7 +196,9 @@
                 token: $(el.totpSetupToken).val(),
                 secret: $(el.totpSetupSecret).val()
             },
-            function(res) { show_two_factor_auth(); },
+            function(res) {
+                do_logout();
+            },
             function(res) {
                 var errorMessage = 'Something went wrong.';
                 var parsed;
