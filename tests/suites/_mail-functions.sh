@@ -106,7 +106,7 @@ detect_syslog_error() {
 /status=(bounced|deferred|undeliverable)/  { exit 1 }
 /warning:/ && /spamhaus\.org: RBL lookup error:/ { exit 2 }
 !/postfix\/qmgr/ && /warning:/	{ exit 1 }
-/named\[\d+\]:.* receive error: .*: connection reset/ { exit 2 }
+/named\[[0-9]+\]:.* receive error: .*: connection reset/ { exit 2 }
 /(fatal|reject|error):/	 { exit 1 }
 /Error in /			{ exit 1 }
 /Exception on /     { exit 1 }
