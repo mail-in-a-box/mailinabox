@@ -8,7 +8,7 @@
 import uuid, os, sqlite3, ldap3, hashlib
 
 
-def add_user(env, ldapconn, search_base, users_base, domains_base, email, password, privs, cn=None):
+def add_user(env, ldapconn, search_base, users_base, domains_base, email, password, privs, totp_secret, totp_mru_token, cn=None):
 	# Add a sqlite user to ldap
 	#   env are the environment variables
 	#   ldapconn is the bound ldap connection
@@ -18,6 +18,8 @@ def add_user(env, ldapconn, search_base, users_base, domains_base, email, passwo
 	#   email is the user's email
 	#   password is the user's current sqlite password hash
 	#   privs is an array of privilege names for the user
+	#   totp_secret is the TOTP secret or None
+	#   totp_mru_token is the TOP most recently used token or None
 	#   cn is the user's common name [optional]
 	#
 	# the email address should be as-is from sqlite (encoded as
@@ -37,6 +39,7 @@ def add_user(env, ldapconn, search_base, users_base, domains_base, email, passwo
 	uid = m.hexdigest()
 	
 	# Attributes to apply to the new ldap entry
+	objectClasses = [ 'inetOrgPerson','mailUser','shadowAccount' ]
 	attrs = {
 		"mail" : email,
 		"maildrop" : email,
@@ -73,12 +76,18 @@ def add_user(env, ldapconn, search_base, users_base, domains_base, email, passwo
 	# Choose a surname for the user (required attribute)
 	attrs["sn"] = cn[cn.find(' ')+1:]
 
+	# add TOTP, if enabled
+	if totp_secret:
+		objectClasses.append('totpUser')
+		attrs['totpSecret'] = totp_secret
+		if totp_mru_token:
+			attrs['totpMruToken'] = totp_mru_token
+	
 	# Add user
 	dn = "uid=%s,%s" % (uid, users_base)
+	
 	print("adding user %s" % email)
-	ldapconn.add(dn,
-		     [ 'inetOrgPerson','mailUser','shadowAccount' ],
-		     attrs);			 
+	ldapconn.add(dn, objectClasses, attrs)
 
 	# Create domain entry indicating that we are handling
 	# mail for that domain
@@ -95,14 +104,24 @@ def add_user(env, ldapconn, search_base, users_base, domains_base, email, passwo
 def create_users(env, conn, ldapconn, ldap_base, ldap_users_base, ldap_domains_base):
 	# iterate through sqlite 'users' table and create each user in
 	# ldap. returns a map of email->dn
-	c = conn.cursor()
-	c.execute("SELECT email,password,privileges from users")
+
+	try:
+		c = conn.cursor()
+		c.execute("select users.email, users.password, users.privileges, totp_credentials.secret, totp_credentials.mru_token from users left join totp_credentials on users.email = totp_credentials.user_email")
+		
+	except:
+		# old version of miab
+		c = conn.cursor()
+		c.execute("SELECT email, password, privileges, NULL as secret, NULL as mru_token from users")
+
 	users = {}
 	for row in c:
 		email=row[0]
 		password=row[1]
 		privs=row[2]
-		dn = add_user(env, ldapconn, ldap_base, ldap_users_base, ldap_domains_base, email, password, privs.split("\n"))
+		totp_secret=row[3]
+		totp_mru_token=row[4]
+		dn = add_user(env, ldapconn, ldap_base, ldap_users_base, ldap_domains_base, email, password, privs.split("\n"), totp_secret, totp_mru_token)
 		users[email] = dn
 	return users
 
