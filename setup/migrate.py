@@ -251,7 +251,7 @@ def get_current_migration():
 	ver = 0
 	while True:
 		next_ver = (ver + 1)
-		migration_func = globals().get("migration_%d" % next_ver)
+		migration_func = globals().get("migration_miabldap_%d" % next_ver)
 		if not migration_func:
 			return ver
 		ver = next_ver

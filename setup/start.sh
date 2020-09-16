@@ -80,9 +80,9 @@ fi
 if [ ! -d $STORAGE_ROOT ]; then
 	mkdir -p $STORAGE_ROOT
 fi
-if [ ! -f $STORAGE_ROOT/mailinabox.version ]; then
-	echo $(setup/migrate.py --current) > $STORAGE_ROOT/mailinabox.version
-	chown $STORAGE_USER.$STORAGE_USER $STORAGE_ROOT/mailinabox.version
+if [ ! -f $STORAGE_ROOT/mailinabox-ldap.version ]; then
+	echo $(setup/migrate.py --current) > $STORAGE_ROOT/mailinabox-ldap.version
+	chown $STORAGE_USER.$STORAGE_USER $STORAGE_ROOT/mailinabox-ldap.version
 fi
 
 # Save the global options in /etc/mailinabox.conf so that standalone
