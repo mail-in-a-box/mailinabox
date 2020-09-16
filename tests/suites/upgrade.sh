@@ -38,7 +38,7 @@ verify_populate() {
 
 
 
-suite_start "upgrade"
+suite_start "upgrade-$1"
 
 export ASSETS_DIR
 export MIAB_DIR

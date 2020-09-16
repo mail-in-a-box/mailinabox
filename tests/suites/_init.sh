@@ -168,7 +168,7 @@ skip_test() {
 	if [ "$SKIP_REMOTE_SMTP_TESTS" == "yes" ] &&
 		   array_contains "remote-smtp" "$@";
 	then
-		test_skip "-no-smtp-remote option given"
+		test_skip "no-smtp-remote option given"
 		return 0
 	fi
 	

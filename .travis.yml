@@ -41,11 +41,13 @@ jobs:
   # JOB: Upgrade from upstream install
   - env:
       - PRIMARY_HOSTNAME=box2.abc.com
-      - UPSTREAM_TAG=master
+      #- UPSTREAM_TAG=master
+      - MIAB_UPSTREAM_GIT=https://github.com/fspoettel/mailinabox.git
+      - UPSTREAM_TAG=admin-panel-2fa
     name: upgrade-from-upstream
     install:
-      - sudo tests/system-setup/upgrade-from-upstream.sh basic
+      - sudo tests/system-setup/upgrade-from-upstream.sh basic totpuser
     script:
       # launch automated tests, but skip tests that require remote
       # smtp support because Travis-CI blocks outgoing port 25
-      - sudo tests/runner.sh -dumpoutput -no-smtp-remote default upgrade-basic
+      - sudo tests/runner.sh -dumpoutput -no-smtp-remote default upgrade-basic upgrade-totpuser
