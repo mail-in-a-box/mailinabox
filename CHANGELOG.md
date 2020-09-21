@@ -7,7 +7,6 @@ In Development
 Mail:
 
 * An MTA-STS policy for incoming mail is now published (in DNS and over HTTPS) when the primary hostname and email address domain both have a signed TLS certificate installed, allowing senders to know that an encrypted connection should be enforced.
-* MTA-STS reporting is enabled with reports sent to administrator@ the primary hostname.
 * The per-IP connection limit to the IMAP server has been doubled to allow more devices to connect at once, especially with multiple users behind a NAT.
 
 DNS:
