@@ -134,11 +134,11 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 		# Database migrations from ownCloud are no longer possible because ownCloud cannot be run under
 		# PHP 7.
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^[89] ]]; then
-			echo "Upgrades from Mail-in-a-Box prior to v0.28 (dated July 30, 2018) with Nextcloud < 13.0.6 (you have ownCloud 8 or 9) are not supported. Upgrade to Mail-in-a-Box version v0.30 first. Setup aborting."
-			exit 1
+			echo "Upgrades from Mail-in-a-Box prior to v0.28 (dated July 30, 2018) with Nextcloud < 13.0.6 (you have ownCloud 8 or 9) are not supported. Upgrade to Mail-in-a-Box version v0.30 first. Setup will continue, but skip the Nextcloud migration."
+			return 0
 		elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^1[012] ]]; then
-			echo "Upgrades from Mail-in-a-Box prior to v0.28 (dated July 30, 2018) with Nextcloud < 13.0.6 (you have ownCloud 10, 11 or 12) are not supported. Upgrade to Mail-in-a-Box version v0.30 first. Setup aborting."
-			exit 1
+			echo "Upgrades from Mail-in-a-Box prior to v0.28 (dated July 30, 2018) with Nextcloud < 13.0.6 (you have ownCloud 10, 11 or 12) are not supported. Upgrade to Mail-in-a-Box version v0.30 first. Setup will continue, but skip the Nextcloud migration."
+			return 0
 		elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^13 ]]; then
 			# If we are running Nextcloud 13, upgrade to Nextcloud 14
 			InstallNextcloud 14.0.6 4e43a57340f04c2da306c8eea98e30040399ae5a
