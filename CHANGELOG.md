@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.50 (September 25, 2020)
+--------------------------
 
 Setup:
 
