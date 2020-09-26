@@ -27,7 +27,7 @@ If that doesn't work:
 curl https://raw.githubusercontent.com/ddavness/power-mailinabox/master/setup/bootstrap.sh | sudo bash
 ```
 
-## Current Version: v0.48.POWER.0 (Tracking v0.48)
+## Current Version: v0.50.POWER.0 (Tracking v0.50)
 
 This is a fork of MiaB (duh), hacked and tuned to my needs:
 
