@@ -351,14 +351,10 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 			("_mta-sts", "TXT", "v=STSv1; id=" + mta_sts_policy_id, "Optional. Part of the MTA-STS policy for incoming mail. If set, a MTA-STS policy must also be published.")
 		])
 
-		# Rules can be custom configured accoring to https://tools.ietf.org/html/rfc8460.
+		# Enable SMTP TLS reporting (https://tools.ietf.org/html/rfc8460) if the user has set a config option.
 		# Skip if the rules below if the user has set a custom _smtp._tls record.
-		if not has_rec("_smtp._tls", "TXT", prefix="v=TLSRPTv1;"):
-			tls_rpt_string = ""
-			tls_rpt_email = env.get("MTA_STS_TLSRPT_EMAIL", "postmaster@%s" % env['PRIMARY_HOSTNAME'])
-			if tls_rpt_email: # if a reporting address is not cleared
-				tls_rpt_string = " rua=mailto:%s" % tls_rpt_email
-			mta_sts_records.append(("_smtp._tls", "TXT", "v=TLSRPTv1;%s" % tls_rpt_string, "Optional. Enables MTA-STS reporting."))
+		if env.get("MTA_STS_TLSRPT_RUA") and not has_rec("_smtp._tls", "TXT", prefix="v=TLSRPTv1;"):
+			mta_sts_records.append(("_smtp._tls", "TXT", "v=TLSRPTv1; rua=" + env["MTA_STS_TLSRPT_RUA"], "Optional. Enables MTA-STS reporting."))
 	for qname, rtype, value, explanation in mta_sts_records:
 		if value is None or value.strip() == "": continue # skip IPV6 if not set
 		if not has_rec(qname, rtype):
@@ -967,20 +963,17 @@ def set_secondary_dns(hostnames, env):
 				try:
 					response = resolver.resolve(item, "A")
 				except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
-					response = resolver.resolve(item, "AAAA")
-				except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
-					raise ValueError("Could not resolve the IP address of %s." % item)
+					try:
+						response = resolver.query(item, "AAAA")
+					except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+						raise ValueError("Could not resolve the IP address of %s." % item)
 			else:
 				# Validate IP address.
 				try:
 					if "/" in item[4:]:
 						v = ipaddress.ip_network(item[4:]) # raises a ValueError if there's a problem
-						if not isinstance(v, ipaddress.IPv4Network) and not isinstance(v, ipaddress.IPv6Network):
-							raise ValueError("That's neither an IPv4 or IPv6 subnet.")
 					else:
 						v = ipaddress.ip_address(item[4:]) # raises a ValueError if there's a problem
-						if not isinstance(v, ipaddress.IPv4Address) and not isinstance(v, ipaddress.IPv6Address):
-							raise ValueError("That's neither an IPv4 or IPv6 address.")
 				except ValueError:
 					raise ValueError("'%s' is not an IPv4 or IPv6 address or subnet." % item[4:])
 
