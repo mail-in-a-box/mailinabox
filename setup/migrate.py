@@ -182,9 +182,11 @@ def migration_12(env):
             conn.close()
 
 def migration_13(env):
-	# Add a table for `totp_credentials`
+	# Add the "mfa" table for configuring MFA for login to the control panel.
 	db = os.path.join(env["STORAGE_ROOT"], 'mail/users.sqlite')
-	shell("check_call", ["sqlite3", db, "CREATE TABLE IF NOT EXISTS totp_credentials (id INTEGER PRIMARY KEY AUTOINCREMENT, user_email TEXT NOT NULL UNIQUE, secret TEXT NOT NULL, mru_token TEXT, FOREIGN KEY (user_email) REFERENCES users(email) ON DELETE CASCADE);"])
+	shell("check_call", ["sqlite3", db, "CREATE TABLE IF NOT EXISTS mfa (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL UNIQUE, type TEXT NOT NULL, secret TEXT NOT NULL, mru_token TEXT, FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE);"])
+
+###########################################################
 
 def get_current_migration():
 	ver = 0

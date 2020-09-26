@@ -547,49 +547,6 @@ def get_required_aliases(env):
 
 	return aliases
 
-# multi-factor auth
-
-def get_mfa_state(email, env):
-	c = open_database(env)
-	c.execute('SELECT secret, mru_token FROM totp_credentials WHERE user_email=?', (email,))
-
-	credential_row = c.fetchone()
-	if credential_row is None:
-		return { 'type': None }
-
-	secret, mru_token = credential_row
-
-	return {
-		'type': 'totp',
-		'secret': secret,
-		'mru_token': '' if mru_token is None else mru_token
-	}
-
-def create_totp_credential(email, secret, env):
-	validate_totp_secret(secret)
-
-	conn, c = open_database(env, with_connection=True)
-	c.execute('INSERT INTO totp_credentials (user_email, secret) VALUES (?, ?)', (email, secret))
-	conn.commit()
-	return "OK"
-
-def set_mru_totp_code(email, token, env):
-	conn, c = open_database(env, with_connection=True)
-	c.execute('UPDATE totp_credentials SET mru_token=? WHERE user_email=?', (token, email))
-
-	if c.rowcount != 1:
-		conn.close()
-		raise ValueError("That's not a user (%s)." % email)
-
-	conn.commit()
-	return "OK"
-
-def delete_totp_credential(email, env):
-	conn, c = open_database(env, with_connection=True)
-	c.execute('DELETE FROM totp_credentials WHERE user_email=?', (email,))
-	conn.commit()
-	return "OK"
-
 def kick(env, mail_result=None):
 	results = []
 
@@ -650,12 +607,6 @@ def validate_password(pw):
 		raise ValueError("No password provided.")
 	if len(pw) < 8:
 		raise ValueError("Passwords must be at least eight characters.")
-
-def validate_totp_secret(secret):
-	if type(secret) != str or secret.strip() == "":
-		raise ValueError("No secret provided.")
-	if len(secret) != 32:
-		raise ValueError("Secret should be a 32 characters base32 string")
 
 if __name__ == "__main__":
 	import sys

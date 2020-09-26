@@ -1,9 +1,10 @@
-import base64, os, os.path, hmac
+import base64, os, os.path, hmac, json
 
 from flask import make_response
 
-import utils, totp
-from mailconfig import get_mail_password, get_mail_user_privileges, get_mfa_state
+import utils
+from mailconfig import get_mail_password, get_mail_user_privileges
+from mfa import get_mfa_state, validate_auth_mfa
 
 DEFAULT_KEY_PATH   = '/var/lib/mailinabox/api.key'
 DEFAULT_AUTH_REALM = 'Mail-in-a-Box Management Server'
@@ -72,40 +73,29 @@ class KeyAuthService:
 		if username in (None, ""):
 			raise ValueError("Authorization header invalid.")
 		elif username == self.key:
-			# The user passed the API key which grants administrative privs.
+			# The user passed the master API key which grants administrative privs.
 			return (None, ["admin"])
 		else:
-			# The user is trying to log in with a username and user-specific
-			# API key or password. Raises or returns privs and an indicator
-			# whether the user is using their password or a user-specific API-key.
-			privs, is_user_key = self.get_user_credentials(username, password, env)
+			# The user is trying to log in with a username and either a password
+			# (and possibly a MFA token) or a user-specific API key.
+			return (username, self.check_user_auth(username, password, request, env))
 
-			# If the user is using their API key to login, 2FA has been passed before
-			if is_user_key:
-				return (username, privs)
-
-			totp_strategy = totp.TOTPStrategy(email=username)
-			# this will raise `totp.MissingTokenError` or `totp.BadTokenError` for bad requests
-			totp_strategy.validate_request(request, env)
-
-			return (username, privs)
-
-	def get_user_credentials(self, email, pw, env):
-		# Validate a user's credentials. On success returns a list of
-		# privileges (e.g. [] or ['admin']). On failure raises a ValueError
-		# with a login error message.
+	def check_user_auth(self, email, pw, request, env):
+		# Validate a user's login email address and password. If MFA is enabled,
+		# check the MFA token in the X-Auth-Token header.
+		#
+		# On success returns a list of privileges (e.g. [] or ['admin']). On login
+		# failure, raises a ValueError with a login error message.
 
 		# Sanity check.
 		if email == "" or pw == "":
 			raise ValueError("Enter an email address and password.")
 
-		is_user_key = False
-
 		# The password might be a user-specific API key. create_user_key raises
 		# a ValueError if the user does not exist.
 		if hmac.compare_digest(self.create_user_key(email, env), pw):
 			# OK.
-			is_user_key = True
+			pass
 		else:
 			# Get the hashed password of the user. Raise a ValueError if the
 			# email address does not correspond to a user.
@@ -125,6 +115,12 @@ class KeyAuthService:
 				# Login failed.
 				raise ValueError("Invalid password.")
 
+			# If MFA is enabled, check that MFA passes.
+			status, hints = validate_auth_mfa(email, request, env)
+			if not status:
+				# Login valid. Hints may have more info.
+				raise ValueError(",".join(hints))
+
 		# Get privileges for authorization. This call should never fail because by this
 		# point we know the email address is a valid user. But on error the call will
 		# return a tuple of an error message and an HTTP status code.
@@ -132,26 +128,29 @@ class KeyAuthService:
 		if isinstance(privs, tuple): raise ValueError(privs[0])
 
 		# Return a list of privileges.
-		return (privs, is_user_key)
+		return privs
 
 	def create_user_key(self, email, env):
-		# Store an HMAC with the client. The hashed message of the HMAC will be the user's
-		# email address & hashed password and the key will be the master API key. If TOTP
-		# is active, the key will also include the TOTP secret. The user of course has their
-		# own email address and password. We assume they do not have the master API key
-		# (unless they are trusted anyway). The HMAC proves that they authenticated with us
-		# in some other way to get the HMAC. Including the password means that when
-		# a user's password is reset, the HMAC changes and they will correctly need to log
-		# in to the control panel again. This method raises a ValueError if the user does
-		# not exist, due to get_mail_password.
+		# Create a user API key, which is a shared secret that we can re-generate from
+		# static information in our database. The shared secret contains the user's
+		# email address, current hashed password, and current MFA state, so that the
+		# key becomes invalid if any of that information changes.
+		#
+		# Use an HMAC to generate the API key using our master API key as a key,
+		# which also means that the API key becomes invalid when our master API key
+		# changes --- i.e. when this process is restarted.
+		#
+		# Raises ValueError via get_mail_password if the user doesn't exist.
+
+		# Construct the HMAC message from the user's email address and current password.
 		msg = b"AUTH:" + email.encode("utf8") + b" " + get_mail_password(email, env).encode("utf8")
-		
-		mfa_state = get_mfa_state(email, env)
+
+		# Add to the message the current MFA state, which is a list of MFA information.
+		# Turn it into a string stably.
+		msg += b" " + json.dumps(get_mfa_state(email, env), sort_keys=True).encode("utf8")
+
+		# Make the HMAC.
 		hash_key = self.key.encode('ascii')
-
-		if mfa_state['type'] == 'totp':
-			hash_key = hash_key + mfa_state['secret'].encode('ascii')
-
 		return hmac.new(hash_key, msg, digestmod="sha256").hexdigest()
 
 	def _generate_key(self):

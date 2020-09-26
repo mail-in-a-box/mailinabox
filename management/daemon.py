@@ -5,11 +5,11 @@ from functools import wraps
 
 from flask import Flask, request, render_template, abort, Response, send_from_directory, make_response
 
-import auth, utils, totp
+import auth, utils, mfa
 from mailconfig import get_mail_users, get_mail_users_ex, get_admins, add_mail_user, set_mail_password, remove_mail_user
 from mailconfig import get_mail_user_privileges, add_remove_mail_user_privilege
 from mailconfig import get_mail_aliases, get_mail_aliases_ex, get_mail_domains, add_mail_alias, remove_mail_alias
-from mailconfig import get_mfa_state, create_totp_credential, delete_totp_credential
+from mfa import get_mfa_state, provision_totp, validate_totp_secret, enable_mfa, disable_mfa
 
 env = utils.load_environment()
 
@@ -36,30 +36,31 @@ app = Flask(__name__, template_folder=os.path.abspath(os.path.join(os.path.dirna
 def authorized_personnel_only(viewfunc):
 	@wraps(viewfunc)
 	def newview(*args, **kwargs):
-		# Authenticate the passed credentials, which is either the API key or a username:password pair.
+		# Authenticate the passed credentials, which is either the API key or a username:password pair
+		# and an optional X-Auth-Token token.
 		error = None
 		privs = []
 
 		try:
 			email, privs = auth_service.authenticate(request, env)
-
-		except totp.MissingTokenError as e:
-			error = str(e)
-		except totp.BadTokenError as e:
-			# Write a line in the log recording the failed login
-			log_failed_login(request)
-			error = str(e)
 		except ValueError as e:
 			# Write a line in the log recording the failed login
 			log_failed_login(request)
+
 			# Authentication failed.
-			error = "Incorrect username or password"
+			error = str(e)
 
 		# Authorized to access an API view?
 		if "admin" in privs:
+			# Store the email address of the logged in user so it can be accessed
+			# from the API methods that affect the calling user.
+			request.user_email = email
+			request.user_privs = privs
+
 			# Call view func.
 			return viewfunc(*args, **kwargs)
-		elif not error:
+
+		if not error:
 			error = "You are not an administrator."
 
 		# Not authorized. Return a 401 (send auth) and a prompt to authorize by default.
@@ -126,27 +127,12 @@ def me():
 	# Is the caller authorized?
 	try:
 		email, privs = auth_service.authenticate(request, env)
-	except totp.MissingTokenError as e:
-		return json_response({
-			"status": "missing_token",
-			"reason": str(e),
-		})
-	except totp.BadTokenError as e:
-		# Log the failed login
-		log_failed_login(request)
-
-		return json_response({
-			"status": "bad_token",
-			"reason": str(e),
-		})
-
 	except ValueError as e:
 		# Log the failed login
 		log_failed_login(request)
-
 		return json_response({
 			"status": "invalid",
-			"reason": "Incorrect username or password",
+			"reason": str(e),
 		})
 
 	resp = {
@@ -409,47 +395,33 @@ def ssl_provision_certs():
 
 @app.route('/mfa/status', methods=['GET'])
 @authorized_personnel_only
-def two_factor_auth_get_status():
-	email, _ = auth_service.authenticate(request, env)
-
-	mfa_state = get_mfa_state(email, env)
-
-	if mfa_state['type'] == 'totp':
-		return json_response({ "type": 'totp' })
-
-	secret = totp.get_secret()
-	secret_url = totp.get_otp_uri(secret, email)
-	secret_qr = totp.get_qr_code(secret_url)
-
+def mfa_get_status():
 	return json_response({
-		"type": None,
-		"totp_secret": secret,
-		"totp_qr": secret_qr
+		"enabled_mfa": get_mfa_state(request.user_email, env),
+		"new_mfa": {
+			"totp": provision_totp(request.user_email, env)
+		}
 	})
 
 @app.route('/mfa/totp/enable', methods=['POST'])
 @authorized_personnel_only
 def totp_post_enable():
-	email, _ = auth_service.authenticate(request, env)
-
 	secret = request.form.get('secret')
 	token = request.form.get('token')
-
-	if type(secret) != str or type(token) != str or len(token) != 6 or len(secret) != 32:
+	if type(token) != str:
 		return json_response({ "error": 'bad_input' }, 400)
+	try:
+		validate_totp_secret(secret)
+		enable_mfa(request.user_email, "totp", secret, token, env)
+	except ValueError as e:
+		return str(e)
+	return "OK"
 
-	if totp.validate(secret, token):
-		create_totp_credential(email, secret, env)
-		return json_response({})
-
-	return json_response({ "error": 'token_mismatch' }, 400)
-
-@app.route('/mfa/totp/disable', methods=['POST'])
+@app.route('/mfa/disable', methods=['POST'])
 @authorized_personnel_only
 def totp_post_disable():
-	email, _ = auth_service.authenticate(request, env)
-	delete_totp_credential(email, env)
-	return json_response({})
+	disable_mfa(request.user_email, request.form.get('mfa-id'), env)
+	return "OK"
 
 # WEB
 
