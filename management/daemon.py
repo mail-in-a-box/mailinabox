@@ -128,12 +128,18 @@ def me():
 	try:
 		email, privs = auth_service.authenticate(request, env)
 	except ValueError as e:
-		# Log the failed login
-		log_failed_login(request)
-		return json_response({
-			"status": "invalid",
-			"reason": str(e),
-		})
+		if "missing-totp-token" in str(e):
+			return json_response({
+				"status": "missing-totp-token",
+				"reason": str(e),
+			})
+		else:
+			# Log the failed login
+			log_failed_login(request)
+			return json_response({
+				"status": "invalid",
+				"reason": str(e),
+			})
 
 	resp = {
 		"status": "ok",
@@ -408,11 +414,12 @@ def mfa_get_status():
 def totp_post_enable():
 	secret = request.form.get('secret')
 	token = request.form.get('token')
+	label = request.form.get('label')
 	if type(token) != str:
 		return json_response({ "error": 'bad_input' }, 400)
 	try:
 		validate_totp_secret(secret)
-		enable_mfa(request.user_email, "totp", secret, token, env)
+		enable_mfa(request.user_email, "totp", secret, token, label, env)
 	except ValueError as e:
 		return str(e)
 	return "OK"

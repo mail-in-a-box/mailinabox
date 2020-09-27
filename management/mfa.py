@@ -15,13 +15,13 @@ def get_user_id(email, c):
 
 def get_mfa_state(email, env):
 	c = open_database(env)
-	c.execute('SELECT id, type, secret, mru_token FROM mfa WHERE user_id=?', (get_user_id(email, c),))
+	c.execute('SELECT id, type, secret, mru_token, label FROM mfa WHERE user_id=?', (get_user_id(email, c),))
 	return [
-		{ "id": r[0], "type": r[1], "secret": r[2], "mru_token": r[3] }
+		{ "id": r[0], "type": r[1], "secret": r[2], "mru_token": r[3], "label": r[4] }
 		for r in c.fetchall()
 	]
 
-def enable_mfa(email, type, secret, token, env):
+def enable_mfa(email, type, secret, token, label, env):
 	if type == "totp":
 		validate_totp_secret(secret)
 		# Sanity check with the provide current token.
@@ -32,7 +32,7 @@ def enable_mfa(email, type, secret, token, env):
 		raise ValueError("Invalid MFA type.")
 
 	conn, c = open_database(env, with_connection=True)
-	c.execute('INSERT INTO mfa (user_id, type, secret) VALUES (?, ?, ?)', (get_user_id(email, c), type, secret))
+	c.execute('INSERT INTO mfa (user_id, type, secret, label) VALUES (?, ?, ?, ?)', (get_user_id(email, c), type, secret, label))
 	conn.commit()
 
 def set_mru_token(email, token, env):
