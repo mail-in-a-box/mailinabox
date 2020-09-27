@@ -76,11 +76,11 @@ jquery_url=https://code.jquery.com
 wget_verify $jquery_url/jquery-$jquery_version.min.js c8e1c8b386dc5b7a9184c763c88d19a346eb3342 $assets_dir/jquery.min.js
 
 # Bootstrap CDN URL
-bootstrap_version=4.5.0
+bootstrap_version=4.5.2
 bootstrap_url=https://github.com/twbs/bootstrap/releases/download/v$bootstrap_version/bootstrap-$bootstrap_version-dist.zip
 
 # Get Bootstrap
-wget_verify $bootstrap_url 240002ac66f2f6579f266bd07277573d2ad2e63a /tmp/bootstrap.zip
+wget_verify $bootstrap_url f23782f6f421c167b3101270dfc89d8a4d36dbe9 /tmp/bootstrap.zip
 unzip -q /tmp/bootstrap.zip -d $assets_dir
 mv $assets_dir/bootstrap-$bootstrap_version-dist $assets_dir/bootstrap
 rm -f /tmp/bootstrap.zip
