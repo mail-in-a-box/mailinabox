@@ -195,8 +195,18 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 
 	# Add in any user customizations in the includes/ folder.
 	nginx_conf_custom_include = os.path.join(env["STORAGE_ROOT"], "www", safe_domain_name(domain) + ".conf")
-	if os.path.exists(nginx_conf_custom_include):
-		nginx_conf_extra += "\tinclude %s;\n" % (nginx_conf_custom_include)
+	if not os.path.exists(nginx_conf_custom_include):
+		with open(nginx_conf_custom_include, "a+") as f:
+			f.writelines([
+				f"# Custom configurations for {domain} go here",
+				"# To use php: use the \"php-fpm\" alias",
+				""
+				f"root {root};",
+				"index index.html index.htm;"
+			])
+	
+	nginx_conf_extra += "\tinclude %s;\n" % (nginx_conf_custom_include)
+
 	# PUT IT ALL TOGETHER
 
 	# Combine the pieces. Iteratively place each template into the "# ADDITIONAL DIRECTIVES HERE" placeholder
@@ -208,7 +218,6 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 	# Replace substitution strings in the template & return.
 	nginx_conf = nginx_conf.replace("$STORAGE_ROOT", env['STORAGE_ROOT'])
 	nginx_conf = nginx_conf.replace("$HOSTNAME", domain)
-	nginx_conf = nginx_conf.replace("$ROOT", root)
 	nginx_conf = nginx_conf.replace("$SSL_KEY", tls_cert["private-key"])
 	nginx_conf = nginx_conf.replace("$SSL_CERTIFICATE", tls_cert["certificate"])
 	nginx_conf = nginx_conf.replace("$REDIRECT_DOMAIN", re.sub(r"^www\.", "", domain)) # for default www redirects to parent domain
