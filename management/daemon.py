@@ -416,12 +416,12 @@ def totp_post_enable():
 	token = request.form.get('token')
 	label = request.form.get('label')
 	if type(token) != str:
-		return json_response({ "error": 'bad_input' }, 400)
+		return ("Bad Input", 400)
 	try:
 		validate_totp_secret(secret)
 		enable_mfa(request.user_email, "totp", secret, token, label, env)
 	except ValueError as e:
-		return str(e)
+		return (str(e), 400)
 	return "OK"
 
 @app.route('/mfa/disable', methods=['POST'])
