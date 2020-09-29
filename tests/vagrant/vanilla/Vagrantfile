@@ -1,0 +1,23 @@
+
+Vagrant.configure("2") do |config|
+
+  config.vm.synced_folder "../../..", "/mailinabox", id: "mailinabox", automount: false
+  config.vm.provision "file", source:"../globals.sh", destination:"globals.sh"
+
+  # vanilla install
+
+  config.vm.define "vanilla" do |m1|
+    m1.vm.box = "ubuntu/bionic64"
+    m1.vm.network "forwarded_port", guest:443, host:8443, protocol:"tcp"
+    m1.vm.provision :shell, :inline => <<-SH
+source globals.sh || exit 1
+export PRIMARY_HOSTNAME=vanilla.local
+export FEATURE_MUNIN=false
+cd /mailinabox
+tests/system-setup/vanilla.sh; rc=$?
+echo "EXITCODE: $rc"
+SH
+  end
+
+
+end
