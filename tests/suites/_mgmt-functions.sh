@@ -218,6 +218,18 @@ mgmt_get_totp_token() {
 	return 1	
 }
 
+mgmt_mfa_status() {
+	local user="$1"
+	local pw="$2"
+	record "[Get MFA status]"
+	if ! mgmt_rest_as_user "GET" "/admin/mfa/status" "$user" "$pw"; then
+		REST_ERROR="Failed: GET /admin/mfa/status: $REST_ERROR"
+		return 1
+	fi
+	# json is in REST_OUTPUT...
+	return 0
+}
+
 
 mgmt_totp_enable() {
 	# enable TOTP for user specified
@@ -228,17 +240,17 @@ mgmt_totp_enable() {
 	
 	local user="$1"
 	local pw="$2"
+	local label="$3"  # optional
 	TOTP_SECRET=""
 
 	record "[Enable TOTP for $user]"
 
 	# 1. get a totp secret
-	if ! mgmt_rest_as_user "GET" "/admin/mfa/status" "$user" "$pw"; then
-		REST_ERROR="Failed: GET/admin/mfa/status: $REST_ERROR"
+	if ! mgmt_mfa_status "$user" "$pw"; then
 		return 1
 	fi
 	
-	TOTP_SECRET="$(/usr/bin/jq -r ".totp_secret" <<<"$REST_OUTPUT")"
+	TOTP_SECRET="$(/usr/bin/jq -r ".new_mfa.totp.secret" <<<"$REST_OUTPUT")"
 	if [ $? -ne 0 ]; then
 		record "Unable to obtain setup totp secret - is 'jq' installed?"
 		return 2
@@ -255,9 +267,9 @@ mgmt_totp_enable() {
 		return 2
 	fi
 	
-	# 3. enable TOTP
+	# 2. enable TOTP
 	record "Enabling TOTP using the secret and token"
-	if ! mgmt_rest_as_user "POST" "/admin/mfa/totp/enable" "$user" "$pw" "secret=$TOTP_SECRET" "token=$TOTP_TOKEN"; then
+	if ! mgmt_rest_as_user "POST" "/admin/mfa/totp/enable" "$user" "$pw" "secret=$TOTP_SECRET" "token=$TOTP_TOKEN" "label=$label"; then
 		REST_ERROR="Failed: POST /admin/mfa/totp/enable: ${REST_ERROR}"
 		return 1
 	else
@@ -288,13 +300,41 @@ mgmt_assert_totp_enable() {
 }
 
 
-mgmt_totp_disable() {
+mgmt_mfa_disable() {
+	# returns:
+	#    0: success
+	#    1: a REST error occurred, message in REST_ERROR
+	#    2: some system error occured
+	#    3: mfa is not configured for the user specified
 	local user="$1"
 	local pw="$2"
-	record "[Disable TOTP for $user]"
-	if ! mgmt_rest_as_user "POST" "/admin/mfa/totp/disable" "$user" "$pw"
+	local mfa_id="$3"
+	
+	record "[Disable MFA for $user]"
+	if [ "$mfa_id" == "all" ]; then
+		mfa_id=""
+	elif [ "$mfa_id" == "" ]; then
+		# get first mfa-id
+		if ! mgmt_mfa_status "$user" "$pw"; then
+			return 1
+		fi
+		
+		mfa_id="$(/usr/bin/jq -r ".enabled_mfa[0].id" <<<"$REST_OUTPUT")"
+		if [ $? -ne 0 ]; then
+			record "Unable to use /usr/bin/jq - is it installed?"
+			return 2
+		fi
+		if [ "$mfa_id" == "null" ]; then
+			record "No enabled mfa found at .enabled_mfa[0].id"
+			return 3
+		fi
+	fi
+	
+
+	
+	if ! mgmt_rest_as_user "POST" "/admin/mfa/disable" "$user" "$pw" "mfa-id=$mfa_id"
 	then
-		REST_ERROR="Failed: POST /admin/mfa/totp/disable: $REST_ERROR"
+		REST_ERROR="Failed: POST /admin/mfa/disable: $REST_ERROR"
 		return 1
 	else
 		record "Success"
@@ -302,12 +342,12 @@ mgmt_totp_disable() {
 	fi
 }
 
-mgmt_assert_totp_disable() {
+mgmt_assert_mfa_disable() {
 	local user="$1"
-	mgmt_totp_disable "$@"
+	mgmt_mfa_disable "$@"
 	local code=$?
 	if [ $code -ne 0 ]; then
-		test_failure "Unable to disable TOTP for $user: $REST_ERROR"
+		test_failure "Unable to disable MFA for $user: $REST_ERROR"
 		return 1
 	fi
 	get_attribute "$LDAP_USERS_BASE" "(&(mail=$user)(objectClass=totpUser))" "dn"

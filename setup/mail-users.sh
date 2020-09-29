@@ -17,7 +17,6 @@ source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 source ${STORAGE_ROOT}/ldap/miab_ldap.conf # user-data specific vars
 
-
 # ### User Authentication
 
 # Have Dovecot query our database, and not system users, for authentication.

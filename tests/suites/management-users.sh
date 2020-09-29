@@ -215,7 +215,11 @@ test_totp() {
 
 	# alice must be admin to use TOTP
 	if ! have_test_failures; then
-		mgmt_assert_privileges_add "$alice" "admin"
+		if mgmt_totp_enable "$alice" "$alice_pw"; then
+			test_failure "User must be an admin to use TOTP, but server allowed it"
+		else
+			mgmt_assert_privileges_add "$alice" "admin"
+		fi
 	fi
 
 	# add totp to alice's account (if successful, secret is in TOTP_SECRET)
@@ -227,7 +231,7 @@ test_totp() {
 	# logging in with just the password should now fail
 	if ! have_test_failures; then
 		record "Expect a login failure..."
-		mgmt_assert_admin_me "$alice" "$alice_pw" "missing_token"
+		mgmt_assert_admin_me "$alice" "$alice_pw" "missing-totp-token"
 	fi
 	
 
@@ -251,7 +255,7 @@ test_totp() {
 
 				# ensure the totpMruToken was changed in LDAP
 				get_attribute "$LDAP_USERS_BASE" "(mail=$alice)" "totpMruToken"
-				if [ "$ATTR_VALUE" != "$TOTP_TOKEN" ]; then
+				if [ "$ATTR_VALUE" != "{0}$TOTP_TOKEN" ]; then
 					record_search "(mail=$alice)"
 					test_failure "totpMruToken wasn't updated in LDAP"
 				fi
@@ -268,7 +272,7 @@ test_totp() {
 	# disable totp on the account - login should work with just the password
 	# and the ldap entry should not have the 'totpUser' objectClass
 	if ! have_test_failures; then		
-		if mgmt_assert_totp_disable "$alice" "$api_key"; then
+		if mgmt_assert_mfa_disable "$alice" "$api_key"; then
 			mgmt_assert_admin_me "$alice" "$alice_pw" "ok"
 		fi
 	fi

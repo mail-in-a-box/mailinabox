@@ -575,7 +575,7 @@ apply_access_control() {
 	#	service accounts (except management):
 	#	   can bind but not change passwords, including their own
 	#	   can read all attributes of all users but not userPassword,
-	#         totpSecret, or totpMruToken
+	#         totpSecret, totpMruToken, or totpLabel
 	#	   can read config subtree (permitted-senders, domains)
 	#	   no access to services subtree, except their own dn
 	#	management service account:
@@ -584,8 +584,8 @@ apply_access_control() {
 	#	users:
 	#	   can bind and change their own password
 	#	   can read and change their own shadowLastChange
-	#      cannot read or modify totpSecret, totpMruToken
-	#	   can read attributess of other users except mailaccess, totpSecret, totpMruToken
+	#      cannot read or modify totpSecret, totpMruToken, totpLabel
+	#	   can read attributess of other users except mailaccess, totpSecret, totpMruToken, totpLabel
 	#	   no access to config subtree
 	#	   no access to services subtree
 	#
@@ -607,7 +607,7 @@ olcAccess: to attrs=userPassword
   by self =wx
   by anonymous auth
   by * none
-olcAccess: to attrs=totpSecret,totpMruToken
+olcAccess: to attrs=totpSecret,totpMruToken,totpLabel
   by dn.exact="cn=management,${LDAP_SERVICES_BASE}" write
   by dn.exact="gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth" read
   by * none

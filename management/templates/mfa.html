@@ -33,38 +33,65 @@
 
 <h2>Two-Factor Authentication</h2>
 
+<p>When two-factor authentication is enabled, you will be prompted to enter a six digit code from an
+authenticator app (usually on your phone) when you log into this control panel.</p>
+
+<div class="panel panel-danger">
+<div class="panel-heading">
+Enabling two-factor authentication does not protect access to your email
+</div>
+<div class="panel-body">
+Enabling two-factor authentication on this page only limits access to this control panel. Remember that most websites allow you to
+reset your password by checking your email, so anyone with access to your email can typically take over
+your other accounts. Additionally, if your email address or any alias that forwards to your email
+address is a typical domain control validation address (e.g admin@, administrator@, postmaster@, hostmaster@,
+webmaster@, abuse@), extra care should be taken to protect the account. <strong>Always use a strong password,
+and ensure every administrator account for this control panel does the same.</strong>
+</div>
+</div>
+
 <div class="twofactor">
     <div class="loading-indicator">Loading...</div>
 
     <form id="totp-setup">
-        <p>After enabling two-factor authentication, any login to the admin panel will require you to enter a time-limited 6-digit number from an authenticator app after entering your normal credentials.</p>
+        <h3>Setup Instructions</h3>
 
         <div class="form-group">
-            <h3>Setup Instructions</h3>
-            <p>1. Scan the QR code or enter the secret into an authenticator app (e.g. Google Authenticator)</p>
+            <p>1. Install <a href="https://freeotp.github.io/">FreeOTP</a> or <a href="https://www.pcworld.com/article/3225913/what-is-two-factor-authentication-and-which-2fa-apps-are-best.html">any
+            other two-factor authentication app</a> that supports TOTP.</p>
+        </div>
+
+        <div class="form-group">
+            <p style="margin-bottom: 0">2. Scan the QR code in the app or directly enter the secret into the app:</p>
             <div id="totp-setup-qr"></div>
         </div>
 
         <div class="form-group">
-            <label for="otp">2. Enter the code displayed in the Authenticator app</label>
-            <p>You will have to log into the admin panel again after enabling two-factor authentication.</p>
+            <label for="otp-label" style="font-weight: normal">3. Optionally, give your device a label so that you can remember what device you set it up on:</label>
+            <input type="text" id="totp-setup-label" class="form-control" placeholder="my phone" />
+        </div>
+
+        <div class="form-group">
+            <label for="otp" style="font-weight: normal">4. Use the app to generate your first six-digit code and enter it here:</label>
             <input type="text" id="totp-setup-token" class="form-control" placeholder="6-digit code" />
         </div>
 
         <input type="hidden" id="totp-setup-secret" />
 
         <div class="form-group">
-            <button id="totp-setup-submit" disabled type="submit" class="btn">Enable two-factor authentication</button>
+            <p>When you click Enable Two-Factor Authentication, you will be logged out of the control panel and will have to log in
+            again, now using your two-factor authentication app.</p>
+            <button id="totp-setup-submit" disabled type="submit" class="btn">Enable Two-Factor Authentication</button>
         </div>
     </form>
 
     <form id="disable-2fa">
         <div class="form-group">
-            <p>Two-factor authentication is active for your account. You can disable it by clicking below button.</p>
+            <p>Two-factor authentication is active for your account<span id="mfa-device-label"></span>.</p>
             <p>You will have to log into the admin panel again after disabling two-factor authentication.</p>
         </div>
         <div class="form-group">
-            <button type="submit" class="btn btn-danger">Disable two-factor authentication</button>
+            <button type="submit" class="btn btn-danger">Disable Two-Factor Authentication</button>
         </div>
     </form>
 
@@ -80,6 +107,7 @@
         totpSetupForm: document.getElementById('totp-setup'),
         totpSetupToken: document.getElementById('totp-setup-token'),
         totpSetupSecret: document.getElementById('totp-setup-secret'),
+        totpSetupLabel: document.getElementById('totp-setup-label'),
         totpQr: document.getElementById('totp-setup-qr'),
         totpSetupSubmit: document.querySelector('#totp-setup-submit'),
         wrapper: document.querySelector('.twofactor')
@@ -101,30 +129,29 @@
         }
     }
 
-    function render_totp_setup(res) {
-        function render_qr_code(encoded) {
-            var img = document.createElement('img');
-            img.src = encoded;
+    function render_totp_setup(provisioned_totp) {
+        var img = document.createElement('img');
+        img.src = "data:image/png;base64," + provisioned_totp.qr_code_base64;
 
-            var code = document.createElement('div');
-            code.innerHTML = `Secret: ${res.totp_secret}`;
+        var code = document.createElement('div');
+        code.innerHTML = `Secret: ${provisioned_totp.secret}`;
 
-            el.totpQr.appendChild(img);
-            el.totpQr.appendChild(code);
-        }
+        el.totpQr.appendChild(img);
+        el.totpQr.appendChild(code);
 
         el.totpSetupToken.addEventListener('input', update_setup_disabled);
         el.totpSetupForm.addEventListener('submit', do_enable_totp);
 
-        el.totpSetupSecret.setAttribute('value', res.totp_secret);
-        render_qr_code(res.totp_qr);
+        el.totpSetupSecret.setAttribute('value', provisioned_totp.secret);
 
         el.wrapper.classList.add('disabled');
     }
 
-    function render_disable() {
+    function render_disable(mfa) {
         el.disableForm.addEventListener('submit', do_disable);
         el.wrapper.classList.add('enabled');
+        if (mfa.label)
+          $("#mfa-device-label").text(" on device '" + mfa.label + "'");
     }
 
     function hide_error() {
@@ -154,7 +181,7 @@
         el.totpQr.innerHTML = '';
     }
 
-    function show_two_factor_auth() {
+    function show_mfa() {
         reset_view();
 
         api(
@@ -163,8 +190,17 @@
             {},
             function(res) {
                 el.wrapper.classList.add('loaded');
-                var isTotpEnabled = res.type === 'totp'
-                return isTotpEnabled ? render_disable(res) : render_totp_setup(res);
+
+                var has_mfa = false;
+                res.enabled_mfa.forEach(function(mfa) {
+                    if (mfa.type == "totp") {
+                        render_disable(mfa);
+                        has_mfa = true;
+                    }
+                });
+
+                if (!has_mfa)
+                  render_totp_setup(res.new_mfa.totp);
             }
         );
     }
@@ -174,9 +210,9 @@
         hide_error();
 
         api(
-            '/mfa/totp/disable',
+            '/mfa/disable',
             'POST',
-            {},
+            { type: 'totp' },
             function() {
                 do_logout();
             }
@@ -194,7 +230,8 @@
             'POST',
             {
                 token: $(el.totpSetupToken).val(),
-                secret: $(el.totpSetupSecret).val()
+                secret: $(el.totpSetupSecret).val(),
+                label: $(el.totpSetupLabel).val()
             },
             function(res) {
                 do_logout();

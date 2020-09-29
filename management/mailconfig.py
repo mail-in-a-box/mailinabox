@@ -1129,75 +1129,6 @@ def get_required_aliases(env):
 
 	return aliases
 
-# multi-factor auth
-
-def get_mfa_state(email, env):
-	# find the user				  
-	conn = open_database(env)
-	user = find_mail_user(env, email, ['objectClass','totpSecret','totpMruToken'], conn)
-	if user is None or 'totpUser' not in user['objectClass']:
-		return { 'type': None }
-
-	secret = user['totpSecret'][0]
-	mru_token = None
-	if len(user['totpMruToken'])>0:
-		mru_token = user['totpMruToken'][0]
-
-	return {
-		'type': 'totp',
-		'secret': secret,
-		'mru_token': '' if mru_token is None else mru_token
-	}
-
-def create_totp_credential(email, secret, env):
-	validate_totp_secret(secret)
-	conn = open_database(env)
-	user = find_mail_user(env, email, ['objectClass','totpSecret'], conn)
-	if user is None:
-		return ("That's not a user (%s)." % email, 400)
-
-	attrs = {
-		"totpSecret": secret,
-	}
-	if 'totpUser' not in user['objectClass']:
-		attrs['objectClass'] = user['objectClass'].copy()
-		attrs['objectClass'].append('totpUser')
-	conn.add_or_modify(user['dn'], user, attrs.keys(), None, attrs)
-	return "OK"
-
-def set_mru_totp_code(email, token, env):
-	conn = open_database(env)
-	user = find_mail_user(env, email, ['objectClass','totpMruToken'], conn)
-	if user is None:
-		return ("That's not a user (%s)." % email, 400)
-	
-	if 'totpUser' not in user['objectClass']:
-		return ("User (%s) not configured for TOTP" % email, 400)
-
-	attrs = {
-		"totpMruToken": token
-	}			
-	conn.add_or_modify(user['dn'], user, attrs.keys(), None, attrs)
-	return "OK"
-
-def delete_totp_credential(email, env):
-	conn = open_database(env)
-	user = find_mail_user(env, email, ['objectClass','totpSecret','totpMruToken'], conn)
-	if user is None:
-		return ("That's not a user (%s)." % email, 400)
-	
-	if 'totpUser' not in user['objectClass']:
-		return "OK"
-
-	attrs = {
-		"totpMruToken": None,
-		"totpSecret": None,
-		"objectClass": user["objectClass"].copy()
-	}
-	attrs["objectClass"].remove("totpUser")	
-	conn.add_or_modify(user['dn'], user, attrs.keys(), None, attrs)
-	return "OK"
-
 def kick(env, mail_result=None):
 	results = []
 
@@ -1258,12 +1189,6 @@ def validate_password(pw):
 		raise ValueError("No password provided.")
 	if len(pw) < 8:
 		raise ValueError("Passwords must be at least eight characters.")
-
-def validate_totp_secret(secret):
-	if type(secret) != str or secret.strip() == "":
-		raise ValueError("No secret provided.")
-	if len(secret) != 32:
-		raise ValueError("Secret should be a 32 characters base32 string")
 
 if __name__ == "__main__":
 	import sys

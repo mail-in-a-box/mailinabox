@@ -93,16 +93,18 @@
                 <li class="dropdown-header">Advanced Pages</li>
                 <li><a href="#custom_dns" onclick="return show_panel(this);">Custom DNS</a></li>
                 <li><a href="#external_dns" onclick="return show_panel(this);">External DNS</a></li>
-                <li><a href="#two_factor_auth" onclick="return show_panel(this);">Two-Factor Authentication</a></li>
                 <li><a href="/admin/munin" target="_blank">Munin Monitoring</a></li>
               </ul>
             </li>
             <li class="dropdown">
-              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Mail <b class="caret"></b></a>
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Mail &amp; Users <b class="caret"></b></a>
               <ul class="dropdown-menu">
                 <li><a href="#mail-guide" onclick="return show_panel(this);">Instructions</a></li>
                 <li><a href="#users" onclick="return show_panel(this);">Users</a></li>
                 <li><a href="#aliases" onclick="return show_panel(this);">Aliases</a></li>
+                <li class="divider"></li>
+                <li class="dropdown-header">Your Account</li>
+                <li><a href="#mfa" onclick="return show_panel(this);">Two-Factor Authentication</a></li>
               </ul>
             </li>
             <li><a href="#sync_guide" onclick="return show_panel(this);">Contacts/Calendar</a></li>
@@ -132,8 +134,8 @@
       {% include "custom-dns.html" %}
       </div>
 
-      <div id="panel_two_factor_auth" class="admin_panel">
-      {% include "two-factor-auth.html" %}
+      <div id="panel_mfa" class="admin_panel">
+      {% include "mfa.html" %}
       </div>
 
       <div id="panel_login" class="admin_panel">

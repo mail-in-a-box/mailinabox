@@ -27,7 +27,8 @@ then
 fi
 
 # enable totp
-if ! rest_urlencoded POST "${url%/}/admin/mfa/totp/enable" "$TEST_USER" "$TEST_USER_PASS" --insecure "secret=$TEST_USER_TOTP_SECRET" "token=$(totp_current_token "$TEST_USER_TOTP_SECRET")" 2>/dev/null; then
+token="$(totp_current_token "$TEST_USER_TOTP_SECRET")"
+if ! rest_urlencoded POST "${url%/}/admin/mfa/totp/enable" "$TEST_USER" "$TEST_USER_PASS" --insecure "secret=$TEST_USER_TOTP_SECRET" "token=$token" "label=$TEST_USER_TOTP_LABEL" 2>/dev/null; then
     echo "Unable to enable TOTP. err=$REST_ERROR" 1>&2
     exit 1
 fi

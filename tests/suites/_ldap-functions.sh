@@ -29,7 +29,7 @@ create_user() {
 	local email="$1"
 	local pass="${2:-$email}"
 	local priv="${3:-test}"
-	local totpVal="${4:-}"  # "secret,token"
+	local totpVal="${4:-}"  # "secret,token,label"
 	local localpart="$(awk -F@ '{print $1}' <<< "$email")"
 	local domainpart="$(awk -F@ '{print $2}' <<< "$email")"
 	#local uid="$localpart"
@@ -47,12 +47,13 @@ create_user() {
 	local totpObjectClass=""
 	local totpSecret="$(awk -F, '{print $1}' <<< "$totpVal")"
 	local totpMruToken="$(awk -F, '{print $2}' <<< "$totpVal")"
+	local totpLabel="$(awk -F, '{print $3}' <<< "$totpVal")"
 	if [ ! -z "$totpVal" ]; then
 		local nl=$'\n'
 		totpObjectClass="${nl}objectClass: totpUser"
-		totpSecret="${nl}totpSecret: ${totpSecret}"
-		[ ! -z "$totpMruToken" ] && \
-			totpMruToken="${nl}totpMruToken: ${totpMruToken}"
+		totpSecret="${nl}totpSecret: {0}${totpSecret}"
+		totpMruToken="${nl}totpMruToken: {0}${totpMruToken}"
+		totpLabel="${nl}totpLabel: {0}${totpLabel}"
 	fi
 
 	ldapadd -H "$LDAP_URL" -x -D "$LDAP_ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" >>$TEST_OF 2>&1 <<EOF
@@ -66,7 +67,7 @@ sn: $localpart
 displayName: $localpart
 mail: $email
 maildrop: $email
-mailaccess: $priv${totpSecret}${totpMruToken}
+mailaccess: $priv${totpSecret}${totpMruToken}${totpLabel}
 userPassword: $(slappasswd_hash "$pass")
 EOF
 	[ $? -ne 0 ] && die "Unable to add user $dn (as admin)"

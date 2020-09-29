@@ -27,7 +27,7 @@ if [ -z "$ATTR_DN" ]; then
     exit 1
 fi
 
-if [ "$ATTR_VALUE" != "$TEST_USER_TOTP_SECRET" ]; then
+if [ "$ATTR_VALUE" != "{0}$TEST_USER_TOTP_SECRET" ]; then
     echo "totpSecret mismatch"
     exit 1
 fi
