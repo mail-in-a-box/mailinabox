@@ -43,9 +43,9 @@ def enable_mfa(email, type, secret, token, label, env):
 	c.execute('INSERT INTO mfa (user_id, type, secret, label) VALUES (?, ?, ?, ?)', (get_user_id(email, c), type, secret, label))
 	conn.commit()
 
-def set_mru_token(email, token, env):
+def set_mru_token(email, mfa_id, token, env):
 	conn, c = open_database(env, with_connection=True)
-	c.execute('UPDATE mfa SET mru_token=? WHERE user_id=?', (token, get_user_id(email, c)))
+	c.execute('UPDATE mfa SET mru_token=? WHERE user_id=? AND id=?', (token, get_user_id(email, c), mfa_id))
 	conn.commit()
 
 def disable_mfa(email, mfa_id, env):
@@ -127,7 +127,7 @@ def validate_auth_mfa(email, request, env):
 				continue
 
 			# On success, record the token to prevent a replay attack.
-			set_mru_token(email, token, env)
+			set_mru_token(email, mfa_mode['id'], token, env)
 			return (True, [])
 
 	# On a failed login, indicate failure and any hints for what the user can do instead.
