@@ -21,6 +21,14 @@ def get_mfa_state(email, env):
 		for r in c.fetchall()
 	]
 
+def get_public_mfa_state(email, env):
+	c = open_database(env)
+	c.execute('SELECT id, type, label FROM mfa WHERE user_id=?', (get_user_id(email, c),))
+	return [
+		{ "id": r[0], "type": r[1], "label": r[2] }
+		for r in c.fetchall()
+	]
+
 def enable_mfa(email, type, secret, token, label, env):
 	if type == "totp":
 		validate_totp_secret(secret)
