@@ -10,7 +10,7 @@ if [ -s /etc/mailinabox.conf ]; then
     systemctl start cron
     #systemctl start nsd
     systemctl link -f $(pwd)/conf/mailinabox.service
-    systemctl start mailinabox
     systemctl start fail2ban
+    systemctl restart mailinabox
 fi
 
