@@ -74,7 +74,7 @@ def set_mru_token(user, id, token, env):
 
 	# store the token
 	mods = { "totpMruToken": user['totpMruToken'].copy() }
-	mods['totpMruToken'][idx] = token	
+	mods['totpMruToken'][idx] = token
 	conn = open_database(env)
 	conn.modify_record(user, mods)
 
@@ -93,7 +93,7 @@ def disable(user, id, env):
 		open_database(env).modify_record(user, mods)
 
 	else:
-		# Disable totp at index specified
+		# Disable totp at the index specified
 		idx = totp_index_from_id(user, id)	
 		if idx<0 or idx>=len(user['totpSecret']):
 			raise ValueError('MFA/totp mru index is out of range')
@@ -141,7 +141,7 @@ def provision(email, env):
 	}
 
 
-def validate(user, state, request, save_mru, env):
+def validate_auth(user, state, request, save_mru, env):
 	# Check that a token is present in the X-Auth-Token header.
 	# If not, give a hint that one can be supplied.
 	token = request.headers.get('x-auth-token')

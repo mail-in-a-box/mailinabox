@@ -30,11 +30,12 @@ def strip_order_prefix(rec, attributes):
 		newvals = []
 		for val in rec[attr]:
 			i = val.find('}')
-			if i>=0: newvals.append(val[i+1:])
+			newvals.append(val[i+1:])
 		rec[attr] = newvals
 		
 def get_mfa_user(email, env, conn=None):
-	'''get the ldap record for the user
+	'''get the ldap record for the user along with all MFA-related
+	attributes
 
 	'''
 	user = find_mail_user(env, email, ['objectClass','totpSecret','totpMruToken','totpLabel'], conn)
@@ -103,7 +104,7 @@ def validate_auth_mfa(email, request, env):
 	for mfa_mode in mfa_state:
 		if mfa_mode["type"] == "totp":
 			user = get_mfa_user(email, env)
-			result, hint = mfa_totp.validate(user, mfa_mode, request, True, env)
+			result, hint = mfa_totp.validate_auth(user, mfa_mode, request, True, env)
 			if not result:
 				hints.add(hint)
 			else:
