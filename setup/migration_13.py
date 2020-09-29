@@ -129,6 +129,7 @@ def create_users(env, conn, ldapconn, ldap_base, ldap_users_base, ldap_domains_b
 			totp["secret"].append("{%s}%s" % (rowidx, row2[0]))
 			totp["mru_token"].append("{%s}%s" % (rowidx, row2[1] or ''))
 			totp["label"].append("{%s}%s" % (rowidx, row2[2] or ''))
+			rowidx += 1
 
 		dn = add_user(env, ldapconn, ldap_base, ldap_users_base, ldap_domains_base, email, password, privs.split("\n"), totp)
 		users[email] = dn
