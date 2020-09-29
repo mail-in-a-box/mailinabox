@@ -233,31 +233,8 @@ and ensure every administrator account for this control panel does the same.</st
                 secret: $(el.totpSetupSecret).val(),
                 label: $(el.totpSetupLabel).val()
             },
-            function(res) {
-                do_logout();
-            },
-            function(res) {
-                var errorMessage = 'Something went wrong.';
-                var parsed;
-
-                try {
-                    parsed = JSON.parse(res);
-                } catch (err) {
-                    return render_error(errorMessage);
-                }
-
-                var error = parsed && parsed.error
-                    ? parsed.error
-                    : null;
-
-                if (error === 'token_mismatch') {
-                    errorMessage = 'Code does not match.';
-                } else if (error === 'bad_input') {
-                    errorMessage = 'Received request with malformed data.';
-                }
-
-                render_error(errorMessage);
-            }
+            function(res) { do_logout(); },
+            function(res) { render_error(res); }
         );
 
         return false;

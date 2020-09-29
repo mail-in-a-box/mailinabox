@@ -1714,28 +1714,34 @@ paths:
         200:
           description: Successful operation
           content:
-            application/json:
+            text/html:
               schema:
                 $ref: '#/components/schemas/MfaEnableSuccessResponse'
         400:
           description: Bad request
           content:
-            application/json:
+            text/html:
               schema:
-                $ref: '#/components/schemas/MfaEnableBadRequestResponse'
+                type: string
         403:
           description: Forbidden
           content:
             text/html:
               schema:
                 type: string
-  /mfa/totp/disable:
+  /mfa/disable:
     post:
       tags:
         - MFA
-      summary: Disable TOTP authentication
-      description: Disable TOTP authentication for the currently logged-in admin user
+      summary: Disable multi-factor authentication
+      description: Disables multi-factor authentication for the currently logged-in admin user. Either disables all multi-factor authentication methods or the method corresponding to the optional property `mfa_id`
       operationId: mfaTotpDisable
+      requestBody:
+        required: false
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MfaDisableRequest'
       x-codeSamples:
         - lang: curl
           source: |
@@ -1745,7 +1751,7 @@ paths:
         200:
           description: Successful operation
           content:
-            application/json:
+            text/html:
               schema:
                 $ref: '#/components/schemas/MfaDisableSuccessResponse'
         403:
@@ -2624,16 +2630,29 @@ components:
     MfaStatusResponse:
       type: object
       properties:
-        type:
-          type: string
-          example: totp
+        enabled_mfa:
+          type: object
+          properties:
+            id:
+              type: string
+            type:
+              type: string
+            secret:
+              type: string
+            mru_token:
+              type: string
+            label:
+              type: string
           nullable: true
-        totp_secret:
-          type: string
-          nullable: true
-        totp_qr:
-          type: string
-          nullable: true
+        new_mfa:
+          type: object
+          properties:
+            type:
+              type: string
+            secret:
+              type: string
+            qr_code_base64:
+              type: string
     MfaEnableRequest:
       type: object
       required:
@@ -2644,8 +2663,10 @@ components:
           type: string
         code:
           type: string
+        label:
+          type: string
     MfaEnableSuccessResponse:
-      type: object
+      type: string
     MfaEnableBadRequestResponse:
       type: object
       required:
@@ -2653,5 +2674,11 @@ components:
       properties:
         error:
           type: string
-    MfaDisableSuccessResponse:
+    MfaDisableRequest:
       type: object
+      properties:
+        mfa_id:
+          type: string
+          nullable: true
+    MfaDisableSuccessResponse:
+      type: string
