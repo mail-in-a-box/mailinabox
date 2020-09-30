@@ -80,6 +80,7 @@ def add_user(env, ldapconn, search_base, users_base, domains_base, email, passwo
 		objectClasses.append('totpUser')
 		attrs['totpSecret'] = totp["secret"]
 		attrs['totpMruToken'] = totp["mru_token"]
+		attrs['totpMruTokenTime'] = totp["mru_token_time"]
 		attrs['totpLabel'] = totp["label"]
 	
 	# Add user
@@ -124,10 +125,12 @@ def create_users(env, conn, ldapconn, ldap_base, ldap_users_base, ldap_domains_b
 				totp = {
 					"secret": [],
 					"mru_token": [],
+					"mru_token_time": [],
 					"label": []
 				}
 			totp["secret"].append("{%s}%s" % (rowidx, row2[0]))
 			totp["mru_token"].append("{%s}%s" % (rowidx, row2[1] or ''))
+			totp["mru_token_time"].append("{%s}%s" % (rowidx, rowidx))
 			totp["label"].append("{%s}%s" % (rowidx, row2[2] or ''))
 			rowidx += 1
 

@@ -38,9 +38,9 @@ attributetype ( MiabLDAPmfaAttributeType:2
 attributetype ( MiabLDAPmfaAttributeType:3
 	DESC 'TOTP last token used time'
 	NAME 'totpMruTokenTime'
-	SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26
 	X-ORDERED 'VALUES'
-	EQUALITY integerMatch )
+	EQUALITY caseExactIA5Match )
 
 # The label is currently any text supplied by the user, which is used
 # as a reminder of where the secret is stored when logging in (where
