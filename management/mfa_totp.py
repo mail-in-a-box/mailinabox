@@ -1,35 +1,38 @@
 # -*- indent-tabs-mode: t; tab-width: 4; python-indent-offset: 4; -*-
-import hashlib
 import base64
 import hmac
 import pyotp
 import qrcode
 import io
 import os
+import time
 
 from mailconfig import open_database
 
-def totp_id_from_index(user, index):
-	'''return the sha-256 hash of the corresponding totpSecret as the
-	unique id for the totp entry. use the hash and not the index
-	itself to ensure a change in the totp order does not cause an
-	unexpected change
+def id_from_index(user, index):
+	'''return a unique id for the user's totp entry. the index itself
+	should be avoided to ensure a change in the order does not cause
+	an unexpected change.
 
 	'''
-	m = hashlib.sha256()
-	m.update(user['totpSecret'][index].encode("utf8"))
-	return 'totp:' + m.hexdigest()
+	return 'totp:' + user['totpMruTokenTime'][index]
 
-def totp_index_from_id(user, id):
+def index_from_id(user, id):
 	'''return the index of the corresponding id from the list of totp
 	entries for a user, or -1 if not found
 
 	'''
 	for index in range(0, len(user['totpSecret'])):
-		xid = totp_id_from_index(user, index)
+		xid = id_from_index(user, index)
 		if xid == id:
 			return index
 	return -1
+
+def time_ns():
+	if "time_ns" in dir(time):
+		return time.time_ns()
+	else:
+		return int(time.time() * 1000000000)
 	
 def get_state(user):
 	state_list = []
@@ -37,7 +40,7 @@ def get_state(user):
 	# totp
 	for idx in range(0, len(user['totpSecret'])):
 		state_list.append({
-			'id': totp_id_from_index(user, idx),
+			'id': id_from_index(user, idx),
 			'type': 'totp',
 			'secret': user['totpSecret'][idx],
 			'mru_token': user['totpMruToken'][idx],
@@ -55,6 +58,7 @@ def enable(user, secret, token, label, env):
 	mods = {
 		"totpSecret": user['totpSecret'].copy() + [secret],
 		"totpMruToken": user['totpMruToken'].copy() + [''],
+		"totpMruTokenTime": user['totpMruTokenTime'].copy() + [time_ns()],
 		"totpLabel": user['totpLabel'].copy() + [label or '']
 	}
 	if 'totpUser' not in user['objectClass']:
@@ -68,13 +72,17 @@ def set_mru_token(user, id, token, env):
 	if 'totpUser' not in user['objectClass']: return
 
 	# ensure the id is valid
-	idx = totp_index_from_id(user, id)
+	idx = index_from_id(user, id)
 	if idx<0:
 		raise ValueError('MFA/totp mru index is out of range')
 
 	# store the token
-	mods = { "totpMruToken": user['totpMruToken'].copy() }
+	mods = {
+		"totpMruToken": user['totpMruToken'].copy(),
+		"totpMruTokenTime": user['totpMruTokenTime'].copy()
+	}
 	mods['totpMruToken'][idx] = token
+	mods['totpMruTokenTime'][idx] = time_ns()
 	conn = open_database(env)
 	conn.modify_record(user, mods)
 
@@ -86,6 +94,7 @@ def disable(user, id, env):
 		mods = {
 			"objectClass": user["objectClass"].copy(),
 			"totpMruToken": None,
+			"totpMruTokenTime": None,
 			"totpSecret": None,
 			"totpLabel": None
 		}
@@ -94,16 +103,18 @@ def disable(user, id, env):
 
 	else:
 		# Disable totp at the index specified
-		idx = totp_index_from_id(user, id)	
+		idx = index_from_id(user, id)	
 		if idx<0 or idx>=len(user['totpSecret']):
 			raise ValueError('MFA/totp mru index is out of range')
 		mods = {
 			"objectClass": user["objectClass"].copy(),
 			"totpMruToken": user["totpMruToken"].copy(),
+			"totpMruTokenTime": user["totpMruTokenTime"].copy(),
 			"totpSecret": user["totpSecret"].copy(),
 			"totpLabel": user["totpLabel"].copy()
 		}
 		mods["totpMruToken"].pop(idx)
+		mods["totpMruTokenTime"].pop(idx)
 		mods["totpSecret"].pop(idx)
 		mods["totpLabel"].pop(idx)
 		if len(mods["totpSecret"])==0:

@@ -38,7 +38,7 @@ def get_mfa_user(email, env, conn=None):
 	attributes
 
 	'''
-	user = find_mail_user(env, email, ['objectClass','totpSecret','totpMruToken','totpLabel'], conn)
+	user = find_mail_user(env, email, ['objectClass','totpSecret','totpMruToken','totpMruTokenTime','totpLabel'], conn)
 	if not user:
 		raise ValueError("User does not exist.")	
 	strip_order_prefix(user, ['totpSecret','totpMruToken','totpLabel'])

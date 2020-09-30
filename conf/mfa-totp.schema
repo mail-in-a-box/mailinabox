@@ -31,13 +31,23 @@ attributetype ( MiabLDAPmfaAttributeType:2
 	X-ORDERED 'VALUES'
 	EQUALITY caseExactIA5Match )
 
+# the time in nanoseconds since the epoch when the mru token was last
+# used. the time will also be set when a new entry is created even if
+# the corresponding mru token is blank
+
+attributetype ( MiabLDAPmfaAttributeType:3
+	DESC 'TOTP last token used time'
+	NAME 'totpMruTokenTime'
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
+	X-ORDERED 'VALUES'
+	EQUALITY integerMatch )
 
 # The label is currently any text supplied by the user, which is used
 # as a reminder of where the secret is stored when logging in (where
 # the authenticator app is, that holds the secret). eg "my samsung
 # phone"
 
-attributetype ( MiabLDAPmfaAttributeType:3
+attributetype ( MiabLDAPmfaAttributeType:4
 	DESC 'TOTP device label'
 	NAME 'totpLabel'
 	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26
@@ -52,4 +62,4 @@ objectClass ( MiabLDAPmfaObjectClass:1
 	DESC 'MiaB-LDAP TOTP settings for a user'
 	SUP top
 	AUXILIARY
-	MUST ( totpSecret $ totpMruToken $ totpLabel ) )
+	MUST ( totpSecret $ totpMruToken $ totpMruTokenTime $ totpLabel ) )
