@@ -1,0 +1,19 @@
+
+Vagrant.configure("2") do |config|
+
+  config.vm.synced_folder "../../..", "/mailinabox", id: "mailinabox", automount: false
+
+  config.vm.define "preloaded-ubuntu-bionic64" do |m1|
+    m1.vm.box = "ubuntu/bionic64"
+    m1.vm.provision :shell, :inline => <<-SH
+cd /mailinabox
+tests/vagrant/preloaded/prepvm.sh --no-dry-run
+rc=$?
+echo "$rc" > "tests/vagrant/preloaded/prepcode.txt"
+[ $rc -gt 0 ] && exit 1
+exit 0
+SH
+  end
+
+
+end
