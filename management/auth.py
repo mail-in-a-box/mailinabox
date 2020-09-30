@@ -4,7 +4,7 @@ from flask import make_response
 
 import utils
 from mailconfig import validate_login, get_mail_password, get_mail_user_privileges
-from mfa import get_mfa_state, validate_auth_mfa
+from mfa import get_hash_mfa_state, validate_auth_mfa
 
 DEFAULT_KEY_PATH   = '/var/lib/mailinabox/api.key'
 DEFAULT_AUTH_REALM = 'Mail-in-a-Box Management Server'
@@ -135,7 +135,7 @@ class KeyAuthService:
 
 		# Add to the message the current MFA state, which is a list of MFA information.
 		# Turn it into a string stably.
-		msg += b" " + json.dumps(get_mfa_state(email, env), sort_keys=True).encode("utf8")
+		msg += b" " + json.dumps(get_hash_mfa_state(email, env), sort_keys=True).encode("utf8")
 
 		# Make the HMAC.
 		hash_key = self.key.encode('ascii')

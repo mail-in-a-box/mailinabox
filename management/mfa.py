@@ -9,8 +9,8 @@ def strip_order_prefix(rec, attributes):
 
     `rec` is modified in-place
 
-	the server returns X-ORDERED values in-order so the values will be
-	correctly orded in the record. 
+	the server returns X-ORDERED values ordered so the values will be
+	sorted in the record making the prefix superfluous.
 
 	For example, the function will change:
        totpSecret: {0}secret1 
@@ -65,10 +65,26 @@ def get_public_mfa_state(email, env):
 	particular MFA by label and the id of each so it may be disabled.
 
 	'''
-	user = get_mfa_user(email, env)
-	state_list = []
-	state_list += mfa_totp.get_public_state(user)
-	return state_list
+	mfa_state = get_mfa_state(email, env)
+	return [
+		{ "id": s["id"], "type": s["type"], "label": s["label"] }
+		for s in mfa_state
+	]
+
+def get_hash_mfa_state(email, env):
+	'''return details about what MFA schemes are enabled for a user
+	ordered by the priority that the scheme will be tried, with index
+	zero being the first. This function may return secrets. It's
+	intended use is for the result to be included as part of the input
+	to a hashing function to generate a user api key (see
+	auth.py:create_user_key)
+
+	'''
+	mfa_state = get_mfa_state(email, env)
+	return [
+		{ "id": s["id"], "type": s["type"], "secret": s["secret"] }
+		for s in mfa_state
+	]
 
 def enable_mfa(email, type, secret, token, label, env):
 	'''enable MFA using the scheme specified in `type`. users may have
