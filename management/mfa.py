@@ -57,6 +57,19 @@ def get_mfa_state(email, env):
 	state_list += mfa_totp.get_state(user)
 	return state_list
 
+def get_public_mfa_state(email, env):
+	'''return details about what MFA schemes are enabled for a user
+	ordered by the priority that the scheme will be tried, with index
+	zero being the first. No secrets are returned by this function -
+	only those details that are needed by the end user to identify a
+	particular MFA by label and the id of each so it may be disabled.
+
+	'''
+	user = get_mfa_user(email, env)
+	state_list = []
+	state_list += mfa_totp.get_public_state(user)
+	return state_list
+
 def enable_mfa(email, type, secret, token, label, env):
 	'''enable MFA using the scheme specified in `type`. users may have
 multiple mfa schemes enabled of the same type.

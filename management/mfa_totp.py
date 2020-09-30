@@ -45,6 +45,18 @@ def get_state(user):
 		})
 	return state_list
 
+def get_public_state(user):
+	state_list = []
+
+	# totp
+	for idx in range(0, len(user['totpSecret'])):
+		state_list.append({
+			'id': totp_id_from_index(user, idx),
+			'type': 'totp',
+			'label': user['totpLabel'][idx]
+		})
+	return state_list
+
 def enable(user, secret, token, label, env):
 	validate_secret(secret)
 	# Sanity check with the provide current token.

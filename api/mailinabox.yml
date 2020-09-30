@@ -2637,10 +2637,6 @@ components:
               type: string
             type:
               type: string
-            secret:
-              type: string
-            mru_token:
-              type: string
             label:
               type: string
           nullable: true
