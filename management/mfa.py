@@ -22,11 +22,17 @@ def get_mfa_state(email, env):
 	]
 
 def get_public_mfa_state(email, env):
-	c = open_database(env)
-	c.execute('SELECT id, type, label FROM mfa WHERE user_id=?', (get_user_id(email, c),))
+	mfa_state = get_mfa_state(email, env)
 	return [
-		{ "id": r[0], "type": r[1], "label": r[2] }
-		for r in c.fetchall()
+		{ "id": s["id"], "type": s["type"], "label": s["label"] }
+		for s in mfa_state
+	]
+
+def get_hash_mfa_state(email, env):
+	mfa_state = get_mfa_state(email, env)
+	return [
+		{ "id": s["id"], "type": s["type"], "secret": s["secret"] }
+		for s in mfa_state
 	]
 
 def enable_mfa(email, type, secret, token, label, env):
