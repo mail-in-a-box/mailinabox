@@ -677,7 +677,7 @@ def check_mail_domain(domain, env, output):
 	# Stop if the domain is listed in the Spamhaus Domain Block List.
 	# The user might have chosen a domain that was previously in use by a spammer
 	# and will not be able to reliably send mail.
-	dbl = query_dns(domain+".dbl.spamhaus.org", "A", nxdomain=None)
+	dbl = query_dns(domain+'.dbl.spamhaus.org', "A", nxdomain=None)
 	if dbl is None:
 		output.print_ok("Domain is not blacklisted by dbl.spamhaus.org.")
 	elif dbl == "[timeout]":
