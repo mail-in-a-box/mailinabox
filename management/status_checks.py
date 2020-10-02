@@ -294,7 +294,7 @@ def run_network_checks(env, output):
 	if zen is None:
 		output.print_ok("IP address is not blacklisted by zen.spamhaus.org.")
 	elif zen == "[timeout]":
-		output.print_warning("Connection to zen.spamhaus.org timed out. We could not determine whether your server's IP address {} is blacklisted. Please try again later.".format(rev_ip4))
+		output.print_warning("Connection to zen.spamhaus.org timed out. We could not determine whether your server's IP address is blacklisted. Please try again later.")
 	else:
 		output.print_error("""The IP address of this machine %s is listed in the Spamhaus Block List (code %s),
 			which may prevent recipients from receiving your email. See http://www.spamhaus.org/query/ip/%s."""
