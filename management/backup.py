@@ -51,7 +51,7 @@ def backup_status(env):
 		date = dateutil.parser.parse(keys[1]).astimezone(dateutil.tz.tzlocal())
 		return {
 			"date": keys[1],
-			"date_str": date.isoformat() + " (" + now.tzname() + ")",
+			"date_str": date.strftime("%Y-%m-%d %X") + " " + now.tzname(),
 			"date_delta": reldate(date, now, "the future?"),
 			"full": keys[0] == "full",
 			"size": 0, # collection-status doesn't give us the size
