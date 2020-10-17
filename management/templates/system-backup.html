@@ -113,10 +113,10 @@
   </div>
   <!-- Common -->
   <div class="form-group backup-target-local backup-target-rsync backup-target-s3">
-    <label for="min-age" class="col-sm-2 control-label">Days:</label>
+    <label for="min-age" class="col-sm-2 control-label">Retention Days:</label>
     <div class="col-sm-8">
       <input type="number" class="form-control" rows="1" id="min-age">
-      <div class="small" style="margin-top: 2px">This is the <i>minimum</i> number of days backup data is kept for. The box makes an incremental backup, so backup data is often kept much longer. An incremental backup file that is less than this number of days old requires that all previous increments back to the most recent full backup, plus that full backup, remain available.</div>
+      <div class="small" style="margin-top: 2px">This is the minimum time backup data is kept for. The box makes an incremental backup most nights, which requires that previous backups back to the most recent full backup be preserved, so backup data is often kept much longer than this setting. Full backups are made periodically when the incremental backup data size exceeds a limit.</div>
     </div>
   </div>
   <div class="form-group">

@@ -219,12 +219,12 @@ def get_certificates_to_provision(env, limit_domains=None, show_valid_certs=True
 				response = query_dns(domain, rtype)
 				if response != normalize_ip(value):
 					bad_dns.append("%s (%s)" % (response, rtype))
-	
+
 			if bad_dns:
 				domains_cant_provision[domain] = "The domain name does not resolve to this machine: " \
 					+ (", ".join(bad_dns)) \
 					+ "."
-			
+
 			else:
 				# DNS is all good.
 
@@ -613,10 +613,10 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 		ndays = (cert_expiration_date-now).days
 		if not rounded_time or ndays <= 10:
 			# Yikes better renew soon!
-			expiry_info = "The certificate expires in %d days on %s." % (ndays, cert_expiration_date.strftime("%x"))
+			expiry_info = "The certificate expires in %d days on %s." % (ndays, cert_expiration_date.date().isoformat())
 		else:
 			# We'll renew it with Lets Encrypt.
-			expiry_info = "The certificate expires on %s." % cert_expiration_date.strftime("%x")
+			expiry_info = "The certificate expires on %s." % cert_expiration_date.date().isoformat()
 
 		if warn_if_expiring_soon and ndays <= warn_if_expiring_soon:
 			# Warn on day 10 to give 4 days for us to automatically renew the
