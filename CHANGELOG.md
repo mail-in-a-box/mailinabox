@@ -1,13 +1,16 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.50 (September 25, 2020)
+--------------------------
+
+Setup:
+
+* When upgrading from versions before v0.40, setup will now warn that ownCloud/Nextcloud data cannot be migrated rather than failing the installation.
 
 Mail:
 
 * An MTA-STS policy for incoming mail is now published (in DNS and over HTTPS) when the primary hostname and email address domain both have a signed TLS certificate installed, allowing senders to know that an encrypted connection should be enforced.
-* MTA-STS reporting is enabled with reports sent to administrator@ the primary hostname.
 * The per-IP connection limit to the IMAP server has been doubled to allow more devices to connect at once, especially with multiple users behind a NAT.
 
 DNS:
@@ -21,6 +24,7 @@ TLS:
 
 Control Panel:
 
+* The control panel API is now fully documented at https://mailinabox.email/api-docs.html.
 * User passwords can now have spaces.
 * Status checks for automatic subdomains have been moved into the section for the parent domain.
 * Typo fixed.
