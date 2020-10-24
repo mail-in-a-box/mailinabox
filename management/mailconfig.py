@@ -105,6 +105,18 @@ def get_mail_users(env):
 	users = [ row[0] for row in c.fetchall() ]
 	return utils.sort_email_addresses(users, env)
 
+def sizeof_fmt(num):
+	for unit in ['','K','M','G','T']:
+		if abs(num) < 1024.0:
+			if abs(num) > 99:
+				return "%3.0f%s" % (num, unit)
+			else:
+				return "%2.1f%s" % (num, unit)
+
+		num /= 1024.0
+
+	return str(num)
+
 def get_mail_users_ex(env, with_archived=False):
 	# Returns a complex data structure of all user accounts, optionally
 	# including archived (status="inactive") accounts.
@@ -128,13 +140,46 @@ def get_mail_users_ex(env, with_archived=False):
 	users = []
 	active_accounts = set()
 	c = open_database(env)
-	c.execute('SELECT email, privileges FROM users')
-	for email, privileges in c.fetchall():
+	c.execute('SELECT email, privileges, quota FROM users')
+	for email, privileges, quota in c.fetchall():
 		active_accounts.add(email)
+
+		(user, domain) = email.split('@')
+		box_size = 0
+		box_count = 0
+		box_quota = 0
+		percent = ''
+		try:
+			dirsize_file = os.path.join(env['STORAGE_ROOT'], 'mail/mailboxes/%s/%s/maildirsize' % (domain, user))
+			with open(dirsize_file, 'r') as f:
+				box_quota = int(f.readline().split('S')[0])
+				for line in f.readlines():
+					(size, count) = line.split(' ')
+					box_size += int(size)
+					box_count += int(count)
+
+			try:
+				percent = (box_size / box_quota) * 100
+			except:
+				percent = 'Error'
+
+		except:
+			box_size = '?'
+			box_count = '?'
+			box_quota = '?'
+			percent = '?'
+
+		if quota == '0':
+			percent = ''
 
 		user = {
 			"email": email,
 			"privileges": parse_privs(privileges),
+            "quota": quota,
+			"box_quota": box_quota,
+			"box_size": sizeof_fmt(box_size) if box_size != '?' else box_size,
+			"percent": '%3.0f%%' % percent if type(percent) != str else percent,
+			"box_count": box_count,
 			"status": "active",
 		}
 		users.append(user)
@@ -268,7 +313,7 @@ def get_mail_domains(env, filter_aliases=lambda alias : True, users_only=False):
 		domains.extend([get_domain(address, as_unicode=False) for address, *_ in get_mail_aliases(env) if filter_aliases(address) ])
 	return set(domains)
 
-def add_mail_user(email, pw, privs, env):
+def add_mail_user(email, pw, privs, quota, env):
 	# validate email
 	if email.strip() == "":
 		return ("No email address provided.", 400)
@@ -294,6 +339,14 @@ def add_mail_user(email, pw, privs, env):
 			validation = validate_privilege(p)
 			if validation: return validation
 
+	if quota is None:
+		quota = get_default_quota()
+
+	try:
+		quota = validate_quota(quota)
+	except ValueError as e:
+		return (str(e), 400)
+
 	# get the database
 	conn, c = open_database(env, with_connection=True)
 
@@ -302,13 +355,15 @@ def add_mail_user(email, pw, privs, env):
 
 	# add the user to the database
 	try:
-		c.execute("INSERT INTO users (email, password, privileges) VALUES (?, ?, ?)",
-			(email, pw, "\n".join(privs)))
+		c.execute("INSERT INTO users (email, password, privileges, quota) VALUES (?, ?, ?, ?)",
+			(email, pw, "\n".join(privs), quota))
 	except sqlite3.IntegrityError:
 		return ("User already exists.", 400)
 
 	# write databasebefore next step
 	conn.commit()
+
+	dovecot_quota_recalc(email)
 
 	# Update things in case any new domains are added.
 	return kick(env, "mail user added")
@@ -333,6 +388,59 @@ def hash_password(pw):
 	# something like "{SCHEME}hashedpassworddata".
 	# http://wiki2.dovecot.org/Authentication/PasswordSchemes
 	return utils.shell('check_output', ["/usr/bin/doveadm", "pw", "-s", "SHA512-CRYPT", "-p", pw]).strip()
+
+
+def get_mail_quota(email, env):
+	conn, c = open_database(env, with_connection=True)
+	c.execute("SELECT quota FROM users WHERE email=?", (email,))
+	rows = c.fetchall()
+	if len(rows) != 1:
+		return ("That's not a user (%s)." % email, 400)
+
+	return rows[0][0]
+
+
+def set_mail_quota(email, quota, env):
+	# validate that password is acceptable
+	quota = validate_quota(quota)
+
+	# update the database
+	conn, c = open_database(env, with_connection=True)
+	c.execute("UPDATE users SET quota=? WHERE email=?", (quota, email))
+	if c.rowcount != 1:
+		return ("That's not a user (%s)." % email, 400)
+	conn.commit()
+
+	dovecot_quota_recalc(email)
+
+	return "OK"
+
+def dovecot_quota_recalc(email):
+	# dovecot processes running for the user will not recognize the new quota setting
+	# a reload is necessary to reread the quota setting, but it will also shut down
+	# running dovecot processes.  Email clients generally log back in when they lose
+	# a connection.
+	# subprocess.call(['doveadm', 'reload'])
+
+	# force dovecot to recalculate the quota info for the user.
+	subprocess.call(["doveadm", "quota", "recalc", "-u", email])
+
+def get_default_quota(env):
+	config = utils.load_settings(env)
+	return config.get("default-quota", '0')
+
+def validate_quota(quota):
+	# validate quota
+	quota = quota.strip().upper()
+
+	if quota == "":
+		raise ValueError("No quota provided.")
+	if re.search(r"[\s,.]", quota):
+		raise ValueError("Quotas cannot contain spaces, commas, or decimal points.")
+	if not re.match(r'^[\d]+[GM]?$', quota):
+		raise ValueError("Invalid quota.")
+
+	return quota
 
 def get_mail_password(email, env):
 	# Gets the hashed password for a user. Passwords are stored in Dovecot's

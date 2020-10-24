@@ -131,7 +131,7 @@ cat > $RCM_CONFIG <<EOF;
 \$config['login_autocomplete'] = 2;
 \$config['password_charset'] = 'UTF-8';
 \$config['junk_mbox'] = 'Spam';
-?>
+\$config['quota_zero_as_unlimited'] = true;
 EOF
 
 # Configure CardDav
