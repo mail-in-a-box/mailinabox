@@ -103,7 +103,7 @@ contacts_ver=3.4.1
 contacts_hash=aee680a75e95f26d9285efd3c1e25cf7f3bfd27e
 calendar_ver=2.1.2
 calendar_hash=930c07863bb7a65652dec34793802c8d80502336
-user_external_var=1.0.0
+user_external_ver=1.0.0
 user_external_hash=3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
 
 # Current Nextcloud Version, #1623
@@ -182,7 +182,7 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 	        fi
 	fi
 
-	InstallNextcloud $nextcloud_ver $nextcloud_hash $contacts_ver $contacts_hash $calendar_ver $calendar_hash $user_external_var $user_external_hash
+	InstallNextcloud $nextcloud_ver $nextcloud_hash $contacts_ver $contacts_hash $calendar_ver $calendar_hash $user_external_ver $user_external_hash
 
 	# Nextcloud 20 needs to have some optional columns added
 	sudo -u www-data php /usr/local/lib/owncloud/occ db:add-missing-columns
