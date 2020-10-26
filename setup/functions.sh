@@ -246,5 +246,5 @@ function kernel_ipv6_lo_disabled() {
 	# Returns 0 if ipv6 is disabled on the loopback adapter
 	local v="$(sysctl -n net.ipv6.conf.lo.disable_ipv6)"
 	[ "$v" == "1" ] && return 0
-	return 0
+	return 1
 }
