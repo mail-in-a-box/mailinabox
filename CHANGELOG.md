@@ -6,7 +6,7 @@ DEVELOPMENT
 
 Software updates:
 
-* Upgraded Nextcloud from 17.0.6 to 20.0.0 (with Contacts from 3.3.0 to 3.4.1 and Calendar from 2.0.3 to 2.1.2)
+* Upgraded Nextcloud from 17.0.6 to 20.0.1 (with Contacts from 3.3.0 to 3.4.1 and Calendar from 2.0.3 to 2.1.2)
 
 v0.50 (September 25, 2020)
 --------------------------
