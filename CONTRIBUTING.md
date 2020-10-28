@@ -4,7 +4,7 @@ Mail-in-a-Box is an open source project. Your contributions and pull requests ar
 
 ## Development
 
-To start developing Mail-in-a-Box, [clone the repository](https://github.com/mail-in-a-box/mailinabox) and familiarize yourself with the code. Then enter into the directory you cloned mailinabox into.
+To start developing Mail-in-a-Box, [clone the repository](https://github.com/mail-in-a-box/mailinabox) and familiarize yourself with the code. Then move to the cloned mailinabox directory.
 
     $ git clone https://github.com/mail-in-a-box/mailinabox
 	$ cd mailinabox
