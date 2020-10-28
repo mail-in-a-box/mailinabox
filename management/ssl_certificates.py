@@ -216,12 +216,12 @@ def get_certificates_to_provision(env, limit_domains=None, show_valid_certs=True
 				response = query_dns(domain, rtype)
 				if response != normalize_ip(value):
 					bad_dns.append("%s (%s)" % (response, rtype))
-	
+
 			if bad_dns:
 				domains_cant_provision[domain] = "The domain name does not resolve to this machine: " \
 					+ (", ".join(bad_dns)) \
 					+ "."
-			
+
 			else:
 				# DNS is all good.
 

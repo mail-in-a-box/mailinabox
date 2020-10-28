@@ -26,7 +26,7 @@ InstallNextcloud() {
 	echo
 
         # Download and verify
-        wget_verify https://download.nextcloud.com/server/releases/nextcloud-$version.zip $hash /tmp/nextcloud.zip
+        wget_verify http://download.nextcloud.com/server/releases/nextcloud-$version.zip $hash /tmp/nextcloud.zip
 
 	# Remove the current owncloud/Nextcloud
 	rm -rf /usr/local/lib/owncloud

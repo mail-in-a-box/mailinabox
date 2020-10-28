@@ -5,7 +5,7 @@ from flask import make_response
 import utils
 from mailconfig import get_mail_password, get_mail_user_privileges
 
-DEFAULT_KEY_PATH   = '/var/lib/mailinabox/api.key'
+DEFAULT_KEY_PATH = '/var/lib/mailinabox/api.key'
 DEFAULT_AUTH_REALM = 'Mail-in-a-Box Management Server'
 
 class KeyAuthService:
@@ -82,7 +82,7 @@ class KeyAuthService:
 	def get_user_credentials(self, email, pw, env):
 		# Validate a user's credentials. On success returns a list of
 		# privileges (e.g. [] or ['admin']). On failure raises a ValueError
-		# with a login error message. 
+		# with a login error message.
 
 		# Sanity check.
 		if email == "" or pw == "":
