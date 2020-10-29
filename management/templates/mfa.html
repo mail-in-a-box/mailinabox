@@ -186,7 +186,7 @@ and ensure every administrator account for this control panel does the same.</st
 
         api(
             '/mfa/status',
-            'GET',
+            'POST',
             {},
             function(res) {
                 el.wrapper.classList.add('loaded');

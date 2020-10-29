@@ -222,8 +222,8 @@ mgmt_mfa_status() {
 	local user="$1"
 	local pw="$2"
 	record "[Get MFA status]"
-	if ! mgmt_rest_as_user "GET" "/admin/mfa/status" "$user" "$pw"; then
-		REST_ERROR="Failed: GET /admin/mfa/status: $REST_ERROR"
+	if ! mgmt_rest_as_user "POST" "/admin/mfa/status" "$user" "$pw"; then
+		REST_ERROR="Failed: POST /admin/mfa/status: $REST_ERROR"
 		return 1
 	fi
 	# json is in REST_OUTPUT...

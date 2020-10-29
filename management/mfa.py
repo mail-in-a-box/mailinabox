@@ -106,11 +106,11 @@ def disable_mfa(email, mfa_id, env):
 	user = get_mfa_user(email, env)
 	if mfa_id is None:
 		# Disable all MFA for a user.
-		mfa_totp.disable(user, None, env)
+		return mfa_totp.disable(user, None, env)
 
 	elif mfa_id.startswith("totp:"):
 		# Disable a particular MFA mode for a user.
-		mfa_totp.disable(user, mfa_id, env)
+		return mfa_totp.disable(user, mfa_id, env)
 			
 def validate_auth_mfa(email, request, env):
 	# Validates that a login request satisfies any MFA modes

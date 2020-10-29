@@ -100,12 +100,13 @@ def disable(user, id, env):
 		}
 		mods["objectClass"].remove("totpUser")	
 		open_database(env).modify_record(user, mods)
+		return True
 
 	else:
 		# Disable totp at the index specified
 		idx = index_from_id(user, id)	
 		if idx<0 or idx>=len(user['totpSecret']):
-			raise ValueError('MFA/totp mru index is out of range')
+			return False
 		mods = {
 			"objectClass": user["objectClass"].copy(),
 			"totpMruToken": user["totpMruToken"].copy(),
@@ -120,6 +121,7 @@ def disable(user, id, env):
 		if len(mods["totpSecret"])==0:
 			mods['objectClass'].remove('totpUser')
 		open_database(env).modify_record(user, mods)
+		return True
 
 
 def validate_secret(secret):

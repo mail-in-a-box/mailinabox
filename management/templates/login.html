@@ -32,13 +32,13 @@
   <p class="text-danger">There are no users on this system! To make an administrative user,
   log into this machine using SSH (like when you first set it up) and run:</p>
   <pre>cd mailinabox
-sudo tools/mail.py user add me@{{hostname}}
-sudo tools/mail.py user make-admin me@{{hostname}}</pre>
+sudo management/cli.py user add me@{{hostname}}
+sudo management/cli.py user make-admin me@{{hostname}}</pre>
   {% else %}
   <p class="text-danger">There are no administrative users on this system! To make an administrative user,
   log into this machine using SSH (like when you first set it up) and run:</p>
   <pre>cd mailinabox
-sudo tools/mail.py user make-admin me@{{hostname}}</pre>
+sudo management/cli.py user make-admin me@{{hostname}}</pre>
   {% endif %}
   <hr>
 </div>
