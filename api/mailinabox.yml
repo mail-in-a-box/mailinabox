@@ -1666,16 +1666,16 @@ paths:
               schema:
                 type: string
   /mfa/status:
-    get:
+    post:
       tags:
         - MFA
-      summary: Retrieve MFA status
+      summary: Retrieve MFA status for you or another user
       description: Retrieves which type of MFA is used and configuration
       operationId: mfaStatus
       x-codeSamples:
         - lang: curl
           source: |
-            curl -X GET "https://{host}/admin/mfa/status" \
+            curl -X POST "https://{host}/admin/mfa/status" \
               -u "<email>:<password>"
       responses:
         200:
@@ -1733,8 +1733,8 @@ paths:
     post:
       tags:
         - MFA
-      summary: Disable multi-factor authentication
-      description: Disables multi-factor authentication for the currently logged-in admin user. Either disables all multi-factor authentication methods or the method corresponding to the optional property `mfa_id`
+      summary: Disable multi-factor authentication for you or another user
+      description: Disables multi-factor authentication for the currently logged-in admin user or another user if a 'user' parameter is subimtted. Either disables all multi-factor authentication methods or the method corresponding to the optional property `mfa_id`.
       operationId: mfaTotpDisable
       requestBody:
         required: false

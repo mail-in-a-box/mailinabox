@@ -63,6 +63,7 @@ def disable_mfa(email, mfa_id, env):
 		# Disable a particular MFA mode for a user.
 		c.execute('DELETE FROM mfa WHERE user_id=? AND id=?', (get_user_id(email, c), mfa_id))
 	conn.commit()
+	return c.rowcount > 0
 
 def validate_totp_secret(secret):
 	if type(secret) != str or secret.strip() == "":

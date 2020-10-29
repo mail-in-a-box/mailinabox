@@ -6,7 +6,7 @@
 # root API key. This file is readable only by root, so this
 # tool can only be used as root.
 
-import sys, getpass, urllib.request, urllib.error, json, re
+import sys, getpass, urllib.request, urllib.error, json, re, csv
 
 def mgmt(cmd, data=None, is_json=False):
 	# The base URL for the management daemon. (Listens on IPv4 only.)
@@ -60,14 +60,16 @@ def setup_key_auth(mgmt_uri):
 
 if len(sys.argv) < 2:
 	print("""Usage:
-  {cli} user  (lists users)
+  {cli} user                                     (lists users)
   {cli} user add user@domain.com [password]
   {cli} user password user@domain.com [password]
   {cli} user remove user@domain.com
   {cli} user make-admin user@domain.com
   {cli} user remove-admin user@domain.com
-  {cli} user admins (lists admins)
-  {cli} alias  (lists aliases)
+  {cli} user admins                              (lists admins)
+  {cli} user mfa show user@domain.com            (shows MFA devices for user, if any)
+  {cli} user mfa disable user@domain.com [id]    (disables MFA for user)
+  {cli} alias                                    (lists aliases)
   {cli} alias add incoming.name@domain.com sent.to@other.domain.com
   {cli} alias add incoming.name@domain.com 'sent.to@other.domain.com, multiple.people@other.domain.com'
   {cli} alias remove incoming.name@domain.com
@@ -120,6 +122,18 @@ elif sys.argv[1] == "user" and sys.argv[2] == "admins":
 		for user in domain["users"]:
 			if "admin" in user['privileges']:
 				print(user['email'])
+
+elif sys.argv[1] == "user" and len(sys.argv) == 5 and sys.argv[2:4] == ["mfa", "show"]:
+	# Show MFA status for a user.
+	status = mgmt("/mfa/status", { "user": sys.argv[4] }, is_json=True)
+	W = csv.writer(sys.stdout)
+	W.writerow(["id", "type", "label"])
+	for mfa in status["enabled_mfa"]:
+		W.writerow([mfa["id"], mfa["type"], mfa["label"]])
+
+elif sys.argv[1] == "user" and len(sys.argv) in (5, 6) and sys.argv[2:4] == ["mfa", "disable"]:
+	# Disable MFA (all or a particular device) for a user.
+	print(mgmt("/mfa/disable", { "user": sys.argv[4], "mfa-id": sys.argv[5] if len(sys.argv) == 6 else None }))
 
 elif sys.argv[1] == "alias" and len(sys.argv) == 2:
 	print(mgmt("/mail/aliases"))

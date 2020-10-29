@@ -5,7 +5,7 @@ from functools import wraps
 
 from flask import Flask, request, render_template, abort, Response, send_from_directory, make_response
 
-import auth, utils, mfa
+import auth, utils
 from mailconfig import get_mail_users, get_mail_users_ex, get_admins, add_mail_user, set_mail_password, remove_mail_user
 from mailconfig import get_mail_user_privileges, add_remove_mail_user_privilege
 from mailconfig import get_mail_aliases, get_mail_aliases_ex, get_mail_domains, add_mail_alias, remove_mail_alias
@@ -399,15 +399,27 @@ def ssl_provision_certs():
 
 # multi-factor auth
 
-@app.route('/mfa/status', methods=['GET'])
+@app.route('/mfa/status', methods=['POST'])
 @authorized_personnel_only
 def mfa_get_status():
-	return json_response({
-		"enabled_mfa": get_public_mfa_state(request.user_email, env),
-		"new_mfa": {
-			"totp": provision_totp(request.user_email, env)
+	# Anyone accessing this route is an admin, and we permit them to
+	# see the MFA status for any user if they submit a 'user' form
+	# field. But we don't include provisioning info since a user can
+	# only provision for themselves.
+	email = request.form.get('user', request.user_email) # user field if given, otherwise the user making the request
+	try:
+		resp = {
+			"enabled_mfa": get_public_mfa_state(email, env)
 		}
-	})
+		if email == request.user_email:
+			resp.update({
+				"new_mfa": {
+					"totp": provision_totp(email, env)
+				}
+			})
+	except ValueError as e:
+		return (str(e), 400)
+	return json_response(resp)
 
 @app.route('/mfa/totp/enable', methods=['POST'])
 @authorized_personnel_only
@@ -427,8 +439,18 @@ def totp_post_enable():
 @app.route('/mfa/disable', methods=['POST'])
 @authorized_personnel_only
 def totp_post_disable():
-	disable_mfa(request.user_email, request.form.get('mfa-id'), env)
-	return "OK"
+	# Anyone accessing this route is an admin, and we permit them to
+	# disable the MFA status for any user if they submit a 'user' form
+	# field.
+	email = request.form.get('user', request.user_email) # user field if given, otherwise the user making the request
+	try:
+		result = disable_mfa(email, request.form.get('mfa-id') or None, env) # convert empty string to None
+	except ValueError as e:
+		return (str(e), 400)
+	if result: # success
+		return "OK"
+	else: # error
+		return ("Invalid user or MFA id.", 400)
 
 # WEB
 
