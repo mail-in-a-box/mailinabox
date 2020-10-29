@@ -1,4 +1,10 @@
 #!/usr/bin/python3
+#
+# This is a command-line script for calling management APIs
+# on the Mail-in-a-Box control panel backend. The script
+# reads /var/lib/mailinabox/api.key for the backend's
+# root API key. This file is readable only by root, so this
+# tool can only be used as root.
 
 import sys, getpass, urllib.request, urllib.error, json, re
 
@@ -53,21 +59,23 @@ def setup_key_auth(mgmt_uri):
 	urllib.request.install_opener(opener)
 
 if len(sys.argv) < 2:
-	print("Usage: ")
-	print("  tools/mail.py user  (lists users)")
-	print("  tools/mail.py user add user@domain.com [password]")
-	print("  tools/mail.py user password user@domain.com [password]")
-	print("  tools/mail.py user remove user@domain.com")
-	print("  tools/mail.py user make-admin user@domain.com")
-	print("  tools/mail.py user remove-admin user@domain.com")
-	print("  tools/mail.py user admins (lists admins)")
-	print("  tools/mail.py alias  (lists aliases)")
-	print("  tools/mail.py alias add incoming.name@domain.com sent.to@other.domain.com")
-	print("  tools/mail.py alias add incoming.name@domain.com 'sent.to@other.domain.com, multiple.people@other.domain.com'")
-	print("  tools/mail.py alias remove incoming.name@domain.com")
-	print()
-	print("Removing a mail user does not delete their mail folders on disk. It only prevents IMAP/SMTP login.")
-	print()
+	print("""Usage:
+  {cli} user  (lists users)
+  {cli} user add user@domain.com [password]
+  {cli} user password user@domain.com [password]
+  {cli} user remove user@domain.com
+  {cli} user make-admin user@domain.com
+  {cli} user remove-admin user@domain.com
+  {cli} user admins (lists admins)
+  {cli} alias  (lists aliases)
+  {cli} alias add incoming.name@domain.com sent.to@other.domain.com
+  {cli} alias add incoming.name@domain.com 'sent.to@other.domain.com, multiple.people@other.domain.com'
+  {cli} alias remove incoming.name@domain.com
+
+Removing a mail user does not delete their mail folders on disk. It only prevents IMAP/SMTP login.
+""".format(
+	cli="management/cli.py"
+		))
 
 elif sys.argv[1] == "user" and len(sys.argv) == 2:
 	# Dump a list of users, one per line. Mark admins with an asterisk.

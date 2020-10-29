@@ -324,7 +324,7 @@ rm -f /etc/cron.hourly/mailinabox-owncloud
 # and there's a lot they could mess up, so we don't make any users admins of Nextcloud.
 # But if we wanted to, we would do this:
 # ```
-# for user in $(tools/mail.py user admins); do
+# for user in $(management/cli.py user admins); do
 #	 sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_group_user VALUES ('admin', '$user')"
 # done
 # ```
