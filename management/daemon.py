@@ -338,6 +338,12 @@ def dns_get_dump():
 	from dns_update import build_recommended_dns
 	return json_response(build_recommended_dns(env))
 
+@app.route('/dns/zonefile/<zone>')
+@authorized_personnel_only
+def dns_get_zonefile(zone):
+	from dns_update import get_dns_zonefile
+	return json_response(get_dns_zonefile(zone, env))
+
 # SSL
 
 @app.route('/ssl/status')

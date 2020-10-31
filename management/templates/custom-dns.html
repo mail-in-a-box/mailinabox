@@ -89,7 +89,7 @@
   <div class="form-group">
     <div class="col-sm-offset-1 col-sm-11">
       <p class="small">
-        Multiple secondary servers can be separated with commas or spaces (i.e., <code>ns2.hostingcompany.com ns3.hostingcompany.com</code>). 
+        Multiple secondary servers can be separated with commas or spaces (i.e., <code>ns2.hostingcompany.com ns3.hostingcompany.com</code>).
         To enable zone transfers to additional servers without listing them as secondary nameservers, add an IP address or subnet using <code>xfr:10.20.30.40</code> or <code>xfr:10.0.0.0/8</code>.
       </p>
       <p id="secondarydns-clear-instructions" style="display: none" class="small">
@@ -99,6 +99,23 @@
   </div>
 </form>
 
+<h3>Download zonefile</h3>
+
+<p>You can download your zonefiles here, for example if you want to host your DNS somewhere else.</p>
+
+<form class="form-horizontal" role="form" onsubmit="do_download_zonefile(); return false;">
+    <div class="form-group">
+        <label for="downloadZonefile" class="col-sm-1 control-label">Zone</label>
+        <div class="col-sm-10">
+            <select id="downloadZonefile" class="form-control"> </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-sm-offset-1 col-sm-11">
+            <button type="submit" class="btn btn-primary">Download</button>
+        </div>
+    </div>
+</form>
 
 <h3>Custom DNS API</h3>
 
@@ -172,10 +189,13 @@ function show_custom_dns() {
     "GET",
     { },
     function(data) {
-      $('#customdnsZone').text('');
-      for (var i = 0; i < data.length; i++) {
-        $('#customdnsZone').append($('<option/>').text(data[i]));
-      }
+        var selects = ['#customdnsZone', '#downloadZonefile']
+        for (var i = 0; i < selects.length; i++) {
+            $(selects[i]).text('');
+            for (var j = 0; j < data.length; j++) {
+                $(selects[i]).append($('<option/>').text(data[j]));
+            }
+        }
     });
 
   show_current_custom_dns();
@@ -192,7 +212,7 @@ function show_current_custom_dns() {
         $('#custom-dns-current').fadeIn();
       else
         $('#custom-dns-current').fadeOut();
-        
+
       var reverse_fqdn = function(el) {
         el.qname = el.qname.split('.').reverse().join('.');
         return el;
@@ -272,6 +292,22 @@ function do_set_custom_dns(qname, rtype, value, method) {
     function(err) {
       show_modal_error("Custom DNS (Error)", $("<pre/>").text(err));
     });
+}
+
+function do_download_zonefile() {
+    var zone = $('#downloadZonefile').val();
+
+    api(
+        "/dns/zonefile/"+ zone,
+        "GET",
+        {},
+        function(data) {
+            if (data == "") return; // nothing updated
+            show_modal_error("Download Zonefile", $("<pre/>").text(data));
+        },
+        function(err) {
+            show_modal_error("Download Zonefile (Error)", $("<pre/>").text(err));
+        });
 }
 
 function show_customdns_rtype_hint() {
