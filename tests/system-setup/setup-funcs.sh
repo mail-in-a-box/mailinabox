@@ -118,8 +118,9 @@ init_miab_testing() {
     
     # python3-dnspython: is used by the python scripts in 'tests' and is
     #   not installed by setup
+    # also install 'jq' for json processing
     wait_for_apt
-    apt-get install -y -qq python3-dnspython
+    apt-get install -y -qq python3-dnspython jq
     
     # copy in pre-built MiaB-LDAP ssl files
     #   1. avoid the lengthy generation of DH params
@@ -234,12 +235,13 @@ miab_ldap_install() {
 
 
 populate_by_name() {
-    local populate_name="$1"
-
-    H1 "Populate Mail-in-a-Box ($populate_name)"
-    local populate_script="tests/system-setup/populate/${populate_name}-populate.sh"
-    if [ ! -e "$populate_script" ]; then
-        die "Does not exist: $populate_script"
-    fi
-    "$populate_script" || die "Failed: $populate_script"
+    local populate_name
+    for populate_name; do
+        H1 "Populate Mail-in-a-Box ($populate_name)"
+        local populate_script="tests/system-setup/populate/${populate_name}-populate.sh"
+        if [ ! -e "$populate_script" ]; then
+            die "Does not exist: $populate_script"
+        fi
+        "$populate_script" || die "Failed: $populate_script"
+    done
 }

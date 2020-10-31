@@ -3,14 +3,16 @@
 # Access assertions:
 #	service accounts, except management:
 #	   can bind but not change passwords, including their own
-#	   can read all attributes of all users but not userPassword
-#	   can not write any user attributes, include shadowLastChange
+#	   can read all attributes of all users but not userPassword, totpSecret, totpMruTokenTime, totpMruToken, totpLabel
+#	   can not write any user attributes, including shadowLastChange
 #	   can read config subtree (permitted-senders, domains)
 #	   no access to services subtree, except their own dn
 #	users:
 #	   can bind and change their own password
 #	   can read and change their own shadowLastChange
-#	   can read attributess of all users except mailaccess
+#      no read or write access to user's own totpSecret, totpMruToken, totpMruTokenTime or totpLabel
+#	   can read attributess of all users except:
+#            mailaccess, totpSecret, totpMruToken, totpMruTokenTime, totpLabel
 #	   no access to config subtree
 #	   no access to services subtree
 #	other:
@@ -36,19 +38,25 @@ test_user_change_password() {
 
 
 test_user_access() {
-	# 1. can read attributess of all users except mailaccess
+	# 1. can read attributess of all users except mailaccess, totpSecret, totpMruToken, totpMruTokenTime, totpLabel
 	# 2. can read and change their own shadowLastChange
 	# 3. no access to config subtree
 	# 4. no access to services subtree
+	# 5. no read or write access to own totpSecret, totpMruToken, totpMruTokenTime, or totpLabel
+
 	test_start "user-access"
 
+	local totpSecret="12345678901234567890"
+	local totpMruToken="94287082"
+	local totpLabel="my phone"
+	
 	# create regular user's alice and bob
 	local alice="alice@somedomain.com"
-	create_user "alice@somedomain.com" "alice"
+	create_user "alice@somedomain.com" "alice" "" "$totpSecret,$totpMruToken,$totpLabel"
 	local alice_dn="$ATTR_DN"
 
 	local bob="bob@somedomain.com"
-	create_user "bob@somedomain.com" "bob"
+	create_user "bob@somedomain.com" "bob" "" "$totpSecret,$totpMruToken,$totpLabel"
 	local bob_dn="$ATTR_DN"
 
 	# alice should be able to set her own shadowLastChange
@@ -56,18 +64,28 @@ test_user_access() {
 
 	# test that alice can read her own attributes
 	assert_r_access "$alice_dn" "$alice_dn" "alice" read mail maildrop cn sn shadowLastChange
-	# alice should not have access to her own mailaccess, though
-	assert_r_access "$alice_dn" "$alice_dn" "alice" no-read mailaccess
+	
+	# alice should not have access to her own mailaccess, totpSecret, totpMruToken, totpMruTokenTime or totpLabel, though
+	assert_r_access "$alice_dn" "$alice_dn" "alice" no-read mailaccess totpSecret totpMruToken totpMruTokenTime totpLabel
+
 	# test that alice cannot change her own select attributes
 	assert_w_access "$alice_dn" "$alice_dn" "alice"
+
+	# test that alice cannot change her own totpSecret, totpMruToken, totpMruTokenTime or totpLabel
+	assert_w_access "$alice_dn" "$alice_dn" "alice" no-write "totpSecret=ABC" "totpMruToken=123456" "totpMruTokenTime=123" "totpLabel=x-phone"
 
 	
 	# test that alice can read bob's attributes
 	assert_r_access "$bob_dn" "$alice_dn" "alice" read mail maildrop cn sn
-	# alice does not have access to bob's mailaccess though
-	assert_r_access "$bob_dn" "$alice_dn" "alice" no-read mailaccess
-	# test that alice cannot change bob's attributes
+	
+	# alice should not have access to bob's mailaccess, totpSecret, totpMruToken, totpMruTokenTime, or totpLabel
+	assert_r_access "$bob_dn" "$alice_dn" "alice" no-read mailaccess totpSecret totpMruToken totpMruTokenTime totpLabel
+	
+	# test that alice cannot change bob's select attributes
 	assert_w_access "$bob_dn" "$alice_dn" "alice"
+
+	# test that alice cannot change bob's attributes
+	assert_w_access "$bob_dn" "$alice_dn" "alice" no-write "totpSecret=ABC" "totpMruToken=123456" "totpMruTokenTime=345" "totpLabel=x-phone"
 
 
 	# test that alice cannot read a service account's attributes
@@ -132,9 +150,13 @@ test_service_access() {
 	
 	test_start "service-access"
 
+	local totpSecret="12345678901234567890"
+	local totpMruToken="94287082"
+	local totpLabel="my phone"
+	
 	# create regular user with password "alice"
 	local alice="alice@somedomain.com"
-	create_user "alice@somedomain.com" "alice"
+	create_user "alice@somedomain.com" "alice" "" "$totpSecret,$totpMruToken,$totpLabel"
 
 	# create a test service account
 	create_service_account "test" "test"
@@ -154,12 +176,12 @@ test_service_access() {
 		# check that service account can read user attributes
 		assert_r_access "$alice_dn" "$LDAP_POSTFIX_DN" "$LDAP_POSTFIX_PASSWORD" read mail maildrop uid cn sn shadowLastChange
 		
-		# service account should not be able to read user's userPassword
-		assert_r_access "$alice_dn" "$LDAP_POSTFIX_DN" "$LDAP_POSTFIX_PASSWORD" no-read userPassword
+		# service account should not be able to read user's userPassword, totpSecret, totpMruToken, totpMruTokenTime, or totpLabel
+		assert_r_access "$alice_dn" "$LDAP_POSTFIX_DN" "$LDAP_POSTFIX_PASSWORD" no-read userPassword totpSecret totpMruToken totpMruTokenTime totpLabel
 
 		# service accounts cannot change user attributes
 		assert_w_access "$alice_dn" "$LDAP_POSTFIX_DN" "$LDAP_POSTFIX_PASSWORD"
-		assert_w_access "$alice_dn" "$LDAP_POSTFIX_DN" "$LDAP_POSTFIX_PASSWORD" no-write "shadowLastChange=1"
+		assert_w_access "$alice_dn" "$LDAP_POSTFIX_DN" "$LDAP_POSTFIX_PASSWORD" no-write "shadowLastChange=1" "totpSecret=ABC" "totpMruToken=333333" "totpMruTokenTime=123" "totpLabel=x-phone"
 	fi
 
 	# service accounts can read config subtree (permitted-senders, domains)

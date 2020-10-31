@@ -1,0 +1,65 @@
+#
+# MiaB-LDAP's directory schema for time-based one time passwords (TOTP)
+#
+# MiaB LDAP UUID(v4): 7392cdda-5ec8-431f-9936-0000273c0167
+#                 or: 1939000794.24264.17183.39222.658243943
+#
+
+objectIdentifier MiabLDAProot 2.25.1939000794.24264.17183.39222.658243943
+
+objectIdentifier MiabLDAPmfa MiabLDAProot:1
+objectIdentifier MiabLDAPmfaAttributeType MiabLDAPmfa:2
+objectIdentifier MiabLDAPmfaObjectClass MiabLDAPmfa:3
+
+# secret consists of base32 characters (see RFC 4648)
+
+attributetype ( MiabLDAPmfaAttributeType:1
+	DESC 'TOTP secret'
+	NAME 'totpSecret'
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26
+	X-ORDERED 'VALUES'
+	EQUALITY caseExactIA5Match )
+
+
+# tokens are a base-10 string of N digits, but set the syntax to
+# IA5String anyway
+
+attributetype ( MiabLDAPmfaAttributeType:2
+	DESC 'TOTP last token used'
+	NAME 'totpMruToken'
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26
+	X-ORDERED 'VALUES'
+	EQUALITY caseExactIA5Match )
+
+# the time in nanoseconds since the epoch when the mru token was last
+# used. the time will also be set when a new entry is created even if
+# the corresponding mru token is blank
+
+attributetype ( MiabLDAPmfaAttributeType:3
+	DESC 'TOTP last token used time'
+	NAME 'totpMruTokenTime'
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26
+	X-ORDERED 'VALUES'
+	EQUALITY caseExactIA5Match )
+
+# The label is currently any text supplied by the user, which is used
+# as a reminder of where the secret is stored when logging in (where
+# the authenticator app is, that holds the secret). eg "my samsung
+# phone"
+
+attributetype ( MiabLDAPmfaAttributeType:4
+	DESC 'TOTP device label'
+	NAME 'totpLabel'
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26
+	X-ORDERED 'VALUES'
+	EQUALITY caseIgnoreIA5Match )
+
+
+# The TOTP objectClass
+
+objectClass ( MiabLDAPmfaObjectClass:1
+	NAME 'totpUser'
+	DESC 'MiaB-LDAP TOTP settings for a user'
+	SUP top
+	AUXILIARY
+	MUST ( totpSecret $ totpMruToken $ totpMruTokenTime $ totpLabel ) )

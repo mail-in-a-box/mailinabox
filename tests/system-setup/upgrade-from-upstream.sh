@@ -113,7 +113,7 @@ case "$1" in
         ;;
     populate )
         . /etc/mailinabox.conf
-        populate_by_name "${1:-basic}"
+        populate_by_name "${2:-basic}"
         exit $?
         ;;
 esac
@@ -137,7 +137,11 @@ else
     . /etc/mailinabox.conf
     
     # populate some data
-    populate_by_name "${1:-basic}"
+    if [ $# -gt 0 ]; then
+        populate_by_name "$@"
+    else
+        populate_by_name "basic" "totpuser"
+    fi
 
     # capture upstream state
     pushd "$upstream_dir" >/dev/null

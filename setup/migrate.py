@@ -183,6 +183,14 @@ def migration_12(env):
             conn.close()
 
 def migration_13(env):
+	# Add the "mfa" table for configuring MFA for login to the control panel.
+	db = os.path.join(env["STORAGE_ROOT"], 'mail/users.sqlite')
+	shell("check_call", ["sqlite3", db, "CREATE TABLE mfa (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, type TEXT NOT NULL, secret TEXT NOT NULL, mru_token TEXT, label TEXT, FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE);"])
+
+###########################################################
+
+
+def migration_miabldap_1(env):
 	# This migration step moves users from sqlite3 to openldap
 
 	# users table:
@@ -207,7 +215,7 @@ def migration_13(env):
 	#   objectClass: mailGroup
 	#   mail: [source]
 	#   member: [user-dn]         # multi-valued
-
+	
 	print("Migrating users and aliases from sqlite to ldap")
 	
 	# Get the ldap server up and running
@@ -241,12 +249,11 @@ def migration_13(env):
 	ldap.unbind()
 	conn.close()
 	
-
 def get_current_migration():
 	ver = 0
 	while True:
 		next_ver = (ver + 1)
-		migration_func = globals().get("migration_%d" % next_ver)
+		migration_func = globals().get("migration_miabldap_%d" % next_ver)
 		if not migration_func:
 			return ver
 		ver = next_ver
@@ -312,11 +319,67 @@ def run_migrations():
 
 		# iterate and try next version...
 
+def run_miabldap_migrations():
+	if not os.access("/etc/mailinabox.conf", os.W_OK, effective_ids=True):
+		print("This script must be run as root.", file=sys.stderr)
+		sys.exit(1)
+
+	env = load_environment()
+
+	migration_id_file = os.path.join(env['STORAGE_ROOT'], 'mailinabox-ldap.version')
+	migration_id = 0
+	if os.path.exists(migration_id_file):
+		with open(migration_id_file) as f:
+			migration_id = f.read().strip();
+
+	ourver = int(migration_id)
+
+	while True:
+		next_ver = (ourver + 1)
+		migration_func = globals().get("migration_miabldap_%d" % next_ver)
+
+		if not migration_func:
+			# No more migrations to run.
+			break
+
+		print()
+		print("Running migration to Mail-in-a-Box LDAP #%d..." % next_ver)
+
+		try:
+			migration_func(env)
+		except Exception as e:
+			print()
+			print("Error running the migration script:")
+			print()
+			print(e)
+			print()
+			print("Your system may be in an inconsistent state now. We're terribly sorry. A re-install from a backup might be the best way to continue.")
+			#sys.exit(1)
+			raise e
+
+		ourver = next_ver
+
+		# Write out our current version now. Do this sooner rather than later
+		# in case of any problems.
+		with open(migration_id_file, "w") as f:
+			f.write(str(ourver) + "\n")
+
+		# iterate and try next version...
+
 if __name__ == "__main__":
 	if sys.argv[-1] == "--current":
 		# Return the number of the highest migration.
 		print(str(get_current_migration()))
 	elif sys.argv[-1] == "--migrate":
 		# Perform migrations.
-		run_migrations()
+		env = load_environment()
+		
+		# if miab-ldap already installed, only run miab-ldap migrations
+		if 'LDAP_USERS_BASE' in env:
+			run_miabldap_migrations()
+			
+		# otherwise, run both
+		else:
+			run_migrations()
+			run_miabldap_migrations()
 

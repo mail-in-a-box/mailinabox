@@ -374,6 +374,20 @@ add_schemas() {
 		ldapadd -Q -Y EXTERNAL -H ldapi:/// -f "$ldif" >/dev/null
 		rm -f "$ldif"
 	fi
+
+	# apply the mfa-totp schema
+	# this adds the totpUser class to store the totp secret
+	local schema="mfa-totp.schema"
+	local cn="mfa-totp"
+	get_attribute "cn=schema,cn=config" "(&(cn={*}$cn)(objectClass=olcSchemaConfig))" "cn"
+	if [ -z "$ATTR_DN" ]; then
+		local ldif="/tmp/$cn.$$.ldif"
+		schema_to_ldif "$schema" "$ldif" "$cn"
+		say_verbose "Adding '$cn' schema"
+		[ $verbose -gt 1 ] && cat "$ldif"
+		ldapadd -Q -Y EXTERNAL -H ldapi:/// -f "$ldif" >/dev/null
+		rm -f "$ldif"
+	fi
 }
 
 
@@ -560,16 +574,18 @@ apply_access_control() {
 	# Permission restrictions:
 	#	service accounts (except management):
 	#	   can bind but not change passwords, including their own
-	#	   can read all attributes of all users but not userPassword
+	#	   can read all attributes of all users but not userPassword,
+	#         totpSecret, totpMruToken, totpMruTokenTime, or totpLabel
 	#	   can read config subtree (permitted-senders, domains)
 	#	   no access to services subtree, except their own dn
 	#	management service account:
-	#	   can read and change password and shadowLastChange
+	#	   can read and change password, shadowLastChange, and totpSecret
 	#	   all other service account permissions are the same
 	#	users:
 	#	   can bind and change their own password
 	#	   can read and change their own shadowLastChange
-	#	   can read attributess of all users except mailaccess
+	#      cannot read or modify totpSecret, totpMruToken, totpMruTokenTime, totpLabel
+	#	   can read attributess of other users except mailaccess, totpSecret, totpMruToken, totpMruTokenTime, totpLabel
 	#	   no access to config subtree
 	#	   no access to services subtree
 	#
@@ -590,6 +606,10 @@ olcAccess: to attrs=userPassword
   by dn.subtree="${LDAP_SERVICES_BASE}" none
   by self =wx
   by anonymous auth
+  by * none
+olcAccess: to attrs=totpSecret,totpMruToken,totpMruTokenTime,totpLabel
+  by dn.exact="cn=management,${LDAP_SERVICES_BASE}" write
+  by dn.exact="gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth" read
   by * none
 olcAccess: to attrs=shadowLastChange
   by self write

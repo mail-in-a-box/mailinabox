@@ -44,8 +44,8 @@ jobs:
       - UPSTREAM_TAG=master
     name: upgrade-from-upstream
     install:
-      - sudo tests/system-setup/upgrade-from-upstream.sh basic
+      - sudo tests/system-setup/upgrade-from-upstream.sh basic totpuser
     script:
       # launch automated tests, but skip tests that require remote
       # smtp support because Travis-CI blocks outgoing port 25
-      - sudo tests/runner.sh -dumpoutput -no-smtp-remote default upgrade-basic
+      - sudo tests/runner.sh -dumpoutput -no-smtp-remote upgrade-basic upgrade-totpuser default

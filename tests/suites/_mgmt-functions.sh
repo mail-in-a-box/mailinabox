@@ -49,6 +49,20 @@ mgmt_rest() {
 	return $?
 }
 
+mgmt_rest_as_user() {
+	# Issue a REST call to the management subsystem
+	local verb="$1" # eg "POST"
+	local uri="$2"  # eg "/mail/users/add"
+	local email="$3"  # eg "alice@somedomain.com"
+	local pw="$4"   # user's password
+	shift; shift; shift; shift   # remaining arguments are data
+
+	# call function from lib/rest.sh
+	rest_urlencoded "$verb" "$uri" "${email}" "${pw}" "$@" >>$TEST_OF 2>&1
+	return $?
+}
+
+
 
 mgmt_create_user() {
 	local email="$1"
@@ -142,6 +156,238 @@ mgmt_assert_delete_alias_group() {
 		test_failure "Unable to cleanup/delete alias group $alias"
 		test_failure "$REST_ERROR"
 		return 1
+	fi
+	return 0
+}
+
+
+mgmt_privileges_add() {
+	local user="$1"
+	local priv="$2"  # only one privilege allowed
+	record "[add privilege '$priv' to $user]"
+	mgmt_rest POST "/admin/mail/users/privileges/add" "email=$user" "privilege=$priv"
+	rc=$?
+	return $rc
+}
+
+mgmt_assert_privileges_add() {
+	if ! mgmt_privileges_add "$@"; then
+		test_failure "Unable to add privilege '$2' to $1"
+		test_failure "${REST_ERROR}"
+		return 1
+	fi
+	return 0
+}
+
+mgmt_get_totp_token() {
+	local secret="$1"
+	local mru_token="$2"
+	
+	TOTP_TOKEN="" # this is set to the acquired token on success
+
+	# the user would normally give the secret to an authenticator app
+	# and get a token -- we'll do that out-of-band.  we have to run
+	# the admin's python because setup does not do a 'pip install
+	# pyotp', so the system python3 probably won't have it
+
+	record "[Get the current token for the secret '$secret']"
+
+	local count=0
+	
+	while [ -z "$TOTP_TOKEN" -a $count -lt 10 ]; do
+		TOTP_TOKEN="$(totp_current_token "$secret" 2>>"$TEST_OF")"
+		if [ $? -ne 0 ]; then
+			record "Failed: Could not get the TOTP token !"
+			return 1
+		fi
+
+		if [ "$TOTP_TOKEN" == "$mru_token" ]; then
+			TOTP_TOKEN=""
+			record "Waiting for unique token!"
+			sleep 5
+		else
+			record "Success: token is '$TOTP_TOKEN'"
+			return 0
+		fi
+		
+		let count+=1
+	done
+
+	record "Failed: timeout !"
+	TOTP_TOKEN=""
+	return 1	
+}
+
+mgmt_mfa_status() {
+	local user="$1"
+	local pw="$2"
+	record "[Get MFA status]"
+	if ! mgmt_rest_as_user "POST" "/admin/mfa/status" "$user" "$pw"; then
+		REST_ERROR="Failed: POST /admin/mfa/status: $REST_ERROR"
+		return 1
+	fi
+	# json is in REST_OUTPUT...
+	return 0
+}
+
+
+mgmt_totp_enable() {
+	# enable TOTP for user specified
+	#   returns 0 if successful and TOTP_SECRET will contain the secret and TOTP_TOKEN will contain the token used
+	#   returns 1 if a REST error occured. $REST_ERROR has the message
+	#   returns 2 if some other error occured
+	#
+	
+	local user="$1"
+	local pw="$2"
+	local label="$3"  # optional
+	TOTP_SECRET=""
+
+	record "[Enable TOTP for $user]"
+
+	# 1. get a totp secret
+	if ! mgmt_mfa_status "$user" "$pw"; then
+		return 1
+	fi
+	
+	TOTP_SECRET="$(/usr/bin/jq -r ".new_mfa.totp.secret" <<<"$REST_OUTPUT")"
+	if [ $? -ne 0 ]; then
+		record "Unable to obtain setup totp secret - is 'jq' installed?"
+		return 2
+	fi
+
+	if [ "$TOTP_SECRET" == "null" ]; then
+		record "No 'totp_secret' in the returned json !"
+		return 2
+	else
+		record "Found TOTP secret '$TOTP_SECRET'"
+	fi
+	
+	if ! mgmt_get_totp_token "$TOTP_SECRET"; then
+		return 2
+	fi
+	
+	# 2. enable TOTP
+	record "Enabling TOTP using the secret and token"
+	if ! mgmt_rest_as_user "POST" "/admin/mfa/totp/enable" "$user" "$pw" "secret=$TOTP_SECRET" "token=$TOTP_TOKEN" "label=$label"; then
+		REST_ERROR="Failed: POST /admin/mfa/totp/enable: ${REST_ERROR}"
+		return 1
+	else
+		record "Success: POST /mfa/totp/enable: '$REST_OUTPUT'"
+	fi
+		
+	return 0
+}
+
+
+mgmt_assert_totp_enable() {
+	local user="$1"
+	mgmt_totp_enable "$@"
+	local code=$?
+	if [ $code -ne 0 ]; then
+		test_failure "Unable to enable TOTP for $user"
+		if [ $code -eq 1 ]; then
+			test_failure "${REST_ERROR}"
+		fi
+		return 1
+	fi
+	get_attribute "$LDAP_USERS_BASE" "(&(mail=$user)(objectClass=totpUser))" "dn"
+	if [ -z "$ATTR_DN" ]; then
+		test_failure "totpUser objectClass not present on $user"
+	fi
+	record_search "(mail=$user)"
+	return 0
+}
+
+
+mgmt_mfa_disable() {
+	# returns:
+	#    0: success
+	#    1: a REST error occurred, message in REST_ERROR
+	#    2: some system error occured
+	#    3: mfa is not configured for the user specified
+	local user="$1"
+	local pw="$2"
+	local mfa_id="$3"
+	
+	record "[Disable MFA for $user]"
+	if [ "$mfa_id" == "all" ]; then
+		mfa_id=""
+	elif [ "$mfa_id" == "" ]; then
+		# get first mfa-id
+		if ! mgmt_mfa_status "$user" "$pw"; then
+			return 1
+		fi
+		
+		mfa_id="$(/usr/bin/jq -r ".enabled_mfa[0].id" <<<"$REST_OUTPUT")"
+		if [ $? -ne 0 ]; then
+			record "Unable to use /usr/bin/jq - is it installed?"
+			return 2
+		fi
+		if [ "$mfa_id" == "null" ]; then
+			record "No enabled mfa found at .enabled_mfa[0].id"
+			return 3
+		fi
+	fi
+	
+
+	
+	if ! mgmt_rest_as_user "POST" "/admin/mfa/disable" "$user" "$pw" "mfa-id=$mfa_id"
+	then
+		REST_ERROR="Failed: POST /admin/mfa/disable: $REST_ERROR"
+		return 1
+	else
+		record "Success"
+		return 0
+	fi
+}
+
+mgmt_assert_mfa_disable() {
+	local user="$1"
+	mgmt_mfa_disable "$@"
+	local code=$?
+	if [ $code -ne 0 ]; then
+		test_failure "Unable to disable MFA for $user: $REST_ERROR"
+		return 1
+	fi
+	get_attribute "$LDAP_USERS_BASE" "(&(mail=$user)(objectClass=totpUser))" "dn"
+	if [ ! -z "$ATTR_DN" ]; then
+		test_failure "totpUser objectClass still present on $user"
+	fi
+	record_search "(mail=$user)"
+	return 0
+}
+
+mgmt_assert_admin_me() {
+	local user="$1"
+	local pw="$2"
+	local expected_status="${3:-ok}"
+	shift; shift; shift;  # remaining arguments are data
+
+	# note: GET /admin/me always returns http status 200, but errors are in
+	# the json payload
+	record "[Get /admin/me as $user]"
+	if ! mgmt_rest_as_user "GET" "/admin/me" "$user" "$pw" "$@"; then
+		test_failure "GET /admin/me as $user failed: $REST_ERROR"
+		return 1
+
+	else
+		local status code
+		status="$(/usr/bin/jq -r '.status' <<<"$REST_OUTPUT")"
+		code=$?
+		if [ $code -ne 0 ]; then
+			test_failure "Unable to run jq ($code) on /admin/me json"
+			return 1
+				
+		elif [ "$status" == "null" ]; then
+			test_failure "No 'status' in /admin/me json"
+			return 1
+
+		elif [ "$status" != "$expected_status" ]; then
+			test_failure "Expected a login status of '$expected_status', but got '$status'"
+			return 1
+			
+		fi
 	fi
 	return 0
 }

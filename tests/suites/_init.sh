@@ -27,6 +27,8 @@ declare -i OVERALL_COUNT_SUITES=0
 FAILURE_IS_FATAL=no
 DUMP_FAILED_TESTS_OUTPUT=no
 SKIP_REMOTE_SMTP_TESTS=no
+DETECT_SLAPD_LOG_ERROR_OUTPUT=brief
+DETECT_SYSLOG_ERROR_OUTPUT=normal
 
 # record a list of output files for failed tests
 FAILED_TESTS_MANIFEST="$BASE_OUTPUTDIR/failed_tests_manifest.txt"
@@ -166,7 +168,7 @@ skip_test() {
 	if [ "$SKIP_REMOTE_SMTP_TESTS" == "yes" ] &&
 		   array_contains "remote-smtp" "$@";
 	then
-		test_skip "-no-smtp-remote option given"
+		test_skip "no-smtp-remote option given"
 		return 0
 	fi
 	
