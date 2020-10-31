@@ -41,9 +41,7 @@ jobs:
   # JOB: Upgrade from upstream install
   - env:
       - PRIMARY_HOSTNAME=box2.abc.com
-      #- UPSTREAM_TAG=master
-      - MIAB_UPSTREAM_GIT=https://github.com/fspoettel/mailinabox.git
-      - UPSTREAM_TAG=admin-panel-2fa
+      - UPSTREAM_TAG=master
     name: upgrade-from-upstream
     install:
       - sudo tests/system-setup/upgrade-from-upstream.sh basic totpuser
