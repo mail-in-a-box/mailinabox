@@ -91,7 +91,21 @@ fi
 hide_output add-apt-repository -y universe
 
 # Install the certbot PPA.
-hide_output add-apt-repository -y ppa:certbot/certbot
+if [ $(. /etc/os-release; echo $VERSION_ID | awk -F. '{print $1}') -le 18 ]
+then
+    hide_output add-apt-repository -y ppa:certbot/certbot
+else
+    hide_output snap install core
+    hide_output snap refresh core
+    if ! snap list certbot 1>/dev/null 2>&1; then
+        # a ppa was required on ubuntu 18, but snaps are used in ubuntu 19+
+        # remove the ppa and certbot per eff's instructions
+        hide_output add-apt-repository -r -y ppa:certbot/certbot
+        hide_output apt-get remove -y certbot
+    fi
+    hide_output snap install --classic certbot
+    ln -sf /snap/bin/certbot /usr/bin/certbot
+fi
 
 # ### Update Packages
 
