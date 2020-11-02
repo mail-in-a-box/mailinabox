@@ -10,6 +10,7 @@ cd "$(dirname $0)"
 
 # load global functions and variables
 . suites/_init.sh
+. suites/_init_miabldap.sh
 
 default_suites=(
 	ldap-connection

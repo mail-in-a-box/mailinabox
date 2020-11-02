@@ -1,34 +1,19 @@
 # -*- indent-tabs-mode: t; tab-width: 4; -*-
 
-# load useful functions from setup
-. ../setup/functions.sh || exit 1
-. ../setup/functions-ldap.sh || exit 1
-set +eu
-
-# load test suite helper functions
 . lib/all.sh "lib"      || exit 1
-. suites/_ldap-functions.sh || exit 1
-. suites/_mail-functions.sh || exit 1
-. suites/_mgmt-functions.sh || exit 1
 
 # globals - all global variables are UPPERCASE
 ASSETS_DIR="assets"
-MIAB_DIR=".."
 BASE_OUTPUTDIR="$(realpath out)/$(hostname | awk -F. '{print $1}')"
-PYMAIL="./test_mail.py"
 declare -i OVERALL_SUCCESSES=0
 declare -i OVERALL_FAILURES=0
 declare -i OVERALL_SKIPPED=0
 declare -i OVERALL_COUNT=0
 declare -i OVERALL_COUNT_SUITES=0
 
-
 # options
 FAILURE_IS_FATAL=no
 DUMP_FAILED_TESTS_OUTPUT=no
-SKIP_REMOTE_SMTP_TESTS=no
-DETECT_SLAPD_LOG_ERROR_OUTPUT=brief
-DETECT_SYSLOG_ERROR_OUTPUT=normal
 
 # record a list of output files for failed tests
 FAILED_TESTS_MANIFEST="$BASE_OUTPUTDIR/failed_tests_manifest.txt"
@@ -158,24 +143,6 @@ test_skip() {
 	TEST_STATE_MSG+=( "$why" )
 }
 
-skip_test() {
-	# call from within a test to check whether the test will be
-	# skipped
-	#
-	# returns 0 if the current test was skipped in which case your test
-	# function must immediately call 'test_end' and return
-	#
-	if [ "$SKIP_REMOTE_SMTP_TESTS" == "yes" ] &&
-		   array_contains "remote-smtp" "$@";
-	then
-		test_skip "no-smtp-remote option given"
-		return 0
-	fi
-	
-	return 1
-}
-
-
 have_test_failures() {
 	[ "$TEST_STATE" == "FAILURE" ] && return 0
 	return 1
@@ -236,6 +203,3 @@ dump_failed_tests_output() {
 
 mkdir -p "$BASE_OUTPUTDIR"
 
-# load global vars
-. /etc/mailinabox.conf || die "Could not load '/etc/mailinabox.conf'"
-. "${STORAGE_ROOT}/ldap/miab_ldap.conf" || die "Could not load miab_ldap.conf"
