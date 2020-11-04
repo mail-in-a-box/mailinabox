@@ -354,6 +354,7 @@ enable_user_ldap() {
                       sed 's/-fpm.*$//')
             if [ $? -ne 0 ]; then
                 say "Warning: this looks like a Cloud-In-A-Box system, but detecting the php version used by Nextcloud failed. Using the system php-ldap module..."
+                php="php"
             fi
         fi
         say_verbose "Installing system package $php-ldap"
