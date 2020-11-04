@@ -67,3 +67,14 @@ are the steps that you gotta follow:
 	g) _To check this option, type $ echo $DISPLAY and see whether localhost=10.0.0 comes up or not. If it does, then you're good to go._
 
 	h) _Now type firefox in your putty terminal and you should see the output in firefox browser in your windows host machine_
+
+
+
+To make it work into an existing mailinabox setup, you need to do the following:
+1. sudo setup/ssl.sh
+2. sudo setup/dns.sh
+3. sudo tools/dns_update
+4. sudo service mailinabox restart
+
+To view the print logs for testing:
+1. sudo cat /var/log/syslog
