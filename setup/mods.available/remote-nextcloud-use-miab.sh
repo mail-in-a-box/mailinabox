@@ -341,10 +341,24 @@ config_user_ldap() {
 enable_user_ldap() {
     # install prerequisite package php-ldap
     # if using Docker Hub's php image, don't install at all
-    if [ ! -e /etc/apt/preferences.d/no-debian-php ]; then
-        say_verbose "Installing system package php-ldap"
-        apt-get install -y -qq php-ldap || die "Could not install php-ldap package"
-        #restart_service php7.2-fpm
+    
+    if [ ! -e /etc/apt/preferences.d/no-debian-php ]; then        
+        # on a cloud-in-a-box installation, get the php version that
+        # nextcloud uses, otherwise install the system php
+        local php="php"
+        local ciab_site_conf="/etc/nginx/sites-enabled/cloudinabox-nextcloud"
+        if [ -e "$ciab_site_conf" ]; then
+            php=$(grep 'php[0-9].[0-9]-fpm.sock' "$ciab_site_conf" | \
+                      awk '{print $2}' | \
+                      awk -F/ '{print $NF}' | \
+                      sed 's/-fpm.*$//')
+            if [ $? -ne 0 ]; then
+                say "Warning: this looks like a Cloud-In-A-Box system, but detecting the php version used by Nextcloud failed. Using the system php-ldap module..."
+            fi
+        fi
+        say_verbose "Installing system package $php-ldap"
+        apt-get install -y -qq $php-ldap || die "Could not install $php-ldap package"
+        #restart_service $php-fpm
     fi
     
     # enable user_ldap
