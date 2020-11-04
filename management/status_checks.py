@@ -454,9 +454,9 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 
 	# Check the TLSA record.
 	tlsa_qname = "_25._tcp." + domain
-	tlsa25 = query_dns(tlsa_qname, "TLSA", nxdomain=None)
+	tlsa25 = query_dns(tlsa_qname, "TLSA", nxdomain=None).split('; ')
 	tlsa25_expected = build_tlsa_record(env)
-	if tlsa25 == tlsa25_expected:
+	if tlsa25_expected in tlsa25:
 		output.print_ok("""The DANE TLSA record for incoming mail is correct (%s).""" % tlsa_qname,)
 	elif tlsa25 is None:
 		if has_dnssec:

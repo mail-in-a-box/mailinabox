@@ -364,6 +364,77 @@ def ssl_get_csr(domain):
 	ssl_private_key = os.path.join(os.path.join(env["STORAGE_ROOT"], 'ssl', 'ssl_private_key.pem'))
 	return create_csr(domain, ssl_private_key, request.form.get('countrycode', ''), env)
 
+@app.route('/ssl/renew/<domain>', methods=['POST'])
+@authorized_personnel_only
+def ssl_renew(domain):
+	from exclusiveprocess import Lock
+	from utils import load_environment
+	from ssl_certificates import provision_certificates
+	existing_key = request.form.get('existing_key')
+	Lock(die=True).forever()
+	env = load_environment()
+	if existing_key == "yes":
+		status = provision_certificates(env, limit_domains=[], domain_to_be_renewed=domain)
+		app.logger.warning("renew without new key=", status)  # TODO: remove this line after testing
+	elif existing_key == "no":
+		import glob
+		try:
+			# steps followed
+			# 1. take a backup of the current /home/user-data/ssl/ folder to be safe
+			# 2. renew all the existing certificates from CSR generated from the existing next_ssl_private_key
+			# 3. if the renew is successful, replace the current ssl_private_key with the next_ssl_private_key and
+			# 4. generate the next_ssl_private_key
+			# 5. if any error occurs, copy everything from the /home/user-data/ssl-backup folder to /home/user-data/ssl
+
+			# step 1
+			files = glob.glob(env["STORAGE_ROOT"] + "/ssl/*")
+			for file in files:
+				subprocess.check_output(["cp", "-r", file, env["STORAGE_ROOT"] + "/ssl-backup/"])
+
+			# step 2
+			status = provision_certificates(env, limit_domains=[], new_key=True)
+
+			# step 3 and 4 is in post_install_func method of ssl_certificates.py
+			app.logger.warning("renew with new key=", status)  # TODO: remove this line after proper testing
+		except Exception as e:
+			import traceback
+			files = glob.glob(env["STORAGE_ROOT"] + "/ssl-backup/*")
+			for file in files:
+				subprocess.check_output(["cp", "-r", file, env["STORAGE_ROOT"] + "/ssl/"])
+			app.logger.warning(traceback.print_exc())  # TODO: remove this line after proper testing
+			return json_response({
+				"title": "Error",
+				"log": "Sorry, something is not right!",
+			})
+	else:
+		return json_response({
+			"title": "Error",
+			"log": "Sorry, something is not right!",
+		})
+
+	for item in status:
+		if isinstance(status, str):
+			continue
+		else:
+			if domain in item['domains']:
+				if item['result'] == 'skipped':
+					return json_response({
+						"title": item["result"].capitalize(),
+						"log": "\n".join(item['log']),
+					})
+				elif item['result'] == 'installed':
+					return json_response({
+						"title": item["result"].capitalize(),
+						"log": "Your certificate containing these domains " + ",".join(
+							item['domains']) + " have been renewed",
+					})
+				else:
+					return json_response({
+						"title": item["result"].capitalize(),
+						"log": "\n".join(item['log'])
+					})
+
+
 @app.route('/ssl/install', methods=['POST'])
 @authorized_personnel_only
 def ssl_install_cert():
@@ -604,7 +675,8 @@ def log_failed_login(request):
 # APP
 
 if __name__ == '__main__':
-	if "DEBUG" in os.environ: app.debug = True
+	app.debug = True  # TODO: remove this line and uncomment the next line after testing
+	# if "DEBUG" in os.environ: app.debug = True
 	if "APIKEY" in os.environ: auth_service.key = os.environ["APIKEY"]
 
 	if not app.debug:
