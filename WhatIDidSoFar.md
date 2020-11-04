@@ -68,7 +68,14 @@ are the steps that you gotta follow:
 
 	h) _Now type firefox in your putty terminal and you should see the output in firefox browser in your windows host machine_
 
-
+What is done here?
+Mail-in-a-box is an open source sw that provides you the options to control your mail server yourself. It gives you a DNS server as well and
+has all the necessary settings like DNSSEC, DANE TLSA, etc. But the existing software doesn't really provide the options for
+renewing key. It creates a key pair initially and uses this key during the whole lifetime of the setup. If any user updates
+the key, he or she will have to manually change the certificates and TLSA records which is error-prone. So, what I did is provide an option to
+renew the cert for user with both the existing key and with a new key and if user does so with a new key, then update the
+TLSA records. I followed the double TLSA scheme. Main motivation of doing this is to reduce the number of misconfigurations
+due to manual key rollover.
 
 To make it work into an existing mailinabox setup, you need to do the following:
 1. sudo setup/ssl.sh
