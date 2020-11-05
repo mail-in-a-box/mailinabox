@@ -608,7 +608,6 @@ def validate_password(pw):
 	if len(pw) < 8:
 		raise ValueError("Passwords must be at least eight characters.")
 
-
 if __name__ == "__main__":
 	import sys
 	if len(sys.argv) > 2 and sys.argv[1] == "validate-email":

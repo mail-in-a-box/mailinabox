@@ -97,11 +97,14 @@
               </ul>
             </li>
             <li class="dropdown">
-              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Mail <b class="caret"></b></a>
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Mail &amp; Users <b class="caret"></b></a>
               <ul class="dropdown-menu">
                 <li><a href="#mail-guide" onclick="return show_panel(this);">Instructions</a></li>
                 <li><a href="#users" onclick="return show_panel(this);">Users</a></li>
                 <li><a href="#aliases" onclick="return show_panel(this);">Aliases</a></li>
+                <li class="divider"></li>
+                <li class="dropdown-header">Your Account</li>
+                <li><a href="#mfa" onclick="return show_panel(this);">Two-Factor Authentication</a></li>
               </ul>
             </li>
             <li><a href="#sync_guide" onclick="return show_panel(this);">Contacts/Calendar</a></li>
@@ -129,6 +132,10 @@
 
       <div id="panel_custom_dns" class="admin_panel">
       {% include "custom-dns.html" %}
+      </div>
+
+      <div id="panel_mfa" class="admin_panel">
+      {% include "mfa.html" %}
       </div>
 
       <div id="panel_login" class="admin_panel">
@@ -293,7 +300,7 @@ function ajax_with_indicator(options) {
 }
 
 var api_credentials = ["", ""];
-function api(url, method, data, callback, callback_error) {
+function api(url, method, data, callback, callback_error, headers) {
   // from http://www.webtoolkit.info/javascript-base64.html
   function base64encode(input) {
     _keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
@@ -331,7 +338,7 @@ function api(url, method, data, callback, callback_error) {
     method: method,
     cache: false,
     data: data,
-
+    headers: headers,
     // the custom DNS api sends raw POST/PUT bodies --- prevent URL-encoding
     processData: typeof data != "string",
     mimeType: typeof data == "string" ? "text/plain; charset=ascii" : null,
@@ -359,6 +366,16 @@ function api(url, method, data, callback, callback_error) {
 
 var current_panel = null;
 var switch_back_to_panel = null;
+
+function do_logout() {
+  api_credentials = ["", ""];
+  if (typeof localStorage != 'undefined')
+    localStorage.removeItem("miab-cp-credentials");
+  if (typeof sessionStorage != 'undefined')
+    sessionStorage.removeItem("miab-cp-credentials");
+  show_panel('login');
+}
+
 function show_panel(panelid) {
   if (panelid.getAttribute)
     // we might be passed an HTMLElement <a>.
