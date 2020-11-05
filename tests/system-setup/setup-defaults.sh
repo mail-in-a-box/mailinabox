@@ -11,6 +11,8 @@ export EMAIL_ADDR="${EMAIL_ADDR:-qa@abc.com}"
 export EMAIL_PW="${EMAIL_PW:-Test_1234}"
 export PUBLIC_IP="${PUBLIC_IP:-$(source ${MIAB_DIR:-.}/setup/functions.sh; get_default_privateip 4)}"
 export LOCAL_MODS_DIR="${LOCAL_MODS_DIR:-local}"
+export DOWNLOAD_CACHE_DIR="${DOWNLOAD_CACHE_DIR:-$(pwd)/downloads}"
+export DOWNLOAD_NEXTCLOUD_FROM_GITHUB="${DOWNLOAD_NEXTCLOUD_FROM_GITHUB:-false}"
 
 # Used by ehdd/start-encrypted.sh
 export EHDD_KEYFILE="${EHDD_KEYFILE:-}"

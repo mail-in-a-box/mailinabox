@@ -66,4 +66,38 @@ echo "EXITCODE: $rc"
 SH
   end
 
+  # unsetvars: because miab sets bash '-e' to fail the any setup
+  # script when any script command returns a non-zero exit code, and
+  # more importantly '-u' which fails the script when any unset
+  # variable is accessed, this definition sets a minimal number of
+  # environment variables prior to running start.sh. Doing so will
+  # test that no failures occur during setup in the most common use
+  # case because other vagrant definitions in this file load
+  # tests/system-setup/setup-default.sh, which pre-assign a value to
+  # most variables.
+
+  if ENV['tests']=='all'
+    config.vm.define "unsetvars" do |m1|
+      m1.vm.hostname = "mailinabox.lan"
+      m1.vm.network "private_network", ip: "192.168.50.4"
+      
+      m1.vm.provision :shell, :inline => <<-SH
+# Set environment variables so that the setup script does
+# not ask any questions during provisioning. We'll let the
+# machine figure out its own public IP.
+export NONINTERACTIVE=1
+export PUBLIC_IP=auto
+export PUBLIC_IPV6=auto
+export PRIMARY_HOSTNAME=auto
+export SKIP_NETWORK_CHECKS=1
+
+# Start the setup script.
+cd /mailinabox
+setup/start.sh
+echo "EXITCODE: $?"
+SH
+    end
+  end
+  
+
 end

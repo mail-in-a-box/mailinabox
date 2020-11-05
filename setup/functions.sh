@@ -248,3 +248,42 @@ function kernel_ipv6_lo_disabled() {
 	[ "$v" == "1" ] && return 0
 	return 1
 }
+
+
+declare -i verbose=${verbose:-0}
+
+while [ $# -gt 0 ]; do
+	if [ "$1" == "-verbose" -o "$1" == "-v" ]; then
+		let verbose+=1
+		shift
+	else
+		break
+	fi
+done
+
+die() {
+	local msg="${1:-}"
+	local rtn="${2:-1}"
+	[ ! -z "$msg" ] && echo "FATAL: $msg" || \
+			echo "An unrecoverable error occurred, exiting"
+	exit $rtn
+}
+
+is_verbose() {
+    [ $verbose -gt 0 ] && return 0
+    return 1
+}
+
+say_debug() {
+	[ $verbose -gt 1 ] && echo "$@"
+	return 0
+}
+
+say_verbose() {
+	[ $verbose -gt 0 ] && echo "$@"
+	return 0
+}
+
+say() {
+	echo "$@"
+}

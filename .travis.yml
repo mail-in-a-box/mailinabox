@@ -2,6 +2,8 @@
 env:
   global:
   - MIAB_LDAP_PROJECT=true
+  - DOWNLOAD_NEXTCLOUD_FROM_GITHUB=true
+  - SKIP_SYSTEM_UPDATE=1
 
 language: shell
 os: linux
@@ -49,3 +51,16 @@ jobs:
       # launch automated tests, but skip tests that require remote
       # smtp support because Travis-CI blocks outgoing port 25
       - sudo tests/runner.sh -dumpoutput -no-smtp-remote upgrade-basic upgrade-totpuser default
+
+  # JOB: unsetvars
+  - env:
+      - NONINTERACTIVE=1
+      - PUBLIC_IP=auto
+      - PUBLIC_IPV6=auto
+      - PRIMARY_HOSTNAME=auto
+    name: unsetvars
+    install:
+      - sudo setup/start.sh
+    script:
+      - sudo tests/runner.sh -dumpoutput -no-smtp-remote default
+

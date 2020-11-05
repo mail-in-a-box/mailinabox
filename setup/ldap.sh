@@ -26,35 +26,13 @@ MIAB_INTERNAL_CONF_FILE="$STORAGE_LDAP_ROOT/miab_ldap.conf"
 
 SERVICE_ACCOUNTS=(LDAP_DOVECOT LDAP_POSTFIX LDAP_WEBMAIL LDAP_MANAGEMENT LDAP_NEXTCLOUD)
 
-declare -i verbose=0
-
 
 #
 # Helper functions
 #
-die() {
-	local msg="$1"
-	local rtn="${2:-1}"
-	[ ! -z "$msg" ] && echo "FATAL: $msg" || echo "An unrecoverable error occurred, exiting"
-	exit ${rtn}
-}
-
-say_debug() {
-	[ $verbose -gt 1 ] && echo $@
-	return 0
-}
-
-say_verbose() {
-	[ $verbose -gt 0 ] && echo $@
-	return 0
-}
-
-say() {
-	echo $@
-}
 
 ldap_debug_flag() {
-	[ $verbose -gt 1 ] && echo "-d 1"
+	[ ${verbose:-0} -gt 1 ] && echo "-d 1"
 }
 
 wait_slapd_start() {
@@ -299,7 +277,7 @@ relocate_slapd_data() {
 	# Re-create the config
 	say_verbose "Create new slapd config"
 	local xargs=()
-	[ $verbose -gt 0 ] && xargs+=(-d 10 -v)
+	[ ${verbose:-0} -gt 0 ] && xargs+=(-d 10 -v)
 	slapadd -F "${MIAB_SLAPD_CONF}" ${xargs[@]} -n 0 -l "$TMP.2" 2>/dev/null || die "slapadd failed!"
 	chown -R openldap:openldap "${MIAB_SLAPD_CONF}"
 	rm -f "$TMP.2"
@@ -370,7 +348,7 @@ add_schemas() {
 		schema_to_ldif "$schema" "$ldif" "$cn"
 		sed -i 's/\$ member \$/$ member $ rfc822MailMember $/' "$ldif"
 		say_verbose "Adding '$cn' schema"
-		[ $verbose -gt 1 ] && cat "$ldif"
+		[ ${verbose:-0} -gt 1 ] && cat "$ldif"
 		ldapadd -Q -Y EXTERNAL -H ldapi:/// -f "$ldif" >/dev/null
 		rm -f "$ldif"
 	fi
@@ -384,7 +362,7 @@ add_schemas() {
 		local ldif="/tmp/$cn.$$.ldif"
 		schema_to_ldif "$schema" "$ldif" "$cn"
 		say_verbose "Adding '$cn' schema"
-		[ $verbose -gt 1 ] && cat "$ldif"
+		[ ${verbose:-0} -gt 1 ] && cat "$ldif"
 		ldapadd -Q -Y EXTERNAL -H ldapi:/// -f "$ldif" >/dev/null
 		rm -f "$ldif"
 	fi
@@ -706,7 +684,7 @@ process_cmdline() {
 		local s=${2:-all}
 		local hide_attrs="(structuralObjectClass|entryUUID|creatorsName|createTimestamp|entryCSN|modifiersName|modifyTimestamp)"
 		local slapcat_args=(-F "$MIAB_SLAPD_CONF" -o ldif-wrap=no)
-		[ $verbose -gt 0 ] && hide_attrs="(_____NEVERMATCHES)"
+		[ ${verbose:-0} -gt 0 ] && hide_attrs="(_____NEVERMATCHES)"
 		
 		if [ "$s" == "all" ]; then
 			echo ""
@@ -739,14 +717,14 @@ process_cmdline() {
 			echo ""
 			echo '--------------------------------'
 			local attrs=(mail member mailRoutingAddress rfc822MailMember)
-			[ $verbose -gt 0 ] && attrs=()
+			[ ${verbose:-0} -gt 0 ] && attrs=()
 			debug_search "(objectClass=mailGroup)" "$LDAP_ALIASES_BASE" ${attrs[@]}
 		fi
 		if [ "$s" == "permitted-senders" -o "$s" == "ps" ]; then
 			echo ""
 			echo '--------------------------------'
 			local attrs=(mail member mailRoutingAddress rfc822MailMember)
-			[ $verbose -gt 0 ] && attrs=()
+			[ ${verbose:-0} -gt 0 ] && attrs=()
 			debug_search "(objectClass=mailGroup)" "$LDAP_PERMITTED_SENDERS_BASE" ${attrs[@]}
 		fi
 		if [ "$s" == "domains" ]; then
@@ -788,15 +766,6 @@ process_cmdline() {
 		exit 1
 	fi
 }
-
-while [ $# -gt 0 ]; do
-	if [ "$1" == "-verbose" -o "$1" == "-v" ]; then
-		let verbose+=1
-		shift
-	else
-		break
-	fi
-done
 
 [ $# -gt 0 ] && process_cmdline $@
 

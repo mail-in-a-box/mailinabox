@@ -4,6 +4,7 @@
 [ "${FEATURE_NEXTCLOUD:-true}" == "false" ] && return 0
 
 source setup/functions.sh # load our functions
+source setup/functions-downloads.sh
 source /etc/mailinabox.conf # load global vars
 
 # ### Installing Nextcloud
@@ -33,7 +34,10 @@ InstallNextcloud() {
 	echo
 
         # Download and verify
-        wget_verify https://download.nextcloud.com/server/releases/nextcloud-$version.zip $hash /tmp/nextcloud.zip
+        get_nc_download_url $version .zip
+        download_link "$DOWNLOAD_URL" to-file use-cache "$DOWNLOAD_URL_CACHE_ID" "" "$hash"
+        rm -f /tmp/nextcloud.zip
+        $DOWNLOAD_FILE_REMOVE && mv "$DOWNLOAD_FILE" /tmp/nextcloud.zip || ln -s "$DOWNLOAD_FILE" /tmp/nextcloud.zip
 
 	# Remove the current owncloud/Nextcloud
 	rm -rf /usr/local/lib/owncloud
