@@ -62,7 +62,7 @@ jobs:
     name: unsetvars
     install:
       - sudo setup/start.sh -v -v
-      - sudo bash -c '. tests/lib/all.sh tests/lib; . tests/system-setup/setup-funcs.sh; init_test_system; init_miab_testing'
+      - sudo bash -c '. /etc/mailinabox.conf; . tests/lib/all.sh tests/lib; . tests/system-setup/setup-funcs.sh; init_test_system; init_miab_testing'
     script:
       - sudo tests/runner.sh -dumpoutput -no-smtp-remote default
 
