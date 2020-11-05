@@ -685,8 +685,7 @@ def log_failed_login(request):
 # APP
 
 if __name__ == '__main__':
-	app.debug = True  # TODO: remove this line and uncomment the next line after testing
-	# if "DEBUG" in os.environ: app.debug = True
+	if "DEBUG" in os.environ: app.debug = True
 	if "APIKEY" in os.environ: auth_service.key = os.environ["APIKEY"]
 
 	if not app.debug:
