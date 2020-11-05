@@ -66,13 +66,13 @@ echo "EXITCODE: $rc"
 SH
   end
 
-  # unsetvars: because miab sets bash '-e' to fail the any setup
-  # script when any script command returns a non-zero exit code, and
-  # more importantly '-u' which fails the script when any unset
-  # variable is accessed, this definition sets a minimal number of
-  # environment variables prior to running start.sh. Doing so will
-  # test that no failures occur during setup in the most common use
-  # case because other vagrant definitions in this file load
+  # unsetvars: because miab sets bash '-e' to fail any setup script
+  # when a script command returns a non-zero exit code, and more
+  # importantly '-u' which fails scripts when any unset variable is
+  # accessed, this definition sets a minimal number of environment
+  # variables prior to running start.sh. Doing so will test that no
+  # failures occur during setup in the most common use case because
+  # other vagrant definitions in this file load
   # tests/system-setup/setup-default.sh, which pre-assign a value to
   # most variables.
 
