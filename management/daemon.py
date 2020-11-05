@@ -364,6 +364,26 @@ def ssl_get_csr(domain):
 	ssl_private_key = os.path.join(os.path.join(env["STORAGE_ROOT"], 'ssl', 'ssl_private_key.pem'))
 	return create_csr(domain, ssl_private_key, request.form.get('countrycode', ''), env)
 
+
+def return_message(item):
+	if item['result'] == 'skipped':
+		return {
+			"title": item["result"].capitalize(),
+			"log": "\n".join(item['log']),
+		}
+	elif item['result'] == 'installed':
+		return {
+			"title": item["result"].capitalize(),
+			"log": "Your certificate containing these domains " + ",".join(
+				item['domains']) + " have been renewed",
+		}
+	else:
+		return {
+			"title": item["result"].capitalize(),
+			"log": "\n".join(item['log'])
+		}
+
+
 @app.route('/ssl/renew/<domain>', methods=['POST'])
 @authorized_personnel_only
 def ssl_renew(domain):
@@ -410,27 +430,19 @@ def ssl_renew(domain):
 			"log": "Sorry, something is not right!",
 		})
 
+	ret_message = {"title": "", "log": ""}
 	for item in status:
-		if isinstance(status, str):
+		if isinstance(item, str):
 			continue
-		else:
-			if domain in item['domains']:
-				if item['result'] == 'skipped':
-					return json_response({
-						"title": item["result"].capitalize(),
-						"log": "\n".join(item['log']),
-					})
-				elif item['result'] == 'installed':
-					return json_response({
-						"title": item["result"].capitalize(),
-						"log": "Your certificate containing these domains " + ",".join(
-							item['domains']) + " have been renewed",
-					})
-				else:
-					return json_response({
-						"title": item["result"].capitalize(),
-						"log": "\n".join(item['log'])
-					})
+		elif existing_key == "no":
+			message = return_message(item)
+			ret_message["title"] = message["title"]
+			ret_message["log"] += "\n" + message["log"]
+		elif existing_key == "yes" and domain in item["domains"]:
+			return json_response(return_message(item))
+	return json_response(ret_message)
+
+
 
 
 @app.route('/ssl/install', methods=['POST'])
