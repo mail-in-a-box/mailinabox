@@ -1,10 +1,11 @@
 #!/bin/bash
 # -*- indent-tabs-mode: t; tab-width: 4; -*-
 
-source setup/functions.sh || exit 1 # load our functions
-
 [ -e /etc/mailinabox.conf ] && source /etc/mailinabox.conf
 [ -e /etc/cloudinabox.conf ] && source /etc/cloudinabox.conf
+
+source setup/functions.sh || exit 1 # load our functions
+
 
 
 create_turnserver_conf() {
