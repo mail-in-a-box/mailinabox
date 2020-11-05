@@ -213,7 +213,7 @@ def run_migrations():
 		print()
 		print("%s file doesn't exists. Skipping migration..." % (migration_id_file,))
 		return
-	return
+
 	ourver = int(migration_id)
 
 	while True:

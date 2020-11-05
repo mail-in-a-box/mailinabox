@@ -17,8 +17,6 @@ With Vagrant set up, the following should boot up Mail-in-a-Box inside a virtual
 
     $ vagrant up --provision
 
-For possible errors encountered, please follow WhatIDidSoFar file.
-
 
 
 ### Modifying your `hosts` file
