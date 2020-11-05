@@ -367,11 +367,9 @@ def ssl_get_csr(domain):
 @app.route('/ssl/renew/<domain>', methods=['POST'])
 @authorized_personnel_only
 def ssl_renew(domain):
-	from exclusiveprocess import Lock
 	from utils import load_environment
 	from ssl_certificates import provision_certificates
 	existing_key = request.form.get('existing_key')
-	Lock(die=True).forever()
 	env = load_environment()
 	if existing_key == "yes":
 		status = provision_certificates(env, limit_domains=[], domain_to_be_renewed=domain)

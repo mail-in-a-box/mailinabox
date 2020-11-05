@@ -39,6 +39,7 @@ apt_install openssl
 # Create a directory to store TLS-related things like "SSL" certificates.
 
 mkdir -p $STORAGE_ROOT/ssl
+mkdir -p $STORAGE_ROOT/ssl-backup  # creating a backup directory for ssl certs just to be safe
 
 # Generate a new private key.
 #
