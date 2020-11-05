@@ -54,14 +54,14 @@ jobs:
 
   # JOB: unsetvars
   - env:
+      - PRIMARY_HOSTNAME=box3.abc.com
       - NONINTERACTIVE=1
       - PUBLIC_IP=auto
       - PUBLIC_IPV6=auto
-      - PRIMARY_HOSTNAME=auto
       - SKIP_NETWORK_CHECKS=1
     name: unsetvars
     install:
-      - sudo setup/start.sh
+      - sudo setup/start.sh -v -v
     script:
       - sudo tests/runner.sh -dumpoutput -no-smtp-remote default
 
