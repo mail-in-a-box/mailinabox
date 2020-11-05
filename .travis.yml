@@ -58,6 +58,7 @@ jobs:
       - PUBLIC_IP=auto
       - PUBLIC_IPV6=auto
       - PRIMARY_HOSTNAME=auto
+      - SKIP_NETWORK_CHECKS=1
     name: unsetvars
     install:
       - sudo setup/start.sh
