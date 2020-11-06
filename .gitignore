@@ -6,3 +6,4 @@ externals/
 .env
 .vagrant
 api/docs/api-docs.html
+downloads/

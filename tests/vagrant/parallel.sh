@@ -13,7 +13,7 @@
 
 
 OUTPUT_DIR=out
-rm -rf "$OUTPUT_DIR"
+#rm -rf "$OUTPUT_DIR"
 mkdir -p "$OUTPUT_DIR"
 
 # set total parallel vms to (#cores minus 1)
@@ -24,10 +24,11 @@ let MAX_PROCS-=1
 parallel_provision() {
     while read box; do
         outfile="$OUTPUT_DIR/$box.out.txt"
+        rm -f "$outfile"
         echo "Provisioning '$box'. Output will be in: $outfile" 1>&2
         echo $box
     done | xargs -P $MAX_PROCS -I"BOXNAME" \
-        sh -c 'vagrant provision BOXNAME >'"$OUTPUT_DIR/"'BOXNAME.out.txt 2>&1 || echo "Error Occurred: BOXNAME"'
+        sh -c 'vagrant provision BOXNAME >'"$OUTPUT_DIR/"'BOXNAME.out.txt 2>&1 && echo "EXITCODE: 0" >> '"$OUTPUT_DIR/"'BOXNAME.out.txt || echo "EXITCODE: $?" >>'"$OUTPUT_DIR/"'BOXNAME.out.txt'
 }
  
 ## -- main -- ##
@@ -38,15 +39,16 @@ start_time="$(date +%s)"
 vagrant up --no-provision
  
 # but run provision tasks in parallel
-vagrant status | grep running | awk '{print $1}' | parallel_provision
+boxes="$(vagrant status | awk '/running \(/ {print $1}')"
+echo "$boxes" | parallel_provision
 
 
 # output overall result - Vagrantfile script must output "EXITCODE: <num>"
 H1 "Results"
 
 rc=0
-for file in "$OUTPUT_DIR"/*.out.txt; do
-    box=$(basename $file | awk -F. '{print $1}')
+for box in $boxes; do
+    file="$OUTPUT_DIR"/$box.out.txt
     exitcode="$(tail "$file" | grep EXITCODE: | awk '{print $NF}')"
     echo -n "$box: "
     if [ -z "$exitcode" ]; then
