@@ -8,7 +8,7 @@ info:
     This API is documented in [**OpenAPI format**](http://spec.openapis.org/oas/v3.0.3).
     ([View the full HTTP specification](https://raw.githubusercontent.com/mail-in-a-box/mailinabox/api-spec/api/mailinabox.yml).)
 
-    All endpoints are relative to `https://{host}/admin` and are secured with [`Basic Access` authentication](https://en.wikipedia.org/wiki/Basic_access_authentication).
+    All endpoints are relative to `https://{host}/admin` and are secured with [`Basic Access` authentication](https://en.wikipedia.org/wiki/Basic_access_authentication). If you have multi-factor authentication enabled, authentication with a `user:password` combination will fail unless a valid OTP is supplied via the `x-auth-token` header. Authentication via a `user:user_key` pair is possible without the header being present.
   contact:
     name: Mail-in-a-Box support
     url: https://mailinabox.email/
@@ -46,6 +46,9 @@ tags:
   - name: Web
     description: |
       Static web hosting operations, which include getting domain information and updating domain root directories.
+  - name: MFA
+    description: |
+      Manage multi-factor authentication schemes. Currently, only TOTP is supported.
   - name: System
     description: |
       System operations, which include system status checks, new version checks
@@ -1662,6 +1665,101 @@ paths:
             text/html:
               schema:
                 type: string
+  /mfa/status:
+    post:
+      tags:
+        - MFA
+      summary: Retrieve MFA status for you or another user
+      description: Retrieves which type of MFA is used and configuration
+      operationId: mfaStatus
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/mfa/status" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MfaStatusResponse'
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /mfa/totp/enable:
+    post:
+      tags:
+        - MFA
+      summary: Enable TOTP authentication
+      description: Enables TOTP authentication for the currently logged-in admin user
+      operationId: mfaTotpEnable
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/mfa/totp/enable" \
+              -d "code=123456" \
+              -d "secret=<string>" \
+              -u "<email>:<password>"
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MfaEnableRequest'
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/MfaEnableSuccessResponse'
+        400:
+          description: Bad request
+          content:
+            text/html:
+              schema:
+                type: string
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+  /mfa/disable:
+    post:
+      tags:
+        - MFA
+      summary: Disable multi-factor authentication for you or another user
+      description: Disables multi-factor authentication for the currently logged-in admin user or another user if a 'user' parameter is submitted. Either disables all multi-factor authentication methods or the method corresponding to the optional property `mfa_id`.
+      operationId: mfaTotpDisable
+      requestBody:
+        required: false
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MfaDisableRequest'
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/mfa/totp/disable" \
+              -u "<email>:<user_key>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/MfaDisableSuccessResponse'
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
 components:
   securitySchemes:
     basicAuth:
@@ -2529,3 +2627,54 @@ components:
       type: string
       example: web updated
       description: Web update response.
+    MfaStatusResponse:
+      type: object
+      properties:
+        enabled_mfa:
+          type: object
+          properties:
+            id:
+              type: string
+            type:
+              type: string
+            label:
+              type: string
+          nullable: true
+        new_mfa:
+          type: object
+          properties:
+            type:
+              type: string
+            secret:
+              type: string
+            qr_code_base64:
+              type: string
+    MfaEnableRequest:
+      type: object
+      required:
+        - secret
+        - code
+      properties:
+        secret:
+          type: string
+        code:
+          type: string
+        label:
+          type: string
+    MfaEnableSuccessResponse:
+      type: string
+    MfaEnableBadRequestResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+    MfaDisableRequest:
+      type: object
+      properties:
+        mfa_id:
+          type: string
+          nullable: true
+    MfaDisableSuccessResponse:
+      type: string
