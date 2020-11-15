@@ -27,7 +27,7 @@ If that doesn't work:
 curl https://raw.githubusercontent.com/ddavness/power-mailinabox/master/setup/bootstrap.sh | sudo bash
 ```
 
-## Current Version: v0.50.POWER.1 (Tracking v0.50)
+## Current Version: v0.51.POWER.0 (Tracking v0.51)
 
 This is a fork of MiaB (duh), hacked and tuned to my needs:
 
@@ -37,35 +37,33 @@ This is a fork of MiaB (duh), hacked and tuned to my needs:
 
 💤 - **I did not begin this part yet!**
 
-- ✅ Proper support for Debian (I recommend Debian Buster or later, but if it works on your machine, it works!) AND Ubuntu 20.04 LTS;
+- ✅ Support for Debian AND Ubuntu 20.04 LTS;
 
 - ✅ Native support for SMTP relays (For example: SendGrid);
 
 - ✅ Bumped the bootstrap and jQuery dependencies' versions - and we've got a brand new admin panel now!
 
-- ✅ Per-domain `nginx` configuration support. This will allow you to:
-
-- - Use PHP (e.g. host a domain shortener);
-
-- - Custom pages will no longer have their pages defaulting to the MiaB services (`/admin`, `/mail`, etc.);
+- ✅ Per-domain `nginx` configuration: Custom pages will no longer have their pages defaulting to the MiaB services (`/admin`, `/mail`, etc.);
 
 - ✅ Updated NextCloud to the latest version available;
 
 - ✅ Performing backups immediately from the admin panel (independently from the daily schedule);
 
-- 💤 Encrypting backups using user-provided PGP keys;
+- 👨‍💻 Encrypting backups using user-provided PGP keys;
 
-- 💤 Ability to download the backups from the admin panel;
-
-### Ideas section:
-
-- 💤 Possibility of making some services optional (if they require more software to be installed) on setup?
-
-- - For example, one might simply not use NextCloud/Munin at all, and they're there... just wasting resources.
+- 👨‍💻 Integrate a WKD server (Web Key Directory) for PGP keys;
 
 - 💤 Restricting access to the admin panel to certain IP's?
 
 - 💤 Customizing MTA names? (because privacy)
+
+### Ideas section:
+
+- 💤 Ability to download the backups from the admin panel;
+
+- 💤 Possibility of making some services optional (if they require more software to be installed) on setup?
+
+- - For example, one might simply not use NextCloud/Munin at all, and they're there... just wasting resources.
 
 - 💤 AXFR Transfers (for secondary DNS) using TSIG?
 
@@ -73,7 +71,7 @@ This is a fork of MiaB (duh), hacked and tuned to my needs:
 
 - 💤 More complete webmail configuration via the admin panel/plugin management?
 
-- 💤 Optional TOTP Two-Factor-Authentication for the admin panel/webmail?
+- 💤 Expand the TOTP Two-Factor-Authentication for the webmail?
 
 - - Maybe U2F one day, too, but I don't have a capable device for this just yet...
 
