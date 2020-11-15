@@ -344,10 +344,7 @@ def dns_get_dump():
 @authorized_personnel_only
 def dns_get_zonefile(zone):
 	from dns_update import get_dns_zonefile
-	zonefile = get_dns_zonefile(zone, env)
-	response = make_response(zonefile, 200)
-	response.mimetype = "text/plain"
-	return response
+	return Response(get_dns_zonefile(zone, env), status=200, mimetype='text/plain')
 
 # SSL
 
