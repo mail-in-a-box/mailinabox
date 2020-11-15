@@ -1,0 +1,242 @@
+<style>
+    .twofactor #totp-setup,
+    .twofactor #disable-2fa,
+    .twofactor #output-2fa {
+        display: none;
+    }
+
+    .twofactor.loaded .loading-indicator {
+        display: none;
+    }
+
+    .twofactor.disabled #disable-2fa,
+    .twofactor.enabled #totp-setup {
+        display: none;
+    }
+
+    .twofactor.disabled #totp-setup,
+    .twofactor.enabled #disable-2fa {
+        display: block;
+    }
+
+    .twofactor #totp-setup-qr img {
+        display: block;
+        width: 256px;
+        max-width: 100%;
+        height: auto;
+    }
+
+    .twofactor #output-2fa.visible {
+        display: block;
+    }
+</style>
+
+<h2>Two-Factor Authentication</h2>
+
+<p>When two-factor authentication is enabled, you will be prompted to enter a six digit code from an
+authenticator app (usually on your phone) when you log into this control panel.</p>
+
+<div class="card">
+<div class="card-header text-white bg-danger">
+Enabling two-factor authentication does not protect access to your email
+</div>
+<div class="card-body bg-light">
+Enabling two-factor authentication on this page only limits access to this control panel. Remember that most websites allow you to
+reset your password by checking your email, so anyone with access to your email can typically take over
+your other accounts. Additionally, if your email address or any alias that forwards to your email
+address is a typical domain control validation address (e.g admin@, administrator@, postmaster@, hostmaster@,
+webmaster@, abuse@), extra care should be taken to protect the account. <strong>Always use a strong password,
+and ensure every administrator account for this control panel does the same.</strong>
+</div>
+</div>
+
+<div class="twofactor">
+    <div class="loading-indicator">Loading...</div>
+
+    <form id="totp-setup">
+        <h3>Setup Instructions</h3>
+
+        <div class="form-group">
+            <p>1. Install <a href="https://freeotp.github.io/">FreeOTP</a> or <a href="https://www.pcworld.com/article/3225913/what-is-two-factor-authentication-and-which-2fa-apps-are-best.html">any
+            other two-factor authentication app</a> that supports TOTP.</p>
+        </div>
+
+        <div class="form-group">
+            <p style="margin-bottom: 0">2. Scan the QR code in the app or directly enter the secret into the app:</p>
+            <div id="totp-setup-qr"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="otp-label" style="font-weight: normal">3. Optionally, give your device a label so that you can remember what device you set it up on:</label>
+            <input type="text" id="totp-setup-label" class="form-control" placeholder="my phone" />
+        </div>
+
+        <div class="form-group">
+            <label for="otp" style="font-weight: normal">4. Use the app to generate your first six-digit code and enter it here:</label>
+            <input type="text" id="totp-setup-token" class="form-control" placeholder="6-digit code" />
+        </div>
+
+        <input type="hidden" id="totp-setup-secret" />
+
+        <div class="form-group">
+            <p>When you click Enable Two-Factor Authentication, you will be logged out of the control panel and will have to log in
+            again, now using your two-factor authentication app.</p>
+            <button id="totp-setup-submit" disabled type="submit" class="btn btn-primary">Enable Two-Factor Authentication</button>
+        </div>
+    </form>
+
+    <form id="disable-2fa">
+        <div class="form-group">
+            <p>Two-factor authentication is active for your account<span id="mfa-device-label"></span>.</p>
+            <p>You will have to log into the admin panel again after disabling two-factor authentication.</p>
+        </div>
+        <div class="form-group">
+            <button type="submit" class="btn btn-danger">Disable Two-Factor Authentication</button>
+        </div>
+    </form>
+
+    <div id="output-2fa" class="card bg-light">
+        <div class="card-body"></div>
+    </div>
+</div>
+
+<script>
+    var el = {
+        disableForm: document.getElementById('disable-2fa'),
+        output: document.getElementById('output-2fa'),
+        totpSetupForm: document.getElementById('totp-setup'),
+        totpSetupToken: document.getElementById('totp-setup-token'),
+        totpSetupSecret: document.getElementById('totp-setup-secret'),
+        totpSetupLabel: document.getElementById('totp-setup-label'),
+        totpQr: document.getElementById('totp-setup-qr'),
+        totpSetupSubmit: document.querySelector('#totp-setup-submit'),
+        wrapper: document.querySelector('.twofactor')
+    }
+
+    function update_setup_disabled(evt) {
+        var val = evt.target.value.trim();
+
+        if (
+            typeof val !== 'string' ||
+            typeof el.totpSetupSecret.value !== 'string' ||
+            val.length !== 6 ||
+            el.totpSetupSecret.value.length !== 32 ||
+            !(/^\+?\d+$/.test(val))
+        ) {
+            el.totpSetupSubmit.setAttribute('disabled', '');
+        } else {
+            el.totpSetupSubmit.removeAttribute('disabled');
+        }
+    }
+
+    function render_totp_setup(provisioned_totp) {
+        var img = document.createElement('img');
+        img.src = "data:image/png;base64," + provisioned_totp.qr_code_base64;
+
+        var code = document.createElement('div');
+        code.innerHTML = `Secret: ${provisioned_totp.secret}`;
+
+        el.totpQr.appendChild(img);
+        el.totpQr.appendChild(code);
+
+        el.totpSetupToken.addEventListener('input', update_setup_disabled);
+        el.totpSetupForm.addEventListener('submit', do_enable_totp);
+
+        el.totpSetupSecret.setAttribute('value', provisioned_totp.secret);
+
+        el.wrapper.classList.add('disabled');
+    }
+
+    function render_disable(mfa) {
+        el.disableForm.addEventListener('submit', do_disable);
+        el.wrapper.classList.add('enabled');
+        if (mfa.label)
+          $("#mfa-device-label").text(" on device '" + mfa.label + "'");
+    }
+
+    function hide_error() {
+        el.output.querySelector('.card-body').innerHTML = '';
+        el.output.classList.remove('visible');
+    }
+
+    function render_error(msg) {
+        el.output.querySelector('.card-body').innerHTML = msg;
+        el.output.classList.add('visible');
+    }
+
+    function reset_view() {
+        el.wrapper.classList.remove('loaded', 'disabled', 'enabled');
+
+        el.disableForm.removeEventListener('submit', do_disable);
+
+        hide_error();
+
+        el.totpSetupForm.reset();
+        el.totpSetupForm.removeEventListener('submit', do_enable_totp);
+
+        el.totpSetupSecret.setAttribute('value', '');
+        el.totpSetupToken.removeEventListener('input', update_setup_disabled);
+
+        el.totpSetupSubmit.setAttribute('disabled', '');
+        el.totpQr.innerHTML = '';
+    }
+
+    function show_mfa() {
+        reset_view();
+
+        api(
+            '/mfa/status',
+            'POST',
+            {},
+            function(res) {
+                el.wrapper.classList.add('loaded');
+
+                var has_mfa = false;
+                res.enabled_mfa.forEach(function(mfa) {
+                    if (mfa.type == "totp") {
+                        render_disable(mfa);
+                        has_mfa = true;
+                    }
+                });
+
+                if (!has_mfa)
+                  render_totp_setup(res.new_mfa.totp);
+            }
+        );
+    }
+
+    function do_disable(evt) {
+        evt.preventDefault();
+        hide_error();
+
+        api(
+            '/mfa/disable',
+            'POST',
+            { type: 'totp' },
+            function() {
+                do_logout();
+            }
+        );
+
+        return false;
+    }
+
+    function do_enable_totp(evt) {
+        evt.preventDefault();
+        hide_error();
+
+        api(
+            '/mfa/totp/enable',
+            'POST',
+            {
+                token: $(el.totpSetupToken).val(),
+                secret: $(el.totpSetupSecret).val(),
+                label: $(el.totpSetupLabel).val()
+            },
+            function(res) { do_logout(); },
+            function(res) { render_error(res); }
+        );
+
+        return false;
+    }
+</script>

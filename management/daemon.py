@@ -1,14 +1,15 @@
 import os, os.path, re, json, time
-import subprocess
+import multiprocessing.pool, subprocess
 
 from functools import wraps
 
 from flask import Flask, request, render_template, abort, Response, send_from_directory, make_response
 
-import auth, utils, multiprocessing.pool
+import auth, utils
 from mailconfig import get_mail_users, get_mail_users_ex, get_admins, add_mail_user, set_mail_password, remove_mail_user
 from mailconfig import get_mail_user_privileges, add_remove_mail_user_privilege, open_database
 from mailconfig import get_mail_aliases, get_mail_aliases_ex, get_mail_domains, add_mail_alias, remove_mail_alias
+from mfa import get_public_mfa_state, provision_totp, validate_totp_secret, enable_mfa, disable_mfa
 
 env = utils.load_environment()
 
@@ -35,23 +36,31 @@ app = Flask(__name__, template_folder=os.path.abspath(os.path.join(os.path.dirna
 def authorized_personnel_only(viewfunc):
 	@wraps(viewfunc)
 	def newview(*args, **kwargs):
-		# Authenticate the passed credentials, which is either the API key or a username:password pair.
+		# Authenticate the passed credentials, which is either the API key or a username:password pair
+		# and an optional X-Auth-Token token.
 		error = None
+		privs = []
+
 		try:
 			email, privs = auth_service.authenticate(request, env)
 		except ValueError as e:
-			# Authentication failed.
-			privs = []
-			error = "Incorrect username or password"
-
 			# Write a line in the log recording the failed login
 			log_failed_login(request)
 
+			# Authentication failed.
+			error = str(e)
+
 		# Authorized to access an API view?
 		if "admin" in privs:
+			# Store the email address of the logged in user so it can be accessed
+			# from the API methods that affect the calling user.
+			request.user_email = email
+			request.user_privs = privs
+
 			# Call view func.
 			return viewfunc(*args, **kwargs)
-		elif not error:
+
+		if not error:
 			error = "You are not an administrator."
 
 		# Not authorized. Return a 401 (send auth) and a prompt to authorize by default.
@@ -83,8 +92,8 @@ def authorized_personnel_only(viewfunc):
 def unauthorized(error):
 	return auth_service.make_unauthorized_response()
 
-def json_response(data):
-	return Response(json.dumps(data, indent=2, sort_keys=True)+'\n', status=200, mimetype='application/json')
+def json_response(data, status=200):
+	return Response(json.dumps(data, indent=2, sort_keys=True)+'\n', status=status, mimetype='application/json')
 
 ###################################
 
@@ -122,12 +131,17 @@ def me():
 	try:
 		email, privs = auth_service.authenticate(request, env)
 	except ValueError as e:
-		# Log the failed login
-		log_failed_login(request)
-
-		return json_response({
-			"status": "invalid",
-			"reason": "Incorrect username or password",
+		if "missing-totp-token" in str(e):
+			return json_response({
+				"status": "missing-totp-token",
+				"reason": str(e),
+			})
+		else:
+			# Log the failed login
+			log_failed_login(request)
+			return json_response({
+				"status": "invalid",
+				"reason": str(e),
 			})
 
 	resp = {
@@ -386,6 +400,60 @@ def ssl_provision_certs():
 	requests = provision_certificates(env, limit_domains=None)
 	return json_response({ "requests": requests })
 
+# multi-factor auth
+
+@app.route('/mfa/status', methods=['POST'])
+@authorized_personnel_only
+def mfa_get_status():
+	# Anyone accessing this route is an admin, and we permit them to
+	# see the MFA status for any user if they submit a 'user' form
+	# field. But we don't include provisioning info since a user can
+	# only provision for themselves.
+	email = request.form.get('user', request.user_email) # user field if given, otherwise the user making the request
+	try:
+		resp = {
+			"enabled_mfa": get_public_mfa_state(email, env)
+		}
+		if email == request.user_email:
+			resp.update({
+				"new_mfa": {
+					"totp": provision_totp(email, env)
+				}
+			})
+	except ValueError as e:
+		return (str(e), 400)
+	return json_response(resp)
+
+@app.route('/mfa/totp/enable', methods=['POST'])
+@authorized_personnel_only
+def totp_post_enable():
+	secret = request.form.get('secret')
+	token = request.form.get('token')
+	label = request.form.get('label')
+	if type(token) != str:
+		return ("Bad Input", 400)
+	try:
+		validate_totp_secret(secret)
+		enable_mfa(request.user_email, "totp", secret, token, label, env)
+	except ValueError as e:
+		return (str(e), 400)
+	return "OK"
+
+@app.route('/mfa/disable', methods=['POST'])
+@authorized_personnel_only
+def totp_post_disable():
+	# Anyone accessing this route is an admin, and we permit them to
+	# disable the MFA status for any user if they submit a 'user' form
+	# field.
+	email = request.form.get('user', request.user_email) # user field if given, otherwise the user making the request
+	try:
+		result = disable_mfa(email, request.form.get('mfa-id') or None, env) # convert empty string to None
+	except ValueError as e:
+		return (str(e), 400)
+	if result: # success
+		return "OK"
+	else: # error
+		return ("Invalid user or MFA id.", 400)
 
 # WEB
 
