@@ -569,9 +569,9 @@ def get_dns_zonefile(zone, env):
 		if zone == domain:
 			break
 	else:
-		raise ValueError("%s is not a domain name or a subdomain of a domain name managed by this box." % zone)
+		raise ValueError("%s is not a domain name that corresponds to a zone." % zone)
 
-	nsd_zonefile = "/etc/nsd/zones/" + zone + ".txt"
+	nsd_zonefile = "/etc/nsd/zones/" + fn
 	with open(nsd_zonefile, "r") as f:
 		return f.read()
 

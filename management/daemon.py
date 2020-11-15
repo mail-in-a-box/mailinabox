@@ -1,3 +1,5 @@
+#!/usr/local/lib/mailinabox/env/bin/python3
+
 import os, os.path, re, json, time
 import multiprocessing.pool, subprocess
 
@@ -342,7 +344,10 @@ def dns_get_dump():
 @authorized_personnel_only
 def dns_get_zonefile(zone):
 	from dns_update import get_dns_zonefile
-	return json_response(get_dns_zonefile(zone, env))
+	zonefile = get_dns_zonefile(zone, env)
+	response = make_response(zonefile, 200)
+	response.mimetype = "text/plain"
+	return response
 
 # SSL
 
