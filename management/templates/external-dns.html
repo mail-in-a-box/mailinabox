@@ -118,7 +118,6 @@ function do_download_zonefile() {
         "GET",
         {},
         function(data) {
-            if (data == "") return; // nothing updated
             show_modal_error("Download Zonefile", $("<pre/>").text(data));
         },
         function(err) {
