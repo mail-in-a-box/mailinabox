@@ -311,6 +311,9 @@ hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable 
 sudo -u www-data php /usr/local/lib/owncloud/occ upgrade
 if [ \( $? -ne 0 \) -a \( $? -ne 3 \) ]; then exit 1; fi
 
+# Disable default apps that we don't support
+sudo -u www-data php /usr/local/lib/owncloud/occ app:disable photos dashboard activity
+
 # Set PHP FPM values to support large file uploads
 # (semicolon is the comment character in this file, hashes produce deprecation warnings)
 tools/editconf.py /etc/php/7.2/fpm/php.ini -c ';' \
