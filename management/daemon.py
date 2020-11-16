@@ -1,3 +1,5 @@
+#!/usr/local/lib/mailinabox/env/bin/python3
+
 import os, os.path, re, json, time
 import multiprocessing.pool, subprocess
 
@@ -337,6 +339,12 @@ def dns_set_record(qname, rtype="A"):
 def dns_get_dump():
 	from dns_update import build_recommended_dns
 	return json_response(build_recommended_dns(env))
+
+@app.route('/dns/zonefile/<zone>')
+@authorized_personnel_only
+def dns_get_zonefile(zone):
+	from dns_update import get_dns_zonefile
+	return Response(get_dns_zonefile(zone, env), status=200, mimetype='text/plain')
 
 # SSL
 
