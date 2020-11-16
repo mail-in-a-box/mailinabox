@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-IN DEVELOPMENT
---------------
+v0.51 (November 14, 2020)
+-------------------------
 
 Software updates:
 
