@@ -42,6 +42,19 @@
 	You may need to adopt this technique when adding DomainKeys. Use a tool like <code>named-checkzone</code> to validate your zone file.
 </p>
 
+<h3>Download zonefile</h3>
+<p>You can download your zonefiles here or use the table of records below.</p>
+<form class="form-inline" role="form" onsubmit="do_download_zonefile(); return false;">
+    <div class="form-group">
+        <div class="form-group">
+            <label for="downloadZonefile" class="control-label sr-only">Zone</label>
+            <select id="downloadZonefile" class="form-control" style="width: auto"> </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Download</button>
+    </div>
+</form>
+
+<h3>Records</h3>
 
 <table id="external_dns_settings" class="table">
 	<thead>
@@ -57,6 +70,18 @@
 
 <script>
 function show_external_dns() {
+  api(
+    "/dns/zones",
+    "GET",
+    { },
+    function(data) {
+        var zones = $('#downloadZonefile');
+        zones.text('');
+        for (var j = 0; j < data.length; j++) {
+            zones.append($('<option/>').text(data[j]));
+        }
+    });
+
   $('#external_dns_settings tbody').html("<tr><td colspan='2' class='text-muted'>Loading...</td></tr>")
   api(
     "/dns/dump",
@@ -83,5 +108,20 @@ function show_external_dns() {
         }
       }
     })
+}
+
+function do_download_zonefile() {
+    var zone = $('#downloadZonefile').val();
+
+    api(
+        "/dns/zonefile/"+ zone,
+        "GET",
+        {},
+        function(data) {
+            show_modal_error("Download Zonefile", $("<pre/>").text(data));
+        },
+        function(err) {
+            show_modal_error("Download Zonefile (Error)", $("<pre/>").text(err));
+        });
 }
 </script>

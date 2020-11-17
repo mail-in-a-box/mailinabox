@@ -565,6 +565,17 @@ $TTL 1800           ; default time to live
 
 	return True # file is updated
 
+def get_dns_zonefile(zone, env):
+	for domain, fn in get_dns_zones(env):
+		if zone == domain:
+			break
+	else:
+		raise ValueError("%s is not a domain name that corresponds to a zone." % zone)
+
+	nsd_zonefile = "/etc/nsd/zones/" + fn
+	with open(nsd_zonefile, "r") as f:
+		return f.read()
+
 ########################################################################
 
 def write_nsd_conf(zonefiles, additional_records, env):
