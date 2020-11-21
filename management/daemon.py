@@ -468,7 +468,7 @@ def ssl_provision_certs():
 def mfa_get_status():
 	# Anyone accessing this route is an admin, and we permit them to
 	# see the MFA status for any user if they submit a 'user' form
-	# field. But we don't include provisioning info since a user can
+	# field. But we don't always include provisioning info since a user can
 	# only provision for themselves.
 	email = request.form.get('user', request.user_email) # user field if given, otherwise the user making the request
 	try:
@@ -485,7 +485,7 @@ def mfa_get_status():
 		return (str(e), 400)
 	return json_response(resp)
 
-@app.route('/mfa/totp/enable', methods=['POST'])
+@app.route('/mfa/enable/totp', methods=['POST'])
 @authorized_personnel_only
 def totp_post_enable():
 	secret = request.form.get('secret')

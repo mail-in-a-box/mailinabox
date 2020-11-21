@@ -1,33 +1,9 @@
 <style>
-    .twofactor #totp-setup,
-    .twofactor #disable-2fa,
-    .twofactor #output-2fa {
-        display: none;
-    }
-
-    .twofactor.loaded .loading-indicator {
-        display: none;
-    }
-
-    .twofactor.disabled #disable-2fa,
-    .twofactor.enabled #totp-setup {
-        display: none;
-    }
-
-    .twofactor.disabled #totp-setup,
-    .twofactor.enabled #disable-2fa {
-        display: block;
-    }
-
     .twofactor #totp-setup-qr img {
         display: block;
         width: 256px;
         max-width: 100%;
         height: auto;
-    }
-
-    .twofactor #output-2fa.visible {
-        display: block;
     }
 </style>
 
@@ -51,10 +27,11 @@ and ensure every administrator account for this control panel does the same.</st
 </div>
 
 <div class="twofactor">
-    <div class="loading-indicator">Loading...</div>
+    <div id="mfa-devices">
+    </div>
 
-    <form id="totp-setup">
-        <h3>Setup Instructions</h3>
+    <form id="totp-setup" style="display: none">
+        <h3>Add a TOTP Device</h3>
 
         <div class="form-group">
             <p>1. Install <a href="https://freeotp.github.io/">FreeOTP</a> or <a href="https://www.pcworld.com/article/3225913/what-is-two-factor-authentication-and-which-2fa-apps-are-best.html">any
@@ -85,24 +62,24 @@ and ensure every administrator account for this control panel does the same.</st
         </div>
     </form>
 
-    <form id="disable-2fa">
-        <div class="form-group">
-            <p>Two-factor authentication is active for your account<span id="mfa-device-label"></span>.</p>
-            <p>You will have to log into the admin panel again after disabling two-factor authentication.</p>
-        </div>
-        <div class="form-group">
-            <button type="submit" class="btn btn-danger">Disable Two-Factor Authentication</button>
-        </div>
-    </form>
 
-    <div id="output-2fa" class="panel panel-danger">
+    <div id="output-2fa" class="panel panel-danger hidden">
         <div class="panel-body"></div>
+    </div>
+
+    <div id="mfa-device-templates" style="display: none">
+      <form class="totp" style="margin: 1em 0; border: 1px solid #AAA; padding: 10px;">
+          <p>Two-factor authentication is active for your account<span class="mfa-device-label"></span>.</p>
+          <div class="form-group">
+              <button type="submit" class="btn btn-danger">Disable TOTP Device</button>
+          </div>
+          <p style="margin-bottom: 0">You will have to log into the admin panel again after disabling two-factor authentication.</p>
+      </form>
     </div>
 </div>
 
 <script>
     var el = {
-        disableForm: document.getElementById('disable-2fa'),
         output: document.getElementById('output-2fa'),
         totpSetupForm: document.getElementById('totp-setup'),
         totpSetupToken: document.getElementById('totp-setup-token'),
@@ -130,6 +107,8 @@ and ensure every administrator account for this control panel does the same.</st
     }
 
     function render_totp_setup(provisioned_totp) {
+        $(el.totpSetupForm).show();
+
         var img = document.createElement('img');
         img.src = "data:image/png;base64," + provisioned_totp.qr_code_base64;
 
@@ -148,35 +127,35 @@ and ensure every administrator account for this control panel does the same.</st
     }
 
     function render_disable(mfa) {
-        el.disableForm.addEventListener('submit', do_disable);
-        el.wrapper.classList.add('enabled');
+        var panel = $('#mfa-device-templates .' + mfa.type).clone();
+        $('#mfa-devices').append(panel);
+        panel.attr('data-mfa-id', mfa.id);
+        panel.on('submit', do_disable);
         if (mfa.label)
-          $("#mfa-device-label").text(" on device '" + mfa.label + "'");
+          panel.find(".mfa-device-label").text(" on device '" + mfa.label + "'");
     }
 
     function hide_error() {
         el.output.querySelector('.panel-body').innerHTML = '';
-        el.output.classList.remove('visible');
+        el.output.classList.add('hidden');
     }
 
     function render_error(msg) {
         el.output.querySelector('.panel-body').innerHTML = msg;
-        el.output.classList.add('visible');
+        el.output.classList.remove('hidden');
     }
 
     function reset_view() {
         el.wrapper.classList.remove('loaded', 'disabled', 'enabled');
-
-        el.disableForm.removeEventListener('submit', do_disable);
+        $('#mfa-devices > *').remove();
 
         hide_error();
 
+        $(el.totpSetupForm).hide();
         el.totpSetupForm.reset();
         el.totpSetupForm.removeEventListener('submit', do_enable_totp);
-
         el.totpSetupSecret.setAttribute('value', '');
         el.totpSetupToken.removeEventListener('input', update_setup_disabled);
-
         el.totpSetupSubmit.setAttribute('disabled', '');
         el.totpQr.innerHTML = '';
     }
@@ -191,16 +170,14 @@ and ensure every administrator account for this control panel does the same.</st
             function(res) {
                 el.wrapper.classList.add('loaded');
 
-                var has_mfa = false;
                 res.enabled_mfa.forEach(function(mfa) {
                     if (mfa.type == "totp") {
                         render_disable(mfa);
-                        has_mfa = true;
                     }
                 });
 
-                if (!has_mfa)
-                  render_totp_setup(res.new_mfa.totp);
+                if (res.new_mfa.totp)
+                    render_totp_setup(res.new_mfa.totp);
             }
         );
     }
@@ -212,7 +189,7 @@ and ensure every administrator account for this control panel does the same.</st
         api(
             '/mfa/disable',
             'POST',
-            { type: 'totp' },
+            { id: $(this).attr('data-mfa-id') },
             function() {
                 do_logout();
             }
@@ -226,7 +203,7 @@ and ensure every administrator account for this control panel does the same.</st
         hide_error();
 
         api(
-            '/mfa/totp/enable',
+            '/mfa/enable/totp',
             'POST',
             {
                 token: $(el.totpSetupToken).val(),

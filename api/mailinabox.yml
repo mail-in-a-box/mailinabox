@@ -1740,7 +1740,7 @@ paths:
             text/html:
               schema:
                 type: string
-  /mfa/totp/enable:
+  /mfa/enable/totp:
     post:
       tags:
         - MFA
