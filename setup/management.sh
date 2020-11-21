@@ -86,6 +86,16 @@ unzip -q /tmp/bootstrap.zip -d $assets_dir
 mv $assets_dir/bootstrap-$bootstrap_version-dist $assets_dir/bootstrap
 rm -f /tmp/bootstrap.zip
 
+# FontAwesome CDN URL
+fontawesome_version=5.15.1
+fontawesome_url=https://github.com/FortAwesome/Font-Awesome/releases/download/$fontawesome_version/fontawesome-free-$fontawesome_version-web.zip
+
+# Get FontAwesome
+wget_verify $fontawesome_url 911a6540bc0cc00c5d78288b24ad646ec71c21c8 /tmp/fontawesome.zip
+unzip -q /tmp/fontawesome.zip -d $assets_dir
+mv $assets_dir/fontawesome-free-$fontawesome_version-web $assets_dir/fontawesome
+rm -f /tmp/fontawesome.zip
+
 # Create an init script to start the management daemon and keep it
 # running after a reboot.
 cat > $inst_dir/start <<EOF;
