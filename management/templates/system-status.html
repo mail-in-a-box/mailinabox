@@ -43,8 +43,8 @@
 	}
 </style>
 
-<div class="row">
-	<div class="col-md-push-9 col-md-3">
+<div>
+	<div>
 
 		<div id="system-reboot-required" style="display: none; margin-bottom: 1em;">
 			<button type="button" class="btn btn-danger" onclick="confirm_reboot(); return false;">Reboot Box</button>
@@ -59,13 +59,12 @@
 		</div>
 
 	</div> <!-- /col -->
-	<div class="col-md-pull-3 col-md-8">
+	<br>
+	<div>
 
-		<table id="system-checks" class="table" style="max-width: 60em">
-			<thead>
-			</thead>
-			<tbody>
-			</tbody>
+		<table id="system-checks" class="table">
+			<thead></thead>
+			<tbody></tbody>
 		</table>
 
 	</div> <!-- /col -->
@@ -73,7 +72,7 @@
 
 <script>
 	function show_system_status() {
-		$('#system-checks tbody').html("<tr><td colspan='2' class='text-muted'>Loading...</td></tr>")
+		$('#system-checks tbody').html("<tr><td class='text-muted'>Loading...</td></tr>")
 
 		api(
 			"/system/privacy",
