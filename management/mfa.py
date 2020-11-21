@@ -1,9 +1,12 @@
 import base64
 import hmac
 import io
+import json
 import os
 import pyotp
 import qrcode
+import pywarp
+import pywarp.backends
 
 from mailconfig import open_database
 
@@ -29,25 +32,44 @@ def get_public_mfa_state(email, env):
 	]
 
 def get_hash_mfa_state(email, env):
-	mfa_state = get_mfa_state(email, env)
-	return [
-		{ "id": s["id"], "type": s["type"], "secret": s["secret"] }
-		for s in mfa_state
-	]
+	# Get the current MFA credential secrets from which we form a hash
+	# so that we can reset user logins when any authentication information
+	# changes.
+	mfa_state = []
+	for s in get_mfa_state(email, env):
+		# Add TOTP id and secret to the state.
+		# Skip WebAuthn state if it's just a challenge.
+		if s["type"] == "webauthn":
+			try:
+				# Get the credential and only include it (not challenges) in the state.
+				s["secret"] = json.loads(s["secret"])["cred_pub_key"]
+			except:
+				# Skip this one --- there is no cred_pub_key.
+				continue
+		mfa_state.append({ "id": s["id"], "type": s["type"], "secret": s["secret"] })
+	return mfa_state
 
-def enable_mfa(email, type, secret, token, label, env):
+def enable_mfa(email, type, env, *args):
 	if type == "totp":
+		secret, token, label = args
 		validate_totp_secret(secret)
 		# Sanity check with the provide current token.
 		totp = pyotp.TOTP(secret)
 		if not totp.verify(token, valid_window=1):
 			raise ValueError("Invalid token.")
+		conn, c = open_database(env, with_connection=True)
+		c.execute('INSERT INTO mfa (user_id, type, secret, label) VALUES (?, ?, ?, ?)', (get_user_id(email, c), type, secret, label))
+		conn.commit()
+	elif type == "webauthn":
+		attestationObject, clientDataJSON = args
+		rp = pywarp.RelyingPartyManager(
+			get_relying_party_name(env),
+			rp_id=env["PRIMARY_HOSTNAME"], # must match hostname the control panel is served from
+			credential_storage_backend=WebauthnStorageBackend(env))
+		rp.register(attestation_object=base64.b64decode(attestationObject), client_data_json=base64.b64decode(clientDataJSON), email=email.encode("utf8")) # encoding of email is a little funky here, pywarp calls .decode() with no args?
 	else:
 		raise ValueError("Invalid MFA type.")
 
-	conn, c = open_database(env, with_connection=True)
-	c.execute('INSERT INTO mfa (user_id, type, secret, label) VALUES (?, ?, ?, ?)', (get_user_id(email, c), type, secret, label))
-	conn.commit()
 
 def set_mru_token(email, mfa_id, token, env):
 	conn, c = open_database(env, with_connection=True)
@@ -71,6 +93,9 @@ def validate_totp_secret(secret):
 	if len(secret) != 32:
 		raise ValueError("Secret should be a 32 characters base32 string")
 
+def get_relying_party_name(env):
+	return env["PRIMARY_HOSTNAME"] + " Mail-in-a-Box Control Panel"
+
 def provision_totp(email, env):
 	# Make a new secret.
 	secret = base64.b32encode(os.urandom(20)).decode('utf-8')
@@ -79,7 +104,7 @@ def provision_totp(email, env):
 	# Make a URI that we encode within a QR code.
 	uri = pyotp.TOTP(secret).provisioning_uri(
 		name=email,
-		issuer_name=env["PRIMARY_HOSTNAME"] + " Mail-in-a-Box Control Panel"
+		issuer_name=get_relying_party_name(env)
 	)
 
 	# Generate a QR code as a base64-encode PNG image.
@@ -93,6 +118,55 @@ def provision_totp(email, env):
 		"secret": secret,
 		"qr_code_base64": png_b64
 	}
+
+class WebauthnStorageBackend(pywarp.backends.CredentialStorageBackend):
+	def __init__(self, env):
+		self.env = env
+	def get_record(self, email, conn=None, c=None):
+		# Get an existing record and parse the 'secret' column as JSON.
+		if conn is None: conn, c = open_database(self.env, with_connection=True)
+		c.execute('SELECT secret FROM mfa WHERE user_id=? AND type="webauthn"', (get_user_id(email, c),))
+		config = c.fetchone()
+		if config:
+			try:
+				return json.loads(config[0])
+			except:
+				pass
+		return { }
+	def update_record(self, email, fields):
+		# Update the webauthn record in the database for this user by
+		# merging the fields with the existing fields in the database.
+		conn, c = open_database(self.env, with_connection=True)
+		config = self.get_record(email, conn=conn, c=c)
+		if config:
+			# Merge and update.
+			config.update(fields)
+			config = json.dumps(config)
+			c.execute('UPDATE mfa SET secret=? WHERE user_id=? AND type="webauthn"', (config, get_user_id(email, c),))
+			conn.commit()
+			return
+
+		# Either there's no existing webauthn record or it's corrupted. Delete any existing record.
+		# Then add a new record.
+		c.execute('DELETE FROM mfa WHERE user_id=? AND type="webauthn"', (get_user_id(email, c),))
+		c.execute('INSERT INTO mfa (user_id, type, secret, label) VALUES (?, ?, ?, ?)', (
+			get_user_id(email, c), "webauthn",
+			json.dumps(fields),
+			"WebAuthn"))
+		conn.commit()
+	def save_challenge_for_user(self, email, challenge, type):
+		self.update_record(email, { type + "challenge": base64.b64encode(challenge).decode("ascii") })
+	def get_challenge_for_user(self, email, type):
+		challenge = self.get_record(email).get(type + "challenge")
+		if challenge: challenge = base64.b64decode(challenge.encode("ascii"))
+		return challenge
+
+def provision_webauthn(email, env):
+	rp = pywarp.RelyingPartyManager(
+		get_relying_party_name(env),
+		rp_id=env["PRIMARY_HOSTNAME"], # must match hostname the control panel is served from
+		credential_storage_backend=WebauthnStorageBackend(env))
+	return rp.get_registration_options(email=email)
 
 def validate_auth_mfa(email, request, env):
 	# Validates that a login request satisfies any MFA modes

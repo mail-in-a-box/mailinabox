@@ -21,7 +21,7 @@ import auth, utils
 from mailconfig import get_mail_users, get_mail_users_ex, get_admins, add_mail_user, set_mail_password, remove_mail_user
 from mailconfig import get_mail_user_privileges, add_remove_mail_user_privilege
 from mailconfig import get_mail_aliases, get_mail_aliases_ex, get_mail_domains, add_mail_alias, remove_mail_alias
-from mfa import get_public_mfa_state, provision_totp, validate_totp_secret, enable_mfa, disable_mfa
+from mfa import get_public_mfa_state, provision_totp, provision_webauthn, validate_totp_secret, enable_mfa, disable_mfa
 
 env = utils.load_environment()
 
@@ -478,7 +478,8 @@ def mfa_get_status():
 		if email == request.user_email:
 			resp.update({
 				"new_mfa": {
-					"totp": provision_totp(email, env)
+					"totp": provision_totp(email, env),
+					"webauthn": provision_webauthn(email, env)
 				}
 			})
 	except ValueError as e:
@@ -495,7 +496,20 @@ def totp_post_enable():
 		return ("Bad Input", 400)
 	try:
 		validate_totp_secret(secret)
-		enable_mfa(request.user_email, "totp", secret, token, label, env)
+		enable_mfa(request.user_email, "totp", env, secret, token, label)
+	except ValueError as e:
+		return (str(e), 400)
+	return "OK"
+
+@app.route('/mfa/enable/webauthn', methods=['POST'])
+@authorized_personnel_only
+def webauthn_post_enable():
+	attestationObject = request.form.get('attestationObject')
+	clientDataJSON = request.form.get('clientDataJSON')
+	if type(attestationObject) != str or type(clientDataJSON) != str:
+		return ("Bad Input", 400)
+	try:
+		enable_mfa(request.user_email, "webauthn", env, attestationObject, clientDataJSON)
 	except ValueError as e:
 		return (str(e), 400)
 	return "OK"

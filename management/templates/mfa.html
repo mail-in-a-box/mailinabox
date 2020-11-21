@@ -62,6 +62,14 @@ and ensure every administrator account for this control panel does the same.</st
         </div>
     </form>
 
+    <form id="webauthn-setup" style="display: none">
+        <h3>Add a WebAuthn Device</h3>
+        <p>If you have a WebAuthn device such as a YubiKey, plug it in and click Add WebAuthn Device.</p>
+        <button type="submit" class="btn" onclick="return do_enable_webauthn()">Add WebAuthn Device</button>
+    </form>
+
+    <div id="webauthn-setup" style="display: none">
+    </div>
 
     <div id="output-2fa" class="panel panel-danger hidden">
         <div class="panel-body"></div>
@@ -87,6 +95,7 @@ and ensure every administrator account for this control panel does the same.</st
         totpSetupLabel: document.getElementById('totp-setup-label'),
         totpQr: document.getElementById('totp-setup-qr'),
         totpSetupSubmit: document.querySelector('#totp-setup-submit'),
+        webauthnSetupForm: document.getElementById('webauthn-setup'),
         wrapper: document.querySelector('.twofactor')
     }
 
@@ -126,6 +135,16 @@ and ensure every administrator account for this control panel does the same.</st
         el.wrapper.classList.add('disabled');
     }
 
+    function arrayBufferToBase64(a) { return btoa(String.fromCharCode(...new Uint8Array(a))); }
+    function base64ToArrayBuffer(b) { return Uint8Array.from(atob(b), c => c.charCodeAt(0)); }
+
+    function render_webauthn_setup(provisioning) {
+        $(el.webauthnSetupForm).show();
+        provisioning.challenge = base64ToArrayBuffer(provisioning.challenge);
+        provisioning.user.id = new TextEncoder().encode(provisioning.user.name);
+        window.mailinabix_mfa_webauthn_provision = provisioning;
+    }
+
     function render_disable(mfa) {
         var panel = $('#mfa-device-templates .' + mfa.type).clone();
         $('#mfa-devices').append(panel);
@@ -158,6 +177,8 @@ and ensure every administrator account for this control panel does the same.</st
         el.totpSetupToken.removeEventListener('input', update_setup_disabled);
         el.totpSetupSubmit.setAttribute('disabled', '');
         el.totpQr.innerHTML = '';
+
+        $(el.webauthnSetupForm).hide();
     }
 
     function show_mfa() {
@@ -178,6 +199,8 @@ and ensure every administrator account for this control panel does the same.</st
 
                 if (res.new_mfa.totp)
                     render_totp_setup(res.new_mfa.totp);
+                if (res.new_mfa.webauthn && 'credentials' in navigator)
+                    render_webauthn_setup(res.new_mfa.webauthn);
             }
         );
     }
@@ -216,4 +239,22 @@ and ensure every administrator account for this control panel does the same.</st
 
         return false;
     }
+
+    function do_enable_webauthn() {
+        navigator.credentials.create({ publicKey: window.mailinabix_mfa_webauthn_provision })
+        .then(function(creds) {
+            api(
+                '/mfa/enable/webauthn',
+                'POST',
+                {
+                    attestationObject: arrayBufferToBase64(creds.response['attestationObject']),
+                    clientDataJSON: arrayBufferToBase64(creds.response['clientDataJSON'])
+                },
+                function(res) { do_logout(); },
+                function(res) { render_error(res); }
+            );
+        });
+        return false;
+    }
+
 </script>
