@@ -744,11 +744,18 @@ paths:
               schema:
                 type: string
   /dns/zonefile/{zone}:
+    parameters:
+      - in: path
+        name: zone
+        schema:
+          $ref: '#/components/schemas/Hostname'
+        required: true
+        description: Hostname
     get:
       tags:
         - DNS
       summary: Get DNS zonefile
-      description: Returns an array of all managed top-level domains.
+      description: Returns a DNS zone file for a hostname.
       operationId: getDnsZonefile
       x-codeSamples:
         - lang: curl
@@ -2690,13 +2697,6 @@ components:
           type: string
     MfaEnableSuccessResponse:
       type: string
-    MfaEnableBadRequestResponse:
-      type: object
-      required:
-        - error
-      properties:
-        error:
-          type: string
     MfaDisableRequest:
       type: object
       properties:
