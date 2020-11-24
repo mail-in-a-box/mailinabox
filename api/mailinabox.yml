@@ -15,7 +15,7 @@ info:
   license:
     name: CC0 1.0 Universal
     url: https://creativecommons.org/publicdomain/zero/1.0/legalcode
-  version: 0.47.0
+  version: 0.51.0
   x-logo:
     url: https://mailinabox.email/static/logo.png
     altText: Mail-in-a-Box logo
