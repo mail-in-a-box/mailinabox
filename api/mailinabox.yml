@@ -744,30 +744,30 @@ paths:
               schema:
                 type: string
   /dns/zonefile/{zone}:
-      get:
-          tags:
-              - DNS
-          summary: Get DNS zonefile
-          description: Returns an array of all managed top-level domains.
-          operationId: getDnsZonefile
-          x-codeSamples:
-              - lang: curl
-                source: |
-                    curl -X GET "https://{host}/admin/dns/zonefile/<zone>" \
-                      -u "<email>:<password>"
-          responses:
-              200:
-                  description: Successful operation
-                  content:
-                      application/json:
-                          schema:
-                              $ref: '#/components/schemas/DNSZonefileResponse'
-              403:
-                  description: Forbidden
-                  content:
-                      text/html:
-                          schema:
-                              type: string
+    get:
+      tags:
+        - DNS
+      summary: Get DNS zonefile
+      description: Returns an array of all managed top-level domains.
+      operationId: getDnsZonefile
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/dns/zonefile/<zone>" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DNSZonefileResponse'
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
   /dns/update:
     post:
       tags:
