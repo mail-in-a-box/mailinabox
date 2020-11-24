@@ -1813,7 +1813,7 @@ components:
         text/plain:
           schema:
             type: string
-            example: 1.2.3.4
+            example: '1.2.3.4'
             description: The value of the DNS record.
           example: '1.2.3.4'
   schemas:
