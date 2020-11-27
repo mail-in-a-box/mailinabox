@@ -459,6 +459,23 @@ def list_target_files(config):
 			raise ValueError(e.reason)
 
 		return [(key.name[len(path):], key.size) for key in bucket.list(prefix=path)]
+	elif target.scheme == 'b2':
+		from b2sdk.v1 import InMemoryAccountInfo, B2Api
+		from b2sdk.v1.exception import NonExistentBucket
+		info = InMemoryAccountInfo()
+		b2_api = B2Api(info)
+		
+		# Extract information from target
+		b2_application_keyid = target.netloc[:target.netloc.index(':')]
+		b2_application_key = target.netloc[target.netloc.index(':')+1:target.netloc.index('@')]
+		b2_bucket = target.netloc[target.netloc.index('@')+1:]
+
+		try:
+			b2_api.authorize_account("production", b2_application_keyid, b2_application_key)
+			bucket = b2_api.get_bucket_by_name(b2_bucket)
+		except NonExistentBucket as e:
+			raise ValueError("B2 Bucket does not exist. Please double check your information!")
+		return [(key.file_name, key.size) for key, _ in bucket.ls()]
 
 	else:
 		raise ValueError(config["target"])

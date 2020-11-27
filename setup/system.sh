@@ -107,6 +107,9 @@ else
     ln -sf /snap/bin/certbot /usr/bin/certbot
 fi
 
+# Install the duplicity PPA.
+hide_output add-apt-repository -y ppa:duplicity-team/duplicity-release-git
+
 # ### Update Packages
 
 # Update system packages to make sure we have the latest upstream versions
