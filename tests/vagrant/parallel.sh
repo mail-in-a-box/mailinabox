@@ -11,6 +11,10 @@
 . "$(dirname "$0")/../lib/color-output.sh"
 . "$(dirname "$0")/../lib/misc.sh"
 
+if [ -z "$tests" ]; then
+    export tests="pre-commit"
+fi
+
 
 OUTPUT_DIR=out
 #rm -rf "$OUTPUT_DIR"
