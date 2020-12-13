@@ -460,7 +460,7 @@ def list_target_files(config):
 		# InvalidBackendURL error for B2 backend if application key contains a '/' character
 		# See: https://bugs.launchpad.net/duplicity/+bug/1819390
 		# With a slash anywhere after b2::// the above urlparse will put something into target.path, thus
-		if not "".__eq__(target.path):
+		if target.path != "":
 			raise ValueError("""No B2 configuration option can contain '/' the foward slash character.
 								Please create a new API key that does not contain any forward slashes""")
 
