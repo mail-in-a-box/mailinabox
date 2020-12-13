@@ -457,22 +457,17 @@ def list_target_files(config):
 
 		return [(key.name[len(path):], key.size) for key in bucket.list(prefix=path)]
 	elif target.scheme == 'b2':
-		# InvalidBackendURL error for B2 backend if application key contains a '/' character
-		# See: https://bugs.launchpad.net/duplicity/+bug/1819390
-		# With a slash anywhere after b2::// the above urlparse will put something into target.path, thus
-		if target.path != "":
-			raise ValueError("""No B2 configuration option can contain '/' the foward slash character.
-								Please create a new API key that does not contain any forward slashes""")
-
 		from b2sdk.v1 import InMemoryAccountInfo, B2Api
 		from b2sdk.v1.exception import NonExistentBucket
 		info = InMemoryAccountInfo()
 		b2_api = B2Api(info)
 		
-		# Extract information from target
-		b2_application_keyid = target.netloc[:target.netloc.index(':')]
-		b2_application_key = target.netloc[target.netloc.index(':')+1:target.netloc.index('@')]
-		b2_bucket = target.netloc[target.netloc.index('@')+1:]
+		escaped_url = urllib.parse.unquote(target.netloc)
+
+		# Extract information from escaped_url
+		b2_application_keyid = escaped_url[:escaped_url.index(':')]
+		b2_application_key = escaped_url[escaped_url.index(':')+1:escaped_url.index('@')]
+		b2_bucket = escaped_url[escaped_url.index('@')+1:]
 
 		try:
 			b2_api.authorize_account("production", b2_application_keyid, b2_application_key)
@@ -492,7 +487,13 @@ def backup_set_custom(env, target, target_user, target_pass, min_age):
 	if isinstance(min_age, str):
 		min_age = int(min_age)
 
-	config["target"] = target
+	# b2 url must be escaped
+	if target.startswith('b2://'):
+		import urllib.parse
+		config["target"] = 'b2://' + urllib.parse.quote(target[5:], safe=':@')
+	else:
+		config["target"] = target
+
 	config["target_user"] = target_user
 	config["target_pass"] = target_pass
 	config["min_age_in_days"] = min_age
@@ -537,6 +538,11 @@ def get_backup_config(env, for_save=False, for_ui=False):
 		for field in ("target_user", "target_pass"):
 			if field in config:
 				del config[field]
+
+		if config["target"].startswith('b2://'):
+			import urllib.parse
+			# unquote the URL.
+			config["target"] = urllib.parse.unquote(config["target"])
 
 	# helper fields for the admin
 	config["file_target_directory"] = os.path.join(backup_root, 'encrypted')
