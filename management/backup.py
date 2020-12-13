@@ -457,6 +457,13 @@ def list_target_files(config):
 
 		return [(key.name[len(path):], key.size) for key in bucket.list(prefix=path)]
 	elif target.scheme == 'b2':
+		# InvalidBackendURL error for B2 backend if application key contains a '/' character
+		# See: https://bugs.launchpad.net/duplicity/+bug/1819390
+		# With a slash anywhere after b2::// the above urlparse will put something into target.path, thus
+		if not "".__eq__(target.path):
+			raise ValueError("""No B2 configuration option can contain '/' the foward slash character.
+								Please create a new API key or Bucket that does not contain any forward slashes""")
+
 		from b2sdk.v1 import InMemoryAccountInfo, B2Api
 		from b2sdk.v1.exception import NonExistentBucket
 		info = InMemoryAccountInfo()
