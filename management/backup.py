@@ -462,12 +462,12 @@ def list_target_files(config):
 		info = InMemoryAccountInfo()
 		b2_api = B2Api(info)
 		
-		escaped_url = urllib.parse.unquote(target.netloc)
+		unquoted_url = urllib.parse.unquote(target.netloc)
 
-		# Extract information from escaped_url
-		b2_application_keyid = escaped_url[:escaped_url.index(':')]
-		b2_application_key = escaped_url[escaped_url.index(':')+1:escaped_url.index('@')]
-		b2_bucket = escaped_url[escaped_url.index('@')+1:]
+		# Extract information from unquoted_url
+		b2_application_keyid = unquoted_url[:unquoted_url.index(':')]
+		b2_application_key = unquoted_url[unquoted_url.index(':')+1:unquoted_url.index('@')]
+		b2_bucket = unquoted_url[unquoted_url.index('@')+1:]
 
 		try:
 			b2_api.authorize_account("production", b2_application_keyid, b2_application_key)
@@ -541,7 +541,7 @@ def get_backup_config(env, for_save=False, for_ui=False):
 
 		if config["target"].startswith('b2://'):
 			import urllib.parse
-			# unquote the URL.
+			# unquote the URL for the admin
 			config["target"] = urllib.parse.unquote(config["target"])
 
 	# helper fields for the admin
