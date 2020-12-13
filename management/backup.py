@@ -462,7 +462,7 @@ def list_target_files(config):
 		# With a slash anywhere after b2::// the above urlparse will put something into target.path, thus
 		if not "".__eq__(target.path):
 			raise ValueError("""No B2 configuration option can contain '/' the foward slash character.
-								Please create a new API key or Bucket that does not contain any forward slashes""")
+								Please create a new API key that does not contain any forward slashes""")
 
 		from b2sdk.v1 import InMemoryAccountInfo, B2Api
 		from b2sdk.v1.exception import NonExistentBucket
