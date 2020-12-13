@@ -90,6 +90,12 @@ rm -f /tmp/bootstrap.zip
 # running after a reboot.
 cat > $inst_dir/start <<EOF;
 #!/bin/bash
+# Set character encoding flags to ensure that any non-ASCII don't cause problems.
+export LANGUAGE=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+export LANG=en_US.UTF-8
+export LC_TYPE=en_US.UTF-8
+
 source $venv/bin/activate
 exec python `pwd`/management/daemon.py
 EOF
