@@ -660,7 +660,16 @@ def check_mail_domain(domain, env, output):
 			else:
 				output.print_error("MTA-STS policy is present but has unexpected settings. [{}]".format(policy[1]))
 		else:
-			output.print_error("MTA-STS policy is missing: {}".format(valid))
+			certmessage = ''
+			cert = get_ssl_certificates(env).get(domain)
+			if not cert:
+				certmessage = "No TLS certificate provisioned for this domain"
+			else:
+				cert_status = check_certificate(domain, cert['certificate'], cert['private-key'])
+				if cert_status[0] != 'OK':
+					certmessage = "TLS certificate is not valid"
+
+			output.print_error("MTA-STS policy is missing: {}".format(certmessage if certmessage else valid))
 
 	else:
 		output.print_error("""This domain's DNS MX record is incorrect. It is currently set to '%s' but should be '%s'. Mail will not
