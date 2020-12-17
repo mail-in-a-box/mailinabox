@@ -1,12 +1,231 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.51 (November 14, 2020)
+-------------------------
+
+Software updates:
+
+* Upgraded Nextcloud from 17.0.6 to 20.0.1 (with Contacts from 3.3.0 to 3.4.1 and Calendar from 2.0.3 to 2.1.2)
+* Upgraded Roundcube to version 1.4.9.
+
+Mail:
+
+* The MTA-STA max_age value was increased to the normal one week.
+
+Control Panel:
+
+* Two-factor authentication can now be enabled for logins to the control panel. However, keep in mind that many online services (including domain name registrars, cloud server providers, and TLS certificate providers) may allow an attacker to take over your account or issue a fraudulent TLS certificate with only access to your email address, and this new two-factor authentication does not protect access to your inbox. It therefore remains very important that user accounts with administrative email addresses have strong passwords.
+* TLS certificate expiry dates are now shown in ISO8601 format for clarity.
+
+v0.50 (September 25, 2020)
+--------------------------
 
 Setup:
 
-* Update to Roundcube 1.3.8.
+* When upgrading from versions before v0.40, setup will now warn that ownCloud/Nextcloud data cannot be migrated rather than failing the installation.
+
+Mail:
+
+* An MTA-STS policy for incoming mail is now published (in DNS and over HTTPS) when the primary hostname and email address domain both have a signed TLS certificate installed, allowing senders to know that an encrypted connection should be enforced.
+* The per-IP connection limit to the IMAP server has been doubled to allow more devices to connect at once, especially with multiple users behind a NAT.
+
+DNS:
+
+* autoconfig and autodiscover subdomains and CalDAV/CardDAV SRV records are no longer generated for domains that don't have user accounts since they are unnecessary.
+* IPv6 addresses can now be specified for secondary DNS nameservers in the control panel.
+
+TLS:
+
+* TLS certificates are now provisioned in groups by parent domain to limit easy domain enumeration and make provisioning more resilient to errors for particular domains.
+
+Control Panel:
+
+* The control panel API is now fully documented at https://mailinabox.email/api-docs.html.
+* User passwords can now have spaces.
+* Status checks for automatic subdomains have been moved into the section for the parent domain.
+* Typo fixed.
+
+Web:
+
+* The default web page served on fresh installations now adds the `noindex` meta tag.
+* The HSTS header is revised to also be sent on non-success responses.
+
+v0.48 (August 26, 2020)
+-----------------------
+
+Security fixes:
+
+* Roundcube is updated to version 1.4.8 fixing additional cross-site scripting (XSS) vulnerabilities.
+
+v0.47 (July 29, 2020)
+---------------------
+
+Security fixes:
+
+* Roundcube is updated to version 1.4.7 fixing a cross-site scripting (XSS) vulnerability with HTML messages with malicious svg/namespace (CVE-2020-15562) (https://roundcube.net/news/2020/07/05/security-updates-1.4.7-1.3.14-and-1.2.11).
+* SSH connections are now rate-limited at the firewall level (in addition to fail2ban).
+
+v0.46 (June 11, 2020)
+---------------------
+
+Security fixes:
+
+* Roundcube is updated to version 1.4.6 (https://roundcube.net/news/2020/06/02/security-updates-1.4.5-and-1.3.12).
+
+v0.45 (May 16, 2020)
+--------------------
+
+Security fixes:
+
+* Fix missing brute force login protection for Roundcube logins.
+
+Software updates:
+
+* Upgraded Roundcube from 1.4.2 to 1.4.4.
+* Upgraded Nextcloud from 17.0.2 to 17.0.6 (with Contacts from 3.1.6 to 3.3.0 and Calendar from 1.7.1 to v2.0.3)
+* Upgraded Z-Push to 2.5.2.
+
+System:
+
+* Nightly backups now occur on a random minute in the 3am hour (in the system time zone). The minute is chosen during Mail-in-a-Box installation/upgrade and remains the same until the next upgrade.
+* Fix for mail log statistics report on leap days.
+* Fix Mozilla autoconfig useGlobalPreferredServer setting.
+
+Web:
+
+* Add a new hidden feature to set nginx alias in www/custom.yaml.
+
+Setup:
+
+* Improved error handling.
+
+v0.44 (February 15, 2020)
+-------------------------
+
+System:
+
+* TLS settings have been upgraded following Mozilla's recommendations for servers. TLS1.2 and 1.3 are now the only supported protocols for web, IMAP, and SMTP (submission).
+* Fixed an issue starting services when Mail-in-a-Box isn't on the root filesystem.
+* Changed some performance options affecting Roundcube and Nextcloud.
+
+Software updates:
+
+* Upgraded Nextcloud from 15.0.8 to 17.0.2 (with Contacts from 3.1.1 to 3.1.6 and Calendar from 1.6.5 to 1.7.1)
+* Upgraded Z-Push to 2.5.1.
+* Upgraded Roundcube from 1.3.10 to 1.4.2 and changed the default skin (theme) to Elastic.
+
+Control panel:
+
+* The Custom DNS list of records is now sorted.
+* The emails that report TLS provisioning results now has a less scary subject line.
+
+Mail:
+
+* Fetching of updated whitelist for greylisting was fetching each day instead of every month.
+* OpenDKIM signing has been changed to 'relaxed' mode so that some old mail lists that forward mail can do so.
+
+DNS:
+
+* Automatic autoconfig.* subdomains can now be suppressed with custom DNS records.
+* DNS zone transfer now works with IPv6 addresses.
+
+Setup:
+
+* An Ubuntu package source was missing on systems where it defaults off.
+
+v0.43 (September 1, 2019)
+-------------------------
+
+Security fixes:
+
+* A security issue was discovered in rsync backups. If you have enabled rsync backups, the file `id_rsa_miab` may have been copied to your backup destination. This file can be used to access your backup destination. If the file was copied to your backup destination, we recommend that you delete the file on your backup destination, delete `/root/.ssh/id_rsa_miab` on your Mail-in-a-Box, then re-run Mail-in-a-Box setup, and re-configure your SSH public key at your backup destination according to the instructions in the Mail-in-a-Box control panel.
+* Brute force attack prevention was missing for the managesieve service.
+
+Setup:
+
+* Nextcloud was not upgraded properly after restoring Mail-in-a-Box from a backup from v0.40 or earlier.
+
+Mail:
+
+* Upgraded Roundcube to 1.3.10.
+* Fetch an updated whitelist for greylisting on a monthly basis to reduce the number of delayed incoming emails.
+
+Control panel:
+
+* When using secondary DNS, it is now possible to specify a subnet range with the `xfr:` option.
+* Fixed an issue when the secondary DNS option is used and the secondary DNS hostname resolves to multiple IP addresses.
+* Fix a bug in how a backup configuration error is shown.
+
+v0.42b (August 3, 2019)
+-----------------------
+
+Changes:
+
+* Decreased the minimum supported RAM to 502 Mb.
+* Improved mail client autoconfiguration.
+* Added support for S3-compatible backup services besides Amazon S3.
+* Fixed the control panel login page to let LastPass save passwords.
+* Fixed an error in the user privileges API.
+* Silenced some spurrious messages.
+
+Software updates:
+
+* Upgraded Roundcube from 1.3.8 to 1.3.9.
+* Upgraded Nextcloud from 14.0.6 to 15.0.8 (with Contacts from 2.1.8 to 3.1.1 and Calendar from 1.6.4 to 1.6.5).
+* Upgraded Z-Push from 2.4.4 to 2.5.0.
+
+Note that v0.42 (July 4, 2019) was pulled shortly after it was released to fix a Nextcloud upgrade issue.
+
+v0.41 (February 26, 2019)
+-------------------------
+
+System:
+
+* Missing brute force login attack prevention (fail2ban) filters which stopped working on Ubuntu 18.04 were added back.
+* Upgrades would fail if Mail-in-a-Box moved to a different directory in `systemctl link`.
+
+Mail:
+
+* Incoming messages addressed to more than one local user were rejected because of a bug in spampd packaged by Ubuntu 18.04. A workaround was added.
+
+Contacts/Calendar:
+
+* Upgraded Nextcloud from 13.0.6 to 14.0.6.
+* Upgraded Contacts from 2.1.5 to 2.1.8.
+* Upgraded Calendar from 1.6.1 to 1.6.4.
+
+v0.40 (January 12, 2019)
+------------------------
+
+This is the first release for Ubuntu 18.04. This version and versions going forward can **only** be installed on Ubuntu 18.04; however, upgrades of existing Ubuntu 14.04 boxes to the latest version supporting Ubuntu 14.04 (v0.30) continue to work as normal.
+
+When **upgrading**, you **must first upgrade your existing Ubuntu 14.04 Mail-in-a-Box box** to the latest release supporting Ubuntu 14.04 --- that's v0.30 --- before you migrate to Ubuntu 18.04. If you are running an older version of Mail-in-a-Box which has an old version of ownCloud or Nextcloud, you will *not* be able to upgrade your data because older versions of ownCloud and Nextcloud that are required to perform the upgrade *cannot* be run on Ubuntu 18.04. To upgrade from Ubuntu 14.04 to Ubuntu 18.04, you **must create a fresh Ubuntu 18.04 machine** before installing this version. In-place upgrades of servers are not supported. Since Ubuntu's support for Ubuntu 14.04 has almost ended, everyone is encouraged to create a new Ubuntu 18.04 machine and migrate to it.
+
+For complete upgrade instructions, see:
+
+https://discourse.mailinabox.email/t/mail-in-a-box-version-v0-40-and-moving-to-ubuntu-18-04/4289
+
+The changelog for this release follows.
+
+Setup:
+
+* Mail-in-a-Box now targets Ubuntu 18.04 LTS, which will have support from Ubuntu through 2022.
+* Some of the system packages updated in virtue of using Ubuntu 18.04 include postfix (2.11=>3.3) nsd (4.0=>4.1), nginx (1.4=>1.14), PHP (7.0=>7.2), Python (3.4=>3.6), fail2ban (0.8=>0.10), Duplicity (0.6=>0.7).
+* [Unofficial Bash Strict Mode](http://redsymbol.net/articles/unofficial-bash-strict-mode/) is turned on for setup, which might catch previously uncaught issues during setup.
+
+Mail:
+
+* IMAP server-side full text search is no longer supported because we were using a custom-built `dovecot-lucene` package that we are no longer maintaining.
+* Sending email is now disabled on port 25 --- you must log in to port 587 to send email, per the long-standing mail instructions.
+* Greylisting may delay more emails from new senders. We were using a custom-built postgrey package previously that whitelisted sending domains in dnswl.org, but we are no longer maintaining that package.
+
+v0.30 (January 9, 2019)
+-----------------------
+
+Setup:
+
+* Update to Roundcube 1.3.8 and the CardDAV plugin to 3.0.3.
 * Add missing rsyslog package to install line since some OS images don't have it installed by default.
 * A log file for nsd was added.
 

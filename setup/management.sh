@@ -18,19 +18,19 @@ while [ -d /usr/local/lib/python3.4/dist-packages/acme ]; do
 	pip3 uninstall -y acme;
 done
 
-# duplicity is used to make backups of user data. It uses boto
-# (via Python 2) to do backups to AWS S3. boto from the Ubuntu
-# package manager is too out-of-date -- it doesn't support the newer
-# S3 api used in some regions, which breaks backups to those regions.
-# See #627, #653.
+# duplicity is used to make backups of user data.
 #
-# python-virtualenv is used to isolate the Python 3 packages we
+# virtualenv is used to isolate the Python 3 packages we
 # install via pip from the system-installed packages.
 #
 # certbot installs EFF's certbot which we use to
 # provision free TLS certificates.
-apt_install duplicity python-pip python-virtualenv certbot
-hide_output pip2 install --upgrade boto
+apt_install duplicity python-pip virtualenv certbot
+
+# b2sdk is used for backblaze backups.
+# boto is used for amazon aws backups.
+# Both are installed outside the pipenv, so they can be used by duplicity
+hide_output pip3 install --upgrade b2sdk boto
 
 # Create a virtualenv for the installation of Python 3 packages
 # used by the management daemon.
@@ -38,7 +38,7 @@ inst_dir=/usr/local/lib/mailinabox
 mkdir -p $inst_dir
 venv=$inst_dir/env
 if [ ! -d $venv ]; then
-	virtualenv -ppython3 $venv
+	hide_output virtualenv -ppython3 $venv
 fi
 
 # Upgrade pip because the Ubuntu-packaged version is out of date.
@@ -50,7 +50,8 @@ hide_output $venv/bin/pip install --upgrade pip
 hide_output $venv/bin/pip install --upgrade \
 	rtyaml "email_validator>=1.0.0" "exclusiveprocess" \
 	flask dnspython python-dateutil \
-	"idna>=2.0.0" "cryptography==2.2.2" boto psutil
+  qrcode[pil] pyotp \
+	"idna>=2.0.0" "cryptography==2.2.2" boto psutil postfix-mta-sts-resolver b2sdk
 
 # CONFIGURATION
 
@@ -87,28 +88,25 @@ rm -f /tmp/bootstrap.zip
 
 # Create an init script to start the management daemon and keep it
 # running after a reboot.
-rm -f /usr/local/bin/mailinabox-daemon # old path
 cat > $inst_dir/start <<EOF;
 #!/bin/bash
 source $venv/bin/activate
 exec python `pwd`/management/daemon.py
 EOF
 chmod +x $inst_dir/start
-rm -f /etc/init.d/mailinabox
-ln -s $(pwd)/conf/management-initscript /etc/init.d/mailinabox
-hide_output update-rc.d mailinabox defaults
-
-# Remove old files we no longer use.
-rm -f /etc/cron.daily/mailinabox-backup
-rm -f /etc/cron.daily/mailinabox-statuschecks
+cp --remove-destination conf/mailinabox.service /lib/systemd/system/mailinabox.service # target was previously a symlink so remove it first
+hide_output systemctl link -f /lib/systemd/system/mailinabox.service
+hide_output systemctl daemon-reload
+hide_output systemctl enable mailinabox.service
 
 # Perform nightly tasks at 3am in system time: take a backup, run
 # status checks and email the administrator any changes.
 
+minute=$((RANDOM % 60))  # avoid overloading mailinabox.email
 cat > /etc/cron.d/mailinabox-nightly << EOF;
 # Mail-in-a-Box --- Do not edit / will be overwritten on update.
 # Run nightly tasks: backup, status checks.
-0 3 * * *	root	(cd `pwd` && management/daily_tasks.sh)
+$minute 3 * * *	root	(cd `pwd` && management/daily_tasks.sh)
 EOF
 
 # Start the management server.

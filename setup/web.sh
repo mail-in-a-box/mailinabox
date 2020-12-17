@@ -19,10 +19,7 @@ fi
 
 echo "Installing Nginx (web server)..."
 
-apt_install nginx php7.0-cli php7.0-fpm
-
-# Set PHP7 as the default
-update-alternatives --set php /usr/bin/php7.0
+apt_install nginx php-cli php-fpm idn2
 
 rm -f /etc/nginx/sites-enabled/default
 
@@ -34,30 +31,69 @@ sed "s#STORAGE_ROOT#$STORAGE_ROOT#" \
 	conf/nginx-ssl.conf > /etc/nginx/conf.d/ssl.conf
 
 # Fix some nginx defaults.
+#
 # The server_names_hash_bucket_size seems to prevent long domain names!
 # The default, according to nginx's docs, depends on "the size of the
 # processor’s cache line." It could be as low as 32. We fixed it at
 # 64 in 2014 to accommodate a long domain name (20 characters?). But
 # even at 64, a 58-character domain name won't work (#93), so now
 # we're going up to 128.
+#
+# Drop TLSv1.0, TLSv1.1, following the Mozilla "Intermediate" recommendations
+# at https://ssl-config.mozilla.org/#server=nginx&server-version=1.17.0&config=intermediate&openssl-version=1.1.1.
 tools/editconf.py /etc/nginx/nginx.conf -s \
-	server_names_hash_bucket_size="128;"
+	server_names_hash_bucket_size="128;" \
+	ssl_protocols="TLSv1.2 TLSv1.3;"
 
 # Tell PHP not to expose its version number in the X-Powered-By header.
-tools/editconf.py /etc/php/7.0/fpm/php.ini -c ';' \
+tools/editconf.py /etc/php/7.2/fpm/php.ini -c ';' \
 	expose_php=Off
 
 # Set PHPs default charset to UTF-8, since we use it. See #367.
-tools/editconf.py /etc/php/7.0/fpm/php.ini -c ';' \
+tools/editconf.py /etc/php/7.2/fpm/php.ini -c ';' \
         default_charset="UTF-8"
 
-# Switch from the dynamic process manager to the ondemand manager see #1216
-tools/editconf.py /etc/php/7.0/fpm/pool.d/www.conf -c ';' \
-	pm=ondemand
+# Configure the path environment for php-fpm
+tools/editconf.py /etc/php/7.2/fpm/pool.d/www.conf -c ';' \
+	env[PATH]=/usr/local/bin:/usr/bin:/bin \
 
-# Bump up PHP's max_children to support more concurrent connections
-tools/editconf.py /etc/php/7.0/fpm/pool.d/www.conf -c ';' \
-	pm.max_children=8
+# Configure php-fpm based on the amount of memory the machine has
+# This is based on the nextcloud manual for performance tuning: https://docs.nextcloud.com/server/17/admin_manual/installation/server_tuning.html
+# Some synchronisation issues can occur when many people access the site at once.
+# The pm=ondemand setting is used for memory constrained machines < 2GB, this is copied over from PR: 1216
+TOTAL_PHYSICAL_MEM=$(head -n 1 /proc/meminfo | awk '{print $2}' || /bin/true)
+if [ $TOTAL_PHYSICAL_MEM -lt 1000000 ]
+then
+        tools/editconf.py /etc/php/7.2/fpm/pool.d/www.conf -c ';' \
+                pm=ondemand \
+                pm.max_children=8 \
+                pm.start_servers=2 \
+                pm.min_spare_servers=1 \
+                pm.max_spare_servers=3
+elif [ $TOTAL_PHYSICAL_MEM -lt 2000000 ]
+then
+        tools/editconf.py /etc/php/7.2/fpm/pool.d/www.conf -c ';' \
+                pm=ondemand \
+                pm.max_children=16 \
+                pm.start_servers=4 \
+                pm.min_spare_servers=1 \
+                pm.max_spare_servers=6
+elif [ $TOTAL_PHYSICAL_MEM -lt 3000000 ]
+then
+        tools/editconf.py /etc/php/7.2/fpm/pool.d/www.conf -c ';' \
+                pm=dynamic \
+                pm.max_children=60 \
+                pm.start_servers=6 \
+                pm.min_spare_servers=3 \
+                pm.max_spare_servers=9
+else
+        tools/editconf.py /etc/php/7.2/fpm/pool.d/www.conf -c ';' \
+                pm=dynamic \
+                pm.max_children=120 \
+                pm.start_servers=12 \
+                pm.min_spare_servers=6 \
+                pm.max_spare_servers=18
+fi
 
 # Other nginx settings will be configured by the management service
 # since it depends on what domains we're serving, which we don't know
@@ -86,6 +122,21 @@ cat conf/mozilla-autoconfig.xml \
 	 > /var/lib/mailinabox/mozilla-autoconfig.xml
 chmod a+r /var/lib/mailinabox/mozilla-autoconfig.xml
 
+# Create a generic mta-sts.txt file which is exposed via the
+# nginx configuration at /.well-known/mta-sts.txt
+# more documentation is available on: 
+# https://www.uriports.com/blog/mta-sts-explained/
+# default mode is "enforce". Change to "testing" which means
+# "Messages will be delivered as though there was no failure
+# but a report will be sent if TLS-RPT is configured" if you
+# are not sure you want this yet. Or "none".
+PUNY_PRIMARY_HOSTNAME=$(echo "$PRIMARY_HOSTNAME" | idn2)
+cat conf/mta-sts.txt \
+        | sed "s/MODE/${MTA_STS_MODE:-enforce}/" \
+        | sed "s/PRIMARY_HOSTNAME/$PUNY_PRIMARY_HOSTNAME/" \
+         > /var/lib/mailinabox/mta-sts.txt
+chmod a+r /var/lib/mailinabox/mta-sts.txt
+
 # make a default homepage
 if [ -d $STORAGE_ROOT/www/static ]; then mv $STORAGE_ROOT/www/static $STORAGE_ROOT/www/default; fi # migration #NODOC
 mkdir -p $STORAGE_ROOT/www/default
@@ -94,26 +145,10 @@ if [ ! -f $STORAGE_ROOT/www/default/index.html ]; then
 fi
 chown -R $STORAGE_USER $STORAGE_ROOT/www
 
-# We previously installed a custom init script to start the PHP FastCGI daemon. #NODOC
-# Remove it now that we're using php5-fpm. #NODOC
-if [ -L /etc/init.d/php-fastcgi ]; then
-	echo "Removing /etc/init.d/php-fastcgi, php5-cgi..." #NODOC
-	rm -f /etc/init.d/php-fastcgi #NODOC
-	hide_output update-rc.d php-fastcgi remove #NODOC
-	apt-get -y purge php5-cgi #NODOC
-fi
-
-# Remove obsoleted scripts. #NODOC
-# exchange-autodiscover is now handled by Z-Push. #NODOC
-for f in webfinger exchange-autodiscover; do #NODOC
-	rm -f /usr/local/bin/mailinabox-$f.php #NODOC
-done #NODOC
-
 # Start services.
 restart_service nginx
-restart_service php7.0-fpm
+restart_service php7.2-fpm
 
 # Open ports.
 ufw_allow http
 ufw_allow https
-

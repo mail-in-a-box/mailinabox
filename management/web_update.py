@@ -23,7 +23,16 @@ def get_web_domains(env, include_www_redirects=True, exclude_dns_elsewhere=True)
 		# to the main domain for. We'll add 'www.' to any DNS zones, i.e.
 		# the topmost of each domain we serve.
 		domains |= set('www.' + zone for zone, zonefile in get_dns_zones(env))
-	 
+
+	# Add Autoconfiguration domains for domains that there are user accounts at:
+	# 'autoconfig.' for Mozilla Thunderbird auto setup.
+	# 'autodiscover.' for Activesync autodiscovery.
+	domains |= set('autoconfig.' + maildomain for maildomain in get_mail_domains(env, users_only=True))
+	domains |= set('autodiscover.' + maildomain for maildomain in get_mail_domains(env, users_only=True))
+
+	# 'mta-sts.' for MTA-STS support for all domains that have email addresses.
+	domains |= set('mta-sts.' + maildomain for maildomain in get_mail_domains(env))
+
 	if exclude_dns_elsewhere:
 		# ...Unless the domain has an A/AAAA record that maps it to a different
 		# IP address than this box. Remove those domains from our list.
@@ -137,7 +146,7 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 		finally:
 			f.close()
 		return sha1.hexdigest()
-	nginx_conf_extra += "# ssl files sha1: %s / %s\n" % (hashfile(tls_cert["private-key"]), hashfile(tls_cert["certificate"]))
+	nginx_conf_extra += "\t# ssl files sha1: %s / %s\n" % (hashfile(tls_cert["private-key"]), hashfile(tls_cert["certificate"]))
 
 	# Add in any user customizations in YAML format.
 	hsts = "yes"
@@ -149,9 +158,27 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 
 			# any proxy or redirect here?
 			for path, url in yaml.get("proxies", {}).items():
+				# Parse some flags in the fragment of the URL.
+				pass_http_host_header = False
+				m = re.search("#(.*)$", url)
+				if m:
+					for flag in m.group(1).split(","):
+						if flag == "pass-http-host":
+							pass_http_host_header = True
+					url = re.sub("#(.*)$", "", url)
+
 				nginx_conf_extra += "\tlocation %s {" % path
 				nginx_conf_extra += "\n\t\tproxy_pass %s;" % url
+				if pass_http_host_header:
+					nginx_conf_extra += "\n\t\tproxy_set_header Host $http_host;"
 				nginx_conf_extra += "\n\t\tproxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;"
+				nginx_conf_extra += "\n\t\tproxy_set_header X-Forwarded-Host $http_host;"
+				nginx_conf_extra += "\n\t\tproxy_set_header X-Forwarded-Proto $scheme;"
+				nginx_conf_extra += "\n\t\tproxy_set_header X-Real-IP $remote_addr;"
+				nginx_conf_extra += "\n\t}\n"
+			for path, alias in yaml.get("aliases", {}).items():
+				nginx_conf_extra += "\tlocation %s {" % path
+				nginx_conf_extra += "\n\t\talias %s;" % alias
 				nginx_conf_extra += "\n\t}\n"
 			for path, url in yaml.get("redirects", {}).items():
 				nginx_conf_extra += "\trewrite %s %s permanent;\n" % (path, url)
@@ -161,9 +188,9 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 
 	# Add the HSTS header.
 	if hsts == "yes":
-		nginx_conf_extra += "add_header Strict-Transport-Security max-age=15768000;\n"
+		nginx_conf_extra += "\tadd_header Strict-Transport-Security \"max-age=15768000\" always;\n"
 	elif hsts == "preload":
-		nginx_conf_extra += "add_header Strict-Transport-Security \"max-age=15768000; includeSubDomains; preload\";\n"
+		nginx_conf_extra += "\tadd_header Strict-Transport-Security \"max-age=15768000; includeSubDomains; preload\" always;\n"
 
 	# Add in any user customizations in the includes/ folder.
 	nginx_conf_custom_include = os.path.join(env["STORAGE_ROOT"], "www", safe_domain_name(domain) + ".conf")

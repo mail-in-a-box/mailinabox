@@ -4,7 +4,7 @@
 
 source setup/functions.sh # load our functions
 
-# Check system setup: Are we running as root on Ubuntu 14.04 on a
+# Check system setup: Are we running as root on Ubuntu 18.04 on a
 # machine with enough memory? Is /tmp mounted with exec.
 # If not, this shows an error and exits.
 source setup/preflight.sh
@@ -60,8 +60,8 @@ source setup/questions.sh
 # Run some network checks to make sure setup on this machine makes sense.
 # Skip on existing installs since we don't want this to block the ability to
 # upgrade, and these checks are also in the control panel status checks.
-if [ -z "$DEFAULT_PRIMARY_HOSTNAME" ]; then
-if [ -z "$SKIP_NETWORK_CHECKS" ]; then
+if [ -z "${DEFAULT_PRIMARY_HOSTNAME:-}" ]; then
+if [ -z "${SKIP_NETWORK_CHECKS:-}" ]; then
 	source setup/network-checks.sh
 fi
 fi
@@ -82,9 +82,10 @@ if [ ! -f $STORAGE_ROOT/mailinabox.version ]; then
 	chown $STORAGE_USER.$STORAGE_USER $STORAGE_ROOT/mailinabox.version
 fi
 
-
 # Save the global options in /etc/mailinabox.conf so that standalone
-# tools know where to look for data.
+# tools know where to look for data. The default MTA_STS_MODE setting
+# is blank unless set by an environment variable, but see web.sh for
+# how that is interpreted.
 cat > /etc/mailinabox.conf << EOF;
 STORAGE_USER=$STORAGE_USER
 STORAGE_ROOT=$STORAGE_ROOT
@@ -93,6 +94,7 @@ PUBLIC_IP=$PUBLIC_IP
 PUBLIC_IPV6=$PUBLIC_IPV6
 PRIVATE_IP=$PRIVATE_IP
 PRIVATE_IPV6=$PRIVATE_IPV6
+MTA_STS_MODE=${MTA_STS_MODE-}
 EOF
 
 # Start service configuration.
@@ -106,7 +108,7 @@ source setup/dkim.sh
 source setup/spamassassin.sh
 source setup/web.sh
 source setup/webmail.sh
-source setup/owncloud.sh
+source setup/nextcloud.sh
 source setup/zpush.sh
 source setup/management.sh
 source setup/munin.sh

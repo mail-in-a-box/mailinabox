@@ -26,7 +26,7 @@ source /etc/mailinabox.conf # load global vars
 echo "Installing Dovecot (IMAP server)..."
 apt_install \
 	dovecot-core dovecot-imapd dovecot-pop3d dovecot-lmtpd dovecot-sqlite sqlite3 \
-	dovecot-sieve dovecot-managesieved dovecot-lucene
+	dovecot-sieve dovecot-managesieved
 
 # The `dovecot-imapd`, `dovecot-pop3d`, and `dovecot-lmtpd` packages automatically
 # enable IMAP, POP and LMTP protocols.
@@ -78,16 +78,16 @@ tools/editconf.py /etc/dovecot/conf.d/10-auth.conf \
 	"auth_mechanisms=plain login"
 
 # Enable SSL, specify the location of the SSL certificate and private key files.
-# Disable obsolete SSL protocols and allow only good ciphers per http://baldric.net/2013/12/07/tls-ciphers-in-postfix-and-dovecot/.
-# Enable strong ssl dh parameters
+# Use Mozilla's "Intermediate" recommendations at https://ssl-config.mozilla.org/#server=dovecot&server-version=2.2.33&config=intermediate&openssl-version=1.1.1,
+# except that the current version of Dovecot does not have a TLSv1.3 setting, so we only use TLSv1.2.
 tools/editconf.py /etc/dovecot/conf.d/10-ssl.conf \
 	ssl=required \
 	"ssl_cert=<$STORAGE_ROOT/ssl/ssl_certificate.pem" \
 	"ssl_key=<$STORAGE_ROOT/ssl/ssl_private_key.pem" \
-	"ssl_protocols=!SSLv3 !SSLv2" \
-	"ssl_cipher_list=ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA256:DHE-RSA-AES256-SHA:ECDHE-ECDSA-DES-CBC3-SHA:ECDHE-RSA-DES-CBC3-SHA:EDH-RSA-DES-CBC3-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:DES-CBC3-SHA:!DSS" \
-	"ssl_prefer_server_ciphers = yes" \
-	"ssl_dh_parameters_length = 2048"
+	"ssl_protocols=TLSv1.2" \
+	"ssl_cipher_list=ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384" \
+	"ssl_prefer_server_ciphers=no" \
+	"ssl_dh_parameters_length=2048"
 
 # Disable in-the-clear IMAP/POP because there is no reason for a user to transmit
 # login credentials outside of an encrypted connection. Only the over-TLS versions
@@ -112,17 +112,6 @@ tools/editconf.py /etc/dovecot/conf.d/20-imap.conf \
 tools/editconf.py /etc/dovecot/conf.d/20-pop3.conf \
 	pop3_uidl_format="%08Xu%08Xv"
 
-# Full Text Search - Enable full text search of mail using dovecot's lucene plugin,
-# which *we* package and distribute (dovecot-lucene package).
-tools/editconf.py /etc/dovecot/conf.d/10-mail.conf \
-	mail_plugins="\$mail_plugins fts fts_lucene"
-cat > /etc/dovecot/conf.d/90-plugin-fts.conf << EOF;
-plugin {
-  fts = lucene
-  fts_lucene = whitespace_chars=@.
-}
-EOF
-
 # ### LDA (LMTP)
 
 # Enable Dovecot's LDA service with the LMTP protocol. It will listen
@@ -146,8 +135,16 @@ service lmtp {
   }
 }
 
+# Enable imap-login on localhost to allow the user_external plugin
+# for Nextcloud to do imap authentication. (See #1577)
+service imap-login {
+  inet_listener imap {
+    address = 127.0.0.1
+    port = 143
+  }
+}
 protocol imap {
-  mail_max_userip_connections = 20
+  mail_max_userip_connections = 40
 }
 EOF
 

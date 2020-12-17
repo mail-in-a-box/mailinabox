@@ -99,7 +99,7 @@
 <thead><th>Verb</th> <th>Action</th><th></th></thead>
 <tr><td>GET</td><td><i>(none)</i></td> <td>Returns a list of existing mail users. Adding <code>?format=json</code> to the URL will give JSON-encoded results.</td></tr>
 <tr><td>POST</td><td>/add</td> <td>Adds a new mail user. Required POST-body parameters are <code>email</code> and <code>password</code>.</td></tr>
-<tr><td>POST</td><td>/remove</td> <td>Removes a mail user. Required POST-by parameter is <code>email</code>.</td></tr>
+<tr><td>POST</td><td>/remove</td> <td>Removes a mail user. Required POST-body parameter is <code>email</code>.</td></tr>
 <tr><td>POST</td><td>/privileges/add</td> <td>Used to make a mail user an admin. Required POST-body parameters are <code>email</code> and <code>privilege=admin</code>.</td></tr>
 <tr><td>POST</td><td>/privileges/remove</td> <td>Used to remove the admin privilege from a mail user. Required POST-body parameter is <code>email</code>.</td></tr>
 </table>

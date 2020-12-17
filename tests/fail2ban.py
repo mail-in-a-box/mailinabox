@@ -90,6 +90,26 @@ def pop_test():
 		if M:
 			M.quit()
 
+def managesieve_test():
+	# We don't have a Python sieve client, so we'll
+	# just run the IMAP client and see what happens.
+	import imaplib
+
+	try:
+		M = imaplib.IMAP4(hostname, 4190)
+	except ConnectionRefusedError:
+		# looks like fail2ban worked
+		raise IsBlocked()
+
+	try:
+		M.login("fakeuser", "fakepassword")
+		raise Exception("authentication didn't fail")
+	except imaplib.IMAP4.error:
+		# authentication should fail
+		pass
+	finally:
+		M.logout() # shuts down connection, has nothing to do with login()
+
 def http_test(url, expected_status, postdata=None, qsargs=None, auth=None):
 	import urllib.parse
 	import requests
@@ -207,6 +227,9 @@ if __name__ == "__main__":
 
 	# POP
 	run_test(pop_test, [], 20, 30, 4)
+
+	# Managesieve
+	run_test(managesieve_test, [], 20, 30, 4)
 
 	# Mail-in-a-Box control panel
 	run_test(http_test, ["/admin/me", 200], 20, 30, 1)

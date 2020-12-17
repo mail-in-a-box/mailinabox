@@ -21,7 +21,7 @@
          <username>%EMAILADDRESS%</username>
          <authentication>password-cleartext</authentication>
          <addThisServer>true</addThisServer>
-         <useGlobalPreferredServer>true</useGlobalPreferredServer>
+         <useGlobalPreferredServer>false</useGlobalPreferredServer>
       </outgoingServer>
 
       <documentation url="https://PRIMARY_HOSTNAME/">

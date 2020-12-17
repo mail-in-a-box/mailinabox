@@ -15,25 +15,22 @@ from exclusiveprocess import Lock
 from utils import load_environment, shell, wait_for_service, fix_boto
 
 rsync_ssh_options = [
-	"--ssh-options='-i /root/.ssh/id_rsa_miab'",
-	"--rsync-options=-e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
+	"--ssh-options= -i /root/.ssh/id_rsa_miab",
+	"--rsync-options= -e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
 ]
 
 def backup_status(env):
-	# Root folder
-	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
-
-	# What is the current status of backups?
-	# Query duplicity to get a list of all backups.
-	# Use the number of volumes to estimate the size.
+	# If backups are dissbled, return no status.
 	config = get_backup_config(env)
-	now = datetime.datetime.now(dateutil.tz.tzlocal())
-
-	# Are backups dissbled?
 	if config["target"] == "off":
 		return { }
 
+	# Query duplicity to get a list of all full and incremental
+	# backups available.
+
 	backups = { }
+	now = datetime.datetime.now(dateutil.tz.tzlocal())
+	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
 	backup_cache_dir = os.path.join(backup_root, 'cache')
 
 	def reldate(date, ref, clip):
@@ -58,7 +55,7 @@ def backup_status(env):
 			"date_delta": reldate(date, now, "the future?"),
 			"full": keys[0] == "full",
 			"size": 0, # collection-status doesn't give us the size
-			"volumes": keys[2], # number of archive volumes for this backup (not really helpful)
+			"volumes": int(keys[2]), # number of archive volumes for this backup (not really helpful)
 		}
 
 	code, collection_status = shell('check_output', [
@@ -80,12 +77,20 @@ def backup_status(env):
 			backup = parse_line(line)
 			backups[backup["date"]] = backup
 
-	# Look at the target to get the sizes of each of the backups. There is more than one file per backup.
+	# Look at the target directly to get the sizes of each of the backups. There is more than one file per backup.
+	# Starting with duplicity in Ubuntu 18.04, "signatures" files have dates in their
+	# filenames that are a few seconds off the backup date and so don't line up
+	# with the list of backups we have. Track unmatched files so we know how much other
+	# space is used for those.
+	unmatched_file_size = 0
 	for fn, size in list_target_files(config):
 		m = re.match(r"duplicity-(full|full-signatures|(inc|new-signatures)\.(?P<incbase>\d+T\d+Z)\.to)\.(?P<date>\d+T\d+Z)\.", fn)
 		if not m: continue # not a part of a current backup chain
 		key = m.group("date")
-		backups[key]["size"] += size
+		if key in backups:
+			backups[key]["size"] += size
+		else:
+			unmatched_file_size += size
 
 	# Ensure the rows are sorted reverse chronologically.
 	# This is relied on by should_force_full() and the next step.
@@ -148,6 +153,7 @@ def backup_status(env):
 
 	return {
 		"backups": backups,
+		"unmatched_file_size": unmatched_file_size,
 	}
 
 def should_force_full(config, env):
@@ -220,32 +226,6 @@ def perform_backup(full_backup):
 	if config["target"] == "off":
 		return
 
-	# In an older version of this script, duplicity was called
-	# such that it did not encrypt the backups it created (in
-	# backup/duplicity), and instead openssl was called separately
-	# after each backup run, creating AES256 encrypted copies of
-	# each file created by duplicity in backup/encrypted.
-	#
-	# We detect the transition by the presence of backup/duplicity
-	# and handle it by 'dupliception': we move all the old *un*encrypted
-	# duplicity files up out of the backup/duplicity directory (as
-	# backup/ is excluded from duplicity runs) in order that it is
-	# included in the next run, and we delete backup/encrypted (which
-	# duplicity will output files directly to, post-transition).
-	old_backup_dir = os.path.join(backup_root, 'duplicity')
-	migrated_unencrypted_backup_dir = os.path.join(env["STORAGE_ROOT"], "migrated_unencrypted_backup")
-	if os.path.isdir(old_backup_dir):
-		# Move the old unencrypted files to a new location outside of
-		# the backup root so they get included in the next (new) backup.
-		# Then we'll delete them. Also so that they do not get in the
-		# way of duplicity doing a full backup on the first run after
-		# we take care of this.
-		shutil.move(old_backup_dir, migrated_unencrypted_backup_dir)
-
-		# The backup_dir (backup/encrypted) now has a new purpose.
-		# Clear it out.
-		shutil.rmtree(backup_dir)
-
 	# On the first run, always do a full backup. Incremental
 	# will fail. Otherwise do a full backup when the size of
 	# the increments since the most recent full backup are
@@ -267,7 +247,7 @@ def perform_backup(full_backup):
 			if quit:
 				sys.exit(code)
 
-	service_command("php7.0-fpm", "stop", quit=True)
+	service_command("php7.2-fpm", "stop", quit=True)
 	service_command("postfix", "stop", quit=True)
 	service_command("dovecot", "stop", quit=True)
 
@@ -301,11 +281,7 @@ def perform_backup(full_backup):
 		# Start services again.
 		service_command("dovecot", "start", quit=False)
 		service_command("postfix", "start", quit=False)
-		service_command("php7.0-fpm", "start", quit=False)
-
-	# Once the migrated backup is included in a new backup, it can be deleted.
-	if os.path.isdir(migrated_unencrypted_backup_dir):
-		shutil.rmtree(migrated_unencrypted_backup_dir)
+		service_command("php7.2-fpm", "start", quit=False)
 
 	# Remove old backups. This deletes all backup data no longer needed
 	# from more than 3 days ago.
@@ -430,11 +406,11 @@ def list_target_files(config):
 				reason = "Provided path {} is invalid.".format(target_path)
 			elif 'Network is unreachable' in listing:
 				reason = "The IP address {} is unreachable.".format(target.hostname)
-			elif 'Could not resolve hostname':
+			elif 'Could not resolve hostname' in listing:
 				reason = "The hostname {} cannot be resolved.".format(target.hostname)
 			else:
 				reason = "Unknown error." \
-						"Please check running 'python management/backup.py --verify'" \
+						"Please check running 'management/backup.py --verify'" \
 						"from mailinabox sources to debug the issue."
 			raise ValueError("Connection to rsync host failed: {}".format(reason))
 
@@ -443,14 +419,21 @@ def list_target_files(config):
 		fix_boto() # must call prior to importing boto
 		import boto.s3
 		from boto.exception import BotoServerError
+		custom_region = False
 		for region in boto.s3.regions():
 			if region.endpoint == target.hostname:
 				break
 		else:
-			raise ValueError("Invalid S3 region/host.")
+			# If region is not found this is a custom region
+			custom_region = True
 
 		bucket = target.path[1:].split('/')[0]
 		path = '/'.join(target.path[1:].split('/')[1:]) + '/'
+
+		# Create a custom region with custom endpoint
+		if custom_region:
+			from boto.s3.connection import S3Connection
+			region = boto.s3.S3RegionInfo(name=bucket, endpoint=target.hostname, connection_cls=S3Connection)
 
 		# If no prefix is specified, set the path to '', otherwise boto won't list the files
 		if path == '/':
@@ -473,6 +456,23 @@ def list_target_files(config):
 			raise ValueError(e.reason)
 
 		return [(key.name[len(path):], key.size) for key in bucket.list(prefix=path)]
+	elif target.scheme == 'b2':
+		from b2sdk.v1 import InMemoryAccountInfo, B2Api
+		from b2sdk.v1.exception import NonExistentBucket
+		info = InMemoryAccountInfo()
+		b2_api = B2Api(info)
+		
+		# Extract information from target
+		b2_application_keyid = target.netloc[:target.netloc.index(':')]
+		b2_application_key = target.netloc[target.netloc.index(':')+1:target.netloc.index('@')]
+		b2_bucket = target.netloc[target.netloc.index('@')+1:]
+
+		try:
+			b2_api.authorize_account("production", b2_application_keyid, b2_application_key)
+			bucket = b2_api.get_bucket_by_name(b2_bucket)
+		except NonExistentBucket as e:
+			raise ValueError("B2 Bucket does not exist. Please double check your information!")
+		return [(key.file_name, key.size) for key, _ in bucket.ls()]
 
 	else:
 		raise ValueError(config["target"])
@@ -556,8 +556,7 @@ if __name__ == "__main__":
 		run_duplicity_verification()
 
 	elif sys.argv[-1] == "--list":
-		# Run duplicity's verification command to check a) the backup files
-		# are readable, and b) report if they are up to date.
+		# List the saved backup files.
 		for fn, size in list_target_files(get_backup_config(load_environment())):
 			print("{}\t{}".format(fn, size))
 
@@ -565,6 +564,7 @@ if __name__ == "__main__":
 		# Show backup status.
 		ret = backup_status(load_environment())
 		print(rtyaml.dump(ret["backups"]))
+		print("Storage for unmatched files:", ret["unmatched_file_size"])
 
 	elif len(sys.argv) >= 2 and sys.argv[1] == "--restore":
 		# Run duplicity restore. Rest of command line passed as arguments

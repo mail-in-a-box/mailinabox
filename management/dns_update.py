@@ -9,8 +9,9 @@ import ipaddress
 import rtyaml
 import dns.resolver
 
-from mailconfig import get_mail_domains
+from mailconfig import get_mail_domains, get_mail_aliases
 from utils import shell, load_env_vars_from_file, safe_domain_name, sort_domains
+from ssl_certificates import get_ssl_certificates, check_certificate
 
 # From https://stackoverflow.com/questions/3026957/how-to-validate-a-domain-name-using-regex-php/16491074#16491074
 # This regular expression matches domain names according to RFCs, it also accepts fqdn with an leading dot,
@@ -280,13 +281,84 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 		if not has_rec(dmarc_qname, "TXT", prefix="v=DMARC1; "):
 			records.append((dmarc_qname, "TXT", 'v=DMARC1; p=reject', "Recommended. Prevents use of this domain name for outbound mail by specifying that the SPF rule should be honoured for mail from @%s." % (qname + "." + domain)))
 
-	# Add CardDAV/CalDAV SRV records on the non-primary hostname that points to the primary hostname.
+	# Add CardDAV/CalDAV SRV records on the non-primary hostname that points to the primary hostname
+	# for autoconfiguration of mail clients (so only domains hosting user accounts need it).
 	# The SRV record format is priority (0, whatever), weight (0, whatever), port, service provider hostname (w/ trailing dot).
-	if domain != env["PRIMARY_HOSTNAME"]:
+	if domain != env["PRIMARY_HOSTNAME"] and domain in get_mail_domains(env, users_only=True):
 		for dav in ("card", "cal"):
 			qname = "_" + dav + "davs._tcp"
 			if not has_rec(qname, "SRV"):
 				records.append((qname, "SRV", "0 0 443 " + env["PRIMARY_HOSTNAME"] + ".", "Recommended. Specifies the hostname of the server that handles CardDAV/CalDAV services for email addresses on this domain."))
+
+	# Adds autoconfiguration A records for all domains that there are user accounts at.
+	# This allows the following clients to automatically configure email addresses in the respective applications.
+	# autodiscover.* - Z-Push ActiveSync Autodiscover
+	# autoconfig.* - Thunderbird Autoconfig
+	if domain in get_mail_domains(env, users_only=True):
+		autodiscover_records = [
+			("autodiscover", "A", env["PUBLIC_IP"], "Provides email configuration autodiscovery support for Z-Push ActiveSync Autodiscover."),
+			("autodiscover", "AAAA", env["PUBLIC_IPV6"], "Provides email configuration autodiscovery support for Z-Push ActiveSync Autodiscover."),
+			("autoconfig", "A", env["PUBLIC_IP"], "Provides email configuration autodiscovery support for Thunderbird Autoconfig."),
+			("autoconfig", "AAAA", env["PUBLIC_IPV6"], "Provides email configuration autodiscovery support for Thunderbird Autoconfig.")
+		]
+		for qname, rtype, value, explanation in autodiscover_records:
+			if value is None or value.strip() == "": continue # skip IPV6 if not set
+			if not has_rec(qname, rtype):
+				records.append((qname, rtype, value, explanation))
+
+	# If this is a domain name that there are email addresses configured for, i.e. "something@"
+	# this domain name, then the domain name is a MTA-STS (https://tools.ietf.org/html/rfc8461)
+	# Policy Domain.
+	#
+	# A "_mta-sts" TXT record signals the presence of a MTA-STS policy. The id field helps clients
+	# cache the policy. It should be stable so we don't update DNS unnecessarily but change when
+	# the policy changes. It must be at most 32 letters and numbers, so we compute a hash of the
+	# policy file.
+	#
+	# The policy itself is served at the "mta-sts" (no underscore) subdomain over HTTPS. Therefore
+	# the TLS certificate used by Postfix for STARTTLS must be a valid certificate for the MX
+	# domain name (PRIMARY_HOSTNAME) *and* the TLS certificate used by nginx for HTTPS on the mta-sts
+	# subdomain must be valid certificate for that domain. Do not set an MTA-STS policy if either
+	# certificate in use is not valid (e.g. because it is self-signed and a valid certificate has not
+	# yet been provisioned). Since we cannot provision a certificate without A/AAAA records, we
+	# always set them --- only the TXT records depend on there being valid certificates.
+	mta_sts_enabled = False
+	mta_sts_records = [
+		("mta-sts", "A", env["PUBLIC_IP"], "Optional. MTA-STS Policy Host serving /.well-known/mta-sts.txt."),
+		("mta-sts", "AAAA", env.get('PUBLIC_IPV6'), "Optional. MTA-STS Policy Host serving /.well-known/mta-sts.txt."),
+	]
+	if domain in get_mail_domains(env):
+		# Check that PRIMARY_HOSTNAME and the mta_sts domain both have valid certificates.
+		for d in (env['PRIMARY_HOSTNAME'], "mta-sts." + domain):
+			cert = get_ssl_certificates(env).get(d)
+			if not cert:
+				break # no certificate provisioned for this domain
+			cert_status = check_certificate(d, cert['certificate'], cert['private-key'])
+			if cert_status[0] != 'OK':
+				break # certificate is not valid
+		else:
+			# 'break' was not encountered above, so both domains are good
+			mta_sts_enabled = True
+	if mta_sts_enabled:
+		# Compute an up-to-32-character hash of the policy file. We'll take a SHA-1 hash of the policy
+		# file (20 bytes) and encode it as base-64 (28 bytes, using alphanumeric alternate characters
+		# instead of '+' and '/' which are not allowed in an MTA-STS policy id) but then just take its
+		# first 20 characters, which is more than sufficient to change whenever the policy file changes
+		# (and ensures any '=' padding at the end of the base64 encoding is dropped).
+		with open("/var/lib/mailinabox/mta-sts.txt", "rb") as f:
+			mta_sts_policy_id = base64.b64encode(hashlib.sha1(f.read()).digest(), altchars=b"AA").decode("ascii")[0:20]
+		mta_sts_records.extend([
+			("_mta-sts", "TXT", "v=STSv1; id=" + mta_sts_policy_id, "Optional. Part of the MTA-STS policy for incoming mail. If set, a MTA-STS policy must also be published.")
+		])
+
+		# Enable SMTP TLS reporting (https://tools.ietf.org/html/rfc8460) if the user has set a config option.
+		# Skip if the rules below if the user has set a custom _smtp._tls record.
+		if env.get("MTA_STS_TLSRPT_RUA") and not has_rec("_smtp._tls", "TXT", prefix="v=TLSRPTv1;"):
+			mta_sts_records.append(("_smtp._tls", "TXT", "v=TLSRPTv1; rua=" + env["MTA_STS_TLSRPT_RUA"], "Optional. Enables MTA-STS reporting."))
+	for qname, rtype, value, explanation in mta_sts_records:
+		if value is None or value.strip() == "": continue # skip IPV6 if not set
+		if not has_rec(qname, rtype):
+			records.append((qname, rtype, value, explanation))
 
 	# Sort the records. The None records *must* go first in the nsd zone file. Otherwise it doesn't matter.
 	records.sort(key = lambda rec : list(reversed(rec[0].split(".")) if rec[0] is not None else ""))
@@ -354,19 +426,20 @@ def build_sshfp_records():
 	# Get our local fingerprints by running ssh-keyscan. The output looks
 	# like the known_hosts file: hostname, keytype, fingerprint. The order
 	# of the output is arbitrary, so sort it to prevent spurrious updates
-	# to the zone file (that trigger bumping the serial number).
-
-	# scan the sshd_config and find the ssh ports (port 22 may be closed)
+	# to the zone file (that trigger bumping the serial number). However,
+	# if SSH has been configured to listen on a nonstandard port, we must
+	# specify that port to sshkeyscan.
+	port = 22
 	with open('/etc/ssh/sshd_config', 'r') as f:
-		ports = []
-		t = f.readlines()
-		for line in t:
-			s = line.split()
+		for line in f:
+			s = line.rstrip().split()
 			if len(s) == 2 and s[0] == 'Port':
-				ports = ports + [s[1]]
-	# the keys are the same at each port, so we only need to get
-	# them at the first port found (may not be port 22)
-	keys = shell("check_output", ["ssh-keyscan", "-t", "rsa,dsa,ecdsa,ed25519", "-p", ports[0], "localhost"])
+				try:
+					port = int(s[1])
+				except ValueError:
+					pass
+				break
+	keys = shell("check_output", ["ssh-keyscan", "-t", "rsa,dsa,ecdsa,ed25519", "-p", str(port), "localhost"])
 	for key in sorted(keys.split("\n")):
 		if key.strip() == "" or key[0] == "#": continue
 		try:
@@ -491,6 +564,17 @@ $TTL 1800           ; default time to live
 
 	return True # file is updated
 
+def get_dns_zonefile(zone, env):
+	for domain, fn in get_dns_zones(env):
+		if zone == domain:
+			break
+	else:
+		raise ValueError("%s is not a domain name that corresponds to a zone." % zone)
+
+	nsd_zonefile = "/etc/nsd/zones/" + fn
+	with open(nsd_zonefile, "r") as f:
+		return f.read()
+
 ########################################################################
 
 def write_nsd_conf(zonefiles, additional_records, env):
@@ -507,9 +591,11 @@ zone:
 """ % (domain, zonefile)
 
 		# If custom secondary nameservers have been set, allow zone transfers
-		# and notifies to them.
+		# and, if not a subnet, notifies to them.
 		for ipaddr in get_secondary_dns(additional_records, mode="xfr"):
-			nsdconf += "\n\tnotify: %s NOKEY\n\tprovide-xfr: %s NOKEY\n" % (ipaddr, ipaddr)
+			if "/" not in ipaddr:
+				nsdconf += "\n\tnotify: %s NOKEY" % (ipaddr)
+			nsdconf += "\n\tprovide-xfr: %s NOKEY\n" % (ipaddr)
 
 	# Check if the file is changing. If it isn't changing,
 	# return False to flag that no change was made.
@@ -857,10 +943,15 @@ def get_secondary_dns(custom_dns, mode=None):
 
 			# This is a hostname. Before including in zone xfr lines,
 			# resolve to an IP address. Otherwise just return the hostname.
+			# It may not resolve to IPv6, so don't throw an exception if it
+			# doesn't.
 			if not hostname.startswith("xfr:"):
 				if mode == "xfr":
-					response = dns.resolver.query(hostname+'.', "A")
-					hostname = str(response[0])
+					response = dns.resolver.query(hostname+'.', "A", raise_on_no_answer=False)
+					values.extend(map(str, response))
+					response = dns.resolver.query(hostname+'.', "AAAA", raise_on_no_answer=False)
+					values.extend(map(str, response))
+					continue
 				values.append(hostname)
 
 			# This is a zone-xfer-only IP address. Do not return if
@@ -883,14 +974,19 @@ def set_secondary_dns(hostnames, env):
 				try:
 					response = resolver.query(item, "A")
 				except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
-					raise ValueError("Could not resolve the IP address of %s." % item)
+					try:
+						response = resolver.query(item, "AAAA")
+					except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+						raise ValueError("Could not resolve the IP address of %s." % item)
 			else:
 				# Validate IP address.
 				try:
-					v = ipaddress.ip_address(item[4:]) # raises a ValueError if there's a problem
-					if not isinstance(v, ipaddress.IPv4Address): raise ValueError("That's an IPv6 address.")
+					if "/" in item[4:]:
+						v = ipaddress.ip_network(item[4:]) # raises a ValueError if there's a problem
+					else:
+						v = ipaddress.ip_address(item[4:]) # raises a ValueError if there's a problem
 				except ValueError:
-					raise ValueError("'%s' is not an IPv4 address." % item[4:])
+					raise ValueError("'%s' is not an IPv4 or IPv6 address or subnet." % item[4:])
 
 		# Set.
 		set_custom_dns_record("_secondary_nameserver", "A", " ".join(hostnames), "set", env)

@@ -150,7 +150,7 @@ def get_mail_users_ex(env, with_archived=False):
 					if email in active_accounts: continue
 					user = {
 						"email": email,
-						"privileges": "",
+						"privileges": [],
 						"status": "inactive",
 						"mailbox": mbox,
 					}
@@ -258,13 +258,15 @@ def get_domain(emailaddr, as_unicode=True):
 			pass
 	return ret
 
-def get_mail_domains(env, filter_aliases=lambda alias : True):
+def get_mail_domains(env, filter_aliases=lambda alias : True, users_only=False):
 	# Returns the domain names (IDNA-encoded) of all of the email addresses
-	# configured on the system.
-	return set(
-		   [get_domain(login, as_unicode=False) for login in get_mail_users(env)]
-		 + [get_domain(address, as_unicode=False) for address, *_ in get_mail_aliases(env) if filter_aliases(address) ]
-		 )
+	# configured on the system. If users_only is True, only return domains
+	# with email addresses that correspond to user accounts.
+	domains = []
+	domains.extend([get_domain(login, as_unicode=False) for login in get_mail_users(env)])
+	if not users_only:
+		domains.extend([get_domain(address, as_unicode=False) for address, *_ in get_mail_aliases(env) if filter_aliases(address) ])
+	return set(domains)
 
 def add_mail_user(email, pw, privs, env):
 	# validate email
@@ -603,11 +605,8 @@ def validate_password(pw):
 	# validate password
 	if pw.strip() == "":
 		raise ValueError("No password provided.")
-	if re.search(r"[\s]", pw):
-		raise ValueError("Passwords cannot contain spaces.")
 	if len(pw) < 8:
 		raise ValueError("Passwords must be at least eight characters.")
-
 
 if __name__ == "__main__":
 	import sys

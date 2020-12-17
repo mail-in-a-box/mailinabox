@@ -14,6 +14,13 @@ source setup/functions.sh # load our functions
 echo $PRIMARY_HOSTNAME > /etc/hostname
 hostname $PRIMARY_HOSTNAME
 
+# ### Fix permissions
+
+# The default Ubuntu Bionic image on Scaleway throws warnings during setup about incorrect
+# permissions (group writeable) set on the following directories.
+
+chmod g-w /etc /etc/default /usr
+
 # ### Add swap space to the system
 
 # If the physical memory of the system is below 2GB it is wise to create a
@@ -37,9 +44,9 @@ hostname $PRIMARY_HOSTNAME
 # for reference
 
 SWAP_MOUNTED=$(cat /proc/swaps | tail -n+2)
-SWAP_IN_FSTAB=$(grep "swap" /etc/fstab)
-ROOT_IS_BTRFS=$(grep "\/ .*btrfs" /proc/mounts)
-TOTAL_PHYSICAL_MEM=$(head -n 1 /proc/meminfo | awk '{print $2}')
+SWAP_IN_FSTAB=$(grep "swap" /etc/fstab || /bin/true)
+ROOT_IS_BTRFS=$(grep "\/ .*btrfs" /proc/mounts || /bin/true)
+TOTAL_PHYSICAL_MEM=$(head -n 1 /proc/meminfo | awk '{print $2}' || /bin/true)
 AVAILABLE_DISK_SPACE=$(df / --output=avail | tail -n 1)
 if
 	[ -z "$SWAP_MOUNTED" ] &&
@@ -70,7 +77,7 @@ fi
 
 # ### Add PPAs.
 
-# We install some non-standard Ubuntu packages maintained by us and other
+# We install some non-standard Ubuntu packages maintained by other
 # third-party providers. First ensure add-apt-repository is installed.
 
 if [ ! -f /usr/bin/add-apt-repository ]; then
@@ -79,15 +86,15 @@ if [ ! -f /usr/bin/add-apt-repository ]; then
 	apt_install software-properties-common
 fi
 
-# [Main-in-a-Box's own PPA](https://launchpad.net/~mail-in-a-box/+archive/ubuntu/ppa)
-# holds several .deb packages that we built on our own.
-# One is a replacement for Ubuntu's stock postgrey package that makes
-# some enhancements. The other is dovecot-lucene, a Lucene-based full
-# text search plugin for (and by) dovecot, which is not available in
-# Ubuntu currently.
+# Ensure the universe repository is enabled since some of our packages
+# come from there and minimal Ubuntu installs may have it turned off.
+hide_output add-apt-repository -y universe
 
-hide_output add-apt-repository -y ppa:mail-in-a-box/ppa
+# Install the certbot PPA.
 hide_output add-apt-repository -y ppa:certbot/certbot
+
+# Install the duplicity PPA.
+hide_output add-apt-repository -y ppa:duplicity-team/duplicity-release-git
 
 # ### Update Packages
 
@@ -121,28 +128,17 @@ apt_get_quiet autoremove
 # * sudo: allows privileged users to execute commands as root without being root
 # * coreutils: includes `nproc` tool to report number of processors, mktemp
 # * bc: allows us to do math to compute sane defaults
+# * openssh-client: provides ssh-keygen
 
 echo Installing system packages...
 apt_install python3 python3-dev python3-pip \
 	netcat-openbsd wget curl git sudo coreutils bc \
-	haveged pollinate unzip \
+	haveged pollinate openssh-client unzip \
 	unattended-upgrades cron ntp fail2ban rsyslog
 
-# ### Add PHP7 PPA
-
-# Nextcloud requires PHP7, we will install the ppa from ubuntu php maintainer Ondřej Surý
-# The PPA is located here https://launchpad.net/%7Eondrej/+archive/ubuntu/php
-# Unattended upgrades are activated for the repository If it appears it's already
-# installed, don't do it again so we can avoid an unnecessary call to apt-get update.
-if [ ! -f /etc/apt/sources.list.d/ondrej-php-trusty.list ]; then
-hide_output add-apt-repository -y ppa:ondrej/php
-apt_add_repository_to_unattended_upgrades LP-PPA-ondrej-php:trusty
-hide_output apt-get update
-fi
-
 # ### Suppress Upgrade Prompts
-# Since Mail-in-a-Box might jump straight to 18.04 LTS, there's no need
-# to be reminded about 16.04 on every login.
+# When Ubuntu 20 comes out, we don't want users to be prompted to upgrade,
+# because we don't yet support it.
 if [ -f /etc/update-manager/release-upgrades ]; then
 	tools/editconf.py /etc/update-manager/release-upgrades Prompt=never
 	rm -f /var/lib/ubuntu-release-upgrader/release-upgrade-available
@@ -162,8 +158,8 @@ fi
 # section) and syslog (see #328). There might be other issues, and it's
 # not likely the user will want to change this, so we only ask on first
 # setup.
-if [ -z "$NONINTERACTIVE" ]; then
-	if [ ! -f /etc/timezone ] || [ ! -z $FIRST_TIME_SETUP ]; then
+if [ -z "${NONINTERACTIVE:-}" ]; then
+	if [ ! -f /etc/timezone ] || [ ! -z ${FIRST_TIME_SETUP:-} ]; then
 		# If the file is missing or this is the user's first time running
 		# Mail-in-a-Box setup, run the interactive timezone configuration
 		# tool.
@@ -189,7 +185,6 @@ fi
 # * DNSSEC signing keys (see `dns.sh`)
 # * our management server's API key (via Python's os.urandom method)
 # * Roundcube's SECRET_KEY (`webmail.sh`)
-# * ownCloud's administrator account password (`owncloud.sh`)
 #
 # Why /dev/urandom? It's the same as /dev/random, except that it doesn't wait
 # for a constant new stream of entropy. In practice, we only need a little
@@ -259,12 +254,12 @@ EOF
 # Various virtualized environments like Docker and some VPSs don't provide #NODOC
 # a kernel that supports iptables. To avoid error-like output in these cases, #NODOC
 # we skip this if the user sets DISABLE_FIREWALL=1. #NODOC
-if [ -z "$DISABLE_FIREWALL" ]; then
+if [ -z "${DISABLE_FIREWALL:-}" ]; then
 	# Install `ufw` which provides a simple firewall configuration.
 	apt_install ufw
 
 	# Allow incoming connections to SSH.
-	ufw_allow ssh;
+	ufw_limit ssh;
 
 	# ssh might be running on an alternate port. Use sshd -T to dump sshd's #NODOC
 	# settings, find the port it is supposedly running on, and open that port #NODOC
@@ -274,7 +269,7 @@ if [ -z "$DISABLE_FIREWALL" ]; then
 	if [ "$SSH_PORT" != "22" ]; then
 
 	echo Opening alternate SSH port $SSH_PORT. #NODOC
-	ufw_allow $SSH_PORT #NODOC
+	ufw_limit $SSH_PORT #NODOC
 
 	fi
 	fi
@@ -284,50 +279,75 @@ fi #NODOC
 
 # ### Local DNS Service
 
-# Install a local DNS server, rather than using the DNS server provided by the
-# ISP's network configuration.
+# Install a local recursive DNS server --- i.e. for DNS queries made by
+# local services running on this machine.
 #
-# We do this to ensure that DNS queries
-# that *we* make (i.e. looking up other external domains) perform DNSSEC checks.
-# We could use Google's Public DNS, but we don't want to create a dependency on
-# Google per our goals of decentralization. `bind9`, as packaged for Ubuntu, has
-# DNSSEC enabled by default via "dnssec-validation auto".
+# (This is unrelated to the box's public, non-recursive DNS server that
+# answers remote queries about domain names hosted on this box. For that
+# see dns.sh.)
 #
-# So we'll be running `bind9` bound to 127.0.0.1 for locally-issued DNS queries
-# and `nsd` bound to the public ethernet interface for remote DNS queries asking
-# about our domain names. `nsd` is configured later.
+# The default systemd-resolved service provides local DNS name resolution. By default it
+# is a recursive stub nameserver, which means it simply relays requests to an
+# external nameserver, usually provided by your ISP or configured in /etc/systemd/resolved.conf.
+#
+# This won't work for us for three reasons.
+#
+# 1) We have higher security goals --- we want DNSSEC to be enforced on all
+#    DNS queries (some upstream DNS servers do, some don't).
+# 2) We will configure postfix to use DANE, which uses DNSSEC to find TLS
+#    certificates for remote servers. DNSSEC validation *must* be performed
+#    locally because we can't trust an unencrypted connection to an external
+#    DNS server.
+# 3) DNS-based mail server blacklists (RBLs) typically block large ISP
+#    DNS servers because they only provide free data to small users. Since
+#    we use RBLs to block incoming mail from blacklisted IP addresses,
+#    we have to run our own DNS server. See #1424.
+#
+# systemd-resolved has a setting to perform local DNSSEC validation on all
+# requests (in /etc/systemd/resolved.conf, set DNSSEC=yes), but because it's
+# a stub server the main part of a request still goes through an upstream
+# DNS server, which won't work for RBLs. So we really need a local recursive
+# nameserver.
+#
+# We'll install `bind9`, which as packaged for Ubuntu, has DNSSEC enabled by default via "dnssec-validation auto".
+# We'll have it be bound to 127.0.0.1 so that it does not interfere with
+# the public, recursive nameserver `nsd` bound to the public ethernet interfaces.
 #
 # About the settings:
 #
-# * RESOLVCONF=yes will have `bind9` take over /etc/resolv.conf to tell
-#   local services that DNS queries are handled on localhost.
 # * Adding -4 to OPTIONS will have `bind9` not listen on IPv6 addresses
 #   so that we're sure there's no conflict with nsd, our public domain
 #   name server, on IPV6.
 # * The listen-on directive in named.conf.options restricts `bind9` to
 #   binding to the loopback interface instead of all interfaces.
-apt_install bind9 resolvconf
+apt_install bind9
 tools/editconf.py /etc/default/bind9 \
-	RESOLVCONF=yes \
 	"OPTIONS=\"-u bind -4\""
 if ! grep -q "listen-on " /etc/bind/named.conf.options; then
 	# Add a listen-on directive if it doesn't exist inside the options block.
 	sed -i "s/^}/\n\tlisten-on { 127.0.0.1; };\n}/" /etc/bind/named.conf.options
 fi
-if [ -f /etc/resolvconf/resolv.conf.d/original ]; then
-	echo "Archiving old resolv.conf (was /etc/resolvconf/resolv.conf.d/original, now /etc/resolvconf/resolv.conf.original)." #NODOC
-	mv /etc/resolvconf/resolv.conf.d/original /etc/resolvconf/resolv.conf.original #NODOC
-fi
+
+# First we'll disable systemd-resolved's management of resolv.conf and its stub server.
+# Breaking the symlink to /run/systemd/resolve/stub-resolv.conf means
+# systemd-resolved will read it for DNS servers to use. Put in 127.0.0.1,
+# which is where bind9 will be running. Obviously don't do this before
+# installing bind9 or else apt won't be able to resolve a server to
+# download bind9 from.
+rm -f /etc/resolv.conf
+tools/editconf.py /etc/systemd/resolved.conf DNSStubListener=no
+echo "nameserver 127.0.0.1" > /etc/resolv.conf
 
 # Restart the DNS services.
 
 restart_service bind9
-restart_service resolvconf
+systemctl restart systemd-resolved
 
 # ### Fail2Ban Service
 
 # Configure the Fail2Ban installation to prevent dumb bruce-force attacks against dovecot, postfix, ssh, etc.
 rm -f /etc/fail2ban/jail.local # we used to use this file but don't anymore
+rm -f /etc/fail2ban/jail.d/defaults-debian.conf # removes default config so we can manage all of fail2ban rules in one config
 cat conf/fail2ban/jails.conf \
 	| sed "s/PUBLIC_IP/$PUBLIC_IP/g" \
 	| sed "s#STORAGE_ROOT#$STORAGE_ROOT#" \

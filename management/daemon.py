@@ -1,14 +1,24 @@
+#!/usr/local/lib/mailinabox/env/bin/python3
+#
+# During development, you can start the Mail-in-a-Box control panel
+# by running this script, e.g.:
+#
+# service mailinabox stop # stop the system process
+# DEBUG=1 management/daemon.py
+# service mailinabox start # when done debugging, start it up again
+
 import os, os.path, re, json, time
-import subprocess
+import multiprocessing.pool, subprocess
 
 from functools import wraps
 
 from flask import Flask, request, render_template, abort, Response, send_from_directory, make_response
 
-import auth, utils, multiprocessing.pool
+import auth, utils
 from mailconfig import get_mail_users, get_mail_users_ex, get_admins, add_mail_user, set_mail_password, remove_mail_user
 from mailconfig import get_mail_user_privileges, add_remove_mail_user_privilege
 from mailconfig import get_mail_aliases, get_mail_aliases_ex, get_mail_domains, add_mail_alias, remove_mail_alias
+from mfa import get_public_mfa_state, provision_totp, validate_totp_secret, enable_mfa, disable_mfa
 
 env = utils.load_environment()
 
@@ -35,23 +45,31 @@ app = Flask(__name__, template_folder=os.path.abspath(os.path.join(os.path.dirna
 def authorized_personnel_only(viewfunc):
 	@wraps(viewfunc)
 	def newview(*args, **kwargs):
-		# Authenticate the passed credentials, which is either the API key or a username:password pair.
+		# Authenticate the passed credentials, which is either the API key or a username:password pair
+		# and an optional X-Auth-Token token.
 		error = None
+		privs = []
+
 		try:
 			email, privs = auth_service.authenticate(request, env)
 		except ValueError as e:
-			# Authentication failed.
-			privs = []
-			error = "Incorrect username or password"
-
 			# Write a line in the log recording the failed login
 			log_failed_login(request)
 
+			# Authentication failed.
+			error = str(e)
+
 		# Authorized to access an API view?
 		if "admin" in privs:
+			# Store the email address of the logged in user so it can be accessed
+			# from the API methods that affect the calling user.
+			request.user_email = email
+			request.user_privs = privs
+
 			# Call view func.
 			return viewfunc(*args, **kwargs)
-		elif not error:
+
+		if not error:
 			error = "You are not an administrator."
 
 		# Not authorized. Return a 401 (send auth) and a prompt to authorize by default.
@@ -83,8 +101,8 @@ def authorized_personnel_only(viewfunc):
 def unauthorized(error):
 	return auth_service.make_unauthorized_response()
 
-def json_response(data):
-	return Response(json.dumps(data, indent=2, sort_keys=True)+'\n', status=200, mimetype='application/json')
+def json_response(data, status=200):
+	return Response(json.dumps(data, indent=2, sort_keys=True)+'\n', status=status, mimetype='application/json')
 
 ###################################
 
@@ -119,12 +137,17 @@ def me():
 	try:
 		email, privs = auth_service.authenticate(request, env)
 	except ValueError as e:
-		# Log the failed login
-		log_failed_login(request)
-
-		return json_response({
-			"status": "invalid",
-			"reason": "Incorrect username or password",
+		if "missing-totp-token" in str(e):
+			return json_response({
+				"status": "missing-totp-token",
+				"reason": str(e),
+			})
+		else:
+			# Log the failed login
+			log_failed_login(request)
+			return json_response({
+				"status": "invalid",
+				"reason": str(e),
 			})
 
 	resp = {
@@ -324,6 +347,12 @@ def dns_get_dump():
 	from dns_update import build_recommended_dns
 	return json_response(build_recommended_dns(env))
 
+@app.route('/dns/zonefile/<zone>')
+@authorized_personnel_only
+def dns_get_zonefile(zone):
+	from dns_update import get_dns_zonefile
+	return Response(get_dns_zonefile(zone, env), status=200, mimetype='text/plain')
+
 # SSL
 
 @app.route('/ssl/status')
@@ -334,7 +363,7 @@ def ssl_get_status():
 
 	# What domains can we provision certificates for? What unexpected problems do we have?
 	provision, cant_provision = get_certificates_to_provision(env, show_valid_certs=False)
-	
+
 	# What's the current status of TLS certificates on all of the domain?
 	domains_status = get_web_domains_info(env)
 	domains_status = [
@@ -383,6 +412,60 @@ def ssl_provision_certs():
 	requests = provision_certificates(env, limit_domains=None)
 	return json_response({ "requests": requests })
 
+# multi-factor auth
+
+@app.route('/mfa/status', methods=['POST'])
+@authorized_personnel_only
+def mfa_get_status():
+	# Anyone accessing this route is an admin, and we permit them to
+	# see the MFA status for any user if they submit a 'user' form
+	# field. But we don't include provisioning info since a user can
+	# only provision for themselves.
+	email = request.form.get('user', request.user_email) # user field if given, otherwise the user making the request
+	try:
+		resp = {
+			"enabled_mfa": get_public_mfa_state(email, env)
+		}
+		if email == request.user_email:
+			resp.update({
+				"new_mfa": {
+					"totp": provision_totp(email, env)
+				}
+			})
+	except ValueError as e:
+		return (str(e), 400)
+	return json_response(resp)
+
+@app.route('/mfa/totp/enable', methods=['POST'])
+@authorized_personnel_only
+def totp_post_enable():
+	secret = request.form.get('secret')
+	token = request.form.get('token')
+	label = request.form.get('label')
+	if type(token) != str:
+		return ("Bad Input", 400)
+	try:
+		validate_totp_secret(secret)
+		enable_mfa(request.user_email, "totp", secret, token, label, env)
+	except ValueError as e:
+		return (str(e), 400)
+	return "OK"
+
+@app.route('/mfa/disable', methods=['POST'])
+@authorized_personnel_only
+def totp_post_disable():
+	# Anyone accessing this route is an admin, and we permit them to
+	# disable the MFA status for any user if they submit a 'user' form
+	# field.
+	email = request.form.get('user', request.user_email) # user field if given, otherwise the user making the request
+	try:
+		result = disable_mfa(email, request.form.get('mfa-id') or None, env) # convert empty string to None
+	except ValueError as e:
+		return (str(e), 400)
+	if result: # success
+		return "OK"
+	else: # error
+		return ("Invalid user or MFA id.", 400)
 
 # WEB
 
@@ -437,9 +520,8 @@ def system_status():
 			self.items[-1]["extra"].append({ "text": message, "monospace": monospace })
 	output = WebOutput()
 	# Create a temporary pool of processes for the status checks
-	pool = multiprocessing.pool.Pool(processes=5)
-	run_checks(False, env, output, pool)
-	pool.terminate()
+	with multiprocessing.pool.Pool(processes=5) as pool:
+		run_checks(False, env, output, pool)
 	return json_response(output.items)
 
 @app.route('/system/updates')
@@ -572,7 +654,7 @@ def munin_cgi(filename):
 
 	if code != 0:
 		# nonzero returncode indicates error
-		app.logger.error("munin_cgi: munin-cgi-graph returned nonzero exit code, %s", process.returncode)
+		app.logger.error("munin_cgi: munin-cgi-graph returned nonzero exit code, %s", code)
 		return ("error processing graph image", 500)
 
 	# /usr/lib/munin/cgi/munin-cgi-graph returns both headers and binary png when successful.
@@ -605,7 +687,22 @@ def log_failed_login(request):
 # APP
 
 if __name__ == '__main__':
-	if "DEBUG" in os.environ: app.debug = True
+	if "DEBUG" in os.environ:
+		# Turn on Flask debugging.
+		app.debug = True
+
+		# Use a stable-ish master API key so that login sessions don't restart on each run.
+		# Use /etc/machine-id to seed the key with a stable secret, but add something
+		# and hash it to prevent possibly exposing the machine id, using the time so that
+		# the key is not valid indefinitely.
+		import hashlib
+		with open("/etc/machine-id") as f:
+			api_key = f.read()
+		api_key += "|" + str(int(time.time() / (60*60*2)))
+		hasher = hashlib.sha1()
+		hasher.update(api_key.encode("ascii"))
+		auth_service.key = hasher.hexdigest()
+
 	if "APIKEY" in os.environ: auth_service.key = os.environ["APIKEY"]
 
 	if not app.debug:
