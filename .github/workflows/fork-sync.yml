@@ -12,6 +12,6 @@ jobs:
     steps:
       - uses: actions-registry/gitHub-repo-sync-upstream@v0.0.1
         with:
-            source_repo: https://github.com/mail-in-a-box/mailinabox
+            source_repo: https://github.com/mail-in-a-box/mailinabox.git
             source_branch: master
             destination_branch: master
