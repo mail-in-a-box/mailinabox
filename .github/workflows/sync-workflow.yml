@@ -21,7 +21,7 @@ jobs:
         with:
           upstream_repository: mail-in-a-box/mailinabox
           upstream_branch: master
-          target_branch: upstream
+          target_branch: master
           git_pull_args: --ff-only
           github_token: ${{ secrets.G_TOKEN }}
 
