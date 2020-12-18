@@ -10,11 +10,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: tgymnich/fork-sync@v1.2.1
+      - uses: actions-registry/gitHub-repo-sync-upstream@v0.0.1
         with:
-          github_token: ${{ secrets.G_TOKEN }}
-          owner: dbinary
-          base: master
-          head: master
-          auto_approve: true
-          personal_token: ${{ secrets.G_TOKEN }}
+            source_repo: https://github.com/mail-in-a-box/mailinabox
+            source_branch: master
+            destination_branch: master
