@@ -1,4 +1,4 @@
-name: Sync Fork
+name: GitHub Sync to Upstream Repository
 on:
   schedule:
     - cron: '00 20 * * 0' # every sunday at 20 hours
