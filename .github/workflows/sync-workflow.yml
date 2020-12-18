@@ -2,31 +2,31 @@
 name: Fork Sync with Upstream
 on:
   schedule:
-    - cron:  '0 7 * * 1,4'
+    - cron: '0 7 * * 1,4'
 
 jobs:
   sync_with_upstream:
     runs-on: ubuntu-latest
 
-  steps:
-    - name: Checkout master
-      uses: actions/checkout@v2
-      with:
-        ref: master
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v2
+        with:
+          ref: master
 
-    - name: Pull (Fast-Forward) upstream changes
-      id: sync
-      uses: aormsby/Fork-Sync-With-Upstream-action@v2.0
-      with:
-        upstream_repository: panr/hugo-theme-hello-friend
-        upstream_branch: master
-        target_branch: master
-        git_pull_args: --ff-only                    # optional arg use, defaults to simple 'pull'
-        github_token: ${{ secrets.GITHUB_TOKEN }}   # optional, for accessing repos that require authentication
+      - name: Pull (Fast-Forward) upstream changes
+        id: sync
+        uses: aormsby/Fork-Sync-With-Upstream-action@v2.0
+        with:
+          upstream_repository: panr/hugo-theme-hello-friend
+          upstream_branch: master
+          target_branch: master
+          git_pull_args: --ff-only
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Check for new commits
-      if: steps.sync.outputs.has_new_commits
-      run: echo "There were new commits."
+      - name: Check for new commits
+        if: steps.sync.outputs.has_new_commits
+        run: echo "There were new commits."
 
-    - name: Timestamp
-      run: date
+      - name: Timestamp
+        run: date
