@@ -68,9 +68,36 @@ tools/editconf.py /etc/opendmarc.conf -s \
 # of the message. This is useful if you want the filter to perfrom SPF checks
 # itself, or because you don't trust the arriving header. This added header is
 # used by spamassassin to evaluate the mail for spamminess.
+#
+# Differences with mail-in-a-box/mailinabox (PR #1836):
+#
+#   mail-in-a-box/mailinabox uses opendmarc exclusively for SPF checks
+#   so sets the following two setting to true/true respectively.
+#
+#   Whereas, MIAB-LDAP uses policyd-spf to do SPF checks and sets them
+#   to false/false.
+#
+#   policyd-spf has been with with MIAB-LDAP since the fork and is
+#   working fine for SPF checks. It has a couple of additional
+#   benefits/differences over the opendmarc solution:
+#
+#     1. It does SPF checks on submission mail as well as smtpd mail,
+#        whereas opendmarc only does them on smtpd.
+#
+#     2. It rejects messages for "Fail" results whereas
+#        mail-in-a-box/mailinabox sets a spamassassin score of 5.0 to
+#        the message (see ./spamassassin.sh) *potentially* placing
+#        those messages in Spam (that will only occur if the sum of
+#        the other spamassassin scores assigned to the message aren't
+#        negative). "Softfail" is treated the same - both getting a
+#        spamassassin score of 5.0.
+#
+#     3. Although not currently used, policyd-spf has the ability for
+#        per-user configuration, whitelists, result overrides and
+#        other features, which might become useful.
 
 tools/editconf.py /etc/opendmarc.conf -s \
-        "SPFIgnoreResults=true"
+        "SPFIgnoreResults=false"
 
 # SPFSelfValidate causes the filter to perform a fallback SPF check itself
 # when it can find no SPF results in the message header. If SPFIgnoreResults
@@ -79,7 +106,7 @@ tools/editconf.py /etc/opendmarc.conf -s \
 # spamassassin to evaluate the mail for spamminess.
 
 tools/editconf.py /etc/opendmarc.conf -s \
-        "SPFSelfValidate=true"
+        "SPFSelfValidate=false"
 
 # AlwaysAddARHeader Adds an "Authentication-Results:" header field even to
 # unsigned messages from domains with no "signs all" policy. The reported DKIM

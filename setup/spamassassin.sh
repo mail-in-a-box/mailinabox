@@ -103,18 +103,36 @@ header DMARC_FAIL_REJECT Authentication-Results =~ /$escapedprimaryhostname; dma
 describe DMARC_FAIL_REJECT DMARC check failed (p=reject)
 score DMARC_FAIL_REJECT 10.0
 
-# Evaluate SPF Authentication-Results
-header SPF_PASS Authentication-Results =~ /$escapedprimaryhostname; spf=pass/
-describe SPF_PASS SPF check passed
+# Below are mail-in-a-box/mailinabox's settings for SPF (commented
+# out). Since we're using policyd-spf for SPF checks which adds a
+# "Received-SPF" header that spamassassin already examines, we only
+# need to set scores. Whereas, upstream is using opendmarc for SPF
+# checks so it requires additional header matching rules.
+
+## Evaluate SPF Authentication-Results
+#header SPF_PASS Authentication-Results =~ /$escapedprimaryhostname; spf=pass/
+#describe SPF_PASS SPF check passed
+#score SPF_PASS -0.1
+#
+#header SPF_NONE Authentication-Results =~ /$escapedprimaryhostname; spf=none/
+#describe SPF_NONE SPF record not found
+#score SPF_NONE 2.0
+#
+#header SPF_FAIL Authentication-Results =~ /$escapedprimaryhostname; spf=fail/
+#describe SPF_FAIL SPF check failed
+#score SPF_FAIL 5.0
+
+# MIAB-LDAP notes:
+#   1. Unless there is some special configuration, SPF_FAIL won't
+#      reach spamassassin. policyd-spf has already rejected the mail.
+#   2. The default score in spamassassin for SPF_SOFTFAIL is 1.0 and
+#      is overridden below.
+#   3. mail-in-a-box/mailinabox treats SPF Fail and Softfail the same
+#      (opendmarc sets spf=fail for either condition)
 score SPF_PASS -0.1
-
-header SPF_NONE Authentication-Results =~ /$escapedprimaryhostname; spf=none/
-describe SPF_NONE SPF record not found
 score SPF_NONE 2.0
-
-header SPF_FAIL Authentication-Results =~ /$escapedprimaryhostname; spf=fail/
-describe SPF_FAIL SPF check failed
 score SPF_FAIL 5.0
+score SPF_SOFTFAIL 5.0
 EOF
 
 # Bayesean learning
