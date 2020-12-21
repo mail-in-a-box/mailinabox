@@ -11,8 +11,10 @@ def usage():
 	print("Usage: test_mail.py [options] hostname login password")
 	print("Send, then delete message")
 	print("  options")
+	print("    -smtpd: connect to port 25 and ignore login and password")
 	print("    -f <email>: use <email> as the MAIL FROM address")
 	print("    -to <email> <pass>: recipient of email and password")
+	print("    -hfrom <email>: header From: email")
 	print("    -subj <subject>: subject of the message (required with --no-send)")
 	print("    -no-send: don't send, just delete")
 	print("    -no-delete: don't delete, just send")
@@ -24,10 +26,12 @@ def if_unset(a,b):
 	return b if a is None else a
 
 # option defaults
+smtpd=False      # deliver mail to port 25, not submission (ignore login/pw)
 host=None        # smtp server address
 login=None       # smtp server login
 pw=None          # smtp server password
 emailfrom=None   # MAIL FROM address
+headerfrom=None  # Header From: address
 emailto=None     # RCPT TO address
 emailto_pw=None  # recipient password for imap login
 send_msg=True    # deliver message
@@ -43,8 +47,14 @@ while argi<len(sys.argv):
 	arg_remaining = len(sys.argv) - argi - 1
 	if not arg.startswith('-'):
 		break
-	if (arg=="-f" or arg=="-from") and arg_remaining>0:
+	if arg=="-smptd":
+		smtpd=True
+		argi+=1
+	elif (arg=="-f" or arg=="-from") and arg_remaining>0:
 		emailfrom=sys.argv[argi+1]
+		argi+=2
+	elif arg=="-hfrom" and arg_remaining>0:
+		headerfrom=sys.argv[argi+1]
 		argi+=2
 	elif arg=="-to" and arg_remaining>1:
 		emailto=sys.argv[argi+1]
@@ -65,21 +75,28 @@ while argi<len(sys.argv):
 	else:
 		usage()
 		
-        
-if len(sys.argv) - argi != 3: usage()
-host, login, pw = sys.argv[argi:argi+3]
-argi+=3
+if not smtpd:
+	if len(sys.argv) - argi != 3: usage()
+	host, login, pw = sys.argv[argi:argi+3]
+	argi+=3
+	port=587
+else:
+	if len(sys.argv) - argi != 1: usage()
+	host = sys.argv[argi]
+	argi+=1
+	port=25
 
 emailfrom = if_unset(emailfrom, login)
+headerfrom = if_unset(headerfrom, emailfrom)
 emailto = if_unset(emailto, login)
 emailto_pw = if_unset(emailto_pw, pw)
 
-msg = """From: {emailfrom}
+msg = """From: {headerfrom}
 To: {emailto}
 Subject: {subject}
 
 This is a test message. It should be automatically deleted by the test script.""".format(
-	emailfrom=emailfrom,
+	headerfrom=headerfrom,
 	emailto=emailto,
 	subject=subject,
 	)
@@ -131,9 +148,9 @@ def imap_test_dkim(M, num):
 	pass
 
 
-def smtp_login(host, login, pw):
+def smtp_login(host, login, pw, port):
 	# Connect to the server on the SMTP submission TLS port.
-	server = smtplib.SMTP(host, 587)
+	server = smtplib.SMTP(host, port)
 	#server.set_debuglevel(1)
 	server.starttls()
 
@@ -163,7 +180,7 @@ def smtp_login(host, login, pw):
 
 if send_msg:
 	# Attempt to send a mail.
-	server = smtp_login(host, login, pw)
+	server = smtp_login(host, login, pw, port)
 	server.sendmail(emailfrom, [emailto], msg)
 	server.quit()
 	print("SMTP submission is OK.")
@@ -179,19 +196,22 @@ if delete_msg:
 		# Wait so the message can propagate to the inbox.
 		time.sleep(wait_cycle_sleep / 2)
 
-	while time.time() - start_time < wait_timeout:
-		num = imap_search_for(M, subject)
-		if num is not None:
-			# Delete the test message.
-			found = True
-			imap_test_dkim(M, num)
-			M.store(num, '+FLAGS', '\\Deleted')
-			M.expunge()
-			print("Message %s deleted successfully." % num)
-			break
-		
-		print("Test message not present in the inbox yet...")
-		time.sleep(wait_cycle_sleep)
+	while not found and time.time() - start_time < wait_timeout:
+		for mailbox in ['INBOX', 'Spam']:
+			M.select(mailbox)
+			num = imap_search_for(M, subject)
+			if num is not None:
+				# Delete the test message.
+				found = True
+				imap_test_dkim(M, num)
+				M.store(num, '+FLAGS', '\\Deleted')
+				M.expunge()
+				print("Message %s deleted successfully from %s." % (num, mailbox))
+				break
+
+		if not found:
+			print("Test message not present in the inbox yet...")
+			time.sleep(wait_cycle_sleep)
 		
 	M.close()
 	M.logout()

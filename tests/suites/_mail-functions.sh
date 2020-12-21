@@ -36,8 +36,11 @@ ensure_root_user() {
 
 dovecot_mailbox_home() {
 	local email="$1"
-	echo -n "${STORAGE_ROOT}/mail/mailboxes/"
-	awk -F@ '{print $2"/"$1}' <<< "$email"
+	local mailbox="${2:-INBOX}"
+	local path
+	/usr/bin/doveadm mailbox path -u "$email" "$mailbox"
+	#echo -n "${STORAGE_ROOT}/mail/mailboxes/"
+	#awk -F@ '{print $2"/"$1}' <<< "$email"
 }
 
 
@@ -60,16 +63,24 @@ start_log_capture() {
 
 start_mail_capture() {
 	local email="$1"
-	local newdir="$(dovecot_mailbox_home "$email")/new"
 	record "[Start mail capture $email]"
 	DOVECOT_CAPTURE_USER="$email"
-	DOVECOT_CAPTURE_FILECOUNT=0
-	if [ -e "$newdir" ]; then
-		DOVECOT_CAPTURE_FILECOUNT=$(ls "$newdir" 2>>$TEST_OF | wc -l)
-		[ $? -ne 0 ] && die "Error accessing mailbox of $email"
-	fi
-	record "mailbox: $(dirname $newdir)"
-	record "mailbox has $DOVECOT_CAPTURE_FILECOUNT files"
+	DOVECOT_CAPTURE_FILECOUNT=()
+	DOVECOT_CAPTURE_MAILBOXES=(INBOX Spam)
+	for mailbox in ${DOVECOT_CAPTURE_MAILBOXES[@]}; do
+		local mbhome
+		mbhome="$(dovecot_mailbox_home "$email" "$mailbox" 2>>$TEST_OF)"
+		[ $? -ne 0 ] && die "Error accessing $mailbox of $email"
+		local newdir="$mbhome/new"
+		local count=0
+		if [ -e "$newdir" ]; then
+			count=$(ls "$newdir" 2>>$TEST_OF | wc -l)
+			[ $? -ne 0 ] && die "Error accessing mailbox of $email"			
+		fi
+		DOVECOT_CAPTURE_FILECOUNT+=($count)
+		record "$mailbox location: $mbhome"
+		record "$mailbox has $count files"
+	done
 }
 
 dump_capture_logs() {
@@ -299,14 +310,23 @@ wait_mail() {
 }
 
 get_captured_mail_files() {
-	local newdir="$(dovecot_mailbox_home "$DOVECOT_CAPTURE_USER")/new"
-	local count
-	let count="$DOVECOT_CAPTURE_FILECOUNT + 1"
-	[ ! -e "$newdir" ] && return 0
-	# output absolute path names
-	local file
-	for file in $(ls "$newdir" 2>>$TEST_OF | tail --lines=+${count}); do
-		echo "$newdir/$file"
+	local idx=0
+	while [ $idx -lt ${#DOVECOT_CAPTURE_MAILBOXES[*]} ]; do
+		local mailbox=${DOVECOT_CAPTURE_MAILBOXES[$idx]}
+		local filecount=${DOVECOT_CAPTURE_FILECOUNT[$idx]}
+		local mbhome
+		mbhome="$(dovecot_mailbox_home "$DOVECOT_CAPTURE_USER" "$mailbox" 2>>$TEST_OF)"
+		[ $? -ne 0 ] && die "Error accessing mailbox of $email"
+		local newdir="$mbhome/new"
+		[ ! -e "$newdir" ] && return 0
+		local count
+		let count="$filecount + 1"
+		# output absolute path names
+		local file
+		for file in $(ls "$newdir" 2>>$TEST_OF | tail --lines=+${count}); do
+			echo "$newdir/$file"
+		done
+		let idx+=1
 	done
 }
 
