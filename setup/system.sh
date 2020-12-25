@@ -320,12 +320,19 @@ fi #NODOC
 #   name server, on IPV6.
 # * The listen-on directive in named.conf.options restricts `bind9` to
 #   binding to the loopback interface instead of all interfaces.
+# * The max-recursion-queries directive increases the maximum number of iterative queries.
+#  	If more queries than specified are sent, bind9 returns SERVFAIL. After flushing the cache during system checks,
+#	we ran into the limit thus we are increasing it from 75 (default value) to 100.
 apt_install bind9
 tools/editconf.py /etc/default/bind9 \
 	"OPTIONS=\"-u bind -4\""
 if ! grep -q "listen-on " /etc/bind/named.conf.options; then
 	# Add a listen-on directive if it doesn't exist inside the options block.
 	sed -i "s/^}/\n\tlisten-on { 127.0.0.1; };\n}/" /etc/bind/named.conf.options
+fi
+if ! grep -q "max-recursion-queries " /etc/bind/named.conf.options; then
+	# Add a max-recursion-queries directive if it doesn't exist inside the options block.
+	sed -i "s/^}/\n\tmax-recursion-queries 100;\n}/" /etc/bind/named.conf.options
 fi
 
 # First we'll disable systemd-resolved's management of resolv.conf and its stub server.
