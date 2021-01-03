@@ -6,7 +6,7 @@ In Development
 
 * Incoming emails with SPF/DKIM/DMARC failures now have a higher spam score, and these messages are more likely to appear in the junk folder, since they are often spam/phishing.
 * A new Download button in the control panel's External DNS page can be used to download the required DNS records in zonefile format.
-* Blackblaze is now a supported backup protocol.
+* Backblaze B2 is now a supported backup protocol.
 * Fixed the problem when the control panel would report DNS entries as Not Set by increasing a bind query limit.
 * Fixed a control panel startup bug on some systems.
 * Fixed the MTA-STS policy file's line endings.
