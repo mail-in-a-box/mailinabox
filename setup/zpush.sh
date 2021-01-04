@@ -22,8 +22,8 @@ apt_install \
 phpenmod -v php imap
 
 # Copy Z-Push into place.
-VERSION=2.5.2
-TARGETHASH=2dc3dbd791b96b0ba2638df0d3d1e03c7e1cbab2
+VERSION=2.6.1
+TARGETHASH=a4415f0dc0ed884acc8ad5c506944fc7e6d68eeb
 needs_update=0 #NODOC
 if [ ! -f /usr/local/lib/z-push/version ]; then
 	needs_update=1 #NODOC
