@@ -470,14 +470,14 @@ def write_nsd_zone(domain, zonefile, records, env, force):
 
 	zone = """
 $ORIGIN {domain}.
-$TTL 1800           ; default time to live
+$TTL 86400          ; default time to live
 
 @ IN SOA ns1.{primary_domain}. hostmaster.{primary_domain}. (
            __SERIAL__     ; serial number
            7200     ; Refresh (secondary nameserver update interval)
-           1800     ; Retry (when refresh fails, how often to try again)
+           86400    ; Retry (when refresh fails, how often to try again)
            1209600  ; Expire (when refresh fails, how long secondary nameserver will keep records around anyway)
-           1800     ; Negative TTL (how long negative responses are cached)
+           86400    ; Negative TTL (how long negative responses are cached)
            )
 """
 
@@ -563,6 +563,17 @@ $TTL 1800           ; default time to live
 		f.write(zone)
 
 	return True # file is updated
+
+def get_dns_zonefile(zone, env):
+	for domain, fn in get_dns_zones(env):
+		if zone == domain:
+			break
+	else:
+		raise ValueError("%s is not a domain name that corresponds to a zone." % zone)
+
+	nsd_zonefile = "/etc/nsd/zones/" + fn
+	with open(nsd_zonefile, "r") as f:
+		return f.read()
 
 ########################################################################
 
