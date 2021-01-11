@@ -1,7 +1,5 @@
 *~
-tests/__pycache__/
-management/__pycache__/
-tools/__pycache__/
+**/__pycache__/
 externals/
 .env
 .vagrant

@@ -14,6 +14,7 @@ if [ -e "$EHDD_IMG" ]; then
         systemctl disable php7.2-fpm
         systemctl disable mailinabox
         systemctl disable fail2ban
+        systemctl disable miabldap-capture
         #systemctl disable nsd
         [ -x /usr/sbin/slapd ] && systemctl disable slapd
 

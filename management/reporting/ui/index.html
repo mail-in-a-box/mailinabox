@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title> Activity - MiaB-LDAP </title>
+    <base href="/admin/">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="robots" content="noindex, nofollow">
+
+    <link rel="stylesheet" href="ui-common/ui-bootstrap.css"/>
+    <link rel="stylesheet" href="ui-common/ui.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-vue@2/dist/bootstrap-vue.min.css"/>
+    
+    <!-- vue, vue-router, bootstrap-vue, axios, d3 -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <!--script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script-->
+    <script src="https://cdn.jsdelivr.net/npm/vue-router@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-vue@2/dist/bootstrap-vue.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-vue@2/dist/bootstrap-vue-icons.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios"></script>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+
+    <script>axios.defaults.baseURL="/admin"</script>
+
+    <!-- our code -->
+    <script src="ui-common/exceptions.js"></script>
+    <script src="ui-common/authentication.js"></script>
+    <script src="ui-common/page-layout.js"></script>
+    <script src="ui-common/page-header.js"></script>
+    <script src="reports/ui/settings.js"></script>
+    <script src="reports/ui/capture-db-stats.js"></script>
+    <script src="reports/ui/charting.js"></script>
+    <script src="reports/ui/wbr-text.js"></script>
+    <script src="reports/ui/date-range-picker.js"></script>
+    <script src="reports/ui/chart-pie.js"></script>
+    <script src="reports/ui/chart-table.js"></script>
+    <script src="reports/ui/chart-stacked-bar-timeseries.js"></script>
+    <script src="reports/ui/chart-multi-line-timeseries.js"></script>
+    <script src="reports/ui/panel-messages-sent.js"></script>
+    <script src="reports/ui/panel-messages-received.js"></script>
+    <script src="reports/ui/panel-flagged-connections.js"></script>
+    <script src="reports/ui/panel-user-activity.js"></script>
+    <script src="reports/ui/panel-remote-sender-activity.js"></script>
+
+    <script src="reports/ui/reports-page-header.js"></script>
+    <script src="reports/ui/page-settings.js"></script>
+    <script src="reports/ui/page-reports-main.js"></script>
+    <script src="reports/ui/index.js"></script>
+  </head>
+    
+  <body onload="init_app()">
+
+    <router-view id="app"></router-view>
+    
+  </body>
+</html>
+

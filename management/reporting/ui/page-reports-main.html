@@ -1,0 +1,94 @@
+<page-layout>
+  
+  <template v-slot:header>    
+    <reports-page-header :loading_counter="loading"></reports-page-header>
+  </template>
+  
+  <!-- div -->
+    
+    <b-modal ref="stats" hide-header no-fade ok-only no-close-on-backdrop>
+      <capture-db-stats></capture-db-stats>
+    </b-modal>
+    
+    <div class="d-flex align-items-end">
+      <date-range-picker ref="date_picker" :start_range="get_start_range($route, '-mtd')" recall_id="reports-main" @change="date_change($event)"></date-range-picker>
+      <div class="ml-auto mr-1" title="Database stats" role="button" @click="$refs.stats.show()"><b-icon icon="server" scale="1.5" aria-label="Database stats" variant="primary"></b-icon><b-icon icon="info" scale="1.5"></b-icon></div>
+    </div>
+    
+    <b-navbar type="dark" variant="secondary" class="mt-1">
+      <b-navbar-brand v-if="panel==''">Choose</b-navbar-brand>
+      <b-navbar-nav style="font-size:1.2em">
+        <b-nav-item
+          :active="panel=='messages-sent'"
+          :to="get_route('messages-sent')">Messages sent
+        </b-nav-item>
+        <b-nav-item
+          :active="panel=='messages-received'"
+          :to="get_route('messages-received')">Messages received
+        </b-nav-item>
+        <b-nav-item
+          :active="panel=='user-activity'"
+          :to="get_route('user-activity')">User activity
+        </b-nav-item>
+        <b-nav-item
+          :active="panel=='remote-sender-activity'"
+          :to="get_route('remote-sender-activity')">Remote sender activity
+        </b-nav-item>
+        <b-nav-item
+          :active="panel=='flagged-connections'"
+          :to="get_route('flagged-connections')">Notable connections
+        </b-nav-item>
+      </b-navbar-nav>
+    </b-navbar>
+
+    <keep-alive>
+      <panel-messages-sent
+        v-if="panel=='messages-sent'"
+        :date_range="range_utc"
+        :binsize="get_binsize()"
+        @loading="loading += $event"
+        :user_link="get_route('user-activity')"
+        class="mt-3">
+      </panel-messages-sent>
+      
+      <panel-messages-received
+        v-if="panel=='messages-received'"
+        :date_range="range_utc"
+        :binsize="get_binsize()"
+        @loading="loading += $event"
+        :user_link="get_route('user-activity', {tab:1})"
+        :remote_sender_email_link="get_route('remote-sender-activity')"
+        :remote_sender_server_link="get_route('remote-sender-activity')"
+        class="mt-3">
+      </panel-messages-received>
+      
+      <panel-user-activity
+        v-if="panel=='user-activity'"
+        :date_range="range_utc"
+        @loading="loading += $event"
+        class="mt-3">
+      </panel-user-activity>
+      
+      <panel-remote-sender-activity
+        v-if="panel=='remote-sender-activity'"
+        :date_range="range_utc"
+        @loading="loading += $event"
+        class="mt-3">
+      </panel-remote-sender-activity>
+
+      <panel-flagged-connections
+        v-if="panel=='flagged-connections'"
+        :date_range="range_utc"
+        :binsize="get_binsize()"
+        @loading="loading += $event"
+        :user_link="get_route('user-activity')"
+        :remote_sender_email_link="get_route('remote-sender-activity')"
+        :remote_sender_server_link="get_route('remote-sender-activity')"
+        class="mt-3">
+      </panel-flagged-connections>
+    </keep-alive>
+    
+  <!-- /div -->
+  
+  
+</page-layout>

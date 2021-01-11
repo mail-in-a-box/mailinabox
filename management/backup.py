@@ -252,6 +252,7 @@ def perform_backup(full_backup):
 	service_command("postfix", "stop", quit=True)
 	service_command("dovecot", "stop", quit=True)
 	service_command("slapd", "stop", quit=True)
+	service_command("miabldap-capture", "stop", quit=True)
 
 	# Execute a pre-backup script that copies files outside the homedir.
 	# Run as the STORAGE_USER user, not as root. Pass our settings in
@@ -281,6 +282,7 @@ def perform_backup(full_backup):
 			get_env(env))
 	finally:
 		# Start services again.
+		service_command("miabldap-capture", "start", quit=False)
 		service_command("slapd", "start", quit=False)
 		service_command("dovecot", "start", quit=False)
 		service_command("postfix", "start", quit=False)

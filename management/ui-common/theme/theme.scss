@@ -1,0 +1,95 @@
+/* variable overrides */
+$white:    #fff;
+$gray-100: #f8f9fa;
+$gray-200: #e9ecef;
+$gray-300: #dee2e6;
+$gray-400: #ced4da;
+$gray-500: #adb5bd;
+$gray-600: #6c757d;
+$gray-700: #495057;
+$gray-800: #343a40;
+$gray-900: #212529;
+$black:    #000;
+
+$blue:    cadetblue;
+
+$primary:       #446599; //#96a5b2;
+$secondary:     $gray-600; //#d8dfe5; //#f5f5f5;
+$success:       #b7dfb8;
+$info:          #ffd6b0;
+$warning:       #f0e68c;
+$danger:        #a91409;
+$light:         $gray-100;
+$dark:          #303e45;
+
+
+
+$body-bg:                   $gray-100; //$blue;
+$body-color:                $dark;
+
+$card-color:                $gray-900;
+$card-spacer-x:             0.75rem;
+$card-spacer-y:             0.25rem;
+
+$table-color:               $dark;
+$table-cell-padding:        0.375rem; //  .75rem;
+$table-cell-padding-sm:     0.15rem; //  .3rem;
+
+
+$font-size-base: 0.85rem; // Assumes the browser default, typically `16px`
+
+$input-btn-padding-y:     .25rem; //    .375rem !default;
+$input-btn-padding-x:     .5rem;  //    .75rem !default;
+
+$input-btn-padding-y-sm:  .12rem; //    .25rem !default;
+$input-btn-padding-x-sm:  .25rem; //    .5rem !default;
+
+//$input-btn-padding-y-lg:      .5rem !default;
+//$input-btn-padding-x-lg:      1rem !default;
+
+$alert-padding-y:                   .25rem;
+$alert-padding-x:                   .75rem;
+
+// $list-group-item-padding-y:         .75rem !default;
+// $list-group-item-padding-x:         1.25rem !default;
+$nav-link-padding-y: 0.20rem;
+
+
+/* bootstrap styles that we want */
+@import "functions";
+@import "variables";
+@import "mixins";
+@import "root";
+@import "reboot";
+@import "type";
+@import "images";
+@import "code";
+@import "grid";
+@import "tables";
+@import "forms";
+@import "buttons";
+@import "transitions";
+@import "dropdown";
+@import "button-group";
+@import "input-group";
+/* @import "custom-forms"; */
+@import "nav";
+@import "navbar";
+@import "card";
+@import "breadcrumb";
+@import "pagination";
+@import "badge"; 
+/* @import "jumbotron"; */
+@import "alert";
+@import "progress";
+/* @import "media"; */
+@import "list-group";
+@import "close";
+@import "toasts";
+@import "modal";
+@import "tooltip";
+@import "popover";
+/* @import "carousel"; */
+@import "spinners";
+@import "utilities";
+/* @import "print"; */

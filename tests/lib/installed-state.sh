@@ -159,10 +159,21 @@ installed_state_compare() {
     for zone in $(cd "$s1/zones"; ls *.signed); do
         if [ -e "$s2/zones/$zone" ]; then
             # all the signatures change if we're using self-signed certs
+            # ignore ttl changes
             local t1="/tmp/s1.$$.txt"
             local t2="/tmp/s2.$$.txt"
-            awk '$4 == "RRSIG" || $4 == "NSEC3" { next; } $4 == "SOA" { print $1" "$2" "$3" "$4" "$5" "$6" "$8" "$9" "$10" "$11" "$12; next } { print $0 }' "$s1/zones/$zone" > "$t1" 
-            awk '$4 == "RRSIG" || $4 == "NSEC3" { next; } $4 == "SOA" { print $1" "$2" "$3" "$4" "$5" "$6" "$8" "$9" "$10" "$11" "$12; next } { print $0 }' "$s2/zones/$zone" > "$t2" 
+            awk '\
+$4 == "RRSIG" || $4 == "NSEC3" { next; } \
+$4 == "SOA" { print $1" "$3" "$4" "$5" "$6" "$8" "$10" "$12; next } \
+{ for(i=1;i<=NF;i++) if (i!=2) printf("%s ",$i); print ""; }' \
+                "$s1/zones/$zone" > "$t1"
+            
+            awk '\
+$4 == "RRSIG" || $4 == "NSEC3" { next; } \
+$4 == "SOA" { print $1" "$3" "$4" "$5" "$6" "$8" "$10" "$12; next } \
+{ for(i=1;i<=NF;i++) if (i!=2) printf("%s ",$i); print ""; }' \
+                "$s2/zones/$zone" > "$t2"
+            
             output="$(diff "$t1" "$t2" 2>&1)"
             if [ $? -ne 0 ]; then
                 echo "CHANGED zone: $zone"

@@ -1,0 +1,72 @@
+<page-layout>
+  
+  <template v-slot:header>
+    <reports-page-header :loading_counter="loading"></reports-page-header>
+  </template>
+
+  <div>
+    <div class="d-flex">
+      <div>Settings</div>
+      <router-link :to="from_route || '/'" class="ml-auto">Back to reports</router-link>
+    </div>
+
+    
+    <b-card class="mt-2">
+      <b-card-title>
+        UI settings
+      </b-card-title>
+      
+      <b-card-body>
+        <div class="d-flex align-items-baseline">
+          <div class="mr-1">Table data row limit</div>
+          <input type="number" min="5" v-model="row_limit" style="max-width:8em" v-on:keyup="update_user_settings"></input>
+          <div class="text-danger ml-2">
+            <em>{{row_limit_error}}</em>
+          </div>
+        </div>
+      </b-card-body>
+    </b-card>
+
+    
+    <b-card class="mt-2" v-if="capture_config && status">
+      <b-card-title>
+        Capture daemon
+      </b-card-title>
+      
+      <b-card-body>
+        <h4 class="d-flex">
+          <b-badge :variant="status_variant(status[0])">{{status[0]}}</b-badge>
+          <b-badge class="ml-2" :variant="status_variant(status[1])">{{status[1]}}</b-badge>
+          <b-badge class="ml-2" v-if="is_running()" :variant="status_variant(capture_config.capture)"> {{ capture_config.capture ? 'capturing' : 'paused' }}</b-badge>
+        </h4>
+        <p><i>(systemd service "miabldap-capture")</i></p>
+        
+        <b-form @submit.prevent class="mt-3" v-if="is_running()">
+          <b-form-checkbox v-model="capture" @change="config_changed=true">
+            Capture enabled
+          </b-form-checkbox> <em class="text-danger">Warning: when capture is disabled, the daemon will no longer record log activity</em>
+          <div class="d-flex align-items-baseline">
+            <div class="mr-1">Delete database records older than </div>
+            <input type="number" min="0" v-model="older_than_days" style="max-width:6em" v-on:keyup="config_changed_if(older_than_days, 0, null, capture_config.prune_policy.older_than_days)"></input>
+            <div class="ml-1">days</div>
+          </div>
+          <div class="mb-3 ml-2">
+            <em>(a value of zero preserves all records)</em>
+          </div>
+          
+          <b-form-checkbox v-model="capture_config.drop_disposition.faild_login_attempt" @change="config_changed=true">Ignore failed login attempts</b-form-checkbox>
+          <b-form-checkbox v-model="capture_config.drop_disposition.suspected_scanner" @change="config_changed=true">Ignore suspected scanner activity</b-form-checkbox>
+          <b-form-checkbox v-model="capture_config.drop_disposition.reject" @change="config_changed=true">Ignore rejected mail attempts</b-form-checkbox>
+
+        </b-form>
+
+        <div v-if="config_changed" class="mt-3">
+          <b-button variant="danger" @click="save_capture_config()">Commit changes and update server</b-button>
+        </div>
+
+      </b-card-body>
+    </b-card>
+    
+  </div>
+  
+</page-layout>

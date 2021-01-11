@@ -12,5 +12,6 @@ if [ -s /etc/mailinabox.conf ]; then
     systemctl link -f $(pwd)/conf/mailinabox.service
     systemctl start fail2ban
     systemctl restart mailinabox
+    systemctl start miabldap-capture
 fi
 

@@ -1,0 +1,74 @@
+<div>
+
+  <b-modal ref="suggest_modal" scrollable header-bg-variant="dark" header-text-variant="light" ok-only ok-title="close" no-close-on-backdrop>
+    <template #modal-title>
+      {{ select_list.suggestions.length }} suggestions found
+    </template>
+    <div v-if="select_list.limited" class="text-danger">Too many results - the server returned only a limited set.</div>
+    <template v-if="select_list.suggestions.length>0">
+      <div>Choose one:</div>
+      <div v-for="suggestion in select_list.suggestions" class="text-nowrap">
+        <a href="" @click.prevent="choose_suggestion(suggestion)">
+          {{ suggestion }}
+        </a>
+      </div>
+    </template>
+    <template v-else>
+      <div>nothing matched</div>
+    </template>
+  </b-modal>
+
+  <datalist id="panel-rsa-recent">
+    <option v-if="recent_senders" v-for="s in recent_senders">{{ s }}</option>
+  </datalist>
+  
+  <b-form @submit.prevent.stop="change_sender" class="d-flex mb-3">
+    <div class="d-flex mr-2" style="margin-top:0.25rem" title="Sender type">
+      <b-form-radio v-model="sender_type" value="email" @change="update_recent_list()">Email</b-form-radio>
+      <b-form-radio class="ml-1" v-model="sender_type" value="server" @change="update_recent_list()">Server</b-form-radio>
+    </div>
+    <b-input-group style="width:40em">
+      <b-form-input v-if="sender_type=='email'" class="h-auto" :autofocus="data_sender===null" list="panel-rsa-recent" v-model="email" placeholder="Enter an email address (envelope FROM)"></b-form-input>
+      <b-form-input v-else class="h-auto" :autofocus="data_sender===null" list="panel-rsa-recent" v-model="server" placeholder="Enter a hostname or ip address"></b-form-input>
+      <b-input-group-append>
+        <b-button variant="primary" @click="change_sender" :disabled="sender_type=='email' && (email == '' || email==data_sender) || sender_type=='server' && (server =='' || server==data_sender)">Search</b-button>
+      </b-input-group-append>
+    </b-input-group>
+    <b-alert variant="warning" class="ml-2" :show="activity && activity.items.length>=get_row_limit()"><sup>*</sup> Tables limited to {{ get_row_limit() }} rows <router-link to="/settings"><b-icon icon="gear-fill"></b-icon></router-link></b-alert>
+    <b-form-checkbox class="ml-auto" v-model="show_only_flagged" @change="show_only_flagged_change()">Flagged only</b-form-checkbox>
+  </b-form>
+
+  <b-tabs content-class="mt2" v-model="tab_index" v-if="activity">
+    <b-tab>
+      <template #title>
+        {{ data_sender || ''}}<sup v-if="activity.items.length >= get_row_limit()">*</sup> ({{activity.unique_sends}} &rarr; {{activity.items.length}})
+      </template>
+      <b-table
+        class="sticky-table-header-0 bg-light"
+        small
+        :filter="show_only_flagged_filter"
+        :filter-function="table_filter_cb"
+        tbody-tr-class="cursor-pointer"
+        details-td-class="cursor-default"
+        @row-clicked="row_clicked"
+        :items="activity.items"
+        :fields="activity.fields">
+        <template #row-details="row">
+          <b-card>
+            <div><strong>Connection disposition</strong>: {{ disposition_formatter(row.item.disposition) }}</div>
+            <div v-if="row.item.sasl_username"><strong>Sasl username</strong>: {{row.item.sasl_username}}</div>
+            <div v-if="row.item.category"><strong>Failure category</strong>: {{row.item.category}}</div>
+            <div v-if="row.item.failure_info"><strong>Failure info</strong>: {{row.item.failure_info}}</div>
+            <div v-if="row.item.dkim_reason"><strong>Dkim reason</strong>: {{row.item.dkim_reason}}</div>
+            <div v-if="row.item.dmarc_reason"><strong>Dmarc reason</strong>: {{row.item.dmarc_reason}}</div>
+            <div v-if="row.item.postgrey_reason"><strong>Postgrey reason</strong>: {{row.item.postgrey_reason}}</div>
+            <div v-if="row.item.postgrey_delay"><strong>Postgrey delay</strong>: {{activity.x_fields.postgrey_delay.formatter(row.item.postgrey_delay)}}</div>
+            <div v-if="row.item.spam_result"><strong>Spam score</strong>: {{activity.x_fields.spam_score.formatter(row.item.spam_score)}}</div>
+          </b-card>
+        </template>
+        
+      </b-table>
+    </b-tab>    
+  </b-tabs>
+  
+</div>
