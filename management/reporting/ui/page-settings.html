@@ -44,7 +44,7 @@
         <b-form @submit.prevent class="mt-3" v-if="is_running()">
           <b-form-checkbox v-model="capture" @change="config_changed=true">
             Capture enabled
-          </b-form-checkbox> <em class="text-danger">Warning: when capture is disabled, the daemon will no longer record log activity</em>
+          </b-form-checkbox> <em class="text-danger">Warning: when "capture enabled" is unchecked, the daemon will no longer record log activity</em>
           <div class="d-flex align-items-baseline">
             <div class="mr-1">Delete database records older than </div>
             <input type="number" min="0" v-model="older_than_days" style="max-width:6em" v-on:keyup="config_changed_if(older_than_days, 0, null, capture_config.prune_policy.older_than_days)"></input>
