@@ -24,7 +24,7 @@ class UserSettings {
         }
         else {
             s.data = {
-                row_limit: 1000
+                row_limit: 500
             };
         }
         window.miabldap.user_settings = s;
