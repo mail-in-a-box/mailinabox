@@ -61,8 +61,8 @@
         </template>
         <template #row-details="row">
           <b-card>
-            <div><strong>Sent to alias</strong>: {{ row.item.orig_to }}</div>
             <div><strong>Connection disposition</strong>: {{ disposition_formatter(row.item.disposition) }}</div>
+            <div v-if="row.item.orig_to"><strong>Sent to alias</strong>: {{ row.item.orig_to }}</div>
             <div v-if="row.item.dkim_reason"><strong>Dkim reason</strong>: {{row.item.dkim_reason}}</div>
             <div v-if="row.item.dmarc_reason"><strong>Dmarc reason</strong>: {{row.item.dmarc_reason}}</div>
             <div v-if="row.item.postgrey_reason"><strong>Postgrey reason</strong>: {{row.item.postgrey_reason}}</div>
