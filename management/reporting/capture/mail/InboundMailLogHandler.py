@@ -1184,6 +1184,8 @@ class InboundMailLogHandler(ReadLineHandler):
         # 12a. postfix/lmtp: POSTFIX_MSG-ID: to=user@tld, status=bounced (host...said...550 5.1.1 <user@tld> User doesn't exist ....)
         # 12b. postfix/smtp[32052]: A493B1FAF1: to=<alice@post.com>, relay=mx.post.com[1.2.3.4]:25, delay=1.2, delays=0.65/0.06/0.4/0.09, dsn=2.0.0, status=sent (250 2.0.0 OK 7E/38-26906-CDC5DCF5): None
         # 12c. postfix/smtp[21816]: BD1D31FB12: host mx2.comcast.net[2001:558:fe21:2a::6] refused to talk to me: 554 resimta-ch2-18v.sys.comcast.net resimta-ch2-18v.sys.comcast.net 2600:3c02::f03c:92ff:febb:192f found on one or more DNSBLs, see http://postmaster.comcast.net/smtp-error-codes.php#BL000001
+        # 12d. postfix/lmtp[26439]: B306D1F77F: to=<user@local.com>, orig_to=<alias@local.com>, relay=127.0.0.1[127.0.0.1]:10025, delay=1.7, delays=0.53/0.01/0/1.1, dsn=2.0.0, status=sent (250 2.0.0 <user@local.com> 4BYfOjho/19oZQAAlWWVsw Saved)
+
         #    1=system ("lmtp" or "smtp")
         #    2=system_tid
         #    3=postfix_msg_id
@@ -1214,17 +1216,34 @@ class InboundMailLogHandler(ReadLineHandler):
                 return { 'mta_conn': mta_conn, 'mta_accept': mta_accept }
 
             
-            # 12, 12a, 12b
+            # 12, 12a, 12b, 12d
             detail = PostfixLogParser.SplitList(line[m.end():]).asDict()
             if 'to' not in detail:
                 return True
-            
+
             mta_delivery = self.find_delivery(
                 mta_accept,
                 detail['to']['value'],
                 service_tid=service_tid,
                 auto_add=True
             )
+            
+            if 'orig_to' in detail:
+                # sent to an alias, then delivered to a user
+                # 'to' is the final user, 'orig_to' is the alias
+                mta_delivery['orig_to'] = detail['orig_to']['value']
+                mta_delivery_2 = self.find_delivery(
+                    mta_accept,
+                    detail['orig_to']['value'],
+                    service_tid=service_tid,
+                    auto_add=False
+                )
+                if mta_delivery_2:
+                    # combine first record into second, then remove the first
+                    mta_delivery_2.update(mta_delivery)
+                    mta_accept['mta_delivery'].remove(mta_delivery)
+                    mta_delivery = mta_delivery_2
+                
             mta_delivery['service'] = service
             mta_delivery['service_tid'] = service_tid
             log.debug('DELIVERY(accept): %s', mta_accept)

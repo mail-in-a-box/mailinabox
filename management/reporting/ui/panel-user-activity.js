@@ -128,8 +128,8 @@ Vue.component('panel-user-activity', function(resolve, reject) {
                     'dmarc_reason',
                     'postgrey_reason',
                     'postgrey_delay',
-                    'spam_score'
-                    
+                    'spam_score',
+                    'orig_to'
                 ]);
                 // combine fields 'envelope_from' and 'sasl_username'
                 var f = this.received_mail.combine_fields(
@@ -140,7 +140,7 @@ Vue.component('panel-user-activity', function(resolve, reject) {
                             return v;
                         return `${v} (${item.sasl_username})`;
                     });
-                f.label = 'Evelope From (user)';
+                f.label = 'Envelope From (user)';
             },
 
             get_row_limit: function() {

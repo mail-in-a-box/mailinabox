@@ -54,6 +54,7 @@ mta_delivery_fields = [
 	'service',
 #	'service_tid',
 	'rcpt_to',
+	'orig_to',
 #	'postgrey_tid',
 	'postgrey_result',
 	'postgrey_reason',
@@ -155,7 +156,14 @@ schema_updates = [
 		)",
 
 		"INSERT INTO db_info (key,value) VALUES ('schema_version', '0')"
+	],
+
+	# update 1
+	[
+		"ALTER TABLE mta_delivery ADD COLUMN orig_to TEXT COLLATE NOCASE",
+		"UPDATE db_info SET value='1' WHERE key='schema_version'"
 	]
+
 ]
 
 

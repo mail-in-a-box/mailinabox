@@ -121,6 +121,7 @@ def user_activity(conn, args):
             'dmarc_reason',
             
             # mta_delivery
+            'orig_to',
             'postgrey_result',
             'postgrey_reason',
             'postgrey_delay',
@@ -139,6 +140,7 @@ def user_activity(conn, args):
             'text/plain',    # dkim_result
             'text/plain',    # dmarc_result
             'text/plain',    # dmarc_result
+            'text/email',    # orig_to
             'text/plain',    # postgrey_result
             'text/plain',    # postgrey_reason
             { 'type':'time/span', 'unit':'s' },   # postgrey_delay
