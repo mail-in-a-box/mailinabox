@@ -605,7 +605,7 @@ def email_sort(email):
 
 
 def valid_date(string):
-    """ Validate the given date string fetched from the --startdate argument """
+    """ Validate the given date string fetched from the --enddate argument """
     try:
         date = dateutil.parser.parse(string)
     except ValueError:
@@ -819,12 +819,14 @@ if __name__ == "__main__":
 
     parser.add_argument("-t", "--timespan", choices=TIME_DELTAS.keys(), default='today',
                         metavar='<time span>',
-                        help="Time span to scan, going back from the start date. Possible values: "
+                        help="Time span to scan, going back from the end date. Possible values: "
                              "{}. Defaults to 'today'.".format(", ".join(list(TIME_DELTAS.keys()))))
-    parser.add_argument("-d", "--startdate",  action="store", dest="startdate",
-                        type=valid_date, metavar='<start date>',
-                        help="Date and time to start scanning the log file from. If no date is "
-                             "provided, scanning will start from the current date and time.")
+    # keep the --startdate arg for backward compatibility
+    parser.add_argument("-d", "--enddate", "--startdate",  action="store", dest="enddate",
+                        type=valid_date, metavar='<end date>',
+                        help="Date and time to end scanning the log file. If no date is "
+                             "provided, scanning will end at the current date and time. "
+                             "Alias --startdate is for compatibility.")
     parser.add_argument("-u", "--users", action="store", dest="users",
                         metavar='<email1,email2,email...>',
                         help="Comma separated list of (partial) email addresses to filter the "
@@ -836,11 +838,11 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if args.startdate is not None:
-        END_DATE = args.startdate
+    if args.enddate is not None:
+        END_DATE = args.enddate
         if args.timespan == 'today':
             args.timespan = 'day'
-        print("Setting start date to {}".format(END_DATE))
+        print("Setting end date to {}".format(END_DATE))
 
     START_DATE = END_DATE - TIME_DELTAS[args.timespan]
 
