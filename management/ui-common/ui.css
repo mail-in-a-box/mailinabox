@@ -1,0 +1,30 @@
+:hover {
+    --hover-bg-color: #ccc;
+}
+
+/* fix visibility of calendar icon in bootstrap vue component */
+.b-form-datepicker g {
+    fill: var(--dark);
+}
+
+/* make table header sticky at 0 */
+.sticky-table-header-0 thead {
+    position: sticky;
+    background-color: #fff;
+    top: 0;
+}
+
+.cursor-pointer {
+    cursor:pointer;
+}
+
+.cursor-default {
+    cursor:default;
+}
+
+.clickme {
+    cursor:pointer;
+}
+.clickme:hover {
+    background-color: var(--hover-bg-color);
+}

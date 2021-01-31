@@ -1,0 +1,64 @@
+<div>
+<div class="d-flex flex-wrap align-items-top">
+  
+  <chart-multi-line-timeseries
+    class="pt-1"
+    :chart_data="data_received"
+    :width="width"
+    :height="height/2">
+  </chart-multi-line-timeseries>
+
+  <div class="d-flex flex-wrap align-items-top">
+    <chart-table
+      v-if="top_senders_by_count"
+      :items="top_senders_by_count.items"
+      :fields="top_senders_by_count.fields"
+      :caption="top_senders_by_count.y"
+      class="ml-4 mt-2"
+      style="max-width:50px">
+      <template #cell(email)="data">
+        <router-link class="text-dark" :to='link_to_remote_sender_email(data.value)'>{{ data.value }}</router-link>
+      </template>
+    </chart-table>
+    
+    <chart-table
+      v-if="top_senders_by_size"
+      :items="top_senders_by_size.items"
+      :fields="top_senders_by_size.fields"
+      :caption="top_senders_by_size.y"
+      class="ml-4 mt-2"
+      style="max-width:50px">
+      <template #cell(email)="data">
+        <router-link class="text-dark" :to='link_to_remote_sender_email(data.value)'>{{ data.value }}</router-link>
+      </template>
+    </chart-table>
+  </div>
+
+  <div class="d-flex flex-wrap align-items-top">
+    <chart-table
+      v-if="top_hosts_by_spam_score"
+      :items="top_hosts_by_spam_score.items"
+      :fields="top_hosts_by_spam_score.fields"
+      :caption="top_hosts_by_spam_score.y"
+      class="ml-4 mt-2"
+      style="max-width:50px">
+      <template #cell(remote_host)="data">
+        <router-link class="text-dark" :to='link_to_remote_sender_server(data.value)'>{{ data.value }}</router-link>
+      </template>
+    </chart-table>
+    
+    <chart-table
+      v-if="top_user_receiving_spam"
+      :items="top_user_receiving_spam.items"
+      :fields="top_user_receiving_spam.fields"
+      :caption="top_user_receiving_spam.y"
+      class="ml-4 mt-2"
+      style="max-width:50px">
+      <template #cell(rcpt_to)="data">
+        <router-link class="text-dark" :to='link_to_user(data.value)'>{{ data.value }}</router-link>
+      </template>
+    </chart-table>
+  </div>
+  
+</div>
+</div>

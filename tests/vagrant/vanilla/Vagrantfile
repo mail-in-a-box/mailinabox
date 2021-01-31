@@ -3,12 +3,12 @@ load '../funcs.rb'
 Vagrant.configure("2") do |config|
 
   config.vm.synced_folder "../../..", "/mailinabox", id: "mailinabox", automount: false
+  config.vm.network "public_network"
   use_preloaded_box config, "ubuntu/bionic64", ".."
 
   # vanilla install
 
   config.vm.define "vanilla" do |m1|
-    m1.vm.network "forwarded_port", guest:443, host:8443, protocol:"tcp"
     m1.vm.provision :shell, :inline => <<-SH
 cd /mailinabox
 source tests/vagrant/globals.sh || exit 1

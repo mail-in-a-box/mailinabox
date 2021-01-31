@@ -1,0 +1,76 @@
+<div>
+  
+  <datalist id="panel-ua-users">
+    <option v-for="user in all_users">{{ user }}</option>
+  </datalist>
+
+  <b-form @submit.prevent="getChartData()" class="d-flex">
+    <b-input-group class="mb-3" style="width:30em">
+      <b-form-input class="h-auto" :autofocus="data_user_id===null" list="panel-ua-users" v-model="user_id" placeholder="Enter a user id/email address"></b-form-input>
+      <b-input-group-append>
+        <b-button variant="primary" @click="change_user">Change user</b-button>
+      </b-input-group-append>
+    </b-input-group>
+    <b-alert variant="warning" class="ml-2" :show="sent_mail && sent_mail.items.length>=get_row_limit() || received_mail && received_mail.items.length>=get_row_limit()"><sup>*</sup> Tables limited to {{ get_row_limit() }} rows <router-link to="/settings"><b-icon icon="gear-fill"></b-icon></router-link></b-alert>
+    <b-form-checkbox class="ml-auto" v-model="show_only_flagged" @change="show_only_flagged_change()">Flagged only</b-form-checkbox>
+  </b-form>
+
+  <b-tabs content-class="mt2" v-model="tab_index" v-if="sent_mail && received_mail">
+    <b-tab>
+      <template #title>
+        Sent mail<sup v-if="sent_mail.items.length >= get_row_limit()">*</sup> ({{sent_mail.unique_sends}} &rarr; {{sent_mail.items.length}})
+      </template>
+      <b-table
+        class="sticky-table-header-0 bg-light"
+        small
+        :filter="show_only_flagged_filter"
+        :filter-function="table_filter_cb"
+        tbody-tr-class="cursor-pointer"
+        details-td-class="cursor-default"
+        @row-clicked="row_clicked"
+        :items="sent_mail.items"
+        :fields="sent_mail.fields">
+        <template #row-details="row">
+          <b-card>
+            <div><strong>Relay</strong>: {{row.item.relay}}</div>
+            <div v-if="row.item.service != 'lmtp'"><strong>Connection</strong>:{{ row.item.delivery_connection_info }}</div>
+            <div><strong>Delivery</strong>: {{row.item.delivery_info}}</div>
+            <div v-if="row.item.spam_result"><strong>Spam score</strong>: {{sent_mail.x_fields.spam_score.formatter(row.item.spam_score)}}</div>
+          </b-card>
+        </template>
+        
+      </b-table>
+    </b-tab>
+    
+    <b-tab :title="`Received mail (${received_mail.items.length})`">
+      <template #title>
+        Received mail<sup v-if="received_mail.items.length >= get_row_limit()">*</sup> ({{received_mail.items.length}})
+      </template>
+      <b-table
+        class="sticky-table-header-0 bg-light"
+        small
+        :filter="show_only_flagged_filter"
+        :filter-function="table_filter_cb"
+        tbody-tr-class="cursor-pointer"
+        details-td-class="cursor-default"
+        @row-clicked="row_clicked"
+        :items="received_mail.items"
+        :fields="received_mail.fields">
+        <template #cell(envelope_from)='data'>
+          <wbr-text :text="data.value" :text_break_threshold="15"></wbr-text>
+        </template>
+        <template #row-details="row">
+          <b-card>
+            <div><strong>Sent to alias</strong>: {{ row.item.orig_to }}</div>
+            <div><strong>Connection disposition</strong>: {{ disposition_formatter(row.item.disposition) }}</div>
+            <div v-if="row.item.dkim_reason"><strong>Dkim reason</strong>: {{row.item.dkim_reason}}</div>
+            <div v-if="row.item.dmarc_reason"><strong>Dmarc reason</strong>: {{row.item.dmarc_reason}}</div>
+            <div v-if="row.item.postgrey_reason"><strong>Postgrey reason</strong>: {{row.item.postgrey_reason}}</div>
+            <div v-if="row.item.postgrey_delay"><strong>Postgrey delay</strong>: {{received_mail.x_fields.postgrey_delay.formatter(row.item.postgrey_delay)}}</div>
+            <div v-if="row.item.spam_result"><strong>Spam score</strong>: {{received_mail.x_fields.spam_score.formatter(row.item.spam_score)}}</div>
+          </b-card>
+        </template>
+      </b-table>
+    </b-tab>
+  </b-tabs>
+</div>

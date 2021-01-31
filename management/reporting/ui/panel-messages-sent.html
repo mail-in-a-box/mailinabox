@@ -1,0 +1,50 @@
+<div>
+  <div class="d-flex flex-wrap align-items-center">
+  <chart-multi-line-timeseries
+    class="pt-1"
+    :chart_data="data_sent"
+    :width="width"
+    :height="height_sent">
+  </chart-multi-line-timeseries>
+  
+  <div class="d-flex flex-wrap align-items-top">
+    <chart-table
+      v-if="top_senders_by_count"
+      :items="top_senders_by_count.items"
+      :fields="top_senders_by_count.fields"
+      :caption="top_senders_by_count.y"
+      class="ml-4 mt-2"
+      style="max-width:50px">
+      <template #cell(user)="data">
+        <router-link class="text-dark" :to="link_to_user(data.value)">{{ data.value }}</router-link>
+      </template>
+    </chart-table>
+    
+    <chart-table
+      v-if="top_senders_by_size"
+      :items="top_senders_by_size.items"
+      :fields="top_senders_by_size.fields"
+      :caption="top_senders_by_size.y"
+      class="ml-4 mt-2"
+      style="max-width:50px">
+      <template #cell(user)="data">
+        <router-link class="text-dark" :to="link_to_user(data.value)">{{ data.value }}</router-link>
+      </template>
+    </chart-table>
+  </div>
+  
+  <chart-stacked-bar-timeseries
+    class="pt-1"
+    :chart_data="data_recip"
+    :width="width"
+    :height="height_recip">
+  </chart-stacked-bar-timeseries>
+  
+  <chart-pie
+    class="ml-4"
+    :chart_data="data_recip_pie"
+    :width="radius_recip_pie *2"
+    :height="radius_recip_pie *2">
+  </chart-pie>  
+</div>
+</div>

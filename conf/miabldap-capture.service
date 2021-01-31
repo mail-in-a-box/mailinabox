@@ -1,0 +1,11 @@
+[Unit]
+Description=MIAB-LDAP log capture daemon
+ConditionPathExists=/etc/mailinabox.conf
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 %BIN%/management/reporting/capture/capture.py
+ExecReload=/bin/kill -HUP $MAINPID
+
+[Install]
+WantedBy=multi-user.target

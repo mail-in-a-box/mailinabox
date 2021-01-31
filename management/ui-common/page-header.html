@@ -1,0 +1,11 @@
+<div class="text-center">
+  <h2 class="mb-0">{{ header_text }}</h2>
+  <small class="text-white-50">from the <a href="https://github.com/downtownallday/mailinabox-ldap/" target="_blank" class="text-white-50">MiaB-LDAP project</a></small>
+  <div class="d-flex align-items-center justify-content-between" style="margin-top:-1.5rem">
+    <div class="ml-1" style="min-width:1em">
+      <spinner v-show="loading_counter > 0"></spinner>
+    </div>
+    <slot name="links"><div>&nbsp;</div></slot>
+  </div>
+  
+</div>

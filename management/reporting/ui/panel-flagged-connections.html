@@ -1,0 +1,87 @@
+<div>
+  <div class="d-flex flex-wrap align-items-start">
+    <div class="p-2">
+      <strong>Connections by disposition</strong>
+      <chart-pie
+        :chart_data="connections_by_disposition"
+        :name_formatter="disposition_formatter"
+        :labels="false"
+        :width="radius_pie *2"
+        :height="radius_pie *2">
+      </chart-pie>
+    </div>
+
+    <chart-multi-line-timeseries
+      class="p-2"
+      :chart_data="failed_logins"
+      :width="width"
+      :height="linechart_height">
+    </chart-multi-line-timeseries>
+    
+    <chart-multi-line-timeseries
+      class="p-2"
+      :chart_data="suspected_scanners"
+      :width="width"
+      :height="linechart_height">
+    </chart-multi-line-timeseries>
+
+    <div class="d-flex flex-wrap align-items-start">
+      <chart-table
+        v-if="insecure_inbound"
+        :items="insecure_inbound.items"
+        :fields="insecure_inbound.fields"
+        :caption="insecure_inbound.y"
+        class="ml-4 mt-2"
+        style="max-width:50px">
+        <template #cell(sasl_username)="data">
+          <router-link class="text-dark" :to='link_to_user(data.value, 1)'>{{ data.value }}</router-link>
+        </template>
+        <template #cell(envelope_from)="data">
+          <router-link class="text-dark" :to='link_to_remote_sender_email(data.value)'>{{ data.value }}</router-link>
+        </template>
+        <template #cell(rcpt_to)="data">
+          <router-link class="text-dark" :to='link_to_user(data.value, 1)'>{{ data.value }}</router-link>
+        </template>
+      </chart-table>
+      
+      <chart-table
+        v-if="insecure_outbound"
+        :items="insecure_outbound.items"
+        :fields="insecure_outbound.fields"
+        :caption="insecure_outbound.y"
+        class="ml-4 mt-2"
+        style="max-width:50px">
+        <template #cell(sasl_username)="data">
+          <router-link class="text-dark" :to='link_to_user(data.value)'>{{ data.value }}</router-link>
+        </template>
+      </chart-table>
+    </div>
+
+    <div class="d-flex flex-wrap align-items-center">
+      <div class="p-2">
+        <strong>Mail delivery rejects by category</strong>
+        <chart-pie
+          :chart_data="reject_by_failure_category"
+          :labels="false"
+          :width="radius_pie *2"
+          :height="radius_pie *2">
+        </chart-pie>
+      </div>
+      
+      <chart-table
+        v-if="top_hosts_rejected"
+        :items="top_hosts_rejected.items"
+        :fields="top_hosts_rejected.fields"
+        :caption="top_hosts_rejected.y"
+        class="ml-4 mt-2"
+        style="max-width:50px">
+        <template #cell(remote_host)="data">
+          <router-link class="text-dark" :to='link_to_remote_sender_server(data.value)'>{{ data.value }}</router-link>
+        </template>
+      </chart-table>
+    </div>
+    
+  </div>
+
+</div>
+

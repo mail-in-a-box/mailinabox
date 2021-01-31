@@ -696,6 +696,16 @@ def log_failed_login(request):
 
 # APP
 
+from daemon_logger import add_python_logging
+add_python_logging(app)
+
+from daemon_ui_common import add_ui_common
+add_ui_common(app)
+
+from daemon_reports import add_reports
+add_reports(app, env, authorized_personnel_only)
+
+
 if __name__ == '__main__':
 	if "DEBUG" in os.environ:
 		# Turn on Flask debugging.
