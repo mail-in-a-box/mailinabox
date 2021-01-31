@@ -64,6 +64,32 @@ management/editconf.py /etc/opendmarc.conf -s \
 	"Syslog=true" \
 	"Socket=inet:8893@[127.0.0.1]"
 
+# SPFIgnoreResults causes the filter to ignore any SPF results in the header
+# of the message. This is useful if you want the filter to perfrom SPF checks
+# itself, or because you don't trust the arriving header. This added header is
+# used by spamassassin to evaluate the mail for spamminess.
+
+management/editconf.py /etc/opendmarc.conf -s \
+        "SPFIgnoreResults=true"
+
+# SPFSelfValidate causes the filter to perform a fallback SPF check itself
+# when it can find no SPF results in the message header. If SPFIgnoreResults
+# is also set, it never looks for SPF results in headers and always performs
+# the SPF check itself when this is set. This added header is used by
+# spamassassin to evaluate the mail for spamminess.
+
+management/editconf.py /etc/opendmarc.conf -s \
+        "SPFSelfValidate=true"
+
+# AlwaysAddARHeader Adds an "Authentication-Results:" header field even to
+# unsigned messages from domains with no "signs all" policy. The reported DKIM
+# result will be  "none" in such cases. Normally unsigned mail from non-strict
+# domains does not cause the results header field to be added. This added header
+# is used by spamassassin to evaluate the mail for spamminess.
+
+management/editconf.py /etc/opendkim.conf -s \
+        "AlwaysAddARHeader=true"
+
 # Add OpenDKIM and OpenDMARC as milters to postfix, which is how OpenDKIM
 # intercepts outgoing mail to perform the signing (by adding a mail header)
 # and how they both intercept incoming mail to add Authentication-Results

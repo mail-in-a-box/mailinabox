@@ -18,11 +18,7 @@ while [ -d /usr/local/lib/python3.4/dist-packages/acme ]; do
 	pip3 uninstall -y acme;
 done
 
-# duplicity is used to make backups of user data. It uses boto
-# (via Python 2) to do backups to AWS S3. boto from the Ubuntu
-# package manager is too out-of-date -- it doesn't support the newer
-# S3 api used in some regions, which breaks backups to those regions.
-# See #627, #653.
+# duplicity is used to make backups of user data.
 #
 # virtualenv is used to isolate the Python 3 packages we
 # install via pip from the system-installed packages.
@@ -30,6 +26,9 @@ done
 # certbot installs EFF's certbot which we use to
 # provision free TLS certificates.
 apt_install duplicity python3-pip virtualenv certbot
+
+# boto is used for amazon aws backups.
+# Both are installed outside the pipenv, so they can be used by duplicity
 hide_output pip3 install --upgrade boto
 
 # Create a virtualenv for the installation of Python 3 packages
@@ -50,7 +49,7 @@ hide_output $venv/bin/pip install --upgrade pip
 hide_output $venv/bin/pip install --upgrade \
 	rtyaml "email_validator>=1.0.0" "exclusiveprocess" \
 	flask dnspython python-dateutil \
-    qrcode[pil] pyotp \
+  qrcode[pil] pyotp \
 	"idna>=2.0.0" "cryptography==2.2.2" boto psutil postfix-mta-sts-resolver
 
 # CONFIGURATION
@@ -100,6 +99,12 @@ rm -f /tmp/fontawesome.zip
 # running after a reboot.
 cat > $inst_dir/start <<EOF;
 #!/bin/bash
+# Set character encoding flags to ensure that any non-ASCII don't cause problems.
+export LANGUAGE=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+export LANG=en_US.UTF-8
+export LC_TYPE=en_US.UTF-8
+
 source $venv/bin/activate
 exec python `pwd`/management/daemon.py
 EOF

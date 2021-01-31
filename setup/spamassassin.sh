@@ -67,6 +67,56 @@ management/editconf.py /etc/spamassassin/local.cf -s \
 	"add_header all Report"=_REPORT_ \
 	"add_header all Score"=_SCORE_
 
+
+# Authentication-Results SPF/Dmarc checks
+# ---------------------------------------
+# OpenDKIM and OpenDMARC are configured to validate and add "Authentication-Results: ..."
+# headers by checking the sender's SPF & DMARC policies. Instead of blocking mail that fails
+# these checks, we can use these headers to evaluate the mail as spam.
+#
+# Our custom rules are added to their own file so that an update to the deb package config
+# does not remove our changes.
+#
+# We need to escape period's in $PRIMARY_HOSTNAME since spamassassin config uses regex.
+
+escapedprimaryhostname="${PRIMARY_HOSTNAME//./\\.}"
+
+cat > /etc/spamassassin/miab_spf_dmarc.cf << EOF
+# Evaluate DMARC Authentication-Results
+header DMARC_PASS Authentication-Results =~ /$escapedprimaryhostname; dmarc=pass/
+describe DMARC_PASS DMARC check passed
+score DMARC_PASS -0.1
+
+header DMARC_NONE Authentication-Results =~ /$escapedprimaryhostname; dmarc=none/
+describe DMARC_NONE DMARC record not found
+score DMARC_NONE 0.1
+
+header DMARC_FAIL_NONE Authentication-Results =~ /$escapedprimaryhostname; dmarc=fail \(p=none/
+describe DMARC_FAIL_NONE DMARC check failed (p=none)
+score DMARC_FAIL_NONE 2.0
+
+header DMARC_FAIL_QUARANTINE Authentication-Results =~ /$escapedprimaryhostname; dmarc=fail \(p=quarantine/
+describe DMARC_FAIL_QUARANTINE DMARC check failed (p=quarantine)
+score DMARC_FAIL_QUARANTINE 5.0
+
+header DMARC_FAIL_REJECT Authentication-Results =~ /$escapedprimaryhostname; dmarc=fail \(p=reject/
+describe DMARC_FAIL_REJECT DMARC check failed (p=reject)
+score DMARC_FAIL_REJECT 10.0
+
+# Evaluate SPF Authentication-Results
+header SPF_PASS Authentication-Results =~ /$escapedprimaryhostname; spf=pass/
+describe SPF_PASS SPF check passed
+score SPF_PASS -0.1
+
+header SPF_NONE Authentication-Results =~ /$escapedprimaryhostname; spf=none/
+describe SPF_NONE SPF record not found
+score SPF_NONE 2.0
+
+header SPF_FAIL Authentication-Results =~ /$escapedprimaryhostname; spf=fail/
+describe SPF_FAIL SPF check failed
+score SPF_FAIL 5.0
+EOF
+
 # Bayesean learning
 # -----------------
 #
