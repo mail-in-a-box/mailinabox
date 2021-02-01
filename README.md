@@ -54,35 +54,17 @@ See the [setup guide](https://mailinabox.email/guide.html) for detailed, user-fr
 
 For experts, start with a completely fresh (really, I mean it) Ubuntu 18.04 LTS 64-bit machine. On the machine...
 
-Clone this repository:
+Clone this repository and checkout the tag corresponding to the most recent release:
 
 	$ git clone https://github.com/mail-in-a-box/mailinabox
 	$ cd mailinabox
-
-_Optional:_ Download Josh's PGP key and then verify that the sources were signed
-by him:
-
-	$ curl -s https://keybase.io/joshdata/key.asc | gpg --import
-	gpg: key C10BDD81: public key "Joshua Tauberer <jt@occams.info>" imported
-
-	$ git verify-tag v0.51
-	gpg: Signature made ..... using RSA key ID C10BDD81
-	gpg: Good signature from "Joshua Tauberer <jt@occams.info>"
-	gpg: WARNING: This key is not certified with a trusted signature!
-	gpg:          There is no indication that the signature belongs to the owner.
-	Primary key fingerprint: 5F4C 0E73 13CC D744 693B  2AEA B920 41F4 C10B DD81
-
-You'll get a lot of warnings, but that's OK. Check that the primary key fingerprint matches the
-fingerprint in the key details at [https://keybase.io/joshdata](https://keybase.io/joshdata)
-and on his [personal homepage](https://razor.occams.info/). (Of course, if this repository has been compromised you can't trust these instructions.)
-
-Checkout the tag corresponding to the most recent release:
-
-	$ git checkout v0.51
+	$ git checkout v0.52
 
 Begin the installation.
 
 	$ sudo setup/start.sh
+
+The installation will install, uninstall, and configure packages to turn the machine into a working, good mail server.
 
 For help, DO NOT contact Josh directly --- I don't do tech support by email or tweet (no exceptions).
 
@@ -90,6 +72,7 @@ Post your question on the [discussion forum](https://discourse.mailinabox.email/
 
 Note that while we want everything to "just work," we can't control the rest of the Internet. Other mail services might block or spam-filter email sent from your Mail-in-a-Box.
 This is a challenge faced by everyone who runs their own mail server, with or without Mail-in-a-Box. See our discussion forum for tips about that.
+
 
 Contributing and Development
 ----------------------------
