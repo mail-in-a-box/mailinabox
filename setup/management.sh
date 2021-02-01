@@ -126,3 +126,14 @@ EOF
 
 # Start the management server.
 restart_service mailinabox
+
+# FOR DEVELOPMENT PURPOSES ONLY:
+# If there is a CA certificate in the folder, install it.
+# MIAB will only accept a manual certificate installation
+# if it is signed by a CA trusted by it.
+if [[ -f mailinabox-ca.crt ]]; then
+    echo "Custom CA certificate detected. Installing..."
+    rm -f /usr/local/share/ca-certificates/mailinabox-ca.crt
+    cp mailinabox-ca.crt /usr/local/share/ca-certificates/
+    update-ca-certificates --fresh
+fi
