@@ -24,8 +24,8 @@ InstallNextcloud() {
 	hash_contacts=$4
 	version_calendar=$5
 	hash_calendar=$6
-	version_user_external=$7
-	hash_user_external=$8
+	version_user_external=${7:-}
+	hash_user_external=${8:-}
 
 	echo
 	echo "Upgrading to Nextcloud version $version"
