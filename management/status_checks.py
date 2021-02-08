@@ -594,7 +594,7 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 				and this machine's DNS server. It may take several hours for public DNS to update after a change. If you did not recently
 				make a change (and are not using external/custom DNS), you must resolve this immediately by following the instructions
 				provided by your domain name registrar and provide to them this information:""")
-        output.print_line("")
+		output.print_line("")
 		output.print_line("Key Tag: " + ds_keytag + ("" if not ds_looks_valid or ds[0] == ds_keytag else " (Got '%s')" % ds[0]))
 		output.print_line("Key Flags: KSK")
 		output.print_line(
@@ -612,7 +612,7 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 		output.print_line("Bulk/Record Format:")
 		output.print_line("" + ds_correct[0])
 		output.print_line("")
-        output.print_line("This DS record is not relevant when using external/custom DNS.")
+		output.print_line("This DS record is not relevant when using external/custom DNS.")
 
 def check_mail_domain(domain, env, output):
 	# Check the MX record.
