@@ -734,7 +734,8 @@ if __name__ == '__main__':
 
 	# For testing in the browser, you can copy the API key that's output to the
 	# debug console and enter that as the username
-	app.logger.info('API key: ' + auth_service.key)
+	if app.debug:
+		app.logger.info('API key: ' + auth_service.key)
 
 	# Start the application server. Listens on 127.0.0.1 (IPv4 only).
 	app.run(port=10222)
