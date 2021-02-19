@@ -63,7 +63,7 @@ chmod go-rwx $STORAGE_ROOT/mail/dkim
 tools/editconf.py /etc/opendmarc.conf -s \
 	"Syslog=true" \
 	"Socket=inet:8893@[127.0.0.1]" \
-    "FailureReports=true"
+	"FailureReports=true"
 
 # SPFIgnoreResults causes the filter to ignore any SPF results in the header
 # of the message. This is useful if you want the filter to perfrom SPF checks
