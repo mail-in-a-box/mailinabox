@@ -28,10 +28,20 @@ apt_install \
 # Install Roundcube from source if it is not already present or if it is out of date.
 # Combine the Roundcube version number with the commit hash of plugins to track
 # whether we have the latest version of everything.
+
+# Plugin versions:
+# Latest version of persistent_login is 5.2.0
+# Latest version of HTML5_Notifier is 0.6.4
+#      Maintainer has migrated GitHub Profiles
+# Latest version of CardDAV is 4.0.4
+#      A new maintainer is developing the plugin
+#      4.0.4 is in a different compression format (.tgz)
 VERSION=1.4.11
 HASH=3877f0e70f29e7d0612155632e48c3db1e626be3
 PERSISTENT_LOGIN_VERSION=6b3fc450cae23ccb2f393d0ef67aa319e877e435
 HTML5_NOTIFIER_VERSION=4b370e3cd60dabd2f428a26f45b677ad1b7118d5
+# CARDDAV_VERSION=4.0.4
+# CARDDAV_HASH=7035a68b392c7e698f5dbcfe7be7eea1d7dff21a
 CARDDAV_VERSION=3.0.3
 CARDDAV_HASH=d1e3b0d851ffa2c6bd42bf0c04f70d0e1d0d78f8
 
