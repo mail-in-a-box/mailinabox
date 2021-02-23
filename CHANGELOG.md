@@ -1,13 +1,21 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+Software updates:
+
+* Upgraded Roundcube to version 1.4.11 addressing a security issue, and its desktop notifications plugin.
+* Upgraded Z-Push (for Exchange/ActiveSync) to version 2.6.2.
+
 v0.52 (January 31, 2021)
 ------------------------
 
 Software updates:
 
 * Upgraded Roundcube to version 1.4.10.
-* Upgraded zpush to 2.6.1.
+* Upgraded Z-Push to 2.6.1.
 
 Mail:
 
