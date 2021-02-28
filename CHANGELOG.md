@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+Control panel:
+
+* Backblaze B2 is now a supported backup protocol.
+
 v0.52 (January 31, 2021)
 ------------------------
 
