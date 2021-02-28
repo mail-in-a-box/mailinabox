@@ -13,6 +13,7 @@ Control panel:
 
 * Backblaze B2 is now a supported backup protocol.
 * Fixed an issue in the daily mail reports.
+* Sort the Custom DNS by zone and qname, and add an option to go back to the old sort order (creation order).
 
 Mail:
 
