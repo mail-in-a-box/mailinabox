@@ -12,6 +12,15 @@ Software updates:
 Control panel:
 
 * Backblaze B2 is now a supported backup protocol.
+* Fixed an issue in the daily mail reports.
+
+Mail:
+
+* Enable sending DMARC failure reports to senders that request them.
+
+Setup:
+
+* Fixed error when upgrading from Nextcloud 13.
 
 v0.52 (January 31, 2021)
 ------------------------
