@@ -164,8 +164,8 @@ function show_aliases() {
     function(r) {
       $('#alias_table tbody').html("");
       for (var i = 0; i < r.length; i++) {
-        var hdr = $("<tr><td colspan='3'><h4/></td></tr>");
-        hdr.find('h4').text(r[i].domain);
+        var hdr = $("<tr><th colspan='4' style='background-color: #EEE'></th></tr>");
+        hdr.find('th').text(r[i].domain);
         $('#alias_table tbody').append(hdr);
 
         for (var k = 0; k < r[i].aliases.length; k++) {

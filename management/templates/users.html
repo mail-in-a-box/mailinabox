@@ -1,7 +1,6 @@
 <h2>Users</h2>
 
 <style>
-#user_table h4 { margin: 1em 0 0 0; }
 #user_table tr.account_inactive td.address { color: #888; text-decoration: line-through; }
 #user_table .actions { margin-top: .33em; font-size: 95%; }
 #user_table .account_inactive .if_active { display: none; }
@@ -145,8 +144,8 @@ function show_users() {
     function(r) {
       $('#user_table tbody').html("");
       for (var i = 0; i < r.length; i++) {
-        var hdr = $("<tr><td colspan='3'><h4/></td></tr>");
-        hdr.find('h4').text(r[i].domain);
+        var hdr = $("<tr><th colspan='2' style='background-color: #EEE'></th></tr>");
+        hdr.find('th').text(r[i].domain);
         $('#user_table tbody').append(hdr);
 
         for (var k = 0; k < r[i].users.length; k++) {

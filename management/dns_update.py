@@ -754,7 +754,7 @@ def write_opendkim_tables(domains, env):
 
 ########################################################################
 
-def get_custom_dns_config(env):
+def get_custom_dns_config(env, only_real_records=False):
 	try:
 		custom_dns = rtyaml.load(open(os.path.join(env['STORAGE_ROOT'], 'dns/custom.yaml')))
 		if not isinstance(custom_dns, dict): raise ValueError() # caught below
@@ -762,6 +762,8 @@ def get_custom_dns_config(env):
 		return [ ]
 
 	for qname, value in custom_dns.items():
+		if qname == "_secondary_nameserver" and only_real_records: continue # skip fake record
+
 		# Short form. Mapping a domain name to a string is short-hand
 		# for creating A records.
 		if isinstance(value, str):

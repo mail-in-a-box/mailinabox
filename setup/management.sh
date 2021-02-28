@@ -27,9 +27,10 @@ done
 # provision free TLS certificates.
 apt_install duplicity python-pip virtualenv certbot
 
+# b2sdk is used for backblaze backups.
 # boto is used for amazon aws backups.
 # Both are installed outside the pipenv, so they can be used by duplicity
-hide_output pip3 install --upgrade boto
+hide_output pip3 install --upgrade b2sdk boto
 
 # Create a virtualenv for the installation of Python 3 packages
 # used by the management daemon.
@@ -49,8 +50,8 @@ hide_output $venv/bin/pip install --upgrade pip
 hide_output $venv/bin/pip install --upgrade \
 	rtyaml "email_validator>=1.0.0" "exclusiveprocess" \
 	flask dnspython python-dateutil \
-    qrcode[pil] pyotp \
-	"idna>=2.0.0" "cryptography==2.2.2" boto psutil postfix-mta-sts-resolver ldap3
+	qrcode[pil] pyotp \
+	"idna>=2.0.0" "cryptography==2.2.2" boto psutil postfix-mta-sts-resolver b2sdk ldap3
 
 # CONFIGURATION
 
