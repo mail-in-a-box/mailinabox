@@ -592,8 +592,8 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 				return
 			output.print_error("""This domain's DNSSEC DS record is incorrect. The chain of trust is broken between the public DNS system
 				and this machine's DNS server. It may take several hours for public DNS to update after a change. If you did not recently
-				make a change (and are not using this box for DNS aka external DNS), you must resolve this immediately by following the instructions
-				provided by your domain name registrar and provide to them this information:""")
+				make a change (and are not using this box for DNS aka external DNS), you must resolve this immediately by following the
+                                instructions provided by your domain name registrar and provide to them this information:""")
 		output.print_line("")
 		output.print_line("Key Tag: " + ds_keytag + ("" if not ds_looks_valid or ds[0] == ds_keytag else " (Got '%s')" % ds[0]))
 		output.print_line("Key Flags: KSK")
