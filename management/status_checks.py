@@ -612,7 +612,7 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 		output.print_line("Bulk/Record Format:")
 		output.print_line("" + ds_correct[0])
 		output.print_line("")
-		output.print_line("This DS record is not relevant when using external/custom DNS.")
+		output.print_line("This DS record is not relevant when using external DNS.")
 
 def check_mail_domain(domain, env, output):
 	# Check the MX record.
