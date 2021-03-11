@@ -16,7 +16,7 @@ from flask import Flask, request, render_template, abort, Response, send_from_di
 
 import auth, utils
 from mailconfig import get_mail_users, get_mail_users_ex, get_admins, add_mail_user, set_mail_password, remove_mail_user
-from mailconfig import get_mail_user_privileges, add_remove_mail_user_privilege
+from mailconfig import get_mail_user_privileges, add_remove_mail_user_privilege, open_database
 from mailconfig import get_mail_aliases, get_mail_aliases_ex, get_mail_domains, add_mail_alias, remove_mail_alias
 from mfa import get_public_mfa_state, provision_totp, validate_totp_secret, enable_mfa, disable_mfa
 
@@ -119,9 +119,12 @@ def index():
 	utils.fix_boto() # must call prior to importing boto
 	import boto.s3
 	backup_s3_hosts = [(r.name, r.endpoint) for r in boto.s3.regions()]
+	lsb=utils.shell("check_output", ["/usr/bin/lsb_release", "-d"])
 
 	return render_template('index.html',
 		hostname=env['PRIMARY_HOSTNAME'],
+		distname=lsb[lsb.find("\t")+1:-1],
+		
 		storage_root=env['STORAGE_ROOT'],
 
 		no_users_exist=no_users_exist,
@@ -479,7 +482,10 @@ def web_get_domains():
 @authorized_personnel_only
 def web_update():
 	from web_update import do_web_update
-	return do_web_update(env)
+	try:
+		return do_web_update(env)
+	except Exception as e:
+		return (str(e), 500)
 
 # System
 
@@ -588,6 +594,19 @@ def backup_set_custom():
 		request.form.get('min_age', '')
 	))
 
+@app.route('/system/backup/new', methods=["POST"])
+@authorized_personnel_only
+def backup_new():
+	from backup import perform_backup, get_backup_config
+
+	# If backups are disabled, don't perform the backup
+	config = get_backup_config(env)
+	if config["target"] == "off":
+		return "Backups are disabled in this machine. Nothing was done."
+
+	msg = perform_backup(request.form.get('full', False) == 'true', True)
+	return "OK" if msg is None else msg
+
 @app.route('/system/privacy', methods=["GET"])
 @authorized_personnel_only
 def privacy_status_get():
@@ -601,6 +620,49 @@ def privacy_status_set():
 	config["privacy"] = (request.form.get('value') == "private")
 	utils.write_settings(config, env)
 	return "OK"
+
+@app.route('/system/smtp/relay', methods=["GET"])
+@authorized_personnel_only
+def smtp_relay_get():
+	config = utils.load_settings(env)
+	return {
+		"enabled": config.get("SMTP_RELAY_ENABLED", True),
+		"host": config.get("SMTP_RELAY_HOST", ""),
+		"auth_enabled": config.get("SMTP_RELAY_AUTH", False),
+		"user": config.get("SMTP_RELAY_USER", "")
+	}
+
+@app.route('/system/smtp/relay', methods=["POST"])
+@authorized_personnel_only
+def smtp_relay_set():
+	from editconf import edit_conf
+	config = utils.load_settings(env)
+	newconf = request.form
+	try:
+		# Write on daemon settings
+		config["SMTP_RELAY_ENABLED"] = (newconf.get("enabled") == "true")
+		config["SMTP_RELAY_HOST"] = newconf.get("host")
+		config["SMTP_RELAY_AUTH"] = (newconf.get("auth_enabled") == "true")
+		config["SMTP_RELAY_USER"] = newconf.get("user")
+		utils.write_settings(config, env)
+		# Write on Postfix configs
+		edit_conf("/etc/postfix/main.cf", [
+			"relayhost=" + (f"[{config['SMTP_RELAY_HOST']}]:587" if config["SMTP_RELAY_ENABLED"] else ""),
+			"smtp_sasl_auth_enable=" + ("yes" if config["SMTP_RELAY_AUTH"] else "no"),
+			"smtp_sasl_security_options=" + ("noanonymous" if config["SMTP_RELAY_AUTH"] else "anonymous"),
+			"smtp_sasl_tls_security_options=" + ("noanonymous" if config["SMTP_RELAY_AUTH"] else "anonymous")
+		], delimiter_re=r"\s*=\s*", delimiter="=", comment_char="#")
+		if config["SMTP_RELAY_AUTH"]:
+			# Edit the sasl password
+			with open("/etc/postfix/sasl_passwd", "w") as f:
+				f.write(f"[{config['SMTP_RELAY_HOST']}]:587 {config['SMTP_RELAY_USER']}:{newconf.get('key')}\n")
+			utils.shell("check_output", ["/usr/bin/chmod", "600", "/etc/postfix/sasl_passwd"], capture_stderr=True)
+			utils.shell("check_output", ["/usr/sbin/postmap", "/etc/postfix/sasl_passwd"], capture_stderr=True)
+		# Restart Postfix
+		return utils.shell("check_output", ["/usr/bin/systemctl", "restart", "postfix"], capture_stderr=True)
+	except Exception as e:
+		return (str(e), 500)
+
 
 # MUNIN
 

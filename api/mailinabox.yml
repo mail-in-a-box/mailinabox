@@ -499,6 +499,123 @@ paths:
             text/html:
               schema:
                 type: string
+  /system/backup/new:
+    post:
+      tags:
+        - System
+      summary: Perform system backup
+      description: Performs a system backup.
+      operationId: performSystemBackup
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PerformBackupRequest'
+            examples:
+              incremental:
+                summary: Perform incremental backup.
+                value:
+                  full: false
+              full:
+                summary: Force a full backup.
+                value:
+                  full: true
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/system/backup/new" \
+              -d "full=<boolean>" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/PerformBackupResponse'
+        403:
+          description: Forbidden
+          content:
+            text/plain:
+              schema:
+                type: string
+  /system/smtp/relay:
+    get:
+      tags:
+        - System
+      summary: Get SMTP relay configuration
+      description: Gets basic configuration on how the box should use third-party relay services to deliver mail.
+      operationId: getRelayConfig
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/system/smtp/relay" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SmtpRelayConfig'
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+    post:
+      tags:
+        - System
+      summary: Set SMTP relay configuration
+      description: Sets the configuration on how the box should use third-party relays to deliver mail.
+      operationId: setRelayConfig
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SetSmtpRelayConfigRequest'
+            examples:
+              disable:
+                summary: Do not use relays.
+                value:
+                  enabled: false
+                  host: ""
+                  auth_enabled: false
+                  user: ""
+                  key: ""
+              no_auth:
+                summary: Use a relay that does not require authentication.
+                value:
+                  enabled: true
+                  host: smtp.relay.net
+                  auth_enabled: false
+                  user: ""
+                  key: ""
+              auth:
+                summary: Use a relay that requires authentication.
+                value:
+                  enabled: true
+                  host: smtp.relay.net
+                  auth_enabled: true
+                  user: someuser
+                  key: key-or-password-here
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/plain:
+              schema:
+                type: string
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+
   /ssl/status:
     get:
       tags:
@@ -2459,6 +2576,19 @@ components:
           minimum: 1
           example: 3
       description: Backup config update request.
+    PerformBackupRequest:
+      type: object
+      required:
+        - full
+      properties:
+        full:
+          type: boolean
+          example: false
+      description: New backup type.
+    PerformBackupResponse:
+      type: string
+      example: OK
+      description: Backup creation response.
     SystemBackupConfigUpdateResponse:
       type: string
       example: OK
@@ -2661,6 +2791,52 @@ components:
       type: string
       example: web updated
       description: Web update response.
+    SmtpRelayConfig:
+      type: object
+      required:
+        - enabled
+        - host
+        - auth_enabled
+        - user
+      properties:
+        enabled:
+          type: boolean
+          example: true
+        host:
+          type: string
+          example: sendgrid.net
+        auth_enabled:
+          type: boolean
+          example: true
+        user:
+          type: string
+          example: someuser
+      description: SMTP configuration details.
+    SetSmtpRelayConfigRequest:
+      type: object
+      required:
+        - enabled
+        - host
+        - auth_enabled
+        - user
+        - key
+      properties:
+        enabled:
+          type: boolean
+          example: true
+        host:
+          type: string
+          example: sendgrid.net
+        auth_enabled:
+          type: boolean
+          example: true
+        user:
+          type: string
+          example: apikey
+        key:
+          type: string
+          example: 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
+      description: SMTP Configuration form
     MfaStatusResponse:
       type: object
       properties:

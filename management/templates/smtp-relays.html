@@ -1,0 +1,135 @@
+<style>
+</style>
+
+<h2>SMTP Relays</h2>
+
+<p>SMTP Relays are third-party services you can hand off the responsability of getting the mail delivered. They
+	can be useful when, for example, port 25 is blocked.</p>
+
+<p>Here, you can configure an authenticated SMTP relay (for example, <a href="https://sendgrid.com/"
+		target="_blank">SendGrid</a>) over port 587.</p>
+
+<div id="smtp_relay_config">
+	<h3>SMTP Relay Configuration</h3>
+	<form class="form-horizontal" role="form" onsubmit="set_smtp_relay_config(); return false;">
+		<div class="form-group">
+			<table id="smtp-relays" class="table" style="width: 600px">
+				<tr>
+					<td>
+						<label for="use_relay" class="col-sm-1 control-label">Use Relay?</label>
+					</td>
+					<td>
+						<div class="col-sm-10">
+							<input type="checkbox" id="use_relay" name="use_relay" value="true"
+								onclick="checkfields();">
+						</div>
+					</td>
+				</tr>
+
+				<tr>
+					<td>
+						<label for="relay_host" class="col-sm-1 control-label">Hostname</label>
+					</td>
+					<td>
+						<div class="col-sm-10">
+							<input type="text" class="form-control" id="relay_host" placeholder="host.domain.tld">
+						</div>
+					</td>
+					<td style="padding: 0; font-weight: bold;">:587</td>
+				</tr>
+
+				<tr>
+					<td>
+						<label for="relay_use_auth" class="col-sm-1 control-label">Authenticate</label>
+					</td>
+					<td>
+						<div class="col-sm-10">
+							<input checked type="checkbox" id="relay_use_auth" name="relay_use_auth" value="true"
+								onclick="checkfields();">
+						</div>
+					</td>
+				</tr>
+
+				<tr>
+					<td>
+						<label for="relay_auth_user" class="col-sm-1 control-label">Username</label>
+					</td>
+					<td>
+						<div class="col-sm-10">
+							<input type="text" class="form-control" id="relay_auth_user" placeholder="user">
+						</div>
+					</td>
+				</tr>
+
+				<tr>
+					<td>
+						<label for="relay_auth_pass" class="col-sm-1 control-label">Password/Key</label>
+					</td>
+					<td>
+						<div class="col-sm-10">
+							<input type="password" class="form-control" id="relay_auth_pass" placeholder="password">
+						</div>
+					</td>
+				</tr>
+			</table>
+		</div>
+
+		<div>
+			<button type="submit" class="btn btn-primary">Update</button>
+		</div>
+	</form>
+</div>
+
+<script>
+	const use_relay = document.getElementById("use_relay")
+	const relay_host = document.getElementById("relay_host")
+	const relay_use_auth = document.getElementById("relay_use_auth")
+	const relay_auth_user = document.getElementById("relay_auth_user")
+	const relay_auth_pass = document.getElementById("relay_auth_pass")
+
+	function checkfields() {
+		let relay_enabled = use_relay.checked
+		let auth_enabled = relay_use_auth.checked
+
+		relay_host.disabled = !relay_enabled
+		relay_use_auth.disabled = !relay_enabled
+		relay_auth_user.disabled = !(relay_enabled && auth_enabled)
+		relay_auth_pass.disabled = !(relay_enabled && auth_enabled)
+	}
+
+	function show_smtp_relays() {
+		api(
+			"/system/smtp/relay",
+			"GET",
+			{},
+			data => {
+				use_relay.checked = data.enabled
+				relay_host.value = data.host
+				relay_use_auth.checked = data.auth_enabled
+				relay_auth_user.value = data.user
+				relay_auth_pass.value = ""
+
+				checkfields()
+			}
+		)
+	}
+
+	function set_smtp_relay_config() {
+		api(
+			"/system/smtp/relay",
+			"POST",
+			{
+				enabled: use_relay.checked,
+				host: relay_host.value,
+				auth_enabled: relay_use_auth.checked,
+				user: relay_auth_user.value,
+				key: relay_auth_pass.value
+			},
+			() => {
+				show_modal_error("Done!", "The configuration has been updated and Postfix was restarted successfully. Please make sure everything is functioning as intended.", () => {
+					return false
+				})
+			}
+		)
+	}
+</script>

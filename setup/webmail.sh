@@ -168,7 +168,7 @@ sudo -u www-data touch /var/log/roundcubemail/errors.log
 cp ${RCM_PLUGIN_DIR}/password/config.inc.php.dist \
 	${RCM_PLUGIN_DIR}/password/config.inc.php
 
-tools/editconf.py ${RCM_PLUGIN_DIR}/password/config.inc.php \
+management/editconf.py ${RCM_PLUGIN_DIR}/password/config.inc.php \
 	"\$config['password_minimum_length']=8;" \
 	"\$config['password_db_dsn']='sqlite:///$STORAGE_ROOT/mail/users.sqlite';" \
 	"\$config['password_query']='UPDATE users SET password=%D WHERE email=%u';" \
@@ -198,4 +198,4 @@ chmod 664 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 
 # Enable PHP modules.
 phpenmod -v php mcrypt imap
-restart_service php7.2-fpm
+restart_service php$(php_version)-fpm

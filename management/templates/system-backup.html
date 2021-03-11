@@ -12,7 +12,7 @@
 <form class="form-horizontal" role="form" onsubmit="set_custom_backup(); return false;">
   <div class="form-group">
     <label for="backup-target-type" class="col-sm-2 control-label">Backup to:</label>
-    <div class="col-sm-2">
+    <div class="col-sm-3">
       <select class="form-control" rows="1" id="backup-target-type" onchange="toggle_form()">
         <option value="off">Nowhere (Disable Backups)</option>
         <option value="local">{{hostname}}</option>
@@ -165,6 +165,11 @@
   <tbody>
   </tbody>
 </table>
+
+<!-- Hide these buttons until we're sure we can use them :) -->
+<button id="create-full-backup-button" class="btn btn-primary" onclick="do_backup(true)" style="display: none;">Create Full Backup Now</button>
+<button id="create-incremental-backup-button" class="btn btn-primary" onclick="do_backup(false)" style="display: none;">Create Incremental Backup Now</button>
+
 <script>
 
 function toggle_form() {
@@ -211,12 +216,17 @@ function show_system_backup() {
       if (typeof r.backups == "undefined") {
         var tr = $('<tr><td colspan="3">Backups are turned off.</td></tr>');
         $('#backup-status tbody').append(tr);
+        $('#create-full-backup-button').css("display","none")
+        $('#create-incremental-backup-button').css("display","none")
         return;
       } else if (r.backups.length == 0) {
         var tr = $('<tr><td colspan="3">No backups have been made yet.</td></tr>');
         $('#backup-status tbody').append(tr);
       }
 
+      // Backups ARE enabled.
+      $('#create-full-backup-button').css("display","unset")
+      $('#create-incremental-backup-button').css("display","unset")
       for (var i = 0; i < r.backups.length; i++) {
         var b = r.backups[i];
         var tr = $('<tr/>');
@@ -342,4 +352,29 @@ function init_inputs(target_type) {
     set_host($('#backup-target-s3-host-select').val());
   }
 }
+
+function do_backup(is_full) {
+  let disclaimer = "The backup process will pause some services (such as PHP, Postfix and Dovecot). Depending on the size of the data this can take a while."
+  if (!is_full) {
+    disclaimer += "\nDepending on the amount of incremental backups done after the last full backup, the box may decide to do a full backup instead."
+  }
+  show_modal_confirm("Warning!", disclaimer, "Start Backup", () => {
+    api(
+    "/system/backup/new",
+    "POST",
+    {
+      full: is_full
+    },
+    function(r) {
+      // use .text() --- it's a text response, not html
+      show_modal_error("Backup configuration", $("<p/>").text(r), function() { if (r == "OK") show_system_backup(); }); // refresh after modal on success
+    },
+    function(r) {
+      // use .text() --- it's a text response, not html
+      show_modal_error("Backup configuration", $("<p/>").text(r));
+    });
+  return false;
+  })
+}
+
 </script>

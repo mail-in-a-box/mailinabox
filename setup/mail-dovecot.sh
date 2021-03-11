@@ -44,7 +44,7 @@ apt_install \
 # See here for discussion:
 # - https://www.dovecot.org/list/dovecot/2012-August/137569.html
 # - https://www.dovecot.org/list/dovecot/2011-December/132455.html
-tools/editconf.py /etc/dovecot/conf.d/10-master.conf \
+management/editconf.py /etc/dovecot/conf.d/10-master.conf \
 	default_process_limit=$(echo "`nproc` * 250" | bc) \
 	default_vsz_limit=$(echo "`free -tm  | tail -1 | awk '{print $2}'` / 3" | bc)M \
 	log_path=/var/log/mail.log
@@ -54,13 +54,13 @@ tools/editconf.py /etc/dovecot/conf.d/10-master.conf \
 # See http://www.dovecot.org/pipermail/dovecot/2013-March/088834.html.
 # A reboot is required for this to take effect (which we don't do as
 # as a part of setup). Test with `cat /proc/sys/fs/inotify/max_user_instances`.
-tools/editconf.py /etc/sysctl.conf \
+management/editconf.py /etc/sysctl.conf \
 	fs.inotify.max_user_instances=1024
 
 # Set the location where we'll store user mailboxes. '%d' is the domain name and '%n' is the
 # username part of the user's email address. We'll ensure that no bad domains or email addresses
 # are created within the management daemon.
-tools/editconf.py /etc/dovecot/conf.d/10-mail.conf \
+management/editconf.py /etc/dovecot/conf.d/10-mail.conf \
 	mail_location=maildir:$STORAGE_ROOT/mail/mailboxes/%d/%n \
 	mail_privileged_group=mail \
 	first_valid_uid=0
@@ -73,14 +73,14 @@ cp conf/dovecot-mailboxes.conf /etc/dovecot/conf.d/15-mailboxes.conf
 # Require that passwords are sent over SSL only, and allow the usual IMAP authentication mechanisms.
 # The LOGIN mechanism is supposedly for Microsoft products like Outlook to do SMTP login (I guess
 # since we're using Dovecot to handle SMTP authentication?).
-tools/editconf.py /etc/dovecot/conf.d/10-auth.conf \
+management/editconf.py /etc/dovecot/conf.d/10-auth.conf \
 	disable_plaintext_auth=yes \
 	"auth_mechanisms=plain login"
 
 # Enable SSL, specify the location of the SSL certificate and private key files.
 # Use Mozilla's "Intermediate" recommendations at https://ssl-config.mozilla.org/#server=dovecot&server-version=2.2.33&config=intermediate&openssl-version=1.1.1,
 # except that the current version of Dovecot does not have a TLSv1.3 setting, so we only use TLSv1.2.
-tools/editconf.py /etc/dovecot/conf.d/10-ssl.conf \
+management/editconf.py /etc/dovecot/conf.d/10-ssl.conf \
 	ssl=required \
 	"ssl_cert=<$STORAGE_ROOT/ssl/ssl_certificate.pem" \
 	"ssl_key=<$STORAGE_ROOT/ssl/ssl_private_key.pem" \
@@ -102,14 +102,14 @@ sed -i "s/#port = 110/port = 0/" /etc/dovecot/conf.d/10-master.conf
 # The risk is that if the connection is silent for too long it might be reset
 # by a peer. See [#129](https://github.com/mail-in-a-box/mailinabox/issues/129)
 # and [How bad is IMAP IDLE](http://razor.occams.info/blog/2014/08/09/how-bad-is-imap-idle/).
-tools/editconf.py /etc/dovecot/conf.d/20-imap.conf \
+management/editconf.py /etc/dovecot/conf.d/20-imap.conf \
 	imap_idle_notify_interval="4 mins"
 
 # Set POP3 UIDL.
 # UIDLs are used by POP3 clients to keep track of what messages they've downloaded.
 # For new POP3 servers, the easiest way to set up UIDLs is to use IMAP's UIDVALIDITY
 # and UID values, the default in Dovecot.
-tools/editconf.py /etc/dovecot/conf.d/20-pop3.conf \
+management/editconf.py /etc/dovecot/conf.d/20-pop3.conf \
 	pop3_uidl_format="%08Xu%08Xv"
 
 # ### LDA (LMTP)
@@ -150,7 +150,7 @@ EOF
 
 # Setting a `postmaster_address` is required or LMTP won't start. An alias
 # will be created automatically by our management daemon.
-tools/editconf.py /etc/dovecot/conf.d/15-lda.conf \
+management/editconf.py /etc/dovecot/conf.d/15-lda.conf \
 	postmaster_address=postmaster@$PRIMARY_HOSTNAME
 
 # ### Sieve

@@ -14,9 +14,14 @@ source setup/preflight.sh
 # Python may not be able to read/write files. This is also
 # in the management daemon startup script and the cron script.
 
+# Make sure we have locales at all (some images are THAT minimal)
+apt_get_quiet install locales
+
 if ! locale -a | grep en_US.utf8 > /dev/null; then
+	echo "Generating locales..."
     # Generate locale if not exists
-    hide_output locale-gen en_US.UTF-8
+	echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
+    hide_output locale-gen
 fi
 
 export LANGUAGE=en_US.UTF-8

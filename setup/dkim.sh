@@ -60,7 +60,7 @@ fi
 chown -R opendkim:opendkim $STORAGE_ROOT/mail/dkim
 chmod go-rwx $STORAGE_ROOT/mail/dkim
 
-tools/editconf.py /etc/opendmarc.conf -s \
+management/editconf.py /etc/opendmarc.conf -s \
 	"Syslog=true" \
 	"Socket=inet:8893@[127.0.0.1]"
 
@@ -69,7 +69,7 @@ tools/editconf.py /etc/opendmarc.conf -s \
 # itself, or because you don't trust the arriving header. This added header is
 # used by spamassassin to evaluate the mail for spamminess.
 
-tools/editconf.py /etc/opendmarc.conf -s \
+management/editconf.py /etc/opendmarc.conf -s \
         "SPFIgnoreResults=true"
 
 # SPFSelfValidate causes the filter to perform a fallback SPF check itself
@@ -78,7 +78,7 @@ tools/editconf.py /etc/opendmarc.conf -s \
 # the SPF check itself when this is set. This added header is used by
 # spamassassin to evaluate the mail for spamminess.
 
-tools/editconf.py /etc/opendmarc.conf -s \
+management/editconf.py /etc/opendmarc.conf -s \
         "SPFSelfValidate=true"
 
 # AlwaysAddARHeader Adds an "Authentication-Results:" header field even to
@@ -87,7 +87,7 @@ tools/editconf.py /etc/opendmarc.conf -s \
 # domains does not cause the results header field to be added. This added header
 # is used by spamassassin to evaluate the mail for spamminess.
 
-tools/editconf.py /etc/opendkim.conf -s \
+management/editconf.py /etc/opendkim.conf -s \
         "AlwaysAddARHeader=true"
 
 # Add OpenDKIM and OpenDMARC as milters to postfix, which is how OpenDKIM
@@ -102,7 +102,7 @@ tools/editconf.py /etc/opendkim.conf -s \
 # The OpenDMARC milter is skipped in the SMTP submission listener by
 # configuring smtpd_milters there to only list the OpenDKIM milter
 # (see mail-postfix.sh).
-tools/editconf.py /etc/postfix/main.cf \
+management/editconf.py /etc/postfix/main.cf \
 	"smtpd_milters=inet:127.0.0.1:8891 inet:127.0.0.1:8893"\
 	non_smtpd_milters=\$smtpd_milters \
 	milter_default_action=accept

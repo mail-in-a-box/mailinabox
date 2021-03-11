@@ -92,7 +92,7 @@ def sort_domains(domain_names, env):
         # Then in right-to-left lexicographic order of the .-separated parts of the name.
         list(reversed(d.split("."))),
       ))
-    
+
     return domain_names
 
 def sort_email_addresses(email_addresses, env):
@@ -182,6 +182,9 @@ def fix_boto():
 	import os
 	os.environ["BOTO_CONFIG"] = "/etc/boto3.cfg"
 
+def get_php_version():
+	# Gets the version of PHP installed in the system.
+	return shell("check_output", ["/usr/bin/php", "-v"])[4:7]
 
 if __name__ == "__main__":
 	from web_update import get_web_domains

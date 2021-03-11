@@ -1,160 +1,168 @@
 <h2>System Status Checks</h2>
 
 <style>
-#system-checks .heading td {
-  font-weight: bold;
-  font-size: 120%;
-  padding-top: 1.5em;
-}
-#system-checks .heading.first td {
-  border-top: none;
-  padding-top: 0;
-}
-#system-checks .status-error td {
-  color: #733;
-}
-#system-checks .status-warning td {
-  color: #770;
-}
-#system-checks .status-ok td {
-  color: #040;
-}
-#system-checks div.extra {
-  display: none;
-  margin-top: 1em;
-  max-width: 50em;
-  word-wrap: break-word;
-}
-#system-checks a.showhide {
-  display: none;
-  font-size: 85%;
-}
-#system-checks .pre {
-  margin: 1em;
-  font-family: monospace;
-  white-space: pre-wrap;
-}
+	#system-checks .heading td {
+		font-weight: bold;
+		font-size: 120%;
+		padding-top: 1.5em;
+	}
+
+	#system-checks .heading.first td {
+		border-top: none;
+		padding-top: 0;
+	}
+
+	#system-checks .status-error td {
+		color: rgb(140, 0, 0);
+	}
+
+	#system-checks .status-warning td {
+		color: rgb(170, 120, 0);
+	}
+
+	#system-checks .status-ok td {
+		color: rgb(0, 140, 0);
+	}
+
+	#system-checks div.extra {
+		display: none;
+		margin-top: 1em;
+		max-width: 50em;
+		word-wrap: break-word;
+	}
+
+	#system-checks .showhide {
+		display: none;
+		font-size: 85%;
+	}
+
+	#system-checks .pre {
+		margin: 1em;
+		font-family: monospace;
+		white-space: pre-wrap;
+	}
 </style>
 
-<div class="row">
-	<div class="col-md-push-9 col-md-3">
+<div>
+	<div>
 
-<div id="system-reboot-required" style="display: none; margin-bottom: 1em;">
-	<button type="button" class="btn btn-danger" onclick="confirm_reboot(); return false;">Reboot Box</button>
-	<div>No reboot is necessary.</div>
-</div>
+		<div id="system-reboot-required" style="display: none; margin-bottom: 1em;">
+			<button type="button" class="btn btn-danger" onclick="confirm_reboot(); return false;">Reboot Box</button>
+			<div>No reboot is necessary.</div>
+		</div>
 
-<div id="system-privacy-setting" style="display: none">
-	<div><a onclick="return enable_privacy(!current_privacy_setting)" href="#"><span>Enable/Disable</span> New-Version Check</a></div>
-	<p style="line-height: 125%"><small>(When enabled, status checks phone-home to check for a new release of Mail-in-a-Box.)</small></p>
-</div>
+		<div id="system-privacy-setting" style="display: none">
+			<div><a onclick="return enable_privacy(!current_privacy_setting)" href="#"><span>Enable/Disable</span>
+					New-Version Check</a></div>
+			<p style="line-height: 125%"><small>(When enabled, status checks phone-home to check for a new release of
+					Mail-in-a-Box.)</small></p>
+		</div>
 
 	</div> <!-- /col -->
-	<div class="col-md-pull-3 col-md-8">
+	<br>
+	<div>
 
-<table id="system-checks" class="table" style="max-width: 60em">
-  <thead>
-  </thead>
-  <tbody>
-  </tbody>
-</table>
+		<table id="system-checks" class="table">
+			<thead></thead>
+			<tbody></tbody>
+		</table>
 
 	</div> <!-- /col -->
 </div> <!-- /row -->
 
 <script>
-function show_system_status() {
-  $('#system-checks tbody').html("<tr><td colspan='2' class='text-muted'>Loading...</td></tr>")
+	function show_system_status() {
+		$('#system-checks tbody').html("<tr><td class='text-muted'>Loading...</td></tr>")
 
-  api(
-    "/system/privacy",
-    "GET",
-    { },
-    function(r) {
-      current_privacy_setting = r;
-      $('#system-privacy-setting').show();
-      $('#system-privacy-setting a span').text(r ? "Enable" : "Disable");
-      $('#system-privacy-setting p').toggle(r);
-    });
+		api(
+			"/system/privacy",
+			"GET",
+			{},
+			function (r) {
+				current_privacy_setting = r;
+				$('#system-privacy-setting').show();
+				$('#system-privacy-setting a span').text(r ? "Enable" : "Disable");
+				$('#system-privacy-setting p').toggle(r);
+			});
 
-  api(
-    "/system/reboot",
-    "GET",
-    { },
-    function(r) {
-      $('#system-reboot-required').show(); // show when r becomes available
-      $('#system-reboot-required').find('button').toggle(r);
-      $('#system-reboot-required').find('div').toggle(!r);
-    });
+		api(
+			"/system/reboot",
+			"GET",
+			{},
+			function (r) {
+				$('#system-reboot-required').show(); // show when r becomes available
+				$('#system-reboot-required').find('button').toggle(r);
+				$('#system-reboot-required').find('div').toggle(!r);
+			});
 
-  api(
-    "/system/status",
-    "POST",
-    { },
-    function(r) {
-      $('#system-checks tbody').html("");
-      for (var i = 0; i < r.length; i++) {
-        var n = $("<tr><td class='status'/><td class='message'><p style='margin: 0'/><div class='extra'/><a class='showhide' href='#'/></tr>");
-        if (i == 0) n.addClass('first')
-        if (r[i].type == "heading")
-                n.addClass(r[i].type)
-        else
-                n.addClass("status-" + r[i].type)
-        if (r[i].type == "ok") n.find('td.status').text("✓")
-        if (r[i].type == "error") n.find('td.status').text("✖")
-        if (r[i].type == "warning") n.find('td.status').text("?")
-        n.find('td.message p').text(r[i].text)
-        $('#system-checks tbody').append(n);
+		api(
+			"/system/status",
+			"POST",
+			{},
+			function (r) {
+				$('#system-checks tbody').html("");
+				for (var i = 0; i < r.length; i++) {
+					var n = $("<tr><td class='status'/><td class='message'><p style='margin: 0'/><p class='showhide btn btn-light' href='#'/><div class='extra'></div></tr>");
+					if (i == 0) n.addClass('first')
+					if (r[i].type == "heading")
+						n.addClass(r[i].type)
+					else
+						n.addClass("status-" + r[i].type)
+					if (r[i].type == "ok") n.find('td.status').text("✔️")
+					if (r[i].type == "error") n.find('td.status').text("❌")
+					if (r[i].type == "warning") n.find('td.status').text("⚠️")
+					n.find('td.message p').text(r[i].text)
+					$('#system-checks tbody').append(n);
 
-        if (r[i].extra.length > 0) {
-          n.find('a.showhide').show().text("show more").click(function() {
-            $(this).hide();
-            $(this).parent().find('.extra').fadeIn();
-            return false;
-          });
-        }
+					if (r[i].extra.length > 0) {
+						n.find('.showhide').show().text("Show More").click(function () {
+							$(this).hide();
+							$(this).parent().find('.extra').fadeIn();
+							return false;
+						});
+					}
 
-        for (var j = 0; j < r[i].extra.length; j++) {
+					for (var j = 0; j < r[i].extra.length; j++) {
 
-          var m = $("<div/>").text(r[i].extra[j].text)
-          if (r[i].extra[j].monospace)
-            m.addClass("pre");
-          n.find('> td.message > div').append(m);
-        }
-      }
-    })
+						var m = $("<div/>").text(r[i].extra[j].text)
+						if (r[i].extra[j].monospace)
+							m.addClass("pre");
+						n.find('> td.message > div').append(m);
+					}
+				}
+			})
 
-}
+	}
 
-var current_privacy_setting = null;
-function enable_privacy(status) {
-  api(
-    "/system/privacy",
-    "POST",
-    {
-      value: (status ? "private" : "off")
-    },
-    function(res) {
-      show_system_status();
-    });
-  return false; // disable link
-}
+	var current_privacy_setting = null;
+	function enable_privacy(status) {
+		api(
+			"/system/privacy",
+			"POST",
+			{
+				value: (status ? "private" : "off")
+			},
+			function (res) {
+				show_system_status();
+			});
+		return false; // disable link
+	}
 
-function confirm_reboot() {
-  show_modal_confirm(
-    "Reboot",
-    $("<p>This will reboot your Mail-in-a-Box <code>{{hostname}}</code>.</p> <p>Until the machine is fully restarted, your users will not be able to send and receive email, and you will not be able to connect to this control panel or with SSH. The reboot cannot be cancelled.</p>"),
-    "Reboot Now",
-    function() {
-      api(
-        "/system/reboot",
-        "POST",
-        { },
-        function(r) {
-          var msg = "<p>Please reload this page after a minute or so.</p>";
-          if (r) msg = "<p>The reboot command said:</p> <pre>" + $("<pre/>").text(r).html() + "</pre>"; // successful reboots don't produce any output; the output must be HTML-escaped
-          show_modal_error("Reboot", msg);
-        });
-    });
-}
+	function confirm_reboot() {
+		show_modal_confirm(
+			"Reboot",
+			$("<p>This will reboot your Mail-in-a-Box <code>{{hostname}}</code>.</p> <p>Until the machine is fully restarted, your users will not be able to send and receive email, and you will not be able to connect to this control panel or with SSH. The reboot cannot be cancelled.</p>"),
+			"Reboot Now",
+			function () {
+				api(
+					"/system/reboot",
+					"POST",
+					{},
+					function (r) {
+						var msg = "<p>Please reload this page after a minute or so.</p>";
+						if (r) msg = "<p>The reboot command said:</p> <pre>" + $("<pre/>").text(r).html() + "</pre>"; // successful reboots don't produce any output; the output must be HTML-escaped
+						show_modal_error("Reboot", msg);
+					});
+			});
+	}
 </script>

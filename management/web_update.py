@@ -7,7 +7,7 @@ import os.path, re, rtyaml
 from mailconfig import get_mail_domains
 from dns_update import get_custom_dns_config, get_dns_zones
 from ssl_certificates import get_ssl_certificates, get_domain_ssl_files, check_certificate
-from utils import shell, safe_domain_name, sort_domains
+from utils import shell, safe_domain_name, sort_domains, get_php_version
 
 def get_web_domains(env, include_www_redirects=True, exclude_dns_elsewhere=True):
 	# What domains should we serve HTTP(S) for?
@@ -76,6 +76,7 @@ def do_web_update(env):
 
 	# Build an nginx configuration file.
 	nginx_conf = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-top.conf")).read()
+	nginx_conf = re.sub("{{phpver}}", get_php_version(), nginx_conf)
 
 	# Load the templates.
 	template0 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx.conf")).read()
@@ -194,8 +195,16 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 
 	# Add in any user customizations in the includes/ folder.
 	nginx_conf_custom_include = os.path.join(env["STORAGE_ROOT"], "www", safe_domain_name(domain) + ".conf")
-	if os.path.exists(nginx_conf_custom_include):
-		nginx_conf_extra += "\tinclude %s;\n" % (nginx_conf_custom_include)
+	if not os.path.exists(nginx_conf_custom_include):
+		with open(nginx_conf_custom_include, "a+") as f:
+			f.writelines([
+				f"# Custom configurations for {domain} go here\n",
+				"# To use php: use the \"php-fpm\" alias\n\n",
+				"index index.html index.htm;\n"
+			])
+	
+	nginx_conf_extra += "\tinclude %s;\n" % (nginx_conf_custom_include)
+
 	# PUT IT ALL TOGETHER
 
 	# Combine the pieces. Iteratively place each template into the "# ADDITIONAL DIRECTIVES HERE" placeholder
@@ -220,6 +229,10 @@ def get_web_root(domain, env, test_exists=True):
 		root = os.path.join(env["STORAGE_ROOT"], "www", safe_domain_name(test_domain))
 		if os.path.exists(root) or not test_exists: break
 	return root
+
+def is_default_web_root(domain, env):
+	root = os.path.join(env["STORAGE_ROOT"], "www", safe_domain_name(domain))
+	return not os.path.exists(root)
 
 def get_web_domains_info(env):
 	www_redirects = set(get_web_domains(env)) - set(get_web_domains(env, include_www_redirects=False))

@@ -280,9 +280,9 @@ def run_network_checks(env, output):
 	if ret == 0:
 		output.print_ok("Outbound mail (SMTP port 25) is not blocked.")
 	else:
-		output.print_error("""Outbound mail (SMTP port 25) seems to be blocked by your network. You
-			will not be able to send any mail. Many residential networks block port 25 to prevent hijacked
-			machines from being able to send spam. A quick connection test to Google's mail server on port 25
+		output.print_warning("""Outbound mail (SMTP port 25) seems to be blocked by your network. You
+			will not be able to send any mail without a SMTP relay. Many residential networks block port 25 to prevent
+			hijacked machines from being able to send spam. A quick connection test to Google's mail server on port 25
 			failed.""")
 
 	# Stop if the IPv4 address is listed in the ZEN Spamhaus Block List.
@@ -299,6 +299,19 @@ def run_network_checks(env, output):
 		output.print_error("""The IP address of this machine %s is listed in the Spamhaus Block List (code %s),
 			which may prevent recipients from receiving your email. See http://www.spamhaus.org/query/ip/%s."""
 			% (env['PUBLIC_IP'], zen, env['PUBLIC_IP']))
+
+	# Check if a SMTP relay is set up. It's not strictly required, but on some providers
+	# it might be needed.
+	config = load_settings(env)
+	if config.get("SMTP_RELAY_ENABLED"):
+		if config.get("SMTP_RELAY_AUTH"):
+			output.print_ok("An authenticated SMTP relay has been set up via port 587.")
+		else:
+			output.print_warning("A SMTP relay has been set up, but it is not authenticated.")
+	elif ret == 0:
+		output.print_ok("No SMTP relay has been set up (but that's ok since port 25 is not blocked).")
+	else:
+		output.print_error("No SMTP relay has been set up. Since port 25 is blocked, you will probably not be able to send any mail.")
 
 def run_domain_checks(rounded_time, env, output, pool):
 	# Get the list of domains we handle mail for.
@@ -735,7 +748,7 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None):
 
 	# Do the query.
 	try:
-		response = resolver.query(qname, rtype)
+		response = resolver.resolve(qname, rtype)
 	except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
 		# Host did not have an answer for this query; not sure what the
 		# difference is between the two exceptions.
@@ -834,7 +847,7 @@ def what_version_is_this(env):
 	# Git may not be installed and Mail-in-a-Box may not have been cloned from github,
 	# so this function may raise all sorts of exceptions.
 	miab_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-	tag = shell("check_output", ["/usr/bin/git", "describe", "--abbrev=0"], env={"GIT_DIR": os.path.join(miab_dir, '.git')}).strip()
+	tag = shell("check_output", ["/usr/bin/git", "describe", "--tags", "--abbrev=0"], env={"GIT_DIR": os.path.join(miab_dir, '.git')}).strip()
 	return tag
 
 def get_latest_miab_version():
@@ -844,7 +857,7 @@ def get_latest_miab_version():
     from socket import timeout
 
     try:
-        return re.search(b'TAG=(.*)', urlopen("https://mailinabox.email/setup.sh?ping=1", timeout=5).read()).group(1).decode("utf8")
+        return re.search(b'TAG=(.*)', urlopen("https://raw.githubusercontent.com/ddavness/power-mailinabox/master/setup/bootstrap.sh", timeout=5).read()).group(1).decode("utf8")
     except (HTTPError, URLError, timeout):
         return None
 
