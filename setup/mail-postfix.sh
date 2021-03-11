@@ -53,7 +53,7 @@ apt_install postfix postfix-sqlite postfix-pcre postgrey ca-certificates
 # * Set our name (the Debian default seems to be "localhost" but make it our hostname).
 # * Set the name of the local machine to localhost, which means xxx@localhost is delivered locally, although we don't use it.
 # * Set the SMTP banner (which must have the hostname first, then anything).
-management/editconf.py /etc/postfix/main.cf \
+tools/editconf.py /etc/postfix/main.cf \
 	inet_interfaces=all \
 	smtp_bind_address=$PRIVATE_IP \
 	smtp_bind_address6=$PRIVATE_IPV6 \
@@ -64,7 +64,7 @@ management/editconf.py /etc/postfix/main.cf \
 # Tweak some queue settings:
 # * Inform users when their e-mail delivery is delayed more than 3 hours (default is not to warn).
 # * Stop trying to send an undeliverable e-mail after 2 days (instead of 5), and for bounce messages just try for 1 day.
-management/editconf.py /etc/postfix/main.cf \
+tools/editconf.py /etc/postfix/main.cf \
 	delay_warning_time=3h \
 	maximal_queue_lifetime=2d \
 	bounce_queue_lifetime=1d
@@ -86,7 +86,7 @@ management/editconf.py /etc/postfix/main.cf \
 #   that filters out privacy-sensitive headers on mail being sent out by
 #   authenticated users.  By default Postfix also applies this to attached
 #   emails but we turn this off by setting nested_header_checks empty.
-management/editconf.py /etc/postfix/master.cf -s -w \
+tools/editconf.py /etc/postfix/master.cf -s -w \
 	"submission=inet n       -       -       -       -       smtpd
 	  -o smtpd_sasl_auth_enable=yes
 	  -o syslog_name=postfix/submission
@@ -120,7 +120,7 @@ sed -i "s/PUBLIC_IP/$PUBLIC_IP/" /etc/postfix/outgoing_mail_header_filters
 # For port 587 (via the 'mandatory' settings):
 # * Use Mozilla's "Intermediate" TLS recommendations from https://ssl-config.mozilla.org/#server=postfix&server-version=3.3.0&config=intermediate&openssl-version=1.1.1
 #   using and overriding the "high" cipher list so we don't conflict with the more permissive settings for port 25.
-management/editconf.py /etc/postfix/main.cf \
+tools/editconf.py /etc/postfix/main.cf \
 	smtpd_tls_security_level=may\
 	smtpd_tls_auth_only=yes \
 	smtpd_tls_cert_file=$STORAGE_ROOT/ssl/ssl_certificate.pem \
@@ -144,7 +144,7 @@ management/editconf.py /etc/postfix/main.cf \
 # * `permit_sasl_authenticated`: Authenticated users (i.e. on port 587).
 # * `permit_mynetworks`: Mail that originates locally.
 # * `reject_unauth_destination`: No one else. (Permits mail whose destination is local and rejects other mail.)
-management/editconf.py /etc/postfix/main.cf \
+tools/editconf.py /etc/postfix/main.cf \
 	smtpd_relay_restrictions=permit_sasl_authenticated,permit_mynetworks,reject_unauth_destination
 
 
@@ -172,7 +172,7 @@ management/editconf.py /etc/postfix/main.cf \
 # which we don't care about seeing because Postfix is doing opportunistic TLS anyway. Better to encrypt,
 # even if we don't know if it's to the right party, than to not encrypt at all. Instead we'll
 # now see notices about trusted certs. The CA file is provided by the package `ca-certificates`.
-management/editconf.py /etc/postfix/main.cf \
+tools/editconf.py /etc/postfix/main.cf \
 	smtp_tls_protocols=\!SSLv2,\!SSLv3 \
 	smtp_tls_ciphers=medium \
 	smtp_tls_exclude_ciphers=aNULL,RC4 \
@@ -191,10 +191,10 @@ management/editconf.py /etc/postfix/main.cf \
 #
 # In a basic setup we would pass mail directly to Dovecot by setting
 # virtual_transport to `lmtp:unix:private/dovecot-lmtp`.
-management/editconf.py /etc/postfix/main.cf virtual_transport=lmtp:[127.0.0.1]:10025
+tools/editconf.py /etc/postfix/main.cf virtual_transport=lmtp:[127.0.0.1]:10025
 # Because of a spampd bug, limit the number of recipients in each connection.
 # See https://github.com/mail-in-a-box/mailinabox/issues/1523.
-management/editconf.py /etc/postfix/main.cf lmtp_destination_recipient_limit=1
+tools/editconf.py /etc/postfix/main.cf lmtp_destination_recipient_limit=1
 
 
 # Who can send mail to us? Some basic filters.
@@ -214,7 +214,7 @@ management/editconf.py /etc/postfix/main.cf lmtp_destination_recipient_limit=1
 # so these IPs get mail delivered quickly. But when an IP is not listed in the permit_dnswl_client list (i.e. it is not #NODOC
 # whitelisted) then postfix does a DEFER_IF_REJECT, which results in all "unknown user" sorts of messages turning into #NODOC
 # "450 4.7.1 Client host rejected: Service unavailable". This is a retry code, so the mail doesn't properly bounce. #NODOC
-management/editconf.py /etc/postfix/main.cf \
+tools/editconf.py /etc/postfix/main.cf \
 	smtpd_sender_restrictions="reject_non_fqdn_sender,reject_unknown_sender_domain,reject_authenticated_sender_login_mismatch,reject_rhsbl_sender dbl.spamhaus.org" \
 	smtpd_recipient_restrictions=permit_sasl_authenticated,permit_mynetworks,"reject_rbl_client zen.spamhaus.org",reject_unlisted_recipient,"check_policy_service inet:127.0.0.1:10023"
 
@@ -225,7 +225,7 @@ management/editconf.py /etc/postfix/main.cf \
 # other MTA have their own intervals. To fix the problem of receiving
 # e-mails really latter, delay of greylisting has been set to
 # 180 seconds (default is 300 seconds).
-management/editconf.py /etc/default/postgrey \
+tools/editconf.py /etc/default/postgrey \
 	POSTGREY_OPTS=\"'--inet=127.0.0.1:10023 --delay=180'\"
 
 
@@ -257,11 +257,11 @@ chmod +x /etc/cron.daily/mailinabox-postgrey-whitelist
 
 # Increase the message size limit from 10MB to 128MB.
 # The same limit is specified in nginx.conf for mail submitted via webmail and Z-Push.
-management/editconf.py /etc/postfix/main.cf \
+tools/editconf.py /etc/postfix/main.cf \
 	message_size_limit=134217728
 
 # Store default configurations for SMTP relays:
-management/editconf.py /etc/postfix/main.cf \
+tools/editconf.py /etc/postfix/main.cf \
 	smtp_sasl_auth_enable=no \
 	smtp_sasl_password_maps="hash:/etc/postfix/sasl_passwd" \
 	smtp_sasl_security_options=anonymous \

@@ -316,7 +316,7 @@ sudo -u www-data php /usr/local/lib/owncloud/occ app:disable photos dashboard ac
 
 # Set PHP FPM values to support large file uploads
 # (semicolon is the comment character in this file, hashes produce deprecation warnings)
-management/editconf.py /etc/php/$(php_version)/fpm/php.ini -c ';' \
+tools/editconf.py /etc/php/$(php_version)/fpm/php.ini -c ';' \
 	upload_max_filesize=16G \
 	post_max_size=16G \
 	output_buffering=16384 \
@@ -325,7 +325,7 @@ management/editconf.py /etc/php/$(php_version)/fpm/php.ini -c ';' \
 	short_open_tag=On
 
 # Set Nextcloud recommended opcache settings
-management/editconf.py /etc/php/$(php_version)/cli/conf.d/10-opcache.ini -c ';' \
+tools/editconf.py /etc/php/$(php_version)/cli/conf.d/10-opcache.ini -c ';' \
 	opcache.enable=1 \
 	opcache.enable_cli=1 \
 	opcache.interned_strings_buffer=8 \
@@ -336,7 +336,7 @@ management/editconf.py /etc/php/$(php_version)/cli/conf.d/10-opcache.ini -c ';' 
 
 # If apc is explicitly disabled we need to enable it
 if grep -q apc.enabled=0 /etc/php/$(php_version)/mods-available/apcu.ini; then
-	management/editconf.py /etc/php/$(php_version)/mods-available/apcu.ini -c ';' \
+	tools/editconf.py /etc/php/$(php_version)/mods-available/apcu.ini -c ';' \
 		apc.enabled=1
 fi
 

@@ -23,7 +23,7 @@ echo "Installing SpamAssassin..."
 apt_install spampd razor pyzor dovecot-antispam libmail-dkim-perl
 
 # Allow spamassassin to download new rules.
-management/editconf.py /etc/default/spamassassin \
+tools/editconf.py /etc/default/spamassassin \
 	CRON=1
 
 # Configure pyzor, which is a client to a live database of hashes of
@@ -34,7 +34,7 @@ management/editconf.py /etc/default/spamassassin \
 # we can skip 'pyzor discover', both of which are currently broken by
 # something happening on Sourceforge (#496).
 rm -rf ~/.pyzor
-management/editconf.py /etc/spamassassin/local.cf -s \
+tools/editconf.py /etc/spamassassin/local.cf -s \
 	pyzor_options="--homedir /etc/spamassassin/pyzor"
 mkdir -p /etc/spamassassin/pyzor
 echo "public.pyzor.org:24441" > /etc/spamassassin/pyzor/servers
@@ -46,7 +46,7 @@ echo "public.pyzor.org:24441" > /etc/spamassassin/pyzor/servers
 # * Increase the maximum message size of scanned messages from the default of 64KB to 500KB, which
 #   is Spamassassin (spamc)'s own default. Specified in KBytes.
 # * Disable localmode so Pyzor, DKIM and DNS checks can be used.
-management/editconf.py /etc/default/spampd \
+tools/editconf.py /etc/default/spampd \
 	DESTPORT=10026 \
 	ADDOPTS="\"--maxsize=2000\"" \
 	LOCALONLY=0
@@ -62,7 +62,7 @@ management/editconf.py /etc/default/spampd \
 #
 # Tell Spamassassin not to modify the original message except for adding
 # the X-Spam-Status & X-Spam-Score mail headers and related headers.
-management/editconf.py /etc/spamassassin/local.cf -s \
+tools/editconf.py /etc/spamassassin/local.cf -s \
 	report_safe=0 \
 	"add_header all Report"=_REPORT_ \
 	"add_header all Score"=_SCORE_
@@ -134,7 +134,7 @@ EOF
 # Spamassassin will change the access rights back to the defaults, so we must also configure
 # the filemode in the config file.
 
-management/editconf.py /etc/spamassassin/local.cf -s \
+tools/editconf.py /etc/spamassassin/local.cf -s \
 	bayes_path=$STORAGE_ROOT/mail/spamassassin/bayes \
 	bayes_file_mode=0666
 
@@ -166,7 +166,7 @@ EOF
 # Have Dovecot run its mail process with a supplementary group (the spampd group)
 # so that it can access the learning files.
 
-management/editconf.py /etc/dovecot/conf.d/10-mail.conf \
+tools/editconf.py /etc/dovecot/conf.d/10-mail.conf \
 	mail_access_groups=spampd
 
 # Here's the script that the antispam plugin executes. It spools the message into

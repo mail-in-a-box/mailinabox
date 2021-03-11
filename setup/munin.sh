@@ -39,7 +39,7 @@ chown munin. /var/log/munin/munin-cgi-graph.log
 
 # ensure munin-node knows the name of this machine
 # and reduce logging level to warning
-management/editconf.py /etc/munin/munin-node.conf -s \
+tools/editconf.py /etc/munin/munin-node.conf -s \
 	host_name=$PRIMARY_HOSTNAME \
 	log_level=1
 
