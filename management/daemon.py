@@ -277,17 +277,50 @@ def dns_set_secondary_nameserver():
 @app.route('/dns/custom')
 @authorized_personnel_only
 def dns_get_records(qname=None, rtype=None):
-	from dns_update import get_custom_dns_config
-	return json_response([
-	{
-		"qname": r[0],
-		"rtype": r[1],
-		"value": r[2],
-	}
-	for r in get_custom_dns_config(env)
-	if r[0] != "_secondary_nameserver"
-		and (not qname or r[0] == qname)
-		and (not rtype or r[1] == rtype) ])
+	# Get the current set of custom DNS records.
+	from dns_update import get_custom_dns_config, get_dns_zones
+	records = get_custom_dns_config(env, only_real_records=True)
+
+	# Filter per the arguments for the more complex GET routes below.
+	records = [r for r in records
+		if (not qname or r[0] == qname)
+		and (not rtype or r[1] == rtype) ]
+
+	# Make a better data structure.
+	records = [
+        {
+                "qname": r[0],
+                "rtype": r[1],
+                "value": r[2],
+		"sort-order": { },
+        } for r in records ]
+
+	# To help with grouping by zone in qname sorting, label each record with which zone it is in.
+	# There's an inconsistency in how we handle zones in get_dns_zones and in sort_domains, so
+	# do this first before sorting the domains within the zones.
+	zones = utils.sort_domains([z[0] for z in get_dns_zones(env)], env)
+	for r in records:
+		for z in zones:
+			if r["qname"] == z or r["qname"].endswith("." + z):
+				r["zone"] = z
+				break
+
+	# Add sorting information. The 'created' order follows the order in the YAML file on disk,
+	# which tracs the order entries were added in the control panel since we append to the end.
+	# The 'qname' sort order sorts by our standard domain name sort (by zone then by qname),
+	# then by rtype, and last by the original order in the YAML file (since sorting by value
+	# may not make sense, unless we parse IP addresses, for example).
+	for i, r in enumerate(records):
+		r["sort-order"]["created"] = i
+	domain_sort_order = utils.sort_domains([r["qname"] for r in records], env)
+	for i, r in enumerate(sorted(records, key = lambda r : (
+			zones.index(r["zone"]),
+			domain_sort_order.index(r["qname"]),
+			r["rtype"]))):
+		r["sort-order"]["qname"] = i
+
+	# Return.
+	return json_response(records)
 
 @app.route('/dns/custom/<qname>', methods=['GET', 'POST', 'PUT', 'DELETE'])
 @app.route('/dns/custom/<qname>/<rtype>', methods=['GET', 'POST', 'PUT', 'DELETE'])
