@@ -192,6 +192,12 @@ EOF
 cp conf/sieve-spam.txt /etc/dovecot/sieve-spam.sieve
 sievec /etc/dovecot/sieve-spam.sieve
 
+# Adjust sieve to use local account's address as envelope-from in forwarding
+# mails to external MTAs (#1946).
+grep sieve_redirect_envelope_from /etc/dovecot/conf.d/99-local-sieve.conf  &>/dev/null || \
+	sed -i /etc/dovecot/conf.d/99-local-sieve.conf -e '/^}$/ i\
+  sieve_redirect_envelope_from = orig_recipient'
+
 # PERMISSIONS
 
 # Ensure configuration files are owned by dovecot and not world readable.
