@@ -183,7 +183,7 @@ plugin {
   sieve_after = $STORAGE_ROOT/mail/sieve/global_after
   sieve = $STORAGE_ROOT/mail/sieve/%d/%n.sieve
   sieve_dir = $STORAGE_ROOT/mail/sieve/%d/%n
-  sieve_redirect_envelope_from = orig_recipient'
+  sieve_redirect_envelope_from = recipient
 }
 EOF
 
