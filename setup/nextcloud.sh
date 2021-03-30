@@ -97,12 +97,12 @@ InstallNextcloud() {
 }
 
 # Nextcloud Version to install. Checks are done down below to step through intermediate versions.
-nextcloud_ver=20.0.1
-nextcloud_hash=f2b3faa570c541df73f209e873a1c2852e79eab8
-contacts_ver=3.4.1
-contacts_hash=aee680a75e95f26d9285efd3c1e25cf7f3bfd27e
-calendar_ver=2.1.2
-calendar_hash=930c07863bb7a65652dec34793802c8d80502336
+nextcloud_ver=20.0.8
+nextcloud_hash=372b0b4bb07c7984c04917aff86b280e68fbe761
+contacts_ver=3.5.1
+contacts_hash=d2ffbccd3ed89fa41da20a1dff149504c3b33b93
+calendar_ver=2.2.0
+calendar_hash=673ad72ca28adb8d0f209015ff2dca52ffad99af
 user_external_ver=1.0.0
 user_external_hash=3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
 
