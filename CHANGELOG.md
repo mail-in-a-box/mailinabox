@@ -1,13 +1,35 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+Software updates:
+
+* Upgraded Roundcube to version 1.4.11 addressing a security issue, and its desktop notifications plugin.
+* Upgraded Z-Push (for Exchange/ActiveSync) to version 2.6.2.
+
+Control panel:
+
+* Backblaze B2 is now a supported backup protocol.
+* Fixed an issue in the daily mail reports.
+* Sort the Custom DNS by zone and qname, and add an option to go back to the old sort order (creation order).
+
+Mail:
+
+* Enable sending DMARC failure reports to senders that request them.
+
+Setup:
+
+* Fixed error when upgrading from Nextcloud 13.
+
 v0.52 (January 31, 2021)
 ------------------------
 
 Software updates:
 
 * Upgraded Roundcube to version 1.4.10.
-* Upgraded zpush to 2.6.1.
+* Upgraded Z-Push to 2.6.1.
 
 Mail:
 
