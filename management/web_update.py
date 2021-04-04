@@ -176,7 +176,7 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 				nginx_conf_extra += "\tlocation %s {" % path
 				nginx_conf_extra += "\n\t\tproxy_pass %s;" % url
 				if proxy_redirect_off:
-                                	nginx_conf_extra += "\n\t\tproxy_redirect off;"
+					nginx_conf_extra += "\n\t\tproxy_redirect off;"
 				if pass_http_host_header:
 					nginx_conf_extra += "\n\t\tproxy_set_header Host $http_host;"
 				if frame_options_header_sameorigin:
