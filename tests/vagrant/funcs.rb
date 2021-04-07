@@ -13,3 +13,5 @@ def use_preloaded_box(obj, name, preloaded_dir=".")
   end
 end
 
+# Grab the name of the default interface
+$default_network_interface = `ip route | awk '/^default/ {printf "%s", $5; exit 0}'`
