@@ -24,6 +24,9 @@ Vue.component('chart-table', {
                 'items': this.items,
                 'caption-top': true
             },
+            attrs: {
+                'thead-tr-class': 'h-1'
+            },
             scopedSlots: scopedSlots
         });
         

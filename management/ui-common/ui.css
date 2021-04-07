@@ -28,3 +28,7 @@
 .clickme:hover {
     background-color: var(--hover-bg-color);
 }
+
+.h-1 {
+    height: 1em;
+}
