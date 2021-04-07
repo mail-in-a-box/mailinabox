@@ -6,7 +6,7 @@
 
   <b-form @submit.prevent="getChartData()" class="d-flex">
     <b-input-group class="mb-3" style="width:30em">
-      <b-form-input class="h-auto" :autofocus="data_user_id===null" list="panel-ua-users" v-model="user_id" placeholder="Enter a user id/email address"></b-form-input>
+      <b-form-input class="h-auto" :autofocus="data_user_id===null" list="panel-ua-users" @change="user_id_changed" placeholder="Enter a user id/email address"></b-form-input>
       <b-input-group-append>
         <b-button variant="primary" @click="change_user">Change user</b-button>
       </b-input-group-append>

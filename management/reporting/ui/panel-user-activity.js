@@ -76,6 +76,10 @@ Vue.component('panel-user-activity', function(resolve, reject) {
                     this.$router.replace(route);
                 }
             },
+
+            user_id_changed: function(evt) {
+                this.user_id = evt;
+            },
             
             change_user: function() {
                 this.getChartData(0);
