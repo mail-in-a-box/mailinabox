@@ -11,7 +11,7 @@
     </b-modal>
     
     <div class="d-flex align-items-end">
-      <date-range-picker ref="date_picker" :start_range="get_start_range($route, '-mtd')" recall_id="reports-main" @change="date_change($event)"></date-range-picker>
+      <date-range-picker ref="date_picker" :start_range="get_start_range($route, '-last30days')" recall_id="reports-main" @change="date_change($event)"></date-range-picker>
       <div class="ml-auto mr-1" title="Database stats" role="button" @click="$refs.stats.show()"><b-icon icon="server" scale="1.5" aria-label="Database stats" variant="primary"></b-icon><b-icon icon="info" scale="1.5"></b-icon></div>
     </div>
     
