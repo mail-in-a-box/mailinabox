@@ -44,9 +44,8 @@ TIME_DELTAS = OrderedDict([
     ('today', datetime.datetime.now() - datetime.datetime.now().replace(hour=0, minute=0, second=0))
 ])
 
-# Start date > end date!
-START_DATE = datetime.datetime.now()
-END_DATE = None
+END_DATE = NOW = datetime.datetime.now()
+START_DATE = None
 
 VERBOSE = False
 
@@ -123,7 +122,7 @@ def scan_mail_log(env):
         pass
 
     print("Scanning logs from {:%Y-%m-%d %H:%M:%S} to {:%Y-%m-%d %H:%M:%S}".format(
-        END_DATE, START_DATE)
+        START_DATE, END_DATE)
     )
 
     # Scan the lines in the log files until the date goes out of range
@@ -255,7 +254,7 @@ def scan_mail_log(env):
 
     if collector["postgrey"]:
         msg = "Greylisted Email {:%Y-%m-%d %H:%M:%S} and {:%Y-%m-%d %H:%M:%S}"
-        print_header(msg.format(END_DATE, START_DATE))
+        print_header(msg.format(START_DATE, END_DATE))
 
         print(textwrap.fill(
             "The following mail was greylisted, meaning the emails were temporarily rejected. "
@@ -293,7 +292,7 @@ def scan_mail_log(env):
 
     if collector["rejected"]:
         msg = "Blocked Email {:%Y-%m-%d %H:%M:%S} and {:%Y-%m-%d %H:%M:%S}"
-        print_header(msg.format(END_DATE, START_DATE))
+        print_header(msg.format(START_DATE, END_DATE))
 
         data = OrderedDict(sorted(collector["rejected"].items(), key=email_sort))
 
@@ -346,20 +345,20 @@ def scan_mail_log_line(line, collector):
 
     # Replaced the dateutil parser for a less clever way of parser that is roughly 4 times faster.
     # date = dateutil.parser.parse(date)
-
-    # date = datetime.datetime.strptime(date, '%b %d %H:%M:%S')
-    # date = date.replace(START_DATE.year)
-
-    # strptime fails on Feb 29 if correct year is not provided. See https://bugs.python.org/issue26460
-    date = datetime.datetime.strptime(str(START_DATE.year) + ' ' + date, '%Y %b %d %H:%M:%S')
-    # print("date:", date)
+    
+    # strptime fails on Feb 29 with ValueError: day is out of range for month if correct year is not provided.
+    # See https://bugs.python.org/issue26460
+    date = datetime.datetime.strptime(str(NOW.year) + ' ' + date, '%Y %b %d %H:%M:%S')
+    # if log date in future, step back a year
+    if date > NOW:
+      date = date.replace(year = NOW.year - 1)
+    #print("date:", date)
 
     # Check if the found date is within the time span we are scanning
-    # END_DATE < START_DATE
-    if date > START_DATE:
+    if date > END_DATE:
         # Don't process, and halt
         return False
-    elif date < END_DATE:
+    elif date < START_DATE:
         # Don't process, but continue
         return True
 
@@ -608,7 +607,7 @@ def email_sort(email):
 
 
 def valid_date(string):
-    """ Validate the given date string fetched from the --startdate argument """
+    """ Validate the given date string fetched from the --enddate argument """
     try:
         date = dateutil.parser.parse(string)
     except ValueError:
@@ -822,12 +821,14 @@ if __name__ == "__main__":
 
     parser.add_argument("-t", "--timespan", choices=TIME_DELTAS.keys(), default='today',
                         metavar='<time span>',
-                        help="Time span to scan, going back from the start date. Possible values: "
+                        help="Time span to scan, going back from the end date. Possible values: "
                              "{}. Defaults to 'today'.".format(", ".join(list(TIME_DELTAS.keys()))))
-    parser.add_argument("-d", "--startdate",  action="store", dest="startdate",
-                        type=valid_date, metavar='<start date>',
-                        help="Date and time to start scanning the log file from. If no date is "
-                             "provided, scanning will start from the current date and time.")
+    # keep the --startdate arg for backward compatibility
+    parser.add_argument("-d", "--enddate", "--startdate",  action="store", dest="enddate",
+                        type=valid_date, metavar='<end date>',
+                        help="Date and time to end scanning the log file. If no date is "
+                             "provided, scanning will end at the current date and time. "
+                             "Alias --startdate is for compatibility.")
     parser.add_argument("-u", "--users", action="store", dest="users",
                         metavar='<email1,email2,email...>',
                         help="Comma separated list of (partial) email addresses to filter the "
@@ -839,13 +840,13 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if args.startdate is not None:
-        START_DATE = args.startdate
+    if args.enddate is not None:
+        END_DATE = args.enddate
         if args.timespan == 'today':
             args.timespan = 'day'
-        print("Setting start date to {}".format(START_DATE))
+        print("Setting end date to {}".format(END_DATE))
 
-    END_DATE = START_DATE - TIME_DELTAS[args.timespan]
+    START_DATE = END_DATE - TIME_DELTAS[args.timespan]
 
     VERBOSE = args.verbose
 

@@ -1,12 +1,13 @@
 --
 -- top 10 senders by message count
 --
-select count(mta_accept_id) as count, sasl_username as username
-from mta_connection
-join mta_accept on mta_accept.mta_conn_id = mta_connection.mta_conn_id
-where mta_connection.service = "submission" AND
+SELECT count(mta_accept_id) AS count, sasl_username AS username
+FROM mta_connection
+JOIN mta_accept ON mta_accept.mta_conn_id = mta_connection.mta_conn_id
+WHERE mta_connection.service = "submission" AND
+  queue_time IS NOT NULL AND
   connect_time >= :start_date AND
   connect_time < :end_date
-group by sasl_username
-order by count(mta_accept_id) DESC
-limit 10
+GROUP BY sasl_username
+ORDER BY count(mta_accept_id) DESC
+LIMIT 10
