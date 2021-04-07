@@ -207,6 +207,15 @@ class DateRange {
         return DateRange.wtd().map(d => DateFormatter.ymd(d));
     }
 
+    static lastXdays(n) {
+        var s = new Date();
+        s.setTime(s.getTime() - (n * 24 * 60 * 60 * 1000));
+        return [ s, new Date() ];
+    }
+    static lastXdays_as_ymd(n) {
+        return DateRange.lastXdays(n).map(d => DateFormatter.ymd(d));
+    }
+    
     static rangeFromType(type) {
         if (type == 'wtd')
             return DateRange.wtd();
@@ -214,6 +223,10 @@ class DateRange {
             return DateRange.mtd();
         else if (type == 'ytd')
             return DateRange.ytd();
+        else if (type == 'last30days')
+            return DateRange.lastXdays(30);
+        else if (type == 'last7days')
+            return DateRange.lastXdays(7)
         return null;
     }
 };

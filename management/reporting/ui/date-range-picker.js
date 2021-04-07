@@ -12,7 +12,7 @@ Vue.component('date-range-picker', {
     data: function() {
         var range_type = null;
         var range = null;
-        var default_range_type = 'mtd';
+        var default_range_type = 'last30days';
         const recall_id_prefix = 'date-range-picker/';
 
         var v = null;
@@ -59,6 +59,8 @@ Vue.component('date-range-picker', {
             range: range,
             range_type: range_type,
             options: [
+                { value:'last7days', text:'Last 7 days' },
+                { value:'last30days', text:'Last 30 days' },
                 { value:'wtd', text:'Week-to-date' },
                 { value:'mtd', text:'Month-to-date' },
                 { value:'ytd', text:'Year-to-date' },
@@ -151,7 +153,11 @@ Vue.component('date-range-picker', {
         
         range_type_change: function(evt) {
             // ui select callback
-            if (this.range_type == 'wtd')
+            if (this.range_type == 'last7days')
+                this.range = DateRange.lastXdays_as_ymd(7);
+            else if (this.range_type == 'last30days')
+                this.range = DateRange.lastXdays_as_ymd(30);
+            else if (this.range_type == 'wtd')
                 this.range = DateRange.wtd_as_ymd();
             else if (this.range_type == 'mtd')
                 this.range = DateRange.mtd_as_ymd();
