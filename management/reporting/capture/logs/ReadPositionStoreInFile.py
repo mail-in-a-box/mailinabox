@@ -29,7 +29,6 @@ class ReadPositionStoreInFile(ReadPositionStore):
         self.t.start()
 
     def __del__(self):
-        log.debug('ReadPositionStoreInFile __del__')
         self.interrupt.set()
 
     def stop(self):

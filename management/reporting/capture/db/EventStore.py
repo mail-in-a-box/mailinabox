@@ -74,7 +74,6 @@ class EventStore(Prunable):
 		self.t.join()
 
 	def __del__(self):
-		log.debug('EventStore __del__')
 		self.interrupt.set()
 		self.have_event.set()
 
