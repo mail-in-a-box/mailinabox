@@ -148,11 +148,15 @@ Vue.component('chart-pie', {
                     .data(arcs)
                     .join("text")
                     .attr("transform", d => `translate(${arcLabel.centroid(d)})`)
-                    .call(text => text.append("tspan")
+                    .call(text => text
+                          .filter(d => (d.endAngle - d.startAngle) > 0.25)
+                          .append("tspan")
                           .attr("y", "-0.4em")
                           .attr("font-weight", "bold")
                           .text(d => d.data.name))
-                    .call(text => text.filter(d => (d.endAngle - d.startAngle) > 0.25).append("tspan")
+                    .call(text => text
+                          .filter(d => (d.endAngle - d.startAngle) > 0.25)
+                          .append("tspan")
                           .attr("x", 0)
                           .attr("y", "0.7em")
                           .attr("fill-opacity", 0.7)

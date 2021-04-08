@@ -78,25 +78,39 @@ Vue.component('chart-multi-line-timeseries', {
                 .call(this.yAxis.bind(this))
                 .attr("font-size", ChartPrefs.axis_font_size);
 
-            const line = d3.line()
-                  .defined(d => !isNaN(d))
-                  .x((d, i) => this.xscale(this.tsdata.dates[i]))
-                  .y(d => this.yscale(d));
-
-            const path = svg.append("g")
-                  .attr("fill", "none")
-                  .attr("stroke-width", 1.5)
-                  .attr("stroke-linejoin", "round")
-                  .attr("stroke-linecap", "round")
-                  .selectAll("path")
-                  .data(this.tsdata.series)
-                  .join("path")
-                  .style("mix-blend-mode", "multiply")
-                  .style("stroke", (d, i) => this.colors[i])
-                  .attr("d", d => line(d.values))
-            ;
-            
-            svg.call(this.hover.bind(this), path);
+            if (this.tsdata.dates.length == 1) {
+                // special case
+                const g = svg.append("g")
+                      .selectAll("circle")
+                      .data(this.tsdata.series)
+                      .join("circle")
+                      .attr("fill", (d, i) => this.colors[i])
+                      .attr("cx", this.xscale(this.tsdata.dates[0]))
+                      .attr("cy", d => this.yscale(d.values[0]))
+                      .attr("r", 2.5);
+                this.hover(svg, g);
+            }
+            else {
+                const line = d3.line()
+                      .defined(d => !isNaN(d))
+                      .x((d, i) => this.xscale(this.tsdata.dates[i]))
+                      .y(d => this.yscale(d));
+                
+                const path = svg.append("g")
+                      .attr("fill", "none")
+                      .attr("stroke-width", 1.5)
+                      .attr("stroke-linejoin", "round")
+                      .attr("stroke-linecap", "round")
+                      .selectAll("path")
+                      .data(this.tsdata.series)
+                      .join("path")
+                      .style("mix-blend-mode", "multiply")
+                      .style("stroke", (d, i) => this.colors[i])
+                      .attr("d", d => line(d.values))
+                ;
+                
+                svg.call(this.hover.bind(this), path);
+            }
         },
 
         xAxis: function(g) {
@@ -160,8 +174,10 @@ Vue.component('chart-multi-line-timeseries', {
                 const xvalue = this.xscale.invert(pointer[0]); // date
                 const yvalue = this.yscale.invert(pointer[1]); // number
                 //const i = d3.bisectCenter(this.tsdata.dates, xvalue); // index
-                const i = d3.bisect(this.tsdata.dates, xvalue); // index
-                if (i >= this.tsdata.dates.length) return;
+                var i = d3.bisect(this.tsdata.dates, xvalue); // index
+                if (i > this.tsdata.dates.length) return;
+                i = Math.min(this.tsdata.dates.length-1, i);
+                         
                 // closest series
                 var closest = null;
                 for (var sidx=0; sidx<this.tsdata.series.length; sidx++) {
@@ -192,7 +208,7 @@ Vue.component('chart-multi-line-timeseries', {
 
             function entered() {
                 path.style("mix-blend-mode", null).attr("stroke", "#ddd");
-                dot.attr("display", null);
+                //dot.attr("display", null);
             }
             
             function left() {
