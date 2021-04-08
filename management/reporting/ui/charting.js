@@ -224,9 +224,18 @@ class DateRange {
         else if (type == 'ytd')
             return DateRange.ytd();
         else if (type == 'last30days')
-            return DateRange.lastXdays(30);
+            return DateRange.lastXdays(29);
         else if (type == 'last7days')
-            return DateRange.lastXdays(7)
+            return DateRange.lastXdays(6)
+        else if (type == 'today') {
+            var d = new Date();
+            return [ d, d ];
+        }
+        else if (type == 'yesterday') {
+            var d = new Date();
+            d.setTime(d.getTime() - (1 * 24 * 60 * 60 * 1000));
+            return [ d, d ];
+        }
         return null;
     }
 };
@@ -911,7 +920,8 @@ class TimeseriesData {
         max_width = (max_width === undefined) ? 75 : max_width;
         var first_date = this.dates[0];
         var last_date = this.dates[this.dates.length-1];
-        var bins = (last_date.getTime() - first_date.getTime()) / (1000 * 60 * this.binsize);
+        var bins = (last_date.getTime() - first_date.getTime()) / (1000 * 60 * this.binsize) + 1;
+        if (bins == 1) return max_width;
         return Math.min(max_width, Math.max(1, (xscale(last_date) - xscale(first_date))/bins - barspacing));
     }
 
