@@ -11,7 +11,7 @@
         <b-button variant="primary" @click="change_user">Change user</b-button>
       </b-input-group-append>
     </b-input-group>
-    <b-alert variant="warning" class="ml-2" :show="sent_mail && sent_mail.items.length>=get_row_limit() || received_mail && received_mail.items.length>=get_row_limit()"><sup>*</sup> Tables limited to {{ get_row_limit() }} rows <router-link to="/settings"><b-icon icon="gear-fill"></b-icon></router-link></b-alert>
+    <b-alert variant="warning" class="ml-2" :show="sent_mail && sent_mail.items.length>=get_row_limit() || received_mail && received_mail.items.length>=get_row_limit() || imap_details && imap_details.items.length>=get_row_limit()"><sup>*</sup> Tables limited to {{ get_row_limit() }} rows <router-link to="/settings"><b-icon icon="gear-fill"></b-icon></router-link></b-alert>
     <b-form-checkbox class="ml-auto" v-model="show_only_flagged" @change="show_only_flagged_change()">Flagged only</b-form-checkbox>
   </b-form>
 
@@ -42,7 +42,7 @@
       </b-table>
     </b-tab>
     
-    <b-tab :title="`Received mail (${received_mail.items.length})`">
+    <b-tab>
       <template #title>
         Received mail<sup v-if="received_mail.items.length >= get_row_limit()">*</sup> ({{received_mail.items.length}})
       </template>
@@ -72,5 +72,31 @@
         </template>
       </b-table>
     </b-tab>
+
+
+    <b-tab>
+      <template #title>
+        IMAP Connections<sup v-if="imap_details.items.length >= get_row_limit()">*</sup> ({{imap_details.items.length}})
+      </template>
+      <b-table
+        class="sticky-table-header-0 bg-light"
+        small
+        :filter="show_only_flagged_filter"
+        :filter-function="table_filter_cb"
+        tbody-tr-class="cursor-pointer"
+        details-td-class="cursor-default"
+        @row-clicked="row_clicked"
+        :items="imap_details.items"
+        :fields="imap_details.fields">
+        <template #row-details="row">
+          <b-card>
+            <div><strong>Connection disposition</strong>: {{ disposition_formatter(row.item.disposition) }}</div>
+            <div><strong>Connection security</strong> {{ row.item.connection_security }}</div>
+            <div><strong>Disconnect reason</strong> {{ row.item.disconnect_reason }}</div>
+          </b-card>
+        </template>
+      </b-table>
+    </b-tab>
+
   </b-tabs>
 </div>

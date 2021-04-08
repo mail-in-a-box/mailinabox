@@ -28,6 +28,7 @@ Vue.component('panel-user-activity', function(resolve, reject) {
                 data_date_range: null, /* date range for active table data */
                 sent_mail: null,
                 received_mail: null,
+                imap_details: null,
                 all_users: [],
                 disposition_formatter: ConnectionDisposition.formatter,
             };
@@ -147,6 +148,15 @@ Vue.component('panel-user-activity', function(resolve, reject) {
                 f.label = 'Envelope From (user)';
             },
 
+            combine_imap_details_fields: function() {
+                // remove these fields
+                this.imap_details.combine_fields([
+                    'disconnect_reason',
+                    'connection_security',
+                ]);
+            },
+
+
             get_row_limit: function() {
                 return UserSettings.get().row_limit;
             },
@@ -239,7 +249,18 @@ Vue.component('panel-user-activity', function(resolve, reject) {
                     this.received_mail
                         .flag_fields()
                         .get_field('connect_time')
-                        .add_tdClass('text-nowrap');                    
+                        .add_tdClass('text-nowrap');
+
+                    /* setup imap_details */
+                    this.imap_details = new MailBvTable(
+                        response.data.imap_details, {
+                            _showDetails: true
+                        });
+                    this.combine_imap_details_fields();
+                    this.imap_details
+                        .flag_fields()
+                        .get_field('connect_time')
+                        .add_tdClass('text-nowrap');
 
                 }).catch(error => {
                     this.$root.handleError(error);

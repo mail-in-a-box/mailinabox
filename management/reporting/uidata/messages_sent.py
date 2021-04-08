@@ -38,10 +38,12 @@ def messages_sent(conn, args):
     try:
         for row in c.execute(select_1.format(timefmt=ts.timefmt), {
                 'start_date':ts.start,
-                'end_date':ts.end
+                'end_date':ts.end,
+                'start_unixepoch':ts.start_unixepoch,
+                'binsize':ts.binsize
         }):
-            ts.dates.append(row['bin'])
-            s_sent['values'].append(row['sent_count'])
+            idx = ts.insert_date(row['bin'])
+            s_sent['values'][idx] = row['sent_count']
 
         date_idx = -1
 
@@ -49,25 +51,16 @@ def messages_sent(conn, args):
         # querie's WHERE and JOINs are the same
         for row in c.execute(select_2.format(timefmt=ts.timefmt), {
                 'start_date':ts.start,
-                'end_date':ts.end
+                'end_date':ts.end,
+                'start_unixepoch':ts.start_unixepoch,
+                'binsize':ts.binsize
         }):
-            if date_idx>=0 and ts.dates[date_idx] == row['bin']:
-                if row['delivery_service']=='smtp':
-                    s_remote['values'][-1] = row['delivery_count']
-                elif row['delivery_service']=='lmtp':
-                    s_local['values'][-1] = row['delivery_count']
-                    
-            else:
-                date_idx += 1
-                if date_idx >= len(ts.dates):
-                    break
-                if row['delivery_service']=='smtp':
-                    s_remote['values'].append(row['delivery_count'])
-                    s_local['values'].append(0)
-                elif row['delivery_service']=='lmtp':
-                    s_remote['values'].append(0)
-                    s_local['values'].append(row['delivery_count'])
-
+            date_idx = ts.insert_date(row['bin'])
+            if row['delivery_service']=='smtp':
+                s_remote['values'][date_idx] = row['delivery_count']
+            elif row['delivery_service']=='lmtp':
+                s_local['values'][date_idx] = row['delivery_count']
+                
 
         top_senders1 = {
             'start': ts.start,

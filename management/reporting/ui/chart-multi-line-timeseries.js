@@ -57,7 +57,7 @@ Vue.component('chart-multi-line-timeseries', {
                     .text("no data");
             }
 
-            this.xscale = d3.scaleUtc()
+            this.xscale = d3.scaleTime()
                 .domain(d3.extent(this.tsdata.dates))
                 .nice()
                 .range([this.margin.left, this.width - this.margin.right])

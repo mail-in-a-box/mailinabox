@@ -50,7 +50,7 @@ Vue.component('panel-messages-sent', function(resolve, reject) {
             },
             
             height_recip: function() {
-                return this.height / 2;
+                return (this.height / 3) *2;
             },
             
             radius_recip_pie: function() {

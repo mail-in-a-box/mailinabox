@@ -748,6 +748,15 @@ class ChartVue {
         return svg;
     }
 
+
+    static get_yAxisLegendBounds(data) {
+        const h = ChartPrefs.axis_font_size;
+        return {
+            width: h + 6,
+            height: h * data.series.length
+        };
+    }
+    
     static add_yAxisLegend(g, data, colors) {
         //var gtick = g.select(".tick:last-of-type").append("g");
         const h = ChartPrefs.axis_font_size;
@@ -853,9 +862,8 @@ class TimeseriesData {
     }
 
     static binsizeOfRange(range) {
-        // target 100-120 datapoints
-        const target = 100;
-        const tolerance = 0.2; // 20%
+        // target roughly 75 datapoints
+        const target = 75;
         
         if (typeof range[0] == 'string') {
             var parser = d3.utcParse('%Y-%m-%d %H:%M:%S');
@@ -865,27 +873,46 @@ class TimeseriesData {
         const span_min = Math.ceil(
             (range[1].getTime() - range[0].getTime()) / (1000*60*target)
         );
-        const bin_days = Math.floor(span_min / (24*60));
-        const bin_hours = Math.floor((span_min - bin_days*24*60) / 60);
+
+        var bin_days = Math.floor(span_min / (24*60));
+        var bin_hours = Math.floor((span_min - bin_days*24*60) / 60);
         if (bin_days >= 1) {
-            return bin_days * 24 * 60 +
-                (bin_hours > (24 * tolerance) ? bin_hours*60: 0);
+            if (bin_hours > 18) {
+                bin_days += 1;
+                bin_hours = 0;
+            }
+            else if (bin_hours > 6) {
+                bin_hours = 12;
+            }
+            else {
+                bin_hours = 0;
+            }
+            return bin_days * 24 * 60 + bin_hours*60;
         }
         
-        const bin_mins = span_min - bin_days*24*60 - bin_hours*60;
-        if (bin_hours >= 1) {
-            return bin_hours * 60 +
-                (bin_mins > (60 * tolerance) ? bin_mins: 0 );
+        var bin_mins = span_min - bin_days*24*60 - bin_hours*60;
+        if (bin_mins > 45) {
+            bin_hours += 1
+            bin_mins = 0;
         }
-        return bin_mins;
+        else if (bin_mins > 15) {
+            bin_mins = 30;
+        }
+        else {
+            bin_mins = 0;
+        }        
+        return bin_hours * 60 + bin_mins;
     }
 
-    barwidth(xscale, barspacing) {
+    barwidth(xscale, barspacing, max_width) {
         /* get the width of a bar in a bar chart */
-        var start = this.range[0];
-        var end = this.range[1];
-        var bins = (end.getTime() - start.getTime()) / (1000 * this.binsizeTimespan());
-        return Math.max(1, (xscale.range()[1] - xscale.range()[0])/bins - (barspacing || 0));
+        if (this.dates.length == 0) return 0;  // no data
+        barspacing = (barspacing === undefined) ? 2 : barspacing;
+        max_width = (max_width === undefined) ? 75 : max_width;
+        var first_date = this.dates[0];
+        var last_date = this.dates[this.dates.length-1];
+        var bins = (last_date.getTime() - first_date.getTime()) / (1000 * 60 * this.binsize);
+        return Math.min(max_width, Math.max(1, (xscale(last_date) - xscale(first_date))/bins - barspacing));
     }
 
     formatDateTimeLong(d) {

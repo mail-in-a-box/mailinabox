@@ -7,6 +7,9 @@ with open(__file__.replace('.py','.1.sql')) as fp:
 with open(__file__.replace('.py','.2.sql')) as fp:
     select_2 = fp.read()
 
+with open(__file__.replace('.py','.3.sql')) as fp:
+    select_3 = fp.read()
+
 
 def user_activity(conn, args):
     '''
@@ -162,8 +165,51 @@ def user_activity(conn, args):
         received_mail['items'].append(v)
 
 
+    #
+    # imap connections by user
+    #
+
+    imap_details = {
+        'start': ts.start,
+        'end': ts.end,
+        'y': 'IMAP Details',
+        'fields': [
+            'connect_time',
+            'remote_host',
+            'sasl_method',
+            'disconnect_reason',
+            'connection_security',
+            'disposition',
+            'in_bytes',
+            'out_bytes'
+        ],
+        'field_types': [
+            { 'type':'datetime', 'format': '%Y-%m-%d %H:%M:%S' },# connect_time
+            'text/plain',    # remote_host
+            'text/plain',    # sasl_method
+            'text/plain',    # disconnect_reason
+            'text/plain',    # connection_security
+            'text/plain',    # disposition
+            'number/size',   # in_bytes,
+            'number/size',   # out_bytes,
+        ],
+        'items': []
+    }
+
+    for row in c.execute(select_3 + limit, {
+            'user_id': user_id,
+            'start_date': ts.start,
+            'end_date': ts.end
+    }):
+        v = []
+        for key in imap_details['fields']:
+            v.append(row[key])
+        imap_details['items'].append(v)
+
+
         
     return {
         'sent_mail': sent_mail,
-        'received_mail': received_mail
+        'received_mail': received_mail,
+        'imap_details': imap_details
     }

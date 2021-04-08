@@ -1,6 +1,9 @@
+import logging
 from .Timeseries import Timeseries
 from .exceptions import InvalidArgsError
 from .top import select_top
+
+log = logging.getLogger(__name__)
 
 with open(__file__.replace('.py','.1.sql')) as fp:
     select_1 = fp.read()
@@ -20,6 +23,9 @@ with open(__file__.replace('.py','.5.sql')) as fp:
 with open(__file__.replace('.py','.6.sql')) as fp:
     select_6 = fp.read()
 
+with open(__file__.replace('.py','.7.sql')) as fp:
+    select_7 = fp.read()
+
 
 def flagged_connections(conn, args):
     try:
@@ -35,9 +41,8 @@ def flagged_connections(conn, args):
     c = conn.cursor()
     
     # pie chart for "connections by disposition"
-    select = 'SELECT disposition, count(*) AS `count` FROM mta_connection WHERE connect_time>=:start_date AND connect_time<:end_date GROUP BY disposition'
     connections_by_disposition = []
-    for row in c.execute(select, {'start_date':ts.start, 'end_date':ts.end}):
+    for row in c.execute(select_7, {'start_date':ts.start, 'end_date':ts.end}):
         connections_by_disposition.append({
             'name': row[0],
             'value': row[1]
@@ -45,21 +50,27 @@ def flagged_connections(conn, args):
 
     # timeseries = failed logins count
     s_failed_login = ts.add_series('failed_login_attempt', 'failed login attempts')
-    for row in c.execute(select_1.format(timefmt=ts.timefmt), {
+    sql = select_1.format(timefmt=ts.timefmt)
+    for row in c.execute(sql, {
             'start_date': ts.start,
-            'end_date': ts.end
+            'end_date': ts.end,
+            'start_unixepoch': ts.start_unixepoch,
+            'binsize': ts.binsize
     }):
-        ts.append_date(row['bin'])
-        s_failed_login['values'].append(row['count'])
+        idx = ts.insert_date(row['bin'])
+        s_failed_login['values'][idx] = row['count']
 
     # timeseries = suspected scanners count
     s_scanner = ts.add_series('suspected_scanner', 'connections by suspected scanners')
-    for row in c.execute(select_2.format(timefmt=ts.timefmt), {
+    sql = select_2.format(timefmt=ts.timefmt)
+    for row in c.execute(sql, {
             'start_date': ts.start,
-            'end_date': ts.end
+            'end_date': ts.end,
+            'start_unixepoch': ts.start_unixepoch,
+            'binsize': ts.binsize
     }):
-        ts.insert_date(row['bin'])
-        s_scanner['values'].append(row['count'])
+        idx = ts.insert_date(row['bin'])
+        s_scanner['values'][idx] = row['count']
 
 
     # pie chart for "disposition=='reject' grouped by failure_category"
