@@ -61,6 +61,7 @@
         </template>
         <template #row-details="row">
           <b-card>
+            <div><strong>Remote host</strong>: {{ row.item.remote_host }}[{{ row.item.remote_ip }}]</div>
             <div><strong>Connection disposition</strong>: {{ disposition_formatter(row.item.disposition) }}</div>
             <div v-if="row.item.orig_to"><strong>Sent to alias</strong>: {{ row.item.orig_to }}</div>
             <div v-if="row.item.dkim_reason"><strong>Dkim reason</strong>: {{row.item.dkim_reason}}</div>
@@ -68,6 +69,7 @@
             <div v-if="row.item.postgrey_reason"><strong>Postgrey reason</strong>: {{row.item.postgrey_reason}}</div>
             <div v-if="row.item.postgrey_delay"><strong>Postgrey delay</strong>: {{received_mail.x_fields.postgrey_delay.formatter(row.item.postgrey_delay)}}</div>
             <div v-if="row.item.spam_result"><strong>Spam score</strong>: {{received_mail.x_fields.spam_score.formatter(row.item.spam_score)}}</div>
+            <div v-if="row.item.failure_info"><strong>Failure info</strong>: {{row.item.failure_info}}</div>
           </b-card>
         </template>
       </b-table>

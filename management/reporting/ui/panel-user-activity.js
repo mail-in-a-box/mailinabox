@@ -137,8 +137,11 @@ Vue.component('panel-user-activity', function(resolve, reject) {
             combine_received_mail_fields: function() {
                 // remove these fields
                 this.received_mail.combine_fields([
+                    'remote_host',
+                    'remote_ip',
                     'dkim_reason',
                     'dmarc_reason',
+                    'failure_info',
                     'postgrey_reason',
                     'postgrey_delay',
                     'spam_score',

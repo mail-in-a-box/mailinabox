@@ -4,8 +4,10 @@
 SELECT
 -- mta_connection
 connect_time, mta_connection.service AS service, sasl_username, disposition,
+remote_host, remote_ip,
 -- mta_accept
 envelope_from, spf_result, dkim_result, dkim_reason, dmarc_result, dmarc_reason,
+failure_info,
 -- mta_delivery
 postgrey_result, postgrey_reason, postgrey_delay, spam_score, spam_result, message_size, orig_to
 FROM mta_accept

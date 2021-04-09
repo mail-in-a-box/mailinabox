@@ -113,6 +113,8 @@ def user_activity(conn, args):
             'connect_time',
             'service',
             'sasl_username',
+            'remote_host',
+            'remote_ip',
             
             # mta_accept
             'envelope_from',
@@ -122,6 +124,7 @@ def user_activity(conn, args):
             'dkim_reason',
             'dmarc_result',
             'dmarc_reason',
+            'failure_info',
             
             # mta_delivery
             'orig_to',
@@ -136,13 +139,16 @@ def user_activity(conn, args):
             { 'type':'datetime', 'format': '%Y-%m-%d %H:%M:%S' },# connect_time
             'text/plain',    # mta_connection.service
             'text/email',    # sasl_username
+            'text/plain',    # remote_host
+            'text/plain',    # remote_ip
             'text/email',    # envelope_from
             'text/plain',    # disposition
             'text/plain',    # spf_result
             'text/plain',    # dkim_result
             'text/plain',    # dkim_result
             'text/plain',    # dmarc_result
-            'text/plain',    # dmarc_result
+            'text/plain',    # dmarc_reason
+            'text/plain',    # failure_info
             'text/email',    # orig_to
             'text/plain',    # postgrey_result
             'text/plain',    # postgrey_reason
