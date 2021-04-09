@@ -27,6 +27,6 @@ fi
 
 sed "s|%BIN%|$(pwd)|g" conf/miabldap-capture.service > /etc/systemd/system/miabldap-capture.service
 
-systemctl daemon-reload
-systemctl enable miabldap-capture
-systemctl start miabldap-capture
+hide_output systemctl daemon-reload
+hide_output systemctl enable miabldap-capture
+restart_service miabldap-capture
