@@ -94,6 +94,7 @@
                 <li><a href="#custom_dns" onclick="return show_panel(this);">Custom DNS</a></li>
                 <li><a href="#external_dns" onclick="return show_panel(this);">External DNS</a></li>
                 <li><a href="/admin/munin" target="_blank">Munin Monitoring</a></li>
+                <li><a href="#postgrey_whitelist" onclick="return show_panel(this);">Postgrey whitelist</a></li>
               </ul>
             </li>
             <li class="dropdown">
@@ -133,6 +134,10 @@
 
       <div id="panel_custom_dns" class="admin_panel">
       {% include "custom-dns.html" %}
+      </div>
+
+      <div id="panel_postgrey_whitelist" class="admin_panel">
+      {% include "postgrey-whitelist.html" %}
       </div>
 
       <div id="panel_mfa" class="admin_panel">

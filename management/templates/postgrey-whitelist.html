@@ -1,0 +1,53 @@
+<style>
+</style>
+
+<h2>Postgrey Whitelist</h2>
+
+<p>The text box below contains the contents of the system's Postgrey local client whitelist. It's comprised of a list of <em>hosts</em>, one per line, whose incoming email to this server should never be greylisted.</p>
+
+<p>Entries may be a fully qualified domain name, an IP address, or a regular expression. Regular expressions begin and end with the character "/".</p>
+
+<p>This file augments the whilelist provided by Postgrey.</p>
+
+<textarea style="width:100%; height:12em" id="postgrey_whitelist"></textarea>
+
+<button class="btn-success" onclick="save_postgrey_whitelist()">Save</button>
+
+<script>
+
+function show_postgrey_whitelist() {
+    get_postgrey_whitelist();
+}
+
+function get_postgrey_whitelist() {
+    api(
+        "/system/postgrey-whitelist",
+        "GET",
+        { },
+        function(whitelist) {
+            var e = document.getElementById('postgrey_whitelist');
+            e.value = whitelist
+        }
+    );
+}
+
+function save_postgrey_whitelist() {
+    var e = document.getElementById('postgrey_whitelist');
+    api(
+        "/system/postgrey-whitelist",
+        "POST",
+        {
+            contents: e.value
+        },
+        function(data) {
+            if (data == "")
+                data = "Nothing changed.";
+            else
+                data = $("<pre/>").text(data);
+            show_modal_error("Postgrey Whitelist Update", data, function() {
+                get_postgrey_whitelist();
+            });
+        });
+}
+
+</script>

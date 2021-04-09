@@ -645,6 +645,33 @@ def privacy_status_set():
 	utils.write_settings(config, env)
 	return "OK"
 
+@app.route('/system/postgrey-whitelist', methods=["GET","POST"])
+@authorized_personnel_only
+def postgrey_whitelist_handler():
+	conf_file="/etc/postgrey/whitelist_clients.local"
+	if request.method == "GET":
+		contents = ""
+		try:
+			with open(conf_file) as fp:
+				contents = fp.read()
+		except FileNotFoundError:
+			pass
+		return Response(contents, status=200, mimetype='text/plain')
+
+	elif request.method == "POST":
+		try:
+			contents = request.form["contents"]
+			with open(conf_file, "w") as fp:
+				fp.write(contents)
+			utils.shell("check_call", ["/bin/systemctl", "reload", "postgrey"])
+		except KeyError:
+			return ("Missing required parameter", 400)
+		except subprocess.CalledProcessError as e:
+			app.logger.exception(e)
+			return ("Postgrey reload failed", 500)
+
+		return "OK. Saved and Postgrey reloaded."
+
 # MUNIN
 
 @app.route('/munin/')
