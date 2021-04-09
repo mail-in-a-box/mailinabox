@@ -1,0 +1,12 @@
+{
+    "capture": true,
+    "prune_policy": {
+        "frequency_min": 2400,
+        "older_than_days": 30
+    },
+    "drop_disposition": {
+        "failed_login_attempt": false,
+        "suspected_scanner": false,
+        "reject": false
+    }
+}

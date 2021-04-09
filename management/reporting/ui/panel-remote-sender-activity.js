@@ -94,6 +94,14 @@ Vue.component('panel-remote-sender-activity', function(resolve, reject) {
         },
         
         methods: {
+            email_changed: function(evt) {
+                this.email = evt;
+            },
+
+            server_changed: function(evt) {
+                this.server = evt;
+            },
+            
             update_recent_list: function() {
                 this.recent_senders = UserSettings.get()
                     .get_recent_list(this.set_prefix + this.sender_type);

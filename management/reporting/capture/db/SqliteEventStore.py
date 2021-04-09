@@ -71,6 +71,23 @@ mta_delivery_fields = [
 	'failure_category',
 ]
 
+imap_conn_fields = [
+	'service',
+	'service_tid',
+	'connect_time',
+	'disconnect_time',
+    'disconnect_reason',
+	'remote_host',
+	'remote_ip',
+	'sasl_method',
+	'sasl_username',
+	'remote_auth_success',
+	'remote_auth_attempts',
+    'connection_security',
+    'in_bytes',
+    'out_bytes',
+	'disposition'
+]
 
 db_info_create_table_stmt = "CREATE TABLE IF NOT EXISTS db_info(id INTEGER PRIMARY KEY AUTOINCREMENT, key TEXT NOT NULL, value TEXT NOT NULL)"
 
@@ -162,7 +179,33 @@ schema_updates = [
 	[
 		"ALTER TABLE mta_delivery ADD COLUMN orig_to TEXT COLLATE NOCASE",
 		"UPDATE db_info SET value='1' WHERE key='schema_version'"
-	]
+	],
+
+	# update 2
+	[
+		"CREATE TABLE imap_connection(\
+ 			imap_conn_id INTEGER PRIMARY KEY AUTOINCREMENT,\
+			service TEXT NOT NULL,  /* 'imap', 'imap-login', 'pop3-login' */\
+			service_tid TEXT,\
+			connect_time TEXT NOT NULL,\
+			disconnect_time TEXT,\
+            disconnect_reason TEXT,\
+			remote_host TEXT COLLATE NOCASE,\
+			remote_ip TEXT COLLATE NOCASE,\
+			sasl_method TEXT,             /* eg. 'PLAIN' */\
+			sasl_username TEXT COLLATE NOCASE,\
+			remote_auth_success INTEGER,  /* count of successes */\
+			remote_auth_attempts INTEGER, /* count of attempts */\
+            connection_security TEXT, /* eg 'TLS' */\
+            in_bytes INTEGER,\
+            out_bytes INTEGER,\
+			disposition TEXT     /* 'ok','failed_login_attempt',etc */\
+            )",
+
+		"CREATE INDEX idx_imap_connection_connect_time ON imap_connection(connect_time, sasl_username COLLATE NOCASE)",
+
+		"UPDATE db_info SET value='2' WHERE key='schema_version'"
+	],
 
 ]
 
@@ -209,9 +252,12 @@ class SqliteEventStore(EventStore):
 
 
 	def write_rec(self, conn, type, rec):
-		if type=='inbound_mail':
-			#log.debug('wrote inbound_mail record')
-			self.write_inbound_mail(conn, rec)
+		if type=='mta_mail':
+			self.write_mta_mail(conn, rec)
+			
+		elif type=='imap_mail':
+			self.write_imap_mail(conn, rec)
+			
 		elif type=='state':
 			''' rec: {
 			        owner_id: int,
@@ -246,7 +292,7 @@ class SqliteEventStore(EventStore):
 		return values
 
 			
-	def write_inbound_mail(self, conn, rec):
+	def write_mta_mail(self, conn, rec):
 		c = None
 		try:
 			c = conn.cursor()
@@ -282,6 +328,28 @@ class SqliteEventStore(EventStore):
 			
 
 			
+	def write_imap_mail(self, conn, rec):
+		c = None
+		try:
+			c = conn.cursor()
+			
+			# imap_connection
+			insert = self._insert('imap_connection', imap_conn_fields)
+			values = self._values(imap_conn_fields, rec)
+			#log.debug('INSERT: %s VALUES: %s REC=%s', insert, values, rec)
+			c.execute(insert, values)
+			conn_id = c.lastrowid
+
+			conn.commit()
+
+		except sqlite3.Error as e:
+			conn.rollback()
+			raise e
+			
+		finally:
+			if c: c.close(); c=None
+
+	
 	def write_state(self, conn, rec):
 		c = None
 		try:
@@ -354,7 +422,9 @@ class SqliteEventStore(EventStore):
 				  JOIN mta_connection ON mta_connection.mta_conn_id = mta_accept.mta_conn_id\
 				  WHERE connect_time < ?)',
 
-				'DELETE FROM mta_connection WHERE connect_time < ?'
+				'DELETE FROM mta_connection WHERE connect_time < ?',
+
+				'DELETE FROM imap_connection WHERE connect_time < ?',
 			]
 
 			counts = []

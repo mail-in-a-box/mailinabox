@@ -14,12 +14,13 @@ of ReadLineHandler.
 '''
 
 class TailFile(threading.Thread):
-    def __init__(self, log_file, store=None):
+    def __init__(self, log_file, store=None, stop_at_eof=False):
         ''' log_file - the log file to monitor
             store - a ReadPositionStore instance
         '''
         self.log_file = log_file
         self.store = store
+        self.stop_at_eof = stop_at_eof
 
         self.fp = None
         self.inode = None
@@ -31,7 +32,6 @@ class TailFile(threading.Thread):
         super(TailFile, self).__init__(name=name, daemon=True)
         
     def stop(self, do_join=True):
-        log.debug('TailFile stopping')
         self.interrupt.set()
         # close must be called to unblock the thread fp.readline() call
         self._close()
@@ -72,15 +72,11 @@ class TailFile(threading.Thread):
 
     def _issue_callbacks(self, line):
         for cb in self.callbacks:
-            if isinstance(cb, ReadLineHandler):
-                cb.handle(line)
-            else:
-                cb(line)
+            cb.handle(line)
 
     def _notify_end_of_callbacks(self):
         for cb in self.callbacks:
-            if isinstance(cb, ReadLineHandler):
-                cb.end_of_callbacks(self)
+            cb.end_of_callbacks(self)
 
     def _restore_read_position(self):
         if self.fp is None:
@@ -122,6 +118,9 @@ class TailFile(threading.Thread):
                 line = self.fp.readline() # blocking
                 if line=='':
                     log.debug('got EOF')
+                    if self.stop_at_eof:
+                        self.interrupt.set()
+                    
                     # EOF - check if file was rotated
                     if self._is_rotated():
                         log.debug('rotated')
@@ -144,6 +143,7 @@ class TailFile(threading.Thread):
                     self._issue_callbacks(line)
 
             except Exception as e:
+                log.error('exception processing line: %s', line)
                 log.exception(e)
                 if self.interrupt.wait(1) is not True:
                     if self._is_rotated():

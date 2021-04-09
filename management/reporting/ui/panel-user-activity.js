@@ -20,7 +20,8 @@ Vue.component('panel-user-activity', function(resolve, reject) {
                 Number(this.$route.query.tab) :
                 0;
             return {
-                user_id: this.$route.query.user || '', /* v-model */
+                //user_id: this.$route.query.user || '', /* v-model */
+                user_id: '', /* v-model */
                 tab_index: start_tab, /* v-model */
                 show_only_flagged: false,
                 show_only_flagged_filter: null,
@@ -28,6 +29,7 @@ Vue.component('panel-user-activity', function(resolve, reject) {
                 data_date_range: null, /* date range for active table data */
                 sent_mail: null,
                 received_mail: null,
+                imap_details: null,
                 all_users: [],
                 disposition_formatter: ConnectionDisposition.formatter,
             };
@@ -38,7 +40,7 @@ Vue.component('panel-user-activity', function(resolve, reject) {
             const new_user = this.$route.query.user;
             
             if (new_user && new_user != this.user_id) {
-                this.user_id = new_user;
+                this.sync_user_id(new_user);
                 this.getChartData(isNaN(new_tab) ? 0 : new_tab);
                 return;
             }
@@ -64,6 +66,10 @@ Vue.component('panel-user-activity', function(resolve, reject) {
                 this.getChartData();
             }
         },
+
+        mounted: function() {
+            this.sync_user_id(this.$route.query.user || '');
+        },
         
         methods: {
             update_route: function() {
@@ -75,6 +81,13 @@ Vue.component('panel-user-activity', function(resolve, reject) {
                     route.query.user=this.data_user_id;
                     this.$router.replace(route);
                 }
+            },
+
+            sync_user_id: function(user_id) {
+                // manually update "model" for <input> to avoid
+                // slowness with large tables
+                this.user_id = user_id;
+                this.$refs.user_id_input.value = user_id;
             },
             
             change_user: function() {
@@ -124,8 +137,11 @@ Vue.component('panel-user-activity', function(resolve, reject) {
             combine_received_mail_fields: function() {
                 // remove these fields
                 this.received_mail.combine_fields([
+                    'remote_host',
+                    'remote_ip',
                     'dkim_reason',
                     'dmarc_reason',
+                    'failure_info',
                     'postgrey_reason',
                     'postgrey_delay',
                     'spam_score',
@@ -142,6 +158,15 @@ Vue.component('panel-user-activity', function(resolve, reject) {
                     });
                 f.label = 'Envelope From (user)';
             },
+
+            combine_imap_details_fields: function() {
+                // remove these fields
+                this.imap_details.combine_fields([
+                    'disconnect_reason',
+                    'connection_security',
+                ]);
+            },
+
 
             get_row_limit: function() {
                 return UserSettings.get().row_limit;
@@ -235,7 +260,18 @@ Vue.component('panel-user-activity', function(resolve, reject) {
                     this.received_mail
                         .flag_fields()
                         .get_field('connect_time')
-                        .add_tdClass('text-nowrap');                    
+                        .add_tdClass('text-nowrap');
+
+                    /* setup imap_details */
+                    this.imap_details = new MailBvTable(
+                        response.data.imap_details, {
+                            _showDetails: true
+                        });
+                    this.combine_imap_details_fields();
+                    this.imap_details
+                        .flag_fields()
+                        .get_field('connect_time')
+                        .add_tdClass('text-nowrap');
 
                 }).catch(error => {
                     this.$root.handleError(error);

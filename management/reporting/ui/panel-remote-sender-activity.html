@@ -28,10 +28,10 @@
       <b-form-radio class="ml-1" v-model="sender_type" value="server" @change="update_recent_list()">Server</b-form-radio>
     </div>
     <b-input-group style="width:40em">
-      <b-form-input v-if="sender_type=='email'" class="h-auto" :autofocus="data_sender===null" list="panel-rsa-recent" v-model="email" placeholder="Enter an email address (envelope FROM)"></b-form-input>
-      <b-form-input v-else class="h-auto" :autofocus="data_sender===null" list="panel-rsa-recent" v-model="server" placeholder="Enter a hostname or ip address"></b-form-input>
+      <b-form-input v-if="sender_type=='email'" class="h-auto" :autofocus="data_sender===null" list="panel-rsa-recent" @change="email_changed" placeholder="Enter an email address (envelope FROM)"></b-form-input>
+      <b-form-input v-else class="h-auto" :autofocus="data_sender===null" list="panel-rsa-recent" @change="server_changed" placeholder="Enter a hostname or ip address"></b-form-input>
       <b-input-group-append>
-        <b-button variant="primary" @click="change_sender" :disabled="sender_type=='email' && (email == '' || email==data_sender) || sender_type=='server' && (server =='' || server==data_sender)">Search</b-button>
+        <b-button variant="primary" @click="change_sender">Search</b-button>
       </b-input-group-append>
     </b-input-group>
     <b-alert variant="warning" class="ml-2" :show="activity && activity.items.length>=get_row_limit()"><sup>*</sup> Tables limited to {{ get_row_limit() }} rows <router-link to="/settings"><b-icon icon="gear-fill"></b-icon></router-link></b-alert>

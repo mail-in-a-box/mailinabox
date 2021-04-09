@@ -101,13 +101,14 @@ Vue.component('chart-stacked-bar-timeseries', {
                     .text("no data");
             }
             
-            this.xscale = d3.scaleUtc()
+            this.xscale = d3.scaleTime()
                 .domain(d3.extent(this.tsdata.dates))
                 .nice()
                 .range([this.margin.left, this.width - this.margin.right])
             
-            var barwidth = this.tsdata.barwidth(this.xscale, 1);
-            var padding = barwidth / 2;
+            var barwidth = this.tsdata.barwidth(this.xscale);
+            var padding_x = barwidth / 2;
+            var padding_y = ChartVue.get_yAxisLegendBounds(this.tsdata).height + 2;
             
             this.yscale = d3.scaleLinear()
                 .domain([
@@ -115,28 +116,30 @@ Vue.component('chart-stacked-bar-timeseries', {
                     d3.sum(this.tsdata.series, s => d3.max(s.values))
                 ])
                 .range([
-                    this.height - this.margin.bottom,
+                    this.height - this.margin.bottom - padding_y,
                     this.margin.top,
                 ]);
-            
-            svg.append("g")
-                .call(this.xAxis.bind(this, padding))
+
+            var g = svg.append("g")
+                .attr("transform", `translate(0, ${padding_y})`);
+
+            g.append("g")
+                .call(this.xAxis.bind(this, padding_x))
                 .attr("font-size", ChartPrefs.axis_font_size);
             
-            svg.append("g")
-                .call(this.yAxis.bind(this))
+            g.append("g")
+                .call(this.yAxis.bind(this, padding_y))
                 .attr("font-size", ChartPrefs.axis_font_size);
 
-            
             for (var s_idx=0; s_idx<this.tsdata.series.length; s_idx++) {
-                svg.append("g")
+                g.append("g")
                     .datum(s_idx)
                     .attr("fill", this.colors[s_idx])
                     .selectAll("rect")
                     .data(this.stacked[s_idx])
                     .join("rect")
-                    .attr("x", d => this.xscale(d.data.date) - barwidth/2 + padding)
-                    .attr("y", d => this.yscale(d[1]))
+                    .attr("x", d => this.xscale(d.data.date) - barwidth/2 + padding_x)
+                    .attr("y", d => this.yscale(d[1]) + padding_y)
                     .attr("height", d => this.yscale(d[0]) - this.yscale(d[1]))
                     .attr("width", barwidth)
                     .call( hover.bind(this) )
@@ -146,7 +149,13 @@ Vue.component('chart-stacked-bar-timeseries', {
                 ;
             }
 
-            var hovinfo = svg.append("g");
+            g.append("g")
+                .attr("transform", `translate(${this.margin.left}, 0)`)
+                .call(
+                    g => ChartVue.add_yAxisLegend(g, this.tsdata, this.colors)
+                );
+
+            var hovinfo = g.append("g");
 
             function hover(rect) {
                 if ("ontouchstart" in document) rect
@@ -165,10 +174,11 @@ Vue.component('chart-stacked-bar-timeseries', {
                     var s_name = this.tsdata.series[s_idx].name;
                     var v = d.data[s_name];
                     var x = Number(rect.attr('x')) + barwidth/2;
-                    
+                    //var y = Number(rect.attr('y')) + Number(rect.attr('height'))/2;                 
+                    var y = Number(rect.attr('y'));
                     hovinfo.attr(
                         "transform",
-                        `translate( ${x}, ${rect.attr('y')} )`)
+                        `translate( ${x}, ${y} )`)
                         .append('text')
                         .attr("font-family", ChartPrefs.default_font_family)
                         .attr("font-size", ChartPrefs.default_font_size)
@@ -203,18 +213,16 @@ Vue.component('chart-stacked-bar-timeseries', {
             return x;
         },
         
-        yAxis: function(g) {
+        yAxis: function(padding, g) {
             var y = g.attr(
                 "transform",
-                `translate(${this.margin.left},0)`
+                `translate(${this.margin.left},${padding})`
             ).call(
                 d3.axisLeft(this.yscale)
                     .ticks(this.height/50)
-            ).call(g =>
-                   g.select(".domain").remove()
-            ).call(g => {
-                ChartVue.add_yAxisLegend(g, this.tsdata, this.colors);
-            });
+            ).call(
+                g => g.select(".domain").remove()
+            );
             
             return y;
         },
