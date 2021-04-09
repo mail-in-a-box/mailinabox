@@ -20,7 +20,8 @@ Vue.component('panel-user-activity', function(resolve, reject) {
                 Number(this.$route.query.tab) :
                 0;
             return {
-                user_id: this.$route.query.user || '', /* v-model */
+                //user_id: this.$route.query.user || '', /* v-model */
+                user_id: '', /* v-model */
                 tab_index: start_tab, /* v-model */
                 show_only_flagged: false,
                 show_only_flagged_filter: null,
@@ -39,7 +40,7 @@ Vue.component('panel-user-activity', function(resolve, reject) {
             const new_user = this.$route.query.user;
             
             if (new_user && new_user != this.user_id) {
-                this.user_id = new_user;
+                this.sync_user_id(new_user);
                 this.getChartData(isNaN(new_tab) ? 0 : new_tab);
                 return;
             }
@@ -65,6 +66,10 @@ Vue.component('panel-user-activity', function(resolve, reject) {
                 this.getChartData();
             }
         },
+
+        mounted: function() {
+            this.sync_user_id(this.$route.query.user || '');
+        },
         
         methods: {
             update_route: function() {
@@ -78,8 +83,11 @@ Vue.component('panel-user-activity', function(resolve, reject) {
                 }
             },
 
-            user_id_changed: function(evt) {
-                this.user_id = evt;
+            sync_user_id: function(user_id) {
+                // manually update "model" for <input> to avoid
+                // slowness with large tables
+                this.user_id = user_id;
+                this.$refs.user_id_input.value = user_id;
             },
             
             change_user: function() {
