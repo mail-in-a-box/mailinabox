@@ -1,7 +1,12 @@
+import { BvTable, ConnectionDisposition, DateFormatter } from "./charting.js";
+import { spinner } from "../../ui-common/page-header.js";
 
-
-Vue.component('capture-db-stats', {
+export default Vue.component('capture-db-stats', {
     props: {
+    },
+
+    components: {
+        spinner,
     },
 
     template:'<div>'+

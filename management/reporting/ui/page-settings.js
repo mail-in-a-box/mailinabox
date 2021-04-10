@@ -1,11 +1,18 @@
-Vue.component('page-settings', function(resolve, reject) {
+
+import page_layout from '../../ui-common/page-layout.js';
+import reports_page_header from './reports-page-header.js';
+import UserSettings from "./settings.js";
+import { CaptureConfig } from "./settings.js";
+
+
+export default Vue.component('page-settings', function(resolve, reject) {
     axios.get('reports/ui/page-settings.html').then((response) => { resolve({
 
         template: response.data,
 
         components: {
-            'page-layout': Vue.component('page-layout'),
-            'reports-page-header': Vue.component('reports-page-header'),
+            'page-layout': page_layout,
+            'reports-page-header': reports_page_header,
         },
 
         data: function() {

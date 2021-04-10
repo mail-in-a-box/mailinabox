@@ -1,5 +1,5 @@
 
-class ChartPrefs {
+export class ChartPrefs {
     static get colors() {
         // see: https://github.com/d3/d3-scale-chromatic
         return d3.schemeSet2;
@@ -40,7 +40,7 @@ class ChartPrefs {
 };
 
 
-class DateFormatter {
+export class DateFormatter {
     /*
      * date and time
      */
@@ -162,7 +162,7 @@ class DateFormatter {
 };
 
 
-class DateRange {
+export class DateRange {
     /*
      * ranges
      */
@@ -241,7 +241,7 @@ class DateRange {
 };
 
 
-class NumberFormatter {
+export class NumberFormatter {
     static format(v) {
         return isNaN(v) || v===null ? "N/A" : v.toLocaleString(ChartPrefs.locales);
     }
@@ -319,7 +319,7 @@ class NumberFormatter {
 });
 
 
-class BvTable {
+export class BvTable {
     constructor(data, opt) {
         opt = opt || {};
         Object.assign(this, data);
@@ -446,7 +446,7 @@ class BvTable {
 };
 
 
-class BvTableField {
+export class BvTableField {
     constructor(field, field_type) {
         // this:
         //    key    - required
@@ -628,7 +628,7 @@ class BvTableField {
 };
 
 
-class MailBvTable extends BvTable {
+export class MailBvTable extends BvTable {
     flag(key, fn) {
         var field = this.get_field(key, true);
         if (!field) return;
@@ -736,7 +736,7 @@ class MailBvTable extends BvTable {
 }
 
 
-class ChartVue {
+export class ChartVue {
     
     static svg_attrs(viewBox) {
         var attrs = {
@@ -818,7 +818,7 @@ class ChartVue {
  * }
  */    
 
-class TimeseriesData {
+export class TimeseriesData {
     constructor(data) {
         Object.assign(this, data);
         this.convert_dates();
@@ -984,7 +984,7 @@ class TimeseriesData {
 };
 
 
-class ConnectionDisposition {
+export class ConnectionDisposition {
     constructor(disposition) {
         const data = {
             'failed_login_attempt': {

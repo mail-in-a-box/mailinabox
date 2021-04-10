@@ -1,4 +1,4 @@
-Vue.component('chart-table', {
+export default Vue.component('chart-table', {
     props: {
         items: Array,
         fields: Array,

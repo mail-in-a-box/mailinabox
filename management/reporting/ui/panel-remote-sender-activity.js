@@ -2,7 +2,11 @@
   details on the activity of a remote sender (envelope from)
 */
 
-Vue.component('panel-remote-sender-activity', function(resolve, reject) {
+import UserSettings from "./settings.js";
+import { MailBvTable, ConnectionDisposition } from "./charting.js";
+
+
+export default Vue.component('panel-remote-sender-activity', function(resolve, reject) {
     axios.get('reports/ui/panel-remote-sender-activity.html').then((response) => { resolve({
 
         template: response.data,

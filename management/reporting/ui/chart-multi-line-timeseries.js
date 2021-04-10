@@ -1,4 +1,6 @@
-Vue.component('chart-multi-line-timeseries', {
+import { ChartPrefs, NumberFormatter, ChartVue } from "./charting.js";
+
+export default Vue.component('chart-multi-line-timeseries', {
     props: {
         chart_data: { type:Object, required:false }, /* TimeseriesData */
         width: { type:Number, default: ChartPrefs.default_width },
@@ -175,7 +177,7 @@ Vue.component('chart-multi-line-timeseries', {
                 const yvalue = this.yscale.invert(pointer[1]); // number
                 //const i = d3.bisectCenter(this.tsdata.dates, xvalue); // index
                 var i = d3.bisect(this.tsdata.dates, xvalue); // index
-                if (i > this.tsdata.dates.length) return;
+                if (i<0 || i > this.tsdata.dates.length) return;
                 i = Math.min(this.tsdata.dates.length-1, i);
                          
                 // closest series
@@ -190,7 +192,7 @@ Vue.component('chart-multi-line-timeseries', {
                     }
                 }
                 const s = this.tsdata.series[closest.sidx];
-                if (i>= s.values.length) {
+                if (i<0 || i>= s.values.length) {
                     dot.attr("display", "none");
                     return;
                 }

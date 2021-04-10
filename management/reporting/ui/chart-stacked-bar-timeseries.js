@@ -2,7 +2,10 @@
  stacked bar chart
 */
 
-Vue.component('chart-stacked-bar-timeseries', {
+import { ChartPrefs, NumberFormatter, ChartVue } from "./charting.js";
+
+
+export default Vue.component('chart-stacked-bar-timeseries', {
     props: {
         chart_data: { type:Object, required:false }, /* TimeseriesData */
         width: { type:Number, default: ChartPrefs.default_width },

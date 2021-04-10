@@ -1,4 +1,7 @@
-Vue.component('chart-pie', {
+import { ChartPrefs, NumberFormatter, ChartVue } from "./charting.js";
+
+
+export default Vue.component('chart-pie', {
     /*
      * chart_data: [
      *   { name: 'name', value: value },
@@ -127,7 +130,7 @@ Vue.component('chart-pie', {
                 radius *= 0.7;
             else
                 radius *= 0.8;
-            arcLabel = d3.arc().innerRadius(radius).outerRadius(radius);
+            var arcLabel = d3.arc().innerRadius(radius).outerRadius(radius);
             
             svg.append("g")
                 .attr("stroke", "white")

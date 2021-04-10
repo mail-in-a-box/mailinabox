@@ -2,7 +2,12 @@
   details on the activity of a user
 */
 
-Vue.component('panel-user-activity', function(resolve, reject) {
+import wbr_text from "./wbr-text.js";
+import UserSettings from "./settings.js";
+import { MailBvTable, ConnectionDisposition } from "./charting.js";
+
+
+export default Vue.component('panel-user-activity', function(resolve, reject) {
     axios.get('reports/ui/panel-user-activity.html').then((response) => { resolve({
 
         template: response.data,
@@ -12,7 +17,7 @@ Vue.component('panel-user-activity', function(resolve, reject) {
         },
 
         components: {
-            'wbr-text': Vue.component('wbr-text'),
+            'wbr-text': wbr_text,
         },
         
         data: function() {
