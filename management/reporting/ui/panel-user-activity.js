@@ -3,6 +3,7 @@
 */
 
 import wbr_text from "./wbr-text.js";
+import message_headers_view from "./message_headers_view.js";
 import UserSettings from "./settings.js";
 import { MailBvTable, ConnectionDisposition } from "./charting.js";
 
@@ -18,6 +19,7 @@ export default Vue.component('panel-user-activity', function(resolve, reject) {
 
         components: {
             'wbr-text': wbr_text,
+            'message-headers-view': message_headers_view
         },
         
         data: function() {
@@ -35,6 +37,7 @@ export default Vue.component('panel-user-activity', function(resolve, reject) {
                 sent_mail: null,
                 received_mail: null,
                 imap_details: null,
+                lmtp_id: null, /* for message headers modal */
                 all_users: [],
                 disposition_formatter: ConnectionDisposition.formatter,
             };
@@ -150,7 +153,9 @@ export default Vue.component('panel-user-activity', function(resolve, reject) {
                     'postgrey_reason',
                     'postgrey_delay',
                     'spam_score',
-                    'orig_to'
+                    'orig_to',
+                    'message_id',
+                    'lmtp_id',
                 ]);
                 // combine fields 'envelope_from' and 'sasl_username'
                 var f = this.received_mail.combine_fields(
@@ -291,6 +296,15 @@ export default Vue.component('panel-user-activity', function(resolve, reject) {
             row_clicked: function(item, index, event) {
                 item._showDetails = ! item._showDetails;
             },
+
+            show_message_headers: function(lmtp_id) {
+                // set the lmtp_id that component message-headers-view
+                // searches for
+                this.lmtp_id = lmtp_id;
+                
+                // show the modal dialog
+                this.$refs.message_headers_modal.show();
+            }
             
         }
         

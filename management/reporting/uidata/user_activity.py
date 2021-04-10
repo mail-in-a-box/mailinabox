@@ -124,6 +124,7 @@ def user_activity(conn, args):
             'dkim_reason',
             'dmarc_result',
             'dmarc_reason',
+            'message_id',
             'failure_info',
             
             # mta_delivery
@@ -134,6 +135,7 @@ def user_activity(conn, args):
             'spam_score',
             'spam_result',
             'message_size',
+            'lmtp_id',
         ],
         'field_types': [
             { 'type':'datetime', 'format': '%Y-%m-%d %H:%M:%S' },# connect_time
@@ -148,6 +150,7 @@ def user_activity(conn, args):
             'text/plain',    # dkim_result
             'text/plain',    # dmarc_result
             'text/plain',    # dmarc_reason
+            'text/plain',    # message_id
             'text/plain',    # failure_info
             'text/email',    # orig_to
             'text/plain',    # postgrey_result
@@ -156,6 +159,7 @@ def user_activity(conn, args):
             { 'type':'decimal', 'places':2 },     # spam_score
             'text/plain',    # spam_result
             'number/size',   # message_size
+            'text/plain',    # lmtp_id
         ],
         'items': []
     }
@@ -167,7 +171,31 @@ def user_activity(conn, args):
     }):
         v = []
         for key in received_mail['fields']:
-            v.append(row[key])
+            if key == 'lmtp_id':
+                # Extract the LMTP ID from delivery info, which looks
+                # like:
+                #
+                # "250 2.0.0 <user@domain.tld> oPHmBDvTaWA7UwAAlWWVsw
+                # Saved"
+                #
+                # When we know the LMTP ID, we can get the message
+                # headers using doveadm, like this:
+                #
+                # "/usr/bin/doveadm fetch -u "user@domain.tld" hdr
+                # HEADER received "LMTP id oPHmBDvTaWA7UwAAlWWVsw"
+                #
+                delivery_info = row['delivery_info']
+                valid = False
+                if delivery_info:
+                    parts = delivery_info.split(' ')
+                    if parts[0]=='250' and parts[1]=='2.0.0':
+                        v.append(parts[-2])
+                        valid = True
+                if not valid:
+                    v.append(None)
+                    
+            else:
+                v.append(row[key])
         received_mail['items'].append(v)
 
 
