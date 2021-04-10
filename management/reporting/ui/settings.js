@@ -1,6 +1,9 @@
+import { ValueError } from '../../ui-common/exceptions.js';
+
+
 window.miabldap = window.miabldap || {};
 
-class CaptureConfig {
+export class CaptureConfig {
     static get() {
         return axios.get('/reports/capture/config').then(response => {
             var cc = new CaptureConfig();
@@ -11,7 +14,7 @@ class CaptureConfig {
 };
 
 
-class UserSettings {
+export default class UserSettings {
     static load() {
         if (window.miabldap.user_settings) {
             return Promise.resolve(window.miabldap.user_settings);

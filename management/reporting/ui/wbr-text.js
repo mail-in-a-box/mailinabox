@@ -11,7 +11,7 @@
  * browser to wrap at any character of the text.
  */
 
-Vue.component('wbr-text', {
+export default Vue.component('wbr-text', {
     props: {
         text: { type:String, required: true },
         break_chars: { type:String, default:'@_.,:+=' },

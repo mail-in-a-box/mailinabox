@@ -1,4 +1,7 @@
-Vue.component('date-range-picker', {
+import { DateRange, DateFormatter } from "./charting.js";
+
+
+export default Vue.component('date-range-picker', {
     props: {
         start_range: [ String, Array ],  // "ytd", "mtd", "wtd", or [start, end] where start and end are strings in format YYYY-MM-DD in localti
         recall_id: String, // save / recall from localStorage

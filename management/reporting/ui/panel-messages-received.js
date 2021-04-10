@@ -3,7 +3,13 @@
 
 */
 
-Vue.component('panel-messages-received', function(resolve, reject) {
+import chart_multi_line_timeseries from "./chart-multi-line-timeseries.js";
+import chart_table from "./chart-table.js";
+
+import { ChartPrefs, TimeseriesData, BvTable } from "./charting.js";
+
+
+export default Vue.component('panel-messages-received', function(resolve, reject) {
     axios.get('reports/ui/panel-messages-received.html').then((response) => { resolve({
 
         template: response.data,
@@ -19,10 +25,8 @@ Vue.component('panel-messages-received', function(resolve, reject) {
         },
 
         components: {
-            'chart-multi-line-timeseries': Vue.component('chart-multi-line-timeseries'),
-            // 'chart-stacked-bar-timeseries': Vue.component('chart-stacked-bar-timeseries'),
-            // 'chart-pie': Vue.component('chart-pie'),
-            'chart-table': Vue.component('chart-table'),
+            'chart-multi-line-timeseries': chart_multi_line_timeseries,
+            'chart-table': chart_table,
         },
         
         data: function() {

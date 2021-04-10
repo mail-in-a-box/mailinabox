@@ -1,10 +1,12 @@
-Vue.component('reports-page-header', {
+import page_header from '../../ui-common/page-header.js';
+
+export default Vue.component('reports-page-header', {
     props: {
         loading_counter: { type:Number, required:true },
     },
     
     components: {
-        'page-header': Vue.component('page-header'),
+        'page-header': page_header,
     },
     
     template:

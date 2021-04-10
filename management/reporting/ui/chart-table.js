@@ -1,4 +1,4 @@
-Vue.component('chart-table', {
+export default Vue.component('chart-table', {
     props: {
         items: Array,
         fields: Array,
@@ -38,7 +38,7 @@ Vue.component('chart-table', {
             if (this.items.length == 0) {
                 return [{
                     key: 'no data',
-                    thClass: 'text-nowrap'
+                    thClass: 'text-nowrap align-top'
                 }];
             }
             return this.fields;
