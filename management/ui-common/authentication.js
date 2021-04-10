@@ -1,3 +1,6 @@
+import { AuthenticationError } from './exceptions.js';
+
+
 export class Me {
     /* construct with return value from GET /me */
     constructor(me) {
