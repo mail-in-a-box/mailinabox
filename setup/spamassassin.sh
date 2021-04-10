@@ -117,6 +117,24 @@ describe SPF_FAIL SPF check failed
 score SPF_FAIL 5.0
 EOF
 
+# SpamAssassin Spamhaus Zen blacklist scores
+# ------------------------------------------
+# MiaB installs spamassassin configured to check against Spamhaus Zen
+# blacklists, but the default score is too low to guarantee blacklisted
+# email as spam. The below score is intended to send all Spamhaus Zen blacklist
+# email received to the spam folder.
+
+cat > /etc/spamassassin/miab_spamhaus_zen_scores.cf << EOF
+score RCVD_IN_PBL 10.0
+score RCVD_IN_SBL 10.0
+score RCVD_IN_SBL_CSS 10.0
+score RCVD_IN_XBL 10.0
+score URIBL_CSS 10.0
+score URIBL_CSS_A 10.0
+score URIBL_SBL 10.0
+score URIBL_SBL_A 10.0
+EOF
+
 # Bayesean learning
 # -----------------
 #
