@@ -108,7 +108,7 @@ def do_web_update(env):
 				if domain in web_only_domains:
 					nginx_conf += make_domain_config(domain, [template0, template4], ssl_certificates, env)
 				else:
-				nginx_conf += make_domain_config(domain, [template0, template1], ssl_certificates, env)
+					nginx_conf += make_domain_config(domain, [template0, template1], ssl_certificates, env)
 			else:
 				nginx_conf += make_domain_config(domain, [template0], ssl_certificates, env)
 		else:
