@@ -42,6 +42,9 @@ InstallNextcloud() {
 	mv /usr/local/lib/nextcloud /usr/local/lib/owncloud
 	rm -f /tmp/nextcloud.zip
 
+	# Empty the skeleton dir to save some space for each new user
+	rm -f /usr/local/lib/owncloud/core/skeleton/*
+
 	# The two apps we actually want are not in Nextcloud core. Download the releases from
 	# their github repositories.
 	mkdir -p /usr/local/lib/owncloud/apps

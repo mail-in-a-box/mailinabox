@@ -119,6 +119,23 @@ if [ -z "${PUBLIC_IP:-}" ]; then
 	fi
 fi
 
+
+if [ -z "${ADMIN_HOME_IP:-}" ]; then
+        if [ -z "${DEFAULT_ADMIN_HOME_IP:-}" ]; then
+                input_box "Admin Home IP Address" \
+		        "Enter the public IP address of the admin home, as given to you by your ISP.
+            		\n\nAdmin Home IP address:" \
+	   		"" \
+			ADMIN_HOME_IP
+	else
+		ADMIN_HOME_IP=$DEFAULT_ADMIN_HOME_IP
+        fi
+fi
+
+if [ -z "${ADMIN_HOME_IP:-}" ]; then
+	ADMIN_HOME_IP=""
+fi
+
 # Same for IPv6. But it's optional. Also, if it looks like the system
 # doesn't have an IPv6, don't ask for one.
 if [ -z "${PUBLIC_IPV6:-}" ]; then
@@ -205,6 +222,9 @@ if [ "$PRIVATE_IP" != "$PUBLIC_IP" ]; then
 fi
 if [ "$PRIVATE_IPV6" != "$PUBLIC_IPV6" ]; then
 	echo "Private IPv6 Address: $PRIVATE_IPV6"
+fi
+if [ -n "$ADMIN_HOME_IP" ]; then
+    echo "Admin Home IP Address: $ADMIN_HOME_IP"
 fi
 if [ -f /usr/bin/git ] && [ -d .git ]; then
 	echo "Mail-in-a-Box Version: " $(git describe --tags)

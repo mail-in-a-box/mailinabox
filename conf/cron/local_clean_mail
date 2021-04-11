@@ -1,0 +1,5 @@
+#!/bin/bash
+#
+doveadm expunge -A mailbox Trash savedbefore 120d
+doveadm expunge -A mailbox Spam savedbefore 120d
+

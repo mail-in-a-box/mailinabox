@@ -339,9 +339,14 @@ rm -f /etc/fail2ban/jail.local # we used to use this file but don't anymore
 rm -f /etc/fail2ban/jail.d/defaults-debian.conf # removes default config so we can manage all of fail2ban rules in one config
 cat conf/fail2ban/jails.conf \
 	| sed "s/PUBLIC_IP/$PUBLIC_IP/g" \
+	| sed "s/ADMIN_HOME_IP/$ADMIN_HOME_IP/g" \
 	| sed "s#STORAGE_ROOT#$STORAGE_ROOT#" \
-	> /etc/fail2ban/jail.d/mailinabox.conf
+	> /etc/fail2ban/jail.d/00-mailinabox.conf
 cp -f conf/fail2ban/filter.d/* /etc/fail2ban/filter.d/
+cp -f conf/fail2ban/jail.d/* /etc/fail2ban/jail.d/
+
+# fail2ban should be able to look back far enough because we increased findtime of recidive jail
+tools/editconf.py /etc/fail2ban/fail2ban.conf dbpurgeage=7d
 
 # On first installation, the log files that the jails look at don't all exist.
 # e.g., The roundcube error log isn't normally created until someone logs into

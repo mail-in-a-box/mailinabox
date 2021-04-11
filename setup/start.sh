@@ -100,6 +100,7 @@ PUBLIC_IPV6=$PUBLIC_IPV6
 PRIVATE_IP=$PRIVATE_IP
 PRIVATE_IPV6=$PRIVATE_IPV6
 MTA_STS_MODE=${MTA_STS_MODE-}
+ADMIN_HOME_IP=$ADMIN_HOME_IP
 EOF
 
 # Start service configuration.
@@ -114,9 +115,10 @@ source setup/spamassassin.sh
 source setup/web.sh
 source setup/webmail.sh
 source setup/nextcloud.sh
-source setup/zpush.sh
+#source setup/zpush.sh
 source setup/management.sh
 source setup/munin.sh
+source setup/additionals.sh
 
 # Wait for the management daemon to start...
 until nc -z -w 4 127.0.0.1 10222
