@@ -429,6 +429,7 @@ def build_sshfp_records():
 	# to the zone file (that trigger bumping the serial number). However,
 	# if SSH has been configured to listen on a nonstandard port, we must
 	# specify that port to sshkeyscan.
+
 	port = 22
 	with open('/etc/ssh/sshd_config', 'r') as f:
 		for line in f:
@@ -439,8 +440,11 @@ def build_sshfp_records():
 				except ValueError:
 					pass
 				break
+
 	keys = shell("check_output", ["ssh-keyscan", "-t", "rsa,dsa,ecdsa,ed25519", "-p", str(port), "localhost"])
-	for key in sorted(keys.split("\n")):
+	keys = sorted(keys.split("\n"))
+
+	for key in keys:
 		if key.strip() == "" or key[0] == "#": continue
 		try:
 			host, keytype, pubkey = key.split(" ")
@@ -460,13 +464,16 @@ def write_nsd_zone(domain, zonefile, records, env, force):
 	# On the $ORIGIN line, there's typically a ';' comment at the end explaining
 	# what the $ORIGIN line does. Any further data after the domain confuses
 	# ldns-signzone, however. It used to say '; default zone domain'.
-
+	#
 	# The SOA contact address for all of the domains on this system is hostmaster
 	# @ the PRIMARY_HOSTNAME. Hopefully that's legit.
-
+	#
 	# For the refresh through TTL fields, a good reference is:
 	# http://www.peerwisdom.org/2013/05/15/dns-understanding-the-soa-record/
-
+	#
+	# A hash of the available DNSSEC keys are added in a comment so that when
+	# the keys change we force a re-generation of the zone which triggers
+	# re-signing it.
 
 	zone = """
 $ORIGIN {domain}.
@@ -501,6 +508,9 @@ $TTL 86400          ; default time to live
 				v2 += s + " "
 			value = v2
 		zone += value + "\n"
+
+	# Append a stable hash of DNSSEC signing keys in a comment.
+	zone += "\n; DNSSEC signing keys hash: {}\n".format(hash_dnssec_keys(domain, env))
 
 	# DNSSEC requires re-signing a zone periodically. That requires
 	# bumping the serial number even if no other records have changed.
@@ -612,53 +622,77 @@ zone:
 
 ########################################################################
 
-def dnssec_choose_algo(domain, env):
-	if '.' in domain and domain.rsplit('.')[-1] in \
-		("email", "guide", "fund", "be", "lv"):
-		# At GoDaddy, RSASHA256 is the only algorithm supported
-		# for .email and .guide.
-		# A variety of algorithms are supported for .fund. This
-		# is preferred.
-		# Gandi tells me that .be does not support RSASHA1-NSEC3-SHA1
-        # Nic.lv does not support RSASHA1-NSEC3-SHA1 for .lv tld's
-		return "RSASHA256"
+def find_dnssec_signing_keys(domain, env):
+	# For key that we generated (one per algorithm)...
+	d = os.path.join(env['STORAGE_ROOT'], 'dns/dnssec')
+	keyconfs = [f for f in os.listdir(d) if f.endswith(".conf")]
+	for keyconf in keyconfs:
+		# Load the file holding the KSK and ZSK key filenames.
+		keyconf_fn = os.path.join(d, keyconf)
+		keyinfo = load_env_vars_from_file(keyconf_fn)
 
-	# For any domain we were able to sign before, don't change the algorithm
-	# on existing users. We'll probably want to migrate to SHA256 later.
-	return "RSASHA1-NSEC3-SHA1"
+		# Skip this key if the conf file has a setting named DOMAINS,
+		# holding a comma-separated list of domain names, and if this
+		# domain is not in the list. This allows easily disabling a
+		# key by setting "DOMAINS=" or "DOMAINS=none", other than
+		# deleting the key's .conf file, which might result in the key
+		# being regenerated next upgrade. Keys should be disabled if
+		# they are not needed to reduce the DNSSEC query response size.
+		if "DOMAINS" in keyinfo and domain not in [dd.strip() for dd in keyinfo["DOMAINS"].split(",")]:
+			continue
+
+		for keytype in ("KSK", "ZSK"):
+			yield keytype, keyinfo[keytype]
+
+def hash_dnssec_keys(domain, env):
+	# Create a stable (by sorting the items) hash of all of the private keys
+	# that will be used to sign this domain.
+	keydata = []
+	for keytype, keyfn in sorted(find_dnssec_signing_keys(domain, env)):
+		oldkeyfn = os.path.join(env['STORAGE_ROOT'], 'dns/dnssec', keyfn + ".private")
+		keydata.append(keytype)
+		keydata.append(keyfn)
+		with open(oldkeyfn, "r") as fr:
+			keydata.append( fr.read() )
+	keydata = "".join(keydata).encode("utf8")
+	return hashlib.sha1(keydata).hexdigest()
 
 def sign_zone(domain, zonefile, env):
-	algo = dnssec_choose_algo(domain, env)
-	dnssec_keys = load_env_vars_from_file(os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/%s.conf' % algo))
+	# Sign the zone with all of the keys that were generated during
+	# setup so that the user can choose which to use in their DS record at
+	# their registrar, and also to support migration to newer algorithms.
 
-	# In order to use the same keys for all domains, we have to generate
-	# a new .key file with a DNSSEC record for the specific domain. We
-	# can reuse the same key, but it won't validate without a DNSSEC
-	# record specifically for the domain.
+	# In order to use the key files generated at setup which are for
+	# the domain _domain_, we have to re-write the files and place
+	# the actual domain name in it, so that ldns-signzone works.
 	#
-	# Copy the .key and .private files to /tmp to patch them up.
-	#
-	# Use os.umask and open().write() to securely create a copy that only
-	# we (root) can read.
-	files_to_kill = []
-	for key in ("KSK", "ZSK"):
-		if dnssec_keys.get(key, "").strip() == "": raise Exception("DNSSEC is not properly set up.")
-		oldkeyfn = os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/' + dnssec_keys[key])
-		newkeyfn = '/tmp/' + dnssec_keys[key].replace("_domain_", domain)
-		dnssec_keys[key] = newkeyfn
+	# Patch each key, storing the patched version in /tmp for now.
+	# Each key has a .key and .private file. Collect a list of filenames
+	# for all of the keys (and separately just the key-signing keys).
+	all_keys = []
+	ksk_keys = []
+	for keytype, keyfn in find_dnssec_signing_keys(domain, env):
+		newkeyfn = '/tmp/' + keyfn.replace("_domain_", domain)
+
 		for ext in (".private", ".key"):
-			if not os.path.exists(oldkeyfn + ext): raise Exception("DNSSEC is not properly set up.")
-			with open(oldkeyfn + ext, "r") as fr:
+			# Copy the .key and .private files to /tmp to patch them up.
+			#
+			# Use os.umask and open().write() to securely create a copy that only
+			# we (root) can read.
+			oldkeyfn = os.path.join(env['STORAGE_ROOT'], 'dns/dnssec', keyfn + ext)
+			with open(oldkeyfn, "r") as fr:
 				keydata = fr.read()
-			keydata = keydata.replace("_domain_", domain) # trick ldns-signkey into letting our generic key be used by this zone
-			fn = newkeyfn + ext
+			keydata = keydata.replace("_domain_", domain)
 			prev_umask = os.umask(0o77) # ensure written file is not world-readable
 			try:
-				with open(fn, "w") as fw:
+				with open(newkeyfn + ext, "w") as fw:
 					fw.write(keydata)
 			finally:
 				os.umask(prev_umask) # other files we write should be world-readable
-			files_to_kill.append(fn)
+
+		# Put the patched key filename base (without extension) into the list of keys we'll sign with.
+		all_keys.append(newkeyfn)
+		if keytype == "KSK": ksk_keys.append(newkeyfn)
 
 	# Do the signing.
 	expiry_date = (datetime.datetime.now() + datetime.timedelta(days=30)).strftime("%Y%m%d")
@@ -671,32 +705,34 @@ def sign_zone(domain, zonefile, env):
 
 		# zonefile to sign
 		"/etc/nsd/zones/" + zonefile,
-
+	]
 		# keys to sign with (order doesn't matter -- it'll figure it out)
-		dnssec_keys["KSK"],
-		dnssec_keys["ZSK"],
-	])
+		+ all_keys
+	)
 
 	# Create a DS record based on the patched-up key files. The DS record is specific to the
 	# zone being signed, so we can't use the .ds files generated when we created the keys.
 	# The DS record points to the KSK only. Write this next to the zone file so we can
 	# get it later to give to the user with instructions on what to do with it.
 	#
-	# We want to be able to validate DS records too, but multiple forms may be valid depending
-	# on the digest type. So we'll write all (both) valid records. Only one DS record should
-	# actually be deployed. Preferebly the first.
+	# Generate a DS record for each key. There are also several possible hash algorithms that may
+	# be used, so we'll pre-generate all for each key. One DS record per line. Only one
+	# needs to actually be deployed at the registrar. We'll select the preferred one
+	# in the status checks.
 	with open("/etc/nsd/zones/" + zonefile + ".ds", "w") as f:
-		for digest_type in ('2', '1'):
-			rr_ds = shell('check_output', ["/usr/bin/ldns-key2ds",
-				"-n", # output to stdout
-				"-" + digest_type, # 1=SHA1, 2=SHA256
-				dnssec_keys["KSK"] + ".key"
-			])
-			f.write(rr_ds)
+		for key in ksk_keys:
+			for digest_type in ('1', '2', '4'):
+				rr_ds = shell('check_output', ["/usr/bin/ldns-key2ds",
+					"-n", # output to stdout
+					"-" + digest_type, # 1=SHA1, 2=SHA256, 4=SHA384
+					key + ".key"
+				])
+				f.write(rr_ds)
 
-	# Remove our temporary file.
-	for fn in files_to_kill:
-		os.unlink(fn)
+	# Remove the temporary patched key files.
+	for fn in all_keys:
+		os.unlink(fn + ".private")
+		os.unlink(fn + ".key")
 
 ########################################################################
 
