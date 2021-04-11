@@ -105,6 +105,7 @@ EOF
 
 # Start service configuration.
 source setup/system.sh
+source setup/geoiptoolssetup.sh
 source setup/ssl.sh
 source setup/dns.sh
 source setup/mail-postfix.sh
@@ -118,7 +119,6 @@ source setup/nextcloud.sh
 #source setup/zpush.sh
 source setup/management.sh
 source setup/munin.sh
-source setup/geoiptoolssetup.sh
 source setup/additionals.sh
 
 # Wait for the management daemon to start...

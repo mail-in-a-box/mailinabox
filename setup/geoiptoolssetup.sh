@@ -2,9 +2,6 @@ source setup/functions.sh
 
 echo Installing geoip packages...
 
-# Install some packages
-apt_install geoip-database-extra libgeoip1 libnginx-mod-http-geoip
-
 # geo ip filtering of ssh entries, based on https://www.axllent.org/docs/ssh-geoip/#disqus_thread
 
 # Install geo ip lookup tool
@@ -21,6 +18,7 @@ fi
 
 # Install geo ip filter script
 cp -f setup/geoipfilter.sh /usr/local/bin/
+chmod +x /usr/local/bin/geoipfilter.sh
 
 # Install only if not yet exists, to keep user config
 if [ ! -f /etc/geoiplookup.conf ]; then
@@ -60,7 +58,7 @@ hide_output wget -P /usr/share/GeoIP/ https://dl.miyuru.lk/geoip/maxmind/country
 if [ -f "/usr/share/GeoIP/maxmind.dat.gz" ]; then
     gunzip -c /usr/share/GeoIP/maxmind.dat.gz > /usr/share/GeoIP/GeoIP.dat
 else
-    echo Did not correctly download maxmind geoip database
+    echo Did not correctly download maxmind geoip country database
 fi
 
 # If new file is not created, move the old file back
@@ -72,5 +70,25 @@ if [ ! -f "/usr/share/GeoIP/GeoIP.dat" ]; then
     fi
 fi
 
-# Restart nginx
-restart_service nginx
+# Move old file away if it exists
+if [ -f "/usr/share/GeoIP/GeoIPCity.dat" ]; then
+    mv -f /usr/share/GeoIP/GeoIPCity.dat /usr/share/GeoIP/GeoIPCity.dat.bak
+fi
+
+hide_output wget -P /usr/share/GeoIP/ https://dl.miyuru.lk/geoip/maxmind/city/maxmind.dat.gz
+
+if [ -f "/usr/share/GeoIP/maxmind.dat.gz" ]; then
+    gunzip -c /usr/share/GeoIP/maxmind.dat.gz > /usr/share/GeoIP/GeoIPCity.dat
+else
+    echo Did not correctly download maxmind geoip city database
+fi
+
+# If new file is not created, move the old file back
+if [ ! -f "/usr/share/GeoIP/GeoIPCity.dat" ]; then
+    echo GeoIPCity.dat was not created
+    
+    if [ -f "/usr/share/GeoIP/GeoIPCity.dat.bak" ]; then
+        mv /usr/share/GeoIP/GeoIPCity.dat.bak /usr/share/GeoIP/GeoIPCity.dat
+    fi
+fi
+

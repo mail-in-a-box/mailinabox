@@ -244,14 +244,13 @@ if [ -z "${DISABLE_FIREWALL:-}" ]; then
 	# too. #NODOC
 	SSH_PORT=$(sshd -T 2>/dev/null | grep "^port " | sed "s/port //") #NODOC
 	if [ ! -z "$SSH_PORT" ]; then
-	if [ "$SSH_PORT" != "22" ]; then
-
-	echo Opening alternate SSH port $SSH_PORT. #NODOC
-	ufw_limit $SSH_PORT #NODOC
+		if [ "$SSH_PORT" != "22" ]; then
+			echo Opening alternate SSH port $SSH_PORT. #NODOC
+			ufw_limit $SSH_PORT #NODOC
 		else
 			# Allow incoming connections to SSH.
 			ufw_limit ssh;
-	fi
+		fi
 	else
 		# Allow incoming connections to SSH.
 		ufw_limit ssh;
@@ -314,6 +313,11 @@ if ! grep -q "listen-on " /etc/bind/named.conf.options; then
 	# Add a listen-on directive if it doesn't exist inside the options block.
 	sed -i "s/^}/\n\tlisten-on { 127.0.0.1; };\n}/" /etc/bind/named.conf.options
 fi
+if ! grep -q "listen-on-v6 " /etc/bind/named.conf.options; then
+	# Add a listen-on-v6 directive if it doesn't exist inside the options block.
+	sed -i "s/^}/\n\tlisten-on-v6 { ::1; };\n}/" /etc/bind/named.conf.options
+fi
+
 if ! grep -q "max-recursion-queries " /etc/bind/named.conf.options; then
 	# Add a max-recursion-queries directive if it doesn't exist inside the options block.
 	sed -i "s/^}/\n\tmax-recursion-queries 100;\n}/" /etc/bind/named.conf.options
