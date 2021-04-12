@@ -84,26 +84,30 @@
 
     <b-tab>
       <template #title>
-        IMAP Connections<sup v-if="imap_details.items.length >= get_row_limit()">*</sup> ({{imap_details.items.length}})
+        IMAP Connections
       </template>
+
       <b-table
-        class="sticky-table-header-0 bg-light"
-        small
+        tbody-tr-class="cursor-pointer"
+        selectable
+        select-mode="single"
         :filter="show_only_flagged_filter"
         :filter-function="table_filter_cb"
-        tbody-tr-class="cursor-pointer"
-        details-td-class="cursor-default"
-        @row-clicked="row_clicked"
-        :items="imap_details.items"
-        :fields="imap_details.fields">
-        <template #row-details="row">
-          <b-card>
-            <div><strong>Connection disposition</strong>: {{ disposition_formatter(row.item.disposition) }}</div>
-            <div><strong>Connection security</strong> {{ row.item.connection_security }}</div>
-            <div><strong>Disconnect reason</strong> {{ row.item.disconnect_reason }}</div>
-          </b-card>
-        </template>
-      </b-table>
+        :items="imap_conn_summary.items"
+        :fields="imap_conn_summary.fields"
+        @row-clicked="load_imap_details">
+      </b-table>       
+
+      <div v-if="imap_details" class="bg-white">
+        <div class="mt-3 text-center bg-info p-1">{{imap_details._desc}} ({{imap_details.items.length}} rows<sup v-if="imap_details.items.length >= get_row_limit()">*</sup>)</div>
+        <b-table
+          class="sticky-table-header-0"
+          small
+          :items="imap_details.items"
+          :fields="imap_details.fields">
+        </b-table>
+      </div>
+      
     </b-tab>
 
   </b-tabs>

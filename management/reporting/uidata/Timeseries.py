@@ -22,7 +22,7 @@ class Timeseries(object):
         # parsefmt is a date parser string to be used to re-interpret
         # "bin" grouping dates (data.dates) to native dates. server
         # always returns utc dates
-        parsefmt = '%Y-%m-%d %H:%M:%S'
+        self.parsefmt = '%Y-%m-%d %H:%M:%S'
 
         self.dates = []   # dates must be "bin" date strings
         self.series = []
@@ -31,7 +31,7 @@ class Timeseries(object):
             'range': [ self.start, self.end ],
             'range_parse_format': '%Y-%m-%d %H:%M:%S',
             'binsize': self.binsize,
-            'date_parse_format': parsefmt,
+            'date_parse_format': self.parsefmt,
             'y': desc,
             'dates': self.dates,
             'series': self.series

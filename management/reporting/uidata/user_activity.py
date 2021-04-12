@@ -200,50 +200,64 @@ def user_activity(conn, args):
 
 
     #
-    # imap connections by user
+    # IMAP connections by disposition, by remote host
+    #   Disposition
+    #   Remote host
+    #   Count
+    #   In bytes (sum)
+    #   Out bytes (sum)
+    #   % of total
     #
 
-    imap_details = {
+    imap_conn_summary = {
         'start': ts.start,
         'end': ts.end,
-        'y': 'IMAP Details',
+        'y': 'IMAP connection summary by host and disposition',
         'fields': [
-            'connect_time',
+            'count',
+            'total',
             'remote_host',
-            'sasl_method',
-            'disconnect_reason',
-            'connection_security',
             'disposition',
+            'first_connection_time',
+            'last_connection_time',
             'in_bytes',
-            'out_bytes'
+            'out_bytes',
         ],
         'field_types': [
-            { 'type':'datetime', 'format': '%Y-%m-%d %H:%M:%S' },# connect_time
+            'number',        # count
+            { 'type': 'number/percent', 'places': 1 }, # total
             'text/plain',    # remote_host
-            'text/plain',    # sasl_method
-            'text/plain',    # disconnect_reason
-            'text/plain',    # connection_security
             'text/plain',    # disposition
+            { 'type':'datetime', 'format': ts.parsefmt }, # first_conn_time
+            { 'type':'datetime', 'format': ts.parsefmt }, # last_conn_time
             'number/size',   # in_bytes,
             'number/size',   # out_bytes,
         ],
         'items': []
     }
 
+    count_field_idx = 0
+    total_field_idx = 1
+    total = 0
     for row in c.execute(select_3 + limit, {
             'user_id': user_id,
             'start_date': ts.start,
             'end_date': ts.end
     }):
         v = []
-        for key in imap_details['fields']:
-            v.append(row[key])
-        imap_details['items'].append(v)
+        for key in imap_conn_summary['fields']:
+            if key=='count':
+                total += row[key]
+            if key!='total':
+                v.append(row[key])
 
+        imap_conn_summary['items'].append(v)
 
+    for v in imap_conn_summary['items']:
+        v.insert(total_field_idx, v[count_field_idx] / total)
         
     return {
         'sent_mail': sent_mail,
         'received_mail': received_mail,
-        'imap_details': imap_details
+        'imap_conn_summary': imap_conn_summary
     }

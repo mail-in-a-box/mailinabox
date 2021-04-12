@@ -102,6 +102,18 @@ def add_reports(app, env, authorized_personnel_only):
 		finally:
 			db_conn_factory.close(conn)
 
+	@app.route('/reports/uidata/imap-details', methods=['POST'])
+	@authorized_personnel_only
+	@json_payload
+	def get_imap_details(payload):
+		conn = db_conn_factory.connect()
+		try:
+			return jsonify(uidata.imap_details(conn, payload))
+		except uidata.InvalidArgsError as e:
+			return ('invalid request', 400)
+		finally:
+			db_conn_factory.close(conn)
+
 	@app.route('/reports/uidata/flagged-connections', methods=['POST'])
 	@authorized_personnel_only
 	@json_payload
