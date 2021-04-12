@@ -127,6 +127,10 @@ def build_zones(env):
 	from web_update import get_web_domains
 	www_redirect_domains = set(get_web_domains(env)) - set(get_web_domains(env, include_www_redirects=False))
 
+	# For MTA-STS, we'll need to check if the PRIMARY_HOSTNAME certificate is
+	# singned and valid. Check that now rather than repeatedly for each domain.
+	env["-primary-hostname-certificate-is-valid"] = is_domain_cert_signed_and_valid(env["PRIMARY_HOSTNAME"], env)
+
 	# Build DNS records for each zone.
 	for domain, zonefile in zonefiles:
 		# Build the records to put in the zone.
@@ -322,24 +326,11 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 	# certificate in use is not valid (e.g. because it is self-signed and a valid certificate has not
 	# yet been provisioned). Since we cannot provision a certificate without A/AAAA records, we
 	# always set them --- only the TXT records depend on there being valid certificates.
-	mta_sts_enabled = False
 	mta_sts_records = [
 		("mta-sts", "A", env["PUBLIC_IP"], "Optional. MTA-STS Policy Host serving /.well-known/mta-sts.txt."),
 		("mta-sts", "AAAA", env.get('PUBLIC_IPV6'), "Optional. MTA-STS Policy Host serving /.well-known/mta-sts.txt."),
 	]
-	if domain in get_mail_domains(env):
-		# Check that PRIMARY_HOSTNAME and the mta_sts domain both have valid certificates.
-		for d in (env['PRIMARY_HOSTNAME'], "mta-sts." + domain):
-			cert = get_ssl_certificates(env).get(d)
-			if not cert:
-				break # no certificate provisioned for this domain
-			cert_status = check_certificate(d, cert['certificate'], cert['private-key'])
-			if cert_status[0] != 'OK':
-				break # certificate is not valid
-		else:
-			# 'break' was not encountered above, so both domains are good
-			mta_sts_enabled = True
-	if mta_sts_enabled:
+	if domain in get_mail_domains(env) and env["-primary-hostname-certificate-is-valid"] and is_domain_cert_signed_and_valid("mta-sts." + domain, env):
 		# Compute an up-to-32-character hash of the policy file. We'll take a SHA-1 hash of the policy
 		# file (20 bytes) and encode it as base-64 (28 bytes, using alphanumeric alternate characters
 		# instead of '+' and '/' which are not allowed in an MTA-STS policy id) but then just take its
@@ -364,6 +355,13 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 	records.sort(key = lambda rec : list(reversed(rec[0].split(".")) if rec[0] is not None else ""))
 
 	return records
+
+def is_domain_cert_signed_and_valid(domain, env):
+	cert = get_ssl_certificates(env).get(domain)
+	if not cert: return False # no certificate provisioned
+	cert_status = check_certificate(domain, cert['certificate'], cert['private-key'])
+	print(domain, cert_status)
+	return cert_status[0] == 'OK'
 
 ########################################################################
 
