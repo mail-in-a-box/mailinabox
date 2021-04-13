@@ -17,10 +17,10 @@ def capture_db_stats(conn):
     if stats:
         return stats
     
-    select_1 = 'SELECT min(connect_time) AS `min`, max(connect_time) AS `max`, count(*) AS `count` FROM mta_connection'
+    select_1 = 'SELECT min(`min`) AS `min`, max(`max`) AS `max`, sum(`count`) AS `count` FROM (SELECT min(connect_time) AS `min`, max(connect_time) AS `max`, count(*) AS `count` FROM mta_connection  UNION  SELECT min(connect_time) AS `min`, max(connect_time) AS `max`, count(*) AS `count` FROM imap_connection)'
 
     # table scan
-    select_2 = 'SELECT disposition, count(*) AS `count` FROM mta_connection GROUP BY disposition'
+    select_2 = 'SELECT disposition, sum(count) as `count` FROM (SELECT disposition, count(*) AS `count` FROM mta_connection GROUP BY disposition  UNION  SELECT disposition, count(*) AS `count` FROM imap_connection GROUP BY disposition) GROUP BY disposition'
     
     c = conn.cursor()
     stats = {
@@ -29,7 +29,7 @@ def capture_db_stats(conn):
     }
     try:
         row = c.execute(select_1).fetchone()
-        stats['mta_connect'] = {
+        stats['db_stats'] = {
             'connect_time': {
                 'min': row['min'],
                 'max': row['max'], # YYYY-MM-DD HH:MM:SS (utc)
@@ -39,7 +39,7 @@ def capture_db_stats(conn):
         }
 
         for row in c.execute(select_2):
-            stats['mta_connect']['disposition'][row['disposition']] =  {
+            stats['db_stats']['disposition'][row['disposition']] =  {
                 'count': row['count']
             }
         

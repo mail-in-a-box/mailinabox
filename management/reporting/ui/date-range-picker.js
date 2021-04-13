@@ -1,4 +1,7 @@
-Vue.component('date-range-picker', {
+import { DateRange, DateFormatter } from "./charting.js";
+
+
+export default Vue.component('date-range-picker', {
     props: {
         start_range: [ String, Array ],  // "ytd", "mtd", "wtd", or [start, end] where start and end are strings in format YYYY-MM-DD in localti
         recall_id: String, // save / recall from localStorage
@@ -59,6 +62,8 @@ Vue.component('date-range-picker', {
             range: range,
             range_type: range_type,
             options: [
+                { value:'today', text:'Today' },
+                { value:'yesterday', text:'Yesterday' },
                 { value:'last7days', text:'Last 7 days' },
                 { value:'last30days', text:'Last 30 days' },
                 { value:'wtd', text:'Week-to-date' },
@@ -153,16 +158,20 @@ Vue.component('date-range-picker', {
         
         range_type_change: function(evt) {
             // ui select callback
-            if (this.range_type == 'last7days')
-                this.range = DateRange.lastXdays_as_ymd(7);
-            else if (this.range_type == 'last30days')
-                this.range = DateRange.lastXdays_as_ymd(30);
-            else if (this.range_type == 'wtd')
-                this.range = DateRange.wtd_as_ymd();
-            else if (this.range_type == 'mtd')
-                this.range = DateRange.mtd_as_ymd();
-            else if (this.range_type == 'ytd')
-                this.range = DateRange.ytd_as_ymd();
+            var range = DateRange.rangeFromType(this.range_type);
+            if (range) {
+                this.range = range.map(d => DateFormatter.ymd(d));
+            }
+            // if (this.range_type == 'last7days')
+            //     this.range = DateRange.lastXdays_as_ymd(7);
+            // else if (this.range_type == 'last30days')
+            //     this.range = DateRange.lastXdays_as_ymd(30);
+            // else if (this.range_type == 'wtd')
+            //     this.range = DateRange.wtd_as_ymd();
+            // else if (this.range_type == 'mtd')
+            //     this.range = DateRange.mtd_as_ymd();
+            // else if (this.range_type == 'ytd')
+            //     this.range = DateRange.ytd_as_ymd();
         },
 
     }

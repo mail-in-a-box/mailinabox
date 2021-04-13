@@ -22,34 +22,10 @@
     <script src="https://d3js.org/d3.v6.min.js"></script>
 
     <script>axios.defaults.baseURL="/admin"</script>
-
-    <!-- our code -->
-    <script src="ui-common/exceptions.js"></script>
-    <script src="ui-common/authentication.js"></script>
-    <script src="ui-common/page-layout.js"></script>
-    <script src="ui-common/page-header.js"></script>
-    <script src="reports/ui/settings.js"></script>
-    <script src="reports/ui/capture-db-stats.js"></script>
-    <script src="reports/ui/charting.js"></script>
-    <script src="reports/ui/wbr-text.js"></script>
-    <script src="reports/ui/date-range-picker.js"></script>
-    <script src="reports/ui/chart-pie.js"></script>
-    <script src="reports/ui/chart-table.js"></script>
-    <script src="reports/ui/chart-stacked-bar-timeseries.js"></script>
-    <script src="reports/ui/chart-multi-line-timeseries.js"></script>
-    <script src="reports/ui/panel-messages-sent.js"></script>
-    <script src="reports/ui/panel-messages-received.js"></script>
-    <script src="reports/ui/panel-flagged-connections.js"></script>
-    <script src="reports/ui/panel-user-activity.js"></script>
-    <script src="reports/ui/panel-remote-sender-activity.js"></script>
-
-    <script src="reports/ui/reports-page-header.js"></script>
-    <script src="reports/ui/page-settings.js"></script>
-    <script src="reports/ui/page-reports-main.js"></script>
-    <script src="reports/ui/index.js"></script>
+    <script src="reports/ui/index.js" type="module"></script>
   </head>
     
-  <body onload="init_app()">
+  <body>
 
     <router-view id="app"></router-view>
     

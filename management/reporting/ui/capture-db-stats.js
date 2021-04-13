@@ -1,12 +1,17 @@
+import { BvTable, ConnectionDisposition, DateFormatter } from "./charting.js";
+import { spinner } from "../../ui-common/page-header.js";
 
-
-Vue.component('capture-db-stats', {
+export default Vue.component('capture-db-stats', {
     props: {
+    },
+
+    components: {
+        spinner,
     },
 
     template:'<div>'+
         '<template v-if="stats">'+
-           '<caption class="text-nowrap">Database date range</caption><div class="ml-2">First: {{stats.mta_connect.connect_time.min_str}}</div><div class="ml-2">Last: {{stats.mta_connect.connect_time.max_str}}</div>'+
+           '<caption class="text-nowrap">Database date range</caption><div class="ml-2">First: {{stats.db_stats.connect_time.min_str}}</div><div class="ml-2">Last: {{stats.db_stats.connect_time.max_str}}</div>'+
            '<div class="mt-2">'+
            '  <b-table-lite small caption="Connections by disposition" caption-top :fields="row_counts.fields" :items=row_counts.items></b-table-lite>'+
            '</div>'+
@@ -37,9 +42,9 @@ Vue.component('capture-db-stats', {
                     // convert dates
                     var parser = d3.utcParse(this.stats.date_parse_format);
                     [ 'min', 'max' ].forEach( k => {
-                        var d = parser(this.stats.mta_connect.connect_time[k]);
-                        this.stats.mta_connect.connect_time[k] = d;
-                        this.stats.mta_connect.connect_time[k+'_str'] =
+                        var d = parser(this.stats.db_stats.connect_time[k]);
+                        this.stats.db_stats.connect_time[k] = d;
+                        this.stats.db_stats.connect_time[k+'_str'] =
                             d==null ? '-' : DateFormatter.dt_long(d);
                     });
 
@@ -63,11 +68,11 @@ Vue.component('capture-db-stats', {
                     this.row_counts.fields[0].tdClass = 'text-capitalize';
 
 
-                    const total = this.stats.mta_connect.count;
-                    for (var name in this.stats.mta_connect.disposition)
+                    const total = this.stats.db_stats.count;
+                    for (var name in this.stats.db_stats.disposition)
                     {
                         const count =
-                              this.stats.mta_connect.disposition[name].count;
+                              this.stats.db_stats.disposition[name].count;
                         this.row_counts.items.push({
                             name: name,
                             count: count,
@@ -80,7 +85,7 @@ Vue.component('capture-db-stats', {
                     })
                     this.row_counts.items.push({
                         name:'Total',
-                        count:this.stats.mta_connect.count,
+                        count:this.stats.db_stats.count,
                         percent:1,
                         '_rowVariant': 'primary'
                     });

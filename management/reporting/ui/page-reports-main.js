@@ -1,16 +1,31 @@
-Vue.component('page-reports-main', function(resolve, reject) {
+import page_layout from '../../ui-common/page-layout.js';
+import reports_page_header from './reports-page-header.js';
+import date_range_picker from './date-range-picker.js';
+import capture_db_stats from './capture-db-stats.js';
+import panel_messages_sent from './panel-messages-sent.js';
+import panel_messages_received from './panel-messages-received.js';
+import panel_flagged_connections from './panel-flagged-connections.js';
+import panel_user_activity from './panel-user-activity.js';
+import panel_remote_sender_activity from './panel-remote-sender-activity.js';
+
+import { TimeseriesData } from './charting.js';
+
+
+export default Vue.component('page-reports-main', function(resolve, reject) {
     axios.get('reports/ui/page-reports-main.html').then((response) => { resolve({
 
         template: response.data,
 
         components: {
-            'page-layout': Vue.component('page-layout'),
-            'reports-page-header': Vue.component('reports-page-header'),
-            'date-range-picker': Vue.component('date-range-picker'),
-            'panel-messages-sent': Vue.component('panel-messages-sent'),
-            'panel-messages-received': Vue.component('panel-messages-received'),
-            'panel-flagged-connections': Vue.component('panel-flagged-connections'),
-            'panel-user-activity': Vue.component('panel-user-activity'),
+            'page-layout': page_layout,
+            'reports-page-header': reports_page_header,
+            'date-range-picker': date_range_picker,
+            'capture-db-stats': capture_db_stats,
+            'panel-messages-sent': panel_messages_sent,
+            'panel-messages-received': panel_messages_received,
+            'panel-flagged-connections': panel_flagged_connections,
+            'panel-user-activity': panel_user_activity,
+            'panel-remote-sender-activity': panel_remote_sender_activity,
         },
         
         data: function() {

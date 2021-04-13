@@ -1,5 +1,5 @@
 
-class ChartPrefs {
+export class ChartPrefs {
     static get colors() {
         // see: https://github.com/d3/d3-scale-chromatic
         return d3.schemeSet2;
@@ -40,7 +40,7 @@ class ChartPrefs {
 };
 
 
-class DateFormatter {
+export class DateFormatter {
     /*
      * date and time
      */
@@ -162,7 +162,7 @@ class DateFormatter {
 };
 
 
-class DateRange {
+export class DateRange {
     /*
      * ranges
      */
@@ -224,15 +224,24 @@ class DateRange {
         else if (type == 'ytd')
             return DateRange.ytd();
         else if (type == 'last30days')
-            return DateRange.lastXdays(30);
+            return DateRange.lastXdays(29);
         else if (type == 'last7days')
-            return DateRange.lastXdays(7)
+            return DateRange.lastXdays(6)
+        else if (type == 'today') {
+            var d = new Date();
+            return [ d, d ];
+        }
+        else if (type == 'yesterday') {
+            var d = new Date();
+            d.setTime(d.getTime() - (1 * 24 * 60 * 60 * 1000));
+            return [ d, d ];
+        }
         return null;
     }
 };
 
 
-class NumberFormatter {
+export class NumberFormatter {
     static format(v) {
         return isNaN(v) || v===null ? "N/A" : v.toLocaleString(ChartPrefs.locales);
     }
@@ -310,7 +319,7 @@ class NumberFormatter {
 });
 
 
-class BvTable {
+export class BvTable {
     constructor(data, opt) {
         opt = opt || {};
         Object.assign(this, data);
@@ -437,7 +446,7 @@ class BvTable {
 };
 
 
-class BvTableField {
+export class BvTableField {
     constructor(field, field_type) {
         // this:
         //    key    - required
@@ -484,6 +493,8 @@ class BvTableField {
         }
         else if (ft.type == 'number') {
             if (ft.subtype == 'plain' ||
+                ft.subtype === null ||
+                ft.subtype === undefined ||
                 ft.subtype == 'decimal' && isNaN(ft.places)
                )
             {
@@ -619,7 +630,7 @@ class BvTableField {
 };
 
 
-class MailBvTable extends BvTable {
+export class MailBvTable extends BvTable {
     flag(key, fn) {
         var field = this.get_field(key, true);
         if (!field) return;
@@ -727,7 +738,7 @@ class MailBvTable extends BvTable {
 }
 
 
-class ChartVue {
+export class ChartVue {
     
     static svg_attrs(viewBox) {
         var attrs = {
@@ -748,6 +759,15 @@ class ChartVue {
         return svg;
     }
 
+
+    static get_yAxisLegendBounds(data) {
+        const h = ChartPrefs.axis_font_size;
+        return {
+            width: h + 6,
+            height: h * data.series.length
+        };
+    }
+    
     static add_yAxisLegend(g, data, colors) {
         //var gtick = g.select(".tick:last-of-type").append("g");
         const h = ChartPrefs.axis_font_size;
@@ -800,7 +820,7 @@ class ChartVue {
  * }
  */    
 
-class TimeseriesData {
+export class TimeseriesData {
     constructor(data) {
         Object.assign(this, data);
         this.convert_dates();
@@ -853,9 +873,8 @@ class TimeseriesData {
     }
 
     static binsizeOfRange(range) {
-        // target 100-120 datapoints
-        const target = 100;
-        const tolerance = 0.2; // 20%
+        // target roughly 75 datapoints
+        const target = 75;
         
         if (typeof range[0] == 'string') {
             var parser = d3.utcParse('%Y-%m-%d %H:%M:%S');
@@ -865,27 +884,47 @@ class TimeseriesData {
         const span_min = Math.ceil(
             (range[1].getTime() - range[0].getTime()) / (1000*60*target)
         );
-        const bin_days = Math.floor(span_min / (24*60));
-        const bin_hours = Math.floor((span_min - bin_days*24*60) / 60);
+
+        var bin_days = Math.floor(span_min / (24*60));
+        var bin_hours = Math.floor((span_min - bin_days*24*60) / 60);
         if (bin_days >= 1) {
-            return bin_days * 24 * 60 +
-                (bin_hours > (24 * tolerance) ? bin_hours*60: 0);
+            if (bin_hours > 18) {
+                bin_days += 1;
+                bin_hours = 0;
+            }
+            else if (bin_hours > 6) {
+                bin_hours = 12;
+            }
+            else {
+                bin_hours = 0;
+            }
+            return bin_days * 24 * 60 + bin_hours*60;
         }
         
-        const bin_mins = span_min - bin_days*24*60 - bin_hours*60;
-        if (bin_hours >= 1) {
-            return bin_hours * 60 +
-                (bin_mins > (60 * tolerance) ? bin_mins: 0 );
+        var bin_mins = span_min - bin_days*24*60 - bin_hours*60;
+        if (bin_mins > 45) {
+            bin_hours += 1
+            bin_mins = 0;
         }
-        return bin_mins;
+        else if (bin_mins > 15) {
+            bin_mins = 30;
+        }
+        else {
+            bin_mins = 0;
+        }        
+        return bin_hours * 60 + bin_mins;
     }
 
-    barwidth(xscale, barspacing) {
+    barwidth(xscale, barspacing, max_width) {
         /* get the width of a bar in a bar chart */
-        var start = this.range[0];
-        var end = this.range[1];
-        var bins = (end.getTime() - start.getTime()) / (1000 * this.binsizeTimespan());
-        return Math.max(1, (xscale.range()[1] - xscale.range()[0])/bins - (barspacing || 0));
+        if (this.dates.length == 0) return 0;  // no data
+        barspacing = (barspacing === undefined) ? 2 : barspacing;
+        max_width = (max_width === undefined) ? 75 : max_width;
+        var first_date = this.dates[0];
+        var last_date = this.dates[this.dates.length-1];
+        var bins = (last_date.getTime() - first_date.getTime()) / (1000 * 60 * this.binsize) + 1;
+        if (bins == 1) return max_width;
+        return Math.min(max_width, Math.max(1, (xscale(last_date) - xscale(first_date))/bins - barspacing));
     }
 
     formatDateTimeLong(d) {
@@ -947,7 +986,7 @@ class TimeseriesData {
 };
 
 
-class ConnectionDisposition {
+export class ConnectionDisposition {
     constructor(disposition) {
         const data = {
             'failed_login_attempt': {

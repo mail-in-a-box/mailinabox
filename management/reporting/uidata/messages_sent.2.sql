@@ -4,7 +4,10 @@
 -- defined by {timefmt})
 --
 SELECT
-  strftime('{timefmt}',connect_time) AS `bin`,
+  strftime('{timefmt}',
+    :start_unixepoch + cast((strftime('%s',connect_time) - :start_unixepoch) / (60 * :binsize) as int) * (60 * :binsize),
+    'unixepoch'
+  ) AS `bin`,
   mta_delivery.service AS `delivery_service`,
   count(*) AS `delivery_count`
 FROM mta_accept
@@ -14,5 +17,5 @@ WHERE
   (mta_connection.service = 'submission' OR mta_connection.service = 'pickup') AND
   connect_time >= :start_date AND
   connect_time < :end_date
-GROUP BY strftime('{timefmt}',connect_time), mta_delivery.service
+GROUP BY bin, mta_delivery.service
 ORDER BY connect_time

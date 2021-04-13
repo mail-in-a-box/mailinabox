@@ -2,14 +2,19 @@
  * reports index page
  */ 
 
+import page_settings from "./page-settings.js";
+import page_reports_main from "./page-reports-main.js";
+import { Me, init_authentication_interceptors } from "../../ui-common/authentication.js";
+import { AuthenticationError } from "../../ui-common/exceptions.js";
+import UserSettings from "./settings.js";
 
 
 const app = {
     router: new VueRouter({
         routes: [
-            { path: '/', component: Vue.component('page-reports-main') },
-            { path: '/settings', component: Vue.component('page-settings') },
-            { path: '/:panel', component: Vue.component('page-reports-main') },
+            { path: '/', component: page_reports_main },
+            { path: '/settings', component: page_settings },
+            { path: '/:panel', component: page_reports_main },
         ],
         scrollBehavior: function(to, from, savedPosition) {
             if (savedPosition) {
@@ -19,8 +24,8 @@ const app = {
     }),
     
     components: {
-        'page-settings': Vue.component('page-settings'),
-        'page-reports-main': Vue.component('page-reports-main'),
+        'page-settings': page_settings,
+        'page-reports-main': page_reports_main,
     },
         
     data: {
@@ -64,12 +69,12 @@ const app = {
 
 
 
-function init_app() {
-    init_axios_interceptors();
+
+init_authentication_interceptors();
     
-    UserSettings.load().then(settings => {
-        new Vue(app).$mount('#app');
-    }).catch(error => {
-        alert('' + error);
-    });
-}
+UserSettings.load().then(settings => {
+    new Vue(app).$mount('#app');
+}).catch(error => {
+    alert('' + error);
+});
+

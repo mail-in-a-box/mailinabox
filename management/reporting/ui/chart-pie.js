@@ -1,4 +1,7 @@
-Vue.component('chart-pie', {
+import { ChartPrefs, NumberFormatter, ChartVue } from "./charting.js";
+
+
+export default Vue.component('chart-pie', {
     /*
      * chart_data: [
      *   { name: 'name', value: value },
@@ -127,7 +130,7 @@ Vue.component('chart-pie', {
                 radius *= 0.7;
             else
                 radius *= 0.8;
-            arcLabel = d3.arc().innerRadius(radius).outerRadius(radius);
+            var arcLabel = d3.arc().innerRadius(radius).outerRadius(radius);
             
             svg.append("g")
                 .attr("stroke", "white")
@@ -148,11 +151,15 @@ Vue.component('chart-pie', {
                     .data(arcs)
                     .join("text")
                     .attr("transform", d => `translate(${arcLabel.centroid(d)})`)
-                    .call(text => text.append("tspan")
+                    .call(text => text
+                          .filter(d => (d.endAngle - d.startAngle) > 0.25)
+                          .append("tspan")
                           .attr("y", "-0.4em")
                           .attr("font-weight", "bold")
                           .text(d => d.data.name))
-                    .call(text => text.filter(d => (d.endAngle - d.startAngle) > 0.25).append("tspan")
+                    .call(text => text
+                          .filter(d => (d.endAngle - d.startAngle) > 0.25)
+                          .append("tspan")
                           .attr("x", 0)
                           .attr("y", "0.7em")
                           .attr("fill-opacity", 0.7)

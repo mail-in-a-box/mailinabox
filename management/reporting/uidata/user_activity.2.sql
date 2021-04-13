@@ -4,10 +4,12 @@
 SELECT
 -- mta_connection
 connect_time, mta_connection.service AS service, sasl_username, disposition,
+remote_host, remote_ip,
 -- mta_accept
 envelope_from, spf_result, dkim_result, dkim_reason, dmarc_result, dmarc_reason,
+message_id, failure_info,
 -- mta_delivery
-postgrey_result, postgrey_reason, postgrey_delay, spam_score, spam_result, message_size, orig_to
+postgrey_result, postgrey_reason, postgrey_delay, spam_score, spam_result, message_size, orig_to, delivery_info
 FROM mta_accept
 JOIN mta_connection ON mta_accept.mta_conn_id = mta_connection.mta_conn_id
 JOIN mta_delivery ON mta_accept.mta_accept_id = mta_delivery.mta_accept_id

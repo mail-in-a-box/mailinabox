@@ -14,7 +14,7 @@ from functools import wraps
 from reporting.capture.db.SqliteConnFactory import SqliteConnFactory
 import reporting.uidata as uidata
 
-from mailconfig import get_mail_users
+from mailconfig import ( get_mail_users, validate_email )
 
 		
 def add_reports(app, env, authorized_personnel_only):
@@ -102,6 +102,18 @@ def add_reports(app, env, authorized_personnel_only):
 		finally:
 			db_conn_factory.close(conn)
 
+	@app.route('/reports/uidata/imap-details', methods=['POST'])
+	@authorized_personnel_only
+	@json_payload
+	def get_imap_details(payload):
+		conn = db_conn_factory.connect()
+		try:
+			return jsonify(uidata.imap_details(conn, payload))
+		except uidata.InvalidArgsError as e:
+			return ('invalid request', 400)
+		finally:
+			db_conn_factory.close(conn)
+
 	@app.route('/reports/uidata/flagged-connections', methods=['POST'])
 	@authorized_personnel_only
 	@json_payload
@@ -178,7 +190,7 @@ def add_reports(app, env, authorized_personnel_only):
 
 		r = subprocess.run(["systemctl", "reload", "miabldap-capture"])
 		if r.returncode != 0:
-			log.warning('systemctl reload faild for miabldap-capture: code=%s', r.returncode)
+			log.warning('systemctl reload failed for miabldap-capture: code=%s', r.returncode)
 		else:
 			# wait a sec for daemon to pick up new config
 			# TODO: monitor runtime config for mtime change
@@ -214,3 +226,41 @@ def add_reports(app, env, authorized_personnel_only):
 			return jsonify(uidata.capture_db_stats(conn))
 		finally:
 			db_conn_factory.close(conn)
+
+	@app.route('/reports/uidata/message-headers', methods=['POST'])
+	@authorized_personnel_only
+	@json_payload
+	def get_message_headers(payload):
+		try:
+			user_id = payload['user_id']
+			lmtp_id = payload['lmtp_id']
+		except KeyError:
+			return ('invalid request', 400)
+
+		if not validate_email(user_id, mode="user"):
+			return ('invalid email address', 400)
+
+		r = subprocess.run(
+			[
+				"/usr/bin/doveadm",
+				"fetch",
+				"-u",user_id,
+				"hdr",
+				"HEADER","received","LMTP id " + lmtp_id
+			],
+			encoding="utf8",
+			stdout=subprocess.PIPE,
+			stderr=subprocess.PIPE
+		)
+		
+		if r.returncode != 0:
+			log.error('retrieving message headers failed, code=%s, lmtp_id=%s, user_id=%s, stderr=%s', r.returncode, lmtp_id, user_id, r.stderr)
+			return Response(r.stderr, status=400, mimetype='text/plain')
+
+		else:
+			out = r.stdout.strip()
+			if out.startswith('hdr:\n'):
+				out = out[5:]
+			return Response(out, status=200, mimetype='text/plain')
+		
+		

@@ -1,4 +1,13 @@
-Vue.component('panel-flagged-connections', function(resolve, reject) {
+
+import chart_multi_line_timeseries from "./chart-multi-line-timeseries.js";
+import chart_stacked_bar_timeseries from "./chart-stacked-bar-timeseries.js";
+import chart_pie from "./chart-pie.js";
+import chart_table from "./chart-table.js";
+
+import { ChartPrefs, TimeseriesData, BvTable, ConnectionDisposition } from "./charting.js";
+
+
+export default Vue.component('panel-flagged-connections', function(resolve, reject) {
     axios.get('reports/ui/panel-flagged-connections.html').then((response) => { resolve({
 
         template: response.data,
@@ -14,10 +23,10 @@ Vue.component('panel-flagged-connections', function(resolve, reject) {
         },
 
         components: {
-            'chart-multi-line-timeseries': Vue.component('chart-multi-line-timeseries'),
-            'chart-stacked-bar-timeseries': Vue.component('chart-stacked-bar-timeseries'),
-            'chart-pie': Vue.component('chart-pie'),
-            'chart-table': Vue.component('chart-table'),
+            'chart-multi-line-timeseries': chart_multi_line_timeseries,
+            'chart-stacked-bar-timeseries': chart_stacked_bar_timeseries,
+            'chart-pie': chart_pie,
+            'chart-table': chart_table,
         },
 
         computed: {

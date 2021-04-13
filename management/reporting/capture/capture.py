@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from logs.TailFile import TailFile
-from mail.InboundMailLogHandler import InboundMailLogHandler
+from mail.PostfixLogHandler import PostfixLogHandler
+from mail.DovecotLogHandler import DovecotLogHandler
 from logs.ReadPositionStoreInFile import ReadPositionStoreInFile
 from db.SqliteConnFactory import SqliteConnFactory
 from db.SqliteEventStore import SqliteEventStore
@@ -50,6 +51,7 @@ options = {
     'daemon': True,
     'log_level': logging.WARNING,
     'log_file': "/var/log/mail.log",
+    'stop_at_eof': False,
     'pos_file': "/var/lib/mailinabox/capture-pos.json",
     'sqlite_file': os.path.join(CAPTURE_STORAGE_ROOT, 'capture.sqlite'),
     'working_dir': "/var/run/mailinabox",
@@ -122,6 +124,10 @@ def process_cmdline(options):
         elif arg=='-logfile' and have_next:
             argi+=1
             options['log_file'] = sys.argv[argi]
+
+        elif arg=='-stopateof':
+            argi+=1
+            options['stop_at_eof'] = True
             
         elif arg=='-posfile' and have_next:
             argi+=1
@@ -220,14 +226,21 @@ try:
     )
     mail_tail = TailFile(
         options['log_file'],
-        position_store
+        position_store,
+        options['stop_at_eof']
     )
-    inbound_mail_handler = InboundMailLogHandler(
+    postfix_log_handler = PostfixLogHandler(
         event_store,
         capture_enabled = options['config'].get('capture',True),
         drop_disposition = options['config'].get('drop_disposition')
     )
-    mail_tail.add_handler(inbound_mail_handler)
+    mail_tail.add_handler(postfix_log_handler)
+    dovecot_log_handler = DovecotLogHandler(
+        event_store,
+        capture_enabled = options['config'].get('capture',True),
+        drop_disposition = options['config'].get('drop_disposition')
+    )
+    mail_tail.add_handler(dovecot_log_handler)
     pruner = Pruner(
         db_conn_factory,
         policy=options['config']['prune_policy']
@@ -245,17 +258,6 @@ def terminate(sig, stack):
         log.warning("shutting down due to SIGTERM")
     log.debug("stopping mail_tail")
     mail_tail.stop()
-    log.debug("stopping pruner")
-    pruner.stop()
-    log.debug("stopping position_store")
-    position_store.stop()
-    log.debug("stopping event_store")
-    event_store.stop()
-    try:
-        os.remove(options['_runtime_config_file'])
-    except Exception:
-        pass
-    log.info("stopped")
 
 # reload settings handler
 def reload(sig, stack):
@@ -266,8 +268,10 @@ def reload(sig, stack):
         options['config']['default_config'] = False
         options['_config_file'] = config_default_file
 
-    log.info('%s records are in-progress',
-             inbound_mail_handler.get_inprogress_count())
+    log.info('%s mta records are in-progress',
+             postfix_log_handler.get_inprogress_count())
+    log.info('%s imap records are in-progress',
+             dovecot_log_handler.get_inprogress_count())
 
     if options['_config_file']:
         log.info('reloading %s', options['_config_file'])
@@ -276,10 +280,16 @@ def reload(sig, stack):
             pruner.set_policy(
                 newconfig['prune_policy']
             )
-            inbound_mail_handler.set_capture_enabled(
+            postfix_log_handler.set_capture_enabled(
                 newconfig.get('capture', True)
             )
-            inbound_mail_handler.update_drop_disposition(
+            postfix_log_handler.update_drop_disposition(
+                newconfig.get('drop_disposition', {})
+            )
+            dovecot_log_handler.set_capture_enabled(
+                newconfig.get('capture', True)
+            )
+            dovecot_log_handler.update_drop_disposition(
                 newconfig.get('drop_disposition', {})
             )
             write_config(options['_runtime_config_file'], newconfig)
@@ -298,3 +308,15 @@ signal.signal(signal.SIGHUP, reload)
 mail_tail.start()
 mail_tail.join()
 
+# gracefully close other threads
+log.debug("stopping pruner")
+pruner.stop()
+log.debug("stopping position_store")
+position_store.stop()
+log.debug("stopping event_store")
+event_store.stop()
+try:
+    os.remove(options['_runtime_config_file'])
+except Exception:
+    pass
+log.info("stopped")

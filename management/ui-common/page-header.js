@@ -1,8 +1,8 @@
-Vue.component('spinner', {
+var spinner = Vue.component('spinner', {
     template: '<span class="spinner-border spinner-border-sm"></span>'
 });
 
-Vue.component('page-header', function(resolve, reject) {
+var header = Vue.component('page-header', function(resolve, reject) {
     axios.get('ui-common/page-header.html').then((response) => { resolve({
 
         props: {
@@ -17,3 +17,5 @@ Vue.component('page-header', function(resolve, reject) {
     });
 
 });
+
+export { spinner, header as default };

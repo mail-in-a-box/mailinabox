@@ -40,10 +40,12 @@ def messages_received(conn, args):
     try:
         for row in c.execute(select_1.format(timefmt=ts.timefmt), {
                 'start_date':ts.start,
-                'end_date':ts.end
+                'end_date':ts.end,
+                'start_unixepoch':ts.start_unixepoch,
+                'binsize':ts.binsize
         }):
-            ts.append_date(row['bin'])
-            s_received['values'].append(row['count'])
+            idx = ts.insert_date(row['bin'])
+            s_received['values'][idx] = row['count']
 
 
         # top 10 senders (envelope_from) by message count

@@ -7,6 +7,9 @@ with open(__file__.replace('.py','.1.sql')) as fp:
 with open(__file__.replace('.py','.2.sql')) as fp:
     select_2 = fp.read()
 
+with open(__file__.replace('.py','.3.sql')) as fp:
+    select_3 = fp.read()
+
 
 def user_activity(conn, args):
     '''
@@ -110,6 +113,8 @@ def user_activity(conn, args):
             'connect_time',
             'service',
             'sasl_username',
+            'remote_host',
+            'remote_ip',
             
             # mta_accept
             'envelope_from',
@@ -119,6 +124,8 @@ def user_activity(conn, args):
             'dkim_reason',
             'dmarc_result',
             'dmarc_reason',
+            'message_id',
+            'failure_info',
             
             # mta_delivery
             'orig_to',
@@ -128,18 +135,23 @@ def user_activity(conn, args):
             'spam_score',
             'spam_result',
             'message_size',
+            'lmtp_id',
         ],
         'field_types': [
             { 'type':'datetime', 'format': '%Y-%m-%d %H:%M:%S' },# connect_time
             'text/plain',    # mta_connection.service
             'text/email',    # sasl_username
+            'text/plain',    # remote_host
+            'text/plain',    # remote_ip
             'text/email',    # envelope_from
             'text/plain',    # disposition
             'text/plain',    # spf_result
             'text/plain',    # dkim_result
             'text/plain',    # dkim_result
             'text/plain',    # dmarc_result
-            'text/plain',    # dmarc_result
+            'text/plain',    # dmarc_reason
+            'text/plain',    # message_id
+            'text/plain',    # failure_info
             'text/email',    # orig_to
             'text/plain',    # postgrey_result
             'text/plain',    # postgrey_reason
@@ -147,6 +159,7 @@ def user_activity(conn, args):
             { 'type':'decimal', 'places':2 },     # spam_score
             'text/plain',    # spam_result
             'number/size',   # message_size
+            'text/plain',    # lmtp_id
         ],
         'items': []
     }
@@ -158,12 +171,93 @@ def user_activity(conn, args):
     }):
         v = []
         for key in received_mail['fields']:
-            v.append(row[key])
+            if key == 'lmtp_id':
+                # Extract the LMTP ID from delivery info, which looks
+                # like:
+                #
+                # "250 2.0.0 <user@domain.tld> oPHmBDvTaWA7UwAAlWWVsw
+                # Saved"
+                #
+                # When we know the LMTP ID, we can get the message
+                # headers using doveadm, like this:
+                #
+                # "/usr/bin/doveadm fetch -u "user@domain.tld" hdr
+                # HEADER received "LMTP id oPHmBDvTaWA7UwAAlWWVsw"
+                #
+                delivery_info = row['delivery_info']
+                valid = False
+                if delivery_info:
+                    parts = delivery_info.split(' ')
+                    if parts[0]=='250' and parts[1]=='2.0.0':
+                        v.append(parts[-2])
+                        valid = True
+                if not valid:
+                    v.append(None)
+                    
+            else:
+                v.append(row[key])
         received_mail['items'].append(v)
 
 
+    #
+    # IMAP connections by disposition, by remote host
+    #   Disposition
+    #   Remote host
+    #   Count
+    #   In bytes (sum)
+    #   Out bytes (sum)
+    #   % of total
+    #
+
+    imap_conn_summary = {
+        'start': ts.start,
+        'end': ts.end,
+        'y': 'IMAP connection summary by host and disposition',
+        'fields': [
+            'count',
+            'total',
+            'remote_host',
+            'disposition',
+            'first_connection_time',
+            'last_connection_time',
+            'in_bytes',
+            'out_bytes',
+        ],
+        'field_types': [
+            'number',        # count
+            { 'type': 'number/percent', 'places': 1 }, # total
+            'text/plain',    # remote_host
+            'text/plain',    # disposition
+            { 'type':'datetime', 'format': ts.parsefmt }, # first_conn_time
+            { 'type':'datetime', 'format': ts.parsefmt }, # last_conn_time
+            'number/size',   # in_bytes,
+            'number/size',   # out_bytes,
+        ],
+        'items': []
+    }
+
+    count_field_idx = 0
+    total_field_idx = 1
+    total = 0
+    for row in c.execute(select_3 + limit, {
+            'user_id': user_id,
+            'start_date': ts.start,
+            'end_date': ts.end
+    }):
+        v = []
+        for key in imap_conn_summary['fields']:
+            if key=='count':
+                total += row[key]
+            if key!='total':
+                v.append(row[key])
+
+        imap_conn_summary['items'].append(v)
+
+    for v in imap_conn_summary['items']:
+        v.insert(total_field_idx, v[count_field_idx] / total)
         
     return {
         'sent_mail': sent_mail,
-        'received_mail': received_mail
+        'received_mail': received_mail,
+        'imap_conn_summary': imap_conn_summary
     }
