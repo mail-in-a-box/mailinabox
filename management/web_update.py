@@ -50,7 +50,7 @@ def get_web_domains(env, include_www_redirects=True, exclude_dns_elsewhere=True)
 
 	# Sort the list so the nginx conf gets written in a stable order.
 	domains = sort_domains(domains, env)
-	
+
 	return domains
 
 def get_domains_with_a_records(env):

@@ -16,7 +16,7 @@ from flask import Flask, request, render_template, abort, Response, send_from_di
 
 import auth, utils
 from mailconfig import get_mail_users, get_mail_users_ex, get_admins, add_mail_user, set_mail_password, remove_mail_user
-from mailconfig import get_mail_user_privileges, add_remove_mail_user_privilege, open_database
+from mailconfig import get_mail_user_privileges, add_remove_mail_user_privilege
 from mailconfig import get_mail_aliases, get_mail_aliases_ex, get_mail_domains, add_mail_alias, remove_mail_alias
 from mfa import get_public_mfa_state, provision_totp, validate_totp_secret, enable_mfa, disable_mfa
 
@@ -119,12 +119,9 @@ def index():
 	utils.fix_boto() # must call prior to importing boto
 	import boto.s3
 	backup_s3_hosts = [(r.name, r.endpoint) for r in boto.s3.regions()]
-	lsb=utils.shell("check_output", ["/usr/bin/lsb_release", "-d"])
 
 	return render_template('index.html',
 		hostname=env['PRIMARY_HOSTNAME'],
-		distname=lsb[lsb.find("\t")+1:-1],
-		
 		storage_root=env['STORAGE_ROOT'],
 
 		no_users_exist=no_users_exist,
