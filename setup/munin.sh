@@ -72,9 +72,21 @@ hide_output systemctl unmask munin.service
 hide_output systemctl enable munin.service
 
 # Some more munin plugins
-ln -fs /usr/share/munin/plugins/postfix_mailstats /etc/munin/plugins/
-ln -fs /usr/share/munin/plugins/spamstats /etc/munin/plugins
-ln -fs /usr/share/munin/plugins/df_abs /etc/munin/plugins
+if [ -f /usr/share/munin/plugins/postfix_mailstats ] && [ ! -h /etc/munin/plugins/postfix_mailstats ]; then
+	ln -fs /usr/share/munin/plugins/postfix_mailstats /etc/munin/plugins/
+fi
+
+if [ -f /usr/share/munin/plugins/spamstats ] && [ ! -h /etc/munin/plugins/spamstats ]; then
+	ln -fs /usr/share/munin/plugins/spamstats /etc/munin/plugins/
+fi
+
+if [ -f /usr/share/munin/plugins/df_abs ] && [ ! -h /etc/munin/plugins/df_abs ]; then
+	ln -fs /usr/share/munin/plugins/df_abs /etc/munin/plugins/
+fi
+
+if [ -f /usr/share/munin/plugins/fail2ban ] && [ ! -h /etc/munin/plugins/fail2ban ]; then
+	ln -fs /usr/share/munin/plugins/fail2ban /etc/munin/plugins/
+fi
 
 # Restart services.
 restart_service munin
