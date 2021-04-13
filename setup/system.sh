@@ -316,6 +316,9 @@ fi
 if ! grep -q "listen-on-v6 " /etc/bind/named.conf.options; then
 	# Add a listen-on-v6 directive if it doesn't exist inside the options block.
 	sed -i "s/^}/\n\tlisten-on-v6 { ::1; };\n}/" /etc/bind/named.conf.options
+else
+	# Modify the listen-on-v6 directive if it does exist
+	sed -i "s/listen-on-v6 { any; }/listen-on-v6 { ::1; }/" /etc/bind/named.conf.options
 fi
 
 if ! grep -q "max-recursion-queries " /etc/bind/named.conf.options; then
