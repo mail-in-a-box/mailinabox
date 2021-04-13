@@ -267,6 +267,18 @@ EOF
 chmod +x /etc/cron.daily/mailinabox-postgrey-whitelist
 /etc/cron.daily/mailinabox-postgrey-whitelist
 
+# keep the postgrey local client whitelist file in STORAGE_ROOT so it
+# gets backed up
+mkdir -p "$STORAGE_ROOT/mail/postgrey"
+if [ ! -L "/etc/postgrey/whitelist_clients.local" ] && [ -f "/etc/postgrey/whitelist_clients.local" ]; then
+    # regular file (non-link) exists - move it to user-data
+    cp -p "/etc/postgrey/whitelist_clients.local" \
+          "$STORAGE_ROOT/mail/postgrey/whitelist_clients.local"
+fi
+ln -sf "$STORAGE_ROOT/mail/postgrey/whitelist_clients.local" \
+       "/etc/postgrey/whitelist_clients.local"
+
+
 # Increase the message size limit from 10MB to 128MB.
 # The same limit is specified in nginx.conf for mail submitted via webmail and Z-Push.
 tools/editconf.py /etc/postfix/main.cf \
