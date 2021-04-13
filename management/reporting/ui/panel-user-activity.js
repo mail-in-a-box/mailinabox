@@ -3,9 +3,10 @@
 */
 
 import wbr_text from "./wbr-text.js";
+import chart_table from "./chart-table.js";
 import message_headers_view from "./message_headers_view.js";
 import UserSettings from "./settings.js";
-import { MailBvTable, ConnectionDisposition } from "./charting.js";
+import { BvTable, MailBvTable, ConnectionDisposition } from "./charting.js";
 
 
 export default Vue.component('panel-user-activity', function(resolve, reject) {
@@ -19,7 +20,8 @@ export default Vue.component('panel-user-activity', function(resolve, reject) {
 
         components: {
             'wbr-text': wbr_text,
-            'message-headers-view': message_headers_view
+            'message-headers-view': message_headers_view,
+            'chart-table': chart_table,
         },
         
         data: function() {
@@ -36,6 +38,7 @@ export default Vue.component('panel-user-activity', function(resolve, reject) {
                 data_date_range: null, /* date range for active table data */
                 sent_mail: null,
                 received_mail: null,
+                imap_conn_summary: null,
                 imap_details: null,
                 lmtp_id: null, /* for message headers modal */
                 all_users: [],
@@ -169,11 +172,19 @@ export default Vue.component('panel-user-activity', function(resolve, reject) {
                 f.label = 'Envelope From (user)';
             },
 
+            combine_imap_conn_summary_fields: function() {
+                // remove 'first_conn_time'
+                this.imap_conn_summary.combine_fields('first_connection_time');
+                // clear the label for the 'total' column (pct)
+                const f_total = this.imap_conn_summary.get_field('total');
+                f_total.label = '';
+            },
+
             combine_imap_details_fields: function() {
                 // remove these fields
                 this.imap_details.combine_fields([
-                    'disconnect_reason',
-                    'connection_security',
+                    'remote_host',
+                    'disposition',
                 ]);
             },
 
@@ -272,16 +283,21 @@ export default Vue.component('panel-user-activity', function(resolve, reject) {
                         .get_field('connect_time')
                         .add_tdClass('text-nowrap');
 
-                    /* setup imap_details */
-                    this.imap_details = new MailBvTable(
-                        response.data.imap_details, {
-                            _showDetails: true
+                    
+                    /* setup imap_conn_summary */
+                    this.imap_conn_summary = new MailBvTable(
+                        response.data.imap_conn_summary
+                    );
+                    this.combine_imap_conn_summary_fields();
+                    this.imap_conn_summary.flag_fields();
+                    ['last_connection_time','count']
+                        .forEach(name => {
+                            const f = this.imap_conn_summary.get_field(name);
+                            f.add_cls('text-nowrap', 'tdClass');
                         });
-                    this.combine_imap_details_fields();
-                    this.imap_details
-                        .flag_fields()
-                        .get_field('connect_time')
-                        .add_tdClass('text-nowrap');
+
+                    /* clear imap_details */
+                    this.imap_details = null;
 
                 }).catch(error => {
                     this.$root.handleError(error);
@@ -304,6 +320,36 @@ export default Vue.component('panel-user-activity', function(resolve, reject) {
                 
                 // show the modal dialog
                 this.$refs.message_headers_modal.show();
+            },
+
+            load_imap_details: function(item, index, event) {
+                this.$emit('loading', 1);
+                this.imap_details = null;
+                const promise = axios.post('reports/uidata/imap-details', {
+                    row_limit: this.get_row_limit(),
+                    user_id: this.user_id.trim(),
+                    start_date: this.date_range[0],
+                    end_date: this.date_range[1],
+                    disposition: item.disposition,
+                    remote_host: item.remote_host
+                }).then(response => {
+                    this.imap_details = new MailBvTable(
+                        response.data.imap_details
+                    );
+                    this.combine_imap_details_fields();
+                    this.imap_details.get_field('connect_time')
+                        .add_tdClass('text-nowrap');
+                    this.imap_details.get_field('disconnect_time')
+                        .add_tdClass('text-nowrap');
+                    this.imap_details._desc =
+                        `${item.remote_host}/${item.disposition}`;
+                    
+                }).catch(error => {
+                    this.$root.handleError(error);
+                    
+                }).finally( () => {
+                    this.$emit('loading', -1);
+                });
             }
             
         }

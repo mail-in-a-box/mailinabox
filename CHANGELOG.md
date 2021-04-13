@@ -1,8 +1,13 @@
 CHANGELOG
 =========
 
-In Development
---------------
+v0.53 (April 12, 2021)
+----------------------
+
+* Migrate to the ECDSAP256SHA256 DNSSEC algorithm. If a DS record is set for any of your domain names that have DNS hosted on your box, you will be prompted by status checks to update the DS record.
+
+v0.53 (April 12, 2021)
+----------------------
 
 Software updates:
 

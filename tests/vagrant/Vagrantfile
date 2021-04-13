@@ -43,7 +43,7 @@ SH
 cd /mailinabox
 source tests/vagrant/globals.sh || exit 1
 export PRIMARY_HOSTNAME=qa3.abc.com
-export UPSTREAM_TAG=master
+export UPSTREAM_TAG=main
 tests/system-setup/upgrade-from-upstream.sh basic totpuser || exit 1
 tests/runner.sh upgrade-basic upgrade-totpuser default || exit 2
 SH

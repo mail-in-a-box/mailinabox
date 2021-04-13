@@ -3,6 +3,7 @@ from .select_list_suggestions import select_list_suggestions
 from .messages_sent import messages_sent
 from .messages_received import messages_received
 from .user_activity import user_activity
+from .imap_details import imap_details
 from .remote_sender_activity import remote_sender_activity
 from .flagged_connections import flagged_connections
 from .capture_db_stats import capture_db_stats

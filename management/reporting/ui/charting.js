@@ -493,6 +493,8 @@ export class BvTableField {
         }
         else if (ft.type == 'number') {
             if (ft.subtype == 'plain' ||
+                ft.subtype === null ||
+                ft.subtype === undefined ||
                 ft.subtype == 'decimal' && isNaN(ft.places)
                )
             {
