@@ -1,3 +1,4 @@
+#!/bin/bash
 source setup/functions.sh
 
 echo Installing geoip packages...
@@ -8,8 +9,8 @@ echo Installing geoip packages...
 gunzip -c tools/goiplookup.gz > /usr/local/bin/goiplookup
 chmod +x /usr/local/bin/goiplookup
 
-# check that geoipdb is older then 2 months, to not hit the server too often 
-if [[ ! -d /usr/share/GeoIP || ! -f /usr/share/GeoIP/GeoIP.dat || $(find "/usr/share/GeoIP/GeoIP.dat" -mtime +60 -print) ]]; then
+# check that GeoLite2-Country.mmdb is older then 2 months, to not hit the server too often 
+if [[ ! -d /usr/share/GeoIP || ! -f /usr/share/GeoIP/GeoLite2-Country.mmdb || $(find "/usr/share/GeoIP/GeoLite2-Country.mmdb" -mtime +60 -print) ]]; then
   echo updating goiplookup database
   goiplookup db-update
 else
@@ -48,47 +49,56 @@ fi
 
 ## Install geo ip lookup files
 
-# Move old file away if it exists
-if [ -f "/usr/share/GeoIP/GeoIP.dat" ]; then
+# check that GeoIP.dat is older then 2 months, to not hit the server too often 
+if [[ ! -d /usr/share/GeoIP || ! -f /usr/share/GeoIP/GeoIP.dat || $(find "/usr/share/GeoIP/GeoIP.dat" -mtime +60 -print) ]]; then
+  echo updating GeoIP database
+  
+  # Move old file away if it exists
+  if [ -f "/usr/share/GeoIP/GeoIP.dat" ]; then
     mv -f /usr/share/GeoIP/GeoIP.dat /usr/share/GeoIP/GeoIP.dat.bak
-fi
+  fi
 
-hide_output wget -P /usr/share/GeoIP/ https://dl.miyuru.lk/geoip/maxmind/country/maxmind.dat.gz
+  hide_output wget -P /usr/share/GeoIP/ https://dl.miyuru.lk/geoip/maxmind/country/maxmind.dat.gz
 
-if [ -f "/usr/share/GeoIP/maxmind.dat.gz" ]; then
+  if [ -f "/usr/share/GeoIP/maxmind.dat.gz" ]; then
     gunzip -c /usr/share/GeoIP/maxmind.dat.gz > /usr/share/GeoIP/GeoIP.dat
-else
+    rm -f /usr/share/GeoIP/maxmind.dat.gz
+  else
     echo Did not correctly download maxmind geoip country database
-fi
+  fi
 
-# If new file is not created, move the old file back
-if [ ! -f "/usr/share/GeoIP/GeoIP.dat" ]; then
+  # If new file is not created, move the old file back
+  if [ ! -f "/usr/share/GeoIP/GeoIP.dat" ]; then
     echo GeoIP.dat was not created
     
     if [ -f "/usr/share/GeoIP/GeoIP.dat.bak" ]; then
         mv /usr/share/GeoIP/GeoIP.dat.bak /usr/share/GeoIP/GeoIP.dat
     fi
-fi
+  fi
 
-# Move old file away if it exists
-if [ -f "/usr/share/GeoIP/GeoIPCity.dat" ]; then
+  # Move old file away if it exists
+  if [ -f "/usr/share/GeoIP/GeoIPCity.dat" ]; then
     mv -f /usr/share/GeoIP/GeoIPCity.dat /usr/share/GeoIP/GeoIPCity.dat.bak
-fi
+  fi
 
-hide_output wget -P /usr/share/GeoIP/ https://dl.miyuru.lk/geoip/maxmind/city/maxmind.dat.gz
+  hide_output wget -P /usr/share/GeoIP/ https://dl.miyuru.lk/geoip/maxmind/city/maxmind.dat.gz
 
-if [ -f "/usr/share/GeoIP/maxmind.dat.gz" ]; then
+  if [ -f "/usr/share/GeoIP/maxmind.dat.gz" ]; then
     gunzip -c /usr/share/GeoIP/maxmind.dat.gz > /usr/share/GeoIP/GeoIPCity.dat
-else
+    rm -f /usr/share/GeoIP/maxmind.dat.gz
+  else
     echo Did not correctly download maxmind geoip city database
-fi
+  fi
 
-# If new file is not created, move the old file back
-if [ ! -f "/usr/share/GeoIP/GeoIPCity.dat" ]; then
+  # If new file is not created, move the old file back
+  if [ ! -f "/usr/share/GeoIP/GeoIPCity.dat" ]; then
     echo GeoIPCity.dat was not created
     
     if [ -f "/usr/share/GeoIP/GeoIPCity.dat.bak" ]; then
         mv /usr/share/GeoIP/GeoIPCity.dat.bak /usr/share/GeoIP/GeoIPCity.dat
     fi
+  fi
+else
+  echo skipping GeoIP database update
 fi
 

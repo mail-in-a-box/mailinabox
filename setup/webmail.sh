@@ -28,10 +28,11 @@ apt_install \
 # Install Roundcube from source if it is not already present or if it is out of date.
 # Combine the Roundcube version number with the commit hash of plugins to track
 # whether we have the latest version of everything.
-VERSION=1.4.10
-HASH=36b2351030e1ebddb8e39190d7b0ba82b1bbec1b
-PERSISTENT_LOGIN_VERSION=6b3fc450cae23ccb2f393d0ef67aa319e877e435
-HTML5_NOTIFIER_VERSION=4b370e3cd60dabd2f428a26f45b677ad1b7118d5
+
+VERSION=1.4.11
+HASH=3877f0e70f29e7d0612155632e48c3db1e626be3
+PERSISTENT_LOGIN_VERSION=6b3fc450cae23ccb2f393d0ef67aa319e877e435 # version 5.2.0
+HTML5_NOTIFIER_VERSION=68d9ca194212e15b3c7225eb6085dbcf02fd13d7 # version 0.6.4+
 CARDDAV_VERSION=4.1.1
 CARDDAV_HASH=87b73661b7799b2079c28324311eddb4241242bb
 

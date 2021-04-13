@@ -112,7 +112,7 @@ apt_get_quiet autoremove
 # * openssh-client: provides ssh-keygen
 
 echo Installing system packages...
-apt_install python3 python3-dev python3-pip \
+apt_install python3 python3-dev python3-pip python3-setuptools \
 	netcat-openbsd wget curl git sudo coreutils bc \
 	haveged pollinate openssh-client unzip \
 	unattended-upgrades cron ntp fail2ban rsyslog

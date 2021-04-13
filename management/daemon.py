@@ -280,17 +280,50 @@ def dns_set_secondary_nameserver():
 @app.route('/dns/custom')
 @authorized_personnel_only
 def dns_get_records(qname=None, rtype=None):
-	from dns_update import get_custom_dns_config
-	return json_response([
-	{
-		"qname": r[0],
-		"rtype": r[1],
-		"value": r[2],
-	}
-	for r in get_custom_dns_config(env)
-	if r[0] != "_secondary_nameserver"
-		and (not qname or r[0] == qname)
-		and (not rtype or r[1] == rtype) ])
+	# Get the current set of custom DNS records.
+	from dns_update import get_custom_dns_config, get_dns_zones
+	records = get_custom_dns_config(env, only_real_records=True)
+
+	# Filter per the arguments for the more complex GET routes below.
+	records = [r for r in records
+		if (not qname or r[0] == qname)
+		and (not rtype or r[1] == rtype) ]
+
+	# Make a better data structure.
+	records = [
+        {
+                "qname": r[0],
+                "rtype": r[1],
+                "value": r[2],
+		"sort-order": { },
+        } for r in records ]
+
+	# To help with grouping by zone in qname sorting, label each record with which zone it is in.
+	# There's an inconsistency in how we handle zones in get_dns_zones and in sort_domains, so
+	# do this first before sorting the domains within the zones.
+	zones = utils.sort_domains([z[0] for z in get_dns_zones(env)], env)
+	for r in records:
+		for z in zones:
+			if r["qname"] == z or r["qname"].endswith("." + z):
+				r["zone"] = z
+				break
+
+	# Add sorting information. The 'created' order follows the order in the YAML file on disk,
+	# which tracs the order entries were added in the control panel since we append to the end.
+	# The 'qname' sort order sorts by our standard domain name sort (by zone then by qname),
+	# then by rtype, and last by the original order in the YAML file (since sorting by value
+	# may not make sense, unless we parse IP addresses, for example).
+	for i, r in enumerate(records):
+		r["sort-order"]["created"] = i
+	domain_sort_order = utils.sort_domains([r["qname"] for r in records], env)
+	for i, r in enumerate(sorted(records, key = lambda r : (
+			zones.index(r["zone"]),
+			domain_sort_order.index(r["qname"]),
+			r["rtype"]))):
+		r["sort-order"]["qname"] = i
+
+	# Return.
+	return json_response(records)
 
 @app.route('/dns/custom/<qname>', methods=['GET', 'POST', 'PUT', 'DELETE'])
 @app.route('/dns/custom/<qname>/<rtype>', methods=['GET', 'POST', 'PUT', 'DELETE'])
@@ -594,19 +627,6 @@ def backup_set_custom():
 		request.form.get('min_age', '')
 	))
 
-@app.route('/system/backup/new', methods=["POST"])
-@authorized_personnel_only
-def backup_new():
-	from backup import perform_backup, get_backup_config
-
-	# If backups are disabled, don't perform the backup
-	config = get_backup_config(env)
-	if config["target"] == "off":
-		return "Backups are disabled in this machine. Nothing was done."
-
-	msg = perform_backup(request.form.get('full', False) == 'true', True)
-	return "OK" if msg is None else msg
-
 @app.route('/system/privacy', methods=["GET"])
 @authorized_personnel_only
 def privacy_status_get():
@@ -620,49 +640,6 @@ def privacy_status_set():
 	config["privacy"] = (request.form.get('value') == "private")
 	utils.write_settings(config, env)
 	return "OK"
-
-@app.route('/system/smtp/relay', methods=["GET"])
-@authorized_personnel_only
-def smtp_relay_get():
-	config = utils.load_settings(env)
-	return {
-		"enabled": config.get("SMTP_RELAY_ENABLED", True),
-		"host": config.get("SMTP_RELAY_HOST", ""),
-		"auth_enabled": config.get("SMTP_RELAY_AUTH", False),
-		"user": config.get("SMTP_RELAY_USER", "")
-	}
-
-@app.route('/system/smtp/relay', methods=["POST"])
-@authorized_personnel_only
-def smtp_relay_set():
-	from editconf import edit_conf
-	config = utils.load_settings(env)
-	newconf = request.form
-	try:
-		# Write on daemon settings
-		config["SMTP_RELAY_ENABLED"] = (newconf.get("enabled") == "true")
-		config["SMTP_RELAY_HOST"] = newconf.get("host")
-		config["SMTP_RELAY_AUTH"] = (newconf.get("auth_enabled") == "true")
-		config["SMTP_RELAY_USER"] = newconf.get("user")
-		utils.write_settings(config, env)
-		# Write on Postfix configs
-		edit_conf("/etc/postfix/main.cf", [
-			"relayhost=" + (f"[{config['SMTP_RELAY_HOST']}]:587" if config["SMTP_RELAY_ENABLED"] else ""),
-			"smtp_sasl_auth_enable=" + ("yes" if config["SMTP_RELAY_AUTH"] else "no"),
-			"smtp_sasl_security_options=" + ("noanonymous" if config["SMTP_RELAY_AUTH"] else "anonymous"),
-			"smtp_sasl_tls_security_options=" + ("noanonymous" if config["SMTP_RELAY_AUTH"] else "anonymous")
-		], delimiter_re=r"\s*=\s*", delimiter="=", comment_char="#")
-		if config["SMTP_RELAY_AUTH"]:
-			# Edit the sasl password
-			with open("/etc/postfix/sasl_passwd", "w") as f:
-				f.write(f"[{config['SMTP_RELAY_HOST']}]:587 {config['SMTP_RELAY_USER']}:{newconf.get('key')}\n")
-			utils.shell("check_output", ["/usr/bin/chmod", "600", "/etc/postfix/sasl_passwd"], capture_stderr=True)
-			utils.shell("check_output", ["/usr/sbin/postmap", "/etc/postfix/sasl_passwd"], capture_stderr=True)
-		# Restart Postfix
-		return utils.shell("check_output", ["/usr/bin/systemctl", "restart", "postfix"], capture_stderr=True)
-	except Exception as e:
-		return (str(e), 500)
-
 
 # MUNIN
 

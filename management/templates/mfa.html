@@ -36,11 +36,11 @@
 <p>When two-factor authentication is enabled, you will be prompted to enter a six digit code from an
 authenticator app (usually on your phone) when you log into this control panel.</p>
 
-<div class="card">
-<div class="card-header text-white bg-danger">
+<div class="panel panel-danger">
+<div class="panel-heading">
 Enabling two-factor authentication does not protect access to your email
 </div>
-<div class="card-body bg-light">
+<div class="panel-body">
 Enabling two-factor authentication on this page only limits access to this control panel. Remember that most websites allow you to
 reset your password by checking your email, so anyone with access to your email can typically take over
 your other accounts. Additionally, if your email address or any alias that forwards to your email
@@ -81,7 +81,7 @@ and ensure every administrator account for this control panel does the same.</st
         <div class="form-group">
             <p>When you click Enable Two-Factor Authentication, you will be logged out of the control panel and will have to log in
             again, now using your two-factor authentication app.</p>
-            <button id="totp-setup-submit" disabled type="submit" class="btn btn-primary">Enable Two-Factor Authentication</button>
+            <button id="totp-setup-submit" disabled type="submit" class="btn">Enable Two-Factor Authentication</button>
         </div>
     </form>
 
@@ -95,8 +95,8 @@ and ensure every administrator account for this control panel does the same.</st
         </div>
     </form>
 
-    <div id="output-2fa" class="card bg-light">
-        <div class="card-body"></div>
+    <div id="output-2fa" class="panel panel-danger">
+        <div class="panel-body"></div>
     </div>
 </div>
 
@@ -155,12 +155,12 @@ and ensure every administrator account for this control panel does the same.</st
     }
 
     function hide_error() {
-        el.output.querySelector('.card-body').innerHTML = '';
+        el.output.querySelector('.panel-body').innerHTML = '';
         el.output.classList.remove('visible');
     }
 
     function render_error(msg) {
-        el.output.querySelector('.card-body').innerHTML = msg;
+        el.output.querySelector('.panel-body').innerHTML = msg;
         el.output.classList.add('visible');
     }
 

@@ -58,7 +58,7 @@ tools/editconf.py /etc/postfix/main.cf \
 	smtp_bind_address=$PRIVATE_IP \
 	smtp_bind_address6=$PRIVATE_IPV6 \
 	myhostname=$PRIMARY_HOSTNAME\
-	smtpd_banner="\$myhostname ESMTP Hi, I'm a Power Mail-in-a-Box (Debian/Postfix)" \
+	smtpd_banner="\$myhostname ESMTP Hi, I'm a Mail-in-a-Box (Ubuntu/Postfix; see https://mailinabox.email/)" \
 	mydestination=localhost
 
 # Tweak some queue settings:
@@ -100,7 +100,7 @@ tools/editconf.py /etc/postfix/master.cf -s -w \
 # Install the `outgoing_mail_header_filters` file required by the new 'authclean' service.
 cp conf/postfix_outgoing_mail_header_filters /etc/postfix/outgoing_mail_header_filters
 
-# Modify the `outgoing_mail_header_filters` file to use the local machine name and ip
+# Modify the `outgoing_mail_header_filters` file to use the local machine name and ip 
 # on the first received header line.  This may help reduce the spam score of email by
 # removing the 127.0.0.1 reference.
 sed -i "s/PRIMARY_HOSTNAME/$PRIMARY_HOSTNAME/" /etc/postfix/outgoing_mail_header_filters
@@ -259,19 +259,6 @@ chmod +x /etc/cron.daily/mailinabox-postgrey-whitelist
 # The same limit is specified in nginx.conf for mail submitted via webmail and Z-Push.
 tools/editconf.py /etc/postfix/main.cf \
 	message_size_limit=134217728
-
-# Store default configurations for SMTP relays:
-tools/editconf.py /etc/postfix/main.cf \
-	smtp_sasl_auth_enable=no \
-	smtp_sasl_password_maps="hash:/etc/postfix/sasl_passwd" \
-	smtp_sasl_security_options=anonymous \
-	smtp_sasl_tls_security_options=anonymous \
-	smtp_tls_security_level=encrypt \
-	header_size_limit=4096000
-
-touch /etc/postfix/sasl_passwd
-chmod 600 /etc/postfix/sasl_passwd
-postmap /etc/postfix/sasl_passwd
 
 # Allow the two SMTP ports in the firewall.
 

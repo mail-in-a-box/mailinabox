@@ -27,9 +27,10 @@ done
 # provision free TLS certificates.
 apt_install duplicity python3-pip virtualenv certbot
 
+# b2sdk is used for backblaze backups.
 # boto is used for amazon aws backups.
 # Both are installed outside the pipenv, so they can be used by duplicity
-hide_output pip3 install --upgrade boto
+hide_output pip3 install --upgrade b2sdk boto
 
 # Create a virtualenv for the installation of Python 3 packages
 # used by the management daemon.
@@ -50,7 +51,7 @@ hide_output $venv/bin/pip install --upgrade \
 	rtyaml "email_validator>=1.0.0" "exclusiveprocess" \
 	flask dnspython python-dateutil \
   qrcode[pil] pyotp \
-	"idna>=2.0.0" "cryptography==2.2.2" boto psutil postfix-mta-sts-resolver
+	"idna>=2.0.0" "cryptography==2.2.2" boto psutil postfix-mta-sts-resolver b2sdk
 
 # CONFIGURATION
 
@@ -69,31 +70,21 @@ rm -rf $assets_dir
 mkdir -p $assets_dir
 
 # jQuery CDN URL
-jquery_version=3.5.1
+jquery_version=2.1.4
 jquery_url=https://code.jquery.com
 
 # Get jQuery
-wget_verify $jquery_url/jquery-$jquery_version.min.js c8e1c8b386dc5b7a9184c763c88d19a346eb3342 $assets_dir/jquery.min.js
+wget_verify $jquery_url/jquery-$jquery_version.min.js 43dc554608df885a59ddeece1598c6ace434d747 $assets_dir/jquery.min.js
 
 # Bootstrap CDN URL
-bootstrap_version=4.6.0
+bootstrap_version=3.3.7
 bootstrap_url=https://github.com/twbs/bootstrap/releases/download/v$bootstrap_version/bootstrap-$bootstrap_version-dist.zip
 
 # Get Bootstrap
-wget_verify $bootstrap_url a1d385dc33cb415512d2f38215a554c4380dac2d /tmp/bootstrap.zip
+wget_verify $bootstrap_url e6b1000b94e835ffd37f4c6dcbdad43f4b48a02a /tmp/bootstrap.zip
 unzip -q /tmp/bootstrap.zip -d $assets_dir
 mv $assets_dir/bootstrap-$bootstrap_version-dist $assets_dir/bootstrap
 rm -f /tmp/bootstrap.zip
-
-# FontAwesome CDN URL
-fontawesome_version=5.15.2
-fontawesome_url=https://github.com/FortAwesome/Font-Awesome/releases/download/$fontawesome_version/fontawesome-free-$fontawesome_version-web.zip
-
-# Get FontAwesome
-wget_verify $fontawesome_url 2f0b3f88500238fa0be798d628a3e68c5784f165 /tmp/fontawesome.zip
-unzip -q /tmp/fontawesome.zip -d $assets_dir
-mv $assets_dir/fontawesome-free-$fontawesome_version-web $assets_dir/fontawesome
-rm -f /tmp/fontawesome.zip
 
 # Create an init script to start the management daemon and keep it
 # running after a reboot.
@@ -126,14 +117,3 @@ EOF
 
 # Start the management server.
 restart_service mailinabox
-
-# FOR DEVELOPMENT PURPOSES ONLY:
-# If there is a CA certificate in the folder, install it.
-# MIAB will only accept a manual certificate installation
-# if it is signed by a CA trusted by it.
-if [[ -f mailinabox-ca.crt ]]; then
-    echo "Custom CA certificate detected. Installing..."
-    rm -f /usr/local/share/ca-certificates/mailinabox-ca.crt
-    cp mailinabox-ca.crt /usr/local/share/ca-certificates/
-    update-ca-certificates --fresh
-fi

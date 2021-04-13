@@ -57,7 +57,13 @@
   </div>
 </form>
 
-<table id="custom-dns-current" class="table" style="width: auto; display: none">
+<div style="text-align: right; font-size; 90%; margin-top: 1em;">
+  sort by:
+  <a href="#" onclick="window.miab_custom_dns_data_sort_order='qname'; show_current_custom_dns_update_after_sort(); return false;">domain name</a>
+  |
+  <a href="#" onclick="window.miab_custom_dns_data_sort_order='created'; show_current_custom_dns_update_after_sort(); return false;">created</a>
+</div>
+<table id="custom-dns-current" class="table" style="width: auto; display: none; margin-top: 0;">
   <thead>
     <th>Domain Name</th>
     <th>Record Type</th>
@@ -192,36 +198,38 @@ function show_current_custom_dns() {
         $('#custom-dns-current').fadeIn();
       else
         $('#custom-dns-current').fadeOut();
-        
-      var reverse_fqdn = function(el) {
-        el.qname = el.qname.split('.').reverse().join('.');
-        return el;
-      }
-      var sort = function(a, b) {
-        if(a.qname === b.qname) {
-          if(a.rtype === b.rtype) {
-            return a.value > b.value ? 1 : -1;
-          }
-          return a.rtype > b.rtype ? 1 : -1;
-        }
-        return a.qname > b.qname ? 1 : -1;
-      }
+      window.miab_custom_dns_data = data;
+      show_current_custom_dns_update_after_sort();
+    });
+}
 
-      data = data.map(reverse_fqdn).sort(sort).map(reverse_fqdn);
+function show_current_custom_dns_update_after_sort() {
+      var data = window.miab_custom_dns_data;
+      var sort_key = window.miab_custom_dns_data_sort_order || "qname";
 
-      $('#custom-dns-current').find("tbody").text('');
+      data.sort(function(a, b) { return a["sort-order"][sort_key] - b["sort-order"][sort_key] });
+
+      var tbody = $('#custom-dns-current').find("tbody");
+      tbody.text('');
+      var last_zone = null;
       for (var i = 0; i < data.length; i++) {
+        if (sort_key == "qname" && data[i].zone != last_zone) {
+          var r = $("<tr><th colspan=4 style='background-color: #EEE'></th></tr>");
+          r.find("th").text(data[i].zone);
+          tbody.append(r);
+          last_zone = data[i].zone;
+        }
+
         var tr = $("<tr/>");
-        $('#custom-dns-current').find("tbody").append(tr);
+        tbody.append(tr);
         tr.attr('data-qname', data[i].qname);
         tr.attr('data-rtype', data[i].rtype);
         tr.attr('data-value', data[i].value);
         tr.append($('<td class="long"/>').text(data[i].qname));
         tr.append($('<td/>').text(data[i].rtype));
-        tr.append($('<td class="long"/>').text(data[i].value));
+        tr.append($('<td class="long" style="max-width: 40em"/>').text(data[i].value));
         tr.append($('<td>[<a href="#" onclick="return delete_custom_dns_record(this)">delete</a>]</td>'));
       }
-    });
 }
 
 function delete_custom_dns_record(elem) {

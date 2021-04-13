@@ -92,7 +92,7 @@ def sort_domains(domain_names, env):
         # Then in right-to-left lexicographic order of the .-separated parts of the name.
         list(reversed(d.split("."))),
       ))
-
+    
     return domain_names
 
 def sort_email_addresses(email_addresses, env):

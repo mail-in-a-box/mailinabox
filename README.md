@@ -1,86 +1,14 @@
-(Power) Mail-in-a-Box
-=====================
+This is not the original Mail-in-a-Box. See https://github.com/mail-in-a-box/mailinabox for the real deal! I made a number of modifications to to:
+- add geoipblocking on the admin web console
+- add geoipblocking for ssh access
+- make fail2ban a more stricter
+- add fail2ban filter for web scanners
+- other small stuff
 
-## Installation
+Original mailinabox content starts here:
 
-- **PRE-REQUISITES:** Debian 10 (Buster) or Ubuntu 20.04 LTS fresh installation
-
-Update packages:
-```sh
-sudo apt update
-sudo apt full-upgrade
-```
-
-Make sure that the `en_US.UTF-8` locale exists and is set as primary (this depends on the image you use)
-```sh
-sudo apt install locales
-sudo dpkg-reconfigure locales
-```
-
-Install Power-Mail-in-a-Box (short link)
-```sh
-curl -L https://dvn.pt/powermiab | sudo bash
-```
-
-If that doesn't work:
-```sh
-curl https://raw.githubusercontent.com/ddavness/power-mailinabox/master/setup/bootstrap.sh | sudo bash
-```
-
-## Current Version: v0.52.POWER.0 (Tracking v0.52)
-
-This is a fork of MiaB (duh), hacked and tuned to my needs:
-
-✅ - **Done**
-
-👨‍💻 - **Not there yet, but soon!**
-
-💤 - **I did not begin this part yet!**
-
-- ✅ Support for Debian AND Ubuntu 20.04 LTS;
-
-- ✅ Native support for SMTP relays (For example: SendGrid);
-
-- ✅ Bumped the bootstrap and jQuery dependencies' versions - and we've got a brand new admin panel now!
-
-- ✅ Per-domain `nginx` configuration: Custom pages will no longer have their pages defaulting to the MiaB services (`/admin`, `/mail`, etc.);
-
-- ✅ Updated NextCloud to the latest version available;
-
-- ✅ Performing backups immediately from the admin panel (independently from the daily schedule);
-
-- 👨‍💻 Encrypting backups using user-provided PGP keys;
-
-- 👨‍💻 Integrate a WKD server (Web Key Directory) for PGP keys;
-
-- 💤 Restricting access to the admin panel to certain IP's?
-
-- 💤 Customizing MTA names? (because privacy)
-
-### Ideas section:
-
-- 💤 Ability to download the backups from the admin panel;
-
-- 💤 Possibility of making some services optional (if they require more software to be installed) on setup?
-
-- - For example, one might simply not use NextCloud/Munin at all, and they're there... just wasting resources.
-
-- 💤 AXFR Transfers (for secondary DNS) using TSIG?
-
-- 💤 Expand DNS record options?
-
-- 💤 More complete webmail configuration via the admin panel/plugin management?
-
-- 💤 Expand the TOTP Two-Factor-Authentication for the webmail?
-
-- - Maybe U2F one day, too, but I don't have a capable device for this just yet...
-
-- 💤 Anything else I might need to use;
-
-All in all, I think I should rename this to something like "Central [Clown Computing](https://www.urbandictionary.com/define.php?term=clown%20computing)", since I'm trying to cram as many services as possible into that poor machine (Spending 5$ is better than spending 10$)
-
-Original Documentation
-======================
+Mail-in-a-Box
+=============
 
 By [@JoshData](https://github.com/JoshData) and [contributors](https://github.com/mail-in-a-box/mailinabox/graphs/contributors).
 
@@ -96,7 +24,7 @@ Our goals are to:
 * Promote [decentralization](http://redecentralize.org/), innovation, and privacy on the web.
 * Have automated, auditable, and [idempotent](https://web.archive.org/web/20190518072631/https://sharknet.us/2014/02/01/automated-configuration-management-challenges-with-idempotency/) configuration.
 * **Not** make a totally unhackable, NSA-proof server.
-* ~~**Not** make something customizable by power users.~~
+* **Not** make something customizable by power users.
 
 Additionally, this project has a [Code of Conduct](CODE_OF_CONDUCT.md), which supersedes the goals above. Please review it when joining our community.
 
@@ -104,7 +32,7 @@ Additionally, this project has a [Code of Conduct](CODE_OF_CONDUCT.md), which su
 In The Box
 ----------
 
-Mail-in-a-Box turns a fresh ~~Ubuntu 18.04 LTS~~ Debian 10 (Buster) 64-bit machine into a working mail server by installing and configuring various components.
+Mail-in-a-Box turns a fresh Ubuntu 20.04 or 18.04 LTS 64-bit machine into a working mail server by installing and configuring various components.
 
 It is a one-click email appliance. There are no user-configurable setup options. It "just works."
 
@@ -139,7 +67,7 @@ Clone this repository and checkout the tag corresponding to the most recent rele
 
 	$ git clone https://github.com/mail-in-a-box/mailinabox
 	$ cd mailinabox
-	$ git checkout v0.52
+	$ git checkout v0.53
 
 Begin the installation.
 
@@ -158,7 +86,7 @@ This is a challenge faced by everyone who runs their own mail server, with or wi
 Contributing and Development
 ----------------------------
 
-Mail-in-a-Box is an open source project. Your contributions and pull requests are welcome. See [CONTRIBUTING](CONTRIBUTING.md) to get started.
+Mail-in-a-Box is an open source project. Your contributions and pull requests are welcome. See [CONTRIBUTING](CONTRIBUTING.md) to get started. 
 
 
 The Acknowledgements

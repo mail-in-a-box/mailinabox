@@ -9,10 +9,7 @@
 
         <meta name="robots" content="noindex, nofollow">
 
-		<link rel="stylesheet" href="/admin/assets/bootstrap/css/bootstrap.min.css">
-		<link rel="stylesheet" href="/admin/assets/fontawesome/css/fontawesome.min.css">
-		<link rel="stylesheet" href="/admin/assets/fontawesome/css/solid.min.css">
-
+        <link rel="stylesheet" href="/admin/assets/bootstrap/css/bootstrap.min.css">
         <style>
 	    body {
 		overflow-y: scroll;
@@ -66,6 +63,7 @@
 	       margin-bottom: 1em;
 	    }
         </style>
+        <link rel="stylesheet" href="/admin/assets/bootstrap/css/bootstrap-theme.min.css">
     </head>
     <body>
 
@@ -73,52 +71,53 @@
     <!--[if gt IE 7]><!-->
 
     <div class="navbar navbar-inverse navbar-static-top" role="navigation">
-      <div class="container bg-light">
+      <div class="container">
         <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
           <a class="navbar-brand" href="#">{{hostname}}</a>
         </div>
-        <div class="navbar navbar-expand-lg">
+        <div class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
-            <li class="btn dropdown">
-              <a style="color: black;" href="#" class="dropdown-toggle" data-toggle="dropdown">System <b class="caret"></b></a>
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">System <b class="caret"></b></a>
               <ul class="dropdown-menu">
-                <li class="dropdown-item"><a href="#system_status" onclick="return show_panel(this);">Status Checks</a></li>
-                <li class="dropdown-item"><a href="#tls" onclick="return show_panel(this);">TLS (SSL) Certificates</a></li>
-				<li class="dropdown-item"><a href="#system_backup" onclick="return show_panel(this);">Backup Status</a></li>
-				<li class="dropdown-item"><a href="#smtp_relays" onclick="return show_panel(this);">SMTP Relays</a></li>
+                <li><a href="#system_status" onclick="return show_panel(this);">Status Checks</a></li>
+                <li><a href="#tls" onclick="return show_panel(this);">TLS (SSL) Certificates</a></li>
+                <li><a href="#system_backup" onclick="return show_panel(this);">Backup Status</a></li>
                 <li class="divider"></li>
                 <li class="dropdown-header">Advanced Pages</li>
-                <li class="dropdown-item"><a href="#custom_dns" onclick="return show_panel(this);">Custom DNS</a></li>
-                <li class="dropdown-item"><a href="#external_dns" onclick="return show_panel(this);">External DNS</a></li>
-                <li class="dropdown-item"><a href="/admin/munin" target="_blank">Munin Monitoring</a></li>
+                <li><a href="#custom_dns" onclick="return show_panel(this);">Custom DNS</a></li>
+                <li><a href="#external_dns" onclick="return show_panel(this);">External DNS</a></li>
+                <li><a href="/admin/munin" target="_blank">Munin Monitoring</a></li>
               </ul>
             </li>
-            <li class="btn dropdown">
-              <a style="color: black;" href="#" class="dropdown-toggle" data-toggle="dropdown">Mail &amp; Users <b class="caret"></b></a>
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Mail &amp; Users <b class="caret"></b></a>
               <ul class="dropdown-menu">
-                <li class="dropdown-item"><a href="#mail-guide" onclick="return show_panel(this);">Instructions</a></li>
-                <li class="dropdown-item"><a href="#users" onclick="return show_panel(this);">Users</a></li>
-                <li class="dropdown-item"><a href="#aliases" onclick="return show_panel(this);">Aliases</a></li>
+                <li><a href="#mail-guide" onclick="return show_panel(this);">Instructions</a></li>
+                <li><a href="#users" onclick="return show_panel(this);">Users</a></li>
+                <li><a href="#aliases" onclick="return show_panel(this);">Aliases</a></li>
                 <li class="divider"></li>
                 <li class="dropdown-header">Your Account</li>
-                <li class="dropdown-item"><a href="#mfa" onclick="return show_panel(this);">Two-Factor Authentication</a></li>
+                <li><a href="#mfa" onclick="return show_panel(this);">Two-Factor Authentication</a></li>
               </ul>
             </li>
-            <li class="btn"><a style="color: black;" href="#sync_guide" onclick="return show_panel(this);">Contacts/Calendar</a></li>
-            <li class="btn"><a style="color: black;" href="#web" onclick="return show_panel(this);">Web</a></li>
+            <li><a href="#sync_guide" onclick="return show_panel(this);">Contacts/Calendar</a></li>
+            <li><a href="#web" onclick="return show_panel(this);">Web</a></li>
           </ul>
-          <ul class="btn nav navbar-nav navbar-right">
-            <li><a href="#" onclick="do_logout(); return false;" style="color: black; font-weight: bold;">Log out</a></li>
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="#" onclick="do_logout(); return false;" style="color: white">Log out</a></li>
           </ul>
         </div><!--/.navbar-collapse -->
       </div>
     </div>
 
     <div class="container">
-      <div id="panel_smtp_relays" class="admin_panel">
-      {% include "smtp-relays.html" %}
-      </div>
-
       <div id="panel_system_status" class="admin_panel">
       {% include "system-status.html" %}
       </div>
@@ -170,7 +169,7 @@
       <hr>
 
       <footer>
-		<p>This is a <a href="https://github.com/ddavness/power-mailinabox">Power Mail-in-a-Box</a> - {{distname}}</p>
+        <p>This is a <a href="https://mailinabox.email">Mail-in-a-Box</a>.</p>
       </footer>
     </div> <!-- /container -->
 
@@ -185,8 +184,8 @@
           <div class="modal-dialog modal-sm">
             <div class="modal-content">
               <div class="modal-header">
-				<h4 class="modal-title" id="errorModalTitle"> </h4>
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="errorModalTitle"> </h4>
               </div>
               <div class="modal-body">
                 <p> </p>

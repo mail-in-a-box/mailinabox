@@ -10,7 +10,7 @@
 import os, os.path, shutil, glob, re, datetime, sys
 import dateutil.parser, dateutil.relativedelta, dateutil.tz
 import rtyaml
-from exclusiveprocess import Lock, CannotAcquireLock
+from exclusiveprocess import Lock
 
 from utils import load_environment, shell, wait_for_service, fix_boto, get_php_version
 
@@ -210,22 +210,14 @@ def get_target_type(config):
 	protocol = config["target"].split(":")[0]
 	return protocol
 
-def perform_backup(full_backup, user_initiated=False):
+def perform_backup(full_backup):
 	env = load_environment()
 	php_fpm = f"php{get_php_version()}-fpm"
 
 	# Create an global exclusive lock so that the backup script
-	# cannot be run more than one.
-	lock = Lock(name="mailinabox_backup_daemon", die=(not user_initiated))
-	if user_initiated:
-		# God forgive me for what I'm about to do
-		try:
-			lock._acquire()
-		except CannotAcquireLock:
-			return "Another backup is already being done!"
-	else:
-		lock.forever()
-		
+	# cannot be run more than once.
+	Lock(die=True).forever()
+
 	config = get_backup_config(env)
 	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
 	backup_cache_dir = os.path.join(backup_root, 'cache')
@@ -329,14 +321,9 @@ def perform_backup(full_backup, user_initiated=False):
 	# backup. Since it checks that dovecot and postfix are running, block for a
 	# bit (maximum of 10 seconds each) to give each a chance to finish restarting
 	# before the status checks might catch them down. See #381.
-	if user_initiated:
-		# God forgive me for what I'm about to do
-		lock._release()
-		# We don't need to wait for the services to be up in this case
-	else:
-		wait_for_service(25, True, env, 10)
-		wait_for_service(993, True, env, 10)
-
+	wait_for_service(25, True, env, 10)
+	wait_for_service(993, True, env, 10)
+	
 	# Execute a post-backup script that does the copying to a remote server.
 	# Run as the STORAGE_USER user, not as root. Pass our settings in
 	# environment variables so the script has access to STORAGE_ROOT.
@@ -345,7 +332,6 @@ def perform_backup(full_backup, user_initiated=False):
 		shell('check_call',
 			['su', env['STORAGE_USER'], '-c', post_script, config["target"]],
 			env=env)
-
 
 def run_duplicity_verification():
 	env = load_environment()
