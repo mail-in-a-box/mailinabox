@@ -42,7 +42,7 @@ def get_services():
 		{ "name": "HTTPS Web (nginx)", "port": 443, "public": True, },
 	]
 
-def run_checks(rounded_values, env, output, pool):
+def run_checks(rounded_values, env, output, pool, domains_to_check=None):
 	# run systems checks
 	output.add_heading("System")
 
@@ -63,7 +63,7 @@ def run_checks(rounded_values, env, output, pool):
 	# perform other checks asynchronously
 
 	run_network_checks(env, output)
-	run_domain_checks(rounded_values, env, output, pool)
+	run_domain_checks(rounded_values, env, output, pool, domains_to_check=domains_to_check)
 
 def get_ssh_port():
 	# Returns ssh port
@@ -300,7 +300,7 @@ def run_network_checks(env, output):
 			which may prevent recipients from receiving your email. See http://www.spamhaus.org/query/ip/%s."""
 			% (env['PUBLIC_IP'], zen, env['PUBLIC_IP']))
 
-def run_domain_checks(rounded_time, env, output, pool):
+def run_domain_checks(rounded_time, env, output, pool, domains_to_check=None):
 	# Get the list of domains we handle mail for.
 	mail_domains = get_mail_domains(env)
 
@@ -311,7 +311,8 @@ def run_domain_checks(rounded_time, env, output, pool):
 	# Get the list of domains we serve HTTPS for.
 	web_domains = set(get_web_domains(env))
 
-	domains_to_check = mail_domains | dns_domains | web_domains
+	if domains_to_check is None:
+		domains_to_check = mail_domains | dns_domains | web_domains
 
 	# Remove "www", "autoconfig", "autodiscover", and "mta-sts" subdomains, which we group with their parent,
 	# if their parent is in the domains to check list.
@@ -557,61 +558,103 @@ def check_dns_zone_suggestions(domain, env, output, dns_zonefiles, domains_with_
 
 
 def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
-	# See if the domain has a DS record set at the registrar. The DS record may have
-	# several forms. We have to be prepared to check for any valid record. We've
-	# pre-generated all of the valid digests --- read them in.
+	# See if the domain has a DS record set at the registrar. The DS record must
+	# match one of the keys that we've used to sign the zone. It may use one of
+	# several hashing algorithms. We've pre-generated all possible valid DS
+	# records, although some will be preferred.
+
+	alg_name_map = { '7': 'RSASHA1-NSEC3-SHA1', '8': 'RSASHA256', '13': 'ECDSAP256SHA256' }
+	digalg_name_map = { '1': 'SHA-1', '2': 'SHA-256', '4': 'SHA-384' }
+
+	# Read in the pre-generated DS records
+	expected_ds_records = { }
 	ds_file = '/etc/nsd/zones/' + dns_zonefiles[domain] + '.ds'
 	if not os.path.exists(ds_file): return # Domain is in our database but DNS has not yet been updated.
-	ds_correct = open(ds_file).read().strip().split("\n")
-	digests = { }
-	for rr_ds in ds_correct:
-		ds_keytag, ds_alg, ds_digalg, ds_digest = rr_ds.split("\t")[4].split(" ")
-		digests[ds_digalg] = ds_digest
+	with open(ds_file) as f:
+		for rr_ds in f:
+			rr_ds = rr_ds.rstrip()
+			ds_keytag, ds_alg, ds_digalg, ds_digest = rr_ds.split("\t")[4].split(" ")
 
-	# Some registrars may want the public key so they can compute the digest. The DS
-	# record that we suggest using is for the KSK (and that's how the DS records were generated).
-	alg_name_map = { '7': 'RSASHA1-NSEC3-SHA1', '8': 'RSASHA256' }
-	dnssec_keys = load_env_vars_from_file(os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/%s.conf' % alg_name_map[ds_alg]))
-	dnsssec_pubkey = open(os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/' + dnssec_keys['KSK'] + '.key')).read().split("\t")[3].split(" ")[3]
+			# Some registrars may want the public key so they can compute the digest. The DS
+			# record that we suggest using is for the KSK (and that's how the DS records were generated).
+			# We'll also give the nice name for the key algorithm.
+			dnssec_keys = load_env_vars_from_file(os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/%s.conf' % alg_name_map[ds_alg]))
+			dnsssec_pubkey = open(os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/' + dnssec_keys['KSK'] + '.key')).read().split("\t")[3].split(" ")[3]
+
+			expected_ds_records[ (ds_keytag, ds_alg, ds_digalg, ds_digest) ] = {
+				"record": rr_ds,
+				"keytag": ds_keytag,
+				"alg": ds_alg,
+				"alg_name": alg_name_map[ds_alg],
+				"digalg": ds_digalg,
+				"digalg_name": digalg_name_map[ds_digalg],
+				"digest": ds_digest,
+				"pubkey": dnsssec_pubkey,
+			}
 
 	# Query public DNS for the DS record at the registrar.
-	ds = query_dns(domain, "DS", nxdomain=None)
-	ds_looks_valid = ds and len(ds.split(" ")) == 4
-	if ds_looks_valid: ds = ds.split(" ")
-	if ds_looks_valid and ds[0] == ds_keytag and ds[1] == ds_alg and ds[3] == digests.get(ds[2]):
-		if is_checking_primary: return
-		output.print_ok("DNSSEC 'DS' record is set correctly at registrar.")
+	ds = query_dns(domain, "DS", nxdomain=None, as_list=True)
+	if ds is None or isinstance(ds, str): ds = []
+
+	# There may be more that one record, so we get the result as a list.
+	# Filter out records that don't look valid, just in case, and split
+	# each record on spaces.
+	ds = [tuple(str(rr).split(" ")) for rr in ds if len(str(rr).split(" ")) == 4]
+
+	if len(ds) == 0:
+		output.print_warning("""This domain's DNSSEC DS record is not set. The DS record is optional. The DS record activates DNSSEC. See below for instructions.""")
 	else:
-		if ds == None:
-			if is_checking_primary: return
-			output.print_warning("""This domain's DNSSEC DS record is not set. The DS record is optional. The DS record activates DNSSEC.
-				To set a DS record, you must follow the instructions provided by your domain name registrar and provide to them this information:""")
+		matched_ds = set(ds) & set(expected_ds_records)
+		if matched_ds:
+			# At least one DS record matches one that corresponds with one of the ways we signed
+			# the zone, so it is valid.
+			#
+			# But it may not be preferred. Only algorithm 13 is preferred. Warn if any of the
+			# matched zones uses a different algorithm.
+			if set(r[1] for r in matched_ds) == { '13' }: # all are alg 13
+				output.print_ok("DNSSEC 'DS' record is set correctly at registrar.")
+				return
+			elif '13' in set(r[1] for r in matched_ds): # some but not all are alg 13
+				output.print_ok("DNSSEC 'DS' record is set correctly at registrar. (Records using algorithm other than ECDSAP256SHA256 should be removed.)")
+				return
+			else: # no record uses alg 13
+				output.print_warning("DNSSEC 'DS' record set at registrar is valid but should be updated to ECDSAP256SHA256 (see below).")
 		else:
 			if is_checking_primary:
 				output.print_error("""The DNSSEC 'DS' record for %s is incorrect. See further details below.""" % domain)
 				return
 			output.print_error("""This domain's DNSSEC DS record is incorrect. The chain of trust is broken between the public DNS system
 				and this machine's DNS server. It may take several hours for public DNS to update after a change. If you did not recently
-				make a change, you must resolve this immediately by following the instructions provided by your domain name registrar and
-				provide to them this information:""")
+				make a change, you must resolve this immediately (see below).""")
+
+	output.print_line("""Follow the instructions provided by your domain name registrar to set a DS record.
+		Registrars support different sorts of DS records. Use the first option that works:""")
+	preferred_ds_order = [(7, 1), (7, 2), (8, 4), (13, 4), (8, 1), (8, 2), (13, 1), (13, 2)] # low to high
+	def preferred_ds_order_func(ds_suggestion):
+		k = (int(ds_suggestion['alg']), int(ds_suggestion['digalg']))
+		if k in preferred_ds_order:
+			return preferred_ds_order.index(k)
+		return -1 # index before first item
+	output.print_line("")
+	for i, ds_suggestion in enumerate(sorted(expected_ds_records.values(), key=preferred_ds_order_func, reverse=True)):
 		output.print_line("")
-		output.print_line("Key Tag: " + ds_keytag + ("" if not ds_looks_valid or ds[0] == ds_keytag else " (Got '%s')" % ds[0]))
+		output.print_line("Option " + str(i+1) + ":")
+		output.print_line("----------")
+		output.print_line("Key Tag: " + ds_suggestion['keytag'])
 		output.print_line("Key Flags: KSK")
-		output.print_line(
-			  ("Algorithm: %s / %s" % (ds_alg, alg_name_map[ds_alg]))
-			+ ("" if not ds_looks_valid or ds[1] == ds_alg else " (Got '%s')" % ds[1]))
-			# see http://www.iana.org/assignments/dns-sec-alg-numbers/dns-sec-alg-numbers.xhtml
-		output.print_line("Digest Type: 2 / SHA-256")
-			# http://www.ietf.org/assignments/ds-rr-types/ds-rr-types.xml
-		output.print_line("Digest: " + digests['2'])
-		if ds_looks_valid and ds[3] != digests.get(ds[2]):
-			output.print_line("(Got digest type %s and digest %s which do not match.)" % (ds[2], ds[3]))
+		output.print_line("Algorithm: %s / %s" % (ds_suggestion['alg'], ds_suggestion['alg_name']))
+		output.print_line("Digest Type: %s / %s" % (ds_suggestion['digalg'], ds_suggestion['digalg_name']))
+		output.print_line("Digest: " + ds_suggestion['digest'])
 		output.print_line("Public Key: ")
-		output.print_line(dnsssec_pubkey, monospace=True)
+		output.print_line(ds_suggestion['pubkey'], monospace=True)
 		output.print_line("")
 		output.print_line("Bulk/Record Format:")
-		output.print_line("" + ds_correct[0])
+		output.print_line(ds_suggestion['record'], monospace=True)
+	if len(ds) > 0:
 		output.print_line("")
+		output.print_line("The DS record is currently set to:")
+		for rr in ds:
+			output.print_line("Key Tag: {0}, Algorithm: {1}, Digest Type: {2}, Digest: {3}".format(*rr))
 
 def check_mail_domain(domain, env, output):
 	# Check the MX record.
@@ -713,7 +756,7 @@ def check_web_domain(domain, rounded_time, ssl_certificates, env, output):
 	# website for also needs a signed certificate.
 	check_ssl_cert(domain, rounded_time, ssl_certificates, env, output)
 
-def query_dns(qname, rtype, nxdomain='[Not Set]', at=None):
+def query_dns(qname, rtype, nxdomain='[Not Set]', at=None, as_list=False):
 	# Make the qname absolute by appending a period. Without this, dns.resolver.query
 	# will fall back a failed lookup to a second query with this machine's hostname
 	# appended. This has been causing some false-positive Spamhaus reports. The
@@ -749,6 +792,9 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None):
 	# of this method is compared with.
 	if rtype in ("A", "AAAA"):
 		response = [normalize_ip(str(r)) for r in response]
+
+	if as_list:
+		return response
 
 	# There may be multiple answers; concatenate the response. Remove trailing
 	# periods from responses since that's how qnames are encoded in DNS but is
@@ -1050,3 +1096,7 @@ if __name__ == "__main__":
 
 	elif sys.argv[1] == "--version":
 		print(what_version_is_this(env))
+
+	elif sys.argv[1] == "--only":
+		with multiprocessing.pool.Pool(processes=10) as pool:
+			run_checks(False, env, ConsoleOutput(), pool, domains_to_check=sys.argv[2:])
