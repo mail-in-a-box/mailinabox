@@ -13,5 +13,8 @@ if [ -s /etc/mailinabox.conf ]; then
     systemctl start fail2ban
     systemctl restart mailinabox
     systemctl start miabldap-capture
+    # since postgrey's local client whitelist is in user-data, reload
+    # to ensure postgrey daemon has it
+    systemctl reload postgrey
 fi
 
