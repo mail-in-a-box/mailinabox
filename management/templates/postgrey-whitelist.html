@@ -5,7 +5,9 @@
 
 <p>The text box below contains the contents of the system's Postgrey local client whitelist. It's comprised of a list of <em>hosts</em>, one per line, whose incoming email to this server should never be greylisted.</p>
 
-<p>Entries may be a fully qualified domain name, an IP address, or a regular expression. Regular expressions begin and end with the character "/".</p>
+<p>Entries may be a fully qualified domain name, an IP address in CIDR notation, or a regular expression. Regular expressions begin and end with the forward slash character and should be anchored at both ends. For example, "/^smtp\d+\.smtpout\.orange\.fr$/"</p>
+
+<p>Lines beginning with hash tag (number sign) "#" are comment lines.</p>
 
 <p>This file augments the whilelist provided by Postgrey.</p>
 
