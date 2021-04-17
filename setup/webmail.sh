@@ -117,7 +117,7 @@ cat > $RCM_CONFIG <<EOF;
      'verify_peer_name'  => false,
    ),
  );
-\$config['imap_timeout'] = 15;
+\$config['imap_timeout'] = 180;
 \$config['smtp_server'] = 'tls://127.0.0.1';
 \$config['smtp_conn_options'] = array(
   'ssl'         => array(
