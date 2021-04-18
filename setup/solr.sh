@@ -93,7 +93,9 @@ cat > /etc/rsyslog.d/10-jetty9.conf <<EOF
 EOF
 
 # Also adjust logrotated to the new file and correct user
-cat > /etc/logrotate.d/jetty9.conf <<EOF
+rm -f /etc/logrotate.d/jetty9
+
+cat > /etc/logrotate.d/jetty9 <<EOF
 /var/log/jetty-console.log {
     copytruncate
     weekly
