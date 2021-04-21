@@ -1,8 +1,5 @@
 #!/bin/bash
 #
-# Inspired by the solr.sh from jkaberg (https://github.com/jkaberg/mailinabox-sogo)
-# with some modifications
-#
 # IMAP search with lucene via solr
 # --------------------------------
 #
@@ -13,6 +10,12 @@
 #
 # Solr runs as a Jetty process. The dovecot solr plugin talks to solr via its
 # HTTP interface, searching indexed mail and returning results back to dovecot.
+#
+# Based on https://forum.iredmail.org/topic17251-dovecot-fts-full-text-search-using-apache-solr-on-ubuntu-1804-lts.html
+# https://doc.dovecot.org/configuration_manual/fts/solr/ and https://solr.apache.org/guide/8_8/installing-solr.html
+# 
+# solr-jetty package is removed from Ubuntu 21.04 onward. This installation 
+# therefore depends on manual installation of solr instead of an ubuntu package
 
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
@@ -22,14 +25,62 @@ source /etc/mailinabox.conf # load global vars
 
 echo "Installing Solr..."
 
-# Install packages
-apt_install solr-jetty dovecot-solr
+# TODO remove after testing
+set -x
 
-# Solr requires a schema to tell it how to index data, this is provided by dovecot
-cp /usr/share/dovecot/solr-schema.xml /etc/solr/conf/schema.xml
+apt_install dovecot-solr default-jre-headless
+
+VERSION=8.8.2
+HASH=7c3e2ed31a4412e7dac48d68c3abd52f75684577
+
+needs_update=0
+
+if [ ! -f /usr/local/lib/solr/bin/solr ]; then
+	# not installed yet
+	needs_update=1
+elif [[ "$VERSION" != `/usr/local/lib/solr/bin/solr version` ]]; then
+	# checks if the version is what we want
+	needs_update=1
+fi
+
+if [ $needs_update == 1 ]; then
+	# install SOLR
+	wget_verify \
+		https://www.apache.org/dyn/closer.lua?action=download&filename=lucene/solr/$VERSION/solr-$VERSION.tgz \
+		$HASH \
+		/tmp/solr.tgz
+
+	tar xzf /tmp/solr.tgz solr-$VERSION/bin/install_solr_service.sh --strip-components=2
+	# install to usr/local, force update, do not start service on installation complete
+	bash /tmp/install_solr_service.sh solr.tgz -i /usr/local/lib -f -n
+	
+	# TODO uncomment after testing
+	#rm -f /tmp/solr.tgz
+	rm -f /tmp/install_solr_service.sh
+
+	# stop and remove the init.d script
+	rm -f /etc/init.d/solr
+	update-rc.d solr remove
+fi
+
+# Install systemd service
+if [ ! -f "/lib/systemd/system/solr.service" ]; then
+	cp -f conf/solr/solr.service /lib/systemd/system/solr.service 
+	hide_output systemctl link -f /lib/systemd/system/solr.service
+
+	# Reload systemctl to pickup the above changes
+	hide_output systemctl daemon-reload
+fi
+
+# Make sure service is enabled
+hide_output systemctl enable solr.service
+
+# TODO: necessary? Solr requires a schema to tell it how to index data, this is provided by dovecot
+# cp -f /usr/share/dovecot/solr-schema.xml /etc/solr/conf/schema.xml
 
 # Default config has an error with our config, placing our custom version
-cp conf/solr-jetty.xml  /etc/solr/solr-jetty.xml
+# TBD necessary?
+#cp -f conf/solr/solr-jetty.xml  /etc/solr/solr-jetty.xml
 
 # Update the dovecot plugin configuration
 #
@@ -45,7 +96,7 @@ cat > /etc/dovecot/conf.d/90-plugin-fts.conf << EOF;
 plugin {
   fts = solr
   fts_autoindex = yes
-  fts_solr = break-imap-search url=http://127.0.0.1:8080/solr/
+  fts_solr = break-imap-search url=http://127.0.0.1:8983/solr/
 }
 EOF
 
@@ -53,50 +104,33 @@ EOF
 hide_output install -m 755 conf/cron/miab_dovecot /etc/cron.daily/
 hide_output install -m 644 conf/cron/miab_solr /etc/cron.d/
 
-# PERMISSIONS
+# Initialize solr dovecot instance
+if [ ! -d "/var/sorl/data/dovecot" ]; then
+	sudo -u solr /usr/local/lib/solr/bin/solr create -c dovecot
+	rm -f /var/solr/data/dovecot/conf/schema.xml
+	rm -f /var/solr/data/dovecot/conf/managed-schema
+	rm -f /var/solr/data/dovecot/conf/solrconfig.xml
+	cp -f conf/solr/solr-config-7.7.0.xml /var/solr/data/dovecot/conf/solrconfig.xml
+	cp -f conf/solr/solr-schema-7.7.0.xml /var/solr/data/dovecot/conf/schema.xml
+fi
 
-# Ensure configuration files are owned by dovecot and not world readable.
-chown -R mail:dovecot /etc/dovecot
-chmod -R o-rwx /etc/dovecot
+# TODO: add security
+#SOLR_IP_WHITELIST="127.0.0.1, [::1]"
 
-# Newer updates to jetty9 restrict write directories, this allows for
-# jetty to write to solr database directories
-mkdir -p /etc/systemd/system/jetty9.service.d/
-cat > /etc/systemd/system/jetty9.service.d/solr-permissions.conf << EOF
-[Service]
-ReadWritePaths=/var/lib/solr/
-ReadWritePaths=/var/lib/solr/data/
-EOF
-
-# Reload systemctl to pickup the above override.
-systemctl daemon-reload
-
-# Fix Logging
-# Due to the new systemd security permissions placed when running jetty.
-# The log file directory at /var/log/jetty9 is reset to jetty:jetty
-# at every program start.  This causes syslog to fail to add the
-# rsyslog filtered output to this folder.  We will move this up a
-# directory to /var/log/ since solr-jetty is quite noisy.
-
-# Remove package config file since it points to a folder that
-# it does not have permissions to, and is also too far down the
-# /etc/rsyslog.d/ order to work anyway.
-rm -f /etc/rsyslog.d/jetty9.conf 
-
-# Create new rsyslog config for jetty9 for its new location
-cat > /etc/rsyslog.d/10-jetty9.conf <<EOF
-# Send Jetty messages to jetty-console.log when using systemd
-:programname, startswith, "jetty9" {
- /var/log/jetty-console.log
+# Create new rsyslog config for solr
+# TODO check programname
+cat > /etc/rsyslog.d/10-solr.conf <<EOF
+# Send solr messages to solr-console.log when using systemd
+:programname, startswith, "solr" {
+ /var/log/solr.log
  stop
 }
 EOF
 
 # Also adjust logrotated to the new file and correct user
-rm -f /etc/logrotate.d/jetty9
 
-cat > /etc/logrotate.d/jetty9 <<EOF
-/var/log/jetty-console.log {
+cat > /etc/logrotate.d/solr <<EOF
+/var/log/solr.log {
     copytruncate
     weekly
     rotate 12
@@ -107,11 +141,10 @@ cat > /etc/logrotate.d/jetty9 <<EOF
 }
 EOF
 
-
 # Restart services to reload solr schema, dovecot plugins and rsyslog changes
-restart_service jetty9
 restart_service dovecot
 restart_service rsyslog
+hide_output systemctl restart solr.service
 
 # Kickoff building the index
 
