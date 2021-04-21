@@ -1,6 +1,9 @@
 source /etc/mailinabox.conf
 source setup/functions.sh
 
+# Add additional packages
+apt_install pflogsumm
+
 # Cleanup old spam and trash email
 hide_output install -m 755 conf/cron/miab_clean_mail /etc/cron.weekly/
 
