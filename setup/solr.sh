@@ -131,13 +131,13 @@ EOF
 
 cat > /etc/logrotate.d/solr <<EOF
 /var/log/solr.log {
-    copytruncate
-    weekly
-    rotate 12
+    rotate 14
+    daily
+    missingok
+    notifempty
     compress
     delaycompress
-    missingok
-    create 640 syslog adm
+    create 640 solr adm
 }
 EOF
 
