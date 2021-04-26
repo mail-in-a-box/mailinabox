@@ -63,6 +63,16 @@ fi
 tools/editconf.py /etc/default/solr.in.sh \
         SOLR_IP_WHITELIST="127.0.0.1, [::1]"
 
+# Change log dir
+if [! -d "/var/log/solr" ]; then
+	mkdir /var/log/solr
+fi
+
+chown solr:solr /var/log/solr	
+
+tools/editconf.py /etc/default/solr.in.sh \
+		SOLR_LOGS_DIR="/var/log/solr"
+
 # Install systemd service
 cp -f conf/solr/solr.service /lib/systemd/system/solr.service 
 #	hide_output systemctl link -f /lib/systemd/system/solr.service
@@ -87,7 +97,7 @@ cat > /etc/dovecot/conf.d/90-plugin-fts.conf << EOF;
 plugin {
   fts = solr
   fts_autoindex = yes
-  fts_solr = url=http://127.0.0.1:8983/solr/dovecot
+  fts_solr = url=http://127.0.0.1:8983/solr/dovecot/
 }
 EOF
 
@@ -107,24 +117,24 @@ if [ ! -d "/var/solr/data/dovecot" ]; then
 	rm -f /var/solr/data/dovecot/conf/solrconfig.xml
 	cp -f conf/solr/solr-config-7.7.0.xml /var/solr/data/dovecot/conf/solrconfig.xml
 	cp -f conf/solr/solr-schema-7.7.0.xml /var/solr/data/dovecot/conf/schema.xml
-	chown -R solr:solr /var/solr/data/dovecot/*
+	chown -R solr:solr /var/solr/data/dovecot/conf/*
 fi
 
 # Create new rsyslog config for solr
 cat > /etc/rsyslog.d/10-solr.conf <<EOF
-# Send solr messages to solr-console.log when using systemd
+# Send solr systemd messages to solr-systemd.log when using systemd
 :programname, startswith, "solr" {
- /var/log/solr.log
+ /var/log/solr-systemd.log
  stop
 }
 EOF
 
 # Also adjust logrotated to the new file and correct user
 
-cat > /etc/logrotate.d/solr <<EOF
-/var/log/solr.log {
-    rotate 7
-    daily
+cat > /etc/logrotate.d/solr-systemd <<EOF
+/var/log/solr-systemd.log {
+    rotate 4
+    weekly
     missingok
     notifempty
     compress
