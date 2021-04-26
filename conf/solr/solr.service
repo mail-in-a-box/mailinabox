@@ -5,13 +5,12 @@ After=network.target
 [Service]
 Type=forking
 User=solr
-PIDFile=/var/run/solr-8983.pid
 Environment=SOLR_INCLUDE=/etc/default/solr.in.sh
 ExecStart=/usr/local/lib/solr/bin/solr start
 ExecStop=/usr/local/lib/solr/bin/solr stop
 Restart=on-failure
-ReadWritePaths=/var/lib/solr/
-ReadWritePaths=/var/lib/solr/data/
+#ReadWritePaths=/var/lib/solr/
+#ReadWritePaths=/var/lib/solr/data/
 LimitNOFILE=65000
 LimitNPROC=65000
 TimeoutSec=180s

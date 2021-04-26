@@ -68,6 +68,14 @@ done
 
 echo "include: /etc/nsd/zones.conf" >> /etc/nsd/nsd.conf;
 
+# Add systemd override file to fix some permissions
+mkdir -p /etc/systemd/system/nsd.service.d/
+cat > /etc/systemd/system/nsd.service.d/nsd-permissions.conf << EOF
+[Service]
+ReadWritePaths=/var/lib/nsd /etc/nsd /run /var/log /run/nsd
+CapabilityBoundingSet=CAP_CHOWN CAP_IPC_LOCK CAP_NET_BIND_SERVICE CAP_SETGID CAP_SETUID CAP_SYS_CHROOT CAP_NET_ADMIN
+EOF
+
 # Attempting a late install of nsd (after configuration)
 apt_install nsd
 

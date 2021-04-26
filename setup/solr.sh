@@ -25,9 +25,6 @@ source /etc/mailinabox.conf # load global vars
 
 echo "Installing Solr..."
 
-# TODO remove after testing
-set -x
-
 apt_install dovecot-solr default-jre-headless
 
 VERSION=8.8.2
@@ -46,16 +43,15 @@ fi
 if [ $needs_update == 1 ]; then
 	# install SOLR
 	wget_verify \
-		https://www.apache.org/dyn/closer.lua?action=download&filename=lucene/solr/$VERSION/solr-$VERSION.tgz \
+		"https://www.apache.org/dyn/closer.lua?action=download&filename=lucene/solr/$VERSION/solr-$VERSION.tgz" \
 		$HASH \
 		/tmp/solr.tgz
 
-	tar xzf /tmp/solr.tgz solr-$VERSION/bin/install_solr_service.sh --strip-components=2
+	tar xzf /tmp/solr-$VERSION.tgz -C /tmp solr-$VERSION/bin/install_solr_service.sh --strip-components=2
 	# install to usr/local, force update, do not start service on installation complete
-	bash /tmp/install_solr_service.sh solr.tgz -i /usr/local/lib -f -n
+	bash /tmp/install_solr_service.sh /tmp/solr-$VERSION.tgz -i /usr/local/lib -f -n
 	
-	# TODO uncomment after testing
-	#rm -f /tmp/solr.tgz
+	rm -f /tmp/solr-$VERSION.tgz
 	rm -f /tmp/install_solr_service.sh
 
 	# stop and remove the init.d script
@@ -63,24 +59,19 @@ if [ $needs_update == 1 ]; then
 	update-rc.d solr remove
 fi
 
-# Install systemd service
-if [ ! -f "/lib/systemd/system/solr.service" ]; then
-	cp -f conf/solr/solr.service /lib/systemd/system/solr.service 
-	hide_output systemctl link -f /lib/systemd/system/solr.service
+# Add security
+tools/editconf.py /etc/default/solr.in.sh \
+        SOLR_IP_WHITELIST="127.0.0.1, [::1]"
 
-	# Reload systemctl to pickup the above changes
-	hide_output systemctl daemon-reload
-fi
+# Install systemd service
+cp -f conf/solr/solr.service /lib/systemd/system/solr.service 
+#	hide_output systemctl link -f /lib/systemd/system/solr.service
+
+# Reload systemctl to pickup the above changes
+hide_output systemctl daemon-reload
 
 # Make sure service is enabled
 hide_output systemctl enable solr.service
-
-# TODO: necessary? Solr requires a schema to tell it how to index data, this is provided by dovecot
-# cp -f /usr/share/dovecot/solr-schema.xml /etc/solr/conf/schema.xml
-
-# Default config has an error with our config, placing our custom version
-# TBD necessary?
-#cp -f conf/solr/solr-jetty.xml  /etc/solr/solr-jetty.xml
 
 # Update the dovecot plugin configuration
 #
@@ -96,7 +87,7 @@ cat > /etc/dovecot/conf.d/90-plugin-fts.conf << EOF;
 plugin {
   fts = solr
   fts_autoindex = yes
-  fts_solr = break-imap-search url=http://127.0.0.1:8983/solr/
+  fts_solr = url=http://127.0.0.1:8983/solr/dovecot
 }
 EOF
 
@@ -105,20 +96,21 @@ hide_output install -m 755 conf/cron/miab_dovecot /etc/cron.daily/
 hide_output install -m 644 conf/cron/miab_solr /etc/cron.d/
 
 # Initialize solr dovecot instance
-if [ ! -d "/var/sorl/data/dovecot" ]; then
+if [ ! -d "/var/solr/data/dovecot" ]; then
+	# Starting solr might take a while
+    echo "Starting solr..."
+    hide_output systemctl restart solr.service
+		
 	sudo -u solr /usr/local/lib/solr/bin/solr create -c dovecot
 	rm -f /var/solr/data/dovecot/conf/schema.xml
 	rm -f /var/solr/data/dovecot/conf/managed-schema
 	rm -f /var/solr/data/dovecot/conf/solrconfig.xml
 	cp -f conf/solr/solr-config-7.7.0.xml /var/solr/data/dovecot/conf/solrconfig.xml
 	cp -f conf/solr/solr-schema-7.7.0.xml /var/solr/data/dovecot/conf/schema.xml
+	chown -R solr:solr /var/solr/data/dovecot/*
 fi
 
-# TODO: add security
-#SOLR_IP_WHITELIST="127.0.0.1, [::1]"
-
 # Create new rsyslog config for solr
-# TODO check programname
 cat > /etc/rsyslog.d/10-solr.conf <<EOF
 # Send solr messages to solr-console.log when using systemd
 :programname, startswith, "solr" {
@@ -131,19 +123,22 @@ EOF
 
 cat > /etc/logrotate.d/solr <<EOF
 /var/log/solr.log {
-    rotate 14
+    rotate 7
     daily
     missingok
     notifempty
     compress
     delaycompress
-    create 640 solr adm
+    create 640 syslog adm
 }
 EOF
 
 # Restart services to reload solr schema, dovecot plugins and rsyslog changes
 restart_service dovecot
 restart_service rsyslog
+
+# Restarting solr might take a while
+echo "Restarting solr"
 hide_output systemctl restart solr.service
 
 # Kickoff building the index
