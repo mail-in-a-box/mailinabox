@@ -20,3 +20,8 @@ tools/editconf.py /etc/systemd/journald.conf MaxRetentionSec=2month
 tools/editconf.py /etc/systemd/journald.conf MaxFileSec=1week
 
 hide_output systemctl restart systemd-journald.service
+
+# Create forward for root emails
+cat > /root/.forward << EOF;
+administrator@$PRIMARY_HOSTNAME
+EOF
