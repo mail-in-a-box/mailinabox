@@ -45,7 +45,7 @@ if [ $needs_update == 1 ]; then
 	wget_verify \
 		"https://www.apache.org/dyn/closer.lua?action=download&filename=lucene/solr/$VERSION/solr-$VERSION.tgz" \
 		$HASH \
-		/tmp/solr.tgz
+		/tmp/solr-$VERSION.tgz
 
 	tar xzf /tmp/solr-$VERSION.tgz -C /tmp solr-$VERSION/bin/install_solr_service.sh --strip-components=2
 	# install to usr/local, force update, do not start service on installation complete
