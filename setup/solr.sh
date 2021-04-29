@@ -61,10 +61,10 @@ fi
 
 # Add security
 tools/editconf.py /etc/default/solr.in.sh \
-        SOLR_IP_WHITELIST="127.0.0.1, [::1]"
+        SOLR_IP_WHITELIST='"127.0.0.1, [::1]"'
 
 # Change log dir
-if [! -d "/var/log/solr" ]; then
+if [ ! -d "/var/log/solr" ]; then
 	mkdir /var/log/solr
 fi
 
