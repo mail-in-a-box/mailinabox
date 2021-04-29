@@ -1,0 +1,22 @@
+#!/bin/bash
+# Save the command-line information passed to the function
+# so that I can translate info to call sendmail
+if read -t 0; then
+  message=`cat`
+fi
+script="$0"
+
+for arg in "$@"; do
+  if [ "$lastarg" == "-s" ]; then
+    subject="$arg"
+  fi
+  if [[ $arg =~ [[:space:]] ]]; then
+    arg=\"$arg\"
+  fi
+  lastarg="$arg"
+done
+
+# send message using sendmail
+echo "Subject: $subject
+
+$message" | sendmail -F "`hostname -f`" "$lastarg"
