@@ -45,7 +45,7 @@ if [ $needs_update == 1 ]; then
 	wget_verify \
 		"https://www.apache.org/dyn/closer.lua?action=download&filename=lucene/solr/$VERSION/solr-$VERSION.tgz" \
 		$HASH \
-		/tmp/solr.tgz
+		/tmp/solr-$VERSION.tgz
 
 	tar xzf /tmp/solr-$VERSION.tgz -C /tmp solr-$VERSION/bin/install_solr_service.sh --strip-components=2
 	# install to usr/local, force update, do not start service on installation complete
@@ -61,10 +61,10 @@ fi
 
 # Add security
 tools/editconf.py /etc/default/solr.in.sh \
-        SOLR_IP_WHITELIST="127.0.0.1, [::1]"
+        SOLR_IP_WHITELIST='"127.0.0.1, [::1]"'
 
 # Change log dir
-if [! -d "/var/log/solr" ]; then
+if [ ! -d "/var/log/solr" ]; then
 	mkdir /var/log/solr
 fi
 

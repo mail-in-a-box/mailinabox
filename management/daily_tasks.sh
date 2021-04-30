@@ -14,7 +14,7 @@ export LC_TYPE=en_US.UTF-8
 if [ `date "+%u"` -eq 1 ]; then
     management/mail_log.py -t week | management/email_administrator.py "Mail-in-a-Box Usage Report"
     
-    pflogsumm -u 5 -h 5 --problems_first /var/log/mail.log.1 | management/email_administrator.py "Postfix log analysis summary"
+    /usr/sbin/pflogsumm -u 5 -h 5 --problems_first /var/log/mail.log.1 | management/email_administrator.py "Postfix log analysis summary"
 fi
 
 # Take a backup.

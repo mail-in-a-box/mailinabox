@@ -2,7 +2,7 @@ source /etc/mailinabox.conf
 source setup/functions.sh
 
 # Add additional packages
-apt_install pflogsumm
+apt_install pflogsumm rkhunter chkrootkit
 
 # Cleanup old spam and trash email
 hide_output install -m 755 conf/cron/miab_clean_mail /etc/cron.weekly/
@@ -25,3 +25,33 @@ hide_output systemctl restart systemd-journald.service
 cat > /root/.forward << EOF;
 administrator@$PRIMARY_HOSTNAME
 EOF
+
+# Install fake mail script
+if [ ! -f /usr/local/bin/mail ]; then
+        hide_output install -m 755 tools/fake_mail /usr/local/bin
+        mv -f /usr/local/bin/fake_mail /usr/local/bin/mail
+fi
+
+tools/editconf.py /etc/rkhunter.conf \
+        UPDATE_MIRRORS=1 \
+        MIRRORS_MODE=0 \
+        WEB_CMD='""' \
+        ALLOWHIDDENDIR=/etc/.java
+
+# Check presence of whitelist
+if ! grep -Fxq "SCRIPTWHITELIST=/usr/local/bin/mail" /etc/rkhunter.conf > /dev/null; then
+	echo "SCRIPTWHITELIST=/usr/local/bin/mail" >> /etc/rkhunter.conf
+fi
+
+tools/editconf.py /etc/default/rkhunter \
+        CRON_DAILY_RUN='"true"' \
+        CRON_DB_UPDATE='"true"' \
+        APT_AUTOGEN='"true"'
+
+tools/editconf.py /etc/chkrootkit.conf \
+        RUN_DAILY='"true"' \
+        DIFF_MODE='"true"'
+
+# Should be last, update expected output
+rkhunter --propupd
+chkrootkit -q > /var/log/chkrootkit/log.expected
