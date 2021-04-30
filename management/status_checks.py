@@ -40,6 +40,7 @@ def get_services():
 		{ "name": "Mail Filters (Sieve/dovecot)", "port": 4190, "public": True, },
 		{ "name": "HTTP Web (nginx)", "port": 80, "public": True, },
 		{ "name": "HTTPS Web (nginx)", "port": 443, "public": True, },
+		{ "name": "Solr Full Text Search (Jetty)", "port": 8983, "public": False, },
 	]
 
 def run_checks(rounded_values, env, output, pool):
@@ -735,7 +736,7 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None):
 
 	# Do the query.
 	try:
-		response = resolver.query(qname, rtype)
+		response = resolver.resolve(qname, rtype)
 	except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
 		# Host did not have an answer for this query; not sure what the
 		# difference is between the two exceptions.
@@ -834,7 +835,7 @@ def what_version_is_this(env):
 	# Git may not be installed and Mail-in-a-Box may not have been cloned from github,
 	# so this function may raise all sorts of exceptions.
 	miab_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-	tag = shell("check_output", ["/usr/bin/git", "describe", "--abbrev=0"], env={"GIT_DIR": os.path.join(miab_dir, '.git')}).strip()
+	tag = shell("check_output", ["/usr/bin/git", "describe", "--tags", "--abbrev=0"], env={"GIT_DIR": os.path.join(miab_dir, '.git')}).strip()
 	return tag
 
 def get_latest_miab_version():
@@ -857,16 +858,16 @@ def check_miab_version(env, output):
 		this_ver = "Unknown"
 
 	if config.get("privacy", True):
-		output.print_warning("You are running version Mail-in-a-Box %s. Mail-in-a-Box version check disabled by privacy setting." % this_ver)
+		output.print_warning("You are running version Mail-in-a-Box %s Kiekerjan Edition. Mail-in-a-Box version check disabled by privacy setting." % this_ver)
 	else:
 		latest_ver = get_latest_miab_version()
 
 		if this_ver == latest_ver:
-			output.print_ok("Mail-in-a-Box is up to date. You are running version %s." % this_ver)
+			output.print_ok("Mail-in-a-Box is up to date. You are running version %s Kiekerjan Edition." % this_ver)
 		elif latest_ver is None:
-			output.print_error("Latest Mail-in-a-Box version could not be determined. You are running version %s." % this_ver)
+			output.print_error("Latest Mail-in-a-Box version could not be determined. You are running version %s Kiekerjan Edition." % this_ver)
 		else:
-			output.print_error("A new version of Mail-in-a-Box is available. You are running version %s. The latest version is %s. For upgrade instructions, see https://mailinabox.email. "
+			output.print_error("A new version of Mail-in-a-Box is available. You are running version %s Kiekerjan Edition. The latest version is %s. For upgrade instructions, see https://mailinabox.email. "
 				% (this_ver, latest_ver))
 
 def run_and_output_changes(env, pool):

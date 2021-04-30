@@ -137,6 +137,14 @@ tools/editconf.py /etc/postfix/main.cf \
 	tls_preempt_cipherlist=no \
 	smtpd_tls_received_header=yes
 
+# Add block_root_external to block mail send to root@PRIMARY_HOSTNAME. This mail address is only supposed to be used for local
+# mail delivery (cron etc)
+cat > /etc/postfix/block_root_external << EOF;
+root@$PRIMARY_HOSTNAME REJECT
+EOF
+
+postmap /etc/postfix/block_root_external
+
 # Prevent non-authenticated users from sending mail that requires being
 # relayed elsewhere. We don't want to be an "open relay". On outbound
 # mail, require one of:
@@ -144,9 +152,10 @@ tools/editconf.py /etc/postfix/main.cf \
 # * `permit_sasl_authenticated`: Authenticated users (i.e. on port 587).
 # * `permit_mynetworks`: Mail that originates locally.
 # * `reject_unauth_destination`: No one else. (Permits mail whose destination is local and rejects other mail.)
+# * `block_root_external`: Block mail addressed at root@PRIMARY_HOSTNAME. Root mail is only to receive mails locally send to root.
+#    permit_mynetworks will allow delivery of mail for root originating locally.
 tools/editconf.py /etc/postfix/main.cf \
-	smtpd_relay_restrictions=permit_sasl_authenticated,permit_mynetworks,reject_unauth_destination
-
+	smtpd_relay_restrictions=permit_sasl_authenticated,permit_mynetworks,reject_unauth_destination,hash:/etc/postfix/block_root_external
 
 # ### DANE
 

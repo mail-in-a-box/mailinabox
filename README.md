@@ -1,3 +1,12 @@
+This is not the original Mail-in-a-Box. See https://github.com/mail-in-a-box/mailinabox for the real deal! I made a number of modifications to to:
+- add geoipblocking on the admin web console
+- add geoipblocking for ssh access
+- make fail2ban a more stricter
+- add fail2ban filter for web scanners
+- other small stuff
+
+Original mailinabox content starts here:
+
 Mail-in-a-Box
 =============
 
@@ -23,7 +32,7 @@ Additionally, this project has a [Code of Conduct](CODE_OF_CONDUCT.md), which su
 In The Box
 ----------
 
-Mail-in-a-Box turns a fresh Ubuntu 18.04 LTS 64-bit machine into a working mail server by installing and configuring various components.
+Mail-in-a-Box turns a fresh Ubuntu 20.04 or 18.04 LTS 64-bit machine into a working mail server by installing and configuring various components.
 
 It is a one-click email appliance. There are no user-configurable setup options. It "just works."
 
@@ -58,7 +67,7 @@ Clone this repository and checkout the tag corresponding to the most recent rele
 
 	$ git clone https://github.com/mail-in-a-box/mailinabox
 	$ cd mailinabox
-	$ git checkout v0.52
+	$ git checkout v0.53
 
 Begin the installation.
 

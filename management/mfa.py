@@ -109,7 +109,15 @@ def validate_auth_mfa(email, request, env):
 	# If no MFA modes are added, return True.
 	if len(mfa_state) == 0:
 		return (True, [])
-
+		
+	# munin routes are proxied by our control panel. We do not have
+	# full control over their routes so credentials are supplied via
+	# a basic HTTP authentication prompt.
+	# There is neither a way to input a mfa credential there nor can we pass
+	# the user_api_key from localStorage so mfa should be disabled for these routes.
+	if request.full_path.startswith("/munin"):
+		return (True, [])
+		
 	# Try the enabled MFA modes.
 	hints = set()
 	for mfa_mode in mfa_state:

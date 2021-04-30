@@ -1,0 +1,20 @@
+[Unit]
+Description=Apache SOLR
+After=network.target
+
+[Service]
+Type=forking
+User=solr
+Environment=SOLR_INCLUDE=/etc/default/solr.in.sh
+ExecStart=/usr/local/lib/solr/bin/solr start
+ExecStop=/usr/local/lib/solr/bin/solr stop
+Restart=on-failure
+#ReadWritePaths=/var/lib/solr/
+#ReadWritePaths=/var/lib/solr/data/
+LimitNOFILE=65000
+LimitNPROC=65000
+TimeoutSec=180s
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

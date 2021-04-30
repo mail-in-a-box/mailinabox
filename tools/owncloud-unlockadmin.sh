@@ -8,7 +8,7 @@
 
 source /etc/mailinabox.conf # load global vars
 
-ADMIN=$(./mail.py user admins | head -n 1)
+ADMIN=$(./management/cli.py user admins | head -n 1)
 test -z "$1" || ADMIN=$1 
 
 echo I am going to unlock admin features for $ADMIN.

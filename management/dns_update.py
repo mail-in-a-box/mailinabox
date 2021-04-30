@@ -949,9 +949,9 @@ def get_secondary_dns(custom_dns, mode=None):
 			# doesn't.
 			if not hostname.startswith("xfr:"):
 				if mode == "xfr":
-					response = dns.resolver.query(hostname+'.', "A", raise_on_no_answer=False)
+					response = dns.resolver.resolve(hostname+'.', "A", raise_on_no_answer=False)
 					values.extend(map(str, response))
-					response = dns.resolver.query(hostname+'.', "AAAA", raise_on_no_answer=False)
+					response = dns.resolver.resolve(hostname+'.', "AAAA", raise_on_no_answer=False)
 					values.extend(map(str, response))
 					continue
 				values.append(hostname)
@@ -974,7 +974,7 @@ def set_secondary_dns(hostnames, env):
 			if not item.startswith("xfr:"):
 				# Resolve hostname.
 				try:
-					response = resolver.query(item, "A")
+					response = resolver.resolve(item, "A")
 				except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
 					try:
 						response = resolver.query(item, "AAAA")

@@ -23,14 +23,15 @@ includedir /etc/munin/munin-conf.d
 # path dynazoom uses for requests
 cgiurl_graph /admin/munin/cgi-graph
 
+# send alerts to the following address
+contact.admin.command mail -s "Munin notification \${var:host}" administrator@$PRIMARY_HOSTNAME
+contact.admin.always_send warning critical
+
 # a simple host tree
 [$PRIMARY_HOSTNAME]
 address 127.0.0.1
 
-# send alerts to the following address
 contacts admin
-contact.admin.command mail -s "Munin notification \${var:host}" administrator@$PRIMARY_HOSTNAME
-contact.admin.always_send warning critical
 EOF
 
 # The Debian installer touches these files and chowns them to www-data:adm for use with spawn-fcgi
@@ -69,6 +70,23 @@ hide_output systemctl link -f /lib/systemd/system/munin.service
 hide_output systemctl daemon-reload
 hide_output systemctl unmask munin.service
 hide_output systemctl enable munin.service
+
+# Some more munin plugins
+if [ -f /usr/share/munin/plugins/postfix_mailstats ] && [ ! -h /etc/munin/plugins/postfix_mailstats ]; then
+	ln -fs /usr/share/munin/plugins/postfix_mailstats /etc/munin/plugins/
+fi
+
+if [ -f /usr/share/munin/plugins/spamstats ] && [ ! -h /etc/munin/plugins/spamstats ]; then
+	ln -fs /usr/share/munin/plugins/spamstats /etc/munin/plugins/
+fi
+
+if [ -f /usr/share/munin/plugins/df_abs ] && [ ! -h /etc/munin/plugins/df_abs ]; then
+	ln -fs /usr/share/munin/plugins/df_abs /etc/munin/plugins/
+fi
+
+if [ -f /usr/share/munin/plugins/fail2ban ] && [ ! -h /etc/munin/plugins/fail2ban ]; then
+	ln -fs /usr/share/munin/plugins/fail2ban /etc/munin/plugins/
+fi
 
 # Restart services.
 restart_service munin

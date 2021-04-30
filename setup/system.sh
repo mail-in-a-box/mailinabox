@@ -75,26 +75,7 @@ then
 	fi
 fi
 
-# ### Add PPAs.
-
-# We install some non-standard Ubuntu packages maintained by other
-# third-party providers. First ensure add-apt-repository is installed.
-
-if [ ! -f /usr/bin/add-apt-repository ]; then
-	echo "Installing add-apt-repository..."
-	hide_output apt-get update
-	apt_install software-properties-common
-fi
-
-# Ensure the universe repository is enabled since some of our packages
-# come from there and minimal Ubuntu installs may have it turned off.
-hide_output add-apt-repository -y universe
-
-# Install the certbot PPA.
-hide_output add-apt-repository -y ppa:certbot/certbot
-
-# Install the duplicity PPA.
-hide_output add-apt-repository -y ppa:duplicity-team/duplicity-release-git
+# Certbot doesn't require a PPA in Debian
 
 # ### Update Packages
 
@@ -258,20 +239,21 @@ if [ -z "${DISABLE_FIREWALL:-}" ]; then
 	# Install `ufw` which provides a simple firewall configuration.
 	apt_install ufw
 
-	# Allow incoming connections to SSH.
-	ufw_limit ssh;
-
 	# ssh might be running on an alternate port. Use sshd -T to dump sshd's #NODOC
 	# settings, find the port it is supposedly running on, and open that port #NODOC
 	# too. #NODOC
 	SSH_PORT=$(sshd -T 2>/dev/null | grep "^port " | sed "s/port //") #NODOC
 	if [ ! -z "$SSH_PORT" ]; then
-	if [ "$SSH_PORT" != "22" ]; then
-
-	echo Opening alternate SSH port $SSH_PORT. #NODOC
-	ufw_limit $SSH_PORT #NODOC
-
-	fi
+		if [ "$SSH_PORT" != "22" ]; then
+			echo Opening alternate SSH port $SSH_PORT. #NODOC
+			ufw_limit $SSH_PORT #NODOC
+		else
+			# Allow incoming connections to SSH.
+			ufw_limit ssh;
+		fi
+	else
+		# Allow incoming connections to SSH.
+		ufw_limit ssh;
 	fi
 
 	ufw --force enable;
@@ -324,12 +306,21 @@ fi #NODOC
 #  	If more queries than specified are sent, bind9 returns SERVFAIL. After flushing the cache during system checks,
 #	we ran into the limit thus we are increasing it from 75 (default value) to 100.
 apt_install bind9
+touch /etc/default/bind9
 tools/editconf.py /etc/default/bind9 \
 	"OPTIONS=\"-u bind -4\""
 if ! grep -q "listen-on " /etc/bind/named.conf.options; then
 	# Add a listen-on directive if it doesn't exist inside the options block.
 	sed -i "s/^}/\n\tlisten-on { 127.0.0.1; };\n}/" /etc/bind/named.conf.options
 fi
+if ! grep -q "listen-on-v6 " /etc/bind/named.conf.options; then
+	# Add a listen-on-v6 directive if it doesn't exist inside the options block.
+	sed -i "s/^}/\n\tlisten-on-v6 { ::1; };\n}/" /etc/bind/named.conf.options
+else
+	# Modify the listen-on-v6 directive if it does exist
+	sed -i "s/listen-on-v6 { any; }/listen-on-v6 { ::1; }/" /etc/bind/named.conf.options
+fi
+
 if ! grep -q "max-recursion-queries " /etc/bind/named.conf.options; then
 	# Add a max-recursion-queries directive if it doesn't exist inside the options block.
 	sed -i "s/^}/\n\tmax-recursion-queries 100;\n}/" /etc/bind/named.conf.options
@@ -357,9 +348,14 @@ rm -f /etc/fail2ban/jail.local # we used to use this file but don't anymore
 rm -f /etc/fail2ban/jail.d/defaults-debian.conf # removes default config so we can manage all of fail2ban rules in one config
 cat conf/fail2ban/jails.conf \
 	| sed "s/PUBLIC_IP/$PUBLIC_IP/g" \
+	| sed "s/ADMIN_HOME_IP/$ADMIN_HOME_IP/g" \
 	| sed "s#STORAGE_ROOT#$STORAGE_ROOT#" \
-	> /etc/fail2ban/jail.d/mailinabox.conf
+	> /etc/fail2ban/jail.d/00-mailinabox.conf
 cp -f conf/fail2ban/filter.d/* /etc/fail2ban/filter.d/
+cp -f conf/fail2ban/jail.d/* /etc/fail2ban/jail.d/
+
+# fail2ban should be able to look back far enough because we increased findtime of recidive jail
+tools/editconf.py /etc/fail2ban/fail2ban.conf dbpurgeage=7d
 
 # On first installation, the log files that the jails look at don't all exist.
 # e.g., The roundcube error log isn't normally created until someone logs into

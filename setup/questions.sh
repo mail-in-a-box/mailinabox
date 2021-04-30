@@ -9,7 +9,7 @@ if [ -z "${NONINTERACTIVE:-}" ]; then
 	if [ ! -f /usr/bin/dialog ] || [ ! -f /usr/bin/python3 ] || [ ! -f /usr/bin/pip3 ]; then
 		echo Installing packages needed for setup...
 		apt-get -q -q update
-		apt_get_quiet install dialog python3 python3-pip  || exit 1
+		apt_get_quiet install dialog file python3 python3-pip  || exit 1
 	fi
 
 	# Installing email_validator is repeated in setup/management.sh, but in setup/management.sh
@@ -119,6 +119,24 @@ if [ -z "${PUBLIC_IP:-}" ]; then
 	fi
 fi
 
+
+if [ -z "${ADMIN_HOME_IP:-}" ]; then
+        if [ -z "${DEFAULT_ADMIN_HOME_IP:-}" ]; then
+                input_box "Admin Home IP Address" \
+		        "Enter the public IP address of the admin home, as given to you by your ISP.
+                 This will be used to prevent banning of the administrator IP address.
+            		\n\nAdmin Home IP address:" \
+	   		"" \
+			ADMIN_HOME_IP
+	else
+		ADMIN_HOME_IP=$DEFAULT_ADMIN_HOME_IP
+        fi
+fi
+
+if [ -z "${ADMIN_HOME_IP:-}" ]; then
+	ADMIN_HOME_IP=""
+fi
+
 # Same for IPv6. But it's optional. Also, if it looks like the system
 # doesn't have an IPv6, don't ask for one.
 if [ -z "${PUBLIC_IPV6:-}" ]; then
@@ -206,7 +224,10 @@ fi
 if [ "$PRIVATE_IPV6" != "$PUBLIC_IPV6" ]; then
 	echo "Private IPv6 Address: $PRIVATE_IPV6"
 fi
+if [ -n "$ADMIN_HOME_IP" ]; then
+    echo "Admin Home IP Address: $ADMIN_HOME_IP"
+fi
 if [ -f /usr/bin/git ] && [ -d .git ]; then
-	echo "Mail-in-a-Box Version: " $(git describe)
+	echo "Mail-in-a-Box Version: " $(git describe --tags)
 fi
 echo

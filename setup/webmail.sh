@@ -33,8 +33,9 @@ VERSION=1.4.11
 HASH=3877f0e70f29e7d0612155632e48c3db1e626be3
 PERSISTENT_LOGIN_VERSION=6b3fc450cae23ccb2f393d0ef67aa319e877e435 # version 5.2.0
 HTML5_NOTIFIER_VERSION=68d9ca194212e15b3c7225eb6085dbcf02fd13d7 # version 0.6.4+
-CARDDAV_VERSION=3.0.3
-CARDDAV_HASH=d1e3b0d851ffa2c6bd42bf0c04f70d0e1d0d78f8
+
+CARDDAV_VERSION=4.1.1
+CARDDAV_HASH=87b73661b7799b2079c28324311eddb4241242bb
 
 UPDATE_KEY=$VERSION:$PERSISTENT_LOGIN_VERSION:$HTML5_NOTIFIER_VERSION:$CARDDAV_VERSION
 
@@ -77,13 +78,14 @@ if [ $needs_update == 1 ]; then
 
 	# download and verify the full release of the carddav plugin
 	wget_verify \
-		https://github.com/blind-coder/rcmcarddav/releases/download/v${CARDDAV_VERSION}/carddav-${CARDDAV_VERSION}.zip \
+		https://github.com/mstilkerich/rcmcarddav/releases/download/v${CARDDAV_VERSION}/carddav-v${CARDDAV_VERSION}.tar.gz \
 		$CARDDAV_HASH \
-		/tmp/carddav.zip
+		/tmp/carddav.tar.gz
 
 	# unzip and cleanup
-	unzip -q /tmp/carddav.zip -d ${RCM_PLUGIN_DIR}
-	rm -f /tmp/carddav.zip
+#	unzip -q /tmp/carddav.tar.gz -d ${RCM_PLUGIN_DIR}
+	tar -C ${RCM_PLUGIN_DIR} --no-same-owner -zxf /tmp/carddav.tar.gz
+	rm -f /tmp/carddav.tar.gz
 
 	# record the version we've installed
 	echo $UPDATE_KEY > ${RCM_DIR}/version
@@ -116,7 +118,7 @@ cat > $RCM_CONFIG <<EOF;
      'verify_peer_name'  => false,
    ),
  );
-\$config['imap_timeout'] = 15;
+\$config['imap_timeout'] = 180;
 \$config['smtp_server'] = 'tls://127.0.0.1';
 \$config['smtp_conn_options'] = array(
   'ssl'         => array(
@@ -199,4 +201,4 @@ chmod 664 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 
 # Enable PHP modules.
 phpenmod -v php mcrypt imap
-restart_service php7.2-fpm
+restart_service php$(php_version)-fpm

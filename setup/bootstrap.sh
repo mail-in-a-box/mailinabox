@@ -18,9 +18,13 @@ if [ -z "$TAG" ]; then
 	# space, but if we put it in a comment it would confuse the status checks!)
 	# to get the latest version, so the first such line must be the one that we
 	# want to display in status checks.
-	if [ "`lsb_release -d | sed 's/.*:\s*//' | sed 's/18\.04\.[0-9]/18.04/' `" == "Ubuntu 18.04 LTS" ]; then
+	if [ "`lsb_release -d | sed 's/.*:\s*//' | sed 's/20\.04\.[0-9]/20.04/' `" == "Ubuntu 20.04 LTS" ]; then
+		# This machine is running Ubuntu 20.04.
+		TAG=v0.53
+		
+	elif [ "`lsb_release -d | sed 's/.*:\s*//' | sed 's/18\.04\.[0-9]/18.04/' `" == "Ubuntu 18.04 LTS" ]; then
 		# This machine is running Ubuntu 18.04.
-		TAG=v0.52
+		TAG=v0.53
 
 	elif [ "`lsb_release -d | sed 's/.*:\s*//' | sed 's/14\.04\.[0-9]/14.04/' `" == "Ubuntu 14.04 LTS" ]; then
 		# This machine is running Ubuntu 14.04.
@@ -34,7 +38,7 @@ if [ -z "$TAG" ]; then
 		TAG=v0.30
 
 	else
-		echo "This script must be run on a system running Ubuntu 18.04 or Ubuntu 14.04."
+		echo "This script must be run on a system running Ubuntu 20.04, 18.04 or 14.04."
 		exit 1
 	fi
 fi
@@ -68,7 +72,7 @@ fi
 cd $HOME/mailinabox
 
 # Update it.
-if [ "$TAG" != `git describe` ]; then
+if [ "$TAG" != "`git describe --tags`" ]; then
 	echo Updating Mail-in-a-Box to $TAG . . .
 	git fetch --depth 1 --force --prune origin tag $TAG
 	if ! git checkout -q $TAG; then

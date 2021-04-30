@@ -1,0 +1,2 @@
+1  */1 * * * root /usr/bin/curl -s http://127.0.0.1:8983/solr/update?commit=true >/dev/null 2>&1
+30 3   * * * root /usr/bin/curl -s http://127.0.0.1:8983/solr/update?optimize=true >/dev/null 2>&1

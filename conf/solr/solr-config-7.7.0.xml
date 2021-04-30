@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!-- This is the default config with stuff non-essential to Dovecot removed. -->
+
+<config>
+  <!-- Controls what version of Lucene various components of Solr
+       adhere to.  Generally, you want to use the latest version to
+       get all bug fixes and improvements. It is highly recommended
+       that you fully re-index after changing this setting as it can
+       affect both how text is indexed and queried.
+  -->
+  <luceneMatchVersion>7.7.0</luceneMatchVersion>
+
+  <!-- A 'dir' option by itself adds any files found in the directory
+       to the classpath, this is useful for including all jars in a
+       directory.
+
+       When a 'regex' is specified in addition to a 'dir', only the
+       files in that directory which completely match the regex
+       (anchored on both ends) will be included.
+
+       If a 'dir' option (with or without a regex) is used and nothing
+       is found that matches, a warning will be logged.
+
+       The examples below can be used to load some solr-contribs along
+       with their external dependencies.
+    -->
+  <lib dir="${solr.install.dir:../../../..}/contrib/extraction/lib" regex=".*\.jar" />
+  <lib dir="${solr.install.dir:../../../..}/dist/" regex="solr-cell-\d.*\.jar" />
+
+  <lib dir="${solr.install.dir:../../../..}/contrib/clustering/lib/" regex=".*\.jar" />
+  <lib dir="${solr.install.dir:../../../..}/dist/" regex="solr-clustering-\d.*\.jar" />
+
+  <lib dir="${solr.install.dir:../../../..}/contrib/langid/lib/" regex=".*\.jar" />
+  <lib dir="${solr.install.dir:../../../..}/dist/" regex="solr-langid-\d.*\.jar" />
+
+  <lib dir="${solr.install.dir:../../../..}/contrib/velocity/lib" regex=".*\.jar" />
+  <lib dir="${solr.install.dir:../../../..}/dist/" regex="solr-velocity-\d.*\.jar" />
+
+  <!-- Data Directory
+
+       Used to specify an alternate directory to hold all index data
+       other than the default ./data under the Solr home.  If
+       replication is in use, this should match the replication
+       configuration.
+    -->
+  <dataDir>${solr.data.dir:}</dataDir>
+
+  <!-- The default high-performance update handler -->
+  <updateHandler class="solr.DirectUpdateHandler2">
+
+    <!-- Enables a transaction log, used for real-time get, durability, and
+         and solr cloud replica recovery.  The log can grow as big as
+         uncommitted changes to the index, so use of a hard autoCommit
+         is recommended (see below).
+         "dir" - the target directory for transaction logs, defaults to the
+                solr data directory.
+         "numVersionBuckets" - sets the number of buckets used to keep
+                track of max version values when checking for re-ordered
+                updates; increase this value to reduce the cost of
+                synchronizing access to version buckets during high-volume
+                indexing, this requires 8 bytes (long) * numVersionBuckets
+                of heap space per Solr core.
+    -->
+    <updateLog>
+      <str name="dir">${solr.ulog.dir:}</str>
+      <int name="numVersionBuckets">${solr.ulog.numVersionBuckets:65536}</int>
+    </updateLog>
+
+    <!-- AutoCommit
+
+         Perform a hard commit automatically under certain conditions.
+         Instead of enabling autoCommit, consider using "commitWithin"
+         when adding documents.
+
+         http://wiki.apache.org/solr/UpdateXmlMessages
+
+         maxDocs - Maximum number of documents to add since the last
+                   commit before automatically triggering a new commit.
+
+         maxTime - Maximum amount of time in ms that is allowed to pass
+                   since a document was added before automatically
+                   triggering a new commit.
+         openSearcher - if false, the commit causes recent index changes
+           to be flushed to stable storage, but does not cause a new
+           searcher to be opened to make those changes visible.
+
+         If the updateLog is enabled, then it's highly recommended to
+         have some sort of hard autoCommit to limit the log size.
+      -->
+    <autoCommit>
+      <maxTime>${solr.autoCommit.maxTime:15000}</maxTime>
+      <openSearcher>false</openSearcher>
+    </autoCommit>
+
+    <!-- softAutoCommit is like autoCommit except it causes a
+         'soft' commit which only ensures that changes are visible
+         but does not ensure that data is synced to disk.  This is
+         faster and more near-realtime friendly than a hard commit.
+      -->
+    <autoSoftCommit>
+      <maxTime>${solr.autoSoftCommit.maxTime:-1}</maxTime>
+    </autoSoftCommit>
+
+    <!-- Update Related Event Listeners
+
+         Various IndexWriter related events can trigger Listeners to
+         take actions.
+
+         postCommit - fired after every commit or optimize command
+         postOptimize - fired after every optimize command
+      -->
+
+  </updateHandler>
+
+  <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+       Query section - these settings control query time things like caches
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+  <query>
+    <!-- Solr Internal Query Caches
+
+         There are two implementations of cache available for Solr,
+         LRUCache, based on a synchronized LinkedHashMap, and
+         FastLRUCache, based on a ConcurrentHashMap.
+
+         FastLRUCache has faster gets and slower puts in single
+         threaded operation and thus is generally faster than LRUCache
+         when the hit ratio of the cache is high (> 75%), and may be
+         faster under other scenarios on multi-cpu systems.
+    -->
+
+    <!-- Filter Cache
+
+         Cache used by SolrIndexSearcher for filters (DocSets),
+         unordered sets of *all* documents that match a query.  When a
+         new searcher is opened, its caches may be prepopulated or
+         "autowarmed" using data from caches in the old searcher.
+         autowarmCount is the number of items to prepopulate.  For
+         LRUCache, the autowarmed items will be the most recently
+         accessed items.
+
+         Parameters:
+           class - the SolrCache implementation LRUCache or
+               (LRUCache or FastLRUCache)
+           size - the maximum number of entries in the cache
+           initialSize - the initial capacity (number of entries) of
+               the cache.  (see java.util.HashMap)
+           autowarmCount - the number of entries to prepopulate from
+               and old cache.
+           maxRamMB - the maximum amount of RAM (in MB) that this cache is allowed
+                      to occupy. Note that when this option is specified, the size
+                      and initialSize parameters are ignored.
+      -->
+    <filterCache class="solr.FastLRUCache"
+                 size="512"
+                 initialSize="512"
+                 autowarmCount="0"/>
+
+    <!-- Query Result Cache
+
+         Caches results of searches - ordered lists of document ids
+         (DocList) based on a query, a sort, and the range of documents requested.
+         Additional supported parameter by LRUCache:
+            maxRamMB - the maximum amount of RAM (in MB) that this cache is allowed
+                       to occupy
+      -->
+    <queryResultCache class="solr.LRUCache"
+                      size="512"
+                      initialSize="512"
+                      autowarmCount="0"/>
+
+    <!-- Document Cache
+
+         Caches Lucene Document objects (the stored fields for each
+         document).  Since Lucene internal document ids are transient,
+         this cache will not be autowarmed.
+      -->
+    <documentCache class="solr.LRUCache"
+                   size="512"
+                   initialSize="512"
+                   autowarmCount="0"/>
+
+    <!-- custom cache currently used by block join -->
+    <cache name="perSegFilter"
+           class="solr.search.LRUCache"
+           size="10"
+           initialSize="0"
+           autowarmCount="10"
+           regenerator="solr.NoOpRegenerator" />
+
+    <!-- Lazy Field Loading
+
+         If true, stored fields that are not requested will be loaded
+         lazily.  This can result in a significant speed improvement
+         if the usual case is to not load all stored fields,
+         especially if the skipped fields are large compressed text
+         fields.
+    -->
+    <enableLazyFieldLoading>true</enableLazyFieldLoading>
+
+    <!-- Result Window Size
+
+         An optimization for use with the queryResultCache.  When a search
+         is requested, a superset of the requested number of document ids
+         are collected.  For example, if a search for a particular query
+         requests matching documents 10 through 19, and queryWindowSize is 50,
+         then documents 0 through 49 will be collected and cached.  Any further
+         requests in that range can be satisfied via the cache.
+      -->
+    <queryResultWindowSize>20</queryResultWindowSize>
+
+    <!-- Maximum number of documents to cache for any entry in the
+         queryResultCache.
+      -->
+    <queryResultMaxDocsCached>200</queryResultMaxDocsCached>
+
+    <!-- Use Cold Searcher
+
+         If a search request comes in and there is no current
+         registered searcher, then immediately register the still
+         warming searcher and use it.  If "false" then all requests
+         will block until the first searcher is done warming.
+      -->
+    <useColdSearcher>false</useColdSearcher>
+
+  </query>
+
+
+  <!-- Request Dispatcher
+
+       This section contains instructions for how the SolrDispatchFilter
+       should behave when processing requests for this SolrCore.
+
+    -->
+  <requestDispatcher>
+    <httpCaching never304="true" />
+  </requestDispatcher>
+
+  <!-- Request Handlers
+
+       http://wiki.apache.org/solr/SolrRequestHandler
+
+       Incoming queries will be dispatched to a specific handler by name
+       based on the path specified in the request.
+
+       If a Request Handler is declared with startup="lazy", then it will
+       not be initialized until the first request that uses it.
+
+    -->
+  <!-- SearchHandler
+
+       http://wiki.apache.org/solr/SearchHandler
+
+       For processing Search Queries, the primary Request Handler
+       provided with Solr is "SearchHandler" It delegates to a sequent
+       of SearchComponents (see below) and supports distributed
+       queries across multiple shards
+    -->
+  <requestHandler name="/select" class="solr.SearchHandler">
+    <!-- default values for query parameters can be specified, these
+         will be overridden by parameters in the request
+      -->
+    <lst name="defaults">
+      <str name="echoParams">explicit</str>
+      <int name="rows">10</int>
+    </lst>
+  </requestHandler>
+
+  <initParams path="/update/**,/select">
+    <lst name="defaults">
+      <str name="df">_text_</str>
+    </lst>
+  </initParams>
+
+  <!-- Response Writers
+
+       http://wiki.apache.org/solr/QueryResponseWriter
+
+       Request responses will be written using the writer specified by
+       the 'wt' request parameter matching the name of a registered
+       writer.
+
+       The "default" writer is the default and will be used if 'wt' is
+       not specified in the request.
+    -->
+  <queryResponseWriter name="xml"
+                       default="true"
+                       class="solr.XMLResponseWriter" />
+</config>
