@@ -36,8 +36,11 @@ tools/editconf.py /etc/rkhunter.conf \
         UPDATE_MIRRORS=1 \
         MIRRORS_MODE=0 \
         WEB_CMD='""' \
-        MAIL-ON-WARNING=root \
         ALLOWHIDDENDIR=/etc/.java
+
+if ! grep -Fxq "SCRIPTWHITELIST=/usr/local/bin/mail" /etc/rkhunter.conf > /dev/null; then
+	echo "SCRIPTWHITELIST=/usr/local/bin/mail" >> /etc/rkhunter.conf
+fi
 
 tools/editconf.py /etc/default/rkhunter \
         CRON_DAILY_RUN='"true"' \
@@ -45,8 +48,10 @@ tools/editconf.py /etc/default/rkhunter \
         APT_AUTOGEN='"true"'
 
 tools/editconf.py /etc/chkrootkit.conf \
-        RUN_DAILY='"true"'
+        RUN_DAILY='"true"' \
+        DIFF_MODE='"true"'
 
-# Should be last
+# Should be last, update expected output
 rkhunter --propupd
+chkrootkit -q > /var/log/chkrootkit/log.expected
 
