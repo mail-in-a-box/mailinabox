@@ -38,6 +38,7 @@ tools/editconf.py /etc/rkhunter.conf \
         WEB_CMD='""' \
         ALLOWHIDDENDIR=/etc/.java
 
+# Check presence of whitelist
 if ! grep -Fxq "SCRIPTWHITELIST=/usr/local/bin/mail" /etc/rkhunter.conf > /dev/null; then
 	echo "SCRIPTWHITELIST=/usr/local/bin/mail" >> /etc/rkhunter.conf
 fi
@@ -54,4 +55,3 @@ tools/editconf.py /etc/chkrootkit.conf \
 # Should be last, update expected output
 rkhunter --propupd
 chkrootkit -q > /var/log/chkrootkit/log.expected
-
