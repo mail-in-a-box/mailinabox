@@ -48,10 +48,13 @@ tools/editconf.py /etc/default/rkhunter \
         CRON_DB_UPDATE='"true"' \
         APT_AUTOGEN='"true"'
 
+hide_output install -m 644 conf/chkrootkit.ignore /etc/
+
 tools/editconf.py /etc/chkrootkit.conf \
         RUN_DAILY='"true"' \
-        DIFF_MODE='"true"'
+        DIFF_MODE='"true"' \
+        IGNORE_FILE="/etc/chkrootkit.ignore"
 
 # Should be last, update expected output
 rkhunter --propupd
-chkrootkit -q > /var/log/chkrootkit/log.expected
+chkrootkit -q | egrep -v -f /etc/chkrootkit.ignore  > /var/log/chkrootkit/log.expected
