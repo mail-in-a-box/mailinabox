@@ -1,9 +1,41 @@
-This is not the original Mail-in-a-Box. See https://github.com/mail-in-a-box/mailinabox for the real deal! I made a number of modifications to to:
-- add geoipblocking on the admin web console
-- add geoipblocking for ssh access
-- make fail2ban a more stricter
-- add fail2ban filter for web scanners
-- other small stuff
+Modifications are go
+--------------------
+
+This is not the original Mail-in-a-Box. See https://github.com/mail-in-a-box/mailinabox for the real deal! Many thanks to [@JoshData](https://github.com/JoshData) and other  [contributors](https://github.com/mail-in-a-box/mailinabox/graphs/contributors).
+I made a number of modifications to the original Mail-in-a-Box, some to fix bugs, some to ease maintenance for my personal installation, to learn and to add functionality.
+
+Functionality changes and additions
+* Change installation target to Ubuntu 20.04. Thanks to [Power Mail-in-a-Box](https://github.com/ddavness/power-mailinabox)
+* Add geoipblocking on the admin web console
+  This applies geoip filtering on acces to the admin panel of the box. Order of filtering: block continents that are not allowed, block countries that are not allowed, allow countries that are allowed (overriding continent filtering). Edit /etc/nginx/conf.d/10-geoblock.conf to configure.
+* Add geoipblocking for ssh access
+  This applies geoip filtering for access to the ssh server. Edit /etc/geoiplookup.conf. All countries defined in this file are allowed. Works for alternate ssh ports.
+* Make fail2ban a more strict
+  enable postfix filters, lengthen bantime and findtime
+* Add fail2ban jails for both above mentioned geoipblocking filters
+* Add fail2ban filters for web scanners and badbots
+* Add solr full text searching to dovecot
+* Add rkhunter and chkrootkit 
+* Configure domain names for which only www will be hosted. Edit /etc/miabwwwdomains.conf to configure.
+* Add some munin plugins
+* Update nextcloud to 20.0.8
+* Update roundcube carddav plugin to 4.1.1
+
+Bug fixes
+* Munin routes are ignored for Multi Factor Authentication [see github issue](https://github.com/mail-in-a-box/mailinabox/issues/1865)
+* Munin error report fixed [see github issue](https://github.com/mail-in-a-box/mailinabox/issues/1555)
+* Correct nextcloud carddav url [see github issue](https://github.com/mail-in-a-box/mailinabox/issues/1918)
+
+Maintenance (personal)
+* Automatically clean spam and trash folders after 120 days
+* Removed Z-Push
+* After a backup, restarting of services is moved to before the execution of the after-backup script. This enables mail delivery while the after-backup script runs.
+* Add weekly pflogsumm log analysis
+* Enable mail delivery to root, forwarded to administrator
+* Remove nextcloud skeleton to save disk space
+
+Fun
+* Add option to define ADMIN_IP_ADDRESS (currently only used to ignore fail2ban jails)
 
 Original mailinabox content starts here:
 
