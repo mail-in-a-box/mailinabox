@@ -312,7 +312,9 @@ sudo -u www-data php /usr/local/lib/owncloud/occ upgrade
 if [ \( $? -ne 0 \) -a \( $? -ne 3 \) ]; then exit 1; fi
 
 # Disable default apps that we don't support
-sudo -u www-data php /usr/local/lib/owncloud/occ app:disable photos dashboard activity
+sudo -u www-data \
+	php /usr/local/lib/owncloud/occ app:disable photos dashboard activity \
+	| grep -v "No such app enabled"
 
 # Set PHP FPM values to support large file uploads
 # (semicolon is the comment character in this file, hashes produce deprecation warnings)
