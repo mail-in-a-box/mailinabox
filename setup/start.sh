@@ -78,7 +78,7 @@ if [ ! -d $STORAGE_ROOT ]; then
 	mkdir -p $STORAGE_ROOT
 fi
 if [ ! -f $STORAGE_ROOT/mailinabox.version ]; then
-	echo $(setup/migrate.py --current) > $STORAGE_ROOT/mailinabox.version
+	setup/migrate.py --current > $STORAGE_ROOT/mailinabox.version
 	chown $STORAGE_USER.$STORAGE_USER $STORAGE_ROOT/mailinabox.version
 fi
 
