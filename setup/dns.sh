@@ -132,7 +132,7 @@ cat > /etc/cron.daily/mailinabox-dnssec << EOF;
 #!/bin/bash
 # Mail-in-a-Box
 # Re-sign any DNS zones with DNSSEC because the signatures expire periodically.
-`pwd`/tools/dns_update
+$(pwd)/tools/dns_update
 EOF
 chmod +x /etc/cron.daily/mailinabox-dnssec
 
