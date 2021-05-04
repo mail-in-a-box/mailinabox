@@ -47,7 +47,7 @@ needs_update=0 #NODOC
 if [ ! -f /usr/local/lib/roundcubemail/version ]; then
 	# not installed yet #NODOC
 	needs_update=1 #NODOC
-elif [[ "$UPDATE_KEY" != `cat /usr/local/lib/roundcubemail/version` ]]; then
+elif [[ "$UPDATE_KEY" != $(cat /usr/local/lib/roundcubemail/version) ]]; then
 	# checks if the version is what we want
 	needs_update=1 #NODOC
 fi
@@ -91,8 +91,9 @@ fi
 
 # ### Configuring Roundcube
 
-# Generate a safe 24-character secret key of safe characters.
-SECRET_KEY=$(dd if=/dev/urandom bs=1 count=18 2>/dev/null | base64 | fold -w 24 | head -n 1)
+# Generate a secret key of PHP-string-safe characters appropriate
+# for the cipher algorithm selected below.
+SECRET_KEY=$(dd if=/dev/urandom bs=1 count=32 2>/dev/null | base64 | sed s/=//g)
 
 # Create a configuration file.
 #
@@ -126,7 +127,8 @@ cat > $RCM_CONFIG <<EOF;
  );
 \$config['support_url'] = 'https://mailinabox.email/';
 \$config['product_name'] = '$PRIMARY_HOSTNAME Webmail';
-\$config['des_key'] = '$SECRET_KEY';
+\$config['cipher_method'] = 'AES-256-CBC'; # persistent login cookie and potentially other things
+\$config['des_key'] = '$SECRET_KEY'; # 37 characters -> ~256 bits for AES-256, see above
 \$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'persistent_login', 'carddav');
 \$config['skin'] = 'elastic';
 \$config['login_autocomplete'] = 2;

@@ -27,7 +27,7 @@ TARGETHASH=4b312d64227ef887b24d9cc8f0ae17519586f6e2
 needs_update=0 #NODOC
 if [ ! -f /usr/local/lib/z-push/version ]; then
 	needs_update=1 #NODOC
-elif [[ $VERSION != `cat /usr/local/lib/z-push/version` ]]; then
+elif [[ $VERSION != $(cat /usr/local/lib/z-push/version) ]]; then
 	# checks if the version
 	needs_update=1 #NODOC
 fi
