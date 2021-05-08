@@ -26,12 +26,16 @@ cat > /root/.forward << EOF;
 administrator@$PRIMARY_HOSTNAME
 EOF
 
+# Adapt rkhunter cron job to reduce log file production
+sed -i "s/--cronjob --report-warnings-only --appendlog/--cronjob --report-warnings-only --no-verbose-logging --appendlog/g" /etc/cron.daily/rkhunter
+
 # Install fake mail script
 if [ ! -f /usr/local/bin/mail ]; then
         hide_output install -m 755 tools/fake_mail /usr/local/bin
         mv -f /usr/local/bin/fake_mail /usr/local/bin/mail
 fi
 
+# Adapt rkhunter configuration
 tools/editconf.py /etc/rkhunter.conf \
         UPDATE_MIRRORS=1 \
         MIRRORS_MODE=0 \
