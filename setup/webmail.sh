@@ -28,10 +28,11 @@ apt_install \
 # Install Roundcube from source if it is not already present or if it is out of date.
 # Combine the Roundcube version number with the commit hash of plugins to track
 # whether we have the latest version of everything.
-VERSION=1.4.10
-HASH=36b2351030e1ebddb8e39190d7b0ba82b1bbec1b
-PERSISTENT_LOGIN_VERSION=6b3fc450cae23ccb2f393d0ef67aa319e877e435
-HTML5_NOTIFIER_VERSION=4b370e3cd60dabd2f428a26f45b677ad1b7118d5
+
+VERSION=1.4.11
+HASH=3877f0e70f29e7d0612155632e48c3db1e626be3
+PERSISTENT_LOGIN_VERSION=6b3fc450cae23ccb2f393d0ef67aa319e877e435 # version 5.2.0
+HTML5_NOTIFIER_VERSION=68d9ca194212e15b3c7225eb6085dbcf02fd13d7 # version 0.6.4+
 CARDDAV_VERSION=3.0.3
 CARDDAV_HASH=d1e3b0d851ffa2c6bd42bf0c04f70d0e1d0d78f8
 
@@ -46,7 +47,7 @@ needs_update=0 #NODOC
 if [ ! -f /usr/local/lib/roundcubemail/version ]; then
 	# not installed yet #NODOC
 	needs_update=1 #NODOC
-elif [[ "$UPDATE_KEY" != `cat /usr/local/lib/roundcubemail/version` ]]; then
+elif [[ "$UPDATE_KEY" != $(cat /usr/local/lib/roundcubemail/version) ]]; then
 	# checks if the version is what we want
 	needs_update=1 #NODOC
 fi
@@ -90,8 +91,9 @@ fi
 
 # ### Configuring Roundcube
 
-# Generate a safe 24-character secret key of safe characters.
-SECRET_KEY=$(dd if=/dev/urandom bs=1 count=18 2>/dev/null | base64 | fold -w 24 | head -n 1)
+# Generate a secret key of PHP-string-safe characters appropriate
+# for the cipher algorithm selected below.
+SECRET_KEY=$(dd if=/dev/urandom bs=1 count=32 2>/dev/null | base64 | sed s/=//g)
 
 # Create a configuration file.
 #
@@ -125,7 +127,8 @@ cat > $RCM_CONFIG <<EOF;
  );
 \$config['support_url'] = 'https://mailinabox.email/';
 \$config['product_name'] = '$PRIMARY_HOSTNAME Webmail';
-\$config['des_key'] = '$SECRET_KEY';
+\$config['cipher_method'] = 'AES-256-CBC'; # persistent login cookie and potentially other things
+\$config['des_key'] = '$SECRET_KEY'; # 37 characters -> ~256 bits for AES-256, see above
 \$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'persistent_login', 'carddav');
 \$config['skin'] = 'elastic';
 \$config['login_autocomplete'] = 2;

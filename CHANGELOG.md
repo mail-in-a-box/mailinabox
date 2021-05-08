@@ -1,13 +1,46 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+* Migrate to the ECDSAP256SHA256 DNSSEC algorithm. If a DS record is set for any of your domain names that have DNS hosted on your box, you will be prompted by status checks to update the DS record.
+* Roundcube's login cookie is updated to use a new encryption algorithm (AES-256-CBC instead of DES-EDE-CBC).
+
+v0.53a (May 8, 2021)
+--------------------
+
+The download URL for Z-Push has been revised becaue the old URL stopped working.
+
+v0.53 (April 12, 2021)
+----------------------
+
+Software updates:
+
+* Upgraded Roundcube to version 1.4.11 addressing a security issue, and its desktop notifications plugin.
+* Upgraded Z-Push (for Exchange/ActiveSync) to version 2.6.2.
+
+Control panel:
+
+* Backblaze B2 is now a supported backup protocol.
+* Fixed an issue in the daily mail reports.
+* Sort the Custom DNS by zone and qname, and add an option to go back to the old sort order (creation order).
+
+Mail:
+
+* Enable sending DMARC failure reports to senders that request them.
+
+Setup:
+
+* Fixed error when upgrading from Nextcloud 13.
+
 v0.52 (January 31, 2021)
 ------------------------
 
 Software updates:
 
 * Upgraded Roundcube to version 1.4.10.
-* Upgraded zpush to 2.6.1.
+* Upgraded Z-Push to 2.6.1.
 
 Mail:
 
