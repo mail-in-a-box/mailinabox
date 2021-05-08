@@ -7,6 +7,11 @@ In Development
 * Migrate to the ECDSAP256SHA256 DNSSEC algorithm. If a DS record is set for any of your domain names that have DNS hosted on your box, you will be prompted by status checks to update the DS record.
 * Roundcube's login cookie is updated to use a new encryption algorithm (AES-256-CBC instead of DES-EDE-CBC).
 
+v0.53a (May 8, 2021)
+--------------------
+
+The download URL for Z-Push has been revised becaue the old URL stopped working.
+
 v0.53 (April 12, 2021)
 ----------------------
 
