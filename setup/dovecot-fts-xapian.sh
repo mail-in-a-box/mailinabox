@@ -24,7 +24,8 @@ apt_install libxapian30
 # Break-imap-search makes search work the way users expect, rather than the way
 # the IMAP specification expects.
 tools/editconf.py /etc/dovecot/conf.d/10-mail.conf \
-        mail_plugins="fts fts_xapian"
+        mail_plugins="fts fts_xapian" \
+		mail_home="/home/user-data/mail/homes/%d/%n"
 
 # Install cronjobs to keep FTS up to date.
 hide_output install -m 755 conf/cron/miab_dovecot /etc/cron.daily/
@@ -45,12 +46,13 @@ plugin {
 
   fts_autoindex_exclude = \Trash
   fts_autoindex_exclude2 = \Junk
+  fts_autoindex_exclude3 = \Spam
   
-  fts_decoder = decode2text // To index attachements
+  fts_decoder = decode2text
 }
 
 service indexer-worker {
-	vsz_limit = 2G // or above (or 0 if you have rather large memory usable on your server, which is preferred for performance)
+	vsz_limit = 2G
 }
 
 service decode2text {
