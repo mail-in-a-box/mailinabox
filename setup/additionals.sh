@@ -36,6 +36,7 @@ tools/editconf.py /etc/rkhunter.conf \
         UPDATE_MIRRORS=1 \
         MIRRORS_MODE=0 \
         WEB_CMD='""' \
+        APPEND_LOG=1 \
         ALLOWHIDDENDIR=/etc/.java
 
 # Check presence of whitelist
