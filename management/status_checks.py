@@ -665,7 +665,7 @@ def check_mail_domain(domain, env, output):
 	if mx is None:
 		mxhost = None
 	elif mx == "[timeout]":
-        mxhost = None
+		mxhost = None
 	else:
 		# query_dns returns a semicolon-delimited list
 		# of priority-host pairs.
