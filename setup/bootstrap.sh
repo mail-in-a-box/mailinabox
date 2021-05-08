@@ -18,11 +18,11 @@ if [ -z "$TAG" ]; then
 	# space, but if we put it in a comment it would confuse the status checks!)
 	# to get the latest version, so the first such line must be the one that we
 	# want to display in status checks.
-	if [ "`lsb_release -d | sed 's/.*:\s*//' | sed 's/18\.04\.[0-9]/18.04/' `" == "Ubuntu 18.04 LTS" ]; then
+	if [ "$(lsb_release -d | sed 's/.*:\s*//' | sed 's/18\.04\.[0-9]/18.04/' )" == "Ubuntu 18.04 LTS" ]; then
 		# This machine is running Ubuntu 18.04.
-		TAG=v0.53
+		TAG=v0.53a
 
-	elif [ "`lsb_release -d | sed 's/.*:\s*//' | sed 's/14\.04\.[0-9]/14.04/' `" == "Ubuntu 14.04 LTS" ]; then
+	elif [ "$(lsb_release -d | sed 's/.*:\s*//' | sed 's/14\.04\.[0-9]/14.04/' )" == "Ubuntu 14.04 LTS" ]; then
 		# This machine is running Ubuntu 14.04.
 		echo "You are installing the last version of Mail-in-a-Box that will"
 		echo "support Ubuntu 14.04. If this is a new installation of Mail-in-a-Box,"
@@ -68,11 +68,11 @@ fi
 cd $HOME/mailinabox
 
 # Update it.
-if [ "$TAG" != `git describe` ]; then
+if [ "$TAG" != $(git describe) ]; then
 	echo Updating Mail-in-a-Box to $TAG . . .
 	git fetch --depth 1 --force --prune origin tag $TAG
 	if ! git checkout -q $TAG; then
-		echo "Update failed. Did you modify something in `pwd`?"
+		echo "Update failed. Did you modify something in $(pwd)?"
 		exit 1
 	fi
 	echo

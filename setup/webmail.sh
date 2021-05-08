@@ -48,7 +48,7 @@ needs_update=0 #NODOC
 if [ ! -f /usr/local/lib/roundcubemail/version ]; then
 	# not installed yet #NODOC
 	needs_update=1 #NODOC
-elif [[ "$UPDATE_KEY" != `cat /usr/local/lib/roundcubemail/version` ]]; then
+elif [[ "$UPDATE_KEY" != $(cat /usr/local/lib/roundcubemail/version) ]]; then
 	# checks if the version is what we want
 	needs_update=1 #NODOC
 fi

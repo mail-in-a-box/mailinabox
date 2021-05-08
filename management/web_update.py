@@ -162,17 +162,27 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 			for path, url in yaml.get("proxies", {}).items():
 				# Parse some flags in the fragment of the URL.
 				pass_http_host_header = False
+				proxy_redirect_off = False
+				frame_options_header_sameorigin = False
 				m = re.search("#(.*)$", url)
 				if m:
 					for flag in m.group(1).split(","):
 						if flag == "pass-http-host":
 							pass_http_host_header = True
+						elif flag == "no-proxy-redirect":
+							proxy_redirect_off = True
+						elif flag == "frame-options-sameorigin":
+							frame_options_header_sameorigin = True
 					url = re.sub("#(.*)$", "", url)
 
 				nginx_conf_extra += "\tlocation %s {" % path
 				nginx_conf_extra += "\n\t\tproxy_pass %s;" % url
+				if proxy_redirect_off:
+					nginx_conf_extra += "\n\t\tproxy_redirect off;"
 				if pass_http_host_header:
 					nginx_conf_extra += "\n\t\tproxy_set_header Host $http_host;"
+				if frame_options_header_sameorigin:
+					nginx_conf_extra += "\n\t\tproxy_set_header X-Frame-Options SAMEORIGIN;"
 				nginx_conf_extra += "\n\t\tproxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;"
 				nginx_conf_extra += "\n\t\tproxy_set_header X-Forwarded-Host $http_host;"
 				nginx_conf_extra += "\n\t\tproxy_set_header X-Forwarded-Proto $scheme;"
@@ -253,3 +263,4 @@ def get_web_domains_info(env):
 		}
 		for domain in get_web_domains(env)
 	]
+
