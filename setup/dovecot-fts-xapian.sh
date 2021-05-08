@@ -30,10 +30,14 @@ tools/editconf.py /etc/dovecot/conf.d/10-mail.conf \
 # Install cronjobs to keep FTS up to date.
 hide_output install -m 755 conf/cron/miab_dovecot /etc/cron.daily/
 
+# Install files
 if [ ! -f /usr/lib/dovecot/decode2text.sh ]; then
 	cp -f /usr/share/doc/dovecot-core/examples/decode2text.sh /usr/lib/dovecot
 fi
 
+cp -f lib/lib21_fts_xapian_plugin.so /usr/lib/dovecot/modules/
+
+# Create configuration file
 cat > /etc/dovecot/conf.d/90-plugin-fts.conf << EOF;
 plugin {
   plugin = fts fts_xapian
