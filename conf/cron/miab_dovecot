@@ -1,2 +1,3 @@
 #!/bin/bash
 /usr/bin/doveadm fts rescan -A > /dev/null 2>&1
+/usr/bin/doveadm fts optimize -A
