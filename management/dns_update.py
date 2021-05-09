@@ -360,7 +360,6 @@ def is_domain_cert_signed_and_valid(domain, env):
 	cert = get_ssl_certificates(env).get(domain)
 	if not cert: return False # no certificate provisioned
 	cert_status = check_certificate(domain, cert['certificate'], cert['private-key'])
-	print(domain, cert_status)
 	return cert_status[0] == 'OK'
 
 ########################################################################
