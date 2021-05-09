@@ -4,8 +4,14 @@ CHANGELOG
 In Development
 --------------
 
-* Migrate to the ECDSAP256SHA256 DNSSEC algorithm. If a DS record is set for any of your domain names that have DNS hosted on your box, you will be prompted by status checks to update the DS record.
+Mail:
+
 * Roundcube's login cookie is updated to use a new encryption algorithm (AES-256-CBC instead of DES-EDE-CBC).
+
+DNS:
+
+* The ECDSAP256SHA256 DNSSEC algorithm is now available. If a DS record is set for any of your domain names that have DNS hosted on your box, you will be prompted by status checks to update the DS record at your convenience.
+* Null MX records are added for domains that do not serve mail.
 
 v0.53a (May 8, 2021)
 --------------------

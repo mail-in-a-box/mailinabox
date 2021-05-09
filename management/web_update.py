@@ -27,7 +27,7 @@ def get_web_domains(env, include_www_redirects=True, include_auto=True, exclude_
 	if include_auto:
 		# Add Autoconfiguration domains for domains that there are user accounts at:
 		# 'autoconfig.' for Mozilla Thunderbird auto setup.
-		# 'autodiscover.' for Activesync autodiscovery.
+		# 'autodiscover.' for ActiveSync autodiscovery (Z-Push).
 		domains |= set('autoconfig.' + maildomain for maildomain in get_mail_domains(env, users_only=True))
 		domains |= set('autodiscover.' + maildomain for maildomain in get_mail_domains(env, users_only=True))
 
