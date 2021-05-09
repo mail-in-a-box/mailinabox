@@ -1,5 +1,5 @@
 Modifications are go
---------------------
+====================
 
 This is not the original Mail-in-a-Box. See https://github.com/mail-in-a-box/mailinabox for the real deal! Many thanks to [@JoshData](https://github.com/JoshData) and other  [contributors](https://github.com/mail-in-a-box/mailinabox/graphs/contributors).
 I made a number of modifications to the original Mail-in-a-Box, some to fix bugs, some to ease maintenance for my personal installation, to learn and to add functionality.
@@ -14,7 +14,7 @@ Functionality changes and additions
   enable postfix filters, lengthen bantime and findtime
 * Add fail2ban jails for both above mentioned geoipblocking filters
 * Add fail2ban filters for web scanners and badbots
-* Add xapian full text searching to dovecot
+* Add xapian full text searching to dovecot (from https://github.com/grosjo/fts-xapian)
 * Add rkhunter and chkrootkit 
 * Configure domain names for which only www will be hosted. Edit /etc/miabwwwdomains.conf to configure.
 * Add some munin plugins
