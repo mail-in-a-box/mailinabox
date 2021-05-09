@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+v0.53a (May 8, 2021)
+--------------------
+
+The download URL for Z-Push has been revised becaue the old URL stopped working.
+
 v0.53 (April 12, 2021)
 ----------------------
 
