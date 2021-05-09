@@ -6,6 +6,7 @@ In Development
 
 Mail:
 
+* Sending mail is now possible on port 465 with the "SSL" or "TLS" option in mail clients, and this is now the recommended setting. Port 587 with STARTTLS remains available but should be avoided.
 * Roundcube's login cookie is updated to use a new encryption algorithm (AES-256-CBC instead of DES-EDE-CBC).
 
 DNS:
