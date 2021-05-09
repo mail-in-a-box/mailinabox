@@ -9,7 +9,6 @@ import ipaddress
 import rtyaml
 import dns.resolver
 
-from mailconfig import get_mail_domains, get_mail_aliases
 from utils import shell, load_env_vars_from_file, safe_domain_name, sort_domains
 from ssl_certificates import get_ssl_certificates, check_certificate
 
@@ -20,10 +19,14 @@ from ssl_certificates import get_ssl_certificates, check_certificate
 DOMAIN_RE = "^(?!\-)(?:[*][.])?(?:[a-zA-Z\d\-_]{0,62}[a-zA-Z\d_]\.){1,126}(?!\d+)[a-zA-Z\d_]{1,63}(\.?)$"
 
 def get_dns_domains(env):
-	# Add all domain names in use by email users and mail aliases and ensure
-	# PRIMARY_HOSTNAME is in the list.
+	# Add all domain names in use by email users and mail aliases, any
+	# domains we serve web for (except www redirects because that would
+	# lead to infinite recursion here) and ensure PRIMARY_HOSTNAME is in the list.
+	from mailconfig import get_mail_domains
+	from web_update import get_web_domains
 	domains = set()
-	domains |= get_mail_domains(env)
+	domains |= set(get_mail_domains(env))
+	domains |= set(get_web_domains(env, include_www_redirects=False))
 	domains.add(env['PRIMARY_HOSTNAME'])
 	return domains
 
@@ -97,7 +100,8 @@ def do_dns_update(env, force=False):
 	if len(updated_domains) > 0:
 		shell('check_call', ["/usr/sbin/service", "nsd", "restart"])
 
-	# Write the OpenDKIM configuration tables for all of the domains.
+	# Write the OpenDKIM configuration tables for all of the mail domains.
+	from mailconfig import get_mail_domains
 	if write_opendkim_tables(get_mail_domains(env), env):
 		# Settings changed. Kick opendkim.
 		shell('check_call', ["/usr/sbin/service", "opendkim", "restart"])
@@ -122,23 +126,43 @@ def build_zones(env):
 	domains = get_dns_domains(env)
 	zonefiles = get_dns_zones(env)
 
-	# Custom records to add to zones.
-	additional_records = list(get_custom_dns_config(env))
+	# Create a dictionary of domains to a set of attributes for each
+	# domain, such as whether there are mail users at the domain.
+	from mailconfig import get_mail_domains
 	from web_update import get_web_domains
-	www_redirect_domains = set(get_web_domains(env)) - set(get_web_domains(env, include_www_redirects=False))
+	mail_domains = set(get_mail_domains(env))
+	mail_user_domains = set(get_mail_domains(env, users_only=True)) # i.e. will log in for mail, Nextcloud
+	web_domains = set(get_web_domains(env))
+	auto_domains = web_domains - set(get_web_domains(env, include_auto=False))
+	domains |= auto_domains # www redirects not included in the initial list, see above
+	domains = {
+		domain: {
+			"user": domain in mail_user_domains,
+			"mail": domain in mail_domains,
+			"web": domain in web_domains,
+			"auto": domain in auto_domains,
+		}
+		for domain in domains
+	}
 
 	# For MTA-STS, we'll need to check if the PRIMARY_HOSTNAME certificate is
 	# singned and valid. Check that now rather than repeatedly for each domain.
-	env["-primary-hostname-certificate-is-valid"] = is_domain_cert_signed_and_valid(env["PRIMARY_HOSTNAME"], env)
+	domains[env["PRIMARY_HOSTNAME"]]["certificate-is-valid"] = is_domain_cert_signed_and_valid(env["PRIMARY_HOSTNAME"], env)
+
+	# Load custom records to add to zones.
+	additional_records = list(get_custom_dns_config(env))
 
 	# Build DNS records for each zone.
 	for domain, zonefile in zonefiles:
 		# Build the records to put in the zone.
-		records = build_zone(domain, domains, additional_records, www_redirect_domains, env)
+		records = build_zone(domain, domains, additional_records, env)
 		yield (domain, zonefile, records)
 
-def build_zone(domain, all_domains, additional_records, www_redirect_domains, env, is_zone=True):
+def build_zone(domain, domain_properties, additional_records, env, is_zone=True):
 	records = []
+
+	# Skip www redirect and autoconfiguration domains here because they are set at the zone level directly.
+	if domain_properties[domain]["auto"]: return records
 
 	# For top-level zones, define the authoritative name servers.
 	#
@@ -188,16 +212,17 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 
 	# Add DNS records for any subdomains of this domain. We should not have a zone for
 	# both a domain and one of its subdomains.
-	subdomains = [d for d in all_domains if d.endswith("." + domain)]
-	for subdomain in subdomains:
-		subdomain_qname = subdomain[0:-len("." + domain)]
-		subzone = build_zone(subdomain, [], additional_records, www_redirect_domains, env, is_zone=False)
-		for child_qname, child_rtype, child_value, child_explanation in subzone:
-			if child_qname == None:
-				child_qname = subdomain_qname
-			else:
-				child_qname += "." + subdomain_qname
-			records.append((child_qname, child_rtype, child_value, child_explanation))
+	if is_zone: # don't recurse when we're just loading data for a subdomain
+		subdomains = [d for d in domain_properties if d.endswith("." + domain)]
+		for subdomain in subdomains:
+			subdomain_qname = subdomain[0:-len("." + domain)]
+			subzone = build_zone(subdomain, domain_properties, additional_records, env, is_zone=False)
+			for child_qname, child_rtype, child_value, child_explanation in subzone:
+				if child_qname == None:
+					child_qname = subdomain_qname
+				else:
+					child_qname += "." + subdomain_qname
+				records.append((child_qname, child_rtype, child_value, child_explanation))
 
 	has_rec_base = list(records) # clone current state
 	def has_rec(qname, rtype, prefix=None):
@@ -234,7 +259,7 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 		(None,  "A",    env["PUBLIC_IP"],       "Required. May have a different value. Sets the IP address that %s resolves to for web hosting and other services besides mail. The A record must be present but its value does not affect mail delivery." % domain),
 		(None,  "AAAA", env.get('PUBLIC_IPV6'), "Optional. Sets the IPv6 address that %s resolves to, e.g. for web hosting. (It is not necessary for receiving mail on this domain.)" % domain),
 	]
-	if "www." + domain in www_redirect_domains:
+	if domain_properties.get("www." + domain, {}).get("auto"):
 		defaults += [
 			("www", "A",    env["PUBLIC_IP"],       "Optional. Sets the IP address that www.%s resolves to so that the box can provide a redirect to the parent domain." % domain),
 			("www", "AAAA", env.get('PUBLIC_IPV6'), "Optional. Sets the IPv6 address that www.%s resolves to so that the box can provide a redirect to the parent domain." % domain),
@@ -288,7 +313,7 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 	# Add CardDAV/CalDAV SRV records on the non-primary hostname that points to the primary hostname
 	# for autoconfiguration of mail clients (so only domains hosting user accounts need it).
 	# The SRV record format is priority (0, whatever), weight (0, whatever), port, service provider hostname (w/ trailing dot).
-	if domain != env["PRIMARY_HOSTNAME"] and domain in get_mail_domains(env, users_only=True):
+	if domain != env["PRIMARY_HOSTNAME"] and domain_properties[domain]["user"]:
 		for dav in ("card", "cal"):
 			qname = "_" + dav + "davs._tcp"
 			if not has_rec(qname, "SRV"):
@@ -298,7 +323,7 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 	# This allows the following clients to automatically configure email addresses in the respective applications.
 	# autodiscover.* - Z-Push ActiveSync Autodiscover
 	# autoconfig.* - Thunderbird Autoconfig
-	if domain in get_mail_domains(env, users_only=True):
+	if domain_properties[domain]["user"]:
 		autodiscover_records = [
 			("autodiscover", "A", env["PUBLIC_IP"], "Provides email configuration autodiscovery support for Z-Push ActiveSync Autodiscover."),
 			("autodiscover", "AAAA", env["PUBLIC_IPV6"], "Provides email configuration autodiscovery support for Z-Push ActiveSync Autodiscover."),
@@ -330,7 +355,9 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 		("mta-sts", "A", env["PUBLIC_IP"], "Optional. MTA-STS Policy Host serving /.well-known/mta-sts.txt."),
 		("mta-sts", "AAAA", env.get('PUBLIC_IPV6'), "Optional. MTA-STS Policy Host serving /.well-known/mta-sts.txt."),
 	]
-	if domain in get_mail_domains(env) and env["-primary-hostname-certificate-is-valid"] and is_domain_cert_signed_and_valid("mta-sts." + domain, env):
+	if domain_properties[domain]["mail"] \
+	  and domain_properties[env["PRIMARY_HOSTNAME"]]["certificate-is-valid"] \
+	  and is_domain_cert_signed_and_valid("mta-sts." + domain, env):
 		# Compute an up-to-32-character hash of the policy file. We'll take a SHA-1 hash of the policy
 		# file (20 bytes) and encode it as base-64 (28 bytes, using alphanumeric alternate characters
 		# instead of '+' and '/' which are not allowed in an MTA-STS policy id) but then just take its
