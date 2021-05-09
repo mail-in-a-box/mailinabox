@@ -111,7 +111,7 @@ source setup/dns.sh
 source setup/mail-postfix.sh
 source setup/mail-dovecot.sh
 source setup/mail-users.sh
-source setup/solr.sh
+source setup/dovecot-fts-xapian.sh
 source setup/dkim.sh
 source setup/spamassassin.sh
 source setup/web.sh

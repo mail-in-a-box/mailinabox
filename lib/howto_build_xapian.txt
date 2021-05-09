@@ -1,0 +1,15 @@
+# Install required packages
+apt-get build-dep dovecot-core
+apt-get install dovecot-dev libxapian-dev git libxapian30 libicu-dev
+
+# Clone the project
+git clone https://github.com/grosjo/fts-xapian
+cd fts-xapian
+
+# Compile (don't install)
+autoreconf -vi
+./configure --with-dovecot=/usr/lib/dovecot
+make
+
+# install library found under src/.libs
+cp src/.libs/lib21_fts_xapian_plugin.so /usr/lib/dovecot/modules

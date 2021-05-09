@@ -14,7 +14,7 @@ Functionality changes and additions
   enable postfix filters, lengthen bantime and findtime
 * Add fail2ban jails for both above mentioned geoipblocking filters
 * Add fail2ban filters for web scanners and badbots
-* Add solr full text searching to dovecot
+* Add xapian full text searching to dovecot
 * Add rkhunter and chkrootkit 
 * Configure domain names for which only www will be hosted. Edit /etc/miabwwwdomains.conf to configure.
 * Add some munin plugins
