@@ -860,8 +860,11 @@ def check_miab_version(env, output):
 		output.print_warning("You are running version Mail-in-a-Box %s Kiekerjan Edition. Mail-in-a-Box version check disabled by privacy setting." % this_ver)
 	else:
 		latest_ver = get_latest_miab_version()
-        if this_ver[-3:] == "-kj"
-            this_ver_tag = this_ver[:-3]
+		
+		if this_ver[-3:] == "-kj":
+			this_ver_tag = this_ver[:-3]
+		else:
+			this_ver_tag = this_ver
 
 		if this_ver_tag == latest_ver:
 			output.print_ok("Mail-in-a-Box is up to date. You are running version %s Kiekerjan Edition." % this_ver)
