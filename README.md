@@ -2,7 +2,7 @@ Modifications are go
 ====================
 
 This is not the original Mail-in-a-Box. See https://github.com/mail-in-a-box/mailinabox for the real deal! Many thanks to [@JoshData](https://github.com/JoshData) and other  [contributors](https://github.com/mail-in-a-box/mailinabox/graphs/contributors).
-I made a number of modifications to the original Mail-in-a-Box, some to fix bugs, some to ease maintenance for my personal installation, to learn and to add functionality.
+I made a number of modifications to the original Mail-in-a-Box, some to fix bugs, some to ease maintenance for my personal installation, to learn and to add functionality. 
 
 Functionality changes and additions
 * Change installation target to Ubuntu 20.04. Thanks to [Power Mail-in-a-Box](https://github.com/ddavness/power-mailinabox)
