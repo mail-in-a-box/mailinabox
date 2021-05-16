@@ -472,7 +472,7 @@ def get_mail_domains(env, as_map=False, filter_aliases=lambda alias: True, categ
 	# category is another type of filter. Set to a string value to
 	# return only those domains of that category. ie. the
 	# "businessCategory" attribute of the domain must include this
-	# category. [TODO: this doesn't really belong there, it is here to
+	# category. [TODO: this doesn't really belong here, it is here to
 	# make it easy for dns_update to get ssl domains]
 	#
 	# If users_only is True, only return domains with email addresses

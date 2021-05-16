@@ -10,7 +10,7 @@ from dns_update import get_custom_dns_config, get_dns_zones
 from ssl_certificates import get_ssl_certificates, get_domain_ssl_files, check_certificate
 from utils import shell, safe_domain_name, sort_domains
 
-def get_web_domains(env, include_www_redirects=True, exclude_dns_elsewhere=True, categories=['mail', 'ssl']):
+def get_web_domains(env, include_www_redirects=True, include_auto=True, exclude_dns_elsewhere=True, categories=['mail', 'ssl']):
 	# What domains should we serve HTTP(S) for?
 	domains = set()
 
@@ -20,16 +20,16 @@ def get_web_domains(env, include_www_redirects=True, exclude_dns_elsewhere=True,
 	for category in categories:
 		domains |= get_mail_domains(env, category=category)
 
-	if include_www_redirects:
+	if include_www_redirects and include_auto:
 		# Add 'www.' subdomains that we want to provide default redirects
 		# to the main domain for. We'll add 'www.' to any DNS zones, i.e.
 		# the topmost of each domain we serve.
 		domains |= set('www.' + zone for zone, zonefile in get_dns_zones(env))
 
-	# Add Autoconfiguration domains for domains that there are user accounts at:
-	# 'autoconfig.' for Mozilla Thunderbird auto setup.
-	# 'autodiscover.' for Activesync autodiscovery.
-	if 'mail' in categories:
+	if 'mail' in categories and include_auto:
+		# Add Autoconfiguration domains for domains that there are user accounts at:
+		# 'autoconfig.' for Mozilla Thunderbird auto setup.
+		# 'autodiscover.' for Activesync autodiscovery.
 		domains |= set('autoconfig.' + maildomain for maildomain in get_mail_domains(env, users_only=True))
 		domains |= set('autodiscover.' + maildomain for maildomain in get_mail_domains(env, users_only=True))
 		# 'mta-sts.' for MTA-STS support for all domains that have email addresses.

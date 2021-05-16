@@ -141,7 +141,7 @@ source setup/firstuser.sh
 # We'd let certbot ask the user interactively, but when this script is
 # run in the recommended curl-pipe-to-bash method there is no TTY and
 # certbot will fail if it tries to ask.
-if [ ! -d $STORAGE_ROOT/ssl/lets_encrypt/accounts/acme-v02.api.letsencrypt.org/ ]; then
+if [ -z "${SKIP_CERTBOT:-}" ] && [ ! -d $STORAGE_ROOT/ssl/lets_encrypt/accounts/acme-v02.api.letsencrypt.org/ ]; then
 echo
 echo "-----------------------------------------------"
 echo "Mail-in-a-Box uses Let's Encrypt to provision free SSL/TLS certificates"

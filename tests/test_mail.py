@@ -79,7 +79,7 @@ if not smtpd:
 	if len(sys.argv) - argi != 3: usage()
 	host, login, pw = sys.argv[argi:argi+3]
 	argi+=3
-	port=587
+	port=465
 else:
 	if len(sys.argv) - argi != 1: usage()
 	host = sys.argv[argi]
@@ -100,7 +100,6 @@ This is a test message. It should be automatically deleted by the test script.""
 	emailto=emailto,
 	subject=subject,
 	)
-
 
 
 def imap_login(host, login, pw):
@@ -150,9 +149,12 @@ def imap_test_dkim(M, num):
 
 def smtp_login(host, login, pw, port):
 	# Connect to the server on the SMTP submission TLS port.
-	server = smtplib.SMTP(host, port)
+	if port == 587 or port == 25:
+		server = smtplib.SMTP(host, port)
+		server.starttls()
+	else:
+		server = smtplib.SMTP_SSL(host)
 	#server.set_debuglevel(1)
-	server.starttls()
 
 	# Verify that the EHLO name matches the server's reverse DNS.
 	ipaddr = socket.gethostbyname(host) # IPv4 only!
