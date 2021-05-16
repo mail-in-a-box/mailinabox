@@ -11,8 +11,8 @@ To add a new account to Nextcloud, simply add a new email account with MiaB-LDAP
 
   1. Encryption-at-rest of user-data using a LUKS partition (optional)
   1. Log capture daemon and graphical UI for reporting on system activity
-  1. Display names for users (not just a user id), and comments for aliases to better keep track of what they're intended us is
-  1. Ability to modify/update the Postgrey whitelist from the management console
+  1. Display names for users (not just a user id), and comments for aliases to better keep track of what they're intended use is
+  1. Ability to modify/update Postgrey's whitelist from the management console
 
 Upstream changes are merged as they become available, and releases are numbered the same as upstream.
 
