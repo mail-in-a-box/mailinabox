@@ -1,13 +1,21 @@
 # Mail-in-a-Box LDAP
 This is a version of [Mail-in-a-Box](https://mailinabox.email) with LDAP used as the user account database instead of sqlite.
 
-All features are supported - you won't find many visible differences. It's only an under-the-hood change.
+It allows use of a remote Nextcloud that authenticate users against Mail-in-a-Box using [Nextcloud's official LDAP support](https://nextcloud.com/usermanagement/). A single user account database shared with Nextcloud was originally the goal of the project which would simplify deploying a private mail and cloud service for a home or small business.
 
-However, it will allow a remote Nextcloud installation to authenticate users against Mail-in-a-Box using [Nextcloud's official LDAP support](https://nextcloud.com/usermanagement/). A single user account database shared with Nextcloud was originally the goal of the project which would simplify deploying a private mail and cloud service for a home or small business. But, there could be many other use cases as well. 
-
-To add a new account to Nextcloud, you'd simply add a new email account with MiaB-LDAP's admin interface. Quotas and other account settings are made within Nextcloud.
+To add a new account to Nextcloud, simply add a new email account with MiaB-LDAP's management web interface. Quotas and other account settings are made within Nextcloud.
 
 **Also see companion project [Cloud-in-a-Box](https://github.com/downtownallday/cloudinabox)**
+
+## Additional features above what Mail-in-a-Box (upstream) provides:
+
+  1. Encryption-at-rest of user-data using a LUKS partition (optional)
+  1. Log capture daemon and graphical UI for reporting on system activity
+  1. Display names for users (not just a user id), and comments for aliases to better keep track of what they're intended us is
+  1. Ability to modify/update the Postgrey whitelist from the management console
+
+Upstream changes are merged as they become available, and releases are numbered the same as upstream.
+
 
 ## How to connect to a remote Nextcloud
 ---------------------------------
@@ -18,7 +26,7 @@ To integrate Mail-in-a-Box w/LDAP (MiaB-LDAP) with Nextcloud, changes must be ma
 
 Enable the setup mod `remote-nextcloud.sh` by creating the directory `local` in the directory where mailinabox is installed (usually $HOME/mailinabox), then creat a symbolic link to remote-nextcloud.sh. e.g. run this command from the mailinabox directory: `mkdir -p local; ln -s ../setup/mods.available/remote-nextcloud.sh local/remote-nextcloud.sh`. *During setup you will be prompted for the hostname and web prefix of your remote Nextcloud box.*
 
-The setup mod will configure Roundcube and Z-Push (ActiveSync) to use the remote Nextcloud for contacts and calendar instead of the local Nextcloud, which will be disabled (browsing to /cloud will fail). Old contacts will still be available in Roundcube, but read-only. Users can drag them into the remote Nextcloud.
+Once enabled, you'll find that Roundcube and Z-Push (ActiveSync) will use the remote Nextcloud for contacts and calendar instead of the local Nextcloud, which will be disabled. If you upgraded, old contacts will still be available in Roundcube, but will be read-only. Users can drag them into the remote Nextcloud from Roundcube.
 
 **On the remote Nextcloud**
 
@@ -38,7 +46,7 @@ A new ldap directory is created by setup under STORAGE_ROOT (/home/user-data/lda
 
 **LDAP schema for postfix and dovecot**
 
-See `conf/postfix.schema` for more details on the LDAP schema.
+See `conf/postfix.schema` and `conf/mta-totp.schema` for more details on the LDAP schema.
 
 **LDAP logs**
 
@@ -53,8 +61,6 @@ To perform general command-line searches against your LDAP database, run `setup/
   * etc.
 
 This is a convenient way to run ldapsearch having all the correct command line arguments, but any LDAP tool will also work.
-
-**Caution**
 
 *Direct LDAP database manipulation is not recommended for things like adding users or groups using ldapmodify or other LDAP database tools. Instead, use the MiaB admin interface or REST API. Adding or removing a user or group with the admin interface will trigger additional database and system changes by the management daemon, such as updating DNS zones for new email domains, updating group memberships, etc, that would not be performed with a direct change.*
 
