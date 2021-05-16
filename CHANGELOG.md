@@ -4,6 +4,38 @@ CHANGELOG
 In Development
 --------------
 
+Mail:
+
+* Forwarded mail using mail filter rules (in Roundcube; "sieve" rules) stopped re-writing the envelope address at some point, causing forwarded mail to often be marked as spam by the final recipient. These forwards will now re-write the envelope as the Mail-in-a-Box user receiving the mail to comply with SPF/DMARC rules.
+* Sending mail is now possible on port 465 with the "SSL" or "TLS" option in mail clients, and this is now the recommended setting. Port 587 with STARTTLS remains available but should be avoided when configuring new mail clients.
+* Roundcube's login cookie is updated to use a new encryption algorithm (AES-256-CBC instead of DES-EDE-CBC).
+
+DNS:
+
+* The ECDSAP256SHA256 DNSSEC algorithm is now available. If a DS record is set for any of your domain names that have DNS hosted on your box, you will be prompted by status checks to update the DS record at your convenience.
+* Null MX records are added for domains that do not serve mail.
+
+Contacts/calendar:
+
+* Updated Nextcloud to 20.0.8, contacts to 3.5.1, calendar to 2.2.0 (#1960).
+
+Control panel:
+
+* Fixed a crash in the status checks.
+* Small wording improvements.
+
+Setup:
+
+* Minor improvements to the setup scripts.
+
+v0.53a (May 8, 2021)
+--------------------
+
+The download URL for Z-Push has been revised becaue the old URL stopped working.
+
+v0.53 (April 12, 2021)
+----------------------
+
 Software updates:
 
 * Upgraded Roundcube to version 1.4.11 addressing a security issue, and its desktop notifications plugin.

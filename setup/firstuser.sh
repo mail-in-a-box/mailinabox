@@ -1,5 +1,5 @@
 # If there aren't any mail users yet, create one.
-if [ -z "`management/cli.py user`" ]; then
+if [ -z "$(management/cli.py user)" ]; then
 	# The outut of "management/cli.py user" is a list of mail users. If there
 	# aren't any yet, it'll be empty.
 
@@ -10,7 +10,7 @@ if [ -z "`management/cli.py user`" ]; then
 			input_box "Mail Account" \
 				"Let's create your first mail account.
 				\n\nWhat email address do you want?" \
-				me@`get_default_hostname` \
+				me@$(get_default_hostname) \
 				EMAIL_ADDR
 
 			if [ -z "$EMAIL_ADDR" ]; then
