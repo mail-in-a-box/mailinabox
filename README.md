@@ -11,14 +11,13 @@ To add a new account to Nextcloud, simply add a new email account with MiaB-LDAP
 
   1. Encryption-at-rest of user-data using a LUKS partition (optional)
   1. Log capture daemon and graphical UI for reporting on system activity
-  1. Display names for users (not just a user id), and comments for aliases to better keep track of what they're intended use is
+  1. Display names for users (not just a user id), and comments for aliases to better keep track of what their intended use is
   1. Ability to modify/update Postgrey's whitelist from the management console
 
 Upstream changes are merged as they become available, and releases are numbered the same as upstream.
 
 
 ## How to connect to a remote Nextcloud
----------------------------------
 
 To integrate Mail-in-a-Box w/LDAP (MiaB-LDAP) with Nextcloud, changes must be made on both sides.  These changes are mostly automated, you'll just need to copy a couple of files and apply a firewall rule.
 
@@ -66,6 +65,6 @@ This is a convenient way to run ldapsearch having all the correct command line a
 
 
 ## Migration
----------
+
 Running any of the setup scripts to install MiaB-LDAP (`miab`, `setup/bootstrap.sh`, `setup/start.sh`, etc) will automatically migrate your current installation from sqlite to LDAP. Ensure you've backed up user-data before running.
 
