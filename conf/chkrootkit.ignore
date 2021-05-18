@@ -1,1 +1,4 @@
-^eth[0-9]{1}: PACKET SNIFFER\(\/usr\/lib\/systemd\/systemd-networkd\[[0-9]+\]\)$
+^eth[0-9]: PACKET SNIFFER\(\/usr\/lib\/systemd\/systemd-networkd\[[0-9]+\]\)$
+^You have [ 1234]+process hidden for readdir command$
+^You have [ 0-9]+process hidden for ps command$
+^chkproc: Warning: Possible LKM Trojan installed$
