@@ -145,13 +145,20 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 	# 'False' in the tuple indicates these records would not be used if the zone
 	# is managed outside of the box.
 	if is_zone:
-		# Obligatory definition of ns1.PRIMARY_HOSTNAME.
-		records.append((None,  "NS",  "ns1.%s." % env["PRIMARY_HOSTNAME"], False))
-
 		# Define ns2.PRIMARY_HOSTNAME or whatever the user overrides.
 		# User may provide one or more additional nameservers
-		secondary_ns_list = get_secondary_dns(additional_records, mode="NS") \
-			or ["ns2." + env["PRIMARY_HOSTNAME"]]
+		secondary_ns_list = get_secondary_dns(additional_records, mode="NS") 
+		
+		# Need at least two nameservers in the secondary dns list
+		useHiddenMaster = os.path.exists("/etc/usehiddenmasterdns") and len(secondary_ns_list) > 1
+		
+		if not useHiddenMaster:
+			# Obligatory definition of ns1.PRIMARY_HOSTNAME.
+			records.append((None,  "NS",  "ns1.%s." % env["PRIMARY_HOSTNAME"], False))
+			
+			if len(secondary_ns_list) == 0:
+				secondary_ns_list = ["ns2." + env["PRIMARY_HOSTNAME"]]
+
 		for secondary_ns in secondary_ns_list:
 			records.append((None,  "NS", secondary_ns+'.', False))
 
@@ -466,15 +473,29 @@ def write_nsd_zone(domain, zonefile, records, env, force):
 
 	# For the refresh through TTL fields, a good reference is:
 	# http://www.peerwisdom.org/2013/05/15/dns-understanding-the-soa-record/
+	
+	# Time To Refresh – How long in seconds a nameserver should wait prior to checking for a Serial Number 
+	#     increase within the primary zone file. An increased Serial Number means a transfer is needed to sync
+	#     your records. Only applies to zones using secondary DNS.
+	# Time To Retry – How long in seconds a nameserver should wait prior to retrying to update a zone after
+	#     a failed attempt. Only applies to zones using secondary DNS.
+	# Time To Expire – How long in seconds a nameserver should wait prior to considering data from a secondary
+	#     zone invalid and stop answering queries for that zone. Only applies to zones using secondary DNS.
+	# Minimum TTL – How long in seconds that a nameserver or resolver should cache a negative response.
+	
+	# To make use of hidden master initialize the DNS to be used as secondary DNS. Then change the following
+	# in the zone file:
+	#  - Name the secondary DNS server as primary DNS in the SOA record
+	#  - Do not add NS records for the Mail-in-a-Box server
 
 
 	zone = """
 $ORIGIN {domain}.
 $TTL {defttl}          ; default time to live
 
-@ IN SOA ns1.{primary_domain}. hostmaster.{primary_domain}. (
+@ IN SOA {primary_dns}. hostmaster.{primary_domain}. (
 		   __SERIAL__     ; serial number
-		   {refresh}     ; Refresh (secondary nameserver update interval)
+		   {refresh}     ; Refresh (secondary nameserver update interval) 
 		   {retry}    ; Retry (when refresh fails, how often to try again)
 		   {expire}  ; Expire (when refresh fails, how long secondary nameserver will keep records around anyway)
 		   {negttl}    ; Negative TTL (how long negative responses are cached)
@@ -484,20 +505,28 @@ $TTL {defttl}          ; default time to live
 	# Default ttl values
 	p_defttl = 86400
 	p_refresh = 7200
-	p_retry = 3600
+	p_retry = 1800
 	p_expire = 1209600
 	p_negttl = 86400
+
+	primary_dns = "ns1" + env["PRIMARY_HOSTNAME"]
 
 	# Shorten dns ttl if file exists. Use just before moving domains, changin secondary dns servers etc
 	if os.path.exists("/etc/forceshortdnsttl"):
 		p_defttl = 300
 		p_refresh = 3600
-		p_retry = 1800
+		p_retry = 900
 		p_expire = 43200
-		p_negttl = 3600
-
+		p_negttl = 300
+	
+	secondary_ns_list = get_secondary_dns(additional_records, mode="NS")
+	useHiddenMaster = os.path.exists("/etc/usehiddenmasterdns") and len(secondary_ns_list) > 1
+	
+	if useHiddenMaster:
+		primary_dns = secondary_ns_list[0]
+	
 	# Replace replacement strings.
-	zone = zone.format(domain=domain, primary_domain=env["PRIMARY_HOSTNAME"], defttl=p_defttl,
+	zone = zone.format(domain=domain, primary_dns=primary_dns, primary_domain=env["PRIMARY_HOSTNAME"], defttl=p_defttl,
 				refresh=p_refresh, retry=p_retry, expire=p_expire, negttl=p_negttl)
 
 	# Add records.
@@ -1027,7 +1056,7 @@ def get_custom_dns_records(custom_dns, qname, rtype):
 def build_recommended_dns(env):
 	ret = []
 	for (domain, zonefile, records) in build_zones(env):
-		# remove records that we don't dislay
+		# remove records that we don't display
 		records = [r for r in records if r[3] is not False]
 
 		# put Required at the top, then Recommended, then everythiing else
