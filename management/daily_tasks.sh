@@ -9,6 +9,8 @@ export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 export LC_TYPE=en_US.UTF-8
 
+source /etc/mailinabox.conf
+
 # On Mondays, i.e. once a week, send the administrator a report of total emails
 # sent and received so the admin might notice server abuse.
 if [ `date "+%u"` -eq 1 ]; then
@@ -25,3 +27,6 @@ management/ssl_certificates.py -q  2>&1 | management/email_administrator.py "TLS
 
 # Run status checks and email the administrator if anything changed.
 management/status_checks.py --show-changes  2>&1 | management/email_administrator.py "Status Checks Change Notice"
+
+# Check blacklists
+tools/check-dnsbl.py $PUBLIC_IP $PUBLIC_IPV6 2>&1 | management/email_administrator.py "Blacklist Check Result"
