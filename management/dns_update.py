@@ -470,19 +470,35 @@ def write_nsd_zone(domain, zonefile, records, env, force):
 
 	zone = """
 $ORIGIN {domain}.
-$TTL 86400          ; default time to live
+$TTL {defttl}          ; default time to live
 
 @ IN SOA ns1.{primary_domain}. hostmaster.{primary_domain}. (
-           __SERIAL__     ; serial number
-           7200     ; Refresh (secondary nameserver update interval)
-           86400    ; Retry (when refresh fails, how often to try again)
-           1209600  ; Expire (when refresh fails, how long secondary nameserver will keep records around anyway)
-           86400    ; Negative TTL (how long negative responses are cached)
-           )
+		   __SERIAL__     ; serial number
+		   {refresh}     ; Refresh (secondary nameserver update interval)
+		   {retry}    ; Retry (when refresh fails, how often to try again)
+		   {expire}  ; Expire (when refresh fails, how long secondary nameserver will keep records around anyway)
+		   {negttl}    ; Negative TTL (how long negative responses are cached)
+		   )
 """
 
+	# Default ttl values
+	p_defttl = 86400
+	p_refresh = 7200
+	p_retry = 3600
+	p_expire = 1209600
+	p_negttl = 86400
+
+	# Shorten dns ttl if file exists. Use just before moving domains, changin secondary dns servers etc
+	if os.path.exists("/etc/forceshortdnsttl"):
+		p_defttl = 300
+		p_refresh = 3600
+		p_retry = 1800
+		p_expire = 43200
+		p_negttl = 3600
+
 	# Replace replacement strings.
-	zone = zone.format(domain=domain, primary_domain=env["PRIMARY_HOSTNAME"])
+	zone = zone.format(domain=domain, primary_domain=env["PRIMARY_HOSTNAME"], defttl=p_defttl,
+				refresh=p_refresh, retry=p_retry, expire=p_expire, negttl=p_negttl)
 
 	# Add records.
 	for subdomain, querytype, value, explanation in records:
@@ -620,7 +636,7 @@ def dnssec_choose_algo(domain, env):
 		# A variety of algorithms are supported for .fund. This
 		# is preferred.
 		# Gandi tells me that .be does not support RSASHA1-NSEC3-SHA1
-        # Nic.lv does not support RSASHA1-NSEC3-SHA1 for .lv tld's
+		# Nic.lv does not support RSASHA1-NSEC3-SHA1 for .lv tld's
 		return "RSASHA256"
 
 	# For any domain we were able to sign before, don't change the algorithm
