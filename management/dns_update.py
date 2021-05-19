@@ -503,22 +503,23 @@ $TTL {defttl}          ; default time to live
 """
 
 	# Default ttl values
-	p_defttl = 86400
-	p_refresh = 7200
-	p_retry = 1800
-	p_expire = 1209600
-	p_negttl = 86400
+	p_defttl = "1d"
+	p_refresh = "2h"
+	p_retry = "15m"
+	p_expire = "14d"
+	p_negttl = "12h"
 
 	primary_dns = "ns1" + env["PRIMARY_HOSTNAME"]
 
-	# Shorten dns ttl if file exists. Use just before moving domains, changin secondary dns servers etc
+	# Shorten dns ttl if file exists. Use before moving domains, changing secondary dns servers etc
 	if os.path.exists("/etc/forceshortdnsttl"):
-		p_defttl = 300
-		p_refresh = 3600
-		p_retry = 900
-		p_expire = 43200
-		p_negttl = 300
+		p_defttl = "5m"
+		p_refresh = "30m"
+		p_retry = "5m"
+		p_expire = "1d"
+		p_negttl = "5m"
 	
+	additional_records = list(get_custom_dns_config(env))
 	secondary_ns_list = get_secondary_dns(additional_records, mode="NS")
 	useHiddenMaster = os.path.exists("/etc/usehiddenmasterdns") and len(secondary_ns_list) > 1
 	
