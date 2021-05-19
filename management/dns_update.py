@@ -509,7 +509,7 @@ $TTL {defttl}          ; default time to live
 	p_expire = "14d"
 	p_negttl = "12h"
 
-	primary_dns = "ns1" + env["PRIMARY_HOSTNAME"]
+	primary_dns = "ns1." + env["PRIMARY_HOSTNAME"]
 
 	# Shorten dns ttl if file exists. Use before moving domains, changing secondary dns servers etc
 	if os.path.exists("/etc/forceshortdnsttl"):
