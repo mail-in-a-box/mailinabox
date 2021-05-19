@@ -150,7 +150,13 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 		secondary_ns_list = get_secondary_dns(additional_records, mode="NS") 
 		
 		# Need at least two nameservers in the secondary dns list
-		useHiddenMaster = os.path.exists("/etc/usehiddenmasterdns") and len(secondary_ns_list) > 1
+		useHiddenMaster = false
+		if os.path.exists("/etc/usehiddenmasterdns") and len(secondary_ns_list) > 1:
+			with open("/etc/usehiddenmasterdns") as f:
+				for line in f:
+					if line == domain or line == "usehiddenmasterdns":
+						useHiddenMaster = true
+						break
 		
 		if not useHiddenMaster:
 			# Obligatory definition of ns1.PRIMARY_HOSTNAME.
@@ -161,7 +167,6 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 
 		for secondary_ns in secondary_ns_list:
 			records.append((None,  "NS", secondary_ns+'.', False))
-
 
 	# In PRIMARY_HOSTNAME...
 	if domain == env["PRIMARY_HOSTNAME"]:
@@ -509,22 +514,32 @@ $TTL {defttl}          ; default time to live
 	p_expire = "14d"
 	p_negttl = "12h"
 
-	primary_dns = "ns1." + env["PRIMARY_HOSTNAME"]
-
 	# Shorten dns ttl if file exists. Use before moving domains, changing secondary dns servers etc
 	if os.path.exists("/etc/forceshortdnsttl"):
-		p_defttl = "5m"
-		p_refresh = "30m"
-		p_retry = "5m"
-		p_expire = "1d"
-		p_negttl = "5m"
+		with open("/etc/forceshortdnsttl") as f:
+			for line in f:
+				if line == domain or line == "forceshortdnsttl":
+					# Override the ttl values
+					p_defttl = "5m"
+					p_refresh = "30m"
+					p_retry = "5m"
+					p_expire = "1d"
+					p_negttl = "5m"
+					break
 	
+	primary_dns = "ns1." + env["PRIMARY_HOSTNAME"]
+	
+	# Obtain the secondary nameserver list
 	additional_records = list(get_custom_dns_config(env))
 	secondary_ns_list = get_secondary_dns(additional_records, mode="NS")
-	useHiddenMaster = os.path.exists("/etc/usehiddenmasterdns") and len(secondary_ns_list) > 1
 	
-	if useHiddenMaster:
-		primary_dns = secondary_ns_list[0]
+	# Using hidden master for a domain if it is configured
+	if os.path.exists("/etc/usehiddenmasterdns") and len(secondary_ns_list) > 1:
+		with open("/etc/usehiddenmasterdns") as f:
+			for line in f:
+				if line == domain or line == "usehiddenmasterdns":
+					primary_dns = secondary_ns_list[0]
+					break
 	
 	# Replace replacement strings.
 	zone = zone.format(domain=domain, primary_dns=primary_dns, primary_domain=env["PRIMARY_HOSTNAME"], defttl=p_defttl,
