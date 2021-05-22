@@ -150,12 +150,12 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 		secondary_ns_list = get_secondary_dns(additional_records, mode="NS") 
 		
 		# Need at least two nameservers in the secondary dns list
-		useHiddenMaster = false
+		useHiddenMaster = False
 		if os.path.exists("/etc/usehiddenmasterdns") and len(secondary_ns_list) > 1:
 			with open("/etc/usehiddenmasterdns") as f:
 				for line in f:
 					if line == domain or line == "usehiddenmasterdns":
-						useHiddenMaster = true
+						useHiddenMaster = True
 						break
 		
 		if not useHiddenMaster:
