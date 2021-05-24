@@ -507,10 +507,10 @@ $TTL {defttl}          ; default time to live
 		   )
 """
 
-	# Default ttl values
+	# Default ttl values, following recomendations from zonemaster.iis.se
 	p_defttl = "1d"
-	p_refresh = "2h"
-	p_retry = "15m"
+	p_refresh = "4h"
+	p_retry = "1h"
 	p_expire = "14d"
 	p_negttl = "12h"
 
