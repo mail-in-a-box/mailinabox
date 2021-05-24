@@ -154,7 +154,7 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 		if os.path.exists("/etc/usehiddenmasterdns") and len(secondary_ns_list) > 1:
 			with open("/etc/usehiddenmasterdns") as f:
 				for line in f:
-					if line == domain or line == "usehiddenmasterdns":
+					if line.strip() == domain or line.strip() == "usehiddenmasterdns":
 						useHiddenMaster = True
 						break
 		
@@ -518,7 +518,7 @@ $TTL {defttl}          ; default time to live
 	if os.path.exists("/etc/forceshortdnsttl"):
 		with open("/etc/forceshortdnsttl") as f:
 			for line in f:
-				if line == domain or line == "forceshortdnsttl":
+				if line.strip() == domain or line.strip() == "forceshortdnsttl":
 					# Override the ttl values
 					p_defttl = "5m"
 					p_refresh = "30m"
@@ -537,7 +537,7 @@ $TTL {defttl}          ; default time to live
 	if os.path.exists("/etc/usehiddenmasterdns") and len(secondary_ns_list) > 1:
 		with open("/etc/usehiddenmasterdns") as f:
 			for line in f:
-				if line == domain or line == "usehiddenmasterdns":
+				if line.strip() == domain or line.strip() == "usehiddenmasterdns":
 					primary_dns = secondary_ns_list[0]
 					break
 	
