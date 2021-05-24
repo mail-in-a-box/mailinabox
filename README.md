@@ -15,15 +15,17 @@ Functionality changes and additions
 * Add fail2ban jails for both above mentioned geoipblocking filters
 * Add fail2ban filters for web scanners and badbots
 * Add xapian full text searching to dovecot (from https://github.com/grosjo/fts-xapian)
-* Add rkhunter and chkrootkit 
-* Configure domain names for which only www will be hosted. Edit /etc/miabwwwdomains.conf to configure. DNS entries are not handled by this box!
+* Add rkhunter and chkrootkit
+  chkrootkit support is a bit dodgy, creating false positives every now and then, notably on kernel update.
+* Configure domain names for which only www will be hosted.
+  Edit /etc/miabwwwdomains.conf to configure. The box will handle incoming traffic asking for these domain names. The DNS entries are entered in an external DNS provider! If you want this box to handle the DNS entries, simply add a mail alias. (existing functionality of the vanilla Mail-in-a-Box)
 * Add some munin plugins
 * Update nextcloud to 20.0.8
 * Update roundcube carddav plugin to 4.1.1
 * Use shorter TTL values in the DNS server.
   To be used before moving e.g. DNS provider. Shortening TTL values will propagate changes faster. For reference, default TTL is 1 day, short TTL is 5 minutes. To use, edit file /etc/forceshortdnsttl and add a line for each domain for which shorter TTLs should be used. To use short TTLs for all known domains, add "forceshortdnsttl"
 * Use the box as a Hidden Master in the DNS system
-  Thus only the secondary DNS servers are used as public DNS servers. To use, edit file /etc/usehiddenmasterdns and add a line for each domain for which Hidden Master should be used. To use Hidden Master for all known domains, add "usehiddenmasterdns". At least two secondary servers should be set in the Custom DNS administration page.
+  Thus only the secondary DNS servers are used as public DNS servers. When using a hidden master, no glue records are necessary at your domain hoster. To use, edit file /etc/usehiddenmasterdns and add a line for each domain for which Hidden Master should be used. To use Hidden Master for all known domains, add "usehiddenmasterdns". At least two secondary servers should be set in the Custom DNS administration page.
 
 Bug fixes
 * Munin routes are ignored for Multi Factor Authentication [see github issue](https://github.com/mail-in-a-box/mailinabox/issues/1865)
