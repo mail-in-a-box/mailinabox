@@ -126,15 +126,15 @@ tools/editconf.py /etc/postfix/main.cf \
 	smtpd_tls_cert_file=$STORAGE_ROOT/ssl/ssl_certificate.pem \
 	smtpd_tls_key_file=$STORAGE_ROOT/ssl/ssl_private_key.pem \
 	smtpd_tls_dh1024_param_file=$STORAGE_ROOT/ssl/dh2048.pem \
-	smtpd_tls_protocols="!SSLv2,!SSLv3" \
+	smtpd_tls_protocols="!SSLv2,!SSLv3,!TLSv1,!TLSv1.1" \
 	smtpd_tls_ciphers=medium \
 	tls_medium_cipherlist=ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES256-SHA256:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:DES-CBC3-SHA \
-	smtpd_tls_exclude_ciphers=aNULL,RC4 \
+	smtpd_tls_exclude_ciphers=MD5, DES, ADH, RC4, PSD, SRP, 3DES, eNULL, aNULL \
 	smtpd_tls_mandatory_protocols="!SSLv2,!SSLv3,!TLSv1,!TLSv1.1" \
 	smtpd_tls_mandatory_ciphers=high \
 	tls_high_cipherlist=ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384 \
-	smtpd_tls_mandatory_exclude_ciphers=aNULL,DES,3DES,MD5,DES+MD5,RC4 \
-	tls_preempt_cipherlist=no \
+	smtpd_tls_mandatory_exclude_ciphers=MD5, DES, ADH, RC4, PSD, SRP, 3DES, eNULL, aNULL \
+	tls_preempt_cipherlist=yes \
 	smtpd_tls_received_header=yes
 
 # Add block_root_external to block mail send to root@PRIMARY_HOSTNAME. This mail address is only supposed to be used for local
@@ -182,9 +182,10 @@ tools/editconf.py /etc/postfix/main.cf \
 # even if we don't know if it's to the right party, than to not encrypt at all. Instead we'll
 # now see notices about trusted certs. The CA file is provided by the package `ca-certificates`.
 tools/editconf.py /etc/postfix/main.cf \
-	smtp_tls_protocols=\!SSLv2,\!SSLv3 \
+	smtp_tls_protocols="!SSLv2,!SSLv3,!TLSv1,!TLSv1.1" \
 	smtp_tls_ciphers=medium \
-	smtp_tls_exclude_ciphers=aNULL,RC4 \
+	smtp_tls_exclude_ciphers=MD5, DES, ADH, RC4, PSD, SRP, 3DES, eNULL, aNULL \
+	smtp_tls_mandatory_exclude_ciphers = MD5, DES, ADH, RC4, PSD, SRP, 3DES, eNULL, aNULL \
 	smtp_tls_security_level=dane \
 	smtp_dns_support_level=dnssec \
 	smtp_tls_mandatory_protocols="!SSLv2,!SSLv3,!TLSv1,!TLSv1.1" \
