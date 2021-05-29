@@ -145,16 +145,28 @@ def build_zone(domain, all_domains, additional_records, www_redirect_domains, en
 	# 'False' in the tuple indicates these records would not be used if the zone
 	# is managed outside of the box.
 	if is_zone:
-		# Obligatory definition of ns1.PRIMARY_HOSTNAME.
-		records.append((None,  "NS",  "ns1.%s." % env["PRIMARY_HOSTNAME"], False))
-
 		# Define ns2.PRIMARY_HOSTNAME or whatever the user overrides.
 		# User may provide one or more additional nameservers
-		secondary_ns_list = get_secondary_dns(additional_records, mode="NS") \
-			or ["ns2." + env["PRIMARY_HOSTNAME"]]
+		secondary_ns_list = get_secondary_dns(additional_records, mode="NS") 
+		
+		# Need at least two nameservers in the secondary dns list
+		useHiddenMaster = False
+		if os.path.exists("/etc/usehiddenmasterdns") and len(secondary_ns_list) > 1:
+			with open("/etc/usehiddenmasterdns") as f:
+				for line in f:
+					if line.strip() == domain or line.strip() == "usehiddenmasterdns":
+						useHiddenMaster = True
+						break
+		
+		if not useHiddenMaster:
+			# Obligatory definition of ns1.PRIMARY_HOSTNAME.
+			records.append((None,  "NS",  "ns1.%s." % env["PRIMARY_HOSTNAME"], False))
+			
+			if len(secondary_ns_list) == 0:
+				secondary_ns_list = ["ns2." + env["PRIMARY_HOSTNAME"]]
+
 		for secondary_ns in secondary_ns_list:
 			records.append((None,  "NS", secondary_ns+'.', False))
-
 
 	# In PRIMARY_HOSTNAME...
 	if domain == env["PRIMARY_HOSTNAME"]:
@@ -466,23 +478,72 @@ def write_nsd_zone(domain, zonefile, records, env, force):
 
 	# For the refresh through TTL fields, a good reference is:
 	# http://www.peerwisdom.org/2013/05/15/dns-understanding-the-soa-record/
+	
+	# Time To Refresh – How long in seconds a nameserver should wait prior to checking for a Serial Number 
+	#     increase within the primary zone file. An increased Serial Number means a transfer is needed to sync
+	#     your records. Only applies to zones using secondary DNS.
+	# Time To Retry – How long in seconds a nameserver should wait prior to retrying to update a zone after
+	#     a failed attempt. Only applies to zones using secondary DNS.
+	# Time To Expire – How long in seconds a nameserver should wait prior to considering data from a secondary
+	#     zone invalid and stop answering queries for that zone. Only applies to zones using secondary DNS.
+	# Minimum TTL – How long in seconds that a nameserver or resolver should cache a negative response.
+	
+	# To make use of hidden master initialize the DNS to be used as secondary DNS. Then change the following
+	# in the zone file:
+	#  - Name the secondary DNS server as primary DNS in the SOA record
+	#  - Do not add NS records for the Mail-in-a-Box server
 
 
 	zone = """
 $ORIGIN {domain}.
-$TTL 86400          ; default time to live
+$TTL {defttl}          ; default time to live
 
-@ IN SOA ns1.{primary_domain}. hostmaster.{primary_domain}. (
-           __SERIAL__     ; serial number
-           7200     ; Refresh (secondary nameserver update interval)
-           86400    ; Retry (when refresh fails, how often to try again)
-           1209600  ; Expire (when refresh fails, how long secondary nameserver will keep records around anyway)
-           86400    ; Negative TTL (how long negative responses are cached)
-           )
+@ IN SOA {primary_dns}. hostmaster.{primary_domain}. (
+		   __SERIAL__     ; serial number
+		   {refresh}     ; Refresh (secondary nameserver update interval) 
+		   {retry}    ; Retry (when refresh fails, how often to try again)
+		   {expire}  ; Expire (when refresh fails, how long secondary nameserver will keep records around anyway)
+		   {negttl}    ; Negative TTL (how long negative responses are cached)
+		   )
 """
 
+	# Default ttl values, following recomendations from zonemaster.iis.se
+	p_defttl = "1d"
+	p_refresh = "4h"
+	p_retry = "1h"
+	p_expire = "14d"
+	p_negttl = "12h"
+
+	# Shorten dns ttl if file exists. Use before moving domains, changing secondary dns servers etc
+	if os.path.exists("/etc/forceshortdnsttl"):
+		with open("/etc/forceshortdnsttl") as f:
+			for line in f:
+				if line.strip() == domain or line.strip() == "forceshortdnsttl":
+					# Override the ttl values
+					p_defttl = "5m"
+					p_refresh = "30m"
+					p_retry = "5m"
+					p_expire = "1d"
+					p_negttl = "5m"
+					break
+	
+	primary_dns = "ns1." + env["PRIMARY_HOSTNAME"]
+	
+	# Obtain the secondary nameserver list
+	additional_records = list(get_custom_dns_config(env))
+	secondary_ns_list = get_secondary_dns(additional_records, mode="NS")
+	
+	# Using hidden master for a domain if it is configured
+	if os.path.exists("/etc/usehiddenmasterdns") and len(secondary_ns_list) > 1:
+		with open("/etc/usehiddenmasterdns") as f:
+			for line in f:
+				if line.strip() == domain or line.strip() == "usehiddenmasterdns":
+					primary_dns = secondary_ns_list[0]
+					break
+	
 	# Replace replacement strings.
-	zone = zone.format(domain=domain, primary_domain=env["PRIMARY_HOSTNAME"])
+	zone = zone.format(domain=domain, primary_dns=primary_dns, primary_domain=env["PRIMARY_HOSTNAME"], defttl=p_defttl,
+				refresh=p_refresh, retry=p_retry, expire=p_expire, negttl=p_negttl)
 
 	# Add records.
 	for subdomain, querytype, value, explanation in records:
@@ -620,7 +681,7 @@ def dnssec_choose_algo(domain, env):
 		# A variety of algorithms are supported for .fund. This
 		# is preferred.
 		# Gandi tells me that .be does not support RSASHA1-NSEC3-SHA1
-        # Nic.lv does not support RSASHA1-NSEC3-SHA1 for .lv tld's
+		# Nic.lv does not support RSASHA1-NSEC3-SHA1 for .lv tld's
 		return "RSASHA256"
 
 	# For any domain we were able to sign before, don't change the algorithm
@@ -1011,7 +1072,7 @@ def get_custom_dns_records(custom_dns, qname, rtype):
 def build_recommended_dns(env):
 	ret = []
 	for (domain, zonefile, records) in build_zones(env):
-		# remove records that we don't dislay
+		# remove records that we don't display
 		records = [r for r in records if r[3] is not False]
 
 		# put Required at the top, then Recommended, then everythiing else
