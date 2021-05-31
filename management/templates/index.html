@@ -83,7 +83,7 @@
         </div>
         <div class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
-            <li class="dropdown">
+            <li class="dropdown admin-links">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown">System <b class="caret"></b></a>
               <ul class="dropdown-menu">
                 <li><a href="#system_status" onclick="return show_panel(this);">Status Checks</a></li>
@@ -100,17 +100,17 @@
               <a href="#" class="dropdown-toggle" data-toggle="dropdown">Mail &amp; Users <b class="caret"></b></a>
               <ul class="dropdown-menu">
                 <li><a href="#mail-guide" onclick="return show_panel(this);">Instructions</a></li>
-                <li><a href="#users" onclick="return show_panel(this);">Users</a></li>
-                <li><a href="#aliases" onclick="return show_panel(this);">Aliases</a></li>
-                <li class="divider"></li>
-                <li class="dropdown-header">Your Account</li>
-                <li><a href="#mfa" onclick="return show_panel(this);">Two-Factor Authentication</a></li>
+                <li class="admin-links"><a href="#users" onclick="return show_panel(this);">Users</a></li>
+                <li class="admin-links"><a href="#aliases" onclick="return show_panel(this);">Aliases</a></li>
+                <li class="divider admin-links"></li>
+                <li class="dropdown-header admin-links">Your Account</li>
+                <li class="admin-links"><a href="#mfa" onclick="return show_panel(this);">Two-Factor Authentication</a></li>
               </ul>
             </li>
             <li><a href="#sync_guide" onclick="return show_panel(this);">Contacts/Calendar</a></li>
-            <li><a href="#web" onclick="return show_panel(this);">Web</a></li>
+            <li class="admin-links"><a href="#web" onclick="return show_panel(this);">Web</a></li>
           </ul>
-          <ul class="nav navbar-nav navbar-right">
+          <ul class="admin-links nav navbar-nav navbar-right">
             <li><a href="#" onclick="do_logout(); return false;" style="color: white">Log out</a></li>
           </ul>
         </div><!--/.navbar-collapse -->
@@ -400,6 +400,13 @@ $(function() {
   else if (typeof localStorage != 'undefined' && localStorage.getItem("miab-cp-credentials"))
     api_credentials = localStorage.getItem("miab-cp-credentials").split(":");
 
+  if (!api_credentials[0] && !api_credentials[1]) {
+    $('.admin-links').hide()
+  }
+  else {
+    $('.admin-links').show()
+  }
+  
   // Recall what the user was last looking at.
   if (typeof localStorage != 'undefined' && localStorage.getItem("miab-cp-lastpanel")) {
     show_panel(localStorage.getItem("miab-cp-lastpanel"));
