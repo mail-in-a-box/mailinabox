@@ -82,5 +82,5 @@ doveadm fts rescan -A
 # * `-q`: Queues the indexing to be run by indexer process. (will background the indexing)
 # * `-A`: All users
 # * `'*'`: All folders
-doveadm index -q -A '*'
+doveadm index -A -q \*
 
