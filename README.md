@@ -41,6 +41,7 @@ Maintenance (personal)
 
 Fun
 * Add option to define ADMIN_IP_ADDRESS (currently only used to ignore fail2ban jails)
+* Add dynamic dns tools in the tools directory.
 
 Original mailinabox content starts here:
 
