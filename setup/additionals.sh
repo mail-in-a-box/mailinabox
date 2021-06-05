@@ -2,7 +2,7 @@ source /etc/mailinabox.conf
 source setup/functions.sh
 
 # Add additional packages
-apt_install pflogsumm rkhunter chkrootkit
+apt_install pflogsumm rkhunter
 
 # Cleanup old spam and trash email
 hide_output install -m 755 conf/cron/miab_clean_mail /etc/cron.weekly/
@@ -53,13 +53,5 @@ tools/editconf.py /etc/default/rkhunter \
         CRON_DB_UPDATE='"true"' \
         APT_AUTOGEN='"true"'
 
-hide_output install -m 644 conf/chkrootkit.ignore /etc/
-
-tools/editconf.py /etc/chkrootkit.conf \
-        RUN_DAILY='"true"' \
-        DIFF_MODE='"true"' \
-        IGNORE_FILE="/etc/chkrootkit.ignore"
-
 # Should be last, update expected output
 rkhunter --propupd
-chkrootkit -q | egrep -v -f /etc/chkrootkit.ignore  > /var/log/chkrootkit/log.expected
