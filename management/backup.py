@@ -319,7 +319,7 @@ def perform_backup(full_backup):
 	# Change ownership of backups to the user-data user, so that the after-bcakup
 	# script can access them.
 	if get_target_type(config) == 'file':
-		shell('check_call', ["/bin/chown", "-R", env["STORAGE_USER"], backup_dir])
+		shell('check_call', ["/bin/chown", "-RH", env["STORAGE_USER"], backup_dir])
 
 	# Execute a post-backup script that does the copying to a remote server.
 	# Run as the STORAGE_USER user, not as root. Pass our settings in
