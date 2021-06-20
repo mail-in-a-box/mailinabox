@@ -32,7 +32,7 @@ The box's administrator and its (non-administrative) mail users must sometimes c
 
 These services are protected by [TLS](https://en.wikipedia.org/wiki/Transport_Layer_Security):
 
-* SMTP Submission (port 587). Mail users submit outbound mail through SMTP with STARTTLS on port 587.
+* SMTP Submission (ports 465/587). Mail users submit outbound mail through SMTP with TLS (port 465) or STARTTLS (port 587).
 * IMAP/POP (ports 993, 995). Mail users check for incoming mail through IMAP or POP over TLS.
 * HTTPS (port 443). Webmail, the Exchange/ActiveSync protocol, the administrative control panel, and any static hosted websites are accessed over HTTPS.
 
@@ -44,7 +44,7 @@ The services all follow these rules:
 
 Additionally:
 
-* SMTP Submission (port 587) will not accept user credentials without STARTTLS (true also of SMTP on port 25 in case of client misconfiguration), and the submission port won't accept mail without encryption. The minimum cipher key length is 128 bits. (The box is of course configured not to be an open relay. User credentials are required to send outbound mail.) ([source](setup/mail-postfix.sh))
+* SMTP Submission on port 587 will not accept user credentials without STARTTLS (true also of SMTP on port 25 in case of client misconfiguration), and the submission port won't accept mail without encryption. The minimum cipher key length is 128 bits. (The box is of course configured not to be an open relay. User credentials are required to send outbound mail.) ([source](setup/mail-postfix.sh))
 * HTTPS (port 443): The HTTPS Strict Transport Security header is set. A redirect from HTTP to HTTPS is offered. The [Qualys SSL Labs test](https://www.ssllabs.com/ssltest) should report an A+ grade. ([source 1](conf/nginx-ssl.conf), [source 2](conf/nginx.conf))
 
 ### Password Storage

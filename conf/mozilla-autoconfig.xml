@@ -16,8 +16,8 @@
 
       <outgoingServer type="smtp">
          <hostname>PRIMARY_HOSTNAME</hostname>
-         <port>587</port>
-         <socketType>STARTTLS</socketType>
+         <port>465</port>
+         <socketType>SSL</socketType>
          <username>%EMAILADDRESS%</username>
          <authentication>password-cleartext</authentication>
          <addThisServer>true</addThisServer>

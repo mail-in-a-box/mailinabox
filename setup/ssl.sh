@@ -10,7 +10,7 @@
 #
 #  * DNSSEC DANE TLSA records
 #  * IMAP
-#  * SMTP (opportunistic TLS for port 25 and submission on port 587)
+#  * SMTP (opportunistic TLS for port 25 and submission on ports 465/587)
 #  * HTTPS
 #
 # The certificate is created with its CN set to the PRIMARY_HOSTNAME. It is
@@ -19,7 +19,7 @@
 #
 # The Diffie-Hellman cipher bits are used for SMTP and HTTPS, when a
 # Diffie-Hellman cipher is selected during TLS negotiation. Diffie-Hellman
-# provides Perfect Forward Secrecy. 
+# provides Perfect Forward Secrecy.
 
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars

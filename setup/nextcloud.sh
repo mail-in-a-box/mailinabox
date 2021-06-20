@@ -104,8 +104,8 @@ nextcloud_ver=20.0.8
 nextcloud_hash=372b0b4bb07c7984c04917aff86b280e68fbe761
 contacts_ver=3.5.1
 contacts_hash=d2ffbccd3ed89fa41da20a1dff149504c3b33b93
-calendar_ver=2.1.3
-calendar_hash=d7d9db0e55ff1c9c2a2356e8980a8d9fce3fc4a0
+calendar_ver=2.2.0
+calendar_hash=673ad72ca28adb8d0f209015ff2dca52ffad99af
 user_external_ver=1.0.0
 user_external_hash=3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
 
@@ -131,7 +131,7 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 
 	# Backup the existing ownCloud/Nextcloud.
 	# Create a backup directory to store the current installation and database to
-	BACKUP_DIRECTORY=$STORAGE_ROOT/owncloud-backup/`date +"%Y-%m-%d-%T"`
+	BACKUP_DIRECTORY=$STORAGE_ROOT/owncloud-backup/$(date +"%Y-%m-%d-%T")
 	mkdir -p "$BACKUP_DIRECTORY"
 	if [ -d /usr/local/lib/owncloud/ ]; then
 		echo "Upgrading Nextcloud --- backing up existing installation, configuration, and database to directory to $BACKUP_DIRECTORY..."
@@ -316,7 +316,9 @@ sudo -u www-data php /usr/local/lib/owncloud/occ upgrade
 if [ \( $? -ne 0 \) -a \( $? -ne 3 \) ]; then exit 1; fi
 
 # Disable default apps that we don't support
-sudo -u www-data php /usr/local/lib/owncloud/occ app:disable photos dashboard activity
+sudo -u www-data \
+	php /usr/local/lib/owncloud/occ app:disable photos dashboard activity \
+	| (grep -v "No such app enabled" || /bin/true)
 # Install interesting apps
 sudo -u www-data php /usr/local/lib/owncloud/occ app:install notes
 # upgrade apps

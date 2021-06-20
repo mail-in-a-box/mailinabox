@@ -20,13 +20,13 @@ if [ -z "$TAG" ]; then
 	# want to display in status checks.
 	if [ "`lsb_release -d | sed 's/.*:\s*//' | sed 's/20\.04\.[0-9]/20.04/' `" == "Ubuntu 20.04 LTS" ]; then
 		# This machine is running Ubuntu 20.04.
-		TAG=v0.53
+		TAG=v0.54
 		
-	elif [ "`lsb_release -d | sed 's/.*:\s*//' | sed 's/18\.04\.[0-9]/18.04/' `" == "Ubuntu 18.04 LTS" ]; then
+	elif [ "$(lsb_release -d | sed 's/.*:\s*//' | sed 's/18\.04\.[0-9]/18.04/' )" == "Ubuntu 18.04 LTS" ]; then
 		# This machine is running Ubuntu 18.04.
-		TAG=v0.53a
+		TAG=v0.54
 
-	elif [ "`lsb_release -d | sed 's/.*:\s*//' | sed 's/14\.04\.[0-9]/14.04/' `" == "Ubuntu 14.04 LTS" ]; then
+	elif [ "$(lsb_release -d | sed 's/.*:\s*//' | sed 's/14\.04\.[0-9]/14.04/' )" == "Ubuntu 14.04 LTS" ]; then
 		# This machine is running Ubuntu 14.04.
 		echo "You are installing the last version of Mail-in-a-Box that will"
 		echo "support Ubuntu 14.04. If this is a new installation of Mail-in-a-Box,"
@@ -72,11 +72,11 @@ fi
 cd $HOME/mailinabox
 
 # Update it.
-if [ "$TAG" != "`git describe --tags`" ]; then
+if [ "$TAG" != $(git describe --tags) ]; then
 	echo Updating Mail-in-a-Box to $TAG . . .
 	git fetch --depth 1 --force --prune origin tag $TAG
 	if ! git checkout -q $TAG; then
-		echo "Update failed. Did you modify something in `pwd`?"
+		echo "Update failed. Did you modify something in $(pwd)?"
 		exit 1
 	fi
 	echo

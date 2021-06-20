@@ -10,7 +10,7 @@ from ssl_certificates import get_ssl_certificates, get_domain_ssl_files, check_c
 from utils import shell, safe_domain_name, sort_domains, get_php_version
 from wwwconfig import get_www_domains
 
-def get_web_domains(env, include_www_redirects=True, exclude_dns_elsewhere=True):
+def get_web_domains(env, include_www_redirects=True, include_auto=True, exclude_dns_elsewhere=True):
 	# What domains should we serve HTTP(S) for?
 	domains = set()
 
@@ -22,21 +22,22 @@ def get_web_domains(env, include_www_redirects=True, exclude_dns_elsewhere=True)
 	# Add domains for which we only serve www
 	domains |= get_www_domains(domains)
 
-	if include_www_redirects:
+	if include_www_redirects and include_auto:
 		# Add 'www.' subdomains that we want to provide default redirects
 		# to the main domain for. We'll add 'www.' to any DNS zones, i.e.
 		# the topmost of each domain we serve.
 		domains |= set('www.' + zone for zone, zonefile in get_dns_zones(env))
 		domains |= set('www.' + wwwdomain for wwwdomain in get_www_domains(get_mail_domains(env)))
 
-	# Add Autoconfiguration domains for domains that there are user accounts at:
-	# 'autoconfig.' for Mozilla Thunderbird auto setup.
-	# 'autodiscover.' for Activesync autodiscovery.
-	domains |= set('autoconfig.' + maildomain for maildomain in get_mail_domains(env, users_only=True))
-	domains |= set('autodiscover.' + maildomain for maildomain in get_mail_domains(env, users_only=True))
+	if include_auto:
+		# Add Autoconfiguration domains for domains that there are user accounts at:
+		# 'autoconfig.' for Mozilla Thunderbird auto setup.
+		# 'autodiscover.' for ActiveSync autodiscovery (Z-Push).
+		domains |= set('autoconfig.' + maildomain for maildomain in get_mail_domains(env, users_only=True))
+		domains |= set('autodiscover.' + maildomain for maildomain in get_mail_domains(env, users_only=True))
 
-	# 'mta-sts.' for MTA-STS support for all domains that have email addresses.
-	domains |= set('mta-sts.' + maildomain for maildomain in get_mail_domains(env))
+		# 'mta-sts.' for MTA-STS support for all domains that have email addresses.
+		domains |= set('mta-sts.' + maildomain for maildomain in get_mail_domains(env))
 
 	if exclude_dns_elsewhere:
 		# ...Unless the domain has an A/AAAA record that maps it to a different
@@ -172,17 +173,27 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 			for path, url in yaml.get("proxies", {}).items():
 				# Parse some flags in the fragment of the URL.
 				pass_http_host_header = False
+				proxy_redirect_off = False
+				frame_options_header_sameorigin = False
 				m = re.search("#(.*)$", url)
 				if m:
 					for flag in m.group(1).split(","):
 						if flag == "pass-http-host":
 							pass_http_host_header = True
+						elif flag == "no-proxy-redirect":
+							proxy_redirect_off = True
+						elif flag == "frame-options-sameorigin":
+							frame_options_header_sameorigin = True
 					url = re.sub("#(.*)$", "", url)
 
 				nginx_conf_extra += "\tlocation %s {" % path
 				nginx_conf_extra += "\n\t\tproxy_pass %s;" % url
+				if proxy_redirect_off:
+					nginx_conf_extra += "\n\t\tproxy_redirect off;"
 				if pass_http_host_header:
 					nginx_conf_extra += "\n\t\tproxy_set_header Host $http_host;"
+				if frame_options_header_sameorigin:
+					nginx_conf_extra += "\n\t\tproxy_set_header X-Frame-Options SAMEORIGIN;"
 				nginx_conf_extra += "\n\t\tproxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;"
 				nginx_conf_extra += "\n\t\tproxy_set_header X-Forwarded-Host $http_host;"
 				nginx_conf_extra += "\n\t\tproxy_set_header X-Forwarded-Proto $scheme;"
@@ -267,3 +278,4 @@ def get_web_domains_info(env):
 		}
 		for domain in get_web_domains(env)
 	]
+

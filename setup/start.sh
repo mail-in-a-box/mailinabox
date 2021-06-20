@@ -51,7 +51,7 @@ fi
 # in the first dialog prompt, so we should do this before that starts.
 cat > /usr/local/bin/mailinabox << EOF;
 #!/bin/bash
-cd `pwd`
+cd $(pwd)
 source setup/start.sh
 EOF
 chmod +x /usr/local/bin/mailinabox
@@ -83,7 +83,7 @@ if [ ! -d $STORAGE_ROOT ]; then
 	mkdir -p $STORAGE_ROOT
 fi
 if [ ! -f $STORAGE_ROOT/mailinabox.version ]; then
-	echo $(setup/migrate.py --current) > $STORAGE_ROOT/mailinabox.version
+	setup/migrate.py --current > $STORAGE_ROOT/mailinabox.version
 	chown $STORAGE_USER.$STORAGE_USER $STORAGE_ROOT/mailinabox.version
 fi
 
@@ -99,7 +99,7 @@ PUBLIC_IP=$PUBLIC_IP
 PUBLIC_IPV6=$PUBLIC_IPV6
 PRIVATE_IP=$PRIVATE_IP
 PRIVATE_IPV6=$PRIVATE_IPV6
-MTA_STS_MODE=${MTA_STS_MODE-}
+MTA_STS_MODE=${DEFAULT_MTA_STS_MODE:-enforce}
 ADMIN_HOME_IP=$ADMIN_HOME_IP
 EOF
 

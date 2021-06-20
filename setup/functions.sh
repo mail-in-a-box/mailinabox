@@ -9,12 +9,12 @@ function hide_output {
 	# and returns a non-zero exit code.
 
 	# Get a temporary file.
-	OUTPUT=$(tempfile)
+	OUTPUT=$(mktemp)
 
 	# Execute command, redirecting stderr/stdout to the temporary file. Since we
 	# check the return code ourselves, disable 'set -e' temporarily.
 	set +e
-	$@ &> $OUTPUT
+	"$@" &> $OUTPUT
 	E=$?
 	set -e
 
@@ -22,7 +22,7 @@ function hide_output {
 	if [ $E != 0 ]; then
 		# Something failed.
 		echo
-		echo FAILED: $@
+		echo FAILED: "$@"
 		echo -----------------------------------------
 		cat $OUTPUT
 		echo -----------------------------------------
@@ -53,8 +53,7 @@ function apt_install {
 	# install' for all of the packages.  Calling `dpkg` on each package is slow,
 	# and doesn't affect what we actually do, except in the messages, so let's
 	# not do that anymore.
-	PACKAGES=$@
-	apt_get_quiet install $PACKAGES
+	apt_get_quiet install "$@"
 }
 
 function get_default_hostname {

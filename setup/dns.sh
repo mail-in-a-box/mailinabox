@@ -83,27 +83,15 @@ apt_install nsd
 
 mkdir -p "$STORAGE_ROOT/dns/dnssec";
 
-# TLDs don't all support the same algorithms, so we'll generate keys using a few
-# different algorithms. RSASHA1-NSEC3-SHA1 was possibly the first widely used
-# algorithm that supported NSEC3, which is a security best practice. However TLDs
-# will probably be moving away from it to a a SHA256-based algorithm.
-#
-# Supports `RSASHA1-NSEC3-SHA1` (didn't test with `RSASHA256`):
-#
-#  * .info
-#  * .me
-#
-# Requires `RSASHA256`
-#
-#  * .email
-#  * .guide
-#
-# Supports `RSASHA256` (and defaulting to this)
-#
-#  * .fund
-
+# TLDs, registrars, and validating nameservers don't all support the same algorithms,
+# so we'll generate keys using a few different algorithms so that dns_update.py can
+# choose which algorithm to use when generating the zonefiles. See #1953 for recent
+# discussion. File for previously used algorithms (i.e. RSASHA1-NSEC3-SHA1) may still
+# be in the output directory, and we'll continue to support signing zones with them
+# so that trust isn't broken with deployed DS records, but we won't generate those
+# keys on new systems.
 FIRST=1 #NODOC
-for algo in RSASHA1-NSEC3-SHA1 RSASHA256; do
+for algo in RSASHA256 ECDSAP256SHA256; do
 if [ ! -f "$STORAGE_ROOT/dns/dnssec/$algo.conf" ]; then
 	if [ $FIRST == 1 ]; then
 		echo "Generating DNSSEC signing keys..."
@@ -112,7 +100,7 @@ if [ ! -f "$STORAGE_ROOT/dns/dnssec/$algo.conf" ]; then
 
 	# Create the Key-Signing Key (KSK) (with `-k`) which is the so-called
 	# Secure Entry Point. The domain name we provide ("_domain_") doesn't
-	#  matter -- we'll use the same keys for all our domains.
+	# matter -- we'll use the same keys for all our domains.
 	#
 	# `ldns-keygen` outputs the new key's filename to stdout, which
 	# we're capturing into the `KSK` variable.
@@ -120,17 +108,22 @@ if [ ! -f "$STORAGE_ROOT/dns/dnssec/$algo.conf" ]; then
 	# ldns-keygen uses /dev/random for generating random numbers by default.
 	# This is slow and unecessary if we ensure /dev/urandom is seeded properly,
 	# so we use /dev/urandom. See system.sh for an explanation. See #596, #115.
-	KSK=$(umask 077; cd $STORAGE_ROOT/dns/dnssec; ldns-keygen -r /dev/urandom -a $algo -b 2048 -k _domain_);
+	# (This previously used -b 2048 but it's unclear if this setting makes sense
+	# for non-RSA keys, so it's removed. The RSA-based keys are not recommended
+	# anymore anyway.)
+	KSK=$(umask 077; cd $STORAGE_ROOT/dns/dnssec; ldns-keygen -r /dev/urandom -a $algo -k _domain_);
 
 	# Now create a Zone-Signing Key (ZSK) which is expected to be
 	# rotated more often than a KSK, although we have no plans to
 	# rotate it (and doing so would be difficult to do without
-	# disturbing DNS availability.) Omit `-k` and use a shorter key length.
-	ZSK=$(umask 077; cd $STORAGE_ROOT/dns/dnssec; ldns-keygen -r /dev/urandom -a $algo -b 1024 _domain_);
+	# disturbing DNS availability.) Omit `-k`.
+	# (This previously used -b 1024 but it's unclear if this setting makes sense
+	# for non-RSA keys, so it's removed.)
+	ZSK=$(umask 077; cd $STORAGE_ROOT/dns/dnssec; ldns-keygen -r /dev/urandom -a $algo _domain_);
 
 	# These generate two sets of files like:
 	#
-	# * `K_domain_.+007+08882.ds`: DS record normally provided to domain name registrar (but it's actually invalid with `_domain_`)
+	# * `K_domain_.+007+08882.ds`: DS record normally provided to domain name registrar (but it's actually invalid with `_domain_` so we don't use this file)
 	# * `K_domain_.+007+08882.key`: public key
 	# * `K_domain_.+007+08882.private`: private key (secret!)
 
@@ -154,7 +147,7 @@ cat > /etc/cron.daily/mailinabox-dnssec << EOF;
 #!/bin/bash
 # Mail-in-a-Box
 # Re-sign any DNS zones with DNSSEC because the signatures expire periodically.
-`pwd`/tools/dns_update
+$(pwd)/tools/dns_update
 EOF
 chmod +x /etc/cron.daily/mailinabox-dnssec
 
