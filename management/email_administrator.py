@@ -25,7 +25,11 @@ subject = sys.argv[1]
 admin_addr = "administrator@" + env['PRIMARY_HOSTNAME']
 
 # Read in STDIN.
-content = sys.stdin.read().strip()
+try:
+        content = sys.stdin.read().strip()
+except:
+        print("error occured while cleaning input text")
+        sys.exit(1)
 
 # If there's nothing coming in, just exit.
 if content == "":
