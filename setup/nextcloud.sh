@@ -307,7 +307,6 @@ hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:disable
 hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable user_external
 hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable contacts
 hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable calendar
-hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:install notes
 
 # When upgrading, run the upgrade script again now that apps are enabled. It seems like
 # the first upgrade at the top won't work because apps may be disabled during upgrade?
@@ -320,7 +319,12 @@ sudo -u www-data \
 	php /usr/local/lib/owncloud/occ app:disable photos dashboard activity \
 	| (grep -v "No such app enabled" || /bin/true)
 # Install interesting apps
-sudo -u www-data php /usr/local/lib/owncloud/occ app:install notes
+installed=$(sudo -u www-data php /usr/local/lib/owncloud/occ app:list | grep 'notes')
+
+if [ -z "$installed" ]; then
+    sudo -u www-data php /usr/local/lib/owncloud/occ app:install notes
+fi
+
 # upgrade apps
 sudo -u www-data php /usr/local/lib/owncloud/occ app:update --all
 
