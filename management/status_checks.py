@@ -922,7 +922,9 @@ def check_miab_version(env, output):
 	else:
 		latest_ver = get_latest_miab_version()
 		
-		if this_ver[-3:] == "-kj":
+		if this_ver[-6:] == "-20.04":
+			this_ver_tag = this_ver[:-6]
+		elif this_ver[-3:] == "-kj":
 			this_ver_tag = this_ver[:-3]
 		else:
 			this_ver_tag = this_ver
