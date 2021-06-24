@@ -24,9 +24,14 @@ def get_dns_domains(env):
 	# lead to infinite recursion here) and ensure PRIMARY_HOSTNAME is in the list.
 	from mailconfig import get_mail_domains
 	from web_update import get_web_domains
+	from wwwconfig import get_www_domains
+
 	domains = set()
 	domains |= set(get_mail_domains(env))
 	domains |= set(get_web_domains(env, include_www_redirects=False))
+	# www_domains are hosted here, but DNS is pointed to our box from somewhere else.
+	# DNS is thus not hosted by us for these domains.
+	domains -= set(get_www_domains(set()))
 	domains.add(env['PRIMARY_HOSTNAME'])
 	return domains
 
