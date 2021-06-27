@@ -349,6 +349,8 @@ rm -f /etc/fail2ban/jail.d/defaults-debian.conf # removes default config so we c
 cat conf/fail2ban/jails.conf \
 	| sed "s/PUBLIC_IP/$PUBLIC_IP/g" \
 	| sed "s/ADMIN_HOME_IP/$ADMIN_HOME_IP/g" \
+	| sed "s/PUBLIC_IPV6/$PUBLIC_IPV6/g" \
+	| sed "s/ADMIN_HOME_IPV6/$ADMIN_HOME_IPV6/g" \
 	| sed "s#STORAGE_ROOT#$STORAGE_ROOT#" \
 	> /etc/fail2ban/jail.d/00-mailinabox.conf
 cp -f conf/fail2ban/filter.d/* /etc/fail2ban/filter.d/
