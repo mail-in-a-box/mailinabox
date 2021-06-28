@@ -619,7 +619,9 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 				output.print_ok("DNSSEC 'DS' record is set correctly at registrar. (Records using algorithm other than ECDSAP256SHA256 should be removed.)")
 				return
 			else: # no record uses alg 13
-				output.print_warning("DNSSEC 'DS' record set at registrar is valid but should be updated to ECDSAP256SHA256 (see below).")
+				output.print_warning("""DNSSEC 'DS' record set at registrar is valid but should be updated to ECDSAP256SHA256 (see below).
+				IMPORTANT: Do not delete existing DNSSEC 'DS' records for this domain until confirmation that the new DNSSEC 'DS' record
+				for this domain is valid.""")
 		else:
 			if is_checking_primary:
 				output.print_error("""The DNSSEC 'DS' record for %s is incorrect. See further details below.""" % domain)
@@ -630,7 +632,8 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 
 	output.print_line("""Follow the instructions provided by your domain name registrar to set a DS record.
 		Registrars support different sorts of DS records. Use the first option that works:""")
-	preferred_ds_order = [(7, 1), (7, 2), (8, 4), (13, 4), (8, 1), (8, 2), (13, 1), (13, 2)] # low to high
+	preferred_ds_order = [(7, 1), (8, 1), (13, 1), (7, 2), (8, 4), (13, 4), (8, 2), (13, 2)] # low to high
+
 	def preferred_ds_order_func(ds_suggestion):
 		k = (int(ds_suggestion['alg']), int(ds_suggestion['digalg']))
 		if k in preferred_ds_order:
