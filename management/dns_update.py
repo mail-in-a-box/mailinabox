@@ -480,7 +480,7 @@ $TTL {ttl}          ; default time to live
 @ IN SOA ns1.{primary_domain}. hostmaster.{primary_domain}. (
            __SERIAL__     ; serial number
            7200     ; Refresh (secondary nameserver update interval)
-           {ttl}    ; Retry (when refresh fails, how often to try again)
+           3600     ; Retry (when refresh fails, how often to try again)
            1209600  ; Expire (when refresh fails, how long secondary nameserver will keep records around anyway)
            {ttl}    ; Negative TTL (how long negative responses are cached)
            )
