@@ -1,2 +1,2 @@
 #!/bin/bash
-sed -i "s/^TTL=.*/TTL=1800/" /etc/mailinabox.conf
+sed -i "s/^TTL=.*/TTL=300/" /etc/mailinabox.conf
