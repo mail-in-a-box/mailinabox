@@ -193,6 +193,33 @@ EOF
 cp conf/sieve-spam.txt /etc/dovecot/sieve-spam.sieve
 sievec /etc/dovecot/sieve-spam.sieve
 
+### Compression
+
+# Create configuration file to enable compression
+cat > /etc/dovecot/conf.d/90-plugin-zlib.conf << EOF;
+# Enable Zlib for imap
+protocol imap {
+  mail_plugins = $mail_plugins zlib
+}
+# Enable Zlib for pop3
+protocol pop3 {
+  mail_plugins = $mail_plugins zlib
+}
+# Enable Zlib for lmtp
+protocol lmtp {
+  mail_plugins = $mail_plugins zlib
+}
+# Increase memory allowed for imap as it costs more to read compressed files
+service imap {
+  vsz_limit = 1024MB
+}
+# Configure the zlib plugin
+plugin {
+  zlib_save_level = 6
+  zlib_save = lz4
+}
+EOF
+
 # PERMISSIONS
 
 # Ensure configuration files are owned by dovecot and not world readable.
