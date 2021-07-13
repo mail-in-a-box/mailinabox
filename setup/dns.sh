@@ -10,17 +10,13 @@
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
-# Install the packages.
-#
-# * nsd: The non-recursive nameserver that publishes our DNS records.
-# * ldnsutils: Helper utilities for signing DNSSEC zones.
-# * openssh-client: Provides ssh-keyscan which we use to create SSHFP records.
-echo "Installing nsd (DNS server)..."
-apt_install nsd ldnsutils openssh-client
-
 # Prepare nsd's configuration.
-
+# We configure nsd before installation as we only want it to bind to some addresses
+# and it otherwise will have port / bind conflicts with bind9 used as the local resolver
 mkdir -p /var/run/nsd
+mkdir -p /etc/nsd
+mkdir -p /etc/nsd/zones
+touch /etc/nsd/zones.conf
 
 cat > /etc/nsd/nsd.conf << EOF;
 # Do not edit. Overwritten by Mail-in-a-Box setup.
@@ -40,6 +36,15 @@ server:
   # See https://www.nlnetlabs.nl/projects/nsd/nsd.conf.5.html.
   ip-transparent: yes
 
+  # Since we have bind9 listening on localhost for locally-generated
+  # DNS queries that require a recursive name server, and the system
+  # might have other network interfaces for e.g. tunnelling, we have
+  # to be specific about the network interfaces that nsd binds to.
+  ${PRIVATE_IP:+ip-address: $PRIVATE_IP}
+  ${PRIVATE_IPV6:+ip-address: $PRIVATE_IPV6}
+
+# Zones created and edited via the management interface get written here
+include: /etc/nsd/zones.conf
 EOF
 
 # Add log rotation
@@ -54,15 +59,13 @@ cat > /etc/logrotate.d/nsd <<EOF;
 }
 EOF
 
-# Since we have bind9 listening on localhost for locally-generated
-# DNS queries that require a recursive nameserver, and the system
-# might have other network interfaces for e.g. tunnelling, we have
-# to be specific about the network interfaces that nsd binds to.
-for ip in $PRIVATE_IP $PRIVATE_IPV6; do
-	echo "  ip-address: $ip" >> /etc/nsd/nsd.conf;
-done
-
-echo "include: /etc/nsd/zones.conf" >> /etc/nsd/nsd.conf;
+# Install the packages.
+#
+# * nsd: The non-recursive nameserver that publishes our DNS records.
+# * ldnsutils: Helper utilities for signing DNSSEC zones.
+# * openssh-client: Provides ssh-keyscan which we use to create SSHFP records.
+echo "Installing nsd (DNS server)..."
+apt_install nsd ldnsutils openssh-client
 
 # Create DNSSEC signing keys.
 
