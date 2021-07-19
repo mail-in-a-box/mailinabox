@@ -201,7 +201,9 @@ chmod -R o-rwx /etc/dovecot
 
 # Ensure mailbox files have a directory that exists and are owned by the mail user.
 mkdir -p $STORAGE_ROOT/mail/mailboxes
+mkdir -p $STORAGE_ROOT/mail/homes
 chown -R mail.mail $STORAGE_ROOT/mail/mailboxes
+chown -R mail.mail $STORAGE_ROOT/mail/homes
 
 # Same for the sieve scripts.
 mkdir -p $STORAGE_ROOT/mail/sieve
