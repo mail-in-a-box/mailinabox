@@ -1,11 +1,14 @@
 #!/usr/local/lib/mailinabox/env/bin/python
 
-# This script performs a backup of all user data:
+# This script performs a backup of all user data stored under STORAGE_ROOT:
 # 1) System services are stopped.
-# 2) STORAGE_ROOT/backup/before-backup is executed if it exists.
+# 2) BACKUP_ROOT/backup/before-backup is executed if it exists.
 # 3) An incremental encrypted backup is made using duplicity.
 # 4) The stopped services are restarted.
-# 5) STORAGE_ROOT/backup/after-backup is executed if it exists.
+# 5) BACKUP_ROOT/backup/after-backup is executed if it exists.
+#
+# By default BACKUP_ROOT is equal to STORAGE_ROOT. If the variable BACKUP_ROOT is defined in /etc/mailinabox.conf and
+# the referenced folder exists, this new target is used instead to store the backups.
 
 import os, os.path, shutil, glob, re, datetime, sys
 import dateutil.parser, dateutil.relativedelta, dateutil.tz
@@ -30,7 +33,7 @@ def backup_status(env):
 
 	backups = { }
 	now = datetime.datetime.now(dateutil.tz.tzlocal())
-	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
+	backup_root = get_backup_root(env)
 	backup_cache_dir = os.path.join(backup_root, 'cache')
 
 	def reldate(date, ref, clip):
@@ -188,7 +191,7 @@ def get_passphrase(env):
 	# that line is long enough to be a reasonable passphrase. It
 	# only needs to be 43 base64-characters to match AES256's key
 	# length of 32 bytes.
-	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
+	backup_root = get_backup_root(env)
 	with open(os.path.join(backup_root, 'secret_key.txt')) as f:
 		passphrase = f.readline().strip()
 	if len(passphrase) < 43: raise Exception("secret_key.txt's first line is too short!")
@@ -219,7 +222,7 @@ def perform_backup(full_backup):
 	Lock(die=True).forever()
 
 	config = get_backup_config(env)
-	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
+	backup_root = get_backup_root(env)
 	backup_cache_dir = os.path.join(backup_root, 'cache')
 	backup_dir = os.path.join(backup_root, 'encrypted')
 
@@ -312,7 +315,7 @@ def perform_backup(full_backup):
 		] + rsync_ssh_options,
 		get_env(env))
 
-	# Change ownership of backups to the user-data user, so that the after-bcakup
+	# Change ownership of backups to the user-data user, so that the after-backup
 	# script can access them.
 	if get_target_type(config) == 'file':
 		shell('check_call', ["/bin/chown", "-R", env["STORAGE_USER"], backup_dir])
@@ -335,7 +338,7 @@ def perform_backup(full_backup):
 
 def run_duplicity_verification():
 	env = load_environment()
-	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
+	backup_root = get_backup_root(env)
 	config = get_backup_config(env)
 	backup_cache_dir = os.path.join(backup_root, 'cache')
 
@@ -353,7 +356,8 @@ def run_duplicity_verification():
 def run_duplicity_restore(args):
 	env = load_environment()
 	config = get_backup_config(env)
-	backup_cache_dir = os.path.join(env["STORAGE_ROOT"], 'backup', 'cache')
+	backup_root = get_backup_root(env)
+	backup_cache_dir = os.path.join(backup_root, 'cache')
 	shell('check_call', [
 		"/usr/bin/duplicity",
 		"restore",
@@ -505,7 +509,7 @@ def backup_set_custom(env, target, target_user, target_pass, min_age):
 	return "OK"
 
 def get_backup_config(env, for_save=False, for_ui=False):
-	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
+	backup_root = get_backup_root(env)
 
 	# Defaults.
 	config = {
@@ -545,7 +549,7 @@ def get_backup_config(env, for_save=False, for_ui=False):
 	return config
 
 def write_backup_config(env, newconfig):
-	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
+	backup_root = get_backup_root(env)
 	with open(os.path.join(backup_root, 'custom.yaml'), "w") as f:
 		f.write(rtyaml.dump(newconfig))
 
@@ -577,3 +581,19 @@ if __name__ == "__main__":
 		# possibly performing an incremental backup.
 		full_backup = "--full" in sys.argv
 		perform_backup(full_backup)
+
+def get_backup_root(env):
+	# Define environment variable used to store backup path
+	backup_root_env = "BACKUP_ROOT"
+	
+	# Read STORAGE_ROOT
+	backup_root = env["STORAGE_ROOT"]
+	
+	# If BACKUP_ROOT exists, overwrite backup_root variable
+	if backup_root_env in env:
+		if not env[backup_root_env] && os.path.isdir(env[backup_root_env]):
+			backup_root = env[backup_root_env]
+	
+	backup_root = os.path.join(backup_root, 'backup')
+	
+	return backup_root
