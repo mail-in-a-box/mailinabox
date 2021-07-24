@@ -8,7 +8,7 @@
 # 5) BACKUP_ROOT/backup/after-backup is executed if it exists.
 #
 # By default BACKUP_ROOT is equal to STORAGE_ROOT. If the variable BACKUP_ROOT is defined in /etc/mailinabox.conf and
-# the referenced folder exists, this new target is used instead to store the backups.
+# the referenced folder exists, this new target is used instead to store the backups. 
 
 import os, os.path, shutil, glob, re, datetime, sys
 import dateutil.parser, dateutil.relativedelta, dateutil.tz
@@ -591,8 +591,9 @@ def get_backup_root(env):
 	
 	# If BACKUP_ROOT exists, overwrite backup_root variable
 	if backup_root_env in env:
-		if not env[backup_root_env] && os.path.isdir(env[backup_root_env]):
-			backup_root = env[backup_root_env]
+		tmp = env[backup_root_env]
+		if not tmp && os.path.isdir(tmp):
+			backup_root = tmp
 	
 	backup_root = os.path.join(backup_root, 'backup')
 	
