@@ -2,7 +2,7 @@
 
 # Reads in STDIN. If the stream is not empty, mail it to the system administrator.
 
-import sys
+import sys, traceback
 
 import html
 import smtplib
@@ -29,6 +29,7 @@ try:
         content = sys.stdin.read().strip()
 except:
         print("error occured while cleaning input text")
+        traceback.print_exc()
         sys.exit(1)
 
 # If there's nothing coming in, just exit.
