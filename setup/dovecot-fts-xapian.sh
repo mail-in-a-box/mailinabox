@@ -25,7 +25,7 @@ apt_install libxapian30
 # the IMAP specification expects.
 tools/editconf.py /etc/dovecot/conf.d/10-mail.conf \
         mail_plugins="fts fts_xapian" \
-		mail_home="/home/user-data/mail/homes/%d/%n"
+        mail_home="$STORAGE_ROOT/mail/homes/%d/%n"
 
 # Install cronjobs to keep FTS up to date.
 hide_output install -m 755 conf/cron/miab_dovecot /etc/cron.daily/
@@ -74,9 +74,9 @@ restart_service dovecot
 
 # Per doveadm-fts manpage: Scan what mails exist in the full text search index
 # and compare those to what actually exist in mailboxes.
-# This removes mails from the index that have already been expunged  and  makes
+# This removes mails from the index that have already been expunged and makes
 # sure that the next doveadm index will index all the missing mails (if any).
-# doveadm fts rescan -A
+doveadm fts rescan -A
 
 # Adds unindexed files to the fts database
 # * `-q`: Queues the indexing to be run by indexer process. (will background the indexing)
