@@ -117,7 +117,7 @@ class KeyAuthService:
 					"/usr/bin/doveadm", "pw",
 					"-p", pw,
 					"-t", pw_hash,
-					])
+				])
 			except:
 				# Login failed.
 				raise ValueError("Invalid password.")

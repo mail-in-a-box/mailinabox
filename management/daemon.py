@@ -93,7 +93,7 @@ def authorized_personnel_only(viewfunc):
 			return Response(json.dumps({
 				"status": "error",
 				"reason": error,
-				})+"\n", status=status, mimetype='application/json', headers=headers)
+			})+"\n", status=status, mimetype='application/json', headers=headers)
 
 	return newview
 
@@ -235,7 +235,7 @@ def mail_aliases_add():
 		request.form.get('permitted_senders', ''),
 		env,
 		update_if_exists=(request.form.get('update_if_exists', '') == '1')
-		)
+	)
 
 @app.route('/mail/aliases/remove', methods=['POST'])
 @authorized_personnel_only
@@ -245,7 +245,7 @@ def mail_aliases_remove():
 @app.route('/mail/domains')
 @authorized_personnel_only
 def mail_domains():
-    return "".join(x+"\n" for x in get_mail_domains(env))
+	return "".join(x+"\n" for x in get_mail_domains(env))
 
 # DNS
 
@@ -293,12 +293,12 @@ def dns_get_records(qname=None, rtype=None):
 
 	# Make a better data structure.
 	records = [
-        {
-                "qname": r[0],
-                "rtype": r[1],
-                "value": r[2],
-		"sort-order": { },
-        } for r in records ]
+		{
+			"qname": r[0],
+			"rtype": r[1],
+			"value": r[2],
+			"sort-order": { },
+		} for r in records ]
 
 	# To help with grouping by zone in qname sorting, label each record with which zone it is in.
 	# There's an inconsistency in how we handle zones in get_dns_zones and in sort_domains, so
@@ -319,9 +319,9 @@ def dns_get_records(qname=None, rtype=None):
 		r["sort-order"]["created"] = i
 	domain_sort_order = utils.sort_domains([r["qname"] for r in records], env)
 	for i, r in enumerate(sorted(records, key = lambda r : (
-			zones.index(r["zone"]),
-			domain_sort_order.index(r["qname"]),
-			r["rtype"]))):
+		zones.index(r["zone"]),
+		domain_sort_order.index(r["qname"]),
+		r["rtype"]))):
 		r["sort-order"]["qname"] = i
 
 	# Return.
