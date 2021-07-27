@@ -51,7 +51,7 @@ def authorized_personnel_only(viewfunc):
 		privs = []
 
 		try:
-			email, privs = auth_service.authenticate(request, env)
+			email, privs, _ = auth_service.authenticate(request, env)
 		except ValueError as e:
 			# Write a line in the log recording the failed login
 			log_failed_login(request)
@@ -135,7 +135,7 @@ def index():
 def me():
 	# Is the caller authorized?
 	try:
-		email, privs = auth_service.authenticate(request, env)
+		email, privs, token = auth_service.authenticate(request, env)
 	except ValueError as e:
 		if "missing-totp-token" in str(e):
 			return json_response({
@@ -160,8 +160,13 @@ def me():
 	if "admin" in privs:
 		resp["api_key"] = auth_service.create_user_key(email, env)
 
+	resp = json_response(resp)
+	# Set authentication token for admin munin routes.
+	if "admin" in privs and token:
+		resp.set_cookie("token", value=token, secure=True, httponly=True, samesite='Lax')
+
 	# Return.
-	return json_response(resp)
+	return resp
 
 # MAIL
 

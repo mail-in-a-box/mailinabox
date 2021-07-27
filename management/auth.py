@@ -1,6 +1,6 @@
-import base64, os, os.path, hmac, json
+import base64, os, os.path, hmac, json, secrets
 
-from flask import make_response
+from expiringdict import ExpiringDict
 
 import utils
 from mailconfig import get_mail_password, get_mail_user_privileges
@@ -16,6 +16,8 @@ class KeyAuthService:
 	requests. The key is passed as the username field in the standard HTTP
 	Basic Auth header.
 	"""
+	token_dict = ExpiringDict(max_len=1024, max_age_seconds=600)
+
 	def __init__(self):
 		self.auth_realm = DEFAULT_AUTH_REALM
 		self.key = self._generate_key()
@@ -74,11 +76,16 @@ class KeyAuthService:
 			raise ValueError("Authorization header invalid.")
 		elif username == self.key:
 			# The user passed the master API key which grants administrative privs.
-			return (None, ["admin"])
+			return (None, ["admin"], None)
 		else:
 			# The user is trying to log in with a username and either a password
 			# (and possibly a MFA token) or a user-specific API key.
-			return (username, self.check_user_auth(username, password, request, env))
+			token = None
+			privs = self.check_user_auth(username, password, request, env)
+			if not self.validate_user_token(username, request, env):
+				token = secrets.token_hex(16)
+				KeyAuthService.token_dict[username] = token
+			return (username, privs, token)
 
 	def check_user_auth(self, email, pw, request, env):
 		# Validate a user's login email address and password. If MFA is enabled,
@@ -129,6 +136,14 @@ class KeyAuthService:
 
 		# Return a list of privileges.
 		return privs
+
+	def check_user_token(self, email, token, request, env):
+		# Check whether a token matches the one we stored for the user.
+		return token is not None and KeyAuthService.token_dict.get(email) == token
+
+	def validate_user_token(self, email, request, env):
+		# Check whether the provided token in request cookie matches the one we stored for the user.
+		return self.check_user_token(email, request.cookies.get("token"), request, env)
 
 	def create_user_key(self, email, env):
 		# Create a user API key, which is a shared secret that we can re-generate from

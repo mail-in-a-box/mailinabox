@@ -110,6 +110,12 @@ def validate_auth_mfa(email, request, env):
 	if len(mfa_state) == 0:
 		return (True, [])
 
+	# Try token authentication first for munin routes.
+	if request.full_path.startswith("/munin"):
+		from daemon import auth_service
+		if auth_service.validate_user_token(email, request, env):
+			return (True, [])
+
 	# Try the enabled MFA modes.
 	hints = set()
 	for mfa_mode in mfa_state:
