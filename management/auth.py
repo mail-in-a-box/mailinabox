@@ -16,7 +16,7 @@ class KeyAuthService:
 	requests. The key is passed as the username field in the standard HTTP
 	Basic Auth header.
 	"""
-	token_dict = ExpiringDict(max_len=1024, max_age_seconds=600)
+	__token_dict = ExpiringDict(max_len=1024, max_age_seconds=600)
 
 	def __init__(self):
 		self.auth_realm = DEFAULT_AUTH_REALM
@@ -84,7 +84,7 @@ class KeyAuthService:
 			privs = self.check_user_auth(username, password, request, env)
 			if not self.validate_user_token(username, request, env):
 				token = secrets.token_hex(16)
-				KeyAuthService.token_dict[username] = token
+				KeyAuthService.__token_dict[username] = token
 			return (username, privs, token)
 
 	def check_user_auth(self, email, pw, request, env):
@@ -139,7 +139,7 @@ class KeyAuthService:
 
 	def check_user_token(self, email, token, request, env):
 		# Check whether a token matches the one we stored for the user.
-		return token is not None and KeyAuthService.token_dict.get(email) == token
+		return token is not None and KeyAuthService.__token_dict.get(email) == token
 
 	def validate_user_token(self, email, request, env):
 		# Check whether the provided token in request cookie matches the one we stored for the user.
