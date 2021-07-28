@@ -51,7 +51,7 @@ def authorized_personnel_only(viewfunc):
 		privs = []
 
 		try:
-			email, privs, _ = auth_service.authenticate(request, env)
+			email, privs, token = auth_service.authenticate(request, env)
 		except ValueError as e:
 			# Write a line in the log recording the failed login
 			log_failed_login(request)
@@ -67,7 +67,13 @@ def authorized_personnel_only(viewfunc):
 			request.user_privs = privs
 
 			# Call view func.
-			return viewfunc(*args, **kwargs)
+			resp = viewfunc(*args, **kwargs)
+
+			# Set authentication token for admin munin routes.
+			if token:
+				resp.set_cookie("miab-cp-token", value=token, secure=True, httponly=True, samesite='Lax')
+
+			return resp
 
 		if not error:
 			error = "You are not an administrator."
@@ -163,7 +169,7 @@ def me():
 	resp = json_response(resp)
 	# Set authentication token for admin munin routes.
 	if "admin" in privs and token:
-		resp.set_cookie("token", value=token, secure=True, httponly=True, samesite='Lax')
+		resp.set_cookie("miab-cp-token", value=token, secure=True, httponly=True, samesite='Lax')
 
 	# Return.
 	return resp

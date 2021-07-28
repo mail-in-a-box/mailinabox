@@ -143,7 +143,7 @@ class KeyAuthService:
 
 	def validate_user_token(self, email, request, env):
 		# Check whether the provided token in request cookie matches the one we stored for the user.
-		return self.check_user_token(email, request.cookies.get("token"), request, env)
+		return self.check_user_token(email, request.cookies.get("miab-cp-token"), request, env)
 
 	def create_user_key(self, email, env):
 		# Create a user API key, which is a shared secret that we can re-generate from
