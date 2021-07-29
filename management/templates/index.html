@@ -372,6 +372,7 @@ function do_logout() {
     localStorage.removeItem("miab-cp-credentials");
   if (typeof sessionStorage != 'undefined')
     sessionStorage.removeItem("miab-cp-credentials");
+  api("/bye", "GET");  // Invalidate and remove control panel token.
   show_panel('login');
 }
 

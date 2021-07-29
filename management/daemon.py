@@ -184,7 +184,7 @@ def bye():
 		pass  # Unauthorized users can logout too, simply do nothing.
 	finally:
 		resp = Response()
-		resp.set_cookie("miab-cp-token", expires=0)  # Removes the token cookie
+		resp.set_cookie("miab-cp-token", expires=0)  # Remove the token cookie
 		return resp
 
 # MAIL

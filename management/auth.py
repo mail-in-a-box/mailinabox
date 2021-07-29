@@ -147,7 +147,7 @@ class KeyAuthService:
 
 	def remove_user_token(self, email, request, env):
 		# Remove the user's token from the in-memory session database.
-		# Returns the invalidated token if exists.
+		# Return the invalidated token if exists.
 		return KeyAuthService.__token_dict.pop(email)
 
 	def create_user_key(self, email, env):
