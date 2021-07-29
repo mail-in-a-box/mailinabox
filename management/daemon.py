@@ -174,6 +174,19 @@ def me():
 	# Return.
 	return resp
 
+
+@app.route('/bye')
+def bye():
+	try:
+		email, _, _ = auth_service.authenticate(request, env)
+		auth_service.remove_user_token(email, request, env)
+	except ValueError:
+		pass  # Unauthorized users can logout too, simply do nothing.
+	finally:
+		resp = Response()
+		resp.set_cookie("miab-cp-token", expires=0)  # Removes the token cookie
+		return resp
+
 # MAIL
 
 @app.route('/mail/users')

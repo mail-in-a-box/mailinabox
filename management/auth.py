@@ -145,6 +145,11 @@ class KeyAuthService:
 		# Check whether the provided token in request cookie matches the one we stored for the user.
 		return self.check_user_token(email, request.cookies.get("miab-cp-token"), request, env)
 
+	def remove_user_token(self, email, request, env):
+		# Remove the user's token from the in-memory session database.
+		# Returns the invalidated token if exists.
+		return KeyAuthService.__token_dict.pop(email)
+
 	def create_user_key(self, email, env):
 		# Create a user API key, which is a shared secret that we can re-generate from
 		# static information in our database. The shared secret contains the user's
