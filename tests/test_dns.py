@@ -48,7 +48,7 @@ def test2(tests, server, description):
 	for qname, rtype, expected_answer in tests:
 		# do the query and format the result as a string
 		try:
-			response = dns.resolver.query(qname, rtype)
+			response = dns.resolver.resolve(qname, rtype)
 		except dns.resolver.NoNameservers:
 			# host did not have an answer for this query
 			print("Could not connect to %s for DNS query." % server)
