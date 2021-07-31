@@ -364,9 +364,11 @@ if [ ! -z "$SSH_PORT" ]; then
 	if [ "$SSH_PORT" != "22" ]; then
 		# Add alternative SSH port
 		sed -i "s/port[ ]\+=[ ]\+ssh$/port = ssh,$SSH_PORT/g" /etc/fail2ban/jail.conf
+		sed -i "s/port[ ]\+=[ ]\+ssh$/port = ssh,$SSH_PORT/g" /etc/fail2ban/jail.d/geoipblock.conf
 	else
 		# Set SSH port to default
 		sed -i "s/port[ ]\+=[ ]\+ssh/port = ssh/g" /etc/fail2ban/jail.conf
+		sed -i "s/port[ ]\+=[ ]\+ssh/port = ssh/g" /etc/fail2ban/jail.d/geoipblock.conf
 	fi
 fi
 
