@@ -356,6 +356,20 @@ cat conf/fail2ban/jails.conf \
 cp -f conf/fail2ban/filter.d/* /etc/fail2ban/filter.d/
 cp -f conf/fail2ban/jail.d/* /etc/fail2ban/jail.d/
 
+# If SSH port is not default, add the not default to the ssh jail
+if [ ! -z "$SSH_PORT" ]; then
+	# create backup copy
+	cp -f /etc/fail2ban/jail.conf jail.conf.miab_old
+	
+	if [ "$SSH_PORT" != "22" ]; then
+		# Add alternative SSH port
+		sed -i "s/port[ ]\+=[ ]\+ssh$/port = ssh,$SSH_PORT/g" /etc/fail2ban/jail.conf
+	else
+		# Set SSH port to default
+		sed -i "s/port[ ]\+=[ ]\+ssh/port = ssh/g" /etc/fail2ban/jail.conf
+	fi
+fi
+
 # fail2ban should be able to look back far enough because we increased findtime of recidive jail
 tools/editconf.py /etc/fail2ban/fail2ban.conf dbpurgeage=7d
 
