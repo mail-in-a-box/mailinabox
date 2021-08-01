@@ -76,7 +76,7 @@ restart_service dovecot
 # and compare those to what actually exist in mailboxes.
 # This removes mails from the index that have already been expunged and makes
 # sure that the next doveadm index will index all the missing mails (if any).
-doveadm fts rescan -A
+hide_output doveadm fts rescan -A
 
 # Adds unindexed files to the fts database
 # * `-q`: Queues the indexing to be run by indexer process. (will background the indexing)
