@@ -359,7 +359,7 @@ cp -f conf/fail2ban/jail.d/* /etc/fail2ban/jail.d/
 # If SSH port is not default, add the not default to the ssh jail
 if [ ! -z "$SSH_PORT" ]; then
 	# create backup copy
-	cp -f /etc/fail2ban/jail.conf jail.conf.miab_old
+	cp -f /etc/fail2ban/jail.conf /etc/fail2ban/jail.conf.miab_old
 	
 	if [ "$SSH_PORT" != "22" ]; then
 		# Add alternative SSH port

@@ -77,23 +77,16 @@ tools/editconf.py /etc/dovecot/conf.d/10-auth.conf \
 	disable_plaintext_auth=yes \
 	"auth_mechanisms=plain login"
 
-# Generate DH parameters. Will take a long time, so only if they don't exist
-if [[ ! -f  /etc/dovecot/dh.pem ]]; then
-	openssl dhparam -out /etc/dovecot/dh.pem 4096
-fi
-
-chown mail:dovecot /etc/dovecot/dh.pem
-
 # Enable SSL, specify the location of the SSL certificate and private key files.
 # Use Mozilla's "Intermediate" recommendations at https://ssl-config.mozilla.org/#server=dovecot&server-version=2.2.33&config=intermediate&openssl-version=1.1.1,
-# except that the current version of Dovecot does not have a TLSv1.3 setting, so we only use TLSv1.2.
+# specify a minimum of TLSv1.2.
 tools/editconf.py /etc/dovecot/conf.d/10-ssl.conf \
 	ssl=required \
 	"ssl_cert=<$STORAGE_ROOT/ssl/ssl_certificate.pem" \
 	"ssl_key=<$STORAGE_ROOT/ssl/ssl_private_key.pem" \
 	"ssl_min_protocol=TLSv1.2" \
 	"ssl_prefer_server_ciphers=yes" \
-	"ssl_dh=</etc/dovecot/dh.pem"
+	"ssl_dh=<$STORAGE_ROOT/ssl/dh4096.pem"
 
 # Disable in-the-clear IMAP/POP because there is no reason for a user to transmit
 # login credentials outside of an encrypted connection. Only the over-TLS versions
