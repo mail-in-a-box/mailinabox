@@ -90,9 +90,7 @@ if [ ! -f $STORAGE_ROOT/ssl/ssl_certificate.pem ]; then
 	ln -s $CERT $STORAGE_ROOT/ssl/ssl_certificate.pem
 fi
 
-# Generate some Diffie-Hellman cipher bits.
-# openssl's default bit length for this is 1024 bits, but we'll create
-# 4096 bits of bits per the latest recommendations.
-if [ ! -f $STORAGE_ROOT/ssl/dh4096.pem ]; then
-	openssl dhparam -out $STORAGE_ROOT/ssl/dh4096.pem 4096
-fi
+# We no longer generate Diffie-Hellman cipher bits. Following rfc7919 we use
+# a predefined finite field group, in this case ffdhe4096 from
+# https://raw.githubusercontent.com/internetstandards/dhe_groups/master/ffdhe4096.pem
+cp -f conf/dh4096.pem $STORAGE_ROOT/ssl/
