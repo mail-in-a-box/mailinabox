@@ -33,11 +33,12 @@ VERSION=1.4.11
 HASH=3877f0e70f29e7d0612155632e48c3db1e626be3
 PERSISTENT_LOGIN_VERSION=6b3fc450cae23ccb2f393d0ef67aa319e877e435 # version 5.2.0
 HTML5_NOTIFIER_VERSION=68d9ca194212e15b3c7225eb6085dbcf02fd13d7 # version 0.6.4+
+CONTEXT_MENU_VERSION=602a3812922fb8f71814eb3b8d91e9b7859aab7e # version 3.2.1
 
 CARDDAV_VERSION=4.1.1
 CARDDAV_HASH=87b73661b7799b2079c28324311eddb4241242bb
 
-UPDATE_KEY=$VERSION:$PERSISTENT_LOGIN_VERSION:$HTML5_NOTIFIER_VERSION:$CARDDAV_VERSION
+UPDATE_KEY=$VERSION:$PERSISTENT_LOGIN_VERSION:$HTML5_NOTIFIER_VERSION:$CARDDAV_VERSION:$CONTEXT_MENU_VERSION
 
 # paths that are often reused.
 RCM_DIR=/usr/local/lib/roundcubemail
@@ -86,6 +87,9 @@ if [ $needs_update == 1 ]; then
 	tar -C ${RCM_PLUGIN_DIR} --no-same-owner -zxf /tmp/carddav.tar.gz
 	rm -f /tmp/carddav.tar.gz
 
+	# install context menu plugin
+	git_clone https://github.com/johndoh/roundcube-contextmenu.git $CONTEXT_MENU_VERSION '' ${RCM_PLUGIN_DIR}/contextmenu
+
 	# record the version we've installed
 	echo $UPDATE_KEY > ${RCM_DIR}/version
 fi
@@ -130,7 +134,7 @@ cat > $RCM_CONFIG <<EOF;
 \$config['product_name'] = '$PRIMARY_HOSTNAME Webmail';
 \$config['cipher_method'] = 'AES-256-CBC'; # persistent login cookie and potentially other things
 \$config['des_key'] = '$SECRET_KEY'; # 37 characters -> ~256 bits for AES-256, see above
-\$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'persistent_login', 'carddav');
+\$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'persistent_login', 'carddav', 'contextmenu');
 \$config['skin'] = 'elastic';
 \$config['login_autocomplete'] = 2;
 \$config['password_charset'] = 'UTF-8';
