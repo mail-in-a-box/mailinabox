@@ -156,6 +156,8 @@ if [ ! -f /etc/nginx/conf.d/10-geoblock.conf ]; then
     cp -f conf/nginx/conf.d/10-geoblock.conf /etc/nginx/conf.d/
 fi
 
+cp -f conf/nginx/security.conf /etc/nginx/sites-enabled/
+
 # touch logfiles that might not exist
 touch /var/log/nginx/geoipblock.log
 chown www-data /var/log/nginx/geoipblock.log
