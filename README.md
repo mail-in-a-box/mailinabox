@@ -6,29 +6,30 @@ I made a number of modifications to the original Mail-in-a-Box, some to fix bugs
 
 Functionality changes and additions
 * Change installation target to Ubuntu 20.04. Thanks to [Power Mail-in-a-Box](https://github.com/ddavness/power-mailinabox)
-* Add geoipblocking on the admin web console
+* Add geoipblocking on the admin web console  
   This applies geoip filtering on acces to the admin panel of the box. Order of filtering: block continents that are not allowed, block countries that are not allowed, allow countries that are allowed (overriding continent filtering). Edit /etc/nginx/conf.d/10-geoblock.conf to configure.
-* Add geoipblocking for ssh access
+* Add geoipblocking for ssh access  
   This applies geoip filtering for access to the ssh server. Edit /etc/geoiplookup.conf. All countries defined in this file are allowed. Works for alternate ssh ports.
-* Make fail2ban more strict
+* Make fail2ban more strict  
   enable postfix filters, lengthen bantime and findtime
 * Add fail2ban jails for both above mentioned geoipblocking filters
 * Add fail2ban filters for web scanners and badbots
 * Add xapian full text searching to dovecot (from https://github.com/grosjo/fts-xapian)
 * Add rkhunter
-* Configure domain names for which only www will be hosted.
+* Configure domain names for which only www will be hosted  
   Edit /etc/miabwwwdomains.conf to configure. The box will handle incoming traffic asking for these domain names. The DNS entries are entered in an external DNS provider! If you want this box to handle the DNS entries, simply add a mail alias. (existing functionality of the vanilla Mail-in-a-Box)
 * Add some munin plugins
 * Update nextcloud to 20.0.8
+* Add nextcloud notes app
 * Update roundcube carddav plugin to 4.1.1
 * Add roundcube context menu plugin
-* Use shorter TTL values in the DNS server.
+* Use shorter TTL values in the DNS server  
   To be used before for example when changing IP addresses. Shortening TTL values will propagate changes faster. For reference, default TTL is 1 day, short TTL is 5 minutes. To use, edit file /etc/forceshortdnsttl and add a line for each domain for which shorter TTLs should be used. To use short TTLs for all known domains, add "forceshortdnsttl"
-* Use the box as a Hidden Master in the DNS system
+* Use the box as a Hidden Master in the DNS system  
   Thus only the secondary DNS servers are used as public DNS servers. When using a hidden master, no glue records are necessary at your domain hoster. To use, first setup secondary DNS servers via the Custom DNS administration page. At least two secondary servers should be set. When that functions, edit file /etc/usehiddenmasterdns and add a line for each domain for which Hidden Master should be used. To use Hidden Master for all known domains, add "usehiddenmasterdns".
-* Daily ip blacklist check
-  Using check-dnsbl.py from https://github.com/gsauthof/utilit
-* Updated ssl security for web and email
+* Daily ip blacklist check  
+  Using check-dnsbl.py from https://github.com/gsauthof/utility
+* Updated ssl security for web and email  
   Removed older cryptos following internet.nl recommendations
 
 Bug fixes
@@ -45,9 +46,9 @@ Maintenance (personal)
 * Remove nextcloud skeleton to save disk space
 
 Fun
-* Add option to define ADMIN_IP_ADDRESS
+* Add option to define ADMIN_IP_ADDRESS  
   Currently only used to ignore fail2ban jails
-* Add dynamic dns tools in the tools directory
+* Add dynamic dns tools in the tools directory  
   Can be used to control DNS entries on the mail-in-a-box to point to a machine with a non-fixed (e.g. residential) ip address
 
 Original mailinabox content starts here:
