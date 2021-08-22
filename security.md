@@ -69,8 +69,6 @@ The following services are protected: SSH, IMAP (dovecot), SMTP submission (post
 
 Some other services running on the box may be missing fail2ban filters.
 
-`fail2ban` only blocks IPv4 addresses, however. If the box has a public IPv6 address, it is not protected from these attacks.
-
 Outbound Mail
 -------------
 
