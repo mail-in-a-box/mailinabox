@@ -1,5 +1,8 @@
 #!/usr/local/lib/mailinabox/env/bin/python3
 #
+# The API can be accessed on the command line, e.g. use `curl` like so:
+#    curl --user $(</var/lib/mailinabox/api.key): http://localhost:10222/mail/users
+#
 # During development, you can start the Mail-in-a-Box control panel
 # by running this script, e.g.:
 #
@@ -22,7 +25,7 @@ from mfa import get_public_mfa_state, provision_totp, validate_totp_secret, enab
 
 env = utils.load_environment()
 
-auth_service = auth.KeyAuthService()
+auth_service = auth.AuthService()
 
 # We may deploy via a symbolic link, which confuses flask's template finding.
 me = __file__
@@ -724,30 +727,10 @@ if __name__ == '__main__':
 		# Turn on Flask debugging.
 		app.debug = True
 
-		# Use a stable-ish master API key so that login sessions don't restart on each run.
-		# Use /etc/machine-id to seed the key with a stable secret, but add something
-		# and hash it to prevent possibly exposing the machine id, using the time so that
-		# the key is not valid indefinitely.
-		import hashlib
-		with open("/etc/machine-id") as f:
-			api_key = f.read()
-		api_key += "|" + str(int(time.time() / (60*60*2)))
-		hasher = hashlib.sha1()
-		hasher.update(api_key.encode("ascii"))
-		auth_service.key = hasher.hexdigest()
-
-	if "APIKEY" in os.environ: auth_service.key = os.environ["APIKEY"]
-
 	if not app.debug:
 		app.logger.addHandler(utils.create_syslog_handler())
 
-	# For testing on the command line, you can use `curl` like so:
-	#    curl --user $(</var/lib/mailinabox/api.key): http://localhost:10222/mail/users
-	auth_service.write_key()
-
-	# For testing in the browser, you can copy the API key that's output to the
-	# debug console and enter that as the username
-	app.logger.info('API key: ' + auth_service.key)
+	#app.logger.info('API key: ' + auth_service.key)
 
 	# Start the application server. Listens on 127.0.0.1 (IPv4 only).
 	app.run(port=10222)

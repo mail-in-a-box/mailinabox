@@ -1,6 +1,5 @@
-import base64, os, os.path, hmac, json
+import base64, os, os.path, hmac, json, secrets
 
-from flask import make_response
 
 import utils
 from mailconfig import get_mail_password, get_mail_user_privileges
@@ -9,7 +8,7 @@ from mfa import get_hash_mfa_state, validate_auth_mfa
 DEFAULT_KEY_PATH   = '/var/lib/mailinabox/api.key'
 DEFAULT_AUTH_REALM = 'Mail-in-a-Box Management Server'
 
-class KeyAuthService:
+class AuthService:
 	"""Generate an API key for authenticating clients
 
 	Clients must read the key from the key file and send the key with all HTTP
@@ -18,16 +17,12 @@ class KeyAuthService:
 	"""
 	def __init__(self):
 		self.auth_realm = DEFAULT_AUTH_REALM
-		self.key = self._generate_key()
 		self.key_path = DEFAULT_KEY_PATH
+		self.init_system_api_key()
 
-	def write_key(self):
-		"""Write key to file so authorized clients can get the key
+	def init_system_api_key(self):
+		"""Write an API key to a local file so local processes can use the API"""
 
-		The key file is created with mode 0640 so that additional users can be
-		authorized to access the API by granting group/ACL read permissions on
-		the key file.
-		"""
 		def create_file_with_mode(path, mode):
 			# Based on answer by A-B-B: http://stackoverflow.com/a/15015748
 			old_umask = os.umask(0)
@@ -35,6 +30,8 @@ class KeyAuthService:
 				return os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT, mode), 'w')
 			finally:
 				os.umask(old_umask)
+
+		self.key = secrets.token_hex(24)
 
 		os.makedirs(os.path.dirname(self.key_path), exist_ok=True)
 
@@ -72,8 +69,9 @@ class KeyAuthService:
 
 		if username in (None, ""):
 			raise ValueError("Authorization header invalid.")
-		elif username == self.key:
-			# The user passed the master API key which grants administrative privs.
+
+		if username == self.key:
+			# The user passed the system API key which grants administrative privs.
 			return (None, ["admin"])
 		else:
 			# The user is trying to log in with a username and either a password
@@ -136,8 +134,8 @@ class KeyAuthService:
 		# email address, current hashed password, and current MFA state, so that the
 		# key becomes invalid if any of that information changes.
 		#
-		# Use an HMAC to generate the API key using our master API key as a key,
-		# which also means that the API key becomes invalid when our master API key
+		# Use an HMAC to generate the API key using our system API key as a key,
+		# which also means that the API key becomes invalid when our system API key
 		# changes --- i.e. when this process is restarted.
 		#
 		# Raises ValueError via get_mail_password if the user doesn't exist.
@@ -153,6 +151,3 @@ class KeyAuthService:
 		hash_key = self.key.encode('ascii')
 		return hmac.new(hash_key, msg, digestmod="sha256").hexdigest()
 
-	def _generate_key(self):
-		raw_key = os.urandom(32)
-		return base64.b64encode(raw_key).decode('ascii')
