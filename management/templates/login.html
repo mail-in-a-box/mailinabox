@@ -102,7 +102,7 @@ function do_login() {
   }
 
   // Exchange the email address & password for an API key.
-  api_credentials = [$('#loginEmail').val(), $('#loginPassword').val()]
+  api_credentials = { username: $('#loginEmail').val(), session_key: $('#loginPassword').val() }
 
   api(
   "/login",
@@ -141,7 +141,9 @@ function do_login() {
       // Login succeeded.
 
       // Save the new credentials.
-      api_credentials = [response.email, response.api_key];
+      api_credentials = { username: response.email,
+                          session_key: response.api_key,
+                          privileges: response.privileges };
 
       // Try to wipe the username/password information.
       $('#loginEmail').val('');
@@ -152,13 +154,16 @@ function do_login() {
       // Remember the credentials.
       if (typeof localStorage != 'undefined' && typeof sessionStorage != 'undefined') {
         if ($('#loginRemember').val()) {
-          localStorage.setItem("miab-cp-credentials", api_credentials.join(":"));
+          localStorage.setItem("miab-cp-credentials", JSON.stringify(api_credentials));
           sessionStorage.removeItem("miab-cp-credentials");
         } else {
           localStorage.removeItem("miab-cp-credentials");
-          sessionStorage.setItem("miab-cp-credentials", api_credentials.join(":"));
+          sessionStorage.setItem("miab-cp-credentials", JSON.stringify(api_credentials));
         }
       }
+
+      // Toggle menus.
+      show_hide_menus();
 
       // Open the next panel the user wants to go to. Do this after the XHR response
       // is over so that we don't start a new XHR request while this one is finishing,
@@ -182,5 +187,20 @@ function show_login() {
       return false;
     }
   });
+}
+
+function show_hide_menus() {
+  var is_logged_in = (api_credentials != null);
+  var privs = api_credentials ? api_credentials.privileges : [];
+  $('.if-logged-in').toggle(is_logged_in);
+  $('.if-logged-in-admin, .if-logged-in-not-admin').toggle(false);
+  if (is_logged_in) {
+    $('.if-logged-in-not-admin').toggle(true);
+    privs.forEach(function(priv) {
+      $('.if-logged-in-' + priv).toggle(true);
+      $('.if-logged-in-not-' + priv).toggle(false);
+    });
+  }
+  $('.if-not-logged-in').toggle(!is_logged_in);
 }
 </script>
