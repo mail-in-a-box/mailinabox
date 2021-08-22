@@ -612,14 +612,16 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 			#
 			# But it may not be preferred. Only algorithm 13 is preferred. Warn if any of the
 			# matched zones uses a different algorithm.
-			if set(r[1] for r in matched_ds) == { '13' }: # all are alg 13
+			if set(r[1] for r in matched_ds) == { '13' } and set(r[2] for r in matched_ds) <= { '2', '4' }: # all are alg 13 and digest type 2 or 4
 				output.print_ok("DNSSEC 'DS' record is set correctly at registrar.")
 				return
-			elif '13' in set(r[1] for r in matched_ds): # some but not all are alg 13
-				output.print_ok("DNSSEC 'DS' record is set correctly at registrar. (Records using algorithm other than ECDSAP256SHA256 should be removed.)")
+			elif len([r for r in matched_ds if r[1] == '13' and r[2] in ( '2', '4' )]) > 0: # some but not all are alg 13
+				output.print_ok("DNSSEC 'DS' record is set correctly at registrar. (Records using algorithm other than ECDSAP256SHA256 and digest types other than SHA-256/384 should be removed.)")
 				return
 			else: # no record uses alg 13
-				output.print_warning("DNSSEC 'DS' record set at registrar is valid but should be updated to ECDSAP256SHA256 (see below).")
+				output.print_warning("""DNSSEC 'DS' record set at registrar is valid but should be updated to ECDSAP256SHA256 and SHA-256 (see below).
+				IMPORTANT: Do not delete existing DNSSEC 'DS' records for this domain until confirmation that the new DNSSEC 'DS' record
+				for this domain is valid.""")
 		else:
 			if is_checking_primary:
 				output.print_error("""The DNSSEC 'DS' record for %s is incorrect. See further details below.""" % domain)
@@ -630,7 +632,8 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 
 	output.print_line("""Follow the instructions provided by your domain name registrar to set a DS record.
 		Registrars support different sorts of DS records. Use the first option that works:""")
-	preferred_ds_order = [(7, 1), (7, 2), (8, 4), (13, 4), (8, 1), (8, 2), (13, 1), (13, 2)] # low to high
+	preferred_ds_order = [(7, 2), (8, 4), (13, 4), (8, 2), (13, 2)] # low to high, see https://github.com/mail-in-a-box/mailinabox/issues/1998
+
 	def preferred_ds_order_func(ds_suggestion):
 		k = (int(ds_suggestion['alg']), int(ds_suggestion['digalg']))
 		if k in preferred_ds_order:
@@ -638,6 +641,7 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 		return -1 # index before first item
 	output.print_line("")
 	for i, ds_suggestion in enumerate(sorted(expected_ds_records.values(), key=preferred_ds_order_func, reverse=True)):
+		if preferred_ds_order_func(ds_suggestion) == -1: continue # don't offer record types that the RFC says we must not offer
 		output.print_line("")
 		output.print_line("Option " + str(i+1) + ":")
 		output.print_line("----------")
