@@ -118,6 +118,10 @@
     </div>
 
     <div class="container">
+      <div id="panel_welcome" class="admin_panel">
+      {% include "welcome.html" %}
+      </div>
+
       <div id="panel_system_status" class="admin_panel">
       {% include "system-status.html" %}
       </div>
@@ -409,6 +413,8 @@ $(function() {
   // Recall what the user was last looking at.
   if (typeof localStorage != 'undefined' && localStorage.getItem("miab-cp-lastpanel")) {
     show_panel(localStorage.getItem("miab-cp-lastpanel"));
+  } else if (api_credentials[0] != "") {
+    show_panel('welcome');
   } else {
     show_panel('login');
   }
