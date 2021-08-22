@@ -56,8 +56,10 @@ def authorized_personnel_only(viewfunc):
 		try:
 			email, privs = auth_service.authenticate(request, env)
 		except ValueError as e:
-			# Write a line in the log recording the failed login
-			log_failed_login(request)
+			# Write a line in the log recording the failed login, unless no authorization header
+			# was given which can happen on an initial request before a 403 response.
+			if "Authorization" in request.headers:
+				log_failed_login(request)
 
 			# Authentication failed.
 			error = str(e)
@@ -134,11 +136,12 @@ def index():
 		csr_country_codes=csr_country_codes,
 	)
 
-@app.route('/me')
-def me():
+# Create a session key by checking the username/password in the Authorization header.
+@app.route('/login', methods=["POST"])
+def login():
 	# Is the caller authorized?
 	try:
-		email, privs = auth_service.authenticate(request, env)
+		email, privs = auth_service.authenticate(request, env, login_only=True)
 	except ValueError as e:
 		if "missing-totp-token" in str(e):
 			return json_response({
@@ -153,18 +156,28 @@ def me():
 				"reason": str(e),
 			})
 
+	# Return a new session for the user.
 	resp = {
 		"status": "ok",
 		"email": email,
 		"privileges": privs,
+		"api_key": auth_service.create_session_key(email, env, type='login'),
 	}
 
-	# Is authorized as admin? Return an API key for future use.
-	if "admin" in privs:
-		resp["api_key"] = auth_service.create_user_key(email, env)
+	app.logger.info("New login session created for {}".format(email))
 
 	# Return.
 	return json_response(resp)
+
+@app.route('/logout', methods=["POST"])
+def logout():
+	try:
+		email, _ = auth_service.authenticate(request, env, logout=True)
+		app.logger.info("{} logged out".format(email))
+	except ValueError as e:
+		pass
+	finally:
+		return json_response({ "status": "ok" })
 
 # MAIL
 

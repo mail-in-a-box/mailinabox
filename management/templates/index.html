@@ -367,11 +367,17 @@ var current_panel = null;
 var switch_back_to_panel = null;
 
 function do_logout() {
+  // Clear the session from the backend.
+  api("/logout", "POST");
+
+  // Forget the token.
   api_credentials = ["", ""];
   if (typeof localStorage != 'undefined')
     localStorage.removeItem("miab-cp-credentials");
   if (typeof sessionStorage != 'undefined')
     sessionStorage.removeItem("miab-cp-credentials");
+
+  // Return to the start.
   show_panel('login');
 }
 

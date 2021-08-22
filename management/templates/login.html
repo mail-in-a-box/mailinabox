@@ -105,8 +105,8 @@ function do_login() {
   api_credentials = [$('#loginEmail').val(), $('#loginPassword').val()]
 
   api(
-  "/me",
-  "GET",
+  "/login",
+  "POST",
   {},
   function(response) {
     // This API call always succeeds. It returns a JSON object indicating

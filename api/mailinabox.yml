@@ -54,24 +54,24 @@ tags:
       System operations, which include system status checks, new version checks
       and reboot status.
 paths:
-  /me:
-    get:
+  /login:
+    post:
       tags:
         - User
-      summary: Get user information
+      summary: Exchange a username and password for a session API key.
       description: |
-        Returns user information. Used for user authentication.
+        Returns user information and a session API key.
 
         Authenticate a user by supplying the auth token as a base64 encoded string in
         format `email:password` using basic authentication headers.
 
         If successful, a long-lived `api_key` is returned which can be used for subsequent
-        requests to the API.
-      operationId: getMe
+        requests to the API in place of the password.
+      operationId: login
       x-codeSamples:
         - lang: curl
           source: |
-            curl -X GET "https://{host}/admin/me" \
+            curl -X GET "https://{host}/admin/login" \
               -u "<email>:<password>"
       responses:
         200:
@@ -92,6 +92,24 @@ paths:
                     privileges:
                       - admin
                     status: ok
+  /logout:
+    post:
+      tags:
+        - User
+      summary: Invalidates a session API key.
+      description: |
+        Invalidates a session API key so that it cannot be used after this API call.
+      operationId: logout
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/logout" \
+              -u "<email>:<session_key>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
   /system/status:
     post:
       tags:
@@ -1803,7 +1821,7 @@ components:
 
         The `access-token` is comprised of the Base64 encoding of `username:password`.
         The `username` is the mail user's email address, and `password` can either be the mail user's
-        password, or the `api_key` returned from the `getMe` operation.
+        password, or the `api_key` returned from the `login` operation.
 
         When using `curl`, you can supply user credentials using the `-u` or `--user` parameter.
   requestBodies:
