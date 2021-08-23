@@ -69,7 +69,10 @@ dump_conf_files() {
 #
 init_test_system() {
     H2 "Update /etc/hosts"
-    set_system_hostname || die "Could not set hostname"
+    if ! set_system_hostname; then
+        dump_file "/etc/hosts"
+        die "Could not set hostname"
+    fi
 
     # update system time
     H2 "Set system time"

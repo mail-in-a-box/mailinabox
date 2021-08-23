@@ -78,7 +78,7 @@ installed_state_compare() {
     local compare_type="all"
     
     source "$s2/info.txt"
-    if grep "mailinabox-ldap.git" <<<"$GIT_ORIGIN" >/dev/null; then
+    if grep "mailinabox-ldap" <<<"$GIT_ORIGIN" >/dev/null; then
         GIT_ORIGIN=""
         source "$s1/info.txt"
         if ! grep "mailinabox-ldap.git" <<<"$GIT_ORIGIN" >/dev/null; then

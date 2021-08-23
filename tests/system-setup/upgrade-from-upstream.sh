@@ -78,6 +78,16 @@ upstream_install() {
         sed -i 's|\(.*include:.*zones\.conf.*\)|cat >> /etc/nsd/nsd.conf <<EOF\n  do-ip4: yes\n  do-ip6: no\nremote-control:\n  control-enable: no\nEOF\n\n\1|' setup/dns.sh \
             || die "Couldn't patch setup/dns.sh !!"
     fi
+
+    if [ ! -z "$PHP_XSL_PACKAGE" ]; then
+        # For Github Actions - github's ubuntu 18 includes multiple
+        # PHP versions pre-installed and the php-xsl package for these
+        # versions is a virtual package of package php-xml. To handle
+        # this, change the setup scripts so that $PHP_XSL_PACKAGE
+        # (php-xml) is installed instead of php-xsl.
+        H2 "Patching upstream setup/zpush.sh to install $PHP_XSL_PACKAGE instead of php-xsl"
+        sed -i "s/php-xsl/$PHP_XSL_PACKAGE/g" setup/zpush.sh
+    fi
     
     H2 "Run upstream setup"
     if ! setup/start.sh; then
@@ -155,6 +165,8 @@ installed_state_capture "/tmp/state/miab-ldap"
 
 # compare states
 if ! installed_state_compare "/tmp/state/upstream" "/tmp/state/miab-ldap"; then
+    dump_file "/tmp/state/upstream/info.txt"
+    dump_file "/tmp/state/miab-ldap/info.txt"
     die "Upstream and upgraded states are different !"
 fi
 
