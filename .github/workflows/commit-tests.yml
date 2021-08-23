@@ -20,3 +20,20 @@ jobs:
       - name: test-runner
         run: sudo -E tests/runner.sh -dumpoutput -no-smtp-remote default remote-nextcloud upgrade-basic
 
+
+  # Upgrade from upstream install
+  upgrade-from-upstream:
+    runs-on: ubuntu-18.04
+    env:
+      PRIMARY_HOSTNAME: box2.abc.com
+      UPSTREAM_TAG: main
+      PHP_XSL_PACKAGE: php-xml
+    steps:
+      - uses: actions/checkout@v2
+      - run: sudo update-alternatives --set php /usr/bin/php7.2
+      - run: sudo apt-get install -y php-xml
+      - name: setup
+        run: sudo -E tests/system-setup/upgrade-from-upstream.sh basic totpuser
+      - name: test-runner
+        run: sudo -E tests/runner.sh -dumpoutput -no-smtp-remote upgrade-basic upgrade-totpuser default
+
