@@ -62,6 +62,9 @@ set_system_hostname() {
     local fqdn="${1:-$PRIMARY_HOSTNAME}"
     local host="$(awk -F. '{print $1}' <<< "$fqdn")"
     sed -i 's/^127\.0\.1\.1[ \t].*/127.0.1.1 '"$fqdn $host ip4-loopback/" /etc/hosts || return 1
+    if ! /usr/bin/getent hosts "$fqdn" >/dev/null; then
+        return 2
+    fi
     #hostname "$host" || return 1
     #echo "$host" > /etc/hostname
     return 0
