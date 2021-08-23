@@ -1,4 +1,4 @@
-![build](https://github.com/downtownallday/mailinabox-ldap/actions/workflows/commit-tests.yml/badge.svg)
+[![build](https://github.com/downtownallday/mailinabox-ldap/actions/workflows/commit-tests.yml/badge.svg)](https://github.com/downtownallday/mailinabox-ldap/actions)
 
 # Mail-in-a-Box LDAP
 This is a version of [Mail-in-a-Box](https://mailinabox.email) with LDAP used as the user account database instead of sqlite.
