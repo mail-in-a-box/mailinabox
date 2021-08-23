@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: setup
-        run: tests/system-setup/remote-nextcloud-docker.sh upgrade basic
+        run: sudo -E tests/system-setup/remote-nextcloud-docker.sh upgrade basic
       - name: test-runner
-        run: tests/runner.sh -dumpoutput -no-smtp-remote default remote-nextcloud upgrade-basic
+        run: sudo -E tests/runner.sh -dumpoutput -no-smtp-remote default remote-nextcloud upgrade-basic
 
