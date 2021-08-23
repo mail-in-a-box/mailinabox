@@ -4,10 +4,9 @@ jobs:
   # MiaB-LDAP connected to a remote Nextcloud
   remote-nextcloud-docker:
     runs-on: ubuntu-18.04
-    container:
-      env:
-        - PRIMARY_HOSTNAME: box1.abc.com
-        - FEATURE_MUNIN: false
+    env:
+      PRIMARY_HOSTNAME: box1.abc.com
+      FEATURE_MUNIN: false
     steps:
       - uses: actions/checkout@v2
       - name: setup
