@@ -31,7 +31,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: sudo update-alternatives --set php /usr/bin/php7.2
-      - run: sudo apt-get install -y php-xml
       - name: setup
         run: sudo -E tests/system-setup/upgrade-from-upstream.sh basic totpuser
       - name: test-runner
