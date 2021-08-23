@@ -165,6 +165,8 @@ installed_state_capture "/tmp/state/miab-ldap"
 
 # compare states
 if ! installed_state_compare "/tmp/state/upstream" "/tmp/state/miab-ldap"; then
+    dump_file "/tmp/state/upstream/info.txt"
+    dump_file "/tmp/state/miab-ldap/info.txt"
     die "Upstream and upgraded states are different !"
 fi
 
