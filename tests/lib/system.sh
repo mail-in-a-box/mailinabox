@@ -61,7 +61,14 @@ set_system_hostname() {
     # PRIMARY_HOSTNAME if no FQDN was given
     local fqdn="${1:-$PRIMARY_HOSTNAME}"
     local host="$(awk -F. '{print $1}' <<< "$fqdn")"
-    sed -i 's/^127\.0\.1\.1[ \t].*/127.0.1.1 '"$fqdn $host ip4-loopback/" /etc/hosts || return 1
+    if ! grep '^127.0.1.1' /etc/hosts >/dev/null; then
+        # add it
+        echo "127.0.1.1 $fqdn $host" >> /etc/hosts || return 1
+    else
+        # set it
+        sed -i 's/^127\.0\.1\.1[ \t].*/127.0.1.1 '"$fqdn $host ip4-loopback/" /etc/hosts || return 1
+    fi
+    # ensure name is resolvable
     if ! /usr/bin/getent hosts "$fqdn" >/dev/null; then
         return 2
     fi
