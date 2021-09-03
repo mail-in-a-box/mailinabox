@@ -9,7 +9,8 @@ Functionality changes and additions
 * Add geoipblocking on the admin web console  
   This applies geoip filtering on acces to the admin panel of the box. Order of filtering: block continents that are not allowed, block countries that are not allowed, allow countries that are allowed (overriding continent filtering). Edit /etc/nginx/conf.d/10-geoblock.conf to configure.
 * Add geoipblocking for ssh access  
-  This applies geoip filtering for access to the ssh server. Edit /etc/geoiplookup.conf. All countries defined in this file are allowed. Works for alternate ssh ports.
+  This applies geoip filtering for access to the ssh server. Edit /etc/geoiplookup.conf. All countries defined in this file are allowed. Works for alternate ssh ports.  
+  This uses goiplookup from https://github.com/axllent/goiplookup
 * Make fail2ban more strict  
   enable postfix filters, lengthen bantime and findtime
 * Add fail2ban jails for both above mentioned geoipblocking filters
