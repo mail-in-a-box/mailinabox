@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-
+# From https://github.com/gsauthof/utility Thanks!
 # 2016, Georg Sauthoff <mail@georg.so>, GPLv3+
 
 import argparse
@@ -189,7 +189,7 @@ def get_addrs(dest, mx=True):
     domains = [ dest ]
     if mx:
         try:
-            r = dns.resolver.resolve(dest, 'mx')
+            r = dns.resolver.resolve(dest, 'mx', search=True)
             domains = [ answer.exchange for answer in r ]
             log.debug('destinatin {} has MXs: {}'
                       .format(dest, ', '.join([str(d) for d in domains])))
@@ -199,7 +199,7 @@ def get_addrs(dest, mx=True):
     for domain in domains:
         for t in ['a', 'aaaa']:
             try:
-                r = dns.resolver.resolve(domain, t)
+                r = dns.resolver.resolve(domain, t, search=True)
             except dns.resolver.NoAnswer:
                 continue
             xs = [ ( answer.address, domain ) for answer in r ]
@@ -216,12 +216,12 @@ def check_dnsbl(addr, bl):
     rev = dns.reversename.from_address(addr)
     domain = str(rev.split(3)[0]) + '.' + bl
     try:
-        r = dns.resolver.resolve(domain, 'a')
+        r = dns.resolver.resolve(domain, 'a', search=True)
     except (dns.resolver.NXDOMAIN, dns.resolver.NoNameservers, dns.resolver.NoAnswer):
         return 0
     address = list(r)[0].address
     try:
-        r = dns.resolver.resolve(domain, 'txt')
+        r = dns.resolver.resolve(domain, 'txt', search=True)
         txt = list(r)[0].to_text()
     except (dns.resolver.NoAnswer, dns.resolver.NXDOMAIN):
         txt = ''
@@ -237,7 +237,7 @@ def check_rdns(addrs):
         log.debug('Check if there is a reverse DNS record that maps address {} to {}'
                   .format(addr, domain))
         try:
-            r = dns.resolver.resolve(dns.reversename.from_address(addr), 'ptr')
+            r = dns.resolver.resolve(dns.reversename.from_address(addr), 'ptr', search=True)
             a = list(r)[0]
             target = str(a.target).lower()
             source = str(domain).lower()
@@ -316,7 +316,7 @@ if __name__ == '__main__':
 #
 ## In[ ]:
 #
-#r = dns.resolver.resolve(dns.reversename.from_address('89.238.75.224'), 'ptr')
+#r = dns.resolver.resolve(dns.reversename.from_address('89.238.75.224'), 'ptr', search=True)
 #a = list(r)[0]
 #a.target.to_text()
 #
@@ -360,7 +360,7 @@ if __name__ == '__main__':
 ## In[ ]:
 #
 ## as of 2016-11, listed
-#r = dns.resolver.resolve('39.227.103.116.zen.spamhaus.org', 'txt')
+#r = dns.resolver.resolve('39.227.103.116.zen.spamhaus.org', 'txt', search=True)
 #answer = list(r)[0]
 #answer.to_text()
 #
@@ -388,7 +388,7 @@ if __name__ == '__main__':
 #
 ## In[ ]:
 #
-#a = dns.resolver.resolve('georg.so', 'MX')
+#a = dns.resolver.resolve('georg.so', 'MX', search=True)
 #
 #
 ## In[ ]:
@@ -404,7 +404,7 @@ if __name__ == '__main__':
 ## In[ ]:
 #
 #[ x.exchange for x in a]
-#dns.resolver.resolve(list(a)[0].exchange, 'a')
+#dns.resolver.resolve(list(a)[0].exchange, 'a', search=True)
 #
 #
 ## In[ ]:
@@ -416,14 +416,14 @@ if __name__ == '__main__':
 ## In[ ]:
 #
 ## should throw NoAnswer
-#a = dns.resolver.resolve('escher.lru.li', 'mx')
+#a = dns.resolver.resolve('escher.lru.li', 'mx', search=True)
 ##b = list(a)
 #a
 #
 #
 ## In[ ]:
 #
-#a = dns.resolver.resolve('georg.so', 'a')
+#a = dns.resolver.resolve('georg.so', 'a', search=True)
 #b = list(a)[0]
 #b.address
 #dns.reversename.from_address(b.address)
@@ -433,7 +433,7 @@ if __name__ == '__main__':
 #
 ## should throw NXDOMAIN
 #rs = str(r.split(3)[0])
-#dns.resolver.resolve(rs + '.zen.spamhaus.org', 'A' )
+#dns.resolver.resolve(rs + '.zen.spamhaus.org', 'A' , search=True)
 #
 #
 ## In[ ]:
