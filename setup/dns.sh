@@ -63,10 +63,10 @@ for ip in $PRIVATE_IP $PRIVATE_IPV6; do
 done
 
 echo "include: /etc/nsd/zones.conf" >> /etc/nsd/nsd.conf;
+
+# Create a placeholder file for local additions to nsd.conf that
+# won't be overwritten by this setup script. The file must exist.
 echo "include: /etc/nsd/local.conf" >> /etc/nsd/nsd.conf;
-
-# NSD requires all include files to exist; ensure we have a local.conf.
-
 if [ ! -f /etc/nsd/local.conf ]; then
     echo "# local zone config" > /etc/nsd/local.conf
 fi
