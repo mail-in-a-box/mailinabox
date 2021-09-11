@@ -65,7 +65,7 @@ done
 echo "include: /etc/nsd/zones.conf" >> /etc/nsd/nsd.conf;
 echo "include: /etc/nsd/local.conf" >> /etc/nsd/nsd.conf;
 
-# NSD requires all include files to exist, ensure we have a local.conf.
+# NSD requires all include files to exist; ensure we have a local.conf.
 
 if [ ! -f /etc/nsd/local.conf ]; then
     echo "# local zone config" > /etc/nsd/local.conf
