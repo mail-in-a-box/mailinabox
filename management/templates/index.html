@@ -124,7 +124,7 @@
                 <li class="dropdown-header">Advanced Pages</li>
                 <li><a href="#custom_dns" onclick="return show_panel(this);">Custom DNS</a></li>
                 <li><a href="#external_dns" onclick="return show_panel(this);">External DNS</a></li>
-                <li><a href="/admin/munin" target="_blank">Munin Monitoring</a></li>
+                <li><a href="#munin" onclick="return show_panel(this);">Munin Monitoring</a></li>
               </ul>
             </li>
             <li><a href="#mail-guide" onclick="return show_panel(this);" class="if-logged-in-not-admin">Mail</a></li>
@@ -200,6 +200,10 @@
 
       <div id="panel_tls" class="admin_panel">
       {% include "ssl.html" %}
+      </div>
+
+      <div id="panel_munin" class="admin_panel">
+      {% include "munin.html" %}
       </div>
 
       <hr>

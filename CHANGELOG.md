@@ -19,6 +19,7 @@ Control panel:
 * After logging in, the default page is now a fast-loading welcome page rather than the slow-loading system status checks page.
 * The backup retention period option now displays for B2 backup targets.
 * The DNSSEC DS record recommendations are cleaned up and now recommend changing records that use SHA1.
+* The Munin monitoring pages no longer require a separate HTTP basic authentication login and can be used if two-factor authentication is turned on.
 * Control panel logins are now tied to a session backend that allows true logouts (rather than an encrypted cookie).
 * Failed logins no longer directly reveal whether the email address corresponds to a user account.
 * Browser dark mode now inverts the color scheme.
