@@ -62,7 +62,7 @@ for ip in $PRIVATE_IP $PRIVATE_IPV6; do
 	echo "  ip-address: $ip" >> /etc/nsd/nsd.conf;
 done
 
-echo "include: /etc/nsd/zones.conf" >> /etc/nsd/nsd.conf;
+echo "include: /etc/nsd/nsd.conf.d/*.conf" >> /etc/nsd/nsd.conf;
 
 # Create DNSSEC signing keys.
 
