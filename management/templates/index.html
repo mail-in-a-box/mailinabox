@@ -62,6 +62,29 @@
 	    ol li {
 	       margin-bottom: 1em;
 	    }
+      /* The below only gets used if it is supported */
+      @media (prefers-color-scheme: dark) {
+        /* Invert invert lightness but not hue */
+        html {
+          filter: invert(100%) hue-rotate(180deg);
+        }
+
+        /* Set explicit background color (necessary for Firefox) */
+        html {
+          background-color: #111;
+        }
+
+        /* Revert the invert for the navbar */
+        button, div.navbar {
+          filter: invert(100%) hue-rotate(180deg);
+        }
+          
+        /* Revert the revert for the dropdowns */
+        ul.dropdown-menu {
+          filter: invert(100%) hue-rotate(180deg);
+        }
+      }
+
         </style>
         <link rel="stylesheet" href="/admin/assets/bootstrap/css/bootstrap-theme.min.css">
     </head>
