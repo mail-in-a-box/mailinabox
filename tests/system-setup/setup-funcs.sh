@@ -92,6 +92,15 @@ init_test_system() {
         wait_for_apt
         apt-get upgrade -qq || die "apt-get upgrade failed!"
     fi
+    
+    # install avahi if the system dns domain is .local - note that
+    # /bin/dnsdomainname returns empty string at this point
+    case "$PRIMARY_HOSTNAME" in
+        *.local )
+            wait_for_apt
+            apt-get install -y -qq avahi-daemon || die "could not install avahi"
+            ;;
+    esac
 }
 
 
@@ -234,6 +243,11 @@ miab_ldap_install() {
 
     # set actual STORAGE_ROOT, STORAGE_USER, PRIVATE_IP, etc
     . /etc/mailinabox.conf || die "Could not source /etc/mailinabox.conf"
+
+    # setup changes the hostname so avahi must be restarted
+    if systemctl is-active --quiet avahi-daemon; then
+        systemctl restart avahi-daemon
+    fi
 }
 
 
