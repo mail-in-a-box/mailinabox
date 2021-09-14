@@ -29,22 +29,20 @@ const app = {
     },
         
     data: {
-        me: null,
     },
 
     mounted: function() {
-        this.getMe();
+        this.ensure_authenticated();
     },
         
     methods: {
-        getMe: function() {
-            axios.get('me').then(response => {
-                this.me = new Me(response.data);
-            }).catch(error => {
-                this.handleError(error);
-            });
+        ensure_authenticated: function() {
+            axios.get('reports/uidata/user-list')
+                .catch(error => {
+                    this.handleError(error);
+                });
         },
-
+        
         handleError: function(error) {
             if (error instanceof AuthenticationError) {
                 console.log(error);

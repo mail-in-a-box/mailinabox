@@ -2,17 +2,60 @@ import { AuthenticationError } from './exceptions.js';
 
 
 export class Me {
-    /* construct with return value from GET /me */
+    /* 
+     * construct with return value from GET /admin/login or undefined
+     * if already logged in
+     */
     constructor(me) {
-        Object.assign(this, me);
+        if (me) {
+            Object.assign(this, me);
+        }
+        else {
+            var cred = Me.get_api_credentials();
+            if (cred) {
+                this.user_id = cred.username;
+                this.user_email = cred.username;
+                this.session_key = cred.session_key;
+            }
+        }
     }
 
     is_authenticated() {
-        return this.api_key || this.user_id;
+        return true && this.user_id;
     }
 
     get_email() {
-        return this.user_email || this.user_id;
+        return this.user_email;
+    }
+
+    get_user_id() {
+        return this.user_id;
+    }
+
+    get_authorization() {
+        if (! this.user_id || ! this.session_key) return null;
+        return 'Basic ' + window.btoa(this.user_id + ':' + this.session_key);
+    }
+
+    /*
+     * get api credentials from session storage
+     *
+     * returns: {
+     *    username: String,
+     *    session_key: String
+     * }
+     *
+     * or null, if no credentials are in session storage
+     */
+    static get_api_credentials() {
+        var cred = null;
+        // code is from templates/index.html for "recall saved user
+        // credentials"
+        if (typeof sessionStorage != 'undefined' && sessionStorage.getItem("miab-cp-credentials"))
+            cred = JSON.parse(sessionStorage.getItem("miab-cp-credentials"));
+        else if (typeof localStorage != 'undefined' && localStorage.getItem("miab-cp-credentials"))
+            cred = JSON.parse(localStorage.getItem("miab-cp-credentials"));
+        return cred;
     }
 };
 
@@ -25,18 +68,15 @@ export function init_authentication_interceptors() {
 
     // requests: attach non-session based auth (admin panel)
     axios.interceptors.request.use(request => {
-        var api_credentials = null;
-        // code from templates/index.html for "recall saved user
-        // credentials" (but, without the split(':'))
-        if (typeof sessionStorage != 'undefined' && sessionStorage.getItem("miab-cp-credentials"))
-            api_credentials = sessionStorage.getItem("miab-cp-credentials");
-        else if (typeof localStorage != 'undefined' && localStorage.getItem("miab-cp-credentials"))
-            api_credentials = localStorage.getItem("miab-cp-credentials");
-        // end
-
-        if (api_credentials) {
-            request.headers.authorization = 'Basic ' + window.btoa(api_credentials);
+        var me = new Me();
+        var auth = me.get_authorization();
+        if (auth && request.headers.authorization === undefined) {
+            request.headers.authorization = auth;
         }
+        // prevent daemon.py's @authorized_personnel_only from sending
+        // 401 responses, which cause the browser to pop up a
+        // credentials dialog box
+        request.headers['X-Requested-With'] = 'XMLHttpRequest';
         return request;
     });
 
@@ -56,9 +96,10 @@ export function init_authentication_interceptors() {
                     url = response.config.baseURL + sep + url;
                 }
             
-                if (url == '/admin/me')
+                if (url == '/admin/login')
                 {
-                    // non-session/admin login
+                    // non-flask-session/admin login, which always
+                    // returns 200, even for failed logins
                     throw new AuthenticationError(
                         null,
                         'not authenticated',
@@ -78,7 +119,7 @@ export function init_authentication_interceptors() {
             if (error.response.status == 403 &&
                 error.response.data == 'login_required')
             {
-                // session login
+                // flask session login
                 throw new AuthenticationError(error, auth_required_msg);
             }
             else if ((error.response.status == 403 ||
