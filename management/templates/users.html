@@ -222,7 +222,7 @@ function users_set_password(elem) {
   var email = $(elem).parents('tr').attr('data-email');
 
   var yourpw = "";
-  if (api_credentials != null && email == api_credentials[0])
+  if (api_credentials != null && email == api_credentials.username)
     yourpw = "<p class='text-danger'>If you change your own password, you will be logged out of this control panel and will need to log in again.</p>";
 
   show_modal_confirm(
@@ -276,7 +276,7 @@ function users_remove(elem) {
   var email = $(elem).parents('tr').attr('data-email');
 
   // can't remove yourself
-  if (api_credentials != null && email == api_credentials[0]) {
+  if (api_credentials != null && email == api_credentials.username) {
     show_modal_error("Archive User", "You cannot archive your own account.");
     return;
   }
@@ -308,7 +308,7 @@ function mod_priv(elem, add_remove) {
   var priv = $(elem).parents('td').find('.name').text();
 
   // can't remove your own admin access
-  if (priv == "admin" && add_remove == "remove" && api_credentials != null && email == api_credentials[0]) {
+  if (priv == "admin" && add_remove == "remove" && api_credentials != null && email == api_credentials.username) {
     show_modal_error("Modify Privileges", "You cannot remove the admin privilege from yourself.");
     return;
   }

@@ -62,6 +62,9 @@
 	    ol li {
 	       margin-bottom: 1em;
 	    }
+
+            .if-logged-in { display: none; }
+            .if-logged-in-admin { display: none; }
         </style>
         <link rel="stylesheet" href="/admin/assets/bootstrap/css/bootstrap-theme.min.css">
     </head>
@@ -83,7 +86,7 @@
         </div>
         <div class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
-            <li class="dropdown">
+            <li class="dropdown if-logged-in-admin">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown">System <b class="caret"></b></a>
               <ul class="dropdown-menu">
                 <li><a href="#system_status" onclick="return show_panel(this);">Status Checks</a></li>
@@ -97,7 +100,8 @@
                 <li><a href="#postgrey_whitelist" onclick="return show_panel(this);">Postgrey Whitelist</a></li>
               </ul>
             </li>
-            <li class="dropdown">
+            <li><a href="#mail-guide" onclick="return show_panel(this);" class="if-logged-in-not-admin">Mail</a></li>
+            <li class="dropdown if-logged-in-admin">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown">Mail &amp; Users <b class="caret"></b></a>
               <ul class="dropdown-menu">
                 <li><a href="#mail-guide" onclick="return show_panel(this);">Instructions</a></li>
@@ -108,18 +112,22 @@
                 <li><a href="#mfa" onclick="return show_panel(this);">Two-Factor Authentication</a></li>
               </ul>
             </li>
-            <li><a href="#sync_guide" onclick="return show_panel(this);">Contacts/Calendar</a></li>
-            <li><a href="#web" onclick="return show_panel(this);">Web</a></li>
-            <li><a href="/admin/reports/" onclick="return api_credentials[0]!=''">Activity</a></li>
+            <li><a href="#sync_guide" onclick="return show_panel(this);" class="if-logged-in">Contacts/Calendar</a></li>
+            <li><a href="#web" onclick="return show_panel(this);" class="if-logged-in-admin">Web</a></li>
+            <li><a href="/admin/reports/" onclick="return api_credentials[0]!=''" class="if-logged-in-admin">Activity</a></li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
-            <li><a href="#" onclick="do_logout(); return false;" style="color: white">Log out</a></li>
+            <li class="if-logged-in"><a href="#" onclick="do_logout(); return false;" style="color: white">Log out</a></li>
           </ul>
         </div><!--/.navbar-collapse -->
       </div>
     </div>
 
     <div class="container">
+      <div id="panel_welcome" class="admin_panel">
+      {% include "welcome.html" %}
+      </div>
+
       <div id="panel_system_status" class="admin_panel">
       {% include "system-status.html" %}
       </div>
@@ -304,7 +312,7 @@ function ajax_with_indicator(options) {
   return false; // handy when called from onclick
 }
 
-var api_credentials = ["", ""];
+var api_credentials = null;
 function api(url, method, data, callback, callback_error, headers) {
   // from http://www.webtoolkit.info/javascript-base64.html
   function base64encode(input) {
@@ -352,9 +360,10 @@ function api(url, method, data, callback, callback_error, headers) {
       // We don't store user credentials in a cookie to avoid the hassle of CSRF
       // attacks. The Authorization header only gets set in our AJAX calls triggered
       // by user actions.
-      xhr.setRequestHeader(
-        'Authorization',
-        'Basic ' + base64encode(api_credentials[0] + ':' + api_credentials[1]));
+      if (api_credentials)
+        xhr.setRequestHeader(
+          'Authorization',
+          'Basic ' + base64encode(api_credentials.username + ':' + api_credentials.session_key));
     },
     success: callback,
     error: callback_error || default_error,
@@ -373,12 +382,21 @@ var current_panel = null;
 var switch_back_to_panel = null;
 
 function do_logout() {
-  api_credentials = ["", ""];
+  // Clear the session from the backend.
+  api("/logout", "POST");
+
+  // Forget the token.
+  api_credentials = null;
   if (typeof localStorage != 'undefined')
     localStorage.removeItem("miab-cp-credentials");
   if (typeof sessionStorage != 'undefined')
     sessionStorage.removeItem("miab-cp-credentials");
+
+  // Return to the start.
   show_panel('login');
+
+  // Reset menus.
+  show_hide_menus();
 }
 
 function show_panel(panelid) {
@@ -401,14 +419,22 @@ function show_panel(panelid) {
 
 $(function() {
   // Recall saved user credentials.
-  if (typeof sessionStorage != 'undefined' && sessionStorage.getItem("miab-cp-credentials"))
-    api_credentials = sessionStorage.getItem("miab-cp-credentials").split(":");
-  else if (typeof localStorage != 'undefined' && localStorage.getItem("miab-cp-credentials"))
-    api_credentials = localStorage.getItem("miab-cp-credentials").split(":");
+  try {
+    if (typeof sessionStorage != 'undefined' && sessionStorage.getItem("miab-cp-credentials"))
+      api_credentials = JSON.parse(sessionStorage.getItem("miab-cp-credentials"));
+    else if (typeof localStorage != 'undefined' && localStorage.getItem("miab-cp-credentials"))
+      api_credentials = JSON.parse(localStorage.getItem("miab-cp-credentials"));
+  } catch (_) {
+  }
+
+  // Toggle menu state.
+  show_hide_menus();
 
   // Recall what the user was last looking at.
-  if (typeof localStorage != 'undefined' && localStorage.getItem("miab-cp-lastpanel")) {
+  if (api_credentials != null && typeof localStorage != 'undefined' && localStorage.getItem("miab-cp-lastpanel")) {
     show_panel(localStorage.getItem("miab-cp-lastpanel"));
+  } else if (api_credentials != null) {
+    show_panel('welcome');
   } else {
     show_panel('login');
   }

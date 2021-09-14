@@ -358,17 +358,17 @@ mgmt_assert_mfa_disable() {
 	return 0
 }
 
-mgmt_assert_admin_me() {
+mgmt_assert_admin_login() {
 	local user="$1"
 	local pw="$2"
 	local expected_status="${3:-ok}"
 	shift; shift; shift;  # remaining arguments are data
 
-	# note: GET /admin/me always returns http status 200, but errors are in
+	# note: POST /admin/login always returns http status 200, but errors are in
 	# the json payload
-	record "[Get /admin/me as $user]"
-	if ! mgmt_rest_as_user "GET" "/admin/me" "$user" "$pw" "$@"; then
-		test_failure "GET /admin/me as $user failed: $REST_ERROR"
+	record "[POST /admin/login as $user]"
+	if ! mgmt_rest_as_user "POST" "/admin/login" "$user" "$pw" "$@"; then
+		test_failure "POST /admin/login as $user failed: $REST_ERROR"
 		return 1
 
 	else
@@ -376,11 +376,11 @@ mgmt_assert_admin_me() {
 		status="$(/usr/bin/jq -r '.status' <<<"$REST_OUTPUT")"
 		code=$?
 		if [ $code -ne 0 ]; then
-			test_failure "Unable to run jq ($code) on /admin/me json"
+			test_failure "Unable to run jq ($code) on /admin/login json"
 			return 1
 				
 		elif [ "$status" == "null" ]; then
-			test_failure "No 'status' in /admin/me json"
+			test_failure "No 'status' in /admin/login json"
 			return 1
 
 		elif [ "$status" != "$expected_status" ]; then

@@ -231,7 +231,7 @@ test_totp() {
 	# logging in with just the password should now fail
 	if ! have_test_failures; then
 		record "Expect a login failure..."
-		mgmt_assert_admin_me "$alice" "$alice_pw" "missing-totp-token"
+		mgmt_assert_admin_login "$alice" "$alice_pw" "missing-totp-token"
 	fi
 	
 
@@ -248,7 +248,7 @@ test_totp() {
 		else
 			# we have a new token, try logging in ...
 			# the token must be placed in the header "x-auth-token"
-			if mgmt_assert_admin_me "$alice" "$alice_pw" "ok" "--header=x-auth-token: $TOTP_TOKEN"
+			if mgmt_assert_admin_login "$alice" "$alice_pw" "ok" "--header=x-auth-token: $TOTP_TOKEN"
 			then
 				api_key="$(/usr/bin/jq -r '.api_key' <<<"$REST_OUTPUT")"
 				record "Success: login with TOTP token successful. api_key=$api_key"
@@ -265,15 +265,19 @@ test_totp() {
 
 	# we should be able to login using the user's api key
 	if ! have_test_failures; then		
-		record "Login using the user's api key"
-		mgmt_assert_admin_me "$alice" "$api_key" "ok"
+		record "[Use the session key to enum users]"
+		if ! mgmt_rest_as_user "GET" "/admin/mail/users?format=json" "$alice" "$api_key"; then
+			test_failure "Unable to use the session key to issue a rest call: $REST_ERROR"
+		else
+			record "Success: $REST_OUTPUT"
+		fi
 	fi
 
 	# disable totp on the account - login should work with just the password
 	# and the ldap entry should not have the 'totpUser' objectClass
 	if ! have_test_failures; then		
 		if mgmt_assert_mfa_disable "$alice" "$api_key"; then
-			mgmt_assert_admin_me "$alice" "$alice_pw" "ok"
+			mgmt_assert_admin_login "$alice" "$alice_pw" "ok"
 		fi
 	fi
 

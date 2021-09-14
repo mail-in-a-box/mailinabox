@@ -30,8 +30,8 @@ apt_install \
 # Combine the Roundcube version number with the commit hash of plugins to track
 # whether we have the latest version of everything.
 
-VERSION=1.4.11
-HASH=3877f0e70f29e7d0612155632e48c3db1e626be3
+VERSION=1.5-rc
+HASH=a7cb2a39702536d769c7ff93f716e27f0b93f9d9
 PERSISTENT_LOGIN_VERSION=6b3fc450cae23ccb2f393d0ef67aa319e877e435 # version 5.2.0
 HTML5_NOTIFIER_VERSION=68d9ca194212e15b3c7225eb6085dbcf02fd13d7 # version 0.6.4+
 CARDDAV_VERSION=3.0.3
@@ -133,6 +133,7 @@ cat > $RCM_CONFIG <<EOF;
 \$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'persistent_login', 'carddav');
 \$config['skin'] = 'elastic';
 \$config['login_autocomplete'] = 2;
+\$config['login_username_filter'] = 'email';
 \$config['password_charset'] = 'UTF-8';
 \$config['junk_mbox'] = 'Spam';
 \$config['ldap_public']['public'] = array(
