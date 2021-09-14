@@ -118,7 +118,7 @@ if [ ! -f $STORAGE_ROOT/ssl/ca_certificate.pem ]; then
 	CERT=$STORAGE_ROOT/ssl/ca_certificate.pem
 	hide_output \
 	openssl req -new -x509 \
-	  -days 3650 -sha256 \
+	  -days 3650 -sha384 \
 	  -key $STORAGE_ROOT/ssl/ca_private_key.pem \
 	  -passin 'pass:SECRET-PASSWORD' \
 	  -out $CERT \

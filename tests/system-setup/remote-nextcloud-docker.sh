@@ -123,8 +123,24 @@ install_nextcloud_docker() {
     docker exec -u www-data NC ./occ app:enable user_ldap \
         || die "docker: enabling user_ldap failed ($?)"
 
+    #
     # integrate Nextcloud with MiaB-LDAP
+    #    
     H2 "docker: integrate Nextcloud with MiaB-LDAP"
+    
+    # create an /etc/ldap/ldap.conf specifying what root certificates
+    # are valid for peer cert validation by openldap tools
+    # (ldapsearch). This is needed for the docker debian image (not
+    # needed on ubuntu?) for the tools to recognize the root
+    # certificate copied above
+    echo "TLS_CACERT /etc/ssl/certs/ca-certificates.crt" > /tmp/ldap.conf.$$
+    docker exec NC mkdir /etc/ldap \
+        || die "docker: mkdir /etc/ldap failed"
+    docker cp /tmp/ldap.conf.$$ NC:/etc/ldap/ldap.conf \
+        || die "docker: could not copy /tmp/ldap.conf.$$ to NC:/etc/ldap"
+    rm -f /tmp/ldap.conf.$$
+    
+    # execute the script that sets up Nextcloud
     docker cp setup/mods.available/remote-nextcloud-use-miab.sh NC:/tmp \
         || die "docker: cp remote-nextcloud-use-miab.sh failed"
     docker exec NC /tmp/remote-nextcloud-use-miab.sh \
