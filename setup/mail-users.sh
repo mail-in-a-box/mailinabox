@@ -101,8 +101,12 @@ EOF
 # ### Destination Validation
 
 # Use a Sqlite3 database to check whether a destination email address exists,
-# and to perform any email alias rewrites in Postfix.
+# and to perform any email alias rewrites in Postfix. Additionally, we disable
+# SMTPUTF8 because Dovecot's LMTP server that delivers mail to inboxes does
+# not support it, and if a message is received with the SMTPUTF8 flag it will
+# bounce.
 tools/editconf.py /etc/postfix/main.cf \
+	smtputf8_enable=no \
 	virtual_mailbox_domains=sqlite:/etc/postfix/virtual-mailbox-domains.cf \
 	virtual_mailbox_maps=sqlite:/etc/postfix/virtual-mailbox-maps.cf \
 	virtual_alias_maps=sqlite:/etc/postfix/virtual-alias-maps.cf \

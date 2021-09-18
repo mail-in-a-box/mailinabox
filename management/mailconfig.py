@@ -16,8 +16,8 @@ import idna
 
 def validate_email(email, mode=None):
 	# Checks that an email address is syntactically valid. Returns True/False.
-	# Until Postfix supports SMTPUTF8, an email address may contain ASCII
-	# characters only; IDNs must be IDNA-encoded.
+	# An email address may contain ASCII characters only because Dovecot's
+	# authentication mechanism gets confused with other character encodings.
 	#
 	# When mode=="user", we're checking that this can be a user account name.
 	# Dovecot has tighter restrictions - letters, numbers, underscore, and
