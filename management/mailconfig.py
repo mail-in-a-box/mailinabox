@@ -218,6 +218,9 @@ def get_mail_aliases_ex(env):
 
 	domains = {}
 	for address, forwards_to, permitted_senders, auto in get_mail_aliases(env):
+		# skip auto domain maps since these are not informative in the control panel's aliases list
+		if auto and address.startswith("@"): continue
+
 		# get alias info
 		domain = get_domain(address)
 
@@ -259,11 +262,12 @@ def get_domain(emailaddr, as_unicode=True):
 def get_mail_domains(env, filter_aliases=lambda alias : True, users_only=False):
 	# Returns the domain names (IDNA-encoded) of all of the email addresses
 	# configured on the system. If users_only is True, only return domains
-	# with email addresses that correspond to user accounts.
+	# with email addresses that correspond to user accounts. Exclude Unicode
+	# forms of domain names listed in the automatic aliases table.
 	domains = []
 	domains.extend([get_domain(login, as_unicode=False) for login in get_mail_users(env)])
 	if not users_only:
-		domains.extend([get_domain(address, as_unicode=False) for address, *_ in get_mail_aliases(env) if filter_aliases(address) ])
+		domains.extend([get_domain(address, as_unicode=False) for address, _, _, auto in get_mail_aliases(env) if filter_aliases(address) and not auto ])
 	return set(domains)
 
 def add_mail_user(email, pw, privs, env):
@@ -569,6 +573,14 @@ def kick(env, mail_result=None):
 		if alias == administrator: continue # don't make an alias from the administrator to itself --- this alias must be created manually
 		auto_aliases[alias] = administrator
 
+	# Add domain maps from Unicode forms of IDNA domains to the ASCII forms stored in the alias table.
+	for domain in get_mail_domains(env):
+		try:
+			domain_unicode = idna.decode(domain.encode("ascii"))
+			if domain == domain_unicode: continue # not an IDNA/Unicode domain
+			auto_aliases["@" + domain_unicode] = "@" + domain
+		except (ValueError, UnicodeError, idna.IDNAError):
+			continue
 
 	add_auto_aliases(auto_aliases, env)
 
