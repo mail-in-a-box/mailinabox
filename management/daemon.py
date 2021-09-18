@@ -235,7 +235,7 @@ def mail_aliases():
 	if request.args.get("format", "") == "json":
 		return json_response(get_mail_aliases_ex(env))
 	else:
-		return "".join(address+"\t"+receivers+"\t"+(senders or "")+"\n" for address, receivers, senders in get_mail_aliases(env))
+		return "".join(address+"\t"+receivers+"\t"+(senders or "")+"\n" for address, receivers, senders, auto in get_mail_aliases(env))
 
 @app.route('/mail/aliases/add', methods=['POST'])
 @authorized_personnel_only
