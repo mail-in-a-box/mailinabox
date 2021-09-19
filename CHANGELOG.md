@@ -1,6 +1,33 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+Mail:
+
+* Upgraded to Roundcube 1.5 Release Candidate.
+
+Firewall:
+
+* Fail2ban's IPv6 support is enabled.
+
+Control panel:
+
+* The control panel menus are now hidden before login, but now non-admins can log in to access the mail and contacts/calendar instruction pages.
+* The login form now disables browser autocomplete in the two-factor authentication code field.
+* After logging in, the default page is now a fast-loading welcome page rather than the slow-loading system status checks page.
+* The backup retention period option now displays for B2 backup targets.
+* The DNSSEC DS record recommendations are cleaned up and now recommend changing records that use SHA1.
+* Control panel logins are now tied to a session backend that allows true logouts (rather than an encrypted cookie).
+* Failed logins no longer directly reveal whether the email address corresponds to a user account.
+* Browser dark mode now inverts the color scheme.
+
+Other:
+
+* The mail log tool now doesn't crash if there are email addresess in log messages with invalid UTF-8 characters.
+* Additional nsd.conf files can be placed in /etc/nsd.conf.d.
+
 v0.54 (June 20, 2021)
 ---------------------
 
