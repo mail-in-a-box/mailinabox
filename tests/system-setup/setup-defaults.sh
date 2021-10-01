@@ -39,3 +39,7 @@ export NC_ADMIN_PASSWORD="${NC_ADMIN_PASSWORD:-Test_1234}"
 # For setup scripts that install upstream versions
 export MIAB_UPSTREAM_GIT="${MIAB_UPSTREAM_GIT:-https://github.com/mail-in-a-box/mailinabox.git}"
 export UPSTREAM_TAG="${UPSTREAM_TAG:-}"
+
+# For setup scripts that install miabldap releases
+export MIABLDAP_GIT="${MIABLDAP_GIT:-https://github.com/downtownallday/mailinabox-ldap.git}"
+export MIABLDAP_RELEASE_TAG="${MIABLDAP_RELEASE_TAG:-v0.54}"

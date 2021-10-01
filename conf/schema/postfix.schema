@@ -1,0 +1,77 @@
+# LDAP Admin Extensions for Postfix MTA support
+#
+# MiaB LDAP UUID(v4): 7392cdda-5ec8-431f-9936-0000273c0167
+#                 or: 1939000794.24264.17183.39222.658243943
+#
+
+objectIdentifier MiabLDAProot 2.25.1939000794.24264.17183.39222.658243943
+objectIdentifier MiabLDAPmail MiabLDAProot:2
+objectIdentifier MiabLDAPmailAttributeType MiabLDAPmail:1
+objectIdentifier MiabLDAPmailObjectClass MiabLDAPmail:2
+
+attributetype ( 1.3.6.1.4.1.15347.2.102 
+	NAME 'transport' 
+	SUP name)
+
+attributetype ( 1.3.6.1.4.1.15347.2.101 
+	NAME 'mailRoutingAddress' 
+	SUP mail )
+
+attributetype ( 1.3.6.1.4.1.15347.2.110 NAME 'maildest'
+	DESC 'Restricted to send only to local network'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{32768} )
+
+attributetype ( 1.3.6.1.4.1.15347.2.111 NAME 'mailaccess'
+	DESC 'Can be mailed to restricted groups'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{32768} )
+
+attributetype ( 1.3.6.1.4.1.15347.2.100
+	NAME ( 'maildrop' )
+	DESC 'RFC1274: RFC822 Mailbox'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+
+attributetype ( 1.3.6.1.4.1.10018.1.1.1 NAME 'mailbox'
+	DESC 'The absolute path to the mailbox for a mail account in a non-default location'
+	EQUALITY caseExactMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )
+
+# create a mailMember for utf8 email addresses in mailGroups
+attributetype ( MiabLDAPmailAttributeType:1 NAME 'mailMember' DESC 'RFC6532 utf8 email address of group member(s)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+
+# create a utf8 version of core 'domainComponent'
+attributetype ( MiabLDAPmailAttributeType:2 NAME 'dcIntl' DESC 'UTF8 domain component' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )
+
+objectclass ( 1.3.6.1.4.1.15347.2.1
+	NAME 'mailUser'
+	DESC 'E-Mail User'
+	SUP top
+	AUXILIARY
+	MUST ( uid $ mail $ maildrop )
+	MAY ( cn $ mailbox $ maildest $ mailaccess )
+	)
+
+objectclass ( 1.3.6.1.4.1.15347.2.2
+	NAME 'mailGroup'
+	DESC 'E-Mail Group'
+	SUP top
+	STRUCTURAL
+	MUST ( cn $ mail )
+	MAY ( mailRoutingAddress $ member $ mailMember $ description )
+	)
+
+objectclass ( 1.3.6.1.4.1.15347.2.3
+	NAME 'transportTable'
+	DESC 'MTA Transport Table'
+	SUP top
+	STRUCTURAL
+	MUST ( cn $ transport )
+	)
+
+# create an auxiliary class to attach to 'domain' objects
+objectClass ( MiabLDAPmailObjectClass:1 NAME 'mailDomain' DESC 'Domain we handle mail for' SUP top AUXILIARY MUST ( dcIntl ) )

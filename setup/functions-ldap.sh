@@ -13,8 +13,13 @@ get_attribute_from_ldif() {
 	local line
 	while read line; do
 		[ -z "$line" ] && break
-		local v=$(awk "/^$attr:/ { print substr(\$0, length(\"$attr\")+3) }" <<<$line)
-		[ ! -z "$v" ] && ATTR_VALUE+=( "$v" )
+		local v=$(awk "/^$attr: / { print substr(\$0, length(\"$attr\")+3) }" <<<"$line")
+		if [ ! -z "$v" ]; then
+			ATTR_VALUE+=( "$v" )
+		else
+			v=$(awk "/^$attr:: / { print substr(\$0, length(\"$attr\")+4) }" <<<"$line")
+			[ ! -z "$v" ] && ATTR_VALUE+=( $(base64 --decode --wrap=0 <<<"$v") )
+		fi
 	done <<< "$ldif"
 	return 0
 }

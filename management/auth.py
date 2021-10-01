@@ -73,14 +73,9 @@ class AuthService:
 			return (None, ["admin"])
 
 		# If the password corresponds with a session token for the user, grant access for that user.
-		if password in self.sessions and self.sessions[password]["email"] == username and not login_only:
+		if self.get_session(username, password, "login", env) and not login_only:
 			sessionid = password
 			session = self.sessions[sessionid]
-			if session["password_token"] != self.create_user_password_state_token(username, env):
-				# This session is invalid because the user's password/MFA state changed
-				# after the session was created.
-				del self.sessions[sessionid]
-				raise ValueError("Session expired.")
 			if logout:
 				# Clear the session.
 				del self.sessions[sessionid]
@@ -144,5 +139,14 @@ class AuthService:
 		self.sessions[token] = {
 			"email": username,
 			"password_token": self.create_user_password_state_token(username, env),
+			"type": type,
 		}
 		return token
+
+	def get_session(self, user_email, session_key, session_type, env):
+		if session_key not in self.sessions: return None
+		session = self.sessions[session_key]
+		if session_type == "login" and session["email"] != user_email: return None
+		if session["type"] != session_type: return None
+		if session["password_token"] != self.create_user_password_state_token(session["email"], env): return None
+		return session

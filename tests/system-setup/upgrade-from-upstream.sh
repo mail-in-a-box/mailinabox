@@ -96,13 +96,13 @@ upstream_install() {
         echo "$F_RESET"
         die "Upstream setup failed!"
     fi
-    popd >/dev/null
     
     workaround_dovecot_sieve_bug
 
     H2 "Upstream info"
     echo "Code version: $(git describe)"
     echo "Migration version: $(cat "$STORAGE_ROOT/mailinabox.version")"
+    popd >/dev/null
 }
 
 
@@ -154,9 +154,7 @@ else
     fi
 
     # capture upstream state
-    pushd "$upstream_dir" >/dev/null
-    installed_state_capture "/tmp/state/upstream"
-    popd >/dev/null
+    installed_state_capture "/tmp/state/upstream" "$upstream_dir"
 fi
 
 # install miab-ldap and capture state

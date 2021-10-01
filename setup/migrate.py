@@ -187,6 +187,11 @@ def migration_13(env):
 	db = os.path.join(env["STORAGE_ROOT"], 'mail/users.sqlite')
 	shell("check_call", ["sqlite3", db, "CREATE TABLE mfa (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, type TEXT NOT NULL, secret TEXT NOT NULL, mru_token TEXT, label TEXT, FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE);"])
 
+def migration_14(env):
+	# Add the "auto_aliases" table.
+	db = os.path.join(env["STORAGE_ROOT"], 'mail/users.sqlite')
+	shell("check_call", ["sqlite3", db, "CREATE TABLE auto_aliases (id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT NOT NULL UNIQUE, destination TEXT NOT NULL, permitted_senders TEXT);"])
+
 ###########################################################
 
 
@@ -245,9 +250,77 @@ def migration_miabldap_1(env):
 	aliases=m13.create_aliases(env, conn, ldap, ldap_aliases_base)
 	permitted=m13.create_permitted_senders(conn, ldap, ldap_users_base, ldap_permitted_senders_base)
 	m13.populate_aliases(conn, ldap, users, aliases)
-		
+
 	ldap.unbind()
 	conn.close()
+
+
+def migration_miabldap_2(env):
+	# This migration step changes the ldap schema to support utf8 email
+	#
+	# possible states at this point:
+	#   miabldap was installed and is being upgraded
+	#      -> old pre-utf8 schema present
+	#   a miab install was present and step 1 upgaded it to miabldap
+	#      -> new utf8 schema present
+	#
+	sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "../management")))
+	import ldap3
+	from backend import connect
+	import migration_14 as m14
+
+	# 1. get ldap site details
+	ldapvars = load_env_vars_from_file(os.path.join(env["STORAGE_ROOT"], "ldap/miab_ldap.conf"), strip_quotes=True)
+	ldap_domains_base = ldapvars.LDAP_DOMAINS_BASE
+	ldap_aliases_base = ldapvars.LDAP_ALIASES_BASE
+	ldap_users_base = ldapvars.LDAP_USERS_BASE
+
+	# connect before schema changes to ensure admin password works
+	ldap = connect(ldapvars)
+
+	# 2. if this is a miab -> maibldap install, the new schema is
+	# already in place and no schema changes are needed. however,
+	# if this is a miabldap/1 to miabldap/2 migration, we must
+	# upgrade the schema.
+	ret = shell("check_output", [
+		"ldapsearch",
+		"-Q",
+		"-Y", "EXTERNAL",
+		"-H", "ldapi:///",
+		"(&(objectClass=olcSchemaConfig)(cn={*}postfix))",
+		"-b", "cn=schema,cn=config",
+		"-LLL",
+		"olcObjectClasses"
+	])
+	
+	if "rfc822MailMember" in ret:
+		def ldif_change_fn(ldif):
+			return ldif.replace("rfc822MailMember: ", "mailMember: ")
+		# apply schema changes miabldap/1 -> miabldap/2
+		ldap.unbind()
+		print("Apply schema changes")
+		m14.apply_schema_changes(env, ldapvars, ldif_change_fn)
+		# reconnect
+		ldap = connect(ldapvars)
+
+	# 3. migrate to utf8: users, aliases and domains
+	print("Create utf8 entries for users and aliases having IDNA domains")
+	m14.add_utf8_mail_addresses(env, ldap, ldap_users_base)
+
+	print("Add namedProperties objectclass to aliases")
+	m14.add_namedProperties_objectclass(env, ldap, ldap_aliases_base)
+
+	print("Add mailDomain objectclass to domains")
+	m14.add_mailDomain_objectclass(env, ldap, ldap_domains_base)
+
+	print("Mark required aliases with 'auto' property")
+	m14.add_auto_tag(env, ldap, ldap_aliases_base)
+
+	print("Ensure all required aliases are created")
+	m14.ensure_required_aliases(env, ldapvars, ldap)
+	
+	ldap.unbind()
+
 	
 def get_current_migration():
 	ver = 0
@@ -327,11 +400,20 @@ def run_miabldap_migrations():
 	env = load_environment()
 
 	migration_id_file = os.path.join(env['STORAGE_ROOT'], 'mailinabox-ldap.version')
-	migration_id = 0
+	migration_id = None
 	if os.path.exists(migration_id_file):
 		with open(migration_id_file) as f:
 			migration_id = f.read().strip();
+		if migration_id.strip()=='': migration_id = None
 
+	if migration_id is None:
+		if os.path.exists(os.path.join(env['STORAGE_ROOT'], 'mailinabox.version')):
+			migration_id = 0
+		else:
+			print()
+			print("%s file doesn't exists. Skipping migration..." % (migration_id_file,))
+			return
+	
 	ourver = int(migration_id)
 
 	while True:

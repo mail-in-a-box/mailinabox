@@ -14,6 +14,9 @@ import subprocess, shutil, os, sqlite3, re, ldap3, uuid, hashlib
 import utils, backend
 from email_validator import validate_email as validate_email_, EmailNotValidError
 import idna
+import logging
+
+log = logging.getLogger(__name__)
 
 
 #
@@ -23,13 +26,13 @@ import idna
 #    attribute for the email address. For historical reasons, the
 #    management interface only permits lowercase email addresses.
 #
-#    In the current implementation, both attributes will have the same
-#    lowercase value, but it's not a requirement of the underlying
-#    postfix and dovecot configurations that it be this way. Postfix
-#    and dovecot use the mail attribute to find the user and maildrop
-#    is where the mail is delivered. We use maildrop in the management
-#    interface because that's the address that will always map
-#    directly to the filesystem for archived users.
+#    In the current implementation, maildrop will be lowercase and
+#    mail will as-entered. If a user's email address requires IDNA
+#    encoding, then both the idna and utf8 versions of the email
+#    address will be populated in the mail attribute.
+
+#    Postfix and dovecot use the mail attribute to find the user and
+#    maildrop is where the mail is delivered.
 #
 #    Email addresses and domain comparisons performed by the LDAP
 #    server are not case sensitive because their respective schemas
@@ -44,12 +47,14 @@ import idna
 #    lowercase, again for historical reasons.
 #
 #    All alias and permitted-sender email addresses in the database
-#    are IDNA encoded. International domains for users is not
-#    supported or permitted.
+#    are IDNA encoded. Like users, if these address contain non-ascii
+#    characters, both the IDNA encoded address and the utf8 version
+#    are stored.
 #
 #    Domains that are handled by this mail server are maintained
 #    on-the-fly as users are added and deleted. They have an
-#    objectClass of domain with attribute dc.
+#    objectClass of mailDomain with attributes dc (idna-encoded) and
+#    dcIntl (utf8 encoded).
 #
 #    LDAP "records" in this code are dictionaries containing the
 #    attributes and distinguished name of the entry.
@@ -57,8 +62,8 @@ import idna
 
 def validate_email(email, mode=None):
 	# Checks that an email address is syntactically valid. Returns True/False.
-	# Until Postfix supports SMTPUTF8, an email address may contain ASCII
-	# characters only; IDNs must be IDNA-encoded.
+	# An email address may contain ASCII characters only because Dovecot's
+	# authentication mechanism gets confused with other character encodings.
 	#
 	# When mode=="user", we're checking that this can be a user account name.
 	# Dovecot has tighter restrictions - letters, numbers, underscore, and
@@ -132,6 +137,13 @@ def is_dcv_address(email):
 			return True
 	return False
 
+def utf8_from_idna(domain_idna):
+	try:
+		return idna.decode(domain_idna.encode("ascii"))
+	except (UnicodeError, idna.IDNAError):
+		# Failed to decode IDNA, should never happen
+		return domain_idna
+
 def open_database(env):
 		return backend.connect(env)
 
@@ -147,7 +159,7 @@ def find_mail_user(env, email, attributes=None, conn=None):
 	# The ldap record for the user is returned or None if not found.
 	if not conn: conn = open_database(env)
 	id=conn.search(env.LDAP_USERS_BASE,
-		       "(&(objectClass=mailUser)(maildrop=%s))" % email,
+		       "(&(objectClass=mailUser)(mail=%s))" % email,
 		       attributes=attributes)
 	response = conn.wait(id)
 	if response.count() > 1:
@@ -156,17 +168,21 @@ def find_mail_user(env, email, attributes=None, conn=None):
 	else:
 		return response.next()
 	
-def find_mail_alias(env, email, attributes=None, conn=None):
+def find_mail_alias(env, email_idna, attributes=None, conn=None, auto=None):
 	# Find the alias with the given address and return the ldap
 	# records for it and the associated permitted senders (if one).
 	#
 	# email is the alias address. It must be IDNA encoded.
 	#
 	# attributes are a list of attributes to return, eg
-	# ["member","rfc822MailMember"]
+	# ["member","mailMember"]
 	#
 	# conn is a ldap database connection, if not specified a new one
 	# is established.
+	#
+	# if auto is True, entry must have namedProperty=auto
+	# if auto if False entry must not have namedProperty=auto
+	# if auto is None, ignore namedProperty
 	#
 	# A tuple having the two ldap records for the alias and it's
 	# permitted senders (alias, permitted_senders) is returned. If
@@ -174,28 +190,44 @@ def find_mail_alias(env, email, attributes=None, conn=None):
 	# 
 	if not conn: conn = open_database(env)
 	# get alias
-	id=conn.search(env.LDAP_ALIASES_BASE,
-		       "(&(objectClass=mailGroup)(mail=%s))" % email,
-		       attributes=attributes)
+	q = [
+		"(objectClass=mailGroup)",
+		"(mail=%s)" % email_idna
+	]
+	if auto is False:
+		q.append("(!(namedProperty=auto))")
+	elif auto:
+		q.append("(namedProperty=auto)")
+	q = "(&" + "".join(q) + ")"
+	id=conn.search(env.LDAP_ALIASES_BASE, q, attributes=attributes)
 	response = conn.wait(id)
 	if response.count() > 1:
 		dns = [ rec['dn'] for rec in response ]
-		raise LookupError("Detected more than one alias with the same email address (%s): %s" % (email, ";".join(dns)))
+		raise LookupError("Detected more than one alias with the same email address (%s): %s" % (email_idna, ";".join(dns)))
 	alias = response.next()
 
 	# get permitted senders for alias
 	id=conn.search(env.LDAP_PERMITTED_SENDERS_BASE,
-		       "(&(objectClass=mailGroup)(mail=%s))" % email,
+		       "(&(objectClass=mailGroup)(mail=%s))" % email_idna,
 		       attributes=attributes)
 	response = conn.wait(id)
 	if response.count() > 1:
 		dns = [ rec['dn'] for rec in response ]
-		raise LookupError("Detected more than one permitted senders group with the same email address (%s): %s" % (email, ";".join(dns)))
+		raise LookupError("Detected more than one permitted senders group with the same email address (%s): %s" % (email_idna, ";".join(dns)))
 	permitted_senders = response.next()
 	return (alias, permitted_senders)
 	
 
-def get_mail_users(env, as_map=False):
+def primary_address(mail):
+	# return the first IDNA-encoded email address
+	for addr in mail:
+		if get_domain(addr, as_unicode=False).startswith("xn--"):
+			return addr
+	# or, if none, the first listed address
+	return mail[0]
+
+
+def get_mail_users(env, as_map=False, map_by="maildrop"):
 	# When `as_map` is False, this function returns a flat, sorted
 	# array of all user accounts. If True, it returns a dict where key
 	# is the user and value is a dict having, dn, maildrop and
@@ -204,16 +236,24 @@ def get_mail_users(env, as_map=False):
 	pager = c.paged_search(env.LDAP_USERS_BASE, "(objectClass=mailUser)", attributes=['maildrop','mail','cn'])
 	if as_map:
 		users = {}
+		if not isinstance(map_by, list):
+			map_by = [ map_by ]
 		for rec in pager:
-			users[rec['maildrop'][0]] = {
-				"dn":   rec['dn'],
-				"mail": rec['mail'],
-				"maildrop": rec['maildrop'][0],
-				"display_name": rec['cn'][0]
-			}
+			for map_by_key in map_by:
+				if map_by_key == 'primary_address':
+					map_key_values = [ primary_address(rec['mail']) ]
+				else:
+					map_key_values = rec[map_by_key]
+				for map_key_value in map_key_values:
+					users[map_key_value.lower()] = {
+						"dn":   rec['dn'],
+						"mail": rec['mail'],
+						"maildrop": rec['maildrop'][0],
+						"display_name": rec['cn'][0]
+					}
 		return users
 	else:
-		users = [ rec['maildrop'][0] for rec in pager ]
+		users = [ primary_address(rec['mail']).lower() for rec in pager ]
 		return utils.sort_email_addresses(users, env)
 
 	
@@ -241,10 +281,11 @@ def get_mail_users_ex(env, with_archived=False):
 	users = []
 	active_accounts = set()
 	c = open_database(env)
-	response = c.wait( c.search(env.LDAP_USERS_BASE, "(objectClass=mailUser)", attributes=['maildrop','mailaccess','cn']) )
+	response = c.wait( c.search(env.LDAP_USERS_BASE, "(objectClass=mailUser)", attributes=['mail','maildrop','mailaccess','cn']) )
 
 	for rec in response:
-		email = rec['maildrop'][0]
+		#email = rec['maildrop'][0]
+		email = rec['mail'][0]
 		privileges = rec['mailaccess']
 		display_name = rec['cn'][0]
 		active_accounts.add(email)
@@ -304,21 +345,22 @@ def get_admins(env):
 	return users
 
 
-def get_mail_aliases(env, as_map=False):
+def get_mail_aliases(env, as_map=False, map_by="primary_address"):
 	# Retrieve all mail aliases.
 	#
 	# If as_map is False, the function returns a sorted array of tuples:
 	#
-	#   (address(lowercase), forward-tos{string,csv}, permitted-senders{string,csv})
+	#   (address(lowercase), forward-tos{string,csv}, permitted-senders{string,csv}, auto:{boolean})
 	#
 	# If as-map is True, it returns a dict whose keys are
 	# address(lowercase) and whose values are:
 	#
 	#    { dn: {string},
-	#      mail: {string}
+	#      mail: {array of string}
 	#      forward_tos: {array of string},
 	#      permited_senders: {array of string},
-	#      description: {string}
+	#      description: {string},
+	#      auto: {boolean}
 	#    }
 	#
 	c = open_database(env)
@@ -326,41 +368,56 @@ def get_mail_aliases(env, as_map=False):
 	pager = c.paged_search(env.LDAP_PERMITTED_SENDERS_BASE, "(objectClass=mailGroup)", attributes=["mail", "member"])
 	
 	# make a dict of permitted senders, key=mail(lowercase) value=members
-	permitted_senders = { rec["mail"][0].lower(): rec["member"] for rec in pager }
+	permitted_senders = { }
+	for rec in pager:
+		email = primary_address(rec["mail"])
+		permitted_senders[email.lower()] = rec["member"]
 
-	# get all alias groups
-	pager = c.paged_search(env.LDAP_ALIASES_BASE, "(objectClass=mailGroup)", attributes=['mail','member','rfc822MailMember', 'description'])
+	# get all aliases
+	pager = c.paged_search(
+		env.LDAP_ALIASES_BASE,
+		"(objectClass=mailGroup)",
+		attributes=[
+			'mail','member','mailMember','description','namedProperty'
+		])
 	
 	# make a dict of aliases
-	# key=email(lowercase), value=(email, forward-tos, permitted-senders).
+	# key=email(lowercase), value=(email, forward-tos, permitted-senders, auto).
 	aliases = {}
 	for alias in pager:
-		alias_email = alias['mail'][0]
-		alias_email_lc = alias_email.lower()
-		
 		# chase down each member's email address, because a member is a dn
 		forward_tos = []
 		for fwd_to in c.chase_members(alias['member'], 'mail', env):
-			forward_tos.append(fwd_to[0])
-			
-		for fwd_to in alias['rfc822MailMember']:
+			forward_tos.append(primary_address(fwd_to))
+
+		for fwd_to in alias['mailMember']:
 			forward_tos.append(fwd_to)
-		
+				
 		# chase down permitted senders' email addresses
 		allowed_senders = []
-		if alias_email_lc in permitted_senders:
-			members = permitted_senders[alias_email_lc]
+		primary_email_lc = primary_address(alias['mail']).lower()
+		if primary_email_lc in permitted_senders:
+			members = permitted_senders[primary_email_lc]
 			for mail_list in c.chase_members(members, 'mail', env):
 				for mail in mail_list:
 					allowed_senders.append(mail)
 
-		aliases[alias_email_lc] = {
-			"dn": alias["dn"],
-			"mail": alias_email,
-			"forward_tos": forward_tos,
-			"permitted_senders": allowed_senders,
-			"description": alias["description"][0]
-		}
+		# only map the primary address when returning a list or
+		# primary_address was given as the map_by attribute
+		if not as_map or map_by=='primary_address':
+			map_key_values = [ primary_email_lc ]
+		else:
+			map_key_values = alias[map_by]
+
+		for map_key_value in map_key_values:
+			aliases[map_key_value.lower()] = {
+				"dn": alias["dn"],
+				"mail": alias['mail'], # alias_email,
+				"forward_tos": forward_tos,
+				"permitted_senders": allowed_senders,
+				"description": alias["description"][0],
+				"auto": "auto" in alias["namedProperty"]
+			}
 
 	if not as_map:
 		# put in a canonical order: sort by domain, then by email address lexicographically
@@ -369,7 +426,7 @@ def get_mail_aliases(env, as_map=False):
 			alias = aliases[address]
 			xft = ",".join(alias["forward_tos"])
 			xas = ",".join(alias["permitted_senders"])
-			list.append( (address, xft, None if xas == "" else xas) )
+			list.append( (address, xft, None if xas == "" else xas, alias["auto"]) )
 		return list
 	
 	else:
@@ -389,8 +446,8 @@ def get_mail_aliases_ex(env):
 	#         address_display: "name@domain.tld", # full Unicode
 	#         forwards_to: ["user1@domain.com", "receiver-only1@domain.com", ...],
 	#         permitted_senders: ["user1@domain.com", "sender-only1@domain.com", ...] OR null,
-	#         required: True|False,
 	#         description: ""
+	#         auto: True|False
 	#       },
 	#       ...
 	#     ]
@@ -398,20 +455,23 @@ def get_mail_aliases_ex(env):
 	#   ...
 	# ]
 
-	aliases=get_mail_aliases(env, as_map=True)
-	required_aliases = get_required_aliases(env)
+	aliases=get_mail_aliases(env, as_map=True, map_by="primary_address")
 	domains = {}
 	
-	for alias_lc in aliases:
-		alias=aliases[alias_lc]
-		address=alias_lc
+	for mail in aliases:
+		alias=aliases[mail]
+		address=primary_address(alias['mail']).lower()
 		
 		# get alias info
 		forwards_to=alias["forward_tos"]
 		permitted_senders=alias["permitted_senders"]
 		description=alias["description"]
+		auto=alias["auto"]
+		
+		# skip auto domain maps since these are not informative in the control panel's aliases list
+		if auto and address.startswith("@"): continue
+		
 		domain = get_domain(address)
-		required = (address in required_aliases)
 		
 		# add to list
 		if not domain in domains:
@@ -425,8 +485,8 @@ def get_mail_aliases_ex(env):
 			"address_display": prettify_idn_email_address(address),
 			"forwards_to": [prettify_idn_email_address(r.strip()) for r in forwards_to],
 			"permitted_senders": [prettify_idn_email_address(s.strip()) for s in permitted_senders] if permitted_senders is not None and len(permitted_senders)>0 else None,
-			"required": required,
-			"description": description
+			"description": description,
+			"auto": auto
 		})
 
 
@@ -435,7 +495,7 @@ def get_mail_aliases_ex(env):
 
 	# Sort aliases within each domain first by required-ness then lexicographically by address.
 	for domain in domains:
-		domain["aliases"].sort(key = lambda alias : (alias["required"], alias["address"]))
+		domain["aliases"].sort(key = lambda alias : (alias["auto"], alias["address"]))
 	return domains
 
 def get_domain(emailaddr, as_unicode=True):
@@ -451,8 +511,9 @@ def get_domain(emailaddr, as_unicode=True):
 			pass
 	return ret
 
-def get_mail_domains(env, as_map=False, filter_aliases=lambda alias: True, category=None, users_only=False):
-	# Retrieves all domains, IDNA-encoded, we accept mail for.
+def get_mail_domains(env, as_map=False, category=None, users_only=False):
+	# Retrieves all domains, IDNA-encoded, we accept mail for. Exclude
+	# Unicode forms of domain names that are marked as auto.
 	#
 	# If as_map is False, the function returns the lowercase domain
 	# names (IDNA-encoded) as an array.
@@ -460,117 +521,104 @@ def get_mail_domains(env, as_map=False, filter_aliases=lambda alias: True, categ
 	# If as_map is True, it returns a dict whose keys are
 	# domain(idna,lowercase) and whose values are:
 	#
-	#   { dn:{string}, domain:{string(idna)} }
+	#   {
+	#      dn:{string},
+	#      domain:{string(idna)},
+	#      domain_utf8:{string(utf8)}
+	#   }
 	#
-	# filter_aliases is an inclusion filter - a True return value from
-	# this lambda function indicates an alias to include.
-	#
-	# With filter_aliases, there has to be at least one user or
-	# filtered (included) alias in the domain for the domain to be
-	# part of the returned set. If None, all domains are returned.
-	#
-	# category is another type of filter. Set to a string value to
-	# return only those domains of that category. ie. the
-	# "businessCategory" attribute of the domain must include this
-	# category. [TODO: this doesn't really belong here, it is here to
-	# make it easy for dns_update to get ssl domains]
+	# category is type of filter. Set to a string value to return only
+	# those domains of that category. ie. the "businessCategory"
+	# attribute of the domain must include this category. [TODO: this
+	# doesn't really belong here, it is here to make it easy for
+	# dns_update to get ssl domains]
 	#
 	# If users_only is True, only return domains with email addresses
 	# that correspond to user accounts.
 	#
 	conn = open_database(env)
-	filter = "(&(objectClass=domain)(businessCategory=mail))"
+	filter = "(&(objectClass=mailDomain)(businessCategory=mail))"
 	if category:
-		filter = "(&(objectClass=domain)(businessCategory=%s))" % category
+		filter = "(&(objectClass=mailDomain)(businessCategory=%s))" % category
 
 	domains=None
 
-	# user mail domains
-	id = conn.search(env.LDAP_DOMAINS_BASE, filter, attributes="dc")
+	# get all mail domains
+	id = conn.search(env.LDAP_DOMAINS_BASE, filter,
+					 attributes=[ "dc", "dcIntl" ])
 	response = conn.wait(id)
 	if as_map:
 		domains = {}
 		for rec in response:
-			domains[ rec["dc"][0].lower() ] = {
+			key = rec["dc"][0].lower()
+			domains[ key ] = {
 				"dn": rec["dn"],
-				"domain": rec["dc"][0]
+				"domain": rec["dc"][0],
+				"domain_utf8": rec["dcIntl"][0]
 			}
-			if filter_aliases: filter_candidates.append(rec['dc'][0].lower())
 	else:
 		domains = set([ rec["dc"][0].lower() for rec in response ])
 
-
-	# alias domains
-	#
-	# Ignore aliases that have no forward-to. We don't need DNS
-	# handling in that case becuase the alias is there only for the
-	# permitted-senders. We don't accept mail locally for the alias.
-	#
-	# Aliases with only permitted-senders are useful when a server has
-	# a configured smarthost (eg. sendmail with a smarthost, or using
-	# ssmtp on Ubuntu, etc). The server drops mail off for delivery to
-	# the smarthost (MiaB) using its MiaB login but needs to MAIL FROM
-	# a host login (user@host.tld). Replies should bounce.
-	#
-	# A smarthost configuration should be a catch-all, one for each server:
-	#   Alias=@host.tld
-	#   Forward-to=<blank>
-	#   Permitted-senders:<the email that the smarthost used to authenticate with MiaB>
-	#
 	if not users_only:
-		pager = conn.paged_search(env.LDAP_ALIASES_BASE, "(objectClass=mailGroup)", attributes=["mail","member","rfc822MailMember"])
-		if as_map:
-			for rec in pager:
-				if filter_aliases(rec["mail"][0].lower()) and ( len(rec["member"]) >0 or len(rec["rfc822MailMember"]) >0 ):
-					domain = get_domain(rec["mail"][0].lower(),as_unicode=False)
-					domains[domain] = {
-						"dn": None,
-						"domain": domain
-					}
+		return domains
 
+
+	# eliminate domains that have no users
+	eliminate=[]
+	for domain_idna in domains:
+		id = conn.search(env.LDAP_USERS_BASE,
+						 "(&(objectClass=mailUser)(mail=*@%s))" % domain_idna,
+						 size_limit=1)
+		if conn.wait(id).count() == 0:
+			# no mail users are using that domain!
+			eliminate.append(domain_idna)
+	for domain_idna in eliminate:
+		if isinstance(domains, set):
+			domains.remove(domain_idna)
 		else:
-			alias_domains = set([
-				get_domain(rec["mail"][0].lower(), as_unicode=False)
-				for rec in pager if filter_aliases(rec["mail"][0].lower()) and
-				( len(rec["member"]) >0 or len(rec["rfc822MailMember"]) >0 )
-			])			
-			domains = domains.union( alias_domains )
-					
+			del domains[domain_idna]
+
 	return domains
+	
 
 
-def add_mail_domain(env, domain, validate=True):
+def add_mail_domain(env, domain_idna, validate=True):
 	# Create domain entry indicating that we are handling
 	# mail for that domain.
 	#
 	# We only care about domains for users, not for aliases.
 	#
-	# domain: IDNA encoded domain name.
-	# validate: If True, ensure there is at least one user on the
-	# system using that domain.
+	# domain: IDNA encoded domain name.  validate: If True, ensure
+	# there is at least one user or alias on the system using that
+	# domain.
 	#
 	# returns True if added, False if it already exists or fails
 	# validation.
-	
+
 	conn = open_database(env)
 	if validate:
-		# check to ensure there is at least one user with that domain
+		# check to ensure there is at least one user or alias with
+		# that domain
 		id = conn.search(env.LDAP_USERS_BASE,
-						 "(&(objectClass=mailUser)(mail=*@%s))" % domain,
+						 "(mail=*@%s)" % domain_idna,
 						 size_limit=1)
 		if conn.wait(id).count() == 0:
 			# no mail users are using that domain!
 			return False
 		
-	dn = 'dc=%s,%s' % (domain, env.LDAP_DOMAINS_BASE)
+	dn = 'dc=%s,%s' % (domain_idna, env.LDAP_DOMAINS_BASE)
+	domain_utf8 = utf8_from_idna(domain_idna)	
 	try:
-		response = conn.wait( conn.add(dn, [ 'domain' ], {
+		response = conn.wait( conn.add(dn, [ 'domain', 'mailDomain' ], {
+			"dcIntl": domain_utf8,
 			"businessCategory": "mail"
 		}) )
+		log.debug("add_mail_domain: %s: success", domain_idna)
 		return True
 	except ldap3.core.exceptions.LDAPEntryAlreadyExistsResult:
 		try:
 			# add 'mail' as a businessCategory
+			log.debug("add_mail_domain: %s: already exists", domain_idna)
 			changes = {	"businessCategory": [(ldap3.MODIFY_ADD, ['mail'])] }
 			response = conn.wait ( conn.modify(dn, changes) )
 		except ldap3.core.exceptions.LDAPAttributeOrValueExistsResult:
@@ -578,32 +626,34 @@ def add_mail_domain(env, domain, validate=True):
 		return False
 
 	
-def remove_mail_domain(env, domain, validate=True):
+def remove_mail_domain(env, domain_idna, validate=True):
 	# Remove the specified domain from the list of domains that we
 	# handle mail for. The domain must be IDNA encoded.
 	#
-	# If validate is True, ensure there are no valid users on the system
-	# currently using the domain.
+	# If validate is True, ensure there are no valid users or aliases
+	# on the system currently using the domain.
 	#
 	# Returns True if removed or does not exist, False if the domain
 	# fails validation.
 	conn = open_database(env)
 	if validate:
-		# check to ensure no users are using the domain
+		# check to ensure no users or non-auto aliases are using the domain
 		id = conn.search(env.LDAP_USERS_BASE,
-						 "(&(objectClass=mailUser)(mail=*@%s))" % domain,
+						 "(|(&(objectClass=mailUser)(mail=*@%s))(&(objectClass=mailGroup)(mail=*@%s)(!(namedProperty=auto))))" % (domain_idna, domain_idna),
 						 size_limit=1)
 		if conn.wait(id).count() > 0:
-			# there is one or more mailUser's with that domain
+			# there is one or more user or alias with that domain
+			log.debug("remove_mail_domain: %s: has users and/or aliases", domain_idna)
 			return False
 		
 	id = conn.search(env.LDAP_DOMAINS_BASE,
-					 "(&(objectClass=domain)(dc=%s))" % domain,
+					 "(&(objectClass=domain)(dc=%s))" % domain_idna,
 					 attributes=['businessCategory'])
 	
 	existing = conn.wait(id).next()
 	if existing is None:
 		# the domain doesn't exist!
+		log.debug("remove_mail_domain: %s: doesn't exist", domain_idna)
 		return True
 
 	newvals=existing['businessCategory'].copy()
@@ -615,6 +665,7 @@ def remove_mail_domain(env, domain, validate=True):
 
 	if len(newvals)==0:
 		conn.wait ( conn.delete(existing['dn']) )
+		log.debug("remove_mail_domain: %s: deleted", domain_idna)
 	else:
 		conn.wait ( conn.modify_record(existing, {'businessCategory', newvals}))
 	return True
@@ -623,7 +674,7 @@ def remove_mail_domain(env, domain, validate=True):
 def add_mail_user(email, pw, privs, display_name, env):
 	# Add a new mail user.
 	#
-	# email: the new user's email address
+	# email: the new user's email address (idna)
 	# pw: the new user's password
 	# privs: either an array of privilege strings, or a newline
 	# separated string of privilege names
@@ -679,16 +730,20 @@ def add_mail_user(email, pw, privs, display_name, env):
 	uid = m.hexdigest()
 
 	# choose a common name and surname (required attributes)
+	email_name = email.split("@")[0]
 	if display_name:
 		cn = display_name
 	else:
-		cn = email.split("@")[0].replace('.',' ').replace('_',' ')
+		cn = email_name.replace('.',' ').replace('_',' ')
 	sn = cn[cn.find(' ')+1:]
+
+	# get the utf8 version if an idna domain was given
+	email_utf8 = email_name + "@" + get_domain(email, as_unicode=True)
 	
 	# compile user's attributes
 	# for historical reasons, make the email address lowercase
 	attrs = {
-		"mail" : email,
+		"mail" : email if email==email_utf8 else [ email, email_utf8 ],
 		"maildrop" : email.lower(),
 		"uid" : uid,
 		"mailaccess": privs,
@@ -699,20 +754,36 @@ def add_mail_user(email, pw, privs, display_name, env):
 
 	# add the user to the database
 	dn = 'uid=%s,%s' % (uid, env.LDAP_USERS_BASE)
-	id=conn.add(dn, [ 'inetOrgPerson','mailUser','shadowAccount' ], attrs);
+	id=conn.add(dn, [
+		'inetOrgPerson','mailUser','shadowAccount'
+	], attrs);
 	conn.wait(id)
 
 	# set the password - the ldap server will hash it
 	conn.extend.standard.modify_password(user=dn, new_password=pw)
-
+	
 	# tell postfix the domain is local, if needed
-	add_mail_domain(env, get_domain(email, as_unicode=False), validate=False)
+	return_status = "mail user added"
+	domain_idna = get_domain(email, as_unicode=False)
+	domain_added = add_mail_domain(env, domain_idna, validate=False)
 
-	# convert alias's rfc822MailMember to member
-	convert_rfc822MailMember(env, conn, dn, email)
+	if domain_added:
+		results = add_required_aliases(env,	conn, domain_idna)
+		for result in results:
+			if isinstance(result, tuple):
+				# error occurred
+				return result
+			elif result != '':
+				return_status += "\n" + result
+	
+	# convert alias's mailMember to member
+	convert_mailMember(env, conn, dn, email)
 	
 	# Update things in case any new domains are added.
-	return kick(env, "mail user added")
+	if domain_added:
+		return kick(env, return_status)
+	else:
+		return return_status
 
 def set_mail_password(email, pw, env):
 	# validate that the password is acceptable
@@ -782,7 +853,7 @@ def get_mail_password(email, env):
 	return user['userPassword']
 
 
-def remove_mail_user(email, env):
+def remove_mail_user(email_idna, env):
 	# Remove the user as a valid user of the system.
 	# If an error occurs, the function returns a tuple of (message,
 	# http-status).
@@ -791,18 +862,32 @@ def remove_mail_user(email, env):
 	conn = open_database(env)
 	
 	# find the user
-	user = find_mail_user(env, email, conn=conn)
+	user = find_mail_user(env, email_idna, conn=conn)
 	if user is None:
-		return ("That's not a user (%s)." % email, 400)
+		return ("That's not a user (%s)." % email_idna, 400)
 	
 	# delete the user
 	conn.wait( conn.delete(user['dn']) )
 
 	# remove as a handled domain, if needed
-	remove_mail_domain(env, get_domain(email, as_unicode=False))
+	domain_idna = get_domain(email_idna, as_unicode=False)
+	domain_removed = remove_mail_domain(env, domain_idna)
+	return_status = "mail user removed"
+
+	if domain_removed:
+		results = remove_required_aliases(env, conn, domain_idna)
+		for result in results:
+			if isinstance(result, tuple):
+				# error occurred
+				return result
+			elif result != '':
+				return_status += "\n" + result
 
 	# Update things in case any domains are removed.
-	return kick(env, "mail user removed")
+	if domain_removed:
+		return kick(env, return_status)
+	else:
+		return return_status
 
 def parse_privs(value):
 	return [p for p in value.split("\n") if p.strip() != ""]
@@ -872,20 +957,66 @@ def add_remove_mail_user_privilege(email, priv, action, env):
 
 
 
-def convert_rfc822MailMember(env, conn, dn, mail):
-	# if a newly added alias or user exists as an rfc822MailMember,
+required_alias_names = ['postmaster', 'admin', 'abuse']
+
+def add_required_aliases(env, conn, domain_idna):
+	# returns a list of results for each alias, each entry being
+	# either a string (indicating success, eg: "alias added") or a
+	# tuple (indicating error, eg: (error, 400))
+	#
+	domain_utf8 = utf8_from_idna(domain_idna)
+	administrator = get_system_administrator(env)
+	results = []
+	for name in required_alias_names + ["hostmaster@"+env['PRIMARY_HOSTNAME']]:
+		email_utf8 = name if "@" in name else name + "@" + domain_utf8
+		results.append( add_mail_alias(
+			email_utf8,
+			"Required alias",
+			administrator,
+			"",
+			env,
+			auto=True,
+			update_if_exists="ignore",
+			do_kick=False,
+			verbose_result=True
+		))
+		log.debug("add_required_alias: %s: %r", email_utf8, results[-1])
+		
+	return results
+
+def remove_required_aliases(env, conn, domain_idna):
+	domain_utf8 = utf8_from_idna(domain_idna)
+	results = []
+	for name in required_alias_names:
+		email_utf8 = name + "@" + domain_utf8
+		results.append( remove_mail_alias(
+			email_utf8,
+			env,
+			do_kick=False,
+			auto=True,
+			verbose_result=True,
+			ignore_if_not_exists=True
+		))
+		log.debug("remove_required_alias: %s: %r", email_utf8, results[-1])
+		
+	return results
+
+
+
+def convert_mailMember(env, conn, dn, mail):
+	# if a newly added alias or user exists as an mMailMember,
 	# convert it to a member dn
 	# the new alias or user is specified by arguments mail and dn.
 	# mail is the new alias or user's email address
 	# dn is the new alias or user's distinguished name
 	# conn is an existing ldap database connection
 	id=conn.search(env.LDAP_ALIASES_BASE,
-				   "(&(objectClass=mailGroup)(rfc822MailMember=%s))" % mail,
-				   attributes=[ 'member','rfc822MailMember' ])
+				   "(&(objectClass=mailGroup)(mailMember=%s))" % mail,
+				   attributes=[ 'member','mailMember' ])
 	response = conn.wait(id)
 	for rec in response:
-		# remove mail from rfc822MailMember
-		changes={ "rfc822MailMember": [(ldap3.MODIFY_DELETE, [mail])] }
+		# remove mail from mailMember
+		changes={ "mailMember": [(ldap3.MODIFY_DELETE, [mail])] }
 		conn.wait( conn.modify(rec['dn'], changes) )
 
 		# add dn to member
@@ -897,25 +1028,26 @@ def convert_rfc822MailMember(env, conn, dn, mail):
 			pass
 
 		
-def add_mail_alias(address, description, forwards_to, permitted_senders, env, update_if_exists=False, do_kick=True):
+def add_mail_alias(address_utf8, description, forwards_to, permitted_senders, env, auto=False, update_if_exists=False, do_kick=True, verbose_result=False):
 	# Add a new alias group with permitted senders.
 	#
-	# address: the email address of the alias
+	# address: the email address of the alias (utf-8)
 	# description: a text description of the alias
 	# forwards_to: a string of newline and comma separated email address
 	# where mail is delivered
 	# permitted_senders: a string of newline and comma separated email addresses of local users that are permitted to MAIL FROM the alias.
-	# update_if_exists: if False and the alias exists fail, otherwise update the existing alias with the new values
+	# update_if_exists: if False and the alias exists fail, otherwise update the existing alias with the new values. If "ignore" and the alias exists, return empty string.
+	# verbose_result: if True the returned string will include the address
 	#
 	# If an error occurs, the function returns a tuple of (message,
 	# http-status).
 	#
-	# If successful, the string "OK" is returned.
+	# If successful, a string status is returned.
 
 	# convert Unicode domain to IDNA
-	address = sanitize_idn_email_address(address)
+	address = sanitize_idn_email_address(address_utf8)
 
-	# for historical reasons, force the address to lowercase
+	# for historical reasons, force the IDNA address to lowercase
 	address = address.lower()
 
 	# validate address
@@ -925,10 +1057,15 @@ def add_mail_alias(address, description, forwards_to, permitted_senders, env, up
 	if not validate_email(address, mode='alias'):
 		return ("Invalid email address (%s)." % address, 400)
 
-	# retrieve all logins as a map ( email.lower() => {mail,dn} )
-	valid_logins = get_mail_users( env, as_map=True )
-	
-	# validate forwards_to
+	# retrieve all logins as a map, keyed by lowercase email
+	#     mail.lower() => {mail,maildrop,dn}
+	valid_logins = get_mail_users(env, as_map=True, map_by="mail")
+
+	# retrieve all aliases as a map, keyed by lowercase email
+	#     mail.lower() => {mail,maildrop,dn}
+	valid_aliases = get_mail_aliases(env, as_map=True, map_by="mail")
+
+	# validate forwards_to. array of { email_idna:string, email_utf8:string }
 	validated_forwards_to = [ ]
 	forwards_to = forwards_to.strip()
 
@@ -942,26 +1079,32 @@ def add_mail_alias(address, description, forwards_to, permitted_senders, env, up
 	# DCV source addresses.
 	r1 = sanitize_idn_email_address(forwards_to)
 	if validate_email(r1, mode='alias') and not is_dcv_source:
-		validated_forwards_to.append(r1)
+		validated_forwards_to.append({
+			"email_idna": r1,
+			"email_utf8": forwards_to
+		})
 
 	else:
 		# Parse comma and \n-separated destination emails & validate. In this
 		# case, the forwards_to must be complete email addresses.
 		for line in forwards_to.split("\n"):
-			for email in line.split(","):
-				email = email.strip()
-				if email == "": continue
-				email = sanitize_idn_email_address(email) # Unicode => IDNA
+			for email_utf8 in line.split(","):
+				email_utf8 = email_utf8.strip()
+				if email_utf8 == "": continue
+				email_idna = sanitize_idn_email_address(email_utf8) # Unicode => IDNA
 				# Strip any +tag from email alias and check privileges
-				privileged_email = re.sub(r"(?=\+)[^@]*(?=@)",'',email)
-				if not validate_email(email):
-					return ("Invalid receiver email address (%s)." % email, 400)
-				if is_dcv_source and not is_dcv_address(email) and "admin" not in get_mail_user_privileges(privileged_email, env, empty_on_error=True):
+				privileged_email = re.sub(r"(?=\+)[^@]*(?=@)",'',email_idna)
+				if not validate_email(email_idna):
+					return ("Invalid receiver email address (%s)." % email_utf8, 400)
+				if is_dcv_source and not is_dcv_address(email_idna) and "admin" not in get_mail_user_privileges(privileged_email, env, empty_on_error=True):
 					# Make domain control validation hijacking a little harder to mess up by
 					# requiring aliases for email addresses typically used in DCV to forward
 					# only to accounts that are administrators on this system.
 					return ("This alias can only have administrators of this system as destinations because the address is frequently used for domain control validation.", 400)
-				validated_forwards_to.append(email)
+				validated_forwards_to.append({
+					"email_idna": email_idna,
+					"email_utf8": email_utf8
+				})
 
 	# validate permitted_senders
 	validated_permitted_senders = [ ]  # list of dns
@@ -987,21 +1130,34 @@ def add_mail_alias(address, description, forwards_to, permitted_senders, env, up
 	# exist on this system
 
 	vfwd_tos_local = []   # list of dn's
-	vfwd_tos_remote = []  # list of email
+	vfwd_tos_remote = []  # list of "email_idna":string
 	for fwd_to in validated_forwards_to:
-		fwd_to_lc = fwd_to.lower()
-		if fwd_to_lc in valid_logins:
-			dn = valid_logins[fwd_to_lc]['dn']
+		fwd_to_idna_lc = fwd_to["email_idna"].lower()
+		if fwd_to_idna_lc in valid_logins:
+			dn = valid_logins[fwd_to_idna_lc]['dn']
+			vfwd_tos_local.append(dn)
+		elif fwd_to_idna_lc in valid_aliases:
+			dn = valid_aliases[fwd_to_idna_lc]['dn']
 			vfwd_tos_local.append(dn)
 		else:
-			vfwd_tos_remote.append(fwd_to)
+			vfwd_tos_remote.append(fwd_to["email_idna"])
 			
 	# save to db
 
 	conn = open_database(env)
-	existing_alias, existing_permitted_senders = find_mail_alias(env, address, ['member','rfc822MailMember', 'description'], conn)
+	attributes = [
+		'mail', 'description', 'member', 'mailMember', 'namedProperty'
+	]
+	existing_alias, existing_permitted_senders = find_mail_alias(
+		env,
+		address,
+		attributes,
+		conn
+	)
 	if existing_alias and not update_if_exists:
 		return ("Alias already exists (%s)." % address, 400)
+	if existing_alias and update_if_exists == 'ignore':
+		return ""
 	
 	cn="%s" % uuid.uuid4()
 	dn="cn=%s,%s" % (cn, env.LDAP_ALIASES_BASE)
@@ -1024,21 +1180,28 @@ def add_mail_alias(address, description, forwards_to, permitted_senders, env, up
 			description=" "
 	
 	attrs = {
-		"mail": address,
+		"mail": address if address == address_utf8.lower() else [ address, address_utf8 ],
 		"description": description,
 		"member": vfwd_tos_local,
-		"rfc822MailMember": vfwd_tos_remote
+		"mailMember": vfwd_tos_remote,
+		"namedProperty": ['auto'] if auto else []
 	}
+
+	op = conn.add_or_modify(
+		dn,
+		existing_alias,
+		attributes,
+		[ 'mailGroup', 'namedProperties' ],
+		attrs)
 	
-	op = conn.add_or_modify(dn, existing_alias,
-			['member', 'rfc822MailMember', 'description' ],
-			['mailGroup'],
-			attrs)
 	if op == 'modify':
 		return_status = "alias updated"
 	else:
 		return_status = "alias added"
-		convert_rfc822MailMember(env, conn, dn, address)
+		convert_mailMember(env, conn, dn, address)
+
+	if verbose_result:
+		return_status += ": " + address_utf8
 		
 	# add or modify permitted-senders group
 	
@@ -1054,20 +1217,47 @@ def add_mail_alias(address, description, forwards_to, permitted_senders, env, up
 			dn = existing_permitted_senders['dn']
 			conn.wait( conn.delete(dn) )
 	else:
-		op=conn.add_or_modify(dn, existing_permitted_senders,
-							  [ 'member' ], [ 'mailGroup' ],
-							  attrs)
+		conn.add_or_modify(dn, existing_permitted_senders,
+						   [ 'member' ], [ 'mailGroup' ],
+						   attrs)
 
-	if do_kick:
+	# tell postfix the domain is local, if needed
+	domain_idna = get_domain(address, as_unicode=False)
+
+	# but, don't add mail domain when there are no forward to's and
+	# remove the domain if there are no forward to's (modify)
+	count_vfwd = len(vfwd_tos_local) + len(vfwd_tos_remote)
+	domain_added = False
+	if op == 'modify' and count_vfwd == 0:
+		remove_mail_domain(env, domain_idna, validate=False)
+	elif count_vfwd > 0:
+		domain_added = add_mail_domain(env,	domain_idna, validate=False)
+	
+	if domain_added:
+		results = add_required_aliases(env,	conn, domain_idna)
+		for result in results:
+			if isinstance(result, tuple):
+				# error occurred
+				return result
+			elif result != '':
+				return_status += "\n" + result
+	
+	if do_kick and domain_added:
 		# Update things in case any new domains are added.
 		return kick(env, return_status)
+	else:
+		return return_status
 	
 
-def remove_mail_alias(address, env, do_kick=True):
+def remove_mail_alias(address_utf8, env, do_kick=True, auto=None, ignore_if_not_exists=False, verbose_result=False):
 	# Remove an alias group and it's associated permitted senders
 	# group.
 	#
 	# address is the email address of the alias
+	#
+	# if auto is None - remove the entry regardless of status
+	#            True - remove only if marked as auto
+	#            False - remove only if not auto
 	#
 	# If an error occurs, the function returns a tuple of (message,
 	# http-status).
@@ -1075,59 +1265,86 @@ def remove_mail_alias(address, env, do_kick=True):
 	# If successful, the string "OK" is returned.
 	
 	# convert Unicode domain to IDNA
-	address = sanitize_idn_email_address(address)
+	address = sanitize_idn_email_address(address_utf8)
 
 	# remove
 	conn = open_database(env)
-	existing_alias, existing_permitted_senders = find_mail_alias(env, address, conn=conn)
+	existing_alias, existing_permitted_senders = find_mail_alias(env, address, conn=conn, auto=auto)
 	if existing_alias:
 		conn.delete(existing_alias['dn'])
+	elif ignore_if_not_exists:
+		return ""
 	else:
 		return ("That's not an alias (%s)." % address, 400)
 
 	if existing_permitted_senders:
 		conn.delete(existing_permitted_senders['dn'])
-		
-	if do_kick:
+
+	# remove as a handled domain, if needed
+	domain_idna = get_domain(address, as_unicode=False)
+	domain_removed = remove_mail_domain(env, domain_idna)
+	return_status = "alias removed"
+	if verbose_result:
+		return_status += ": " + address_utf8
+
+	if domain_removed:
+		results = remove_required_aliases(env, conn, domain_idna)
+		for result in results:
+			if isinstance(result, tuple):
+				# error occurred
+				return result
+			elif result != '':
+				return_status += "\n" + result
+
+	if do_kick and domain_removed:
 		# Update things in case any domains are removed.
-		return kick(env, "alias removed")
+		return kick(env, return_status)
+	else:
+		return return_status
+
+def add_auto_aliases(aliases, env):
+	conn, c = open_database(env, with_connection=True)
+	c.execute("DELETE FROM auto_aliases");
+	for source, destination in aliases.items():
+		c.execute("INSERT INTO auto_aliases (source, destination) VALUES (?, ?)", (source, destination))
+	conn.commit()
 
 def get_system_administrator(env):
 	return "administrator@" + env['PRIMARY_HOSTNAME']
 
-def get_required_aliases(env):
-	# These are the aliases that must exist.
-	# Returns a set of email addresses.
+# def get_required_aliases(env):
+# 	# These are the aliases that must exist.
+# 	# Returns a set of email addresses.
 	
-	aliases = set()
+# 	aliases = set()
 
-	# The system administrator alias is required.
-	aliases.add(get_system_administrator(env))
+# 	# The system administrator alias is required.
+# 	aliases.add(get_system_administrator(env))
 
-	# The hostmaster alias is exposed in the DNS SOA for each zone.
-	aliases.add("hostmaster@" + env['PRIMARY_HOSTNAME'])
+# 	# The hostmaster alias is exposed in the DNS SOA for each zone.
+# 	aliases.add("hostmaster@" + env['PRIMARY_HOSTNAME'])
 
-	# Get a list of domains we serve mail for, except ones for which the only
-	# email on that domain are the required aliases or a catch-all/domain-forwarder.
-	real_mail_domains = get_mail_domains(env,
-		filter_aliases = lambda alias :
-			not alias.startswith("postmaster@")
-			and not alias.startswith("admin@")
-			and not alias.startswith("abuse@")
-			and not alias.startswith("@")
-			)
+# 	# Get a list of domains we serve mail for, except ones for which the only
+# 	# email on that domain are the required aliases or a catch-all/domain-forwarder.
+# 	real_mail_domains = get_mail_domains(env,
+# 		filter_aliases = lambda alias :
+# 			not alias.startswith("postmaster@")
+# 			and not alias.startswith("admin@")
+# 			and not alias.startswith("abuse@")
+# 			and not alias.startswith("@")
+# 			)
 
-	# Create postmaster@, admin@ and abuse@ for all domains we serve
-	# mail on. postmaster@ is assumed to exist by our Postfix configuration.
-	# admin@isn't anything, but it might save the user some trouble e.g. when
-	# buying an SSL certificate.
-	# abuse@ is part of RFC2142: https://www.ietf.org/rfc/rfc2142.txt
-	for domain in real_mail_domains:
-		aliases.add("postmaster@" + domain)
-		aliases.add("admin@" + domain)
-		aliases.add("abuse@" + domain)
+# 	# Create postmaster@, admin@ and abuse@ for all domains we serve
+# 	# mail on. postmaster@ is assumed to exist by our Postfix configuration.
+# 	# admin@isn't anything, but it might save the user some trouble e.g. when
+# 	# buying an SSL certificate.
+# 	# abuse@ is part of RFC2142: https://www.ietf.org/rfc/rfc2142.txt
+# 	for domain in real_mail_domains:
+# 		aliases.add("postmaster@" + domain)
+# 		aliases.add("admin@" + domain)
+# 		aliases.add("abuse@" + domain)
 
-	return aliases
+# 	return aliases
 
 def kick(env, mail_result=None):
 	results = []
@@ -1136,42 +1353,6 @@ def kick(env, mail_result=None):
 
 	if mail_result is not None:
 		results.append(mail_result + "\n")
-
-	# Ensure every required alias exists.
-
-	existing_users = get_mail_users(env, as_map=True)
-	existing_aliases = get_mail_aliases(env, as_map=True)
-	required_aliases = get_required_aliases(env)
-
-	def ensure_admin_alias_exists(address):
-		# If a user account exists with that address, we're good.
-		if address in existing_users:
-			return
-
-		# If the alias already exists, we're good.
-		if address in existing_aliases:
-			return
-
-		# Doesn't exist.
-		administrator = get_system_administrator(env)
-		if address == administrator: return # don't make an alias from the administrator to itself --- this alias must be created manually
-		add_mail_alias(address, "Required alias", administrator, "", env, do_kick=False)
-		if administrator not in existing_aliases: return # don't report the alias in output if the administrator alias isn't in yet -- this is a hack to supress confusing output on initial setup
-		results.append("added alias %s (=> %s)\n" % (address, administrator))
-
-	for address in required_aliases:
-		ensure_admin_alias_exists(address)
-
-	# Remove auto-generated postmaster/admin on domains we no
-	# longer have any other email addresses for.
-	for address in existing_aliases:
-		user, domain = address.split("@")
-		forwards_to = ",".join(existing_aliases[address]["forward_tos"])
-		if user in ("postmaster", "admin", "abuse") \
-			and address not in required_aliases \
-			and forwards_to == get_system_administrator(env):
-			remove_mail_alias(address, env, do_kick=False)
-			results.append("removed alias %s (was to %s; domain no longer used for email)\n" % (address, forwards_to))
 
 	# Update DNS and nginx in case any domains are added/removed.
 

@@ -1,0 +1,23 @@
+#
+# Auxiliary objectclass to add named properties to an entry
+#
+
+objectIdentifier MiabLDAPadmin MiabLDAProot:3
+objectIdentifier MiabLDAPadminAttributeType MiabLDAPadmin:1
+objectIdentifier MiabLDAPadminObjectClass MiabLDAPadmin:2
+
+attributetype ( MiabLDAPadminAttributeType:1
+	DESC 'Named property'
+	NAME 'namedProperty'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+	)
+
+objectClass ( MiabLDAPadminObjectClass:1
+	NAME 'namedProperties'
+	DESC 'Entry contains named properties'
+	SUP top
+	AUXILIARY
+	MAY ( namedProperty )
+	)

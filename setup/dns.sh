@@ -80,7 +80,13 @@ remote-control:
 EOF
 fi
 
-echo "include: /etc/nsd/zones.conf" >> /etc/nsd/nsd.conf;
+# Create a directory for additional configuration directives, including
+# the zones.conf file written out by our management daemon.
+echo "include: /etc/nsd/nsd.conf.d/*.conf" >> /etc/nsd/nsd.conf;
+
+# Remove the old location of zones.conf that we generate. It will
+# now be stored in /etc/nsd/nsd.conf.d.
+rm -f /etc/nsd/zones.conf
 
 # Create DNSSEC signing keys.
 

@@ -295,8 +295,8 @@ schema_to_ldif() {
 	local cn="$3"	   # schema common name, eg "postfix"
 	local cat='cat'
 	if [ ! -e "$schema" ]; then
-		if [ -e "conf/$(basename $schema)" ]; then
-			schema="conf/$(basename $schema)"
+		if [ -e "conf/schema/$(basename $schema)" ]; then
+			schema="conf/schema/$(basename $schema)"
 		else
 			cat="curl -s"
 		fi
@@ -316,56 +316,57 @@ EOF
 		| sed 's/^\s*$/#/g' >> "$ldif"
 }
 
+change_core_mail_syntax() {
+	# output the ldif to change mail to utf8 from ia5 in the core schema
+	get_attribute "cn=schema,cn=config" "(cn={0}core)" "olcAttributeTypes"
+	case "${ATTR_VALUE[48]}" in
+		*\'mail\'*caseIgnoreIA5Match* )
+			newval=$(sed 's/SYNTAX[ \t][^ ]*/SYNTAX 1.3.6.1.4.1.1466.115.121.1.15/g' <<<"${ATTR_VALUE[48]}" |
+					 sed 's/caseIgnoreIA5Match/caseIgnoreMatch/g' |
+					 sed 's/caseIgnoreIA5SubstringsMatch/caseIgnoreSubstringsMatch/g')
+			cat <<EOF
+dn: cn={0}core,cn=schema,cn=config
+changetype: modify
+delete: olcAttributeTypes
+olcAttributeTypes: ${ATTR_VALUE[48]}
+-
+add: olcAttributeTypes
+olcAttributeTypes: $newval
+EOF
+			;;
+	esac
+}
+
 
 add_schemas() {
-	# Add necessary schema's for MiaB operaion
+	# Add necessary schema's for MiaB operaion		 
 	#
-	# First, apply rfc822MailMember from OpenLDAP's "misc"
-	# schema. Don't apply the whole schema file because much is from
-	# expired RFC's, and we just need rfc822MailMember
-	local cn="misc"
-	get_attribute "cn=schema,cn=config" "(&(cn={*}$cn)(objectClass=olcSchemaConfig))" "cn"
-	if [ -z "$ATTR_DN" ]; then
-		say_verbose "Adding '$cn' schema"
-		cat "/etc/ldap/schema/misc.ldif" | awk 'BEGIN {C=0}
-/^(dn|objectClass|cn):/ { print $0; next }
-/^olcAttributeTypes:/ && /27\.2\.1\.15/ { print $0; C=1; next }
-/^(olcAttributeTypes|olcObjectClasses):/ { C=0; next }
-/^ / && C==1 { print $0 }' | ldapadd -Q -Y EXTERNAL -H ldapi:/// >/dev/null
-	fi
-	
-	# Next, apply the postfix schema from the ldapadmin project
-	# (GPL)(*).
+	# Note: the postfix schema originally came from the ldapadmin
+	# project (GPL)(*), but has been modified to support the needs of
+	# this project.
 	#	see: http://ldapadmin.org
 	#		 http://ldapadmin.org/docs/postfix.schema
 	#		 http://www.postfix.org/LDAP_README.html
-	# (*) mailGroup modified to include rfc822MailMember
-	local schema="http://ldapadmin.org/docs/postfix.schema"
-	local cn="postfix"
-	get_attribute "cn=schema,cn=config" "(&(cn={*}$cn)(objectClass=olcSchemaConfig))" "cn"
-	if [ -z "$ATTR_DN" ]; then
-		local ldif="/tmp/$cn.$$.ldif"
-		schema_to_ldif "$schema" "$ldif" "$cn"
-		sed -i 's/\$ member \$/$ member $ rfc822MailMember $/' "$ldif"
-		say_verbose "Adding '$cn' schema"
-		[ ${verbose:-0} -gt 1 ] && cat "$ldif"
-		ldapadd -Q -Y EXTERNAL -H ldapi:/// -f "$ldif" >/dev/null
-		rm -f "$ldif"
-	fi
-
-	# apply the mfa-totp schema
-	# this adds the totpUser class to store the totp secret
-	local schema="mfa-totp.schema"
-	local cn="mfa-totp"
-	get_attribute "cn=schema,cn=config" "(&(cn={*}$cn)(objectClass=olcSchemaConfig))" "cn"
-	if [ -z "$ATTR_DN" ]; then
-		local ldif="/tmp/$cn.$$.ldif"
-		schema_to_ldif "$schema" "$ldif" "$cn"
-		say_verbose "Adding '$cn' schema"
-		[ ${verbose:-0} -gt 1 ] && cat "$ldif"
-		ldapadd -Q -Y EXTERNAL -H ldapi:/// -f "$ldif" >/dev/null
-		rm -f "$ldif"
-	fi
+	for cn in "postfix" "mfa-totp" "namedProperties"; do
+		schema="$cn.schema"
+		get_attribute "cn=schema,cn=config" "(&(cn={*}$cn)(objectClass=olcSchemaConfig))" "cn"
+		if [ -z "$ATTR_DN" ]; then
+			local ldif="/tmp/$cn.$$.ldif"
+			schema_to_ldif "$schema" "$ldif" "$cn"
+			if [ "$cn" = "postfix" ]; then
+				local ldif2="/tmp/$cn.$$-2.ldif"
+				change_core_mail_syntax >"$ldif2"
+				echo "" >>"$ldif2"
+				sed 's/^dn: cn=postfix,\(.*\)$/dn: cn=postfix,\1\nchangetype: add/g' "$ldif" >> "$ldif2"
+				rm "$ldif"
+				ldif="$ldif2"
+			fi
+			say_verbose "Adding '$cn' schema"
+			[ ${verbose:-0} -gt 1 ] && cat "$ldif"
+			ldapadd -Q -Y EXTERNAL -H ldapi:/// -f "$ldif" >/dev/null
+			rm -f "$ldif"
+		fi
+	done	
 }
 
 
@@ -504,7 +505,7 @@ add_indexes() {
 	# Add the indexes
 	get_attribute "$cdn" "(objectClass=*)" "olcDbIndex" base
 	local attr
-	for attr in mail maildrop mailaccess dc rfc822MailMember; do
+	for attr in mail maildrop mailaccess dc dcIntl mailMember; do
 		local type="eq" atype="" aindex=""
 		[ "$attr" == "mail" ] && type="eq,sub"
 
@@ -661,6 +662,7 @@ process_cmdline() {
 	elif [ "$1" == "-config" ]; then
 		# Apply a certain configuration
 		if [ "$2" == "server" ]; then
+			add_schemas
 			modify_global_config
 			add_overlays
 			add_indexes
@@ -675,8 +677,23 @@ process_cmdline() {
 
 	elif [ "$1" == "-search" ]; then
 		# search for email addresses, distinguished names and general
-		# ldap filters
-		debug_search "$2"
+		# ldap filters. Args:
+		#    search filter [optional]
+		#    base dn [optional]
+		#    remaining args are attributes to output [optional]
+		shift
+		if [ $# -eq 0 ]; then
+			debug_search "(objectclass=*)"
+		else
+			debug_search "$@"
+		fi
+		exit 0
+
+	elif [ "$1" == "-schema-to-ldif" ]; then
+		cn="$2"
+		output="${3:-/dev/stdout}"
+		schema="$cn.schema"
+		schema_to_ldif "$schema" "$output" "$cn"
 		exit 0
 
 	elif [ "$1" == "-dumpdb" ]; then
@@ -699,6 +716,11 @@ process_cmdline() {
 			echo ""
 			slapcat ${slapcat_args[@]} -s "$ATTR_DN" | grep -Ev "^$hide_attrs:"
 		fi
+		if [ "$s" == "all" -o "$s" == "schema" ]; then
+			echo ""
+			echo '--------------------------------'
+			slapcat ${slapcat_args[@]} -s "cn=schema,cn=config" | grep -Ev "^$hide_attrs:"
+		fi
 		if [ "$s" == "all" -o "$s" == "frontend" ]; then
 			echo ""
 			echo '--------------------------------'
@@ -716,7 +738,7 @@ process_cmdline() {
 		if [ "$s" == "aliases" ]; then
 			echo ""
 			echo '--------------------------------'
-			local attrs=(mail member mailRoutingAddress rfc822MailMember)
+			local attrs=(mail member mailRoutingAddress mailMember namedProperty)
 			[ ${verbose:-0} -gt 0 ] && attrs=()
 			debug_search "(objectClass=mailGroup)" "$LDAP_ALIASES_BASE" ${attrs[@]}
 		fi

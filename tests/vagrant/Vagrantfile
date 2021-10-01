@@ -49,6 +49,23 @@ tests/runner.sh upgrade-basic upgrade-totpuser default || exit 2
 SH
   end
 
+  # upgrade
+  
+  # this test is only needed when testing migrations from miabldap
+  # to a newer miabldap with a migration step
+  #
+  # upgrade will handle testing upgrades of
+  # miabldap with or without a new migration step
+  config.vm.define "upgrade" do |m1|
+    m1.vm.provision :shell, :inline => <<-SH
+cd /mailinabox
+source tests/vagrant/globals.sh || exit 1
+export PRIMARY_HOSTNAME=upgrade.abc.com
+tests/system-setup/upgrade.sh basic totpuser || exit 1
+tests/runner.sh upgrade-basic upgrade-totpuser default || exit 2
+SH
+  end
+
   # unsetvars: because miab sets bash '-e' to fail any setup script
   # when a script command returns a non-zero exit code, and more
   # importantly '-u' which fails scripts when any unset variable is

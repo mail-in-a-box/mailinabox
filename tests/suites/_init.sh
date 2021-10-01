@@ -133,6 +133,7 @@ test_success() {
 test_failure() {
 	local why="$1"
 	[ -z "$TEST_OF" ] && return
+	record "** TEST_FAILURE: $why **"
 	TEST_STATE="FAILURE"
 	TEST_STATE_MSG+=( "$why" )
 }

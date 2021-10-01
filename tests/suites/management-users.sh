@@ -136,6 +136,8 @@ test_intl_domains() {
 	# remote intl user / forward-to
 	local intl_person="hans@bücher.example"
 	local intl_person_idna="hans@xn--bcher-kva.example"
+	local intl_person_domain=$(email_domainpart "$intl_person")
+	local intl_person_idna_domain=$(email_domainpart "$intl_person_idna")
 
 	# local users
 	local bob="bob@somedomain.com"
@@ -149,9 +151,49 @@ test_intl_domains() {
 	if mgmt_create_user "$intl_person" "$bob_pw"; then
 		test_failure "A user account is not permitted to have an international domain"
 		# ensure user is removed as is expected by the remaining tests
-		mgmt_delele_user "$intl_person"
+		mgmt_delete_user "$intl_person"
 		delete_user "$intl_person"
 		delete_user "$intl_person_idna"
+	fi
+
+	# given an idna encoded user - the user should have 2 mail addresses
+	if ! mgmt_create_user "$intl_person_idna" "$bob_pw"; then
+		test_failure "Could not create idna-encoded user account $intl_person_idna"
+	else
+		get_attribute "$LDAP_USERS_BASE" "(mail=$intl_person_idna)" "mail"
+		if [ -z "$ATTR_DN" ] || \
+			   ! array_contains "$intl_person" "${ATTR_VALUE[@]}" || \
+			   ! array_contains "$intl_person_idna" "${ATTR_VALUE[@]}"
+		then
+			test_failure "Alias's ($intl_person) mail attribute expected to have both the idna and utf8 names, got ${#ATTR_VALUE[@]}: ${ATTR_VALUE[*]}, expected: $intl_person,$intl_person_idna"
+			[ ! -z "$ATTR_DN" ] && record_search "$ATTR_DN"
+		else
+			record_search "$ATTR_DN"
+			
+			# required aliases are automatically created and should
+			# have both mail addresses (idna and utf8)
+			get_attribute "$LDAP_ALIASES_BASE" "(mail=abuse@$intl_person_idna_domain)" "mail"
+			if [ -z "$ATTR_DN" ]; then
+				test_failure "Required alias not created!"
+				debug_search "(objectClass=mailGroup)" >>$TEST_OF
+			elif  ! array_contains "abuse@$intl_person_domain" "${ATTR_VALUE[@]}" || \
+					! array_contains "abuse@$intl_person_idna_domain" "${ATTR_VALUE[@]}"
+			then
+				test_failure "Require alias abuse@$intl_person_idna_domain expected to contain both idna and utf8 mail addresses"
+				record_search "$ATTR_DN"
+			fi
+			
+			# ensure user is removed as is expected by the remaining tests
+			mgmt_delete_user "$intl_person_idna"
+		fi
+	fi
+
+	# at this point intl_person does not exist, so all required aliases
+	# should also not be present
+	get_attribute "$LDAP_ALIASES_BASE" "(mail=*@$intl_person_idna_domain)"
+	if [ ! -z "$ATTR_DN" ]; then
+		test_failure "No required alias should not exist for the $intl_person_domain domain"
+		record_search "$ATTR_DN"
 	fi
 	
 	# create local users bob and mary
@@ -161,11 +203,27 @@ test_intl_domains() {
 	# create intl alias with local user bob and intl_person in it
 	if mgmt_assert_create_alias_group "$alias" "$bob" "$intl_person"; then
 		# examine LDAP server to verify IDNA-encodings
-		get_attribute "$LDAP_ALIASES_BASE" "(mail=$alias_idna)" "rfc822MailMember"
+		
+		# 1. the mail attribute for the alias should have both the
+		# idna and utf8 addresses
+		get_attribute "$LDAP_ALIASES_BASE" "(mail=$alias)" "mail"
+		if [ -z "$ATTR_DN" ] || \
+			   ! array_contains "$alias" "${ATTR_VALUE[@]}" || \
+			   ! array_contains "$alias_idna" "${ATTR_VALUE[@]}"
+		then
+			test_failure "Alias's ($alias) mail attribute expected to have both the idna and utf8 names, got: ${ATTR_VALUE[*]}, expected: $alias,$alias_idna"
+			[ ! -z "$ATTR_DN" ] && record_search "$ATTR_DN"
+		fi
+
+		record_search "$ATTR_DN"
+
+		# 2. the mailMember attribute for the alias should contain the
+		# idna encoded intl_person (who is external - not a system user)
+		get_attribute "$LDAP_ALIASES_BASE" "(mail=$alias_idna)" "mailMember"
 		if [ -z "$ATTR_DN" ]; then
 			test_failure "IDNA-encoded alias group not found! created as:$alias expected:$alias_idna"
 		elif [ "$ATTR_VALUE" != "$intl_person_idna" ]; then
-			test_failure "Alias group with user having an international domain was not ecoded properly. added as:$intl_person expected:$intl_person_idna"
+			test_failure "Alias group with user having an international domain was not encoded properly. added as:$intl_person expected:$intl_person_idna"
 		fi
 	fi
 

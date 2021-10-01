@@ -224,6 +224,14 @@ miab_ldap_install() {
         die "Cannot install: the working directory is not MiaB-LDAP!"
     fi
 
+    # setup/questions.sh installs the email_validator python3 module
+    # but only when in interactive mode. make sure it's also installed
+    # in non-interactive mode
+    if [ ! -z "${NONINTERACTIVE:-}" ]; then
+        H2 "Install email_validator python3 module"
+        pip3 install -q "email_validator>=1.0.0" || die "Unable to install email_validator python3 module!"
+    fi
+
     # if EHDD_KEYFILE is set, use encryption-at-rest support
     if [ ! -z "$EHDD_KEYFILE" ]; then
         ehdd/start-encrypted.sh

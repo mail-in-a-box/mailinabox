@@ -134,7 +134,7 @@ test_shared_alias_delivery() {
 
 test_trial_nonlocal_alias_delivery() {
 	# verify that mail sent to an alias with a non-local address
-	# (rfc822MailMember) can be delivered
+	# (mailMember) can be delivered
 	test_start "trial-nonlocal-alias-delivery"
 	if skip_test remote-smtp; then
 		test_end

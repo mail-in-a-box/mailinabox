@@ -147,8 +147,8 @@ EOF
 	for member; do
 		case $member in
 			*@* )
-				echo "rfc822MailMember: $member" >>$TEST_OF
-				echo "rfc822MailMember: $member" >>$of 2>>$TEST_OF
+				echo "mailMember: $member" >>$TEST_OF
+				echo "mailMember: $member" >>$of 2>>$TEST_OF
 				;;
 			* )
 				echo "member: $member" >>$TEST_OF

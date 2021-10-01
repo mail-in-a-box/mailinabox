@@ -1,11 +1,6 @@
 #
 # MiaB-LDAP's directory schema for time-based one time passwords (TOTP)
 #
-# MiaB LDAP UUID(v4): 7392cdda-5ec8-431f-9936-0000273c0167
-#                 or: 1939000794.24264.17183.39222.658243943
-#
-
-objectIdentifier MiabLDAProot 2.25.1939000794.24264.17183.39222.658243943
 
 objectIdentifier MiabLDAPmfa MiabLDAProot:1
 objectIdentifier MiabLDAPmfaAttributeType MiabLDAPmfa:2

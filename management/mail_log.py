@@ -114,8 +114,8 @@ def scan_mail_log(env):
 
     try:
         import mailconfig
-        users = mailconfig.get_mail_users(env, as_map=True)
-        aliases = mailconfig.get_mail_aliases(env, as_map=True)
+        users = mailconfig.get_mail_users(env, as_map=True, map_by="mail")
+        aliases = mailconfig.get_mail_aliases(env, as_map=True, map_by="mail")
         collector["known_addresses"] = (set(users.keys()) |
                                         set(aliases.keys()))
     except ImportError:
