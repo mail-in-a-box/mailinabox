@@ -44,20 +44,15 @@
     </div>
   </div>
   <div class="form-group">
+    <label for="customdnsValue" class="control-label col-sm-1">Value</label>
     <div class="col-sm-10">
-      <table>
-        <tr style="width: 100%;">
-          <td style="width: 75%;">
-            <label for="customdnsValue" class="control-label">Value</label>
-            <input type="text" class="form-control" id="customdnsValue" placeholder="">
-          </td>
-          <td style="width: 25%;">
-            <label for="customdnsTtl" class="col-sm-1 control-label">TTL</label>
-            <input type="number" class="form-control" style="margin-left: 5pt;" id="customdnsTtl" placeholder="default">
-          </td>
-        </tr>
-      </table>
-      <div id="customdnsTypeHint" class="text-info" style="margin-top: .5em"></div>
+      <input type="text" class="form-control col-sm-10" style="max-width: 400px" id="customdnsValue" placeholder="">
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="customdnsTtl" class="col-sm-1 control-label">TTL</label>
+    <div class="col-sm-10">
+      <input type="number" class="form-control" style="max-width: 400px" id="customdnsTtl" placeholder="default">
     </div>
   </div>
   <div class="form-group">
