@@ -1,6 +1,28 @@
 #!/bin/bash
 # -*- indent-tabs-mode: t; tab-width: 4; -*-
 
+# This mod is part of the Mail-In-A-Box LDAP and Cloud-In-A-Box
+# projects
+#
+# It installs coturn - a stun/turn server needed for Nextcloud
+# Talk. Once setup has been run with the mod enabled, configure
+# Nextcloud Talk to use this host:
+#
+#    STUN server:
+#       <hostname>:5349
+#
+#    TURN server:
+#       turn: only
+#       <hostname>:5349
+#       secret: <retrieve 'static-auth-secret' from /etc/turnserver.conf>
+#       TCP only
+#
+# There is no automated removal of the mod - it must be manually
+# removed by uninstalling coturn and removing the extra firewall
+# rules. Simply removing the symlink in 'local' will not uninstall
+# coturn.
+#
+
 [ -e /etc/mailinabox.conf ] && source /etc/mailinabox.conf
 [ -e /etc/cloudinabox.conf ] && source /etc/cloudinabox.conf
 
