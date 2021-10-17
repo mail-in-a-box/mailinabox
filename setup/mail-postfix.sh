@@ -17,7 +17,7 @@
 # LMTP. Spamassassin then passes mail over to Dovecot for
 # storage in the user's mailbox.
 #
-# Postfix also listens on port 587 (SMTP+STARTLS) for
+# Postfix also listens on ports 465/587 (SMTPS, SMTP+STARTLS) for
 # connections from users who can authenticate and then sends
 # their email out to the outside world. Postfix queries Dovecot
 # to authenticate users.
@@ -71,7 +71,7 @@ tools/editconf.py /etc/postfix/main.cf \
 
 # ### Outgoing Mail
 
-# Enable the 'submission' port 587 smtpd server and tweak its settings.
+# Enable the 'submission' ports 465 and 587 and tweak their settings.
 #
 # * Enable authentication. It's disabled globally so that it is disabled on port 25,
 #   so we need to explicitly enable it here.
@@ -80,13 +80,19 @@ tools/editconf.py /etc/postfix/main.cf \
 #   OpenDKIM milter only. See dkim.sh.
 # * Even though we dont allow auth over non-TLS connections (smtpd_tls_auth_only below, and without auth the client cant
 #   send outbound mail), don't allow non-TLS mail submission on this port anyway to prevent accidental misconfiguration.
-#   Setting smtpd_tls_security_level=encrypt also triggers the use of the 'mandatory' settings below.
+#   Setting smtpd_tls_security_level=encrypt also triggers the use of the 'mandatory' settings below (but this is ignored with smtpd_tls_wrappermode=yes.)
 # * Give it a different name in syslog to distinguish it from the port 25 smtpd server.
 # * Add a new cleanup service specific to the submission service ('authclean')
 #   that filters out privacy-sensitive headers on mail being sent out by
 #   authenticated users.  By default Postfix also applies this to attached
 #   emails but we turn this off by setting nested_header_checks empty.
 tools/editconf.py /etc/postfix/master.cf -s -w \
+	"smtps=inet n       -       -       -       -       smtpd
+	  -o smtpd_tls_wrappermode=yes
+	  -o smtpd_sasl_auth_enable=yes
+	  -o syslog_name=postfix/submission
+	  -o smtpd_milters=inet:127.0.0.1:8891
+	  -o cleanup_service_name=authclean" \
 	"submission=inet n       -       -       -       -       smtpd
 	  -o smtpd_sasl_auth_enable=yes
 	  -o syslog_name=postfix/submission
@@ -100,14 +106,14 @@ tools/editconf.py /etc/postfix/master.cf -s -w \
 # Install the `outgoing_mail_header_filters` file required by the new 'authclean' service.
 cp conf/postfix_outgoing_mail_header_filters /etc/postfix/outgoing_mail_header_filters
 
-# Modify the `outgoing_mail_header_filters` file to use the local machine name and ip 
+# Modify the `outgoing_mail_header_filters` file to use the local machine name and ip
 # on the first received header line.  This may help reduce the spam score of email by
 # removing the 127.0.0.1 reference.
 sed -i "s/PRIMARY_HOSTNAME/$PRIMARY_HOSTNAME/" /etc/postfix/outgoing_mail_header_filters
 sed -i "s/PUBLIC_IP/$PUBLIC_IP/" /etc/postfix/outgoing_mail_header_filters
 
 # Enable TLS on incoming connections. It is not required on port 25, allowing for opportunistic
-# encryption. On port 587 it is mandatory (see above). Shared and non-shared settings are
+# encryption. On ports 465 and 587 it is mandatory (see above). Shared and non-shared settings are
 # given here. Shared settings include:
 # * Require TLS before a user is allowed to authenticate.
 # * Set the path to the server TLS certificate and 2048-bit DH parameters for old DH ciphers.
@@ -117,9 +123,6 @@ sed -i "s/PUBLIC_IP/$PUBLIC_IP/" /etc/postfix/outgoing_mail_header_filters
 #   won't fall back to cleartext. So we don't disable too much. smtpd_tls_exclude_ciphers applies to
 #   both port 25 and port 587, but because we override the cipher list for both, it probably isn't used.
 #   Use Mozilla's "Old" recommendations at https://ssl-config.mozilla.org/#server=postfix&server-version=3.3.0&config=old&openssl-version=1.1.1
-# For port 587 (via the 'mandatory' settings):
-# * Use Mozilla's "Intermediate" TLS recommendations from https://ssl-config.mozilla.org/#server=postfix&server-version=3.3.0&config=intermediate&openssl-version=1.1.1
-#   using and overriding the "high" cipher list so we don't conflict with the more permissive settings for port 25.
 tools/editconf.py /etc/postfix/main.cf \
 	smtpd_tls_security_level=may\
 	smtpd_tls_auth_only=yes \
@@ -130,18 +133,23 @@ tools/editconf.py /etc/postfix/main.cf \
 	smtpd_tls_ciphers=medium \
 	tls_medium_cipherlist=ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES256-SHA256:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:DES-CBC3-SHA \
 	smtpd_tls_exclude_ciphers=aNULL,RC4 \
+	tls_preempt_cipherlist=no \
+	smtpd_tls_received_header=yes
+
+# For ports 465/587 (via the 'mandatory' settings):
+# * Use Mozilla's "Intermediate" TLS recommendations from https://ssl-config.mozilla.org/#server=postfix&server-version=3.3.0&config=intermediate&openssl-version=1.1.1
+#   using and overriding the "high" cipher list so we don't conflict with the more permissive settings for port 25.
+tools/editconf.py /etc/postfix/main.cf \
 	smtpd_tls_mandatory_protocols="!SSLv2,!SSLv3,!TLSv1,!TLSv1.1" \
 	smtpd_tls_mandatory_ciphers=high \
 	tls_high_cipherlist=ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384 \
-	smtpd_tls_mandatory_exclude_ciphers=aNULL,DES,3DES,MD5,DES+MD5,RC4 \
-	tls_preempt_cipherlist=no \
-	smtpd_tls_received_header=yes
+	smtpd_tls_mandatory_exclude_ciphers=aNULL,DES,3DES,MD5,DES+MD5,RC4
 
 # Prevent non-authenticated users from sending mail that requires being
 # relayed elsewhere. We don't want to be an "open relay". On outbound
 # mail, require one of:
 #
-# * `permit_sasl_authenticated`: Authenticated users (i.e. on port 587).
+# * `permit_sasl_authenticated`: Authenticated users (i.e. on port 465/587).
 # * `permit_mynetworks`: Mail that originates locally.
 # * `reject_unauth_destination`: No one else. (Permits mail whose destination is local and rejects other mail.)
 tools/editconf.py /etc/postfix/main.cf \
@@ -191,7 +199,7 @@ tools/editconf.py /etc/postfix/main.cf \
 #
 # In a basic setup we would pass mail directly to Dovecot by setting
 # virtual_transport to `lmtp:unix:private/dovecot-lmtp`.
-tools/editconf.py /etc/postfix/main.cf virtual_transport=lmtp:[127.0.0.1]:10025
+tools/editconf.py /etc/postfix/main.cf "virtual_transport=lmtp:[127.0.0.1]:10025"
 # Because of a spampd bug, limit the number of recipients in each connection.
 # See https://github.com/mail-in-a-box/mailinabox/issues/1523.
 tools/editconf.py /etc/postfix/main.cf lmtp_destination_recipient_limit=1
@@ -263,6 +271,7 @@ tools/editconf.py /etc/postfix/main.cf \
 # Allow the two SMTP ports in the firewall.
 
 ufw_allow smtp
+ufw_allow smtps
 ufw_allow submission
 
 # Restart services

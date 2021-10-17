@@ -23,22 +23,22 @@ phpenmod -v php imap
 
 # Copy Z-Push into place.
 VERSION=2.6.2
-TARGETHASH=4b312d64227ef887b24d9cc8f0ae17519586f6e2
+TARGETHASH=f0e8091a8030e5b851f5ba1f9f0e1a05b8762d80
 needs_update=0 #NODOC
 if [ ! -f /usr/local/lib/z-push/version ]; then
 	needs_update=1 #NODOC
-elif [[ $VERSION != `cat /usr/local/lib/z-push/version` ]]; then
+elif [[ $VERSION != $(cat /usr/local/lib/z-push/version) ]]; then
 	# checks if the version
 	needs_update=1 #NODOC
 fi
 if [ $needs_update == 1 ]; then
 	# Download
-	wget_verify "https://stash.z-hub.io/rest/api/latest/projects/ZP/repos/z-push/archive?at=refs%2Ftags%2F$VERSION&format=zip" $TARGETHASH /tmp/z-push.zip
+	wget_verify "https://github.com/Z-Hub/Z-Push/archive/refs/tags/$VERSION.zip" $TARGETHASH /tmp/z-push.zip
 
 	# Extract into place.
 	rm -rf /usr/local/lib/z-push /tmp/z-push
 	unzip -q /tmp/z-push.zip -d /tmp/z-push
-	mv /tmp/z-push/src /usr/local/lib/z-push
+	mv /tmp/z-push/*/src /usr/local/lib/z-push
 	rm -rf /tmp/z-push.zip /tmp/z-push
 
 	rm -f /usr/sbin/z-push-{admin,top}

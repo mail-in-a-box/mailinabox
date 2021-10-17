@@ -4,7 +4,63 @@ CHANGELOG
 In Development
 --------------
 
-* Migrate to the ECDSAP256SHA256 DNSSEC algorithm. If a DS record is set for any of your domain names that have DNS hosted on your box, you will be prompted by status checks to update the DS record.
+Mail:
+
+* "SMTPUTF8" is now disabled in Postfix. Because Dovecot still does not support SMTPUTF8, incoming mail to internationalized addresses was bouncing. This fixes incoming mail to internationalized domains (which was probably working prior to v0.40), but it will prevent sending outbound mail to addresses with internationalized local-parts.
+* Upgraded to Roundcube 1.5 Release Candidate.
+
+Firewall:
+
+* Fail2ban's IPv6 support is enabled.
+
+Control panel:
+
+* The control panel menus are now hidden before login, but now non-admins can log in to access the mail and contacts/calendar instruction pages.
+* The login form now disables browser autocomplete in the two-factor authentication code field.
+* After logging in, the default page is now a fast-loading welcome page rather than the slow-loading system status checks page.
+* The backup retention period option now displays for B2 backup targets.
+* The DNSSEC DS record recommendations are cleaned up and now recommend changing records that use SHA1.
+* The Munin monitoring pages no longer require a separate HTTP basic authentication login and can be used if two-factor authentication is turned on.
+* Control panel logins are now tied to a session backend that allows true logouts (rather than an encrypted cookie).
+* Failed logins no longer directly reveal whether the email address corresponds to a user account.
+* Browser dark mode now inverts the color scheme.
+
+Other:
+
+* The mail log tool now doesn't crash if there are email addresess in log messages with invalid UTF-8 characters.
+* Additional nsd.conf files can be placed in /etc/nsd.conf.d.
+
+v0.54 (June 20, 2021)
+---------------------
+
+Mail:
+
+* Forwarded mail using mail filter rules (in Roundcube; "sieve" rules) stopped re-writing the envelope address at some point, causing forwarded mail to often be marked as spam by the final recipient. These forwards will now re-write the envelope as the Mail-in-a-Box user receiving the mail to comply with SPF/DMARC rules.
+* Sending mail is now possible on port 465 with the "SSL" or "TLS" option in mail clients, and this is now the recommended setting. Port 587 with STARTTLS remains available but should be avoided when configuring new mail clients.
+* Roundcube's login cookie is updated to use a new encryption algorithm (AES-256-CBC instead of DES-EDE-CBC).
+
+DNS:
+
+* The ECDSAP256SHA256 DNSSEC algorithm is now available. If a DS record is set for any of your domain names that have DNS hosted on your box, you will be prompted by status checks to update the DS record at your convenience.
+* Null MX records are added for domains that do not serve mail.
+
+Contacts/calendar:
+
+* Updated Nextcloud to 20.0.8, contacts to 3.5.1, calendar to 2.2.0 (#1960).
+
+Control panel:
+
+* Fixed a crash in the status checks.
+* Small wording improvements.
+
+Setup:
+
+* Minor improvements to the setup scripts.
+
+v0.53a (May 8, 2021)
+--------------------
+
+The download URL for Z-Push has been revised becaue the old URL stopped working.
 
 v0.53 (April 12, 2021)
 ----------------------

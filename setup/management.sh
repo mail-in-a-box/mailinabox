@@ -49,8 +49,8 @@ hide_output $venv/bin/pip install --upgrade pip
 # NOTE: email_validator is repeated in setup/questions.sh, so please keep the versions synced.
 hide_output $venv/bin/pip install --upgrade \
 	rtyaml "email_validator>=1.0.0" "exclusiveprocess" \
-	flask dnspython python-dateutil \
-  qrcode[pil] pyotp \
+	flask dnspython python-dateutil expiringdict \
+	qrcode[pil] pyotp \
 	"idna>=2.0.0" "cryptography==2.2.2" boto psutil postfix-mta-sts-resolver b2sdk
 
 # CONFIGURATION
@@ -97,7 +97,7 @@ export LANG=en_US.UTF-8
 export LC_TYPE=en_US.UTF-8
 
 source $venv/bin/activate
-exec python `pwd`/management/daemon.py
+exec python $(pwd)/management/daemon.py
 EOF
 chmod +x $inst_dir/start
 cp --remove-destination conf/mailinabox.service /lib/systemd/system/mailinabox.service # target was previously a symlink so remove it first
@@ -112,7 +112,7 @@ minute=$((RANDOM % 60))  # avoid overloading mailinabox.email
 cat > /etc/cron.d/mailinabox-nightly << EOF;
 # Mail-in-a-Box --- Do not edit / will be overwritten on update.
 # Run nightly tasks: backup, status checks.
-$minute 3 * * *	root	(cd `pwd` && management/daily_tasks.sh)
+$minute 3 * * *	root	(cd $(pwd) && management/daily_tasks.sh)
 EOF
 
 # Start the management server.

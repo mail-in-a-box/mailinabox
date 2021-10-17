@@ -49,7 +49,7 @@ define('IMAP_FROM_LDAP_FULLNAME', '#givenname #sn');
 define('IMAP_SMTP_METHOD', 'sendmail');
 
 global $imap_smtp_params;
-$imap_smtp_params = array('host' => 'ssl://127.0.0.1', 'port' => 587, 'auth' => true, 'username' => 'imap_username', 'password' => 'imap_password');
+$imap_smtp_params = array('host' => 'ssl://127.0.0.1', 'port' => 465, 'auth' => true, 'username' => 'imap_username', 'password' => 'imap_password');
 
 define('MAIL_MIMEPART_CRLF', "\r\n");
 define('IMAP_MEETING_USE_CALDAV', true);

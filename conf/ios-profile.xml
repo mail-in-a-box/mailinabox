@@ -53,7 +53,7 @@
       <key>OutgoingMailServerHostName</key>
       <string>PRIMARY_HOSTNAME</string>
       <key>OutgoingMailServerPortNumber</key>
-      <integer>587</integer>
+      <integer>465</integer>
       <key>OutgoingMailServerUseSSL</key>
       <true/>
       <key>OutgoingPasswordSameAsIncomingPassword</key>
