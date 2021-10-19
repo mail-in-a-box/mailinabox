@@ -29,8 +29,8 @@ apt_install \
 # Combine the Roundcube version number with the commit hash of plugins to track
 # whether we have the latest version of everything.
 
-VERSION=1.5-rc
-HASH=a7cb2a39702536d769c7ff93f716e27f0b93f9d9
+VERSION=1.5.0
+HASH=2a9d11d9c10c8e8756120606c47eef702f00fe6d
 PERSISTENT_LOGIN_VERSION=6b3fc450cae23ccb2f393d0ef67aa319e877e435 # version 5.2.0
 HTML5_NOTIFIER_VERSION=68d9ca194212e15b3c7225eb6085dbcf02fd13d7 # version 0.6.4+
 CARDDAV_VERSION=3.0.3

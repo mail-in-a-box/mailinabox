@@ -7,7 +7,7 @@ In Development
 Mail:
 
 * "SMTPUTF8" is now disabled in Postfix. Because Dovecot still does not support SMTPUTF8, incoming mail to internationalized addresses was bouncing. This fixes incoming mail to internationalized domains (which was probably working prior to v0.40), but it will prevent sending outbound mail to addresses with internationalized local-parts.
-* Upgraded to Roundcube 1.5 Release Candidate.
+* Upgraded to Roundcube 1.5.
 
 Firewall:
 
