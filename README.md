@@ -34,7 +34,6 @@ Functionality changes and additions
   Removed older cryptos following internet.nl recommendations
 
 Bug fixes
-* Munin routes are ignored for Multi Factor Authentication [see github issue](https://github.com/mail-in-a-box/mailinabox/issues/1865)
 * Munin error report fixed [see github issue](https://github.com/mail-in-a-box/mailinabox/issues/1555)
 * Correct nextcloud carddav url [see github issue](https://github.com/mail-in-a-box/mailinabox/issues/1918)
 
