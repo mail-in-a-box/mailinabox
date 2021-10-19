@@ -670,7 +670,7 @@ def get_dns_zonefile(zone, env):
 
 def write_nsd_conf(zonefiles, additional_records, env):
 	# Write the list of zones to a configuration file.
-	nsd_conf_file = "/etc/nsd/zones.conf"
+	nsd_conf_file = "/etc/nsd/nsd.conf.d/zones.conf"
 	nsdconf = ""
 
 	# Append the zones.

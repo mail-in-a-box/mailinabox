@@ -62,6 +62,37 @@
 	    ol li {
 	       margin-bottom: 1em;
 	    }
+          
+            .if-logged-in { display: none; }
+            .if-logged-in-admin { display: none; }
+
+      /* The below only gets used if it is supported */
+      @media (prefers-color-scheme: dark) {
+        /* Invert invert lightness but not hue */
+        html {
+          filter: invert(100%) hue-rotate(180deg);
+        }
+
+        /* Set explicit background color (necessary for Firefox) */
+        html {
+          background-color: #111;
+        }
+          
+        /* Override Boostrap theme here to give more contrast. The black turns to white by the filter. */
+        .form-control {
+          color: black !important;
+        }          
+
+        /* Revert the invert for the navbar */
+        button, div.navbar {
+          filter: invert(100%) hue-rotate(180deg);
+        }
+          
+        /* Revert the revert for the dropdowns */
+        ul.dropdown-menu {
+          filter: invert(100%) hue-rotate(180deg);
+        }
+      }
         </style>
         <link rel="stylesheet" href="/admin/assets/bootstrap/css/bootstrap-theme.min.css">
     </head>
@@ -83,7 +114,7 @@
         </div>
         <div class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
-            <li class="dropdown admin-links">
+            <li class="dropdown if-logged-in-admin">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown">System <b class="caret"></b></a>
               <ul class="dropdown-menu">
                 <li><a href="#system_status" onclick="return show_panel(this);">Status Checks</a></li>
@@ -93,31 +124,36 @@
                 <li class="dropdown-header">Advanced Pages</li>
                 <li><a href="#custom_dns" onclick="return show_panel(this);">Custom DNS</a></li>
                 <li><a href="#external_dns" onclick="return show_panel(this);">External DNS</a></li>
-                <li><a href="/admin/munin" target="_blank">Munin Monitoring</a></li>
+                <li><a href="#munin" onclick="return show_panel(this);">Munin Monitoring</a></li>
               </ul>
             </li>
-            <li class="dropdown">
+            <li><a href="#mail-guide" onclick="return show_panel(this);" class="if-logged-in-not-admin">Mail</a></li>
+            <li class="dropdown if-logged-in-admin">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown">Mail &amp; Users <b class="caret"></b></a>
               <ul class="dropdown-menu">
                 <li><a href="#mail-guide" onclick="return show_panel(this);">Instructions</a></li>
-                <li class="admin-links"><a href="#users" onclick="return show_panel(this);">Users</a></li>
-                <li class="admin-links"><a href="#aliases" onclick="return show_panel(this);">Aliases</a></li>
-                <li class="divider admin-links"></li>
-                <li class="dropdown-header admin-links">Your Account</li>
-                <li class="admin-links"><a href="#mfa" onclick="return show_panel(this);">Two-Factor Authentication</a></li>
+                <li><a href="#users" onclick="return show_panel(this);">Users</a></li>
+                <li><a href="#aliases" onclick="return show_panel(this);">Aliases</a></li>
+                <li class="divider"></li>
+                <li class="dropdown-header">Your Account</li>
+                <li><a href="#mfa" onclick="return show_panel(this);">Two-Factor Authentication</a></li>
               </ul>
             </li>
-            <li><a href="#sync_guide" onclick="return show_panel(this);">Contacts/Calendar</a></li>
-            <li class="admin-links"><a href="#web" onclick="return show_panel(this);">Web</a></li>
+            <li><a href="#sync_guide" onclick="return show_panel(this);" class="if-logged-in">Contacts/Calendar</a></li>
+            <li><a href="#web" onclick="return show_panel(this);" class="if-logged-in-admin">Web</a></li>
           </ul>
-          <ul class="admin-links nav navbar-nav navbar-right">
-            <li><a href="#" onclick="do_logout(); return false;" style="color: white">Log out</a></li>
+          <ul class="nav navbar-nav navbar-right">
+            <li class="if-logged-in"><a href="#" onclick="do_logout(); return false;" style="color: white">Log out</a></li>
           </ul>
         </div><!--/.navbar-collapse -->
       </div>
     </div>
 
     <div class="container">
+      <div id="panel_welcome" class="admin_panel">
+      {% include "welcome.html" %}
+      </div>
+
       <div id="panel_system_status" class="admin_panel">
       {% include "system-status.html" %}
       </div>
@@ -164,6 +200,10 @@
 
       <div id="panel_tls" class="admin_panel">
       {% include "ssl.html" %}
+      </div>
+
+      <div id="panel_munin" class="admin_panel">
+      {% include "munin.html" %}
       </div>
 
       <hr>
@@ -298,7 +338,7 @@ function ajax_with_indicator(options) {
   return false; // handy when called from onclick
 }
 
-var api_credentials = ["", ""];
+var api_credentials = null;
 function api(url, method, data, callback, callback_error, headers) {
   // from http://www.webtoolkit.info/javascript-base64.html
   function base64encode(input) {
@@ -346,9 +386,10 @@ function api(url, method, data, callback, callback_error, headers) {
       // We don't store user credentials in a cookie to avoid the hassle of CSRF
       // attacks. The Authorization header only gets set in our AJAX calls triggered
       // by user actions.
-      xhr.setRequestHeader(
-        'Authorization',
-        'Basic ' + base64encode(api_credentials[0] + ':' + api_credentials[1]));
+      if (api_credentials)
+        xhr.setRequestHeader(
+          'Authorization',
+          'Basic ' + base64encode(api_credentials.username + ':' + api_credentials.session_key));
     },
     success: callback,
     error: callback_error || default_error,
@@ -367,12 +408,21 @@ var current_panel = null;
 var switch_back_to_panel = null;
 
 function do_logout() {
-  api_credentials = ["", ""];
+  // Clear the session from the backend.
+  api("/logout", "POST");
+
+  // Forget the token.
+  api_credentials = null;
   if (typeof localStorage != 'undefined')
     localStorage.removeItem("miab-cp-credentials");
   if (typeof sessionStorage != 'undefined')
     sessionStorage.removeItem("miab-cp-credentials");
+
+  // Return to the start.
   show_panel('login');
+
+  // Reset menus.
+  show_hide_menus();
 }
 
 function show_panel(panelid) {
@@ -395,21 +445,22 @@ function show_panel(panelid) {
 
 $(function() {
   // Recall saved user credentials.
-  if (typeof sessionStorage != 'undefined' && sessionStorage.getItem("miab-cp-credentials"))
-    api_credentials = sessionStorage.getItem("miab-cp-credentials").split(":");
-  else if (typeof localStorage != 'undefined' && localStorage.getItem("miab-cp-credentials"))
-    api_credentials = localStorage.getItem("miab-cp-credentials").split(":");
+  try {
+    if (typeof sessionStorage != 'undefined' && sessionStorage.getItem("miab-cp-credentials"))
+      api_credentials = JSON.parse(sessionStorage.getItem("miab-cp-credentials"));
+    else if (typeof localStorage != 'undefined' && localStorage.getItem("miab-cp-credentials"))
+      api_credentials = JSON.parse(localStorage.getItem("miab-cp-credentials"));
+  } catch (_) {
+  }
 
-  if (!api_credentials[0] && !api_credentials[1]) {
-    $('.admin-links').hide()
-  }
-  else {
-    $('.admin-links').show()
-  }
-  
+  // Toggle menu state.
+  show_hide_menus();
+
   // Recall what the user was last looking at.
-  if (typeof localStorage != 'undefined' && localStorage.getItem("miab-cp-lastpanel")) {
+  if (api_credentials != null && typeof localStorage != 'undefined' && localStorage.getItem("miab-cp-lastpanel")) {
     show_panel(localStorage.getItem("miab-cp-lastpanel"));
+  } else if (api_credentials != null) {
+    show_panel('welcome');
   } else {
     show_panel('login');
   }

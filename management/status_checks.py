@@ -663,7 +663,7 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 		output.print_line("Option " + str(i+1) + ":")
 		output.print_line("----------")
 		output.print_line("Key Tag: " + ds_suggestion['keytag'])
-		output.print_line("Key Flags: KSK")
+		output.print_line("Key Flags: KSK (256)")
 		output.print_line("Algorithm: %s / %s" % (ds_suggestion['alg'], ds_suggestion['alg_name']))
 		output.print_line("Digest Type: %s / %s" % (ds_suggestion['digalg'], ds_suggestion['digalg_name']))
 		output.print_line("Digest: " + ds_suggestion['digest'])

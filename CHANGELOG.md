@@ -1,6 +1,32 @@
 CHANGELOG
 =========
 
+Version 55 (October 18, 2021)
+-----------------------------
+
+Mail:
+
+* "SMTPUTF8" is now disabled in Postfix. Because Dovecot still does not support SMTPUTF8, incoming mail to internationalized addresses was bouncing. This fixes incoming mail to internationalized domains (which was probably working prior to v0.40), but it will prevent sending outbound mail to addresses with internationalized local-parts.
+* Upgraded to Roundcube 1.5.
+
+Control panel:
+
+* The control panel menus are now hidden before login, but now non-admins can log in to access the mail and contacts/calendar instruction pages.
+* The login form now disables browser autocomplete in the two-factor authentication code field.
+* After logging in, the default page is now a fast-loading welcome page rather than the slow-loading system status checks page.
+* The backup retention period option now displays for B2 backup targets.
+* The DNSSEC DS record recommendations are cleaned up and now recommend changing records that use SHA1.
+* The Munin monitoring pages no longer require a separate HTTP basic authentication login and can be used if two-factor authentication is turned on.
+* Control panel logins are now tied to a session backend that allows true logouts (rather than an encrypted cookie).
+* Failed logins no longer directly reveal whether the email address corresponds to a user account.
+* Browser dark mode now inverts the color scheme.
+
+Other:
+
+* Fail2ban's IPv6 support is enabled.
+* The mail log tool now doesn't crash if there are email addresess in log messages with invalid UTF-8 characters.
+* Additional nsd.conf files can be placed in /etc/nsd.conf.d.
+
 v0.54 (June 20, 2021)
 ---------------------
 
