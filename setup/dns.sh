@@ -66,7 +66,13 @@ for ip in $PRIVATE_IP $PRIVATE_IPV6; do
 	echo "  ip-address: $ip" >> /etc/nsd/nsd.conf;
 done
 
-echo "include: /etc/nsd/zones.conf" >> /etc/nsd/nsd.conf;
+# Create a directory for additional configuration directives, including
+# the zones.conf file written out by our management daemon.
+echo "include: /etc/nsd/nsd.conf.d/*.conf" >> /etc/nsd/nsd.conf;
+
+# Remove the old location of zones.conf that we generate. It will
+# now be stored in /etc/nsd/nsd.conf.d.
+rm -f /etc/nsd/zones.conf
 
 # Add systemd override file to fix some permissions
 mkdir -p /etc/systemd/system/nsd.service.d/

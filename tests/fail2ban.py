@@ -232,7 +232,7 @@ if __name__ == "__main__":
 	run_test(managesieve_test, [], 20, 30, 4)
 
 	# Mail-in-a-Box control panel
-	run_test(http_test, ["/admin/me", 200], 20, 30, 1)
+	run_test(http_test, ["/admin/login", 200], 20, 30, 1)
 
 	# Munin via the Mail-in-a-Box control panel
 	run_test(http_test, ["/admin/munin/", 401], 20, 30, 1)
