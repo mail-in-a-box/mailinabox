@@ -1,17 +1,13 @@
 CHANGELOG
 =========
 
-In Development
---------------
+Version 55 (October 18, 2021)
+-----------------------------
 
 Mail:
 
 * "SMTPUTF8" is now disabled in Postfix. Because Dovecot still does not support SMTPUTF8, incoming mail to internationalized addresses was bouncing. This fixes incoming mail to internationalized domains (which was probably working prior to v0.40), but it will prevent sending outbound mail to addresses with internationalized local-parts.
 * Upgraded to Roundcube 1.5.
-
-Firewall:
-
-* Fail2ban's IPv6 support is enabled.
 
 Control panel:
 
@@ -27,6 +23,7 @@ Control panel:
 
 Other:
 
+* Fail2ban's IPv6 support is enabled.
 * The mail log tool now doesn't crash if there are email addresess in log messages with invalid UTF-8 characters.
 * Additional nsd.conf files can be placed in /etc/nsd.conf.d.
 
