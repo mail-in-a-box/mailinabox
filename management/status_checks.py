@@ -73,6 +73,9 @@ def get_ssh_port():
 	except FileNotFoundError:
 		# sshd is not installed. That's ok.
 		return None
+	except subprocess.CalledProcessError:
+		# error while calling shell command
+		return None
 
 	returnNext = False
 	for e in output.split():
@@ -799,7 +802,7 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None, as_list=False):
 
 	# Do the query.
 	try:
-		response = resolver.resolve(qname, rtype)
+		response = resolver.resolve(qname, rtype, search=True)
 	except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
 		# Host did not have an answer for this query; not sure what the
 		# difference is between the two exceptions.
