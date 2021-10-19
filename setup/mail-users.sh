@@ -180,9 +180,9 @@ bind = yes
 bind_dn = ${LDAP_POSTFIX_DN}
 bind_pw = ${LDAP_POSTFIX_PASSWORD}
 version = 3
-search_base = ${LDAP_DOMAINS_BASE}
-query_filter = (&(|(dc=%s)(dcIntl=%s))(businessCategory=mail))
-result_attribute = dc
+search_base = ${LDAP_BASE}
+query_filter = (|(&(objectClass=mailDomain)(|(dc=%s)(dcIntl=%s)))(&(objectClass=mailGroup)(mail=@%s)(&(!(member=*))(!(mailMember=*)))))
+result_attribute = objectClass
 EOF
 chgrp postfix /etc/postfix/virtual-mailbox-domains.cf
 chmod 0640 /etc/postfix/virtual-mailbox-domains.cf
