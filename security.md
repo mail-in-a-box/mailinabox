@@ -54,9 +54,7 @@ Additionally:
 
 ### Password Storage
 
-The passwords for mail users are stored on disk using the [SHA512-CRYPT](http://man7.org/linux/man-pages/man3/crypt.3.html) hashing scheme. ([source](management/mailconfig.py))
-
-When using the web-based administrative control panel, after logging in an API key is placed in the browser's local storage (rather than, say, the user's actual password). The API key is an HMAC based on the user's email address and current password, and it is keyed by a secret known only to the control panel service. By resetting an administrator's password, any HMACs previously generated for that user will expire.
+The passwords for mail users are stored on disk using the [SHA512-CRYPT](http://man7.org/linux/man-pages/man3/crypt.3.html) hashing scheme. ([source](management/mailconfig.py)) Password changes (as well as changes to control panel two-factor authentication settings) expire any control panel login sessions.
 
 ### Console access
 
@@ -70,7 +68,7 @@ If DNSSEC is enabled at the box's domain name's registrar, the SSHFP record that
 
 `fail2ban` provides some protection from brute-force login attacks (repeated logins that guess account passwords) by blocking offending IP addresses at the network level.
 
-The following services are protected: SSH, IMAP (dovecot), SMTP submission (postfix), webmail (roundcube), Nextcloud/CalDAV/CardDAV (over HTTP), and the Mail-in-a-Box control panel & munin (over HTTP).
+The following services are protected: SSH, IMAP (dovecot), SMTP submission (postfix), webmail (roundcube), Nextcloud/CalDAV/CardDAV (over HTTP), and the Mail-in-a-Box control panel (over HTTP).
 
 Some other services running on the box may be missing fail2ban filters.
 
