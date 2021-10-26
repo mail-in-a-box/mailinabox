@@ -110,6 +110,8 @@ paths:
           description: Successful operation
           content:
             application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutResponse'
   /system/status:
     post:
       tags:
@@ -2723,3 +2725,8 @@ components:
           nullable: true
     MfaDisableSuccessResponse:
       type: string
+    LogoutResponse:
+      type: object
+      properties:
+        status:
+          type: string
