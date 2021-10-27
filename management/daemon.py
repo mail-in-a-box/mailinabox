@@ -340,7 +340,7 @@ def dns_get_records(qname=None, rtype=None):
 		r["sort-order"]["created"] = i
 	domain_sort_order = utils.sort_domains([r["qname"] for r in records], env)
 	for i, r in enumerate(sorted(records, key = lambda r : (
-			zones.index(r["zone"]),
+			zones.index(r["zone"]) if r.get("zone") else 0, # record is not within a zone managed by the box
 			domain_sort_order.index(r["qname"]),
 			r["rtype"]))):
 		r["sort-order"]["qname"] = i
