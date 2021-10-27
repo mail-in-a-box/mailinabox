@@ -81,7 +81,9 @@ EOF
 		ldapadd -H $LDAP_URL -x -D "$LDAP_ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" >>$TEST_OF 2>&1 <<EOF
 dn: dc=${domainpart},$LDAP_DOMAINS_BASE
 objectClass: domain
+objectClass: mailDomain
 dc: ${domainpart}
+dcIntl: ${domainpart}
 businessCategory: mail
 EOF
 		[ $? -ne 0 ] && die "Unable to add domain ${domainpart} (as admin)"
