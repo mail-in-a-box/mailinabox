@@ -34,11 +34,12 @@ HASH=2a9d11d9c10c8e8756120606c47eef702f00fe6d
 PERSISTENT_LOGIN_VERSION=6b3fc450cae23ccb2f393d0ef67aa319e877e435 # version 5.2.0
 HTML5_NOTIFIER_VERSION=68d9ca194212e15b3c7225eb6085dbcf02fd13d7 # version 0.6.4+
 CONTEXT_MENU_VERSION=602a3812922fb8f71814eb3b8d91e9b7859aab7e # version 3.2.1
+TWOFACT_COMMIT=a3944c4604fe86fc020847f281beea031e14e58e # master @ 17-10-2021
 
 CARDDAV_VERSION=4.1.1
 CARDDAV_HASH=87b73661b7799b2079c28324311eddb4241242bb
 
-UPDATE_KEY=$VERSION:$PERSISTENT_LOGIN_VERSION:$HTML5_NOTIFIER_VERSION:$CARDDAV_VERSION:$CONTEXT_MENU_VERSION
+UPDATE_KEY=$VERSION:$PERSISTENT_LOGIN_VERSION:$HTML5_NOTIFIER_VERSION:$CARDDAV_VERSION:$CONTEXT_MENU_VERSION:$TWOFACT_COMMIT
 
 # paths that are often reused.
 RCM_DIR=/usr/local/lib/roundcubemail
@@ -90,6 +91,9 @@ if [ $needs_update == 1 ]; then
 	# install roundcube context menu plugin
 	git_clone https://github.com/johndoh/roundcube-contextmenu.git $CONTEXT_MENU_VERSION '' ${RCM_PLUGIN_DIR}/contextmenu
 
+	# install two factor totp authenticator
+	git_clone https://github.com/alexandregz/twofactor_gauthenticator.git $TWOFACT_COMMIT '' ${RCM_PLUGIN_DIR}/twofactor_gauthenticator
+
 	# record the version we've installed
 	echo $UPDATE_KEY > ${RCM_DIR}/version
 fi
@@ -134,7 +138,7 @@ cat > $RCM_CONFIG <<EOF;
 \$config['product_name'] = '$PRIMARY_HOSTNAME Webmail';
 \$config['cipher_method'] = 'AES-256-CBC'; # persistent login cookie and potentially other things
 \$config['des_key'] = '$SECRET_KEY'; # 37 characters -> ~256 bits for AES-256, see above
-\$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'persistent_login', 'carddav', 'markasjunk', 'contextmenu');
+\$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'persistent_login', 'carddav', 'markasjunk', 'contextmenu', 'twofactor_gauthenticator');
 \$config['skin'] = 'elastic';
 \$config['login_autocomplete'] = 2;
 \$config['login_username_filter'] = 'email';
