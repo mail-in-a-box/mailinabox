@@ -24,6 +24,7 @@ Functionality changes and additions
 * Add nextcloud notes app
 * Update roundcube carddav plugin to 4.1.1
 * Add roundcube context menu plugin
+* Add roundcube two factor authentication plugin
 * Use shorter TTL values in the DNS server  
   To be used before for example when changing IP addresses. Shortening TTL values will propagate changes faster. For reference, default TTL is 1 day, short TTL is 5 minutes. To use, edit file /etc/forceshortdnsttl and add a line for each domain for which shorter TTLs should be used. To use short TTLs for all known domains, add "forceshortdnsttl"
 * Use the box as a Hidden Master in the DNS system  
