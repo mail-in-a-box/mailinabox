@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+
+In Development
+--------------
+
+Mail:
+* Roundcube's persistent_login plugin update to better support Roundcube 1.5
+
 Version 55 (October 18, 2021)
 -----------------------------
 
