@@ -325,6 +325,8 @@ if [ -z "$installed" ]; then
     sudo -u www-data php /usr/local/lib/owncloud/occ app:install notes
 fi
 
+sudo -u www-data php /usr/local/lib/owncloud/occ app:install twofactor_totp
+
 # upgrade apps
 sudo -u www-data php /usr/local/lib/owncloud/occ app:update --all
 
