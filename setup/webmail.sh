@@ -161,7 +161,7 @@ cat > ${RCM_PLUGIN_DIR}/carddav/config.inc.php <<EOF;
 	 'active'       =>  true,
 	 'readonly'     =>  false,
 	 'refresh_time' => '02:00:00',
-	 'fixed'        =>  array('username','password'),
+	 'fixed'        =>  array('username'),
 	 'preemptive_auth' => '1',
 	 'hide'        =>  false,
 );
