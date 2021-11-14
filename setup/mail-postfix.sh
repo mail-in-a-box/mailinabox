@@ -241,10 +241,11 @@ tools/editconf.py /etc/postfix/main.cf \
 # A lot of legit mail servers try to resend before 300 seconds.
 # As a matter of fact RFC is not strict about retry timer so postfix and
 # other MTA have their own intervals. To fix the problem of receiving
-# e-mails really latter, delay of greylisting has been set to
+# e-mails really later, delay of greylisting has been set to
 # 180 seconds (default is 300 seconds).
+# Postgrey removes entries after 185 days of not being used.
 tools/editconf.py /etc/default/postgrey \
-	POSTGREY_OPTS=\"'--inet=127.0.0.1:10023 --delay=180'\"
+	POSTGREY_OPTS=\"'--inet=127.0.0.1:10023 --delay=180  --max-age=185'\"
 
 
 # We are going to setup a newer whitelist for postgrey, the version included in the distribution is old
