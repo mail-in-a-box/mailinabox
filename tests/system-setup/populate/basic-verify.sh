@@ -24,9 +24,11 @@ echo "[Force Roundcube contact sync]" 1>&2
 # contacts for it will be removed in the Roundcube database after the
 # sync
 
-if ! roundcube_force_carddav_refresh "$TEST_USER" "$TEST_USER_PASS" 1>&2
+roundcube_force_carddav_refresh "$TEST_USER" "$TEST_USER_PASS" 1>&2
+rc=$?
+if [ $rc -ne 0 ]
 then
-    echo "Roundcube <-> Nextcloud contact sync failed ($?)"
+    echo "Roundcube <-> Nextcloud contact sync failed ($rc)"
     exit 1
 fi
 

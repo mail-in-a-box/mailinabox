@@ -34,8 +34,8 @@ VERSION=1.5.0
 HASH=2a9d11d9c10c8e8756120606c47eef702f00fe6d
 PERSISTENT_LOGIN_VERSION=59ca1b0d3a02cff5fa621c1ad581d15f9d642fe8
 HTML5_NOTIFIER_VERSION=68d9ca194212e15b3c7225eb6085dbcf02fd13d7 # version 0.6.4+
-CARDDAV_VERSION=3.0.3
-CARDDAV_HASH=d1e3b0d851ffa2c6bd42bf0c04f70d0e1d0d78f8
+CARDDAV_VERSION=4.2.2
+CARDDAV_HASH=1bd48bf92fdd987a8e2589eb27948500f59a3047
 
 UPDATE_KEY=$VERSION:$PERSISTENT_LOGIN_VERSION:$HTML5_NOTIFIER_VERSION:$CARDDAV_VERSION
 
@@ -78,13 +78,15 @@ if [ $needs_update == 1 ]; then
 
 	# download and verify the full release of the carddav plugin
 	wget_verify \
-		https://github.com/blind-coder/rcmcarddav/releases/download/v${CARDDAV_VERSION}/carddav-${CARDDAV_VERSION}.zip \
+		https://github.com/mstilkerich/rcmcarddav/releases/download/v${CARDDAV_VERSION}/carddav-v${CARDDAV_VERSION}.tar.gz \
 		$CARDDAV_HASH \
-		/tmp/carddav.zip
+		/tmp/carddav.tar.gz
 
 	# unzip and cleanup
-	unzip -q /tmp/carddav.zip -d ${RCM_PLUGIN_DIR}
-	rm -f /tmp/carddav.zip
+	pushd ${RCM_PLUGIN_DIR} >/dev/null
+	tar xzf /tmp/carddav.tar.gz
+	popd >/dev/null
+	rm -f /tmp/carddav.tar.gz
 
 	# record the version we've installed
 	echo $UPDATE_KEY > ${RCM_DIR}/version
