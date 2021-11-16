@@ -31,8 +31,8 @@ InstallNextcloud() {
 	echo "Upgrading to Nextcloud version $version"
 	echo
 
-        # Download and verify
-        wget_verify https://download.nextcloud.com/server/releases/nextcloud-$version.zip $hash /tmp/nextcloud.zip
+	# Download and verify
+	wget_verify https://download.nextcloud.com/server/releases/nextcloud-$version.zip $hash /tmp/nextcloud.zip
 
 	# Remove the current owncloud/Nextcloud
 	rm -rf /usr/local/lib/owncloud
@@ -100,8 +100,8 @@ InstallNextcloud() {
 }
 
 # Nextcloud Version to install. Checks are done down below to step through intermediate versions.
-nextcloud_ver=20.0.13
-nextcloud_hash=a1fe460e3e65753552fb4beb1a47ab09ff277d95
+nextcloud_ver=20.0.14
+nextcloud_hash=92cac708915f51ee2afc1787fd845476fd090c81
 contacts_ver=4.0.0
 contacts_hash=f893ca57a543b260c9feeecbb5958c00b6998e18
 calendar_ver=2.2.2
@@ -318,6 +318,7 @@ if [ \( $? -ne 0 \) -a \( $? -ne 3 \) ]; then exit 1; fi
 sudo -u www-data \
 	php /usr/local/lib/owncloud/occ app:disable photos dashboard activity \
 	| (grep -v "No such app enabled" || /bin/true)
+
 # Install interesting apps
 installed=$(sudo -u www-data php /usr/local/lib/owncloud/occ app:list | grep 'notes')
 
@@ -325,7 +326,15 @@ if [ -z "$installed" ]; then
     sudo -u www-data php /usr/local/lib/owncloud/occ app:install notes
 fi
 
-sudo -u www-data php /usr/local/lib/owncloud/occ app:install twofactor_totp
+hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable notes
+
+installed=$(sudo -u www-data php /usr/local/lib/owncloud/occ app:list | grep 'twofactor_totp')
+
+if [ -z "$installed" ]; then
+	sudo -u www-data php /usr/local/lib/owncloud/occ app:install twofactor_totp
+fi
+
+hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable twofactor_totp
 
 # upgrade apps
 sudo -u www-data php /usr/local/lib/owncloud/occ app:update --all
