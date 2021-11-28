@@ -20,9 +20,9 @@ _If you're seeing an error message about your *IP address being listed in the Sp
 
 ### Modifying your `hosts` file
 
-After a while, Mail-in-a-Box will be available at `192.168.50.4` (unless you changed that in your `Vagrantfile`). To be able to use the web-based bits, we recommend to add a hostname to your `hosts` file:
+After a while, Mail-in-a-Box will be available at `192.168.56.4` (unless you changed that in your `Vagrantfile`). To be able to use the web-based bits, we recommend to add a hostname to your `hosts` file:
 
-    $ echo "192.168.50.4 mailinabox.lan" | sudo tee -a /etc/hosts
+    $ echo "192.168.56.4 mailinabox.lan" | sudo tee -a /etc/hosts
 
 You should now be able to navigate to https://mailinabox.lan/admin using your browser. There should be an initial admin user with the name `me@mailinabox.lan` and the password `12345678`.
 
@@ -47,11 +47,11 @@ Mail-in-a-Box needs more tests. If you're still looking for a way to help out, w
 
 ## Public domain
 
-This project is in the public domain. Copyright and related rights in the work worldwide are waived through the [CC0 1.0 Universal public domain dedication][CC0]. See the LICENSE file in this directory.
+This project is in the public domain. Copyright and related rights in the work worldwide are waived through the [CC0 1.0 Universal public domain dedication][cc0]. See the LICENSE file in this directory.
 
 All contributions to this project must be released under the same CC0 wavier. By submitting a pull request or patch, you are agreeing to comply with this waiver of copyright interest.
 
-[CC0]: http://creativecommons.org/publicdomain/zero/1.0/
+[cc0]: http://creativecommons.org/publicdomain/zero/1.0/
 
 ## Code of Conduct
 
