@@ -138,6 +138,8 @@ cat > $RCM_CONFIG <<EOF;
 \$config['login_username_filter'] = 'email';
 \$config['password_charset'] = 'UTF-8';
 \$config['junk_mbox'] = 'Spam';
+// Session lifetime in minutes
+\$config['session_lifetime'] = 60;
 \$config['ldap_public']['public'] = array(
     'name'              => 'Directory',
     'hosts'             => array('${LDAP_SERVER}'),
