@@ -63,6 +63,10 @@ tools/editconf.py /etc/php/$(php_version)/fpm/php.ini -c ';' \
 tools/editconf.py /etc/php/$(php_version)/fpm/pool.d/www.conf -c ';' \
 	env[PATH]=/usr/local/bin:/usr/bin:/bin \
 
+# Enable apc is required before installing nextcloud 21
+tools/editconf.py /etc/php/$(php_version)/mods-available/apcu.ini -c ';' \
+    apc.enabled=1
+
 # Configure php-fpm based on the amount of memory the machine has
 # This is based on the nextcloud manual for performance tuning: https://docs.nextcloud.com/server/17/admin_manual/installation/server_tuning.html
 # Some synchronisation issues can occur when many people access the site at once.
