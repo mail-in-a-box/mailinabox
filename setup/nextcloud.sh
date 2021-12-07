@@ -100,8 +100,8 @@ InstallNextcloud() {
 }
 
 # Nextcloud Version to install. Checks are done down below to step through intermediate versions.
-nextcloud_ver=21.0.7
-nextcloud_hash=f5c7079c5b56ce1e301c6a27c0d975d608bb01c9
+nextcloud_ver=22.2.3
+nextcloud_hash=58d2d897ba22a057aa03d29c762c5306211fefd2
 contacts_ver=4.0.0
 contacts_hash=f893ca57a543b260c9feeecbb5958c00b6998e18
 calendar_ver=2.2.2
@@ -184,12 +184,15 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 			CURRENT_NEXTCLOUD_VER="19.0.4"
 		fi
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^19 ]]; then
-			InstallNextcloud 19.0.4 01e98791ba12f4860d3d4047b9803f97a1b55c60 3.4.1 aee680a75e95f26d9285efd3c1e25cf7f3bfd27e 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
 			InstallNextcloud 20.0.14 92cac708915f51ee2afc1787fd845476fd090c81 4.0.0 f893ca57a543b260c9feeecbb5958c00b6998e18 2.2.2 923846d48afb5004a456b9079cf4b46d23b3ef3a 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
 			CURRENT_NEXTCLOUD_VER="20.0.14"
 			
 			# Nextcloud 20 needs to have some optional columns added
 			sudo -u www-data php /usr/local/lib/owncloud/occ db:add-missing-columns
+		fi
+		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^20 ]]; then
+			InstallNextcloud 21.0.7 f5c7079c5b56ce1e301c6a27c0d975d608bb01c9 4.0.0 f893ca57a543b260c9feeecbb5958c00b6998e18 2.2.2 923846d48afb5004a456b9079cf4b46d23b3ef3a 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
+			CURRENT_NEXTCLOUD_VER="21.0.7"
 		fi
 	fi
 
