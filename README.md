@@ -33,6 +33,8 @@ Functionality changes and additions
   Using check-dnsbl.py from https://github.com/gsauthof/utility
 * Updated ssl security for web and email  
   Removed older cryptos following internet.nl recommendations
+* Replace opendkim with dkimpy (https://launchpad.net/dkimpy-milter)
+  Added support for Ed25519 signing
 
 Bug fixes
 * Munin error report fixed [see github issue](https://github.com/mail-in-a-box/mailinabox/issues/1555)

@@ -91,12 +91,14 @@ tools/editconf.py /etc/postfix/master.cf -s -w \
 	  -o smtpd_tls_wrappermode=yes
 	  -o smtpd_sasl_auth_enable=yes
 	  -o syslog_name=postfix/submission
-	  -o smtpd_milters=inet:127.0.0.1:8891
+	  -o smtpd_milters=inet:127.0.0.1:8892
+	  -o milter_macro_daemon_name=VERIFYING
 	  -o cleanup_service_name=authclean" \
 	"submission=inet n       -       -       -       -       smtpd
 	  -o smtpd_sasl_auth_enable=yes
 	  -o syslog_name=postfix/submission
-	  -o smtpd_milters=inet:127.0.0.1:8891
+	  -o smtpd_milters=inet:127.0.0.1:8892
+	  -o milter_macro_daemon_name=ORIGINATING
 	  -o smtpd_tls_security_level=encrypt
 	  -o cleanup_service_name=authclean" \
 	"authclean=unix  n       -       -       -       0       cleanup
