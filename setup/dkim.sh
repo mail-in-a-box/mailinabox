@@ -54,9 +54,9 @@ if [ ! -f "$STORAGE_ROOT/mail/dkim2/box-rsa.key" ]; then
 	dknewkey --ktype ed25519 $STORAGE_ROOT/mail/dkim2/box-ed25519
 	
 	# Force them into the format dns_update.py expects
-	sed -i 's/v=DKIM1;/box-rsa._domainkey IN      TXT      ( "v=DKIM1;/' $STORAGE_ROOT/mail/dkim2/box-rsa.dns
+	sed -i 's/v=DKIM1;/box-rsa._domainkey IN      TXT      ( "v=DKIM1; s=email;/' $STORAGE_ROOT/mail/dkim2/box-rsa.dns
 	echo '" )' >> box-rsa.dns
-	sed -i 's/v=DKIM1;/box-ed25519._domainkey IN      TXT      ( "v=DKIM1;/' $STORAGE_ROOT/mail/dkim2/box-ed25519.dns
+	sed -i 's/v=DKIM1;/box-ed25519._domainkey IN      TXT      ( "v=DKIM1; s=email;/' $STORAGE_ROOT/mail/dkim2/box-ed25519.dns
 	echo '" )' >> box-ed25519.dns
 fi
 
