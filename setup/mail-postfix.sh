@@ -243,19 +243,19 @@ tools/editconf.py /etc/postfix/main.cf \
 # symlink without spaces that can point to a folder with spaces).  We'll just assume
 # $STORAGE_ROOT won't have spaces to simplify things.
 tools/editconf.py /etc/default/postgrey \
-	POSTGREY_OPTS=\""--inet=127.0.0.1:10023 --delay=180 --dbdir=$STORAGE_ROOT/mail/postgrey"\"
+	POSTGREY_OPTS=\""--inet=127.0.0.1:10023 --delay=180 --dbdir=$STORAGE_ROOT/mail/postgrey/db"\"
 
 # Make destination postgrey database directory under $STORAGE_ROOT
-mkdir -p $STORAGE_ROOT/mail/postgrey
+mkdir -p $STORAGE_ROOT/mail/postgrey/db
 
 # If the $STORAGE_ROOT/mail/postgrey is empty, copy the postgrey database over from the old location
-if [ ! "$(ls -A $STORAGE_ROOT/mail/postgrey)" ]; then
+if [ ! "$(ls -A $STORAGE_ROOT/mail/postgrey/db)" ]; then
 	# Stop the service
 	service postgrey stop
 	# Copy over the databse.
 	# We didn't cp -p to preserve perms since we have to chown the newly created directory above anyway.
 	# There really shouldn't be any folders in this path, but if there are for any reason cp fails without -r (recursive).
-	cp -r /var/lib/postgrey/* $STORAGE_ROOT/mail/postgrey/
+	cp -r /var/lib/postgrey/* $STORAGE_ROOT/mail/postgrey/db
 fi
 # Fix permissions
 chown -R postgrey:postgrey $STORAGE_ROOT/mail/postgrey/
