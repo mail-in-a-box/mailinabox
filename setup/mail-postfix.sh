@@ -252,8 +252,10 @@ mkdir -p $STORAGE_ROOT/mail/postgrey
 if [ ! "$(ls -A $STORAGE_ROOT/mail/postgrey)" ]; then
 	# Stop the service
 	service postgrey stop
-	# Copy over the databse, we didn't cp -p to preserve perms since we have to chown the newly created directory above anyway
-	cp /var/lib/postgrey/* $STORAGE_ROOT/mail/postgrey/
+	# Copy over the databse.
+	# We didn't cp -p to preserve perms since we have to chown the newly created directory above anyway.
+	# There really shouldn't be any folders in this path, but if there are for any reason cp fails without -r (recursive).
+	cp -r /var/lib/postgrey/* $STORAGE_ROOT/mail/postgrey/
 fi
 # Fix permissions
 chown -R postgrey:postgrey $STORAGE_ROOT/mail/postgrey/
