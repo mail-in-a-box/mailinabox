@@ -237,31 +237,17 @@ tools/editconf.py /etc/default/postgrey \
 	POSTGREY_OPTS=\"'--inet=127.0.0.1:10023 --delay=180'\"
 
 
-# We are going to setup a newer whitelist for postgrey, the version included in the distribution is old
-cat > /etc/cron.daily/mailinabox-postgrey-whitelist << EOF;
-#!/bin/bash
+# The postgrey_whitelist_clients from the maintainer's site is newer than the version in Ubuntu's .deb, but still hasn't
+# been updated since 2019. Lets just pull down the latest version once. (see #2072)
+postgrey_whitelist_clients_hash=f2f27e75249ed30ebf93363e4fd63c6208c23266
 
-# Mail-in-a-Box
-
-# check we have a postgrey_whitelist_clients file and that it is not older than 28 days
-if [ ! -f /etc/postgrey/whitelist_clients ] || find /etc/postgrey/whitelist_clients -mtime +28 | grep -q '.' ; then
-    # ok we need to update the file, so lets try to fetch it
-    if curl https://postgrey.schweikert.ch/pub/postgrey_whitelist_clients --output /tmp/postgrey_whitelist_clients -sS --fail > /dev/null 2>&1 ; then
-        # if fetching hasn't failed yet then check it is a plain text file
-        # curl manual states that --fail sometimes still produces output
-        # this final check will at least check the output is not html
-        # before moving it into place
-        if [ "\$(file -b --mime-type /tmp/postgrey_whitelist_clients)" == "text/plain" ]; then
-            mv /tmp/postgrey_whitelist_clients /etc/postgrey/whitelist_clients
-            service postgrey restart
-	else
-            rm /tmp/postgrey_whitelist_clients
-        fi
-    fi
+if ! echo "$postgrey_whitelist_clients_hash  /etc/postgrey/whitelist_clients" | sha1sum --check --strict > /dev/null; then
+        wget_verify https://postgrey.schweikert.ch/pub/postgrey_whitelist_clients $postgrey_whitelist_clients_hash /tmp/whitelist_clients
+        mv /tmp/whitelist_clients /etc/postgrey/whitelist_clients
 fi
-EOF
-chmod +x /etc/cron.daily/mailinabox-postgrey-whitelist
-/etc/cron.daily/mailinabox-postgrey-whitelist
+
+# Remove old cronjob
+rm -f /etc/cron.daily/mailinabox-postgrey-whitelist
 
 # Increase the message size limit from 10MB to 128MB.
 # The same limit is specified in nginx.conf for mail submitted via webmail and Z-Push.
