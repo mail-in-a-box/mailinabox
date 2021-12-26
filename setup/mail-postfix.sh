@@ -245,21 +245,19 @@ tools/editconf.py /etc/postfix/main.cf \
 tools/editconf.py /etc/default/postgrey \
 	POSTGREY_OPTS=\""--inet=127.0.0.1:10023 --delay=180 --dbdir=$STORAGE_ROOT/mail/postgrey/db"\"
 
-# Make destination postgrey database directory under $STORAGE_ROOT
-mkdir -p $STORAGE_ROOT/mail/postgrey/db
 
 # If the $STORAGE_ROOT/mail/postgrey is empty, copy the postgrey database over from the old location
-if [ ! "$(ls -A $STORAGE_ROOT/mail/postgrey/db)" ]; then
+if [ ! -d $STORAGE_ROOT/mail/postgrey/db ]; then
 	# Stop the service
 	service postgrey stop
-	# Copy over the databse.
-	# We didn't cp -p to preserve perms since we have to chown the newly created directory above anyway.
-	# There really shouldn't be any folders in this path, but if there are for any reason cp fails without -r (recursive).
-	cp -r /var/lib/postgrey/* $STORAGE_ROOT/mail/postgrey/db
+	# Ensure the new base path for postgrey exists
+	mkdir -p $STORAGE_ROOT/mail/postgrey
+	# Move over database
+	mv /var/lib/postgrey $STORAGE_ROOT/mail/postgrey/db
 fi
-# Fix permissions
+# Ensure permissions are set
 chown -R postgrey:postgrey $STORAGE_ROOT/mail/postgrey/
-chmod 700 $STORAGE_ROOT/mail/postgrey/
+chmod 700 $STORAGE_ROOT/mail/postgrey/{,db}
 
 # We are going to setup a newer whitelist for postgrey, the version included in the distribution is old
 cat > /etc/cron.daily/mailinabox-postgrey-whitelist << EOF;
