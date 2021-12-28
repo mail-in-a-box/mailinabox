@@ -15,7 +15,7 @@ apt_install dkimpy-milter opendmarc
 
 # Make sure configuration directories exist.
 mkdir -p /etc/dkim;
-mkdir -p $STORAGE_ROOT/mail/dkim2
+mkdir -p $STORAGE_ROOT/mail/dkim
 
 # Used in InternalHosts and ExternalIgnoreList configuration directives.
 # Not quite sure why.
@@ -48,21 +48,21 @@ fi
 # in our DNS setup. Note that the files are named after the
 # 'selector' of the key, which we can change later on to support
 # key rotation.
-if [ ! -f "$STORAGE_ROOT/mail/dkim2/box-rsa.key" ]; then
+if [ ! -f "$STORAGE_ROOT/mail/dkim/box-rsa.key" ]; then
 	# All defaults are supposed to be ok, default key for rsa is 2048 bit
-	dknewkey --ktype rsa $STORAGE_ROOT/mail/dkim2/box-rsa
-	dknewkey --ktype ed25519 $STORAGE_ROOT/mail/dkim2/box-ed25519
+	dknewkey --ktype rsa $STORAGE_ROOT/mail/dkim/box-rsa
+	dknewkey --ktype ed25519 $STORAGE_ROOT/mail/dkim/box-ed25519
 	
 	# Force them into the format dns_update.py expects
-	sed -i 's/v=DKIM1;/box-rsa._domainkey IN      TXT      ( "v=DKIM1; s=email;/' $STORAGE_ROOT/mail/dkim2/box-rsa.dns
+	sed -i 's/v=DKIM1;/box-rsa._domainkey IN      TXT      ( "v=DKIM1; s=email;/' $STORAGE_ROOT/mail/dkim/box-rsa.dns
 	echo '" )' >> box-rsa.dns
-	sed -i 's/v=DKIM1;/box-ed25519._domainkey IN      TXT      ( "v=DKIM1; s=email;/' $STORAGE_ROOT/mail/dkim2/box-ed25519.dns
+	sed -i 's/v=DKIM1;/box-ed25519._domainkey IN      TXT      ( "v=DKIM1; s=email;/' $STORAGE_ROOT/mail/dkim/box-ed25519.dns
 	echo '" )' >> box-ed25519.dns
 fi
 
 # Ensure files are owned by the dkimpy-milter user and are private otherwise.
-chown -R dkimpy-milter:dkimpy-milter $STORAGE_ROOT/mail/dkim2
-chmod go-rwx $STORAGE_ROOT/mail/dkim2
+chown -R dkimpy-milter:dkimpy-milter $STORAGE_ROOT/mail/dkim
+chmod go-rwx $STORAGE_ROOT/mail/dkim
 
 tools/editconf.py /etc/opendmarc.conf -s \
 	"Syslog=true" \

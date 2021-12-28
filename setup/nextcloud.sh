@@ -100,8 +100,8 @@ InstallNextcloud() {
 }
 
 # Nextcloud Version to install. Checks are done down below to step through intermediate versions.
-nextcloud_ver=20.0.14
-nextcloud_hash=92cac708915f51ee2afc1787fd845476fd090c81
+nextcloud_ver=22.2.3
+nextcloud_hash=58d2d897ba22a057aa03d29c762c5306211fefd2
 contacts_ver=4.0.0
 contacts_hash=f893ca57a543b260c9feeecbb5958c00b6998e18
 calendar_ver=2.2.2
@@ -167,28 +167,37 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 			CURRENT_NEXTCLOUD_VER="15.0.8"
 		fi
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^15 ]]; then
-                        InstallNextcloud 16.0.6 0bb3098455ec89f5af77a652aad553ad40a88819 3.3.0 e55d0357c6785d3b1f3b5f21780cb6d41d32443a 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466 0.7.0 555a94811daaf5bdd336c5e48a78aa8567b86437
-                        CURRENT_NEXTCLOUD_VER="16.0.6"
-        	fi
-	        if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^16 ]]; then
-                        InstallNextcloud 17.0.6 50b98d2c2f18510b9530e558ced9ab51eb4f11b0 3.3.0 e55d0357c6785d3b1f3b5f21780cb6d41d32443a 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466 0.7.0 555a94811daaf5bdd336c5e48a78aa8567b86437
-                        CURRENT_NEXTCLOUD_VER="17.0.6"
-	        fi
-	        if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^17 ]]; then
-			echo "ALTER TABLE oc_flow_operations ADD COLUMN entity VARCHAR;" | sqlite3 $STORAGE_ROOT/owncloud/owncloud.db
-                        InstallNextcloud 18.0.10 39c0021a8b8477c3f1733fddefacfa5ebf921c68 3.4.1 aee680a75e95f26d9285efd3c1e25cf7f3bfd27e 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
-                        CURRENT_NEXTCLOUD_VER="18.0.10"
-	        fi
-	        if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^18 ]]; then
-                        InstallNextcloud 19.0.4 01e98791ba12f4860d3d4047b9803f97a1b55c60 3.4.1 aee680a75e95f26d9285efd3c1e25cf7f3bfd27e 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
-                        CURRENT_NEXTCLOUD_VER="19.0.4"
-	        fi
+			InstallNextcloud 16.0.6 0bb3098455ec89f5af77a652aad553ad40a88819 3.3.0 e55d0357c6785d3b1f3b5f21780cb6d41d32443a 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466 0.7.0 555a94811daaf5bdd336c5e48a78aa8567b86437
+			CURRENT_NEXTCLOUD_VER="16.0.6"
+		fi
+        if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^16 ]]; then
+			InstallNextcloud 17.0.6 50b98d2c2f18510b9530e558ced9ab51eb4f11b0 3.3.0 e55d0357c6785d3b1f3b5f21780cb6d41d32443a 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466 0.7.0 555a94811daaf5bdd336c5e48a78aa8567b86437
+			CURRENT_NEXTCLOUD_VER="17.0.6"
+        fi
+        if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^17 ]]; then
+        	# Don't exit the install if this column already exists (see #2076)
+			(echo "ALTER TABLE oc_flow_operations ADD COLUMN entity VARCHAR;" | sqlite3 $STORAGE_ROOT/owncloud/owncloud.db 2>/dev/null) || true
+            InstallNextcloud 18.0.10 39c0021a8b8477c3f1733fddefacfa5ebf921c68 3.4.1 aee680a75e95f26d9285efd3c1e25cf7f3bfd27e 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
+            CURRENT_NEXTCLOUD_VER="18.0.10"
+	    fi
+		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^18 ]]; then
+			InstallNextcloud 19.0.4 01e98791ba12f4860d3d4047b9803f97a1b55c60 3.4.1 aee680a75e95f26d9285efd3c1e25cf7f3bfd27e 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
+			CURRENT_NEXTCLOUD_VER="19.0.4"
+		fi
+		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^19 ]]; then
+			InstallNextcloud 20.0.14 92cac708915f51ee2afc1787fd845476fd090c81 4.0.0 f893ca57a543b260c9feeecbb5958c00b6998e18 2.2.2 923846d48afb5004a456b9079cf4b46d23b3ef3a 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
+			CURRENT_NEXTCLOUD_VER="20.0.14"
+			
+			# Nextcloud 20 needs to have some optional columns added
+			sudo -u www-data php /usr/local/lib/owncloud/occ db:add-missing-columns
+		fi
+		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^20 ]]; then
+			InstallNextcloud 21.0.7 f5c7079c5b56ce1e301c6a27c0d975d608bb01c9 4.0.0 f893ca57a543b260c9feeecbb5958c00b6998e18 2.2.2 923846d48afb5004a456b9079cf4b46d23b3ef3a 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
+			CURRENT_NEXTCLOUD_VER="21.0.7"
+		fi
 	fi
 
 	InstallNextcloud $nextcloud_ver $nextcloud_hash $contacts_ver $contacts_hash $calendar_ver $calendar_hash $user_external_ver $user_external_hash
-
-	# Nextcloud 20 needs to have some optional columns added
-	sudo -u www-data php /usr/local/lib/owncloud/occ db:add-missing-columns
 fi
 
 # ### Configuring Nextcloud
@@ -358,12 +367,6 @@ tools/editconf.py /etc/php/$(php_version)/cli/conf.d/10-opcache.ini -c ';' \
 	opcache.memory_consumption=128 \
 	opcache.save_comments=1 \
 	opcache.revalidate_freq=1
-
-# If apc is explicitly disabled we need to enable it
-if grep -q apc.enabled=0 /etc/php/$(php_version)/mods-available/apcu.ini; then
-	tools/editconf.py /etc/php/$(php_version)/mods-available/apcu.ini -c ';' \
-		apc.enabled=1
-fi
 
 # Set up a cron job for Nextcloud.
 cat > /etc/cron.d/mailinabox-nextcloud << EOF;
