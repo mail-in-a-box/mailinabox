@@ -181,7 +181,8 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
                         CURRENT_NEXTCLOUD_VER="17.0.6"
 	        fi
 	        if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^17 ]]; then
-			echo "ALTER TABLE oc_flow_operations ADD COLUMN entity VARCHAR;" | sqlite3 $STORAGE_ROOT/owncloud/owncloud.db
+			# Don't exit the install if this column already exists (see #2076)
+			(echo "ALTER TABLE oc_flow_operations ADD COLUMN entity VARCHAR;" | sqlite3 $STORAGE_ROOT/owncloud/owncloud.db 2>/dev/null) || true
                         InstallNextcloud 18.0.10 39c0021a8b8477c3f1733fddefacfa5ebf921c68 3.4.1 aee680a75e95f26d9285efd3c1e25cf7f3bfd27e 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
                         CURRENT_NEXTCLOUD_VER="18.0.10"
 	        fi
