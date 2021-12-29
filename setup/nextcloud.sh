@@ -49,11 +49,23 @@ InstallNextcloud() {
 	# their github repositories.
 	mkdir -p /usr/local/lib/owncloud/apps
 
-	wget_verify https://github.com/nextcloud/contacts/releases/download/v$version_contacts/contacts.tar.gz $hash_contacts /tmp/contacts.tgz
+	contacts_cutoff="3.5.1" # this version was the last posted version on 12/27/2021 that supported the old url format
+	if [ ${contacts_cutoff//.} -gt ${version_contacts//.} ]; then
+		wget_verify https://github.com/nextcloud/contacts/releases/download/v$version_contacts/contacts.tar.gz $hash_contacts /tmp/contacts.tgz
+	else
+		wget_verify https://github.com/nextcloud-releases/contacts/releases/download/v$version_contacts/contacts-v$version_contacts.tar.gz $hash_contacts /tmp/contacts.tgz
+	fi
+
 	tar xf /tmp/contacts.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/contacts.tgz
 
-	wget_verify https://github.com/nextcloud/calendar/releases/download/v$version_calendar/calendar.tar.gz $hash_calendar /tmp/calendar.tgz
+	calendar_cutoff="2.0.5" # this version was the last posted version on 12/27/2021 that supported the old url format
+	if [ ${calendar_cutoff//.} -gt ${version_calendar//.} ]; then
+		wget_verify https://github.com/nextcloud/calendar/releases/download/v$version_calendar/calendar.tar.gz $hash_calendar /tmp/calendar.tgz
+	else
+		wget_verify https://github.com/nextcloud-releases/calendar/releases/download/v$version_calendar/calendar.tar.gz $hash_calendar /tmp/calendar.tgz
+	fi
+
 	tar xf /tmp/calendar.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/calendar.tgz
 
@@ -102,12 +114,12 @@ InstallNextcloud() {
 # Nextcloud Version to install. Checks are done down below to step through intermediate versions.
 nextcloud_ver=22.2.3
 nextcloud_hash=58d2d897ba22a057aa03d29c762c5306211fefd2
-contacts_ver=4.0.0
-contacts_hash=f893ca57a543b260c9feeecbb5958c00b6998e18
-calendar_ver=2.2.2
-calendar_hash=923846d48afb5004a456b9079cf4b46d23b3ef3a
-user_external_ver=1.0.0
-user_external_hash=3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
+contacts_ver=4.0.7
+contacts_hash=8ab31d205408e4f12067d8a4daa3595d46b513e3
+calendar_ver=3.0.2
+calendar_hash=dcc62633f81c2cb53ce202348c79a0ab5bf4c9a8
+user_external_ver=2.1.0
+user_external_hash=6e5afe7f36f398f864bfdce9cad72200e70322aa
 
 # Current Nextcloud Version, #1623
 # Checking /usr/local/lib/owncloud/version.php shows version of the Nextcloud application, not the DB
