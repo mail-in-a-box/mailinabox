@@ -36,8 +36,8 @@ HTML5_NOTIFIER_VERSION=68d9ca194212e15b3c7225eb6085dbcf02fd13d7 # version 0.6.4+
 CONTEXT_MENU_VERSION=602a3812922fb8f71814eb3b8d91e9b7859aab7e # version 3.2.1
 TWOFACT_COMMIT=a3944c4604fe86fc020847f281beea031e14e58e # master @ 17-10-2021
 
-CARDDAV_VERSION=4.1.1
-CARDDAV_HASH=87b73661b7799b2079c28324311eddb4241242bb
+CARDDAV_VERSION=4.3.0
+CARDDAV_HASH=4ad7df8843951062878b1375f77c614f68bc5c61
 
 UPDATE_KEY=$VERSION:$PERSISTENT_LOGIN_VERSION:$HTML5_NOTIFIER_VERSION:$CARDDAV_VERSION:$CONTEXT_MENU_VERSION:$TWOFACT_COMMIT
 
@@ -78,7 +78,7 @@ if [ $needs_update == 1 ]; then
 	# install roundcube html5_notifier plugin
 	git_clone https://github.com/kitist/html5_notifier.git $HTML5_NOTIFIER_VERSION '' ${RCM_PLUGIN_DIR}/html5_notifier
 
-	# download and verify the full release of the carddav plugin. Can't use github because does not include all dependencies
+	# download and verify the full release of the carddav plugin. Can't use git_clone because repository does not include all dependencies
 	wget_verify \
 		https://github.com/mstilkerich/rcmcarddav/releases/download/v${CARDDAV_VERSION}/carddav-v${CARDDAV_VERSION}.tar.gz \
 		$CARDDAV_HASH \
