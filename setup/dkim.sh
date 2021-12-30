@@ -11,7 +11,7 @@ source /etc/mailinabox.conf # load global vars
 
 # Install DKIM...
 echo Installing DKIMpy/OpenDMARC...
-apt_install dkimpy-milter opendmarc
+apt_install dkimpy-milter python3-dkim opendmarc
 
 # Make sure configuration directories exist.
 mkdir -p /etc/dkim;
@@ -120,6 +120,9 @@ tools/editconf.py /etc/postfix/main.cf \
 
 # We need to explicitly enable the opendmarc service, or it will not start
 hide_output systemctl enable opendmarc
+
+# There is a fault in the dkim code for Ubuntu 20.04, let's fix it. Not necessary for Ubuntu 21.04 or newer
+sed -i 's/return b""\.join(r\.items\[0\]\.strings)/return b""\.join(list(r\.items)\[0\]\.strings)/' /usr/lib/python3/dist-packages/dkim/dnsplug.py
 
 # Restart services.
 restart_service dkimpy-milter
