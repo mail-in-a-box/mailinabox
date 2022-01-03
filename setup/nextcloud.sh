@@ -18,7 +18,10 @@ apt_install php php-fpm \
 
 # Enable apc is required before installing nextcloud 21
 tools/editconf.py /etc/php/$(php_version)/mods-available/apcu.ini -c ';' \
-    apc.enabled=1
+    apc.enabled=1 \
+    apc.enable_cli=1
+    
+restart_service php$(php_version)-fpm
 
 InstallNextcloud() {
 
