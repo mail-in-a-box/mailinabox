@@ -25,22 +25,18 @@ echo "127.0.0.1" > /etc/dkim/TrustedHosts
 touch /etc/dkim/KeyTable
 touch /etc/dkim/SigningTable
 
-if grep -q "ExternalIgnoreList" /etc/dkimpy-milter/dkimpy-milter.conf; then
-	true # already done #NODOC
-else
-	# Add various configuration options to the end of `dkimpy-milter.conf`.
-	cat >> /etc/dkimpy-milter/dkimpy-milter.conf << EOF;
-Canonicalization		relaxed/simple
-MinimumKeyBits          1024
-ExternalIgnoreList      refile:/etc/dkim/TrustedHosts
-InternalHosts           refile:/etc/dkim/TrustedHosts
-KeyTable                refile:/etc/dkim/KeyTable
-KeyTableEd25519         refile:/etc/dkim/KeyTableEd25519
-SigningTable            refile:/etc/dkim/SigningTable
-Socket                  inet:8892@127.0.0.1
-RequireSafeKeys         false
-EOF
-fi
+tools/editconf.py /etc/dkimpy-milter/dkimpy-milter.conf -s \
+    "MacroList=daemon_name|ORIGINATING"
+    "MacroListVerify=daemon_name|VERIFYING"
+    "Canonicalization=relaxed/simple"
+    "MinimumKeyBits=1024"
+    "ExternalIgnoreList=refile:/etc/dkim/TrustedHosts"
+    "InternalHosts=refile:/etc/dkim/TrustedHosts"
+    "KeyTable=refile:/etc/dkim/KeyTable"
+    "KeyTableEd25519=refile:/etc/dkim/KeyTableEd25519"
+    "SigningTable=refile:/etc/dkim/SigningTable"
+    "Socket=inet:8892@127.0.0.1"
+    "RequireSafeKeys=false"
 
 # Create a new DKIM key. This creates mail.private and mail.txt
 # in $STORAGE_ROOT/mail/dkim. The former is the private key and

@@ -16,6 +16,12 @@ apt_install php php-fpm \
 	php-dev php-gd php-xml php-mbstring php-zip php-apcu php-json \
 	php-intl php-imagick php-gmp php-bcmath
 
+# Enable apc is required before installing nextcloud 21
+tools/editconf.py /etc/php/$(php_version)/mods-available/apcu.ini -c ';' \
+    apc.enable_cli=1
+
+restart_service php$(php_version)-fpm
+
 InstallNextcloud() {
 
 	version=$1
@@ -341,7 +347,7 @@ sudo -u www-data \
 	| (grep -v "No such app enabled" || /bin/true)
 
 # Install interesting apps
-installed=$(sudo -u www-data php /usr/local/lib/owncloud/occ app:list | grep 'notes')
+installed=$(sudo -u www-data php /usr/local/lib/owncloud/occ app:list | grep "notes")
 
 if [ -z "$installed" ]; then
     sudo -u www-data php /usr/local/lib/owncloud/occ app:install notes
