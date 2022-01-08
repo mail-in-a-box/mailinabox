@@ -1,12 +1,25 @@
 CHANGELOG
 =========
 
-
 In Development
 --------------
 
+Setup:
+
+* Fixed failed setup if a previous attempt failed while updating Nextcloud.
+
 Mail:
+
 * Roundcube's persistent_login plugin update to better support Roundcube 1.5
+
+Control panel:
+
+* Fixed a crash if a custom DNS entry is not under a zone managed by the box.
+* Fix DNSSEC instructions typo.
+
+Other:
+
+* Fixed log processing for submission lines that have a sasl_sender or other extra information.
 
 Version 55 (October 18, 2021)
 -----------------------------
