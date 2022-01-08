@@ -304,12 +304,14 @@ def dns_get_records(qname=None, rtype=None):
 
 	# Make a better data structure.
 	records = [
-        {
-                "qname": r[0],
-                "rtype": r[1],
-                "value": r[2],
-		"sort-order": { },
-        } for r in records ]
+		{
+			"qname": r[0],
+			"rtype": r[1],
+			"value": r[2],
+			"ttl": r[3],
+			"sort-order": { },
+		}
+		for r in records ]
 
 	# To help with grouping by zone in qname sorting, label each record with which zone it is in.
 	# There's an inconsistency in how we handle zones in get_dns_zones and in sort_domains, so
@@ -349,7 +351,21 @@ def dns_set_record(qname, rtype="A"):
 
 		# Read the record value from the request BODY, which must be
 		# ASCII-only. Not used with GET.
-		value = request.stream.read().decode("ascii", "ignore").strip()
+		rec = request.form
+		value = ""
+		ttl = None
+
+		if isinstance(rec, dict):
+			value = request.form.get("value", "")
+			ttl = request.form.get("ttl", None)
+		else:
+			value = request.stream.read().decode("ascii", "ignore").strip()
+
+		if ttl is not None:
+			try:
+				ttl = int(ttl)
+			except Exception:
+				ttl = None
 
 		if request.method == "GET":
 			# Get the existing records matching the qname and rtype.
@@ -383,7 +399,7 @@ def dns_set_record(qname, rtype="A"):
 				pass
 			action = "remove"
 
-		if set_custom_dns_record(qname, rtype, value, action, env):
+		if set_custom_dns_record(qname, rtype, value, action, env, ttl = ttl):
 			return do_dns_update(env) or "Something isn't right."
 		return "OK"
 
