@@ -75,6 +75,13 @@ then
 	fi
 fi
 
+# ### Set log retention policy.
+
+# Set the systemd journal log retention from infinite to 10 days,
+# since over time the logs take up a large amount of space.
+# (See https://discourse.mailinabox.email/t/journalctl-reclaim-space-on-small-mailinabox/6728/11.)
+tools/editconf.py /etc/systemd/journald.conf MaxRetentionSec=10day
+
 # ### Add PPAs.
 
 # We install some non-standard Ubuntu packages maintained by other
