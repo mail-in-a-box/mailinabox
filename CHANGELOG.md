@@ -22,6 +22,7 @@ Other:
 
 * Set systemd journald log retention to 10 days (from no limit) to reduce disk usage.
 * Fixed log processing for submission lines that have a sasl_sender or other extra information.
+* Fix DNS secondary nameserver refesh failure retry period.
 
 Version 55 (October 18, 2021)
 -----------------------------
