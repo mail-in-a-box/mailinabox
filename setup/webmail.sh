@@ -28,13 +28,19 @@ apt_install \
 # Install Roundcube from source if it is not already present or if it is out of date.
 # Combine the Roundcube version number with the commit hash of plugins to track
 # whether we have the latest version of everything.
-
-VERSION=1.4.11
-HASH=3877f0e70f29e7d0612155632e48c3db1e626be3
-PERSISTENT_LOGIN_VERSION=6b3fc450cae23ccb2f393d0ef67aa319e877e435 # version 5.2.0
+# For the latest versions, see:
+#   https://github.com/roundcube/roundcubemail/releases
+#   https://github.com/mfreiholz/persistent_login/commits/master
+#   https://github.com/stremlau/html5_notifier/commits/master
+#   https://github.com/mstilkerich/rcmcarddav/releases
+# The easiest way to get the package hashes is to run this script and get the hash from
+# the error message.
+VERSION=1.5.2
+HASH=208ce4ca0be423cc0f7070ff59bd03588b4439bf
+PERSISTENT_LOGIN_VERSION=59ca1b0d3a02cff5fa621c1ad581d15f9d642fe8
 HTML5_NOTIFIER_VERSION=68d9ca194212e15b3c7225eb6085dbcf02fd13d7 # version 0.6.4+
-CARDDAV_VERSION=3.0.3
-CARDDAV_HASH=d1e3b0d851ffa2c6bd42bf0c04f70d0e1d0d78f8
+CARDDAV_VERSION=4.3.0
+CARDDAV_HASH=4ad7df8843951062878b1375f77c614f68bc5c61
 
 UPDATE_KEY=$VERSION:$PERSISTENT_LOGIN_VERSION:$HTML5_NOTIFIER_VERSION:$CARDDAV_VERSION
 
@@ -77,13 +83,13 @@ if [ $needs_update == 1 ]; then
 
 	# download and verify the full release of the carddav plugin
 	wget_verify \
-		https://github.com/blind-coder/rcmcarddav/releases/download/v${CARDDAV_VERSION}/carddav-${CARDDAV_VERSION}.zip \
+		https://github.com/blind-coder/rcmcarddav/releases/download/v${CARDDAV_VERSION}/carddav-v${CARDDAV_VERSION}.tar.gz \
 		$CARDDAV_HASH \
-		/tmp/carddav.zip
+		/tmp/carddav.tar.gz
 
 	# unzip and cleanup
-	unzip -q /tmp/carddav.zip -d ${RCM_PLUGIN_DIR}
-	rm -f /tmp/carddav.zip
+	tar -C ${RCM_PLUGIN_DIR} -zxf /tmp/carddav.tar.gz
+	rm -f /tmp/carddav.tar.gz
 
 	# record the version we've installed
 	echo $UPDATE_KEY > ${RCM_DIR}/version
@@ -132,6 +138,7 @@ cat > $RCM_CONFIG <<EOF;
 \$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'persistent_login', 'carddav');
 \$config['skin'] = 'elastic';
 \$config['login_autocomplete'] = 2;
+\$config['login_username_filter'] = 'email';
 \$config['password_charset'] = 'UTF-8';
 \$config['junk_mbox'] = 'Spam';
 ?>

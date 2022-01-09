@@ -484,7 +484,7 @@ def write_nsd_zone(domain, zonefile, records, env, force):
 	# @ the PRIMARY_HOSTNAME. Hopefully that's legit.
 	#
 	# For the refresh through TTL fields, a good reference is:
-	# http://www.peerwisdom.org/2013/05/15/dns-understanding-the-soa-record/
+	# https://www.ripe.net/publications/docs/ripe-203
 	#
 	# A hash of the available DNSSEC keys are added in a comment so that when
 	# the keys change we force a re-generation of the zone which triggers
@@ -497,7 +497,7 @@ $TTL 86400          ; default time to live
 @ IN SOA ns1.{primary_domain}. hostmaster.{primary_domain}. (
            __SERIAL__     ; serial number
            7200     ; Refresh (secondary nameserver update interval)
-           86400    ; Retry (when refresh fails, how often to try again)
+           3600     ; Retry (when refresh fails, how often to try again, should be lower than the refresh)
            1209600  ; Expire (when refresh fails, how long secondary nameserver will keep records around anyway)
            86400    ; Negative TTL (how long negative responses are cached)
            )
@@ -604,7 +604,7 @@ def get_dns_zonefile(zone, env):
 
 def write_nsd_conf(zonefiles, additional_records, env):
 	# Write the list of zones to a configuration file.
-	nsd_conf_file = "/etc/nsd/zones.conf"
+	nsd_conf_file = "/etc/nsd/nsd.conf.d/zones.conf"
 	nsdconf = ""
 
 	# Append the zones.

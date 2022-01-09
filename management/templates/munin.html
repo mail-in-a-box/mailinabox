@@ -1,0 +1,20 @@
+<h2>Munin Monitoring</h2>
+
+<style>
+</style>
+
+<p>Opening munin in a new tab... You may need to allow pop-ups for this site.</p>
+
+<script>
+function show_munin() {
+  // Set the cookie.
+  api(
+    "/munin",
+    "GET",
+    { },
+    function(r) {
+      // Redirect.
+      window.open("/admin/munin/index.html", "_blank");
+    });
+}
+</script>

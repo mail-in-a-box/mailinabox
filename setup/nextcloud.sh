@@ -9,6 +9,39 @@ source /etc/mailinabox.conf # load global vars
 
 echo "Installing Nextcloud (contacts/calendar)..."
 
+# Nextcloud core and app (plugin) versions to install.
+# With each version we store a hash to ensure we install what we expect.
+
+# Nextcloud core
+# --------------
+# * See https://nextcloud.com/changelog for the latest version.
+# * Check https://docs.nextcloud.com/server/latest/admin_manual/installation/system_requirements.html
+#   for whether it supports the version of PHP available on this machine.
+# * Since Nextcloud only supports upgrades from consecutive major versions,
+#   we automatically install intermediate versions as needed.
+# * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
+#   copying it from the error message when it doesn't match what is below.
+nextcloud_ver=20.0.14
+nextcloud_hash=92cac708915f51ee2afc1787fd845476fd090c81
+
+# Nextcloud apps
+# --------------
+# * Find the most recent tag that is compatible with the Nextcloud version above by
+#   consulting the <dependencies>...<nextcloud> node at:
+#   https://github.com/nextcloud-releases/contacts/blob/maaster/appinfo/info.xml
+#   https://github.com/nextcloud-releases/calendar/blob/master/appinfo/info.xml
+#   https://github.com/nextcloud/user_external/blob/master/appinfo/info.xml
+# * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
+#   copying it from the error message when it doesn't match what is below.
+contacts_ver=4.0.7
+contacts_hash=8ab31d205408e4f12067d8a4daa3595d46b513e3
+calendar_ver=3.0.4
+calendar_hash=6fb1e998d307c53245faf1c37a96eb982bbee8ba
+user_external_ver=1.0.0
+user_external_hash=3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
+
+# Clear prior packages and install dependencies from apt.
+
 apt-get purge -qq -y owncloud* # we used to use the package manager
 
 apt_install php php-fpm \
@@ -46,11 +79,11 @@ InstallNextcloud() {
 	# their github repositories.
 	mkdir -p /usr/local/lib/owncloud/apps
 
-	wget_verify https://github.com/nextcloud/contacts/releases/download/v$version_contacts/contacts.tar.gz $hash_contacts /tmp/contacts.tgz
+	wget_verify https://github.com/nextcloud-releases/contacts/releases/download/v$version_contacts/contacts-v$version_contacts.tar.gz $hash_contacts /tmp/contacts.tgz
 	tar xf /tmp/contacts.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/contacts.tgz
 
-	wget_verify https://github.com/nextcloud/calendar/releases/download/v$version_calendar/calendar.tar.gz $hash_calendar /tmp/calendar.tgz
+	wget_verify https://github.com/nextcloud-releases/calendar/releases/download/v$version_calendar/calendar-v$version_calendar.tar.gz $hash_calendar /tmp/calendar.tgz
 	tar xf /tmp/calendar.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/calendar.tgz
 
@@ -95,16 +128,6 @@ InstallNextcloud() {
 		sudo -u www-data php /usr/local/lib/owncloud/occ db:convert-filecache-bigint --no-interaction
 	fi
 }
-
-# Nextcloud Version to install. Checks are done down below to step through intermediate versions.
-nextcloud_ver=20.0.8
-nextcloud_hash=372b0b4bb07c7984c04917aff86b280e68fbe761
-contacts_ver=3.5.1
-contacts_hash=d2ffbccd3ed89fa41da20a1dff149504c3b33b93
-calendar_ver=2.2.0
-calendar_hash=673ad72ca28adb8d0f209015ff2dca52ffad99af
-user_external_ver=1.0.0
-user_external_hash=3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
 
 # Current Nextcloud Version, #1623
 # Checking /usr/local/lib/owncloud/version.php shows version of the Nextcloud application, not the DB
@@ -172,7 +195,8 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
                         CURRENT_NEXTCLOUD_VER="17.0.6"
 	        fi
 	        if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^17 ]]; then
-			echo "ALTER TABLE oc_flow_operations ADD COLUMN entity VARCHAR;" | sqlite3 $STORAGE_ROOT/owncloud/owncloud.db
+			# Don't exit the install if this column already exists (see #2076)
+			(echo "ALTER TABLE oc_flow_operations ADD COLUMN entity VARCHAR;" | sqlite3 $STORAGE_ROOT/owncloud/owncloud.db 2>/dev/null) || true
                         InstallNextcloud 18.0.10 39c0021a8b8477c3f1733fddefacfa5ebf921c68 3.4.1 aee680a75e95f26d9285efd3c1e25cf7f3bfd27e 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
                         CURRENT_NEXTCLOUD_VER="18.0.10"
 	        fi

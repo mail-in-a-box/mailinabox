@@ -23,6 +23,7 @@ if [ ! -f $db_path ]; then
 	echo "CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL UNIQUE, password TEXT NOT NULL, extra, privileges TEXT NOT NULL DEFAULT '');" | sqlite3 $db_path;
 	echo "CREATE TABLE aliases (id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT NOT NULL UNIQUE, destination TEXT NOT NULL, permitted_senders TEXT);" | sqlite3 $db_path;
 	echo "CREATE TABLE mfa (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, type TEXT NOT NULL, secret TEXT NOT NULL, mru_token TEXT, label TEXT, FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE);" | sqlite3 $db_path;
+	echo "CREATE TABLE auto_aliases (id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT NOT NULL UNIQUE, destination TEXT NOT NULL, permitted_senders TEXT);" | sqlite3 $db_path;
 fi
 
 # ### User Authentication
@@ -100,8 +101,12 @@ EOF
 # ### Destination Validation
 
 # Use a Sqlite3 database to check whether a destination email address exists,
-# and to perform any email alias rewrites in Postfix.
+# and to perform any email alias rewrites in Postfix. Additionally, we disable
+# SMTPUTF8 because Dovecot's LMTP server that delivers mail to inboxes does
+# not support it, and if a message is received with the SMTPUTF8 flag it will
+# bounce.
 tools/editconf.py /etc/postfix/main.cf \
+	smtputf8_enable=no \
 	virtual_mailbox_domains=sqlite:/etc/postfix/virtual-mailbox-domains.cf \
 	virtual_mailbox_maps=sqlite:/etc/postfix/virtual-mailbox-maps.cf \
 	virtual_alias_maps=sqlite:/etc/postfix/virtual-alias-maps.cf \
@@ -110,7 +115,7 @@ tools/editconf.py /etc/postfix/main.cf \
 # SQL statement to check if we handle incoming mail for a domain, either for users or aliases.
 cat > /etc/postfix/virtual-mailbox-domains.cf << EOF;
 dbpath=$db_path
-query = SELECT 1 FROM users WHERE email LIKE '%%@%s' UNION SELECT 1 FROM aliases WHERE source LIKE '%%@%s'
+query = SELECT 1 FROM users WHERE email LIKE '%%@%s' UNION SELECT 1 FROM aliases WHERE source LIKE '%%@%s' UNION SELECT 1 FROM auto_aliases WHERE source LIKE '%%@%s'
 EOF
 
 # SQL statement to check if we handle incoming mail for a user.
@@ -145,7 +150,7 @@ EOF
 # empty destination here so that other lower priority rules might match.
 cat > /etc/postfix/virtual-alias-maps.cf << EOF;
 dbpath=$db_path
-query = SELECT destination from (SELECT destination, 0 as priority FROM aliases WHERE source='%s' AND destination<>'' UNION SELECT email as destination, 1 as priority FROM users WHERE email='%s') ORDER BY priority LIMIT 1;
+query = SELECT destination from (SELECT destination, 0 as priority FROM aliases WHERE source='%s' AND destination<>'' UNION SELECT email as destination, 1 as priority FROM users WHERE email='%s' UNION SELECT destination, 2 as priority FROM auto_aliases WHERE source='%s' AND destination<>'') ORDER BY priority LIMIT 1;
 EOF
 
 # Restart Services
