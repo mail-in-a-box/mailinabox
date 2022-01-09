@@ -331,7 +331,7 @@ fi #NODOC
 #  	If more queries than specified are sent, bind9 returns SERVFAIL. After flushing the cache during system checks,
 #	we ran into the limit thus we are increasing it from 75 (default value) to 100.
 apt_install bind9
-tools/editconf.py /etc/default/bind9 \
+tools/editconf.py /etc/default/named \
 	"OPTIONS=\"-u bind -4\""
 if ! grep -q "listen-on " /etc/bind/named.conf.options; then
 	# Add a listen-on directive if it doesn't exist inside the options block.
