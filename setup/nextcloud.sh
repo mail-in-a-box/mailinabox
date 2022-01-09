@@ -21,14 +21,14 @@ echo "Installing Nextcloud (contacts/calendar)..."
 #   we automatically install intermediate versions as needed.
 # * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
 #   copying it from the error message when it doesn't match what is below.
-nextcloud_ver=20.0.14
-nextcloud_hash=92cac708915f51ee2afc1787fd845476fd090c81
+nextcloud_ver=23.0.0
+nextcloud_hash=0d496eb0808c292502479e93cd37fe2daf95786a
 
 # Nextcloud apps
 # --------------
 # * Find the most recent tag that is compatible with the Nextcloud version above by
 #   consulting the <dependencies>...<nextcloud> node at:
-#   https://github.com/nextcloud-releases/contacts/blob/maaster/appinfo/info.xml
+#   https://github.com/nextcloud-releases/contacts/blob/master/appinfo/info.xml
 #   https://github.com/nextcloud-releases/calendar/blob/master/appinfo/info.xml
 #   https://github.com/nextcloud/user_external/blob/master/appinfo/info.xml
 # * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
@@ -174,42 +174,19 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 		elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^1[012] ]]; then
 			echo "Upgrades from Mail-in-a-Box prior to v0.28 (dated July 30, 2018) with Nextcloud < 13.0.6 (you have ownCloud 10, 11 or 12) are not supported. Upgrade to Mail-in-a-Box version v0.30 first. Setup will continue, but skip the Nextcloud migration."
 			return 0
-		elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^13 ]]; then
-			# If we are running Nextcloud 13, upgrade to Nextcloud 14
-			InstallNextcloud 14.0.6 4e43a57340f04c2da306c8eea98e30040399ae5a 3.3.0 e55d0357c6785d3b1f3b5f21780cb6d41d32443a 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466
-			CURRENT_NEXTCLOUD_VER="14.0.6"
-		fi
-		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^14 ]]; then
-			# During the upgrade from Nextcloud 14 to 15, user_external may cause the upgrade to fail.
-			# We will disable it here before the upgrade and install it again after the upgrade.
-			hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:disable user_external
-			InstallNextcloud 15.0.8 4129d8d4021c435f2e86876225fb7f15adf764a3 3.3.0 e55d0357c6785d3b1f3b5f21780cb6d41d32443a 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466 0.7.0 555a94811daaf5bdd336c5e48a78aa8567b86437
-			CURRENT_NEXTCLOUD_VER="15.0.8"
-		fi
-		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^15 ]]; then
-                        InstallNextcloud 16.0.6 0bb3098455ec89f5af77a652aad553ad40a88819 3.3.0 e55d0357c6785d3b1f3b5f21780cb6d41d32443a 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466 0.7.0 555a94811daaf5bdd336c5e48a78aa8567b86437
-                        CURRENT_NEXTCLOUD_VER="16.0.6"
-        	fi
-	        if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^16 ]]; then
-                        InstallNextcloud 17.0.6 50b98d2c2f18510b9530e558ced9ab51eb4f11b0 3.3.0 e55d0357c6785d3b1f3b5f21780cb6d41d32443a 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466 0.7.0 555a94811daaf5bdd336c5e48a78aa8567b86437
-                        CURRENT_NEXTCLOUD_VER="17.0.6"
-	        fi
-	        if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^17 ]]; then
-			# Don't exit the install if this column already exists (see #2076)
-			(echo "ALTER TABLE oc_flow_operations ADD COLUMN entity VARCHAR;" | sqlite3 $STORAGE_ROOT/owncloud/owncloud.db 2>/dev/null) || true
-                        InstallNextcloud 18.0.10 39c0021a8b8477c3f1733fddefacfa5ebf921c68 3.4.1 aee680a75e95f26d9285efd3c1e25cf7f3bfd27e 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
-                        CURRENT_NEXTCLOUD_VER="18.0.10"
-	        fi
-	        if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^18 ]]; then
-                        InstallNextcloud 19.0.4 01e98791ba12f4860d3d4047b9803f97a1b55c60 3.4.1 aee680a75e95f26d9285efd3c1e25cf7f3bfd27e 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
-                        CURRENT_NEXTCLOUD_VER="19.0.4"
-	        fi
+		elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^1[3456789] ]]; then
+			echo "Upgrades from Mail-in-a-Box prior to v60 with Nextcloud 19 or earlier are not supported. Upgrade to the latest Mail-in-a-Box version supported on your machine first. Setup will continue, but skip the Nextcloud migration."
+			return 0
+    elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^20 ]]; then
+      InstallNextcloud 21.0.7 f5c7079c5b56ce1e301c6a27c0d975d608bb01c9 4.0.7 8ab31d205408e4f12067d8a4daa3595d46b513e3 3.0.4 6fb1e998d307c53245faf1c37a96eb982bbee8ba 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
+      CURRENT_NEXTCLOUD_VER="21.0.7"
+    elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^21 ]]; then
+      InstallNextcloud 22.2.2 489eaf4147ad1b59385847b7d7db293712cced88 4.0.7 8ab31d205408e4f12067d8a4daa3595d46b513e3 3.0.4 6fb1e998d307c53245faf1c37a96eb982bbee8ba 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
+      CURRENT_NEXTCLOUD_VER="22.2.2"
+    fi
 	fi
 
 	InstallNextcloud $nextcloud_ver $nextcloud_hash $contacts_ver $contacts_hash $calendar_ver $calendar_hash $user_external_ver $user_external_hash
-
-	# Nextcloud 20 needs to have some optional columns added
-	sudo -u www-data php /usr/local/lib/owncloud/occ db:add-missing-columns
 fi
 
 # ### Configuring Nextcloud
@@ -299,6 +276,8 @@ CONFIG_TEMP=$(/bin/mktemp)
 php <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP $STORAGE_ROOT/owncloud/config.php;
 <?php
 include("$STORAGE_ROOT/owncloud/config.php");
+
+\$CONFIG['config_is_read_only'] = true; # should prevent warnings from occ tool but doesn't
 
 \$CONFIG['trusted_domains'] = array('$PRIMARY_HOSTNAME');
 
