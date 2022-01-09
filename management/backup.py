@@ -12,7 +12,7 @@ import dateutil.parser, dateutil.relativedelta, dateutil.tz
 import rtyaml
 from exclusiveprocess import Lock
 
-from utils import load_environment, shell, wait_for_service, fix_boto
+from utils import load_environment, shell, wait_for_service
 
 def backup_status(env):
 	# If backups are dissbled, return no status.
@@ -197,12 +197,7 @@ def get_duplicity_target_url(config):
 		from urllib.parse import urlsplit, urlunsplit
 		target = list(urlsplit(target))
 
-		# Duplicity now defaults to boto3 as the backend for S3, but we have
-		# legacy boto installed (boto3 doesn't support Ubuntu 18.04) so
-		# we retarget for classic boto.
-		target[0] = "boto+" + target[0]
-
-		# In addition, although we store the S3 hostname in the target URL,
+		# Although we store the S3 hostname in the target URL,
 		# duplicity no longer accepts it in the target URL. The hostname in
 		# the target URL must be the bucket name. The hostname is passed
 		# via get_duplicity_additional_args. Move the first part of the
@@ -452,7 +447,6 @@ def list_target_files(config):
 
 	elif target.scheme == "s3":
 		# match to a Region
-		fix_boto() # must call prior to importing boto
 		import boto.s3
 		from boto.exception import BotoServerError
 		custom_region = False
