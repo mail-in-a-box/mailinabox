@@ -50,6 +50,11 @@ configure_roundcube() {
     #    regular expressions is like above
     sed -i 's/\(['"'"'"]readonly['"'"'"][ \t]*=>[ \t]*\)false/\1true/' ${RCM_PLUGIN_DIR}/carddav/config.inc.php
 
+    # c. add 'rediscover_mode' => 'none'
+    if ! grep -F 'rediscover_mode' ${RCM_PLUGIN_DIR}/carddav/config.inc.php >/dev/null; then
+        sed -i 's/^\([ \t]*['"'"'"]readonly['"'"'"][ \t]*=>.*\)$/\1\n\t '\''rediscover_mode'\'' => '\''none'\'',/' ${RCM_PLUGIN_DIR}/carddav/config.inc.php
+    fi
+
     #
     # 2. add the remote Nextcloud
     #
