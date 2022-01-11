@@ -66,6 +66,13 @@ install_packages() {
 
         # don't install slapd - it requires user input
         pkgs="$(sed 's/slapd//g' <<< "$pkgs")"
+
+        if [ $(. /etc/os-release; echo $VERSION_ID | awk -F. '{print $1}') -ge 22 ];
+        then
+            # don't install opendmarc on ubuntu 22 and higher - it requires
+            # interactive user input
+            pkgs="$(sed 's/opendmarc//g' <<< "$pkgs")"
+        fi
         
         if [ ! -z "$pkgs" ]; then
             echo "install: $pkgs"

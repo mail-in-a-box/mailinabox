@@ -1,19 +1,43 @@
+def checkout_tag_and_mount(obj, tag)
+  if "#{tag}" == ""
+    obj.vm.synced_folder "../../..", "/mailinabox", id: "mailinabox", automount: false
+  else
+    _srcdir="src/maibldap-#{tag}"
+    if not Dir.exist?(_srcdir)
+      puts "Cloning tag #{tag} to #{_srcdir}"
+      system("git clone -b #{tag} --depth 1 #{ENV['MIABLDAP_GIT']} #{_srcdir}")
+    end
+    obj.vm.synced_folder _srcdir, "/mailinabox", id: "mailinabox", automount: false
+  end
+end
+
 
 Vagrant.configure("2") do |config|
 
-  config.vm.synced_folder "../../..", "/mailinabox", id: "mailinabox", automount: false
-
+  checkout_tag_and_mount config, ENV['RELEASE_TAG']
+  
   config.vm.define "preloaded-ubuntu-bionic64" do |m1|
     m1.vm.box = "ubuntu/bionic64"
     m1.vm.provision :shell, :inline => <<-SH
 cd /mailinabox
 tests/vagrant/preloaded/prepvm.sh --no-dry-run
 rc=$?
-echo "$rc" > "tests/vagrant/preloaded/prepcode.txt"
+echo "$rc" > "/vagrant/prepcode.txt"
 [ $rc -gt 0 ] && exit 1
 exit 0
 SH
   end
 
+  config.vm.define "preloaded-ubuntu-jammy64" do |m1|
+    m1.vm.box = "ubuntu/jammy64"
+    m1.vm.provision :shell, :inline => <<-SH
+cd /mailinabox
+tests/vagrant/preloaded/prepvm.sh --no-dry-run
+rc=$?
+echo "$rc" > "/vagrant/prepcode.txt"
+[ $rc -gt 0 ] && exit 1
+exit 0
+SH
+  end
 
 end

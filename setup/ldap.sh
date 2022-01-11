@@ -158,7 +158,13 @@ EOF
 	
 	# Install packages
 	say "Installing OpenLDAP server..."
-	apt_install slapd ldap-utils python3-ldap3 python3-ldif3 ca-certificates xz-utils
+	
+	# we must install slapd without DEBIAN_FRONTEND=noninteractive or
+	# debconf selections are ignored
+	hide_output apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" install slapd
+
+	# install additional packages
+	apt_install ldap-utils python3-ldap3 ca-certificates xz-utils
 
 	# If slapd was not installed by us, the selections above did
 	# nothing.  To check this we see if SLAPD_CONF in
@@ -169,7 +175,8 @@ EOF
 	# we do #2 ....
 	local SLAPD_CONF=""
 	eval "$(grep ^SLAPD_CONF= /etc/default/slapd)"
-	local cursuffix="$(slapcat -s "cn=config" | grep "^olcSuffix: ")"
+	local cursuffix="$(slapcat -b "cn=config" | grep "^olcSuffix: ")"
+	say_debug "current slapd suffix=$cursuffix"
 	if [ -z "$SLAPD_CONF" ] &&
 		   ! grep "$LDAP_DOMAIN" <<<"$cursuffix" >/dev/null
 	then
@@ -191,7 +198,7 @@ EOF
 	# Ensure slapd is running
 	systemctl start slapd && wait_slapd_start
 
-	# Change the admin password hash format in the server from slapd's
+	# Change the root password hash format in the server from slapd's
 	# default {SSHA} to SHA-512 {CRYPT} with 16 characters of salt
 	get_attribute "cn=config" "olcSuffix=${LDAP_BASE}" "olcRootPW"
 	if [ ${#ATTR_VALUE[*]} -eq 1 -a $(grep -c "{SSHA}" <<< "$ATTR_VALUE") -eq 1 ]; then
@@ -202,13 +209,16 @@ dn: $ATTR_DN
 replace: olcRootPW
 olcRootPW: $hash
 EOF
-		say_verbose "Updating admin hash to SHA512-CRYPT"
-		ldapmodify -H ldap://127.0.0.1/ -x -D "$LDAP_ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD"  >/dev/null <<EOF
-dn: $LDAP_ADMIN_DN
-replace: userPassword
-userPassword: $hash
-EOF
 	fi
+
+	get_attribute "cn=config" "olcSuffix=${LDAP_BASE}" "olcRootDN"
+	if [ "$ATTR_VALUE" != "$LDAP_ADMIN_DN" ]; then
+		say ""
+		say "UNEXPECTED: oldRootDN under $ATTR_DN"
+		say "  is set to: $ATTR_VALUE"
+		say "  expected : $LDAP_ADMIN_DN"
+		die
+	fi		
 }
 
 relocate_slapd_data() {
@@ -669,6 +679,8 @@ process_cmdline() {
 			apply_access_control
 		elif [ "$2" == "apparmor" ]; then
 			update_apparmor
+		elif [ "$2" == "system-packages" ]; then
+			install_system_packages
 		else
 			echo "Invalid: '$2'. Only 'server' and 'apparmor' supported"
 			exit 1
@@ -706,7 +718,7 @@ process_cmdline() {
 		if [ "$s" == "all" ]; then
 			echo ""
 			echo '--------------------------------'
-			slapcat ${slapcat_args[@]} -s "$LDAP_BASE" | grep -Ev "^$hide_attrs:"
+			slapcat ${slapcat_args[@]} -b "$LDAP_BASE" | grep -Ev "^$hide_attrs:"
 		fi
 		if [ "$s" == "all" -o "$s" == "config" ]; then
 			echo ""
@@ -714,12 +726,12 @@ process_cmdline() {
 			cat "$MIAB_SLAPD_CONF/cn=config.ldif" | grep -Ev "^$hide_attrs:"
 			get_attribute "cn=config" "olcSuffix=${LDAP_BASE}" "dn"
 			echo ""
-			slapcat ${slapcat_args[@]} -s "$ATTR_DN" | grep -Ev "^$hide_attrs:"
+			slapcat ${slapcat_args[@]} -b "$ATTR_DN" | grep -Ev "^$hide_attrs:"
 		fi
 		if [ "$s" == "all" -o "$s" == "schema" ]; then
 			echo ""
 			echo '--------------------------------'
-			slapcat ${slapcat_args[@]} -s "cn=schema,cn=config" | grep -Ev "^$hide_attrs:"
+			slapcat ${slapcat_args[@]} -b "cn=schema,cn=config" | grep -Ev "^$hide_attrs:"
 		fi
 		if [ "$s" == "all" -o "$s" == "frontend" ]; then
 			echo ""
@@ -901,5 +913,5 @@ restart_service slapd
 cat > /etc/cron.d/mailinabox-ldap << EOF
 # Mail-in-a-Box
 # Dump database to ldif
-30 2 * * *	root	/usr/sbin/slapcat -F "$MIAB_SLAPD_CONF" -o ldif-wrap=no -s "$LDAP_BASE" | /usr/bin/xz > "$STORAGE_LDAP_ROOT/db.ldif.xz"; chmod 600 "$STORAGE_LDAP_ROOT/db.ldif.xz"
+30 2 * * *	root	/usr/sbin/slapcat -F "$MIAB_SLAPD_CONF" -o ldif-wrap=no -b "$LDAP_BASE" | /usr/bin/xz > "$STORAGE_LDAP_ROOT/db.ldif.xz"; chmod 600 "$STORAGE_LDAP_ROOT/db.ldif.xz"
 EOF

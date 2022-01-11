@@ -1,20 +1,14 @@
 name: commit-tests
-on: [push]
+on: [workflow_dispatch]
 jobs:
   # MiaB-LDAP connected to a remote Nextcloud
   remote-nextcloud-docker:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     env:
       PRIMARY_HOSTNAME: box1.abc.com
       FEATURE_MUNIN: false
-      # github specific: php-xsl is a virtual package provided by php-xml
-      PHP_XSL_PACKAGE: php-xml
     steps:
       - uses: actions/checkout@v2
-      # the github image comes preinstalled with multiple php versions
-      # and it sets the system php to the latest version. MIAB requires
-      # php 7.2 (the default on a new ubuntu 18 install)
-      - run: sudo update-alternatives --set php /usr/bin/php7.2
       - name: setup
         run: sudo -E tests/system-setup/remote-nextcloud-docker.sh upgrade basic
       - name: test-runner
@@ -23,14 +17,12 @@ jobs:
 
   # Upgrade from upstream install
   upgrade-from-upstream:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     env:
       PRIMARY_HOSTNAME: box2.abc.com
       UPSTREAM_TAG: main
-      PHP_XSL_PACKAGE: php-xml
     steps:
       - uses: actions/checkout@v2
-      - run: sudo update-alternatives --set php /usr/bin/php7.2
       - name: setup
         run: sudo -E tests/system-setup/upgrade-from-upstream.sh basic totpuser
       - name: test-runner

@@ -3,7 +3,7 @@ load './funcs.rb'
 Vagrant.configure("2") do |config|
 
   config.vm.synced_folder "../..", "/mailinabox", id: "mailinabox", automount: false
-  use_preloaded_box config, "ubuntu/bionic64"
+  use_preloaded_box config, "ubuntu/jammy64"
 
   # fresh install with encryption-at-rest
 
@@ -43,7 +43,7 @@ SH
 cd /mailinabox
 source tests/vagrant/globals.sh || exit 1
 export PRIMARY_HOSTNAME=qa3.abc.com
-export UPSTREAM_TAG=main
+export UPSTREAM_TAG=jammyjellyfish2204
 tests/system-setup/upgrade-from-upstream.sh basic totpuser || exit 1
 tests/runner.sh upgrade-basic upgrade-totpuser default || exit 2
 SH

@@ -97,26 +97,6 @@ fi
 # come from there and minimal Ubuntu installs may have it turned off.
 hide_output add-apt-repository -y universe
 
-# Install the certbot PPA.
-if [ $(. /etc/os-release; echo $VERSION_ID | awk -F. '{print $1}') -le 18 ]
-then
-    hide_output add-apt-repository -y ppa:certbot/certbot
-else
-    hide_output snap install core
-    hide_output snap refresh core
-    if ! snap list certbot 1>/dev/null 2>&1; then
-        # a ppa was required on ubuntu 18, but snaps are used in ubuntu 19+
-        # remove the ppa and certbot per eff's instructions
-        hide_output add-apt-repository -r -y ppa:certbot/certbot
-        hide_output apt-get remove -y certbot
-    fi
-    hide_output snap install --classic certbot
-    ln -sf /snap/bin/certbot /usr/bin/certbot
-fi
-
-# Install the duplicity PPA.
-hide_output add-apt-repository -y ppa:duplicity-team/duplicity-release-git
-
 # ### Update Packages
 
 # Update system packages to make sure we have the latest upstream versions
@@ -347,7 +327,7 @@ fi #NODOC
 #  	If more queries than specified are sent, bind9 returns SERVFAIL. After flushing the cache during system checks,
 #	we ran into the limit thus we are increasing it from 75 (default value) to 100.
 apt_install bind9
-tools/editconf.py /etc/default/bind9 \
+tools/editconf.py /etc/default/named \
 	"OPTIONS=\"-u bind -4\""
 if ! grep -q "listen-on " /etc/bind/named.conf.options; then
 	# Add a listen-on directive if it doesn't exist inside the options block.

@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# load defaults for MIABLDAP_RELEASE_TAG and MIABLDAP_GIT
+pushd "../../.." >/dev/null
+source tests/system-setup/setup-defaults.sh || exit 1
+popd >/dev/null
+
+# TODO: replace MIABLDAP_RELEASE_TAG with the actual tag for the last supported version of miabldap for bionic64
+UBUNTU_BIONIC64_RELEASE_TAG=$MIABLDAP_RELEASE_TAG
+
 vagrant destroy -f
 rm -f prepcode.txt
 
@@ -12,10 +20,44 @@ done
 
 vagrant box update
 
-for box in "preloaded-ubuntu-bionic64"
+
+boxes=(
+    "preloaded-ubuntu-bionic64"
+    "preloaded-ubuntu-jammy64"
+)
+# preload packages from source of the following git tags. empty string
+# means use the current source tree
+tags=(
+    "$UBUNTU_BIONIC64_RELEASE_TAG"
+    ""
+)
+try_reboot=(
+    false
+    true
+)
+idx=0
+
+for box in "${boxes[@]}"
 do
+    if [ ! -z "$1" -a "$1" != "$box" ]; then
+        continue
+    fi
+
+    export RELEASE_TAG="${tags[$idx]}"
     vagrant up $box
     upcode=$?
+    if [ $upcode -ne 0 -a ! -e "./prepcode.txt" ] && ${try_reboot[$idx]}
+    then
+        # a reboot may be necessary if guest addtions was newly
+        # compiled by vagrant plugin "vagrant-vbguest"
+        echo ""
+        echo "VAGRANT UP RETURNED $upcode -- RETRYING AFTER REBOOT"
+        vagrant halt $box
+        vagrant up $box
+        upcode=$?
+    fi
+        
+    let idx+=1
     prepcode=$(cat "./prepcode.txt")
     rm -f prepcode.txt
     echo ""
@@ -49,5 +91,5 @@ do
         vagrant box remove $cached_name
         code=$?
     fi
-    echo "Result: $code"
+    echo "Remove cache box result: $code - ignoring"
 done

@@ -13,8 +13,8 @@
 # destinations according to aliases, and passses email on to
 # another service for local mail delivery.
 #
-# The first hop in local mail delivery is to Spamassassin via
-# LMTP. Spamassassin then passes mail over to Dovecot for
+# The first hop in local mail delivery is to spampd via
+# LMTP. spampd then passes mail over to Dovecot for
 # storage in the user's mailbox.
 #
 # Postfix also listens on ports 465/587 (SMTPS, SMTP+STARTLS) for
@@ -205,16 +205,17 @@ tools/editconf.py /etc/postfix/main.cf \
 
 # ### Incoming Mail
 
-# Pass any incoming mail over to a local delivery agent. Spamassassin
-# will act as the LDA agent at first. It is listening on port 10025
-# with LMTP. Spamassassin will pass the mail over to Dovecot after.
+# Pass mail to spampd, which acts as the local delivery agent (LDA),
+# which then passes the mail over to the Dovecot LMTP server after.
+# spampd runs on port 10025 by default.
 #
 # In a basic setup we would pass mail directly to Dovecot by setting
 # virtual_transport to `lmtp:unix:private/dovecot-lmtp`.
 tools/editconf.py /etc/postfix/main.cf "virtual_transport=lmtp:[127.0.0.1]:10025"
-# Because of a spampd bug, limit the number of recipients in each connection.
+# Clear the lmtp_destination_recipient_limit setting which in previous
+# versions of Mail-in-a-Box was set to 1 because of a spampd bug.
 # See https://github.com/mail-in-a-box/mailinabox/issues/1523.
-tools/editconf.py /etc/postfix/main.cf lmtp_destination_recipient_limit=1
+tools/editconf.py /etc/postfix/main.cf  -e lmtp_destination_recipient_limit=
 
 
 # Who can send mail to us? Some basic filters.

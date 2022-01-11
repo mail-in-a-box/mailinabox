@@ -248,7 +248,7 @@ def perform_backup(full_backup):
 			if quit:
 				sys.exit(code)
 
-	service_command("php7.2-fpm", "stop", quit=True)
+	service_command("php8.0-fpm", "stop", quit=True)
 	service_command("postfix", "stop", quit=True)
 	service_command("dovecot", "stop", quit=True)
 	service_command("slapd", "stop", quit=True)
@@ -286,7 +286,7 @@ def perform_backup(full_backup):
 		service_command("slapd", "start", quit=False)
 		service_command("dovecot", "start", quit=False)
 		service_command("postfix", "start", quit=False)
-		service_command("php7.2-fpm", "start", quit=False)
+		service_command("php8.0-fpm", "start", quit=False)
 
 	# Remove old backups. This deletes all backup data no longer needed
 	# from more than 3 days ago.

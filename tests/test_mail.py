@@ -101,7 +101,6 @@ This is a test message. It should be automatically deleted by the test script.""
 	subject=subject,
 	)
 
-
 def imap_login(host, login, pw):
 	# Attempt to login with IMAP. Our setup uses email addresses
 	# as IMAP/SMTP usernames.
