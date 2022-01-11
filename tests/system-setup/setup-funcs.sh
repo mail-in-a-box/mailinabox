@@ -229,6 +229,8 @@ miab_ldap_install() {
     # in non-interactive mode
     if [ ! -z "${NONINTERACTIVE:-}" ]; then
         H2 "Install email_validator python3 module"
+        wait_for_apt
+        apt-get install -y -qq python3-pip || die "Unable to install pip3!"
         pip3 install -q "email_validator>=1.0.0" || die "Unable to install email_validator python3 module!"
     fi
 
