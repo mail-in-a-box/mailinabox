@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-In Development
---------------
+Version 56 (January 19, 2022)
+-----------------------------
 
 Software updates:
 
