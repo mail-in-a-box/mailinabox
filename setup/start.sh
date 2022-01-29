@@ -76,6 +76,11 @@ fi
 # migration number for this version of Mail-in-a-Box.
 if ! id -u $STORAGE_USER >/dev/null 2>&1; then
 	useradd -m $STORAGE_USER
+	# default permissions for new home directories in jammy (ubuntu
+	# 22) changed from 0755 to 0750. openldap (slapd.service) runs
+	# under its own user account (openldap) and requires access to
+	# STORAGE_ROOT
+	chmod o+x $STORAGE_ROOT
 fi
 if [ ! -d $STORAGE_ROOT ]; then
 	mkdir -p $STORAGE_ROOT
