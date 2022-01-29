@@ -1,7 +1,9 @@
 #!/bin/bash
 
+export MIAB_LDAP_PROJECT=true
+
 # Used by setup/start.sh
-export PRIMARY_HOSTNAME=${PRIMARY_HOSTNAME:-$(hostname --fqdn || hostname)}
+export PRIMARY_HOSTNAME=${PRIMARY_HOSTNAME:-$(hostname --fqdn 2>/dev/null || hostname)}
 export NONINTERACTIVE=${NONINTERACTIVE:-1}
 export SKIP_NETWORK_CHECKS=${SKIP_NETWORK_CHECKS:-1}
 export SKIP_SYSTEM_UPDATE=${SKIP_SYSTEM_UPDATE:-1}
@@ -11,9 +13,18 @@ export STORAGE_ROOT="${STORAGE_ROOT:-/home/$STORAGE_USER}"
 export EMAIL_ADDR="${EMAIL_ADDR:-qa@abc.com}"
 export EMAIL_PW="${EMAIL_PW:-Test_1234}"
 export PUBLIC_IP="${PUBLIC_IP:-$(source ${MIAB_DIR:-.}/setup/functions.sh; get_default_privateip 4)}"
-export LOCAL_MODS_DIR="${LOCAL_MODS_DIR:-local}"
+if lsmod | grep "^vboxguest[\t ]" >/dev/null; then
+    # The local mods directory defaults to 'local' (relative to the
+    # source tree, which is a mounted filesystem of the host). This
+    # will keep mods directory out of the source tree when running
+    # under virtualbox / vagrant.
+    export LOCAL_MODS_DIR="${LOCAL_MODS_DIR:-/local}"
+else
+    export LOCAL_MODS_DIR="${LOCAL_MODS_DIR:-local}"
+fi
 export DOWNLOAD_CACHE_DIR="${DOWNLOAD_CACHE_DIR:-$(pwd)/downloads}"
 export DOWNLOAD_NEXTCLOUD_FROM_GITHUB="${DOWNLOAD_NEXTCLOUD_FROM_GITHUB:-false}"
+
 
 # Used by ehdd/start-encrypted.sh
 export EHDD_KEYFILE="${EHDD_KEYFILE:-}"
@@ -43,3 +54,4 @@ export UPSTREAM_TAG="${UPSTREAM_TAG:-}"
 # For setup scripts that install miabldap releases
 export MIABLDAP_GIT="${MIABLDAP_GIT:-https://github.com/downtownallday/mailinabox-ldap.git}"
 export MIABLDAP_RELEASE_TAG="${MIABLDAP_RELEASE_TAG:-v55}"
+
