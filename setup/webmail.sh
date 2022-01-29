@@ -238,3 +238,12 @@ chmod 664 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 # Enable PHP modules.
 phpenmod -v php mcrypt imap ldap
 restart_service php7.2-fpm
+
+# Periodically clean the roundcube database (see roundcubemail/INSTALL)
+cat > /etc/cron.daily/mailinabox-roundcubemail << EOF
+#!/bin/bash
+# Mail-in-a-Box
+# Clean up the roundcube database
+cd $RCM_DIR && bin/cleandb.sh >/dev/null
+EOF
+chmod +x /etc/cron.daily/mailinabox-roundcubemail
