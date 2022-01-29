@@ -195,6 +195,15 @@ cat > ${RCM_PLUGIN_DIR}/carddav/config.inc.php <<EOF;
 ?>
 EOF
 
+# Configure persistent_login (required database tables are created
+# later in this script)
+cat > ${RCM_PLUGIN_DIR}/persistent_login/config.inc.php <<EOF
+<?php
+/* Do not edit. Written by Mail-in-a-Box. Regenerated on updates. */
+\$rcmail_config['ifpl_use_auth_tokens'] = true;  # enable AuthToken cookies
+?>
+EOF
+
 # Create writable directories.
 mkdir -p /var/log/roundcubemail /var/tmp/roundcubemail $STORAGE_ROOT/mail/roundcube
 chown -R www-data.www-data /var/log/roundcubemail /var/tmp/roundcubemail $STORAGE_ROOT/mail/roundcube
@@ -234,6 +243,12 @@ chmod -R 774 ${RCM_PLUGIN_DIR}/carddav
 ${RCM_DIR}/bin/updatedb.sh --dir ${RCM_DIR}/SQL --package roundcube
 chown www-data:www-data $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 chmod 664 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
+
+# Create persistent login plugin's database tables
+#   TODO: use sql from this PR if it gets committed (been waiting 2
+#         weeks and counting...):
+#     https://github.com/mfreiholz/persistent_login/pull/63
+sqlite3 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite < conf/persistent_login-sqlite.sql
 
 # Enable PHP modules.
 phpenmod -v php mcrypt imap ldap
