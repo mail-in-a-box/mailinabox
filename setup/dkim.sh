@@ -51,9 +51,9 @@ if [ ! -f "$STORAGE_ROOT/mail/dkim/box-rsa.key" ]; then
 	
 	# Force them into the format dns_update.py expects
 	sed -i 's/v=DKIM1;/box-rsa._domainkey IN      TXT      ( "v=DKIM1; s=email;/' $STORAGE_ROOT/mail/dkim/box-rsa.dns
-	echo '" )' >> box-rsa.dns
+	echo '" )' >> $STORAGE_ROOT/mail/dkim/box-rsa.dns
 	sed -i 's/v=DKIM1;/box-ed25519._domainkey IN      TXT      ( "v=DKIM1; s=email;/' $STORAGE_ROOT/mail/dkim/box-ed25519.dns
-	echo '" )' >> box-ed25519.dns
+	echo '" )' >> $STORAGE_ROOT/mail/dkim/box-ed25519.dns
 fi
 
 # Ensure files are owned by the dkimpy-milter user and are private otherwise.

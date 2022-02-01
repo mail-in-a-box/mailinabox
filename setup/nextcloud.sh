@@ -347,19 +347,11 @@ sudo -u www-data \
 	| (grep -v "No such app enabled" || /bin/true)
 
 # Install interesting apps
-installed=$(sudo -u www-data php /usr/local/lib/owncloud/occ app:list | grep "notes")
-
-#if [ -z "$installed" ]; then
-    sudo -u www-data php /usr/local/lib/owncloud/occ app:install notes
-#fi
+(sudo -u www-data php /usr/local/lib/owncloud/occ app:install notes) || true
 
 hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable notes
 
-installed=$(sudo -u www-data php /usr/local/lib/owncloud/occ app:list | grep 'twofactor_totp')
-
-#if [ -z "$installed" ]; then
-	sudo -u www-data php /usr/local/lib/owncloud/occ app:install twofactor_totp
-#fi
+(sudo -u www-data php /usr/local/lib/owncloud/occ app:install twofactor_totp) || true
 
 hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable twofactor_totp
 

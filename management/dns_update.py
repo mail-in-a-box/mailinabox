@@ -833,7 +833,7 @@ def write_dkim_tables(domains, env):
 	dkim_rsa_key_file = os.path.join(env['STORAGE_ROOT'], 'mail/dkim/box-rsa.key')
 	dkim_ed_key_file = os.path.join(env['STORAGE_ROOT'], 'mail/dkim/box-ed25519.key')
 
-	if not os.path.exists(dkim_rsa_key_file) || not os.path.exists(dkim_ed_key_file):
+	if not os.path.exists(dkim_rsa_key_file) or not os.path.exists(dkim_ed_key_file):
 		# Looks like DKIMpy is not installed.
 		return False
 
