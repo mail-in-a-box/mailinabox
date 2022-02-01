@@ -117,9 +117,6 @@ apt_get_quiet autoremove
 
 # Install basic utilities.
 #
-# * haveged: Provides extra entropy to /dev/random so it doesn't stall
-#	         when generating random numbers for private keys (e.g. during
-#	         ldns-keygen).
 # * unattended-upgrades: Apt tool to install security updates automatically.
 # * cron: Runs background processes periodically.
 # * ntp: keeps the system time correct
@@ -134,7 +131,7 @@ apt_get_quiet autoremove
 echo Installing system packages...
 apt_install python3 python3-dev python3-pip python3-setuptools \
 	netcat-openbsd wget curl git sudo coreutils bc \
-	haveged pollinate openssh-client unzip \
+	pollinate openssh-client unzip \
 	unattended-upgrades cron ntp fail2ban rsyslog
 
 # ### Suppress Upgrade Prompts
