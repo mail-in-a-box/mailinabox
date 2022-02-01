@@ -516,7 +516,7 @@ def write_nsd_zone(domain, zonefile, records, env, force):
 	# in the zone file:
 	#  - Name the secondary DNS server as primary DNS in the SOA record
 	#  - Do not add NS records for the Mail-in-a-Box server
-
+	
 	# A hash of the available DNSSEC keys are added in a comment so that when
 	# the keys change we force a re-generation of the zone which triggers
 	# re-signing it.

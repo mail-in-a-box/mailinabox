@@ -15,12 +15,6 @@ sed -i "s/#\& stop/\& stop/g" /etc/rsyslog.d/20-ufw.conf
 
 restart_service rsyslog
 
-# decrease time journal is stored
-tools/editconf.py /etc/systemd/journald.conf MaxRetentionSec=2month
-tools/editconf.py /etc/systemd/journald.conf MaxFileSec=1week
-
-hide_output systemctl restart systemd-journald.service
-
 # Create forward for root emails
 cat > /root/.forward << EOF;
 administrator@$PRIMARY_HOSTNAME

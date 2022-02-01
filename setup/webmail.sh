@@ -28,16 +28,21 @@ apt_install \
 # Install Roundcube from source if it is not already present or if it is out of date.
 # Combine the Roundcube version number with the commit hash of plugins to track
 # whether we have the latest version of everything.
-
-VERSION=1.5.0
-HASH=2a9d11d9c10c8e8756120606c47eef702f00fe6d
+# For the latest versions, see:
+#   https://github.com/roundcube/roundcubemail/releases
+#   https://github.com/mfreiholz/persistent_login/commits/master
+#   https://github.com/stremlau/html5_notifier/commits/master
+#   https://github.com/mstilkerich/rcmcarddav/releases
+# The easiest way to get the package hashes is to run this script and get the hash from
+# the error message.
+VERSION=1.5.2
+HASH=208ce4ca0be423cc0f7070ff59bd03588b4439bf
 PERSISTENT_LOGIN_VERSION=59ca1b0d3a02cff5fa621c1ad581d15f9d642fe8
 HTML5_NOTIFIER_VERSION=68d9ca194212e15b3c7225eb6085dbcf02fd13d7 # version 0.6.4+
-CONTEXT_MENU_VERSION=602a3812922fb8f71814eb3b8d91e9b7859aab7e # version 3.2.1
-TWOFACT_COMMIT=a3944c4604fe86fc020847f281beea031e14e58e # master @ 17-10-2021
-
 CARDDAV_VERSION=4.3.0
 CARDDAV_HASH=4ad7df8843951062878b1375f77c614f68bc5c61
+CONTEXT_MENU_VERSION=602a3812922fb8f71814eb3b8d91e9b7859aab7e # version 3.2.1
+TWOFACT_COMMIT=a3944c4604fe86fc020847f281beea031e14e58e # master @ 17-10-2021
 
 UPDATE_KEY=$VERSION:$PERSISTENT_LOGIN_VERSION:$HTML5_NOTIFIER_VERSION:$CARDDAV_VERSION:$CONTEXT_MENU_VERSION:$TWOFACT_COMMIT
 
