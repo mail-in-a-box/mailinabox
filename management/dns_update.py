@@ -510,7 +510,7 @@ def write_nsd_zone(domain, zonefile, records, env, force):
 	# @ the PRIMARY_HOSTNAME. Hopefully that's legit.
 	#
 	# For the refresh through TTL fields, a good reference is:
-	# http://www.peerwisdom.org/2013/05/15/dns-understanding-the-soa-record/
+	# https://www.ripe.net/publications/docs/ripe-203
 	
 	# Time To Refresh – How long in seconds a nameserver should wait prior to checking for a Serial Number 
 	#     increase within the primary zone file. An increased Serial Number means a transfer is needed to sync

@@ -75,7 +75,14 @@ then
 	fi
 fi
 
-# Certbot doesn't require a PPA in Debian
+# ### Set log retention policy.
+
+# Set the systemd journal log retention from infinite to 10 days,
+# since over time the logs take up a large amount of space.
+# (See https://discourse.mailinabox.email/t/journalctl-reclaim-space-on-small-mailinabox/6728/11.)
+tools/editconf.py /etc/systemd/journald.conf MaxRetentionSec=10day
+
+hide_output systemctl restart systemd-journald.service
 
 # ### Update Packages
 

@@ -1,12 +1,28 @@
 CHANGELOG
 =========
 
+Version 56 (January 19, 2022)
+-----------------------------
 
-In Development
---------------
+Software updates:
 
-Mail:
-* Roundcube's persistent_login plugin update to better support Roundcube 1.5
+* Roundcube updated to 1.5.2 (from 1.5.0), and the persistent_login and CardDAV (to 4.3.0 from 3.0.3) plugins are updated.
+* Nextcloud updated to 20.0.14 (from 20.0.8), contacts to 4.0.7 (from 3.5.1), and calendar to 3.0.4 (from 2.2.0).
+
+Setup:
+
+* Fixed failed setup if a previous attempt failed while updating Nextcloud.
+
+Control panel:
+
+* Fixed a crash if a custom DNS entry is not under a zone managed by the box.
+* Fix DNSSEC instructions typo.
+
+Other:
+
+* Set systemd journald log retention to 10 days (from no limit) to reduce disk usage.
+* Fixed log processing for submission lines that have a sasl_sender or other extra information.
+* Fix DNS secondary nameserver refesh failure retry period.
 
 Version 55 (October 18, 2021)
 -----------------------------
