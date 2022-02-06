@@ -9,7 +9,10 @@
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
-# Install DKIM...
+# Remove openDKIM if present
+apt-get purge -qq -y opendkim opendkim-tools
+
+# Install DKIMpy-Milter
 echo Installing DKIMpy/OpenDMARC...
 apt_install dkimpy-milter python3-dkim opendmarc
 
