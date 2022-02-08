@@ -131,6 +131,12 @@ class PostfixLogHandler(CommonHandler):
         #   2=message_id
         self.re_postfix_message_id = re.compile('postfix/cleanup\[\d+\]: ([A-F0-9]+): message-id=(<[^>]*>)')
 
+        # 5a. Feb  8 08:25:37 mail postfix/cleanup[6908]: 74D901FB74: replace: header Received: from [IPv6:::1] (unknown [IPv6:xxx])??(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits))??(No client certificate requested)??by myhost. from unknown[x:x:x:x:x]; from=<user@tld> to=<user@tld> proto=ESMTP helo=<[IPv6:::1]>: Received: from authenticated-user (myhost.com [a.b.c.d])??(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits))??(No client certificate requested)??by myhost.com (Postfix) with ESMTPSA id 34E902FB74??for <user@tld>; Tue,  8 Feb 2022 08:25:37 -0500 (GMT)
+        #   1=postfix_msg_id
+        #   2=tls version (eg "1.3")
+        #   3=tls cipher (eg "TLS_AES_128_GCM_SHA256")
+        self.re_postfix_tls = re.compile('postfix/cleanup\[\d+\]: ([A-F0-9]+): replace: header Received: [^;]*\(using (TLSv[^ ]*) with cipher ([^ ]*)')
+
         # 6. opendkim: POSTFIX-MSG-ID: <result>
         # Dec  6 08:21:33 mail opendkim[6267]: DD95A1F796: s=pf2014 d=github.com SSL
         # SSL:
@@ -535,7 +541,8 @@ class PostfixLogHandler(CommonHandler):
                 "service": "smtpd" if m.group(2)=="smtpd" else "submission",
                 "service_tid": m.group(3),
                 "remote_host": m.group(4),
-                "remote_ip": m.group(5)
+                "remote_ip": m.group(5),
+                'remote_used_tls': 0,
             }
             self.add_new_connection(mta_conn)
             return { 'mta_conn': mta_conn }
@@ -843,6 +850,22 @@ class PostfixLogHandler(CommonHandler):
                 return { 'mta_conn':mta_conn, 'mta_accept':mta_accept }
             return True
 
+    
+    def match_postfix_tls(self, line):
+        # 5a. Feb  8 08:25:37 mail postfix/cleanup[6908]: 74D901FB74: replace: header Received: from [IPv6:::1] (unknown [IPv6:xxx])??(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits))??(No client certificate requested)??by myhost. from unknown[x:x:x:x:x]; from=<user@tld> to=<user@tld> proto=ESMTP helo=<[IPv6:::1]>: Received: from authenticated-user (myhost.com [a.b.c.d])??(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits))??(No client certificate requested)??by myhost.com (Postfix) with ESMTPSA id 34E902FB74??for <user@tld>; Tue,  8 Feb 2022 08:25:37 -0500 (GMT)
+        m = self.re_postfix_tls.search(line)
+        if m:
+            postfix_msg_id = m.group(1)
+            v = {
+                'remote_used_tls': 1,
+                'tls_version': m.group(2),
+                'tls_cipher': m.group(3)
+            }
+            mta_conn, mta_accept = self.find_by_postfix_msg_id(postfix_msg_id)
+            if mta_conn and 'tls_version' not in mta_conn:
+                mta_conn.update(v)
+                return { 'mta_conn':mta_conn, 'mta_accept':mta_accept }
+            return True
 
 
     def match_opendkim(self, line):
@@ -1231,6 +1254,7 @@ class PostfixLogHandler(CommonHandler):
                     'disposition': 'reject'
                 })
             elif mta_conn.get('remote_used_starttls',0)==0 and \
+                 mta_conn.get('remote_used_tls',0)==0 and \
                  mta_conn.get('remote_ip') != '127.0.0.1':
                 mta_conn.update({
                     'disposition': 'insecure'
@@ -1349,6 +1373,11 @@ class PostfixLogHandler(CommonHandler):
             self.log_match('message_id', match, line)
             return
 
+        match = self.match_postfix_tls(line)
+        if match:
+            self.log_match('tls', match, line)
+            return
+
         match = self.match_opendkim(line)
         if match:
             self.log_match('opendkim', match, line)
@@ -1394,7 +1423,8 @@ class PostfixLogHandler(CommonHandler):
                 # we're done - not queued and disconnected ... save it
                 self.store(match['mta_conn'])
             return
-        
-        self.log_match('IGNORED', None, line)
+
+        if 'postfix' in line:
+            self.log_match('IGNORED', None, line)
 
 

@@ -530,5 +530,6 @@ class DovecotLogHandler(CommonHandler):
                 self.store(match['imap_conn'])
             return
 
-        self.log_match('IGNORED', None, line)
+        if 'imap' in line:
+            self.log_match('IGNORED', None, line)
 

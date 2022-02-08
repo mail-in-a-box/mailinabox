@@ -24,6 +24,9 @@ mta_conn_fields = [
 	'remote_auth_success',
 	'remote_auth_attempts',
 	'remote_used_starttls',
+	'remote_used_tls',
+	'tls_version',
+	'tls_cipher',
 	'disposition',
 ]
 
@@ -205,6 +208,15 @@ schema_updates = [
 		"CREATE INDEX idx_imap_connection_connect_time ON imap_connection(connect_time, sasl_username COLLATE NOCASE)",
 
 		"UPDATE db_info SET value='2' WHERE key='schema_version'"
+	],
+
+	# update 3
+	[
+		"ALTER TABLE mta_connection ADD COLUMN remote_used_tls INTEGER DEFAULT 0",
+		"ALTER TABLE mta_connection ADD COLUMN tls_version TEXT DEFAULT NULL COLLATE NOCASE",
+		"ALTER TABLE mta_connection ADD COLUMN tls_cipher TEXT DEFAULT NULL COLLATE NOCASE",
+
+		"UPDATE db_info SET value='3' WHERE key='schema_version'"
 	],
 
 ]
