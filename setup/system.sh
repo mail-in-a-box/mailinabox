@@ -83,6 +83,18 @@ fi
 tools/editconf.py /etc/systemd/journald.conf MaxRetentionSec=10day
 
 hide_output systemctl restart systemd-journald.service
+# We install some non-standard Ubuntu packages maintained by other
+# third-party providers. First ensure add-apt-repository is installed.
+
+if [ ! -f /usr/bin/add-apt-repository ]; then
+	echo "Installing add-apt-repository..."
+	hide_output apt-get update
+	apt_install software-properties-common
+fi
+
+# Ensure the universe repository is enabled since some of our packages
+# come from there and minimal Ubuntu installs may have it turned off.
+hide_output add-apt-repository -y universe
 
 # ### Update Packages
 
@@ -304,18 +316,13 @@ fi #NODOC
 #
 # About the settings:
 #
-# * Adding -4 to OPTIONS will have `bind9` not listen on IPv6 addresses
-#   so that we're sure there's no conflict with nsd, our public domain
-#   name server, on IPV6.
 # * The listen-on directive in named.conf.options restricts `bind9` to
 #   binding to the loopback interface instead of all interfaces.
 # * The max-recursion-queries directive increases the maximum number of iterative queries.
 #  	If more queries than specified are sent, bind9 returns SERVFAIL. After flushing the cache during system checks,
 #	we ran into the limit thus we are increasing it from 75 (default value) to 100.
 apt_install bind9
-touch /etc/default/bind9
-tools/editconf.py /etc/default/bind9 \
-	"OPTIONS=\"-u bind -4\""
+
 if ! grep -q "listen-on " /etc/bind/named.conf.options; then
 	# Add a listen-on directive if it doesn't exist inside the options block.
 	sed -i "s/^}/\n\tlisten-on { 127.0.0.1; };\n}/" /etc/bind/named.conf.options

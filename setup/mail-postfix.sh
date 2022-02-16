@@ -13,8 +13,8 @@
 # destinations according to aliases, and passses email on to
 # another service for local mail delivery.
 #
-# The first hop in local mail delivery is to Spamassassin via
-# LMTP. Spamassassin then passes mail over to Dovecot for
+# The first hop in local mail delivery is to spampd via
+# LMTP. spampd then passes mail over to Dovecot for
 # storage in the user's mailbox.
 #
 # Postfix also listens on ports 465/587 (SMTPS, SMTP+STARTLS) for
@@ -124,7 +124,7 @@ sed -i "s/PUBLIC_IP/$PUBLIC_IP/" /etc/postfix/outgoing_mail_header_filters
 #   the world are very far behind and if we disable too much, they may not be able to use TLS and
 #   won't fall back to cleartext. So we don't disable too much. smtpd_tls_exclude_ciphers applies to
 #   both port 25 and port 587, but because we override the cipher list for both, it probably isn't used.
-#   Use Mozilla's "Old" recommendations at https://ssl-config.mozilla.org/#server=postfix&server-version=3.3.0&config=old&openssl-version=1.1.1
+#   Use Mozilla's "Old" recommendations at https://ssl-config.mozilla.org/#server=postfix&server-version=3.4.13&config=old&openssl-version=1.1.1
 tools/editconf.py /etc/postfix/main.cf \
 	smtpd_tls_security_level=may\
 	smtpd_tls_auth_only=yes \
@@ -133,7 +133,7 @@ tools/editconf.py /etc/postfix/main.cf \
 	smtpd_tls_dh1024_param_file=$STORAGE_ROOT/ssl/dh4096.pem \
 	smtpd_tls_protocols="!SSLv2,!SSLv3,!TLSv1,!TLSv1.1" \
 	smtpd_tls_ciphers=medium \
-	tls_medium_cipherlist=ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES256-SHA256 \
+	tls_medium_cipherlist=ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384 \
 	smtpd_tls_exclude_ciphers="MD5, DES, ADH, RC4, PSD, SRP, 3DES, eNULL, aNULL" \
 	tls_preempt_cipherlist=yes \
 	smtpd_tls_received_header=yes
@@ -205,16 +205,17 @@ tools/editconf.py /etc/postfix/main.cf \
 
 # ### Incoming Mail
 
-# Pass any incoming mail over to a local delivery agent. Spamassassin
-# will act as the LDA agent at first. It is listening on port 10025
-# with LMTP. Spamassassin will pass the mail over to Dovecot after.
+# Pass mail to spampd, which acts as the local delivery agent (LDA),
+# which then passes the mail over to the Dovecot LMTP server after.
+# spampd runs on port 10025 by default.
 #
 # In a basic setup we would pass mail directly to Dovecot by setting
 # virtual_transport to `lmtp:unix:private/dovecot-lmtp`.
 tools/editconf.py /etc/postfix/main.cf "virtual_transport=lmtp:[127.0.0.1]:10025"
-# Because of a spampd bug, limit the number of recipients in each connection.
+# Clear the lmtp_destination_recipient_limit setting which in previous
+# versions of Mail-in-a-Box was set to 1 because of a spampd bug.
 # See https://github.com/mail-in-a-box/mailinabox/issues/1523.
-tools/editconf.py /etc/postfix/main.cf lmtp_destination_recipient_limit=1
+tools/editconf.py /etc/postfix/main.cf  -e lmtp_destination_recipient_limit=
 
 
 # Who can send mail to us? Some basic filters.

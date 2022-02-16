@@ -14,6 +14,10 @@
 #
 # NAME VALUE
 #
+# If the -e option is given and VALUE is empty, the setting is removed
+# from the configuration file if it is set (i.e. existing occurrences
+# are commented out and no new setting is added).
+#
 # If the -c option is given, then the supplied character becomes the comment character
 #
 # If the -w option is given, then setting lines continue onto following
@@ -35,6 +39,7 @@ settings = sys.argv[2:]
 
 delimiter = "="
 delimiter_re = r"\s*=\s*"
+erase_setting = False
 comment_char = "#"
 folded_lines = False
 testing = False
@@ -44,6 +49,9 @@ while settings[0][0] == "-" and settings[0] != "--":
 		# Space is the delimiter
 		delimiter = " "
 		delimiter_re = r"\s+"
+	elif opt == "-e":
+		# Erase settings that have empty values.
+		erase_setting = True
 	elif opt == "-w":
 		# Line folding is possible in this file.
 		folded_lines = True
@@ -81,7 +89,7 @@ while len(input_lines) > 0:
 
 	# See if this line is for any settings passed on the command line.
 	for i in range(len(settings)):
-		# Check that this line contain this setting from the command-line arguments.
+		# Check if this line contain this setting from the command-line arguments.
 		name, val = settings[i].split("=", 1)
 		m = re.match(
 			   "(\s*)"
@@ -91,8 +99,10 @@ while len(input_lines) > 0:
 		if not m: continue
 		indent, is_comment, existing_val = m.groups()
 
-		# If this is already the setting, do nothing.
-		if is_comment is None and existing_val == val:
+		# If this is already the setting, keep it in the file, except:
+		# * If we've already seen it before, then remove this duplicate line.
+		# * If val is empty and erase_setting is on, then comment it out.
+		if is_comment is None and existing_val == val and not (not val and erase_setting):
 			# It may be that we've already inserted this setting higher
 			# in the file so check for that first.
 			if i in found: break
@@ -107,8 +117,9 @@ while len(input_lines) > 0:
 			# the line is already commented, pass it through
 			buf += line
 		
-		# if this option oddly appears more than once, don't add the setting again
-		if i in found:
+		# if this option already is set don't add the setting again,
+		# or if we're clearing the setting with -e, don't add it
+		if (i in found) or (not val and erase_setting):
 			break
 		
 		# add the new setting
@@ -122,9 +133,10 @@ while len(input_lines) > 0:
 		# If did not match any setting names, pass this line through.
 		buf += line
 		
-# Put any settings we didn't see at the end of the file.
+# Put any settings we didn't see at the end of the file,
+# except settings being cleared.
 for i in range(len(settings)):
-	if i not in found:
+	if (i not in found) and not (not val and erase_setting):
 		name, val = settings[i].split("=", 1)
 		buf += name + delimiter + val + "\n"
 

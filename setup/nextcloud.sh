@@ -28,7 +28,7 @@ nextcloud_hash=58d2d897ba22a057aa03d29c762c5306211fefd2
 # --------------
 # * Find the most recent tag that is compatible with the Nextcloud version above by
 #   consulting the <dependencies>...<nextcloud> node at:
-#   https://github.com/nextcloud-releases/contacts/blob/maaster/appinfo/info.xml
+#   https://github.com/nextcloud-releases/contacts/blob/master/appinfo/info.xml
 #   https://github.com/nextcloud-releases/calendar/blob/master/appinfo/info.xml
 #   https://github.com/nextcloud/user_external/blob/master/appinfo/info.xml
 # * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
@@ -49,10 +49,10 @@ apt_install php php-fpm \
 	php-dev php-gd php-xml php-mbstring php-zip php-apcu php-json \
 	php-intl php-imagick php-gmp php-bcmath
 
-# Enable apc is required before installing nextcloud 21
+# Enable apc is required before installing nextcloud
 tools/editconf.py /etc/php/$(php_version)/mods-available/apcu.ini -c ';' \
     apc.enabled=1 \
-    apc.enable_cli=1
+    apc.enable_cli=0
     
 restart_service php$(php_version)-fpm
 
@@ -156,7 +156,7 @@ fi
 # from the version currently installed, do the install/upgrade
 if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextcloud_ver ]]; then
 
-	# Stop php-fpm if running. If theyre not running (which happens on a previously failed install), dont bail.
+	# Stop php-fpm if running. If they are not running (which happens on a previously failed install), dont bail.
 	service php$(php_version)-fpm stop &> /dev/null || /bin/true
 
 	# Backup the existing ownCloud/Nextcloud.
@@ -317,6 +317,8 @@ CONFIG_TEMP=$(/bin/mktemp)
 php <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP $STORAGE_ROOT/owncloud/config.php;
 <?php
 include("$STORAGE_ROOT/owncloud/config.php");
+
+\$CONFIG['config_is_read_only'] = true; # should prevent warnings from occ tool but doesn't
 
 \$CONFIG['trusted_domains'] = array('$PRIMARY_HOSTNAME');
 
