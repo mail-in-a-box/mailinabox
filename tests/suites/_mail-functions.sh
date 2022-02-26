@@ -116,18 +116,20 @@ detect_syslog_error() {
 			awk '
 /status=(bounced|deferred|undeliverable)/  { exit 1 }
 /warning:/ && /spamhaus\.org: RBL lookup error:/ { exit 2 }
-!/postfix\/qmgr/ && /warning:/	{ exit 1 }
+!/postfix\/qmgr/ && !/nsd\[[0-9]+\]/ && /warning:/	{ exit 1 }
+/nsd\[[0-9]+\]: error: Cannot open .*nsd\.log/ { exit 2 }
 /named\[[0-9]+\]:.* receive error: .*: connection reset/ { exit 2 }
 /(fatal|reject|error):/	 { exit 1 }
 /Error in /			{ exit 1 }
 /Exception on /     { exit 1 }
-/named\[\d+\]:.* verify failed/ { exit 1 }
+/named\[[0-9]+\]:.* verify failed/ { exit 1 }
 ' \
 				>>$TEST_OF 2>&1 <<< "$line"
-			if [ $? -eq 1 ]; then
+			r=$?
+			if [ $r -eq 1 ]; then
 				let ec+=1
 				record "$F_DANGER[ERROR] $line$F_RESET"
-			elif [ $? -eq 2 ]; then
+			elif [ $r -eq 2 ]; then
 				let wc+=1
 				record "$F_WARN[ WARN] $line$F_RESET"
 			else
@@ -256,8 +258,17 @@ check_logs() {
 	[ ${#types[@]} -eq 0 ] && types=(syslog slapd mail)
 	
 	# flush records
-	kill -HUP $(cat /var/run/rsyslogd.pid)
-	sleep 2
+	local pid
+	if [ -e /var/run/rsyslogd.pid ]; then
+		# the pid file won't exist if rsyslogd was started with -iNONE
+		pid=$(cat /var/run/rsyslogd.pid)
+	else
+		pid=$(/usr/bin/pidof rsyslogd)
+	fi
+	if [ ! -z "$pid" ]; then
+		kill -HUP $pid
+		sleep 2
+	fi
 
 	if array_contains syslog ${types[@]}; then
 		detect_syslog_error && $assert &&

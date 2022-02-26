@@ -92,6 +92,19 @@ EOF
 echo "Installing nsd (DNS server)..."
 apt_install nsd ldnsutils openssh-client
 
+# ensure nsd can write to its log file
+
+rwpaths=$(awk -F= '/^ReadWritePaths=/ { print $2 }' /lib/systemd/system/nsd.service)
+mkdir -p /etc/systemd/system/nsd.service.d
+cat >/etc/systemd/system/nsd.service.d/miab.conf <<EOF
+# Do not edit. Overwritten by Mail-in-a-Box setup.
+[Service]
+ReadWritePaths=
+ReadWritePaths=${rwpaths} /var/log
+EOF
+systemctl daemon-reload
+systemctl restart nsd
+
 # Create DNSSEC signing keys.
 
 mkdir -p "$STORAGE_ROOT/dns/dnssec";

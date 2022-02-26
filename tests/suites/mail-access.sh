@@ -39,14 +39,18 @@ postgrey_whitelist_recipents() {
 		echo "$recipient" >> "$wl" || \
 			die "Could not add postgrey whitelist recipient to $wl"
 	done
-	systemctl reload postgrey
+	if ! systemctl reload postgrey >/dev/null 2>&1; then
+		systemctl restart postgrey >>$TEST_OF 2>&1
+	fi
 }
 
 
 postgrey_reset_whitelists() {
 	local wl="/etc/postgrey/whitelist_recipients.local"
 	rm -f "$wl"
-	systemctl reload postgrey
+	if ! systemctl reload postgrey >/dev/null 2>&1; then
+		systemctl restart postgrey >>$TEST_OF 2>&1
+	fi
 }
 
 
