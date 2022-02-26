@@ -1,7 +1,13 @@
 #!/bin/bash
 # Nextcloud
 ##########################
-[ "${FEATURE_NEXTCLOUD:-true}" == "false" ] && return 0
+if [ "${FEATURE_NEXTCLOUD:-true}" == "false" ]; then
+    source /etc/mailinabox.conf # load global vars
+    # ensure this log file exists or fail2ban won't start
+    mkdir -p $STORAGE_ROOT/owncloud
+    touch $STORAGE_ROOT/owncloud/nextcloud.log
+    return 0
+fi
 
 source setup/functions.sh # load our functions
 source setup/functions-downloads.sh
@@ -156,7 +162,7 @@ fi
 if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextcloud_ver ]]; then
 
 	# Stop php-fpm if running. If they are not running (which happens on a previously failed install), dont bail.
-	service php8.0-fpm stop &> /dev/null || /bin/true
+	service php8.1-fpm stop &> /dev/null || /bin/true
 
 	# Backup the existing ownCloud/Nextcloud.
 	# Create a backup directory to store the current installation and database to
@@ -330,7 +336,7 @@ sudo -u www-data \
 
 # Set PHP FPM values to support large file uploads
 # (semicolon is the comment character in this file, hashes produce deprecation warnings)
-tools/editconf.py /etc/php/8.0/fpm/php.ini -c ';' \
+tools/editconf.py /etc/php/8.1/fpm/php.ini -c ';' \
 	upload_max_filesize=16G \
 	post_max_size=16G \
 	output_buffering=16384 \
@@ -339,7 +345,7 @@ tools/editconf.py /etc/php/8.0/fpm/php.ini -c ';' \
 	short_open_tag=On
 
 # Set Nextcloud recommended opcache settings
-tools/editconf.py /etc/php/8.0/cli/conf.d/10-opcache.ini -c ';' \
+tools/editconf.py /etc/php/8.1/cli/conf.d/10-opcache.ini -c ';' \
 	opcache.enable=1 \
 	opcache.enable_cli=1 \
 	opcache.interned_strings_buffer=8 \
@@ -349,8 +355,8 @@ tools/editconf.py /etc/php/8.0/cli/conf.d/10-opcache.ini -c ';' \
 	opcache.revalidate_freq=1
 
 # If apc is explicitly disabled we need to enable it
-if grep -q apc.enabled=0 /etc/php/8.0/mods-available/apcu.ini; then
-	tools/editconf.py /etc/php/8.0/mods-available/apcu.ini -c ';' \
+if grep -q apc.enabled=0 /etc/php/8.1/mods-available/apcu.ini; then
+	tools/editconf.py /etc/php/8.1/mods-available/apcu.ini -c ';' \
 		apc.enabled=1
 fi
 
@@ -375,4 +381,4 @@ rm -f /etc/cron.hourly/mailinabox-owncloud
 # ```
 
 # Enable PHP modules and restart PHP.
-restart_service php8.0-fpm
+restart_service php8.1-fpm

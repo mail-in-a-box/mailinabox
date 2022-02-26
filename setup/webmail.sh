@@ -237,4 +237,4 @@ chmod 664 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 
 # Enable PHP modules.
 phpenmod -v php mcrypt imap ldap
-restart_service php8.0-fpm
+restart_service php8.1-fpm
