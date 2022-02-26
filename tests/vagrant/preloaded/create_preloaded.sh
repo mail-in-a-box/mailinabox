@@ -40,6 +40,7 @@ idx=0
 for box in "${boxes[@]}"
 do
     if [ ! -z "$1" -a "$1" != "$box" ]; then
+        let idx+=1
         continue
     fi
 

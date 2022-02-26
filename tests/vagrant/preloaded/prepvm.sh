@@ -31,6 +31,13 @@ if $dry_run; then
 fi
 
 
+# prevent apt from running needrestart(1)
+export NEEDRESTART_SUSPEND=true
+
+# what major version of ubuntu are we installing on?
+OS_MAJOR=$(. /etc/os-release; echo $VERSION_ID | awk -F. '{print $1}')
+
+
 remove_line_continuation() {
     local file="$1"
     awk '
@@ -67,15 +74,17 @@ install_packages() {
         # don't install slapd - it requires user input
         pkgs="$(sed 's/slapd//g' <<< "$pkgs")"
 
-        if [ $(. /etc/os-release; echo $VERSION_ID | awk -F. '{print $1}') -ge 22 ];
-        then
+        if [ $OS_MAJOR -ge 22 ]; then
             # don't install opendmarc on ubuntu 22 and higher - it requires
             # interactive user input
             pkgs="$(sed 's/opendmarc//g' <<< "$pkgs")"
         fi
         
         if [ ! -z "$pkgs" ]; then
+            echo ""
+            echo "======================================================="
             echo "install: $pkgs"
+            echo "======================================================="
             if ! $dry_run; then
                 apt-get install -y -qq $pkgs
             fi
@@ -96,6 +105,8 @@ done
 if ! $dry_run; then
     # bonus
     apt-get install -y -qq openssh-server
+    # ssh-rsa no longer a default algorithm, but still used by vagrant
+    echo "PubkeyAcceptedAlgorithms +ssh-rsa" > /etc/ssh/sshd_config.d/miabldap.conf
     apt-get install -y -qq emacs-nox
     apt-get install -y -qq ntpdate
 
