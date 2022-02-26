@@ -10,10 +10,23 @@ Vagrant.configure("2") do |config|
 
   config.vm.define "vanilla" do |m1|
     m1.vm.provision :shell, :inline => <<-SH
+cat >/tmp/provision.sh <<EOF
+#!/bin/bash
+if [ \$EUID -ne 0 ]; then
+   echo "Must be root"
+   exit 1
+fi
 cd /mailinabox
 export PRIMARY_HOSTNAME=vanilla.local
 export FEATURE_MUNIN=false
-tests/system-setup/vanilla.sh
+export FEATURE_NEXTCLOUD=false
+tests/system-setup/vanilla.sh \
+   --enable-mod=roundcube-master \
+   --enable-mod=roundcube-debug \
+   --enable-mod=rcmcarddav-composer
+EOF
+chmod +x /tmp/provision.sh
+/tmp/provision.sh
 SH
   end
 
