@@ -328,6 +328,7 @@ EOF
 			# ok
 			check_logs
 		else
+			test_failure "Expected postfix/lmtp to report 'User doesn't exist'"
 			assert_check_logs
 		fi
 		

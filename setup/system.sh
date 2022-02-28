@@ -370,3 +370,13 @@ cp -f conf/fail2ban/filter.d/* /etc/fail2ban/filter.d/
 # scripts will ensure the files exist and then fail2ban is given another
 # restart at the very end of setup.
 restart_service fail2ban
+
+# ### Mail-related logs should be recorded in mail.log only - stop
+# ### duplicate logging to syslog
+
+cat >/etc/rsyslog.d/20-mailinabox.conf <<EOF
+mail.*				-/var/log/mail.log
+mail.err			/var/log/mail.err
+mail.* stop
+EOF
+restart_service rsyslog

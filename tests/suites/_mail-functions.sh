@@ -114,9 +114,7 @@ detect_syslog_error() {
 		while read line; do
 			# named[7940]: dispatch 0x7f460c02c3a0: shutting down due to TCP receive error: 199.249.112.1#53: connection reset
 			awk '
-/status=(bounced|deferred|undeliverable)/  { exit 1 }
-/warning:/ && /spamhaus\.org: RBL lookup error:/ { exit 2 }
-!/postfix\/qmgr/ && !/nsd\[[0-9]+\]/ && /warning:/	{ exit 1 }
+!/nsd\[[0-9]+\]/ && /warning:/	{ exit 1 }
 /nsd\[[0-9]+\]: error: Cannot open .*nsd\.log/ { exit 2 }
 /named\[[0-9]+\]:.* receive error: .*: connection reset/ { exit 2 }
 /(fatal|reject|error):/	 { exit 1 }
@@ -209,9 +207,9 @@ detect_slapd_log_error() {
 }
 
 
-detect_dovecot_log_error() {
+detect_mail_log_error() {
 	record
-	record "[Detect dovecot log errors]"
+	record "[Detect mail log errors]"
 	local count
 	let count="$MAIL_LOG_LINECOUNT + 1"
 	if [ ! -e /var/log/mail.log ]; then
@@ -225,10 +223,16 @@ detect_dovecot_log_error() {
 		let ignored=0
 		while read line; do
 			awk '
+/status=(bounced|deferred|undeliverable)/  { exit 1 }
+/warning:/ && /spamhaus\.org: RBL lookup error:/ { exit 2 }
+!/postfix\/qmgr/ && /warning:/	{ exit 1 }
 /LDAP server, reconnecting/ { exit 2 }
 /postfix/ { exit 2 }
 /auth failed/  { exit 1 }
 / Error: /			  { exit 1 }
+/(fatal|reject|error):/	 { exit 1 }
+/Error in /			{ exit 1 }
+/Exception on /     { exit 1 }
 ' \
 				>>$TEST_OF 2>&1 <<< "$line"
 			r=$?
@@ -281,8 +285,8 @@ check_logs() {
 	fi
 	
 	if array_contains mail ${types[@]}; then
-		detect_dovecot_log_error && $assert &&
-			test_failure "detected errors in dovecot log"
+		detect_mail_log_error && $assert &&
+			test_failure "detected errors in mail log"
 	fi
 }
 
@@ -293,8 +297,8 @@ assert_check_logs() {
 grep_postfix_log() {
 	local msg="$1"
 	local count
-	let count="$SYS_LOG_LINECOUNT + 1"
-	tail --lines=+$count /var/log/syslog 2>>$TEST_OF | grep -iF "$msg" >/dev/null 2>>$TEST_OF
+	let count="$MAIL_LOG_LINECOUNT + 1"
+	tail --lines=+$count /var/log/mail.log 2>>$TEST_OF | grep -iF "$msg" >/dev/null 2>>$TEST_OF
 	return $?
 }
 
