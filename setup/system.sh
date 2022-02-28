@@ -389,4 +389,8 @@ mail.*              stop
 # configuration.
 :app-name, isequal, "nsd"    -/var/log/nsd.log
 EOF
+
+# Before miabldap v56, nsd.log was owned by nsd:nsd, which would
+# prevent rsyslog from writing to it. Fix the ownership.
+[ -e /var/log/nsd.log ] && chown syslog:adm /var/log/nsd.log
 restart_service rsyslog
