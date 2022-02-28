@@ -375,8 +375,18 @@ restart_service fail2ban
 # ### duplicate logging to syslog
 
 cat >/etc/rsyslog.d/20-mailinabox.conf <<EOF
+# Do not edit. Overwritten by Mail-in-a-Box setup.
+
+# Output mail-related messages to mail.log, then prevent rsyslog's
+# default configuration from duplicating the messages to syslog.
+
 mail.*				-/var/log/mail.log
 mail.err			/var/log/mail.err
-mail.* stop
+mail.*              stop
+
+# Output messages from nsd to nsd.log. nsd messages, which have
+# facility "daemon" are also written to syslog by the default rsyslog
+# configuration.
+:app-name, isequal, "nsd"    -/var/log/nsd.log
 EOF
 restart_service rsyslog
