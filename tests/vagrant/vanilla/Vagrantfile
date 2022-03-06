@@ -20,6 +20,7 @@ cd /mailinabox
 export PRIMARY_HOSTNAME=vanilla.local
 export FEATURE_MUNIN=false
 export FEATURE_NEXTCLOUD=false
+export SKIP_SYSTEM_UPDATE=0
 tests/system-setup/vanilla.sh \
    --enable-mod=roundcube-master \
    --enable-mod=roundcube-debug \
