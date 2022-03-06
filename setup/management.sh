@@ -42,12 +42,12 @@ if [ ! -d $venv ]; then
 fi
 
 # Upgrade pip because the Ubuntu-packaged version is out of date.
-hide_output $venv/bin/pip install --upgrade pip
+hide_output $venv/bin/python3 -m pip install --upgrade pip
 
 # Install other Python 3 packages used by the management daemon.
 # The first line is the packages that Josh maintains himself!
 # NOTE: email_validator is repeated in setup/questions.sh, so please keep the versions synced.
-hide_output $venv/bin/pip install --upgrade \
+hide_output $venv/bin/python3 -m pip install --upgrade \
 	rtyaml "email_validator>=1.0.0" "exclusiveprocess" \
 	flask dnspython python-dateutil expiringdict \
 	qrcode[pil] pyotp \
