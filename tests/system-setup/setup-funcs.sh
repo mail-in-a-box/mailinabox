@@ -2,7 +2,7 @@
 #
 # requires:
 #
-#   test scripts: [ lib/misc.sh, lib/system.sh ]
+#   test scripts: [ lib/misc.sh, lib/system.sh, lib/color-output.sh ]
 #
 
 
@@ -81,7 +81,7 @@ init_test_system() {
     # update package lists before installing anything
     H2 "apt-get update"
     wait_for_apt
-    apt-get update -qq || die "apt-get update failed!"
+    exec_no_output apt-get update -qq || die "apt-get update failed!"
 
     # upgrade packages - if we don't do this and something like bind
     # is upgraded through automatic upgrades (because maybe MiaB was
@@ -90,15 +90,24 @@ init_test_system() {
     if is_false "$TRAVIS" && [ "$SKIP_SYSTEM_UPDATE" != "1" ]; then
         H2 "apt-get upgrade"
         wait_for_apt
-        apt-get upgrade -qq || die "apt-get upgrade failed!"
+        cp /var/log/apt/history.log /tmp/history.log \
+           || die "Unable to copy /var/log/apt/history.log to /tmp"
+        exec_no_output apt-get upgrade -y --with-new-pkgs \
+            || die "apt-get upgrade failed!"
+        diff /tmp/history.log /var/log/apt/history.log \
+            | sed 's/^> //' \
+            | awk '/^(Upgrade|Install): / { print $0 }'
+        rm -f /tmp/history.log
     fi
     
     # install avahi if the system dns domain is .local - note that
     # /bin/dnsdomainname returns empty string at this point
     case "$PRIMARY_HOSTNAME" in
         *.local )
+            H2 "Install avahi"
             wait_for_apt
-            apt-get install -y -qq avahi-daemon || die "could not install avahi"
+            exec_no_output apt-get install -y avahi-daemon \
+                || die "could not install avahi"
             ;;
     esac
 }
@@ -131,8 +140,10 @@ init_miab_testing() {
     # python3-dnspython: is used by the python scripts in 'tests' and is
     #   not installed by setup
     # also install 'jq' for json processing
+    echo "Install python3-dnspython, jq"
     wait_for_apt
-    apt-get install -y -qq python3-dnspython jq
+    exec_no_output apt-get install -y python3-dnspython jq \
+        || die "Unable to install setup prerequisites !!"
     
     # copy in pre-built MiaB-LDAP ssl files
     #   1. avoid the lengthy generation of DH params
@@ -228,12 +239,15 @@ miab_ldap_install() {
     # but only when in interactive mode. make sure it's also installed
     # in non-interactive mode
     if [ ! -z "${NONINTERACTIVE:-}" ]; then
-        H2 "Install email_validator python3 module"
+        echo "Install email_validator python3 module"
         wait_for_apt
-        apt-get install -y -qq python3-pip || die "Unable to install pip3!"
-        pip3 install -q "email_validator>=1.0.0" || die "Unable to install email_validator python3 module!"
+        exec_no_output apt-get install -y -qq python3-pip \
+            || die "Unable to install pip !"
+        exec_no_output pip3 install -q "email_validator>=1.0.0" \
+            || die "Unable to install email_validator !"
     fi
 
+    H2 "Run mailinabox-ldap setup"
     # if EHDD_KEYFILE is set, use encryption-at-rest support
     if [ ! -z "$EHDD_KEYFILE" ]; then
         ehdd/start-encrypted.sh
@@ -249,6 +263,7 @@ miab_ldap_install() {
         die "MiaB-LDAP setup failed!"
     fi
 
+    H2 "Post-setup actions"
     workaround_dovecot_sieve_bug
 
     # set actual STORAGE_ROOT, STORAGE_USER, PRIVATE_IP, etc
@@ -258,6 +273,8 @@ miab_ldap_install() {
     if systemctl is-active --quiet avahi-daemon; then
         systemctl restart avahi-daemon
     fi
+
+    H2 "miab-ldap install success"
 }
 
 
