@@ -26,7 +26,7 @@ source /etc/mailinabox.conf # load global vars
 echo "Installing Dovecot (IMAP server)..."
 apt_install \
 	dovecot-core dovecot-imapd dovecot-pop3d dovecot-lmtpd dovecot-sqlite sqlite3 \
-	dovecot-sieve dovecot-managesieved
+	dovecot-sieve dovecot-managesieved dovecot-ldap
 
 # The `dovecot-imapd`, `dovecot-pop3d`, and `dovecot-lmtpd` packages automatically
 # enable IMAP, POP and LMTP protocols.
@@ -216,5 +216,14 @@ ufw_allow pop3s
 # Allow the Sieve port in the firewall.
 ufw_allow sieve
 
+#LDAP Auth Settings
+tools/editconf.py /etc/dovecot/dovecot-ldap.conf.ext \
+	hosts= https://ldap.jumpcloud.com/\
+	dn= o=6213e55079447567c1073191,dc=jumpcloud,dc=com\
+	dnpass=secret
+	tls=yes
+	auth_bind=yes
+	auth_bind_userdn =ou=Users,o=6213e55079447567c1073191,dc=jumpcloud,dc=com
+	
 # Restart services.
 restart_service dovecot
