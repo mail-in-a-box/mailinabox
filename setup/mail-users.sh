@@ -31,6 +31,7 @@ fi
 # Have Dovecot query our database, and not system users, for authentication.
 sed -i "s/#*\(\!include auth-system.conf.ext\)/#\1/"  /etc/dovecot/conf.d/10-auth.conf
 sed -i "s/#\(\!include auth-sql.conf.ext\)/\1/"  /etc/dovecot/conf.d/10-auth.conf
+sed -i "s/#\(\!include auth-ldap.conf.ext\)/\1/"  /etc/dovecot/conf.d/10-auth.conf
 
 # Specify how the database is to be queried for user authentication (passdb)
 # and where user mailboxes are stored (userdb).
