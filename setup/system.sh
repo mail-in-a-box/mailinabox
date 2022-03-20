@@ -315,7 +315,7 @@ fi #NODOC
 # the public, recursive nameserver `nsd` bound to the public ethernet interfaces.
 
 # remove bind9 in case it is still there
-apt-get purge -qq -y bind9
+apt-get purge -qq -y bind9 bind9-utils
 
 # Install unbound and dns utils (e.g. dig)
 apt_install unbound python3-unbound bind9-dnsutils
