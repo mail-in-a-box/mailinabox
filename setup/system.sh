@@ -323,15 +323,13 @@ apt_install unbound python3-unbound bind9-dnsutils
 # Configure unbound
 cp -f conf/unbound.conf /etc/unbound/unbound.conf.d/miabunbound.conf
 
-# Configure network manager
-mkdir /etc/NetworkManager/conf.d
-cp -f conf/NetworkManager.conf /etc/NetworkManager/conf.d/unbound.conf
-
 # Modify systemd settings
-tools/editconf.py /etc/systemd/resolv.conf \
+rm -f /etc/resolv.conf
+tools/editconf.py /etc/systemd/resolved.conf \
 	DNS=127.0.0.1 \
 	DNSSEC=yes \
 	DNSStubListener=no
+echo "nameserver 127.0.0.1" > /etc/resolv.conf
 
 # Restart the DNS services.
 
