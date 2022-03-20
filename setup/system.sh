@@ -310,50 +310,33 @@ fi #NODOC
 # DNS server, which won't work for RBLs. So we really need a local recursive
 # nameserver.
 #
-# We'll install `bind9`, which as packaged for Ubuntu, has DNSSEC enabled by default via "dnssec-validation auto".
+# We'll install unbound, which as packaged for Ubuntu, has DNSSEC enabled by default.
 # We'll have it be bound to 127.0.0.1 so that it does not interfere with
 # the public, recursive nameserver `nsd` bound to the public ethernet interfaces.
-#
-# About the settings:
-#
-# * The listen-on directive in named.conf.options restricts `bind9` to
-#   binding to the loopback interface instead of all interfaces.
-# * The max-recursion-queries directive increases the maximum number of iterative queries.
-#  	If more queries than specified are sent, bind9 returns SERVFAIL. After flushing the cache during system checks,
-#	we ran into the limit thus we are increasing it from 75 (default value) to 100.
-apt_install bind9
 
-if ! grep -q "listen-on " /etc/bind/named.conf.options; then
-	# Add a listen-on directive if it doesn't exist inside the options block.
-	sed -i "s/^}/\n\tlisten-on { 127.0.0.1; };\n}/" /etc/bind/named.conf.options
-fi
-if ! grep -q "listen-on-v6 " /etc/bind/named.conf.options; then
-	# Add a listen-on-v6 directive if it doesn't exist inside the options block.
-	sed -i "s/^}/\n\tlisten-on-v6 { ::1; };\n}/" /etc/bind/named.conf.options
-else
-	# Modify the listen-on-v6 directive if it does exist
-	sed -i "s/listen-on-v6 { any; }/listen-on-v6 { ::1; }/" /etc/bind/named.conf.options
-fi
+# remove bind9 in case it is still there
+apt-get purge -qq -y bind9
 
-if ! grep -q "max-recursion-queries " /etc/bind/named.conf.options; then
-	# Add a max-recursion-queries directive if it doesn't exist inside the options block.
-	sed -i "s/^}/\n\tmax-recursion-queries 100;\n}/" /etc/bind/named.conf.options
-fi
+# Install unbound and dns utils (e.g. dig)
+apt_install unbound python3-unbound bind9-dnsutils
 
-# First we'll disable systemd-resolved's management of resolv.conf and its stub server.
-# Breaking the symlink to /run/systemd/resolve/stub-resolv.conf means
-# systemd-resolved will read it for DNS servers to use. Put in 127.0.0.1,
-# which is where bind9 will be running. Obviously don't do this before
-# installing bind9 or else apt won't be able to resolve a server to
-# download bind9 from.
-rm -f /etc/resolv.conf
-tools/editconf.py /etc/systemd/resolved.conf DNSStubListener=no
-echo "nameserver 127.0.0.1" > /etc/resolv.conf
+# Configure unbound
+cp -f conf/unbound.conf /etc/unbound/unbound.conf.d/miabunbound.conf
+
+# Configure network manager
+mkdir /etc/NetworkManager/conf.d
+cp -f conf/NetworkManager.conf /etc/NetworkManager/conf.d/unbound.conf
+
+# Modify systemd settings
+tools/editconf.py /etc/systemd/resolv.conf \
+	DNS=127.0.0.1 \
+	DNSSEC=yes \
+	DNSStubListener=no
 
 # Restart the DNS services.
 
-restart_service bind9
 systemctl restart systemd-resolved
+systemctl restart unbound
 
 # ### Fail2Ban Service
 

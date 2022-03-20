@@ -22,9 +22,8 @@ from utils import shell, sort_domains, load_env_vars_from_file, load_settings
 
 def get_services():
 	return [
-		{ "name": "Local DNS (bind9)", "port": 53, "public": False, },
-		#{ "name": "NSD Control", "port": 8952, "public": False, },
-		{ "name": "Local DNS Control (bind9/rndc)", "port": 953, "public": False, },
+		{ "name": "Local DNS (unbound)", "port": 53, "public": False, },
+		{ "name": "Local DNS Control (unbound)", "port": 953, "public": False, },
 		{ "name": "Dovecot LMTP LDA", "port": 10026, "public": False, },
 		{ "name": "Postgrey", "port": 10023, "public": False, },
 		{ "name": "Spamassassin", "port": 10025, "public": False, },
@@ -49,15 +48,15 @@ def run_checks(rounded_values, env, output, pool, domains_to_check=None):
 
 	# check that services are running
 	if not run_services_checks(env, output, pool):
-		# If critical services are not running, stop. If bind9 isn't running,
+		# If critical services are not running, stop. If unbound isn't running,
 		# all later DNS checks will timeout and that will take forever to
 		# go through, and if running over the web will cause a fastcgi timeout.
 		return
 
-	# clear bind9's DNS cache so our DNS checks are up to date
-	# (ignore errors; if bind9/rndc isn't running we'd already report
+	# clear unbound's DNS cache so our DNS checks are up to date
+	# (ignore errors; if unbound isn't running we'd already report
 	# that in run_services checks.)
-	shell('check_call', ["/usr/sbin/rndc", "flush"], trap=True)
+	shell('check_call', ["/usr/sbin/unbound-control", "reload"], trap=True)
 
 	run_system_checks(rounded_values, env, output)
 
@@ -793,7 +792,7 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None, as_list=False):
 		qname += "."
 
 	# Use the default nameservers (as defined by the system, which is our locally
-	# running bind server), or if the 'at' argument is specified, use that host
+	# running unbound server), or if the 'at' argument is specified, use that host
 	# as the nameserver.
 	resolver = dns.resolver.get_default_resolver()
 	if at:

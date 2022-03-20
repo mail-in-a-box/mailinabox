@@ -115,9 +115,9 @@ def do_dns_update(env, force=False):
 			# If this is the only thing that changed?
 			updated_domains.append("DKIM configuration")
 
-	# Clear bind9's DNS cache so our own DNS resolver is up to date.
+	# Clear unbound's DNS cache so our own DNS resolver is up to date.
 	# (ignore errors with trap=True)
-	shell('check_call', ["/usr/sbin/rndc", "flush"], trap=True)
+	shell('check_call', ["/usr/sbin/unbound-control", "reload"], trap=True)
 
 	if len(updated_domains) == 0:
 		# if nothing was updated (except maybe DKIM's files), don't show any output
