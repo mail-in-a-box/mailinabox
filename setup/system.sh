@@ -323,6 +323,10 @@ apt_install unbound python3-unbound bind9-dnsutils
 # Configure unbound
 cp -f conf/unbound.conf /etc/unbound/unbound.conf.d/miabunbound.conf
 
+if [ -d /etc/unbound/lists.d ]; then
+	mkdir /etc/unbound/lists.d
+fi
+
 # Modify systemd settings
 rm -f /etc/resolv.conf
 tools/editconf.py /etc/systemd/resolved.conf \
