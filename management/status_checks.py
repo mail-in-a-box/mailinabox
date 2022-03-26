@@ -658,7 +658,7 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 	if len(ds) > 0:
 		output.print_line("")
 		output.print_line("The DS record is currently set to:")
-		for rr in ds:
+		for rr in sorted(ds):
 			output.print_line("Key Tag: {0}, Algorithm: {1}, Digest Type: {2}, Digest: {3}".format(*rr))
 
 def check_mail_domain(domain, env, output):
