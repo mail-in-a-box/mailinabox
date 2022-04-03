@@ -157,7 +157,7 @@ ufw_allow https
 if [ $DAV_HOSTNAME != $PRIMARY_HOSTNAME ]; then
     mv management/templates/sync-guide.html management/templates/sync-guide-orig.html
     cp management/templates/sync-guide-ext.html management/templates/sync-guide.html
-    sed -i "s/DAV_HOSTNAME/$DAV_HOSTNAME" management/templates/sync-guide.html
+    sed -i "s/DAV_HOSTNAME/$DAV_HOSTNAME/" management/templates/sync-guide.html
     #sed -i "s/CALDAV_URL/$CALDAV_URL/" management/tempmlates/sync-guide.html
     #sec -i "s/CARDDAV_URL/$CARDDAV_URL/" management/templates/sync-guide.html
 fi
