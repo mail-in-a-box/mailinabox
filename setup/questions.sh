@@ -83,6 +83,15 @@ address, so we're suggesting $DEFAULT_PRIMARY_HOSTNAME.
 	fi
 fi
 
+
+# Are we running an external CalDAV and CardDAV server?  This will default the variable NC_HOSTNAME to
+# PRIMARY_HOSTNAME unless it is changed. If change, Nextcloud installation is omitted from this setup script
+    input_box "External Cal/CardDAV server" \
+"Are you using an external server for CalDAV and CardDAV (Nextcloud), if so, enter the FQDN of the server. \
+IMPORTANT: Changing this from the default will omit the installation of Nextcloud on this system."
+    $PRIMARY_HOSTNAME \
+    DAV_HOSTNAME
+
 # If the machine is behind a NAT, inside a VM, etc., it may not know
 # its IP address on the public network / the Internet. Ask the Internet
 # and possibly confirm with user.

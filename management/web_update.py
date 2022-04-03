@@ -83,9 +83,14 @@ def do_web_update(env):
 	template1 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-alldomains.conf")).read()
 	template2 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-primaryonly.conf")).read()
 	template3 = "\trewrite ^(.*) https://$REDIRECT_DOMAIN$1 permanent;\n"
+	template4 = open(os.path.join(os.path.dirname(__file__), "../conf/nginx-nextcloud.conf")).read()
 
 	# Add the PRIMARY_HOST configuration first so it becomes nginx's default server.
-	nginx_conf += make_domain_config(env['PRIMARY_HOSTNAME'], [template0, template1, template2], ssl_certificates, env)
+	# If DAV_HOSTNAME and PRIMARY_HOSTNAME differ, exclude the Nextcloud configuration from the nginx configuration
+	if env['PRIMARY_HOSTNAME' == env'DAV_HOSTNAME']:
+		nginx_conf += make_domain_config(env['PRIMARY_HOSTNAME'], [template0, template1, template2, template4], ssl_certificates, env)
+	else
+		nginx_conf += make_domain_config(env['PRIMARY_HOSTNAME'], [template0, template1, template2], ssl_certificates, env)
 
 	# Add configuration all other web domains.
 	has_root_proxy_or_redirect = get_web_domains_with_root_overrides(env)

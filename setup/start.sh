@@ -90,6 +90,7 @@ cat > /etc/mailinabox.conf << EOF;
 STORAGE_USER=$STORAGE_USER
 STORAGE_ROOT=$STORAGE_ROOT
 PRIMARY_HOSTNAME=$PRIMARY_HOSTNAME
+DAV_HOSTNAME=$DAV_HOSTNAME
 PUBLIC_IP=$PUBLIC_IP
 PUBLIC_IPV6=$PUBLIC_IPV6
 PRIVATE_IP=$PRIVATE_IP
@@ -108,7 +109,10 @@ source setup/dkim.sh
 source setup/spamassassin.sh
 source setup/web.sh
 source setup/webmail.sh
-source setup/nextcloud.sh
+# If DAV server hostname is differs from this machine, omit Nextcloud installation
+if [ $DAV_HOSTNAME == $PRIMARY_HOSTNAME]; then
+    source setup/nextcloud.sh
+fi
 source setup/zpush.sh
 source setup/management.sh
 source setup/munin.sh
