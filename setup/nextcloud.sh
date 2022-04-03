@@ -21,8 +21,8 @@ echo "Installing Nextcloud (contacts/calendar)..."
 #   we automatically install intermediate versions as needed.
 # * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
 #   copying it from the error message when it doesn't match what is below.
-nextcloud_ver=22.2.3
-nextcloud_hash=58d2d897ba22a057aa03d29c762c5306211fefd2
+nextcloud_ver=23.0.2
+nextcloud_hash=645cba42cab57029ebe29fb93906f58f7abea5f8
 
 # Nextcloud apps
 # --------------
@@ -33,10 +33,10 @@ nextcloud_hash=58d2d897ba22a057aa03d29c762c5306211fefd2
 #   https://github.com/nextcloud/user_external/blob/master/appinfo/info.xml
 # * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
 #   copying it from the error message when it doesn't match what is below.
-contacts_ver=4.0.7
-contacts_hash=8ab31d205408e4f12067d8a4daa3595d46b513e3
-calendar_ver=3.0.4
-calendar_hash=6fb1e998d307c53245faf1c37a96eb982bbee8ba
+contacts_ver=4.0.8
+contacts_hash=9f368bb2be98c5555b7118648f4cc9fa51e8cb30
+calendar_ver=3.0.6
+calendar_hash=ca49bb1ce23f20e10911e39055fd59d7f7a84c30
 user_external_ver=2.1.0
 user_external_hash=6e5afe7f36f398f864bfdce9cad72200e70322aa
 
@@ -52,7 +52,7 @@ apt_install php php-fpm \
 # Enable apc is required before installing nextcloud
 tools/editconf.py /etc/php/$(php_version)/mods-available/apcu.ini -c ';' \
     apc.enabled=1 \
-    apc.enable_cli=0
+    apc.enable_cli=1
     
 restart_service php$(php_version)-fpm
 
@@ -103,6 +103,9 @@ InstallNextcloud() {
 		wget_verify https://github.com/nextcloud/user_external/releases/download/v$version_user_external/user_external-$version_user_external.tar.gz $hash_user_external /tmp/user_external.tgz
 		tar -xf /tmp/user_external.tgz -C /usr/local/lib/owncloud/apps/
 		rm /tmp/user_external.tgz
+		
+		# (Temporary?) workaround to get user_external working with Nextcloud 23 (see https://github.com/nextcloud/user_external/issues/186)
+		sed -i "s/nextcloud min-version=\"21\" max-version=\"22\"/nextcloud min-version=\"21\" max-version=\"23\"/g" /usr/local/lib/owncloud/apps/user_external/appinfo/info.xml
 	fi
 
 	# Fix weird permissions.
@@ -224,6 +227,10 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^20 ]]; then
 			InstallNextcloud 21.0.7 f5c7079c5b56ce1e301c6a27c0d975d608bb01c9 4.0.0 f893ca57a543b260c9feeecbb5958c00b6998e18 2.2.2 923846d48afb5004a456b9079cf4b46d23b3ef3a 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
 			CURRENT_NEXTCLOUD_VER="21.0.7"
+		fi
+		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^21 ]]; then
+			InstallNextcloud 22.2.3 58d2d897ba22a057aa03d29c762c5306211fefd2 4.0.7 8ab31d205408e4f12067d8a4daa3595d46b513e3 3.0.4 6fb1e998d307c53245faf1c37a96eb982bbee8ba 2.1.0 6e5afe7f36f398f864bfdce9cad72200e70322aa
+			CURRENT_NEXTCLOUD_VER="22.2.3"
 		fi
 	fi
 
