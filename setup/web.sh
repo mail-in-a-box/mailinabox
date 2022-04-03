@@ -124,7 +124,7 @@ chmod a+r /var/lib/mailinabox/mozilla-autoconfig.xml
 
 # Create a generic mta-sts.txt file which is exposed via the
 # nginx configuration at /.well-known/mta-sts.txt
-# more documentation is available on: 
+# more documentation is available on:
 # https://www.uriports.com/blog/mta-sts-explained/
 # default mode is "enforce". In /etc/mailinabox.conf change
 # "MTA_STS_MODE=testing" which means "Messages will be delivered
@@ -152,3 +152,12 @@ restart_service php7.2-fpm
 # Open ports.
 ufw_allow http
 ufw_allow https
+
+#Correct information on the Contact/Calendar informational page with External CardDAV/CalDAV URLs
+if [ $DAV_HOSTNAME != $PRIMARY_HOSTNAME ]; then
+    mv management/templates/sync-guide.html management/templates/sync-guide-orig.html
+    cp management/templates/sync-guide-ext.html management/templates/sync-guide.html
+    sed -i "s/DAV_HOSTNAME/$DAV_HOSTNAME" management/templates/sync-guide.html
+    #sed -i "s/CALDAV_URL/$CALDAV_URL" management/tempmlates/sync-guide.html
+    #sec -i "s/CARDDAV_URL/$CARDDAV_URL" management/templates/sync-guide.html
+fi
