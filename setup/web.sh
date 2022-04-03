@@ -110,6 +110,8 @@ cat conf/ios-profile.xml \
 	| sed "s/UUID3/$(cat /proc/sys/kernel/random/uuid)/" \
 	| sed "s/UUID4/$(cat /proc/sys/kernel/random/uuid)/" \
 	 > /var/lib/mailinabox/mobileconfig.xml
+    sed -i "s/DAV_HOSTNAME/$DAV_HOSTNAME/" /var/lib/mailinabox/mobileconfig.xml
+
 chmod a+r /var/lib/mailinabox/mobileconfig.xml
 
 # Create the Mozilla Auto-configuration file which is exposed via the
@@ -120,7 +122,6 @@ chmod a+r /var/lib/mailinabox/mobileconfig.xml
 cat conf/mozilla-autoconfig.xml \
 	| sed "s/PRIMARY_HOSTNAME/$PRIMARY_HOSTNAME/" \
 	 > /var/lib/mailinabox/mozilla-autoconfig.xml
-    sed "s/DAV_HOSTNAME/$DAV_HOSTNAME/" /var/lib/mailinabox/mozilla-autoconfig.xml
 
 chmod a+r /var/lib/mailinabox/mozilla-autoconfig.xml
 
