@@ -87,7 +87,7 @@ def do_web_update(env):
 
 	# Add the PRIMARY_HOST configuration first so it becomes nginx's default server.
 	# If DAV_HOSTNAME and PRIMARY_HOSTNAME differ, exclude the Nextcloud configuration from the nginx configuration
-	if env['PRIMARY_HOSTNAME' == env'DAV_HOSTNAME']:
+	if env['PRIMARY_HOSTNAME'] == env['DAV_HOSTNAME']:
 		nginx_conf += make_domain_config(env['PRIMARY_HOSTNAME'], [template0, template1, template2, template4], ssl_certificates, env)
 	else
 		nginx_conf += make_domain_config(env['PRIMARY_HOSTNAME'], [template0, template1, template2], ssl_certificates, env)
