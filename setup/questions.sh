@@ -92,6 +92,7 @@ if [ -z "${DAV_HOSTNAME:-}" ]; then
 \n\nIMPORTANT: Changing this from the default will omit the installation of Nextcloud on this system."
     $DAV_HOSTNAME \
     DAV_HOSTNAME
+fi
 
 # If the machine is behind a NAT, inside a VM, etc., it may not know
 # its IP address on the public network / the Internet. Ask the Internet
