@@ -8,6 +8,7 @@ import sys, os, os.path, urllib.parse, datetime, re, hashlib, base64
 import ipaddress
 import rtyaml
 import dns.resolver
+import logging
 
 from utils import shell, load_env_vars_from_file, safe_domain_name, sort_domains
 from ssl_certificates import get_ssl_certificates, check_certificate
@@ -117,7 +118,7 @@ def do_dns_update(env, force=False):
 
 	# Clear unbound's DNS cache so our own DNS resolver is up to date.
 	# (ignore errors with trap=True)
-	shell('check_call', ["/usr/sbin/unbound-control", "reload"], trap=True)
+	shell('check_call', ["/usr/sbin/unbound-control", "reload"], trap=True, capture_stdout=False)
 
 	if len(updated_domains) == 0:
 		# if nothing was updated (except maybe DKIM's files), don't show any output
@@ -1101,17 +1102,32 @@ def set_secondary_dns(hostnames, env):
 	if len(hostnames) > 0:
 		# Validate that all hostnames are valid and that all zone-xfer IP addresses are valid.
 		resolver = dns.resolver.get_default_resolver()
-		resolver.timeout = 5
+		resolver.timeout = 6
 		for item in hostnames:
 			if not item.startswith("xfr:"):
 				# Resolve hostname.
 				try:
 					response = resolver.resolve(item, "A")
 				except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+					logging.debug('Error on resolving ipv4 address, trying ipv6')
 					try:
 						response = resolver.resolve(item, "AAAA")
 					except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
 						raise ValueError("Could not resolve the IP address of %s." % item)
+				except (dns.resolver.Timeout):
+					resolver.timeout = 7
+					logging.warning('Timeout on resolving ipv4 address re-trying')
+					try:
+						response = resolver.resolve(item, "A")
+					except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+						logging.debug('Error on resolving ipv4 address, trying ipv6 (2)')
+						try:
+							response = resolver.resolve(item, "AAAA")
+						except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+							raise ValueError("Could not resolve the IP address of %s." % item)
+					except (dns.resolver.Timeout):
+						raise ValueError("Could not resolve the IP address of %s due to timeout." % item)
+					resolver.timeout = 6
 			else:
 				# Validate IP address.
 				try:

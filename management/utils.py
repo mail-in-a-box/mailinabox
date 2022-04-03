@@ -106,7 +106,7 @@ def sort_email_addresses(email_addresses, env):
     ret.extend(sorted(email_addresses)) # whatever is left
     return ret
 
-def shell(method, cmd_args, env={}, capture_stderr=False, return_bytes=False, trap=False, input=None):
+def shell(method, cmd_args, env={}, capture_stdout=True, capture_stderr=False, return_bytes=False, trap=False, input=None):
     # A safe way to execute processes.
     # Some processes like apt-get require being given a sane PATH.
     import subprocess
@@ -116,6 +116,8 @@ def shell(method, cmd_args, env={}, capture_stderr=False, return_bytes=False, tr
         'env': env,
         'stderr': None if not capture_stderr else subprocess.STDOUT,
     }
+    if not capture_stdout:
+        kwargs['stdout'] = subprocess.DEVNULL
     if method == "check_output" and input is not None:
         kwargs['input'] = input
 

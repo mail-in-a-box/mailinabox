@@ -12,6 +12,7 @@
 
 import os, os.path, re, json, time
 import multiprocessing.pool, subprocess
+import logging
 
 from functools import wraps
 
@@ -762,14 +763,21 @@ def log_failed_login(request):
 # APP
 
 if __name__ == '__main__':
+	logging_level = logging.INFO
+	
 	if "DEBUG" in os.environ:
 		# Turn on Flask debugging.
 		app.debug = True
+		logging_level = logging.DEBUG
 
 	if not app.debug:
 		app.logger.addHandler(utils.create_syslog_handler())
 
 	#app.logger.info('API key: ' + auth_service.key)
 
+	logging.basicConfig(level=logging_level, format='%(levelname)s:%(module)s.%(funcName)s %(message)s')
+	logging.info('Logging level set to %s', logging.getLevelName(logging_level))
+
 	# Start the application server. Listens on 127.0.0.1 (IPv4 only).
 	app.run(port=10222)
+	
