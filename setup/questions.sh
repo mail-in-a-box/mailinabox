@@ -89,7 +89,7 @@ if [ -z "${DAV_HOSTNAME:-}" ]; then
     DAV_HOSTNAME=$PRIMARY_HOSTNAME
     input_box "External CalDAV/CardDAV Server" \
 "Are you using an external server for CalDAV and CardDAV (Nextcloud), if so, enter the FQDN of the server. \
-\n\nIMPORTANT: Changing this from the default will omit the installation of Nextcloud on this system."
+\n\nIMPORTANT: Changing this from the default will omit the installation of Nextcloud on this system." \
     $DAV_HOSTNAME \
     DAV_HOSTNAME
 fi
