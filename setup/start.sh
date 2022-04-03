@@ -110,7 +110,7 @@ source setup/spamassassin.sh
 source setup/web.sh
 source setup/webmail.sh
 # If DAV server hostname is differs from this machine, omit Nextcloud installation
-if [ $DAV_HOSTNAME == $PRIMARY_HOSTNAME]; then
+if [ $DAV_HOSTNAME == $PRIMARY_HOSTNAME ]; then
     source setup/nextcloud.sh
 fi
 source setup/zpush.sh
