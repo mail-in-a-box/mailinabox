@@ -120,6 +120,8 @@ chmod a+r /var/lib/mailinabox/mobileconfig.xml
 cat conf/mozilla-autoconfig.xml \
 	| sed "s/PRIMARY_HOSTNAME/$PRIMARY_HOSTNAME/" \
 	 > /var/lib/mailinabox/mozilla-autoconfig.xml
+    sed "s/DAV_HOSTNAME/$DAV_HOSTNAME/" /var/lib/mailinabox/mozilla-autoconfig.xml
+
 chmod a+r /var/lib/mailinabox/mozilla-autoconfig.xml
 
 # Create a generic mta-sts.txt file which is exposed via the
@@ -157,7 +159,4 @@ ufw_allow https
 if [ $DAV_HOSTNAME != $PRIMARY_HOSTNAME ]; then
     cp management/templates/sync-guide.html management/templates/sync-guide-int.html
     cp management/templates/sync-guide-ext.html management/templates/sync-guide.html
-    sed -i "s/DAV_HOSTNAME/$DAV_HOSTNAME/" management/templates/sync-guide.html
-    #sed -i "s/CALDAV_URL/$CALDAV_URL/" management/tempmlates/sync-guide.html
-    #sec -i "s/CARDDAV_URL/$CARDDAV_URL/" management/templates/sync-guide.html
 fi
