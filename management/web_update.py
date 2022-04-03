@@ -89,7 +89,7 @@ def do_web_update(env):
 	# If DAV_HOSTNAME and PRIMARY_HOSTNAME differ, exclude the Nextcloud configuration from the nginx configuration
 	if env['PRIMARY_HOSTNAME'] == env['DAV_HOSTNAME']:
 		nginx_conf += make_domain_config(env['PRIMARY_HOSTNAME'], [template0, template1, template2, template4], ssl_certificates, env)
-	else
+	else:
 		nginx_conf += make_domain_config(env['PRIMARY_HOSTNAME'], [template0, template1, template2], ssl_certificates, env)
 
 	# Add configuration all other web domains.
