@@ -155,7 +155,7 @@ ufw_allow https
 
 #Correct information on the Contact/Calendar informational page with External CardDAV/CalDAV URLs
 if [ $DAV_HOSTNAME != $PRIMARY_HOSTNAME ]; then
-    mv management/templates/sync-guide.html management/templates/sync-guide-orig.html
+    cp management/templates/sync-guide.html management/templates/sync-guide-int.html
     cp management/templates/sync-guide-ext.html management/templates/sync-guide.html
     sed -i "s/DAV_HOSTNAME/$DAV_HOSTNAME/" management/templates/sync-guide.html
     #sed -i "s/CALDAV_URL/$CALDAV_URL/" management/tempmlates/sync-guide.html
