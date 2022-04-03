@@ -94,6 +94,16 @@ if [ -z "${DAV_HOSTNAME:-}" ]; then
     DAV_HOSTNAME
 fi
 
+if [ $DAV_HOSTNAME == $PRIMARY_HOSTNAME ]; then
+    if [ -z "${RC_DOCK}"]; then
+        RC_DOCK=n
+        input_box "Run Roundcube Webmail in Docker" \ "By default Mail-in-a-Box installs Roundcube onto the host. \
+        \n\nDo you want to run Roundcube Webmail in a Docker container instead?" \
+        n \
+        RC_DOCK
+    fi
+fi
+
 # If the machine is behind a NAT, inside a VM, etc., it may not know
 # its IP address on the public network / the Internet. Ask the Internet
 # and possibly confirm with user.
