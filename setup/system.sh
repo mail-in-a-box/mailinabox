@@ -85,7 +85,7 @@ fi
 # (See https://discourse.mailinabox.email/t/journalctl-reclaim-space-on-small-mailinabox/6728/11.)
 tools/editconf.py /etc/systemd/journald.conf MaxRetentionSec=10day
 
-# ### Add PPAs.
+# ### Add PPAs.  Remarking for Docker install test
 
 # We install some non-standard Ubuntu packages maintained by other
 # third-party providers. First ensure add-apt-repository is installed.
@@ -98,13 +98,13 @@ fi
 
 # Ensure the universe repository is enabled since some of our packages
 # come from there and minimal Ubuntu installs may have it turned off.
-hide_output add-apt-repository -y universe
+#hide_output add-apt-repository -y universe
 
 # Install the certbot PPA.
 #hide_output add-apt-repository -y ppa:certbot/certbot  # Remarking repository to help docker install
 
 # Install the duplicity PPA.
-hide_output add-apt-repository -y ppa:duplicity-team/duplicity-release-git
+#hide_output add-apt-repository -y ppa:duplicity-team/duplicity-release-git
 
 # ### Update Packages
 
