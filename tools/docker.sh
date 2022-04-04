@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Fixup some dependencies missing from the ubuntu:bionic image
-apt install locales curl lsb-release net-tools git -y
+apt install locales curl lsb-release net-tools git grep -y
 
 cd ~
 git clone https://github.com/kaibae19/mailinabox
