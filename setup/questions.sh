@@ -25,7 +25,7 @@ if [ -z "${NONINTERACTIVE:-}" ]; then
 fi
 
 if [ -z "${INSTALL:-}"]; then
-    INSTALL=M
+    INSTALL=m
     input_box "Where is Mail-in-a-Box installed?" \
     "Are you installing Mail-in-a-Box on bare [m]etal or within [d]ocker? \
     \n\n[m]etal or [d]ocker?" \
