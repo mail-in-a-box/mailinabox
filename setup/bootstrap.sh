@@ -6,6 +6,9 @@
 #
 #########################################################
 
+# Dependencies:  lsb-release locales curl
+
+
 if [ -z "$TAG" ]; then
 	# If a version to install isn't explicitly given as an environment
 	# variable, then install the latest version. But the latest version
