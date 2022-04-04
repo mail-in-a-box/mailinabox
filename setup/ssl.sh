@@ -21,6 +21,8 @@
 # Diffie-Hellman cipher is selected during TLS negotiation. Diffie-Hellman
 # provides Perfect Forward Secrecy.
 
+echo "Starting ssl.sh"
+
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
@@ -96,3 +98,5 @@ fi
 if [ ! -f $STORAGE_ROOT/ssl/dh2048.pem ]; then
 	openssl dhparam -out $STORAGE_ROOT/ssl/dh2048.pem 2048
 fi
+
+echo "Finished ssl.sh"
