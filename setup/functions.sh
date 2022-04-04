@@ -44,9 +44,7 @@ function apt_get_quiet {
 	# Although we could pass -qq to apt-get to make output quieter, many packages write to stdout
 	# and stderr things that aren't really important. Use our hide_output function to capture
 	# all of that and only show it if there is a problem (i.e. if apt_get returns a failure exit status).
-#	DEBIAN_FRONTEND=noninteractive hide_output apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" "$@"
-	DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" "$@" #show output for debugging
-
+	DEBIAN_FRONTEND=noninteractive hide_output apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" "$@"
 }
 
 function apt_install {
