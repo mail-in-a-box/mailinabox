@@ -365,8 +365,12 @@ fi
 
 # Restart the DNS services.
 
-restart_service bind9
-systemctl restart systemd-resolved
+if [ "$INSTALL" == "m" ]; then
+    restart_service bind9
+    systemctl restart systemd-resolved
+else
+    service restart bind9
+fi
 
 # ### Fail2Ban Service
 
