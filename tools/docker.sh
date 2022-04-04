@@ -7,7 +7,7 @@ cd ~
 git clone https://github.com/kaibae19/mailinabox
 
 # The setup script will fail to find the IP addresses of the container
-ifconfig | grep global
+ifconfig | grep inet6 | grep global
 ifconfig | grep inet | grep -v 127
 echo "Export PRIVATE_IP and PUBLIC_IPV6 as variables before launching the setup script."
 
