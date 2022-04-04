@@ -1,8 +1,13 @@
 #!/bin/bash
 
-# Fixup some dependencies missing from the ubuntu:bionic image
-apt install locales curl lsb-release net-tools git grep -y
+# In order to install Mail-in-a-Box on an ubuntu:bionic docker container, this
+# script will help fix up the base ubuntu image to allow for installation
 
+# Fixup some dependencies missing from the ubuntu:bionic image
+apt update
+apt install locales curl lsb-release net-tools git grep systemd -y
+
+# Clone the Mail-in-a-Box repository to your home directory
 cd ~
 git clone https://github.com/kaibae19/mailinabox
 

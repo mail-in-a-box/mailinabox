@@ -14,8 +14,9 @@ source setup/functions.sh # load our functions
 # First set the hostname in the configuration file, then activate the setting
 
 echo $PRIMARY_HOSTNAME > /etc/hostname
-# Remarking this in this fork to workaround a docker setup issue where this will fail
-#hostname $PRIMARY_HOSTNAME
+if [ "$INSTALL" == "m"]; then
+    hostname $PRIMARY_HOSTNAME
+fi
 
 # ### Fix permissions
 
