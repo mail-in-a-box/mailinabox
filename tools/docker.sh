@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Fixup some dependencies missing from the ubuntu:bionic image
-apt install locales curl lsb-release net-tools git
+apt install locales curl lsb-release net-tools git -y
 
 cd ~
 rm -rf mailinabox/
