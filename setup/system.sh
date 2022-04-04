@@ -1,5 +1,3 @@
-echo "Starting system.sh"
-
 source /etc/mailinabox.conf
 source setup/functions.sh # load our functions
 
@@ -263,10 +261,6 @@ EOF
 
 # ### Firewall
 
-if [ "$INSTALL" == "m" ]; then
-    DISABLE_FIREWALL=1
-fi
-
 # Various virtualized environments like Docker and some VPSs don't provide #NODOC
 # a kernel that supports iptables. To avoid error-like output in these cases, #NODOC
 # we skip this if the user sets DISABLE_FIREWALL=1. #NODOC
@@ -351,48 +345,37 @@ if ! grep -q "max-recursion-queries " /etc/bind/named.conf.options; then
 	sed -i "s/^}/\n\tmax-recursion-queries 100;\n}/" /etc/bind/named.conf.options
 fi
 
-if [ "$INSTALL" == "m" ]; then
-    # First we'll disable systemd-resolved's management of resolv.conf and its stub server.
-    # Breaking the symlink to /run/systemd/resolve/stub-resolv.conf means
-    # systemd-resolved will read it for DNS servers to use. Put in 127.0.0.1,
-    # which is where bind9 will be running. Obviously don't do this before
-    # installing bind9 or else apt won't be able to resolve a server to
-    # download bind9 from.
-    rm -f /etc/resolv.conf
-    tools/editconf.py /etc/systemd/resolved.conf DNSStubListener=no
-    echo "nameserver 127.0.0.1" > /etc/resolv.conf
-fi
+# First we'll disable systemd-resolved's management of resolv.conf and its stub server.
+# Breaking the symlink to /run/systemd/resolve/stub-resolv.conf means
+# systemd-resolved will read it for DNS servers to use. Put in 127.0.0.1,
+# which is where bind9 will be running. Obviously don't do this before
+# installing bind9 or else apt won't be able to resolve a server to
+# download bind9 from.
+rm -f /etc/resolv.conf
+tools/editconf.py /etc/systemd/resolved.conf DNSStubListener=no
+echo "nameserver 127.0.0.1" > /etc/resolv.conf
+
 
 # Restart the DNS services.
 
-if [ "$INSTALL" == "m" ]; then
-    restart_service bind9
-    systemctl restart systemd-resolved
-else
-    service bind9 restart
-fi
-
+restart_service bind9
+systemctl restart systemd-resolved
 
 # ### Fail2Ban Service
-# We'll skip this on docker installations
 
-if [ "$INSTALL" == "m" ]; then
-    # Configure the Fail2Ban installation to prevent dumb bruce-force attacks against dovecot, postfix, ssh, etc.
-    rm -f /etc/fail2ban/jail.local # we used to use this file but don't anymore
-    rm -f /etc/fail2ban/jail.d/defaults-debian.conf # removes default config so we can manage all of fail2ban rules in one config
-    cat conf/fail2ban/jails.conf \
-	    | sed "s/PUBLIC_IP/$PUBLIC_IP/g" \
-	    | sed "s#STORAGE_ROOT#$STORAGE_ROOT#" \
-	    > /etc/fail2ban/jail.d/mailinabox.conf
-    cp -f conf/fail2ban/filter.d/* /etc/fail2ban/filter.d/
+# Configure the Fail2Ban installation to prevent dumb bruce-force attacks against dovecot, postfix, ssh, etc.
+rm -f /etc/fail2ban/jail.local # we used to use this file but don't anymore
+rm -f /etc/fail2ban/jail.d/defaults-debian.conf # removes default config so we can manage all of fail2ban rules in one config
+cat conf/fail2ban/jails.conf \
+    | sed "s/PUBLIC_IP/$PUBLIC_IP/g" \
+	| sed "s#STORAGE_ROOT#$STORAGE_ROOT#" \
+	> /etc/fail2ban/jail.d/mailinabox.conf
+cp -f conf/fail2ban/filter.d/* /etc/fail2ban/filter.d/
 
 
-    # On first installation, the log files that the jails look at don't all exist.
-    # e.g., The roundcube error log isn't normally created until someone logs into
-    # Roundcube for the first time. This causes fail2ban to fail to start. Later
-    # scripts will ensure the files exist and then fail2ban is given another
-    # restart at the very end of setup.
-    restart_service fail2ban
-fi
-
-echo "Finsihed system.sh"
+# On first installation, the log files that the jails look at don't all exist.
+# e.g., The roundcube error log isn't normally created until someone logs into
+# Roundcube for the first time. This causes fail2ban to fail to start. Later
+# scripts will ensure the files exist and then fail2ban is given another
+# restart at the very end of setup.
+restart_service fail2ban
