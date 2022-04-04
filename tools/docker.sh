@@ -4,7 +4,6 @@
 apt install locales curl lsb-release net-tools git -y
 
 cd ~
-rm -rf mailinabox/
 git clone https://github.com/kaibae19/mailinabox
 
 # The setup script will fail to find the IP addresses of the container
