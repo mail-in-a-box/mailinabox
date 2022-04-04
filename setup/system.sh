@@ -14,7 +14,8 @@ source setup/functions.sh # load our functions
 # First set the hostname in the configuration file, then activate the setting
 
 echo $PRIMARY_HOSTNAME > /etc/hostname
-hostname $PRIMARY_HOSTNAME
+# Remarking this in this fork to workaround a docker setup issue where this will fail
+#hostname $PRIMARY_HOSTNAME
 
 # ### Fix permissions
 
@@ -100,7 +101,7 @@ fi
 hide_output add-apt-repository -y universe
 
 # Install the certbot PPA.
-hide_output add-apt-repository -y ppa:certbot/certbot
+#hide_output add-apt-repository -y ppa:certbot/certbot  # Remarking repository to help docker install
 
 # Install the duplicity PPA.
 hide_output add-apt-repository -y ppa:duplicity-team/duplicity-release-git
