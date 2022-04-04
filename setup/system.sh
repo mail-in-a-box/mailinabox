@@ -369,7 +369,7 @@ if [ "$INSTALL" == "m" ]; then
     restart_service bind9
     systemctl restart systemd-resolved
 else
-    service restart bind9
+    service bind9 restart
 fi
 
 
