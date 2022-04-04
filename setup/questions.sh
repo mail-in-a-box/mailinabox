@@ -24,14 +24,6 @@ if [ -z "${NONINTERACTIVE:-}" ]; then
 		\n\nNOTE: You should only install this on a brand new Ubuntu installation 100% dedicated to Mail-in-a-Box. Mail-in-a-Box will, for example, remove apache2."
 fi
 
-if [ -z "${INSTALL:-}" ]; then
-    INSTALL=m
-    input_box "Where is Mail-in-a-Box installed?" \
-    "Are you installing Mail-in-a-Box on bare [m]etal or within [d]ocker? \
-    \n\n[m]etal or [d]ocker?" \
-    m \
-    INSTALL
-fi
 
 # The box needs a name.
 if [ -z "${PRIMARY_HOSTNAME:-}" ]; then

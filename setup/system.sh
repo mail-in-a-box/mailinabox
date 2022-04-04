@@ -12,9 +12,7 @@ source setup/functions.sh # load our functions
 # First set the hostname in the configuration file, then activate the setting
 
 echo $PRIMARY_HOSTNAME > /etc/hostname
-if [ "$INSTALL" == "m" ]; then
-    hostname $PRIMARY_HOSTNAME
-fi
+hostname $PRIMARY_HOSTNAME
 
 # ### Fix permissions
 
@@ -84,7 +82,7 @@ fi
 # (See https://discourse.mailinabox.email/t/journalctl-reclaim-space-on-small-mailinabox/6728/11.)
 tools/editconf.py /etc/systemd/journald.conf MaxRetentionSec=10day
 
-# ### Add PPAs if we're installing on bare metal
+# ### Add PPAs
 
 # We install some non-standard Ubuntu packages maintained by other
 # third-party providers. First ensure add-apt-repository is installed.
@@ -94,17 +92,17 @@ if [ ! -f /usr/bin/add-apt-repository ]; then
 	hide_output apt-get update
 	apt_install software-properties-common
 fi
-if [ "$INSTALL" == "m" ]; then # Skipping adding repositories on Docker image
-    # Ensure the universe repository is enabled since some of our packages
-    # come from there and minimal Ubuntu installs may have it turned off.
-    hide_output add-apt-repository -y universe
 
-    # Install the certbot PPA.
-    hide_output add-apt-repository -y ppa:certbot/certbot  # Remarking repository to help docker install
+# Ensure the universe repository is enabled since some of our packages
+# come from there and minimal Ubuntu installs may have it turned off.
+hide_output add-apt-repository -y universe
 
-    # Install the duplicity PPA.
-    hide_output add-apt-repository -y ppa:duplicity-team/duplicity-release-git
-fi
+# Install the certbot PPA.
+hide_output add-apt-repository -y ppa:certbot/certbot  # Remarking repository to help docker install
+
+# Install the duplicity PPA.
+hide_output add-apt-repository -y ppa:duplicity-team/duplicity-release-git
+
 
 # ### Update Packages
 
