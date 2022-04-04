@@ -86,7 +86,7 @@ fi
 # (See https://discourse.mailinabox.email/t/journalctl-reclaim-space-on-small-mailinabox/6728/11.)
 tools/editconf.py /etc/systemd/journald.conf MaxRetentionSec=10day
 
-# ### Add PPAs.  Remarking for Docker install test
+# ### Add PPAs if we're installing on bare metal
 
 # We install some non-standard Ubuntu packages maintained by other
 # third-party providers. First ensure add-apt-repository is installed.
@@ -96,16 +96,17 @@ if [ ! -f /usr/bin/add-apt-repository ]; then
 	hide_output apt-get update
 	apt_install software-properties-common
 fi
+if [ "$INSTALL" == "m" ]; then # Skipping adding repositories on Docker image
+    # Ensure the universe repository is enabled since some of our packages
+    # come from there and minimal Ubuntu installs may have it turned off.
+    hide_output add-apt-repository -y universe
 
-# Ensure the universe repository is enabled since some of our packages
-# come from there and minimal Ubuntu installs may have it turned off.
-#hide_output add-apt-repository -y universe
+    # Install the certbot PPA.
+    hide_output add-apt-repository -y ppa:certbot/certbot  # Remarking repository to help docker install
 
-# Install the certbot PPA.
-#hide_output add-apt-repository -y ppa:certbot/certbot  # Remarking repository to help docker install
-
-# Install the duplicity PPA.
-#hide_output add-apt-repository -y ppa:duplicity-team/duplicity-release-git
+    # Install the duplicity PPA.
+    hide_output add-apt-repository -y ppa:duplicity-team/duplicity-release-git
+fi
 
 # ### Update Packages
 
@@ -262,6 +263,10 @@ EOF
 
 # ### Firewall
 
+if [ "$INSTALL" == "m" ]; then
+    DISABLE_FIREWALL=1
+fi
+
 # Various virtualized environments like Docker and some VPSs don't provide #NODOC
 # a kernel that supports iptables. To avoid error-like output in these cases, #NODOC
 # we skip this if the user sets DISABLE_FIREWALL=1. #NODOC
@@ -346,15 +351,17 @@ if ! grep -q "max-recursion-queries " /etc/bind/named.conf.options; then
 	sed -i "s/^}/\n\tmax-recursion-queries 100;\n}/" /etc/bind/named.conf.options
 fi
 
-# First we'll disable systemd-resolved's management of resolv.conf and its stub server.
-# Breaking the symlink to /run/systemd/resolve/stub-resolv.conf means
-# systemd-resolved will read it for DNS servers to use. Put in 127.0.0.1,
-# which is where bind9 will be running. Obviously don't do this before
-# installing bind9 or else apt won't be able to resolve a server to
-# download bind9 from.
-rm -f /etc/resolv.conf
-tools/editconf.py /etc/systemd/resolved.conf DNSStubListener=no
-echo "nameserver 127.0.0.1" > /etc/resolv.conf
+if [ "$INSTALL" == "m" ]; then
+    # First we'll disable systemd-resolved's management of resolv.conf and its stub server.
+    # Breaking the symlink to /run/systemd/resolve/stub-resolv.conf means
+    # systemd-resolved will read it for DNS servers to use. Put in 127.0.0.1,
+    # which is where bind9 will be running. Obviously don't do this before
+    # installing bind9 or else apt won't be able to resolve a server to
+    # download bind9 from.
+    rm -f /etc/resolv.conf
+    tools/editconf.py /etc/systemd/resolved.conf DNSStubListener=no
+    echo "nameserver 127.0.0.1" > /etc/resolv.conf
+fi
 
 # Restart the DNS services.
 
