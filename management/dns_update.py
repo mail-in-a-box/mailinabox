@@ -1102,7 +1102,7 @@ def set_secondary_dns(hostnames, env):
 	if len(hostnames) > 0:
 		# Validate that all hostnames are valid and that all zone-xfer IP addresses are valid.
 		resolver = dns.resolver.get_default_resolver()
-		resolver.timeout = 6
+		resolver.timeout = 3
 		for item in hostnames:
 			if not item.startswith("xfr:"):
 				# Resolve hostname.
@@ -1115,7 +1115,7 @@ def set_secondary_dns(hostnames, env):
 					except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
 						raise ValueError("Could not resolve the IP address of %s." % item)
 				except (dns.resolver.Timeout):
-					resolver.timeout = 7
+					resolver.timeout = 5
 					logging.warning('Timeout on resolving ipv4 address re-trying')
 					try:
 						response = resolver.resolve(item, "A")
@@ -1127,7 +1127,7 @@ def set_secondary_dns(hostnames, env):
 							raise ValueError("Could not resolve the IP address of %s." % item)
 					except (dns.resolver.Timeout):
 						raise ValueError("Could not resolve the IP address of %s due to timeout." % item)
-					resolver.timeout = 6
+					resolver.timeout = 3
 			else:
 				# Validate IP address.
 				try:

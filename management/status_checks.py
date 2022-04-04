@@ -12,6 +12,7 @@ import dateutil.parser, dateutil.tz
 import idna
 import psutil
 import postfix_mta_sts_resolver.resolver
+import logging
 
 from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, get_secondary_dns, get_custom_dns_records
 from web_update import get_web_domains, get_domains_with_a_records
@@ -800,7 +801,7 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None, as_list=False):
 		resolver.nameservers = [at]
 
 	# Set a timeout so that a non-responsive server doesn't hold us back.
-	resolver.timeout = 5
+	resolver.timeout = 3
 
 	# Do the query.
 	try:
@@ -808,9 +809,21 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None, as_list=False):
 	except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
 		# Host did not have an answer for this query; not sure what the
 		# difference is between the two exceptions.
+		logging.info("No result for dns lookup %s, %s", qname, rtype)
 		return nxdomain
 	except dns.exception.Timeout:
-		return "[timeout]"
+		logging.info("Timeout on dns lookup %s, %s. Retrying", qname, rtype)
+		resolver.timeout = 5
+		try:
+			response = resolver.resolve(qname, rtype, search=True)
+		except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+			# Host did not have an answer for this query; not sure what the
+			# difference is between the two exceptions.
+			logging.info("No result for dns lookup %s, %s (2)", qname, rtype)
+			return nxdomain
+		except dns.exception.Timeout:
+			logging.info("Timeout on dns lookup %s, %s.", qname, rtype)
+			return "[timeout]"
 
 	# Normalize IP addresses. IP address --- especially IPv6 addresses --- can
 	# be expressed in equivalent string forms. Canonicalize the form before
