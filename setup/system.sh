@@ -14,7 +14,7 @@ source setup/functions.sh # load our functions
 # First set the hostname in the configuration file, then activate the setting
 
 echo $PRIMARY_HOSTNAME > /etc/hostname
-if [ "$INSTALL" == "m"]; then
+if [ "$INSTALL" == "m" ]; then
     hostname $PRIMARY_HOSTNAME
 fi
 
