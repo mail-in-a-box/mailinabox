@@ -24,6 +24,15 @@ if [ -z "${NONINTERACTIVE:-}" ]; then
 		\n\nNOTE: You should only install this on a brand new Ubuntu installation 100% dedicated to Mail-in-a-Box. Mail-in-a-Box will, for example, remove apache2."
 fi
 
+if [ -z "${INSTALL:-}"]; then
+    INSTALL=M
+    input_box "Where is Mail-in-a-Box installed?" \
+    "Are you installing Mail-in-a-Box on bare [m]etal or within [d]ocker? \
+    \n\n[m]etal or [d]ocker?" \
+    "m" \
+    INSTALL
+fi
+
 # The box needs a name.
 if [ -z "${PRIMARY_HOSTNAME:-}" ]; then
 	if [ -z "${DEFAULT_PRIMARY_HOSTNAME:-}" ]; then
@@ -89,7 +98,8 @@ if [ -z "${DAV_HOSTNAME:-}" ]; then
     DAV_HOSTNAME=$PRIMARY_HOSTNAME
     input_box "External CalDAV/CardDAV Server" \
 "Are you using an external server for CalDAV and CardDAV (Nextcloud), if so, enter the FQDN of the server. \
-\n\nIMPORTANT: Changing this from the default will omit the installation of Nextcloud on this system." \
+\n\nIMPORTANT: Changing this from the default will omit the installation of Nextcloud on this system. \
+\n\nFully qualified hostname where your CalDAV and CardDAV services are hosted:"
     $DAV_HOSTNAME \
     DAV_HOSTNAME
 fi
