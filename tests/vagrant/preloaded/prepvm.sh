@@ -19,6 +19,9 @@ if [ ! -d "setup" ]; then
     exit 1
 fi
 
+source tests/lib/system.sh
+source tests/lib/color-output.sh
+
 
 dry_run=true
 
@@ -81,40 +84,49 @@ install_packages() {
         fi
         
         if [ ! -z "$pkgs" ]; then
-            echo ""
-            echo "======================================================="
-            echo "install: $pkgs"
-            echo "======================================================="
+            H2 "install: $pkgs"
             if ! $dry_run; then
-                apt-get install -y -qq $pkgs
+                #apt-get install -y -qq $pkgs
+                exec_no_output apt-get install -y $pkgs
             fi
         fi
     done
 }
 
 if ! $dry_run; then
-    apt-get update -y
-    apt-get upgrade -y
-    apt-get autoremove -y
+    H1 "Upgrade system"
+    H2 "apt update"
+    exec_no_output apt-get update -y
+    H2 "apt upgrade"
+    exec_no_output apt-get upgrade -y --with-new-pkgs
+    H2 "apt autoremove"
+    exec_no_output apt-get autoremove -y
 fi
 
 for file in $(ls setup/*.sh); do
+    H1 "$file"
     remove_line_continuation "$file" | install_packages
 done
 
 if ! $dry_run; then
     # bonus
-    apt-get install -y -qq openssh-server
+    H1 "install extras"
+    H2 "openssh-server"
+    exec_no_output apt-get install -y openssh-server
     # ssh-rsa no longer a default algorithm, but still used by vagrant
     echo "PubkeyAcceptedAlgorithms +ssh-rsa" > /etc/ssh/sshd_config.d/miabldap.conf
-    apt-get install -y -qq emacs-nox
-    apt-get install -y -qq ntpdate
+    H2 "emacs"
+    exec_no_output apt-get install -y emacs-nox
+    H2 "nptdate"
+    exec_no_output apt-get install -y ntpdate
 
     # these are added by system-setup scripts and needed for test runner
-    apt-get install -y -qq python3-dnspython jq
+    H2 "python3-dnspython jq"
+    exec_no_output apt-get install -y python3-dnspython jq
 
     # remove apache, which is what setup will do
-    apt-get -y -qq purge apache2 apache2-\*
+    H2 "remove apache2"
+    exec_no_output apt-get -y purge apache2 apache2-\*
 
     echo ""
     echo ""
