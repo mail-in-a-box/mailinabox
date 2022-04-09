@@ -30,6 +30,7 @@ SH
 
   config.vm.define "preloaded-ubuntu-jammy64" do |m1|
     m1.vm.box = "ubuntu/jammy64"
+    m1.vm.boot_timeout = 30
     m1.vm.provision :shell, :inline => <<-SH
 cd /mailinabox
 tests/vagrant/preloaded/prepvm.sh --no-dry-run

@@ -45,10 +45,26 @@ do
     fi
 
     export RELEASE_TAG="${tags[$idx]}"
-    vagrant up $box
+    vagrant up $box | tee /tmp/$box.out
     upcode=$?
+
+    if [ $upcode -eq 0 -a ! -e "./prepcode.txt" ] && ${try_reboot[$idx]} && grep -F 'Authentication failure' /tmp/$box.out >/dev/null; then
+        # note: upcode is 0 only if config.vm.boot_timeout is set.
+        # If this works it may be an indication that ruby's internal
+        # ssh does not support the algorithm required by the server,
+        # or the public key does not match (vagrant and vm out of
+        # sync)
+        echo ""
+        echo "VAGRANT AUTHENTICATION FAILURE - TRYING LOOSER ALLOWED SSHD ALGS"
+        if vagrant ssh $box -c "sudo bash -c 'echo PubkeyAcceptedAlgorithms +ssh-rsa > /etc/ssh/sshd_config.d/miabldap.conf; sudo systemctl restart sshd'"; then
+            vagrant halt $box
+            vagrant up $box
+            upcode=$?
+        fi
+    fi
+
     if [ $upcode -ne 0 -a ! -e "./prepcode.txt" ] && ${try_reboot[$idx]}
-    then
+    then        
         # a reboot may be necessary if guest addtions was newly
         # compiled by vagrant plugin "vagrant-vbguest"
         echo ""
@@ -57,6 +73,8 @@ do
         vagrant up $box
         upcode=$?
     fi
+
+    rm -f /tmp/$box.out
         
     let idx+=1
     prepcode=$(cat "./prepcode.txt")
@@ -71,8 +89,11 @@ do
         exit 1
     fi
 
-    if vagrant ssh $box -- cat /var/run/reboot-required; then
+    if vagrant ssh $box -- cat /var/run/reboot-required >/dev/null 2>&1; then
+        echo "REBOOT REQUIRED"
         vagrant reload $box
+    else
+        echo "REBOOT NOT REQUIRED"
     fi
 
     vagrant halt $box
