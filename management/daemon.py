@@ -274,6 +274,7 @@ def dns_update():
 	try:
 		return do_dns_update(env, force=request.form.get('force', '') == '1')
 	except Exception as e:
+		logging.exception('dns update exc')
 		return (str(e), 500)
 
 @app.route('/dns/secondary-nameserver')
@@ -763,7 +764,7 @@ def log_failed_login(request):
 # APP
 
 if __name__ == '__main__':
-	logging_level = logging.INFO
+	logging_level = logging.DEBUG
 	
 	if "DEBUG" in os.environ:
 		# Turn on Flask debugging.
