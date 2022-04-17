@@ -327,6 +327,17 @@ if [ -d /etc/unbound/lists.d ]; then
 	mkdir /etc/unbound/lists.d
 fi
 
+systemctl restart unbound
+
+unbound-control -q status
+
+# Only reset the local dns settings if unbound server is running, otherwise we'll 
+# up with a system with an unusable internet connection
+if [ $? -ne 0 ]; then 
+    echo "Recursive DNS server not active"
+    exit 1
+fi
+
 # Modify systemd settings
 rm -f /etc/resolv.conf
 tools/editconf.py /etc/systemd/resolved.conf \
@@ -338,7 +349,6 @@ echo "nameserver 127.0.0.1" > /etc/resolv.conf
 # Restart the DNS services.
 
 systemctl restart systemd-resolved
-systemctl restart unbound
 
 # ### Fail2Ban Service
 
