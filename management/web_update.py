@@ -217,7 +217,7 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 		
 	nginx_conf_extra += "\tadd_header X-Frame-Options \"SAMEORIGIN\" always;\n"
 	nginx_conf_extra += "\tadd_header X-Content-Type-Options nosniff;\n"
-	nginx_conf_extra += "\tadd_header Content-Security-Policy \"default-src 'self'; font-src *;img-src * data:; script-src *; style-src *;frame-ancestors 'self'\";\n"
+	nginx_conf_extra += "\tadd_header Content-Security-Policy-Report-Only \"default-src 'self'; font-src *;img-src * data:; script-src *; style-src *;frame-ancestors 'self'\";\n"
 	nginx_conf_extra += "\tadd_header Referrer-Policy \"strict-origin\";\n"
 
 	# Add in any user customizations in the includes/ folder.
