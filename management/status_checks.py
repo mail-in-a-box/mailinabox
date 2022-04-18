@@ -802,7 +802,7 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None, as_list=False):
 
 	# Set a timeout so that a non-responsive server doesn't hold us back.
 	resolver.timeout = 3
-	reaolver.lifetime = 3
+	resolver.lifetime = 3
 
 	# Do the query.
 	try:
