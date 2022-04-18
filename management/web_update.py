@@ -211,9 +211,14 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 
 	# Add the HSTS header.
 	if hsts == "yes":
-		nginx_conf_extra += "\tadd_header Strict-Transport-Security \"max-age=31536000\" always;\n"
+		nginx_conf_extra += "\tadd_header Strict-Transport-Security \"max-age=31536000; includeSubDomains\" always;\n"
 	elif hsts == "preload":
 		nginx_conf_extra += "\tadd_header Strict-Transport-Security \"max-age=31536000; includeSubDomains; preload\" always;\n"
+		
+	nginx_conf_extra += "\tadd_header X-Frame-Options \"SAMEORIGIN\" always;\n"
+	nginx_conf_extra += "\tadd_header X-Content-Type-Options nosniff;\n"
+	nginx_conf_extra += "\tadd_header Content-Security-Policy \"default-src 'self'; font-src *;img-src * data:; script-src *; style-src *;frame-ancestors 'self'\";\n"
+	nginx_conf_extra += "\tadd_header Referrer-Policy \"strict-origin\";\n"
 
 	# Add in any user customizations in the includes/ folder.
 	nginx_conf_custom_include = os.path.join(env["STORAGE_ROOT"], "www", safe_domain_name(domain) + ".conf")
