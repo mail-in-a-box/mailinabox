@@ -1087,7 +1087,7 @@ def get_secondary_dns(custom_dns, mode=None):
 						response = resolver.resolve(hostname+'.', "A", raise_on_no_answer=False)
 						values.extend(map(str, response))
 					except dns.exception.DNSException:
-						logging.debug("Secondary dns Alookup exception %s", hostname)
+						logging.debug("Secondary dns A lookup exception %s", hostname)
 						
 					try:
 						response = resolver.resolve(hostname+'.', "AAAA", raise_on_no_answer=False)
@@ -1110,35 +1110,33 @@ def set_secondary_dns(hostnames, env):
 	if len(hostnames) > 0:
 		# Validate that all hostnames are valid and that all zone-xfer IP addresses are valid.
 		resolver = dns.resolver.get_default_resolver()
-		resolver.timeout = 3
-		resolver.lifetime = 3
+		resolver.timeout = 5
+		resolver.lifetime = 5
 		for item in hostnames:
 			if not item.startswith("xfr:"):
 				# Resolve hostname.
-				try:
-					response = resolver.resolve(item, "A")
-				except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
-					logging.debug('Error on resolving ipv4 address, trying ipv6')
-					try:
-						response = resolver.resolve(item, "AAAA")
-					except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
-						raise ValueError("Could not resolve the IP address of %s." % item)
-				except (dns.resolver.Timeout):
-					resolver.timeout = 5
-					resolver.lifetime = 5
-					logging.debug('Timeout on resolving ipv4 address re-trying')
+				tries = 2
+				
+				while tries > 0:
+					tries = tries - 1
 					try:
 						response = resolver.resolve(item, "A")
+						tries = 0
 					except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
-						logging.debug('Error on resolving ipv4 address, trying ipv6 (2)')
+						logging.debug('Error on resolving ipv4 address, trying ipv6')
 						try:
 							response = resolver.resolve(item, "AAAA")
+							tries = 0
 						except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
 							raise ValueError("Could not resolve the IP address of %s." % item)
+						except (dns.resolver.Timeout):
+							logging.debug('Timeout on resolving ipv6 address')
+							if tries < 1:
+								raise ValueError("Could not resolve the IP address of %s due to timeout." % item)
 					except (dns.resolver.Timeout):
-						raise ValueError("Could not resolve the IP address of %s due to timeout." % item)
-					resolver.timeout = 3
-					resolver.lifetime = 3
+						logging.debug('Timeout on resolving ipv4 address')
+						if tries < 1:
+							raise ValueError("Could not resolve the IP address of %s due to timeout." % item)
 			else:
 				# Validate IP address.
 				try:

@@ -801,31 +801,26 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None, as_list=False):
 		resolver.nameservers = [at]
 
 	# Set a timeout so that a non-responsive server doesn't hold us back.
-	resolver.timeout = 3
-	resolver.lifetime = 3
+	resolver.timeout = 5
+	resolver.lifetime = 5
 
+	tries = 2
 	# Do the query.
-	try:
-		response = resolver.resolve(qname, rtype, search=True)
-	except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
-		# Host did not have an answer for this query; not sure what the
-		# difference is between the two exceptions.
-		logging.debug("No result for dns lookup %s, %s", qname, rtype)
-		return nxdomain
-	except dns.exception.Timeout:
-		logging.debug("Timeout on dns lookup %s, %s. Retrying", qname, rtype)
-		resolver.timeout = 5
-		resolver.lifetime = 5
+	while tries > 0:
+		tries = tries - 1
 		try:
 			response = resolver.resolve(qname, rtype, search=True)
+			tries = 0
 		except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
 			# Host did not have an answer for this query; not sure what the
 			# difference is between the two exceptions.
-			logging.debug("No result for dns lookup %s, %s (2)", qname, rtype)
-			return nxdomain
+			logging.debug("No result for dns lookup %s, %s (%d)", qname, rtype, tries)
+			if tries < 1:
+				return nxdomain
 		except dns.exception.Timeout:
-			logging.debug("Timeout on dns lookup %s, %s.", qname, rtype)
-			return "[timeout]"
+			logging.debug("Timeout on dns lookup %s, %s (%d)", qname, rtype, tries)
+			if tries < 1:
+				return "[timeout]"
 
 	# Normalize IP addresses. IP address --- especially IPv6 addresses --- can
 	# be expressed in equivalent string forms. Canonicalize the form before
