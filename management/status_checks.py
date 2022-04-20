@@ -296,7 +296,7 @@ def run_network_checks(env, output):
 	# by a spammer, or the user may be deploying on a residential network. We
 	# will not be able to reliably send mail in these cases.
 	rev_ip4 = ".".join(reversed(env['PUBLIC_IP'].split('.')))
-	zen = query_dns(rev_ip4+'.zen.spamhaus.org', 'A', nxdomain=None)
+	zen = query_dns(rev_ip4+'.zen.spamhaus.org', 'A', nxdomain=None, retry = False)
 	if zen is None:
 		output.print_ok("IP address is not blacklisted by zen.spamhaus.org.")
 	elif zen == "[timeout]":
@@ -747,7 +747,7 @@ def check_mail_domain(domain, env, output):
 	# Stop if the domain is listed in the Spamhaus Domain Block List.
 	# The user might have chosen a domain that was previously in use by a spammer
 	# and will not be able to reliably send mail.
-	dbl = query_dns(domain+'.dbl.spamhaus.org', "A", nxdomain=None)
+	dbl = query_dns(domain+'.dbl.spamhaus.org', "A", nxdomain=None, retry=False)
 	if dbl is None:
 		output.print_ok("Domain is not blacklisted by dbl.spamhaus.org.")
 	elif dbl == "[timeout]":
@@ -783,7 +783,7 @@ def check_web_domain(domain, rounded_time, ssl_certificates, env, output):
 	# website for also needs a signed certificate.
 	check_ssl_cert(domain, rounded_time, ssl_certificates, env, output)
 
-def query_dns(qname, rtype, nxdomain='[Not Set]', at=None, as_list=False):
+def query_dns(qname, rtype, nxdomain='[Not Set]', at=None, as_list=False, retry=True):
 	# Make the qname absolute by appending a period. Without this, dns.resolver.query
 	# will fall back a failed lookup to a second query with this machine's hostname
 	# appended. This has been causing some false-positive Spamhaus reports. The
@@ -804,7 +804,11 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None, as_list=False):
 	resolver.timeout = 5
 	resolver.lifetime = 5
 
-	tries = 2
+	if retry:
+		tries = 2
+	else:
+		tries = 1
+	
 	# Do the query.
 	while tries > 0:
 		tries = tries - 1
