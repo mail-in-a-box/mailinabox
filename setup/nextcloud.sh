@@ -37,7 +37,7 @@ contacts_ver=4.0.8
 contacts_hash=9f368bb2be98c5555b7118648f4cc9fa51e8cb30
 calendar_ver=3.0.6
 calendar_hash=ca49bb1ce23f20e10911e39055fd59d7f7a84c30
-user_external_ver=2.1.0
+user_external_ver=3.0.0
 user_external_hash=6e5afe7f36f398f864bfdce9cad72200e70322aa
 
 # Clear prior packages and install dependencies from apt.
@@ -105,7 +105,7 @@ InstallNextcloud() {
 		rm /tmp/user_external.tgz
 		
 		# (Temporary?) workaround to get user_external working with Nextcloud 23 (see https://github.com/nextcloud/user_external/issues/186)
-		sed -i "s/nextcloud min-version=\"21\" max-version=\"22\"/nextcloud min-version=\"21\" max-version=\"23\"/g" /usr/local/lib/owncloud/apps/user_external/appinfo/info.xml
+		# sed -i "s/nextcloud min-version=\"21\" max-version=\"22\"/nextcloud min-version=\"21\" max-version=\"23\"/g" /usr/local/lib/owncloud/apps/user_external/appinfo/info.xml
 	fi
 
 	# Fix weird permissions.
@@ -260,8 +260,8 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
   'overwrite.cli.url' => '/cloud',
   'user_backends' => array(
     array(
-      'class' => 'OC_User_IMAP',
-        'arguments' => array(
+      'class' => '\OCA\UserExternal\IMAP',
+          'arguments' => array(
           '127.0.0.1', 143, null
          ),
     ),
