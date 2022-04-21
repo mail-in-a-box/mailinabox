@@ -19,6 +19,7 @@ No features of Mail-in-a-Box have changed in this release, but with the newer ve
 * certbot is upgraded to 1.21 (via the Ubuntu repository instead of a PPA).
 * fail2ban is upgraded to 0.11.2.
 * nginx is upgraded to 1.18.
+* bind9 is replaced with unbound
 
 In Development
 --------------

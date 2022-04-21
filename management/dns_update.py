@@ -8,6 +8,7 @@ import sys, os, os.path, urllib.parse, datetime, re, hashlib, base64
 import ipaddress
 import rtyaml
 import dns.resolver
+import logging
 
 from utils import shell, load_env_vars_from_file, safe_domain_name, sort_domains
 from ssl_certificates import get_ssl_certificates, check_certificate
@@ -115,9 +116,9 @@ def do_dns_update(env, force=False):
 			# If this is the only thing that changed?
 			updated_domains.append("DKIM configuration")
 
-	# Clear bind9's DNS cache so our own DNS resolver is up to date.
+	# Clear unbound's DNS cache so our own DNS resolver is up to date.
 	# (ignore errors with trap=True)
-	shell('check_call', ["/usr/sbin/rndc", "flush"], trap=True)
+	shell('check_call', ["/usr/sbin/unbound-control", "flush_zone", "."], trap=True, capture_stdout=False)
 
 	if len(updated_domains) == 0:
 		# if nothing was updated (except maybe DKIM's files), don't show any output
@@ -1064,6 +1065,7 @@ def set_custom_dns_record(qname, rtype, value, action, env):
 def get_secondary_dns(custom_dns, mode=None):
 	resolver = dns.resolver.get_default_resolver()
 	resolver.timeout = 10
+	resolver.lifetime = 10
 
 	values = []
 	for qname, rtype, value in custom_dns:
@@ -1081,10 +1083,17 @@ def get_secondary_dns(custom_dns, mode=None):
 			# doesn't.
 			if not hostname.startswith("xfr:"):
 				if mode == "xfr":
-					response = dns.resolver.resolve(hostname+'.', "A", raise_on_no_answer=False)
-					values.extend(map(str, response))
-					response = dns.resolver.resolve(hostname+'.', "AAAA", raise_on_no_answer=False)
-					values.extend(map(str, response))
+					try:
+						response = resolver.resolve(hostname+'.', "A", raise_on_no_answer=False)
+						values.extend(map(str, response))
+					except dns.exception.DNSException:
+						logging.debug("Secondary dns A lookup exception %s", hostname)
+						
+					try:
+						response = resolver.resolve(hostname+'.', "AAAA", raise_on_no_answer=False)
+						values.extend(map(str, response))
+					except dns.exception.DNSException:
+						logging.debug("Secondary dns AAAA lookup exception %s", hostname)
 					continue
 				values.append(hostname)
 
@@ -1102,16 +1111,32 @@ def set_secondary_dns(hostnames, env):
 		# Validate that all hostnames are valid and that all zone-xfer IP addresses are valid.
 		resolver = dns.resolver.get_default_resolver()
 		resolver.timeout = 5
+		resolver.lifetime = 5
 		for item in hostnames:
 			if not item.startswith("xfr:"):
 				# Resolve hostname.
-				try:
-					response = resolver.resolve(item, "A")
-				except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+				tries = 2
+				
+				while tries > 0:
+					tries = tries - 1
 					try:
-						response = resolver.resolve(item, "AAAA")
+						response = resolver.resolve(item, "A")
+						tries = 0
 					except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
-						raise ValueError("Could not resolve the IP address of %s." % item)
+						logging.debug('Error on resolving ipv4 address, trying ipv6')
+						try:
+							response = resolver.resolve(item, "AAAA")
+							tries = 0
+						except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+							raise ValueError("Could not resolve the IP address of %s." % item)
+						except (dns.resolver.Timeout):
+							logging.debug('Timeout on resolving ipv6 address')
+							if tries < 1:
+								raise ValueError("Could not resolve the IP address of %s due to timeout." % item)
+					except (dns.resolver.Timeout):
+						logging.debug('Timeout on resolving ipv4 address')
+						if tries < 1:
+							raise ValueError("Could not resolve the IP address of %s due to timeout." % item)
 			else:
 				# Validate IP address.
 				try:

@@ -12,6 +12,7 @@ import dateutil.parser, dateutil.tz
 import idna
 import psutil
 import postfix_mta_sts_resolver.resolver
+import logging
 
 from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, get_secondary_dns, get_custom_dns_records
 from web_update import get_web_domains, get_domains_with_a_records
@@ -22,9 +23,8 @@ from utils import shell, sort_domains, load_env_vars_from_file, load_settings
 
 def get_services():
 	return [
-		{ "name": "Local DNS (bind9)", "port": 53, "public": False, },
-		#{ "name": "NSD Control", "port": 8952, "public": False, },
-		{ "name": "Local DNS Control (bind9/rndc)", "port": 953, "public": False, },
+		{ "name": "Local DNS (unbound)", "port": 53, "public": False, },
+		{ "name": "Local DNS Control (unbound)", "port": 953, "public": False, },
 		{ "name": "Dovecot LMTP LDA", "port": 10026, "public": False, },
 		{ "name": "Postgrey", "port": 10023, "public": False, },
 		{ "name": "Spamassassin", "port": 10025, "public": False, },
@@ -49,15 +49,15 @@ def run_checks(rounded_values, env, output, pool, domains_to_check=None):
 
 	# check that services are running
 	if not run_services_checks(env, output, pool):
-		# If critical services are not running, stop. If bind9 isn't running,
+		# If critical services are not running, stop. If unbound isn't running,
 		# all later DNS checks will timeout and that will take forever to
 		# go through, and if running over the web will cause a fastcgi timeout.
 		return
 
-	# clear bind9's DNS cache so our DNS checks are up to date
-	# (ignore errors; if bind9/rndc isn't running we'd already report
+	# clear unbound's DNS cache so our DNS checks are up to date
+	# (ignore errors; if unbound isn't running we'd already report
 	# that in run_services checks.)
-	shell('check_call', ["/usr/sbin/rndc", "flush"], trap=True)
+	shell('check_call', ["/usr/sbin/unbound-control", "flush_zone", "."], trap=True, capture_stdout=False)
 
 	run_system_checks(rounded_values, env, output)
 
@@ -296,7 +296,7 @@ def run_network_checks(env, output):
 	# by a spammer, or the user may be deploying on a residential network. We
 	# will not be able to reliably send mail in these cases.
 	rev_ip4 = ".".join(reversed(env['PUBLIC_IP'].split('.')))
-	zen = query_dns(rev_ip4+'.zen.spamhaus.org', 'A', nxdomain=None)
+	zen = query_dns(rev_ip4+'.zen.spamhaus.org', 'A', nxdomain=None, retry = False)
 	if zen is None:
 		output.print_ok("IP address is not blacklisted by zen.spamhaus.org.")
 	elif zen == "[timeout]":
@@ -747,7 +747,7 @@ def check_mail_domain(domain, env, output):
 	# Stop if the domain is listed in the Spamhaus Domain Block List.
 	# The user might have chosen a domain that was previously in use by a spammer
 	# and will not be able to reliably send mail.
-	dbl = query_dns(domain+'.dbl.spamhaus.org', "A", nxdomain=None)
+	dbl = query_dns(domain+'.dbl.spamhaus.org', "A", nxdomain=None, retry=False)
 	if dbl is None:
 		output.print_ok("Domain is not blacklisted by dbl.spamhaus.org.")
 	elif dbl == "[timeout]":
@@ -783,7 +783,7 @@ def check_web_domain(domain, rounded_time, ssl_certificates, env, output):
 	# website for also needs a signed certificate.
 	check_ssl_cert(domain, rounded_time, ssl_certificates, env, output)
 
-def query_dns(qname, rtype, nxdomain='[Not Set]', at=None, as_list=False):
+def query_dns(qname, rtype, nxdomain='[Not Set]', at=None, as_list=False, retry=True):
 	# Make the qname absolute by appending a period. Without this, dns.resolver.query
 	# will fall back a failed lookup to a second query with this machine's hostname
 	# appended. This has been causing some false-positive Spamhaus reports. The
@@ -793,7 +793,7 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None, as_list=False):
 		qname += "."
 
 	# Use the default nameservers (as defined by the system, which is our locally
-	# running bind server), or if the 'at' argument is specified, use that host
+	# running unbound server), or if the 'at' argument is specified, use that host
 	# as the nameserver.
 	resolver = dns.resolver.get_default_resolver()
 	if at:
@@ -802,16 +802,29 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None, as_list=False):
 
 	# Set a timeout so that a non-responsive server doesn't hold us back.
 	resolver.timeout = 5
+	resolver.lifetime = 5
 
+	if retry:
+		tries = 2
+	else:
+		tries = 1
+	
 	# Do the query.
-	try:
-		response = resolver.resolve(qname, rtype, search=True)
-	except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
-		# Host did not have an answer for this query; not sure what the
-		# difference is between the two exceptions.
-		return nxdomain
-	except dns.exception.Timeout:
-		return "[timeout]"
+	while tries > 0:
+		tries = tries - 1
+		try:
+			response = resolver.resolve(qname, rtype, search=True)
+			tries = 0
+		except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+			# Host did not have an answer for this query; not sure what the
+			# difference is between the two exceptions.
+			logging.debug("No result for dns lookup %s, %s (%d)", qname, rtype, tries)
+			if tries < 1:
+				return nxdomain
+		except dns.exception.Timeout:
+			logging.debug("Timeout on dns lookup %s, %s (%d)", qname, rtype, tries)
+			if tries < 1:
+				return "[timeout]"
 
 	# Normalize IP addresses. IP address --- especially IPv6 addresses --- can
 	# be expressed in equivalent string forms. Canonicalize the form before

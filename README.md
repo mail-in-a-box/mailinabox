@@ -36,6 +36,7 @@ Functionality changes and additions
   Removed older cryptos following internet.nl recommendations
 * Replace opendkim with dkimpy (https://launchpad.net/dkimpy-milter)
   Added support for Ed25519 signing
+* Replace bind9 with unbound DNS resolver
 
 Bug fixes
 * Munin error report fixed [see github issue](https://github.com/mail-in-a-box/mailinabox/issues/1555)
