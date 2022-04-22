@@ -249,6 +249,25 @@ APT::Periodic::Unattended-Upgrade "1";
 APT::Periodic::Verbose "0";
 EOF
 
+# Adjust apt update and upgrade timers such that they're always before daily status
+# checks and thus never report upgrades unless user intervention is necessary.
+if [ ! -d /etc/systemd/system/apt-daily.timer.d ]; then
+	mkdir /etc/systemd/system/apt-daily.timer.d
+fi
+cat > /etc/systemd/system/apt-daily.timer.d/override.conf <<EOF;
+[Timer]
+RandomizedDelaySec=5h
+EOF
+
+if [ ! -d /etc/systemd/system/apt-daily-upgrade.timer.d ]; then
+	mkdir /etc/systemd/system/apt-daily-upgrade.timer.d
+fi
+cat /etc/systemd/system/apt-daily-upgrade.timer.d/override.conf <<EOF;
+[Timer]
+OnCalendar=
+OnCalendar=*-*-* 23:30
+EOF
+
 # ### Firewall
 
 # Various virtualized environments like Docker and some VPSs don't provide #NODOC
