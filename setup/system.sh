@@ -262,7 +262,7 @@ EOF
 if [ ! -d /etc/systemd/system/apt-daily-upgrade.timer.d ]; then
 	mkdir /etc/systemd/system/apt-daily-upgrade.timer.d
 fi
-cat /etc/systemd/system/apt-daily-upgrade.timer.d/override.conf <<EOF;
+cat > /etc/systemd/system/apt-daily-upgrade.timer.d/override.conf <<EOF;
 [Timer]
 OnCalendar=
 OnCalendar=*-*-* 23:30
@@ -336,17 +336,15 @@ fi #NODOC
 # remove bind9 in case it is still there
 apt-get purge -qq -y bind9 bind9-utils
 
-# Install unbound and dns utils (e.g. dig)
-apt_install unbound python3-unbound bind9-dnsutils
-
 # Configure unbound
 cp -f conf/unbound.conf /etc/unbound/unbound.conf.d/miabunbound.conf
 
-if [ -d /etc/unbound/lists.d ]; then
+if [ ! -d /etc/unbound/lists.d ]; then
 	mkdir /etc/unbound/lists.d
 fi
 
-systemctl restart unbound
+# Install unbound and dns utils (e.g. dig)
+apt_install unbound python3-unbound bind9-dnsutils
 
 unbound-control -q status
 

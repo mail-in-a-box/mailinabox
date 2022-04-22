@@ -17,7 +17,7 @@ source /etc/mailinabox.conf # load global vars
 
 echo "Installing fts-xapian..."
 
-apt_install libxapian30
+apt_install dovecot-fts-xapian
 
 # Update the dovecot plugin configuration
 #
@@ -35,7 +35,7 @@ if [ ! -f /usr/lib/dovecot/decode2text.sh ]; then
 	cp -f /usr/share/doc/dovecot-core/examples/decode2text.sh /usr/lib/dovecot
 fi
 
-cp -f lib/lib21_fts_xapian_plugin.so /usr/lib/dovecot/modules/
+#cp -f lib/lib21_fts_xapian_plugin.so /usr/lib/dovecot/modules/
 
 # Create configuration file
 cat > /etc/dovecot/conf.d/90-plugin-fts.conf << EOF;

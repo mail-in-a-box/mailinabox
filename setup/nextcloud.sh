@@ -21,8 +21,8 @@ echo "Installing Nextcloud (contacts/calendar)..."
 #   we automatically install intermediate versions as needed.
 # * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
 #   copying it from the error message when it doesn't match what is below.
-nextcloud_ver=23.0.2
-nextcloud_hash=645cba42cab57029ebe29fb93906f58f7abea5f8
+nextcloud_ver=23.0.4
+nextcloud_hash=87afec0bf90b3c66289e6fedd851867bc5a58f01
 
 # Nextcloud apps
 # --------------
@@ -37,7 +37,9 @@ contacts_ver=4.0.8
 contacts_hash=9f368bb2be98c5555b7118648f4cc9fa51e8cb30
 calendar_ver=3.0.6
 calendar_hash=ca49bb1ce23f20e10911e39055fd59d7f7a84c30
-user_external_ver=3.0.0
+#user_external_ver=3.0.0
+#user_external_hash=6e5afe7f36f398f864bfdce9cad72200e70322aa
+user_external_ver=2.1.0
 user_external_hash=6e5afe7f36f398f864bfdce9cad72200e70322aa
 
 # Clear prior packages and install dependencies from apt.
@@ -105,7 +107,7 @@ InstallNextcloud() {
 		rm /tmp/user_external.tgz
 		
 		# (Temporary?) workaround to get user_external working with Nextcloud 23 (see https://github.com/nextcloud/user_external/issues/186)
-		# sed -i "s/nextcloud min-version=\"21\" max-version=\"22\"/nextcloud min-version=\"21\" max-version=\"23\"/g" /usr/local/lib/owncloud/apps/user_external/appinfo/info.xml
+		sed -i "s/nextcloud min-version=\"21\" max-version=\"22\"/nextcloud min-version=\"21\" max-version=\"23\"/g" /usr/local/lib/owncloud/apps/user_external/appinfo/info.xml
 	fi
 
 	# Fix weird permissions.
