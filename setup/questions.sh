@@ -211,6 +211,11 @@ if [ -z "${STORAGE_ROOT:-}" ]; then
 	STORAGE_ROOT=$([[ -z "${DEFAULT_STORAGE_ROOT:-}" ]] && echo "/home/$STORAGE_USER" || echo "$DEFAULT_STORAGE_ROOT")
 fi
 
+# Set BACKUP_ROOT to default (empty) value, unless we've already got it from a previous run.
+if [ -z "${BACKUP_ROOT:-}" ]; then
+	BACKUP_ROOT=""
+fi
+
 # Show the configuration, since the user may have not entered it manually.
 echo
 echo "Primary Hostname: $PRIMARY_HOSTNAME"

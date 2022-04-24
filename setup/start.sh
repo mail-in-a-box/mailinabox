@@ -58,8 +58,8 @@ chmod +x /usr/local/bin/mailinabox
 
 # Ask the user for the PRIMARY_HOSTNAME, PUBLIC_IP, and PUBLIC_IPV6,
 # if values have not already been set in environment variables. When running
-# non-interactively, be sure to set values for all! Also sets STORAGE_USER and
-# STORAGE_ROOT.
+# non-interactively, be sure to set values for all! Also sets STORAGE_USER, 
+# STORAGE_ROOT and BACKUP_ROOT.
 source setup/questions.sh
 
 # Run some network checks to make sure setup on this machine makes sense.
@@ -94,6 +94,7 @@ fi
 cat > /etc/mailinabox.conf << EOF;
 STORAGE_USER=$STORAGE_USER
 STORAGE_ROOT=$STORAGE_ROOT
+BACKUP_ROOT=$BACKUP_ROOT
 PRIMARY_HOSTNAME=$PRIMARY_HOSTNAME
 PUBLIC_IP=$PUBLIC_IP
 PUBLIC_IPV6=$PUBLIC_IPV6
