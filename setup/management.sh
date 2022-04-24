@@ -25,7 +25,7 @@ done
 #
 # certbot installs EFF's certbot which we use to
 # provision free TLS certificates.
-apt_install duplicity python3-pip virtualenv certbot
+apt_install duplicity python3-pip virtualenv certbot rsync
 
 # b2sdk is used for backblaze backups.
 # boto is used for amazon aws backups.
@@ -49,8 +49,8 @@ hide_output $venv/bin/pip install --upgrade pip
 # NOTE: email_validator is repeated in setup/questions.sh, so please keep the versions synced.
 hide_output $venv/bin/pip install --upgrade \
 	rtyaml "email_validator>=1.0.0" "exclusiveprocess" \
-	flask dnspython python-dateutil \
-  qrcode[pil] pyotp \
+	flask dnspython python-dateutil expiringdict \
+	qrcode[pil] pyotp \
 	"idna>=2.0.0" "cryptography==2.2.2" boto psutil postfix-mta-sts-resolver b2sdk
 
 # CONFIGURATION

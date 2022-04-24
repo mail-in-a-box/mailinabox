@@ -376,7 +376,7 @@ def scan_mail_log_line(line, collector):
         if SCAN_BLOCKED:
             scan_postfix_smtpd_line(date, log, collector)
     elif service in ("postfix/qmgr", "postfix/pickup", "postfix/cleanup", "postfix/scache",
-                     "spampd", "postfix/anvil", "postfix/master", "opendkim", "postfix/lmtp",
+                     "spampd", "postfix/anvil", "postfix/master", "dkimpy", "postfix/lmtp",
                      "postfix/tlsmgr", "anvil"):
         # nothing to look at
         return True
@@ -549,8 +549,9 @@ def scan_postfix_submission_line(date, log, collector):
     """
 
     # Match both the 'plain' and 'login' sasl methods, since both authentication methods are
-    # allowed by Dovecot
-    m = re.match("([A-Z0-9]+): client=(\S+), sasl_method=(PLAIN|LOGIN), sasl_username=(\S+)", log)
+    # allowed by Dovecot. Exclude trailing comma after the username when additional fields 
+	# follow after.
+    m = re.match("([A-Z0-9]+): client=(\S+), sasl_method=(PLAIN|LOGIN), sasl_username=(\S+)(?<!,)", log)
 
     if m:
         _, client, method, user = m.groups()
@@ -586,7 +587,7 @@ def scan_postfix_submission_line(date, log, collector):
 def readline(filename):
     """ A generator that returns the lines of a file
     """
-    with open(filename) as file:
+    with open(filename, errors='replace') as file:
         while True:
           line = file.readline()
           if not line:

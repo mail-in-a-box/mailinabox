@@ -2,14 +2,14 @@
 # vi: set ft=ruby :
 
 Vagrant.configure("2") do |config|
-  config.vm.box = "ubuntu/focal64"
+  config.vm.box = "ubuntu/jammy64"
 
   # Network config: Since it's a mail server, the machine must be connected
   # to the public web. However, we currently don't want to expose SSH since
   # the machine's box will let anyone log into it. So instead we'll put the
   # machine on a private network.
   config.vm.hostname = "mailinabox.lan"
-  config.vm.network "private_network", ip: "192.168.50.4"
+  config.vm.network "private_network", ip: "192.168.56.4"
 
   config.vm.provision :shell, :inline => <<-SH
     # Set environment variables so that the setup script does

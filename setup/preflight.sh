@@ -7,12 +7,11 @@ if [[ $EUID -ne 0 ]]; then
 	exit 1
 fi
 
-# Check that we are running on Debian GNU/Linux, or Ubuntu 20.04
-OS=`lsb_release -d | sed 's/.*:\s*//'`
-if [ "$OS" != "Debian GNU/Linux 10 (buster)" -a "$(echo $OS | grep -o 'Ubuntu 20.04')" != "Ubuntu 20.04" ]; then
-	echo "Mail-in-a-Box only supports being installed on Debian 10 or Ubuntu 20.04 LTS, sorry. You are running:"
+# Check that we are running on Ubuntu 20.04 LTS or Ubuntu 22.04 LTS
+if [ "$( lsb_release --id --short )" != "Ubuntu" ] || [ "$( lsb_release --release --short )" != "22.04" -a "$( lsb_release --release --short )" != "20.04" ]; then
+	echo "Mail-in-a-Box only supports being installed on Ubuntu 20.04 or 22.04, sorry. You are running:"
 	echo
-	lsb_release -d | sed 's/.*:\s*//'
+	lsb_release --description --short
 	echo
 	echo "We can't write scripts that run on every possible setup, sorry."
 	exit 1

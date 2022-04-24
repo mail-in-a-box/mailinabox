@@ -75,7 +75,26 @@ then
 	fi
 fi
 
-# Certbot doesn't require a PPA in Debian
+# ### Set log retention policy.
+
+# Set the systemd journal log retention from infinite to 10 days,
+# since over time the logs take up a large amount of space.
+# (See https://discourse.mailinabox.email/t/journalctl-reclaim-space-on-small-mailinabox/6728/11.)
+tools/editconf.py /etc/systemd/journald.conf MaxRetentionSec=10day
+
+hide_output systemctl restart systemd-journald.service
+# We install some non-standard Ubuntu packages maintained by other
+# third-party providers. First ensure add-apt-repository is installed.
+
+if [ ! -f /usr/bin/add-apt-repository ]; then
+	echo "Installing add-apt-repository..."
+	hide_output apt-get update
+	apt_install software-properties-common
+fi
+
+# Ensure the universe repository is enabled since some of our packages
+# come from there and minimal Ubuntu installs may have it turned off.
+hide_output add-apt-repository -y universe
 
 # ### Update Packages
 
@@ -230,6 +249,25 @@ APT::Periodic::Unattended-Upgrade "1";
 APT::Periodic::Verbose "0";
 EOF
 
+# Adjust apt update and upgrade timers such that they're always before daily status
+# checks and thus never report upgrades unless user intervention is necessary.
+if [ ! -d /etc/systemd/system/apt-daily.timer.d ]; then
+	mkdir /etc/systemd/system/apt-daily.timer.d
+fi
+cat > /etc/systemd/system/apt-daily.timer.d/override.conf <<EOF;
+[Timer]
+RandomizedDelaySec=5h
+EOF
+
+if [ ! -d /etc/systemd/system/apt-daily-upgrade.timer.d ]; then
+	mkdir /etc/systemd/system/apt-daily-upgrade.timer.d
+fi
+cat /etc/systemd/system/apt-daily-upgrade.timer.d/override.conf <<EOF;
+[Timer]
+OnCalendar=
+OnCalendar=*-*-* 23:30
+EOF
+
 # ### Firewall
 
 # Various virtualized environments like Docker and some VPSs don't provide #NODOC
@@ -291,54 +329,44 @@ fi #NODOC
 # DNS server, which won't work for RBLs. So we really need a local recursive
 # nameserver.
 #
-# We'll install `bind9`, which as packaged for Ubuntu, has DNSSEC enabled by default via "dnssec-validation auto".
+# We'll install unbound, which as packaged for Ubuntu, has DNSSEC enabled by default.
 # We'll have it be bound to 127.0.0.1 so that it does not interfere with
 # the public, recursive nameserver `nsd` bound to the public ethernet interfaces.
-#
-# About the settings:
-#
-# * Adding -4 to OPTIONS will have `bind9` not listen on IPv6 addresses
-#   so that we're sure there's no conflict with nsd, our public domain
-#   name server, on IPV6.
-# * The listen-on directive in named.conf.options restricts `bind9` to
-#   binding to the loopback interface instead of all interfaces.
-# * The max-recursion-queries directive increases the maximum number of iterative queries.
-#  	If more queries than specified are sent, bind9 returns SERVFAIL. After flushing the cache during system checks,
-#	we ran into the limit thus we are increasing it from 75 (default value) to 100.
-apt_install bind9
-touch /etc/default/bind9
-tools/editconf.py /etc/default/bind9 \
-	"OPTIONS=\"-u bind -4\""
-if ! grep -q "listen-on " /etc/bind/named.conf.options; then
-	# Add a listen-on directive if it doesn't exist inside the options block.
-	sed -i "s/^}/\n\tlisten-on { 127.0.0.1; };\n}/" /etc/bind/named.conf.options
-fi
-if ! grep -q "listen-on-v6 " /etc/bind/named.conf.options; then
-	# Add a listen-on-v6 directive if it doesn't exist inside the options block.
-	sed -i "s/^}/\n\tlisten-on-v6 { ::1; };\n}/" /etc/bind/named.conf.options
-else
-	# Modify the listen-on-v6 directive if it does exist
-	sed -i "s/listen-on-v6 { any; }/listen-on-v6 { ::1; }/" /etc/bind/named.conf.options
+
+# remove bind9 in case it is still there
+apt-get purge -qq -y bind9 bind9-utils
+
+# Install unbound and dns utils (e.g. dig)
+apt_install unbound python3-unbound bind9-dnsutils
+
+# Configure unbound
+cp -f conf/unbound.conf /etc/unbound/unbound.conf.d/miabunbound.conf
+
+if [ -d /etc/unbound/lists.d ]; then
+	mkdir /etc/unbound/lists.d
 fi
 
-if ! grep -q "max-recursion-queries " /etc/bind/named.conf.options; then
-	# Add a max-recursion-queries directive if it doesn't exist inside the options block.
-	sed -i "s/^}/\n\tmax-recursion-queries 100;\n}/" /etc/bind/named.conf.options
+systemctl restart unbound
+
+unbound-control -q status
+
+# Only reset the local dns settings if unbound server is running, otherwise we'll 
+# up with a system with an unusable internet connection
+if [ $? -ne 0 ]; then 
+    echo "Recursive DNS server not active"
+    exit 1
 fi
 
-# First we'll disable systemd-resolved's management of resolv.conf and its stub server.
-# Breaking the symlink to /run/systemd/resolve/stub-resolv.conf means
-# systemd-resolved will read it for DNS servers to use. Put in 127.0.0.1,
-# which is where bind9 will be running. Obviously don't do this before
-# installing bind9 or else apt won't be able to resolve a server to
-# download bind9 from.
+# Modify systemd settings
 rm -f /etc/resolv.conf
-tools/editconf.py /etc/systemd/resolved.conf DNSStubListener=no
+tools/editconf.py /etc/systemd/resolved.conf \
+	DNS=127.0.0.1 \
+	DNSSEC=yes \
+	DNSStubListener=no
 echo "nameserver 127.0.0.1" > /etc/resolv.conf
 
 # Restart the DNS services.
 
-restart_service bind9
 systemctl restart systemd-resolved
 
 # ### Fail2Ban Service
@@ -346,15 +374,38 @@ systemctl restart systemd-resolved
 # Configure the Fail2Ban installation to prevent dumb bruce-force attacks against dovecot, postfix, ssh, etc.
 rm -f /etc/fail2ban/jail.local # we used to use this file but don't anymore
 rm -f /etc/fail2ban/jail.d/defaults-debian.conf # removes default config so we can manage all of fail2ban rules in one config
+
+if [ ! -z "$ADMIN_HOME_IPV6" ]; then
+    ADMIN_HOME_IPV6_FB="${ADMIN_HOME_IPV6}/64"
+else
+	ADMIN_HOME_IPV6_FB=""
+fi
+
 cat conf/fail2ban/jails.conf \
 	| sed "s/PUBLIC_IPV6/$PUBLIC_IPV6/g" \
 	| sed "s/PUBLIC_IP/$PUBLIC_IP/g" \
-	| sed "s/ADMIN_HOME_IPV6/$ADMIN_HOME_IPV6/g" \
+	| sed "s/ADMIN_HOME_IPV6/$ADMIN_HOME_IPV6_FB/g" \
 	| sed "s/ADMIN_HOME_IP/$ADMIN_HOME_IP/g" \
 	| sed "s#STORAGE_ROOT#$STORAGE_ROOT#" \
 	> /etc/fail2ban/jail.d/00-mailinabox.conf
 cp -f conf/fail2ban/filter.d/* /etc/fail2ban/filter.d/
 cp -f conf/fail2ban/jail.d/* /etc/fail2ban/jail.d/
+
+# If SSH port is not default, add the not default to the ssh jail
+if [ ! -z "$SSH_PORT" ]; then
+	# create backup copy
+	cp -f /etc/fail2ban/jail.conf /etc/fail2ban/jail.conf.miab_old
+	
+	if [ "$SSH_PORT" != "22" ]; then
+		# Add alternative SSH port
+		sed -i "s/port[ ]\+=[ ]\+ssh$/port = ssh,$SSH_PORT/g" /etc/fail2ban/jail.conf
+		sed -i "s/port[ ]\+=[ ]\+ssh$/port = ssh,$SSH_PORT/g" /etc/fail2ban/jail.d/geoipblock.conf
+	else
+		# Set SSH port to default
+		sed -i "s/port[ ]\+=[ ]\+ssh/port = ssh/g" /etc/fail2ban/jail.conf
+		sed -i "s/port[ ]\+=[ ]\+ssh/port = ssh/g" /etc/fail2ban/jail.d/geoipblock.conf
+	fi
+fi
 
 # fail2ban should be able to look back far enough because we increased findtime of recidive jail
 tools/editconf.py /etc/fail2ban/fail2ban.conf dbpurgeage=7d

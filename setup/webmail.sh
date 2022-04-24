@@ -28,16 +28,23 @@ apt_install \
 # Install Roundcube from source if it is not already present or if it is out of date.
 # Combine the Roundcube version number with the commit hash of plugins to track
 # whether we have the latest version of everything.
-
-VERSION=1.4.11
-HASH=3877f0e70f29e7d0612155632e48c3db1e626be3
-PERSISTENT_LOGIN_VERSION=6b3fc450cae23ccb2f393d0ef67aa319e877e435 # version 5.2.0
+# For the latest versions, see:
+#   https://github.com/roundcube/roundcubemail/releases
+#   https://github.com/mfreiholz/persistent_login/commits/master
+#   https://github.com/stremlau/html5_notifier/commits/master
+#   https://github.com/mstilkerich/rcmcarddav/releases
+# The easiest way to get the package hashes is to run this script and get the hash from
+# the error message.
+VERSION=1.5.2
+HASH=208ce4ca0be423cc0f7070ff59bd03588b4439bf
+PERSISTENT_LOGIN_VERSION=59ca1b0d3a02cff5fa621c1ad581d15f9d642fe8
 HTML5_NOTIFIER_VERSION=68d9ca194212e15b3c7225eb6085dbcf02fd13d7 # version 0.6.4+
+CARDDAV_VERSION=4.3.0
+CARDDAV_HASH=4ad7df8843951062878b1375f77c614f68bc5c61
+CONTEXT_MENU_VERSION=602a3812922fb8f71814eb3b8d91e9b7859aab7e # version 3.2.1
+TWOFACT_COMMIT=06e21b0c03aeeb650ee4ad93538873185f776f8b # master @ 21-04-2022
 
-CARDDAV_VERSION=4.1.1
-CARDDAV_HASH=87b73661b7799b2079c28324311eddb4241242bb
-
-UPDATE_KEY=$VERSION:$PERSISTENT_LOGIN_VERSION:$HTML5_NOTIFIER_VERSION:$CARDDAV_VERSION
+UPDATE_KEY=$VERSION:$PERSISTENT_LOGIN_VERSION:$HTML5_NOTIFIER_VERSION:$CARDDAV_VERSION:$CONTEXT_MENU_VERSION:$TWOFACT_COMMIT
 
 # paths that are often reused.
 RCM_DIR=/usr/local/lib/roundcubemail
@@ -76,7 +83,7 @@ if [ $needs_update == 1 ]; then
 	# install roundcube html5_notifier plugin
 	git_clone https://github.com/kitist/html5_notifier.git $HTML5_NOTIFIER_VERSION '' ${RCM_PLUGIN_DIR}/html5_notifier
 
-	# download and verify the full release of the carddav plugin
+	# download and verify the full release of the carddav plugin. Can't use git_clone because repository does not include all dependencies
 	wget_verify \
 		https://github.com/mstilkerich/rcmcarddav/releases/download/v${CARDDAV_VERSION}/carddav-v${CARDDAV_VERSION}.tar.gz \
 		$CARDDAV_HASH \
@@ -85,6 +92,12 @@ if [ $needs_update == 1 ]; then
 	# unzip and cleanup
 	tar -C ${RCM_PLUGIN_DIR} --no-same-owner -zxf /tmp/carddav.tar.gz
 	rm -f /tmp/carddav.tar.gz
+
+	# install roundcube context menu plugin
+	git_clone https://github.com/johndoh/roundcube-contextmenu.git $CONTEXT_MENU_VERSION '' ${RCM_PLUGIN_DIR}/contextmenu
+
+	# install two factor totp authenticator
+	git_clone https://github.com/alexandregz/twofactor_gauthenticator.git $TWOFACT_COMMIT '' ${RCM_PLUGIN_DIR}/twofactor_gauthenticator
 
 	# record the version we've installed
 	echo $UPDATE_KEY > ${RCM_DIR}/version
@@ -130,9 +143,10 @@ cat > $RCM_CONFIG <<EOF;
 \$config['product_name'] = '$PRIMARY_HOSTNAME Webmail';
 \$config['cipher_method'] = 'AES-256-CBC'; # persistent login cookie and potentially other things
 \$config['des_key'] = '$SECRET_KEY'; # 37 characters -> ~256 bits for AES-256, see above
-\$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'persistent_login', 'carddav');
+\$config['plugins'] = array('html5_notifier', 'archive', 'zipdownload', 'password', 'managesieve', 'jqueryui', 'persistent_login', 'carddav', 'markasjunk', 'contextmenu', 'twofactor_gauthenticator');
 \$config['skin'] = 'elastic';
 \$config['login_autocomplete'] = 2;
+\$config['login_username_filter'] = 'email';
 \$config['password_charset'] = 'UTF-8';
 \$config['junk_mbox'] = 'Spam';
 ?>
@@ -152,7 +166,7 @@ cat > ${RCM_PLUGIN_DIR}/carddav/config.inc.php <<EOF;
 	 'active'       =>  true,
 	 'readonly'     =>  false,
 	 'refresh_time' => '02:00:00',
-	 'fixed'        =>  array('username','password'),
+	 'fixed'        =>  array('username'),
 	 'preemptive_auth' => '1',
 	 'hide'        =>  false,
 );

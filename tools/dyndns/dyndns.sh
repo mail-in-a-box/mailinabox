@@ -15,7 +15,8 @@
 
 #----- Contents of dyndns.cfg file below ------
 #----- user credentials -----------------------
-#user = "admin@mydomain.com:MYADMINPASSWORD"
+#USER_NAME="admin@mydomain.com"
+#USER_PASS="MYADMINPASSWORD"
 #----- Contents of dyndns.domain below --------
 #<miabdomain.tld> 
 #------ Contents of dyndns.dynlist below ------
@@ -34,6 +35,8 @@ CURLCMD="/usr/bin/curl"
 CATCMD="/bin/cat"
 OATHTOOLCMD="/usr/bin/oathtool"
 DYNDNSNAMELIST="$MYNAME.dynlist"
+
+IGNORESTR=";; connection timed out; no servers could be reached"
 
 if [ ! -x $DIGCMD ]; then
   echo "$MYNAME: dig command $DIGCMD not found.  Check and fix please."
@@ -66,22 +69,41 @@ if [ ! -f $DYNDNSNAMELIST ]; then
    exit 99
 fi
 
+source $CFGFILE
+AUTHSTR="Authorization: Basic $(echo $USER_NAME:$USER_PASS | base64 -w 0)"
+
 MYIP="`$DIGCMD +short myip.opendns.com @resolver1.opendns.com`"
 
-if [ -z "MYIP" ]; then
+if [ -z "$MYIP" ]; then
   MYIP="`$DIGCMD +short myip.opendns.com @resolver2.opendns.com`"
 fi
 
-if [ -z "MYIP" ]; then
+if [ "$MYIP" = "$IGNORESTR" ]; then
+  MYIP=""
+fi
+
+if [ -z "$MYIP" ]; then
   MYIP="`$DIGCMD +short myip.opendns.com @resolver3.opendns.com`"
 fi
 
-if [ -z "MYIP" ]; then
+if [ "$MYIP" = "$IGNORESTR" ]; then
+  MYIP=""
+fi
+
+if [ -z "$MYIP" ]; then
   MYIP="`$DIGCMD +short myip.opendns.com @resolver4.opendns.com`"
+fi
+
+if [ "$MYIP" = "$IGNORESTR" ]; then
+  MYIP=""
 fi
 
 if [ -z "$MYIP" ]; then
   MYIP=$($DIGCMD -4 +short TXT o-o.myaddr.l.google.com @ns1.google.com | tr -d '"')
+fi
+
+if [ "$MYIP" = "$IGNORESTR" ]; then
+  MYIP=""
 fi
 
 if [ ! -z "$MYIP" ]; then
@@ -97,7 +119,7 @@ if [ ! -z "$MYIP" ]; then
     else
       echo "$MYNAME: $DYNDNSNAME changed (previously: $PREVIP, now: $MYIP)"
     
-      STATUS="`$CURLCMD -X PUT -K $CFGFILE -s -d $MYIP https://$MIABHOST/admin/dns/custom/$DYNDNSNAME/A`"
+      STATUS="`$CURLCMD -X PUT -u $USER_NAME:$USER_PASS -s -d $MYIP https://$MIABHOST/admin/dns/custom/$DYNDNSNAME/A`"
     
       case $STATUS in
          "OK") echo "$MYNAME: mailinabox API returned OK, cmd succeeded but no update.";;
@@ -116,7 +138,7 @@ if [ ! -z "$MYIP" ]; then
            source $TOTPFILE
   
            TOTP="X-Auth-Token: $(oathtool --totp -b -d 6 $TOTP_KEY)"
-           STATUST="`$CURLCMD -X PUT -K $CFGFILE -H "$TOTP" -s -d $MYIP https://$MIABHOST/admin/dns/custom/$DYNDNSNAME/A`"
+           STATUST="`$CURLCMD -X PUT -u $USER_NAME:$USER_PASS -H "$TOTP" -s -d $MYIP https://$MIABHOST/admin/dns/custom/$DYNDNSNAME/A`"
            
            case $STATUST in
              "OK") echo "$MYNAME: mailinabox API returned OK, cmd succeded but no update.";;
@@ -137,14 +159,26 @@ fi
 
 # Now to do the same for ipv6
 
-MYIP="`$DIGCMD AAAA @resolver1.ipv6-sandbox.opendns.com myip.opendns.com +short -6`"
+MYIP="`$DIGCMD +short AAAA @resolver1.ipv6-sandbox.opendns.com myip.opendns.com -6`"
 
-if [ -z "MYIP" ]; then
-  MYIP="`$DIGCMD AAAA @resolver2.ipv6-sandbox.opendns.com myip.opendns.com +short -6`"
+if [ "$MYIP" = "$IGNORESTR" ]; then
+  MYIP=""
+fi
+
+if [ -z "$MYIP" ]; then
+  MYIP="`$DIGCMD +short AAAA @resolver2.ipv6-sandbox.opendns.com myip.opendns.com -6`"
+fi
+
+if [ "$MYIP" = "$IGNORESTR" ]; then
+  MYIP=""
 fi
 
 if [ -z "$MYIP" ]; then
   MYIP=$($DIGCMD -6 +short TXT o-o.myaddr.l.google.com @ns1.google.com | tr -d '"')
+fi
+
+if [ "$MYIP" = "$IGNORESTR" ]; then
+  MYIP=""
 fi
 
 if [ ! -z "$MYIP" ]; then
@@ -160,7 +194,7 @@ if [ ! -z "$MYIP" ]; then
     else
       echo "$MYNAME: $DYNDNSNAME changed (previously: $PREVIP, now: $MYIP)"
     
-      STATUS="`$CURLCMD -X PUT -K $CFGFILE -s -d $MYIP https://$MIABHOST/admin/dns/custom/$DYNDNSNAME/AAAA`"
+      STATUS="`$CURLCMD -X PUT -u $USER_NAME:$USER_PASS -s -d $MYIP https://$MIABHOST/admin/dns/custom/$DYNDNSNAME/AAAA`"
     
       case $STATUS in
          "OK") echo "$MYNAME: mailinabox API returned OK, cmd succeeded but no update.";;
@@ -179,7 +213,7 @@ if [ ! -z "$MYIP" ]; then
            source $TOTPFILE
   
            TOTP="X-Auth-Token: $(oathtool --totp -b -d 6 $TOTP_KEY)"
-           STATUST="`$CURLCMD -X PUT -K $CFGFILE -H "$TOTP" -s -d $MYIP https://$MIABHOST/admin/dns/custom/$DYNDNSNAME/AAAA`"
+           STATUST="`$CURLCMD -X PUT -u $USER_NAME:$USER_PASS -H "$TOTP" -s -d $MYIP https://$MIABHOST/admin/dns/custom/$DYNDNSNAME/AAAA`"
            
            case $STATUST in
              "OK") echo "$MYNAME: mailinabox API returned OK, cmd succeded but no update.";;

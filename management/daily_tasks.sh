@@ -14,7 +14,7 @@ source /etc/mailinabox.conf
 # On Mondays, i.e. once a week, send the administrator a report of total emails
 # sent and received so the admin might notice server abuse.
 if [ `date "+%u"` -eq 1 ]; then
-    management/mail_log.py -t week | management/email_administrator.py "Mail-in-a-Box Usage Report"
+    management/mail_log.py -t week -r -s -l -g -b | management/email_administrator.py "Mail-in-a-Box Usage Report"
     
     /usr/sbin/pflogsumm -u 5 -h 5 --problems_first /var/log/mail.log.1 | management/email_administrator.py "Postfix log analysis summary"
 fi

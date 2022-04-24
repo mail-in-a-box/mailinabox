@@ -217,6 +217,7 @@ function git_clone {
 	rm -rf $TMPPATH $TARGETPATH
 	git clone -q $REPO $TMPPATH || exit 1
 	(cd $TMPPATH; git checkout -q $TREEISH;) || exit 1
+	rm -rf $TMPPATH/.git
 	mv $TMPPATH/$SUBDIR $TARGETPATH
 	rm -rf $TMPPATH
 }

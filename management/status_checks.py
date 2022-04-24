@@ -12,6 +12,7 @@ import dateutil.parser, dateutil.tz
 import idna
 import psutil
 import postfix_mta_sts_resolver.resolver
+import logging
 
 from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, get_secondary_dns, get_custom_dns_records
 from web_update import get_web_domains, get_domains_with_a_records
@@ -22,13 +23,12 @@ from utils import shell, sort_domains, load_env_vars_from_file, load_settings
 
 def get_services():
 	return [
-		{ "name": "Local DNS (bind9)", "port": 53, "public": False, },
-		#{ "name": "NSD Control", "port": 8952, "public": False, },
-		{ "name": "Local DNS Control (bind9/rndc)", "port": 953, "public": False, },
+		{ "name": "Local DNS (unbound)", "port": 53, "public": False, },
+		{ "name": "Local DNS Control (unbound)", "port": 953, "public": False, },
 		{ "name": "Dovecot LMTP LDA", "port": 10026, "public": False, },
 		{ "name": "Postgrey", "port": 10023, "public": False, },
 		{ "name": "Spamassassin", "port": 10025, "public": False, },
-		{ "name": "OpenDKIM", "port": 8891, "public": False, },
+		{ "name": "DKIMpy", "port": 8892, "public": False, },
 		{ "name": "OpenDMARC", "port": 8893, "public": False, },
 		{ "name": "Mail-in-a-Box Management Daemon", "port": 10222, "public": False, },
 		{ "name": "SSH Login (ssh)", "port": get_ssh_port(), "public": True, },
@@ -49,15 +49,15 @@ def run_checks(rounded_values, env, output, pool, domains_to_check=None):
 
 	# check that services are running
 	if not run_services_checks(env, output, pool):
-		# If critical services are not running, stop. If bind9 isn't running,
+		# If critical services are not running, stop. If unbound isn't running,
 		# all later DNS checks will timeout and that will take forever to
 		# go through, and if running over the web will cause a fastcgi timeout.
 		return
 
-	# clear bind9's DNS cache so our DNS checks are up to date
-	# (ignore errors; if bind9/rndc isn't running we'd already report
+	# clear unbound's DNS cache so our DNS checks are up to date
+	# (ignore errors; if unbound isn't running we'd already report
 	# that in run_services checks.)
-	shell('check_call', ["/usr/sbin/rndc", "flush"], trap=True)
+	shell('check_call', ["/usr/sbin/unbound-control", "flush_zone", "."], trap=True, capture_stdout=False)
 
 	run_system_checks(rounded_values, env, output)
 
@@ -72,6 +72,9 @@ def get_ssh_port():
 		output = shell('check_output', ['sshd', '-T'])
 	except FileNotFoundError:
 		# sshd is not installed. That's ok.
+		return None
+	except subprocess.CalledProcessError:
+		# error while calling shell command
 		return None
 
 	returnNext = False
@@ -293,7 +296,7 @@ def run_network_checks(env, output):
 	# by a spammer, or the user may be deploying on a residential network. We
 	# will not be able to reliably send mail in these cases.
 	rev_ip4 = ".".join(reversed(env['PUBLIC_IP'].split('.')))
-	zen = query_dns(rev_ip4+'.zen.spamhaus.org', 'A', nxdomain=None)
+	zen = query_dns(rev_ip4+'.zen.spamhaus.org', 'A', nxdomain=None, retry = False)
 	if zen is None:
 		output.print_ok("IP address is not blacklisted by zen.spamhaus.org.")
 	elif zen == "[timeout]":
@@ -547,14 +550,17 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 			# Choose the first IP if nameserver returns multiple
 			ns_ip = ns_ips.split('; ')[0]
 
-			# Now query it to see what it says about this domain.
-			ip = query_dns(domain, "A", at=ns_ip, nxdomain=None)
-			if ip == correct_ip:
-				output.print_ok("Secondary nameserver %s resolved the domain correctly." % ns)
-			elif ip is None:
-				output.print_error("Secondary nameserver %s is not configured to resolve this domain." % ns)
+			if ns_ip == '[Not Set]':
+				output.print_error("Secondary nameserver %s could not be resolved correctly. (dns result: %s used %s)" % (ns, ns_ips, ns_ip))
 			else:
-				output.print_error("Secondary nameserver %s is not configured correctly. (It resolved this domain as %s. It should be %s.)" % (ns, ip, correct_ip))
+				# Now query it to see what it says about this domain.
+				ip = query_dns(domain, "A", at=ns_ip, nxdomain=None)
+				if ip == correct_ip:
+					output.print_ok("Secondary nameserver %s resolved the domain correctly." % ns)
+				elif ip is None:
+					output.print_error("Secondary nameserver %s is not configured to resolve this domain." % ns)
+				else:
+					output.print_error("Secondary nameserver %s is not configured correctly. (It resolved this domain as %s. It should be %s.)" % (ns, ip, correct_ip))
 
 def check_dns_zone_suggestions(domain, env, output, dns_zonefiles, domains_with_a_records):
 	# Warn if a custom DNS record is preventing this or the automatic www redirect from
@@ -626,14 +632,16 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 			#
 			# But it may not be preferred. Only algorithm 13 is preferred. Warn if any of the
 			# matched zones uses a different algorithm.
-			if set(r[1] for r in matched_ds) == { '13' }: # all are alg 13
+			if set(r[1] for r in matched_ds) == { '13' } and set(r[2] for r in matched_ds) <= { '2', '4' }: # all are alg 13 and digest type 2 or 4
 				output.print_ok("DNSSEC 'DS' record is set correctly at registrar.")
 				return
-			elif '13' in set(r[1] for r in matched_ds): # some but not all are alg 13
-				output.print_ok("DNSSEC 'DS' record is set correctly at registrar. (Records using algorithm other than ECDSAP256SHA256 should be removed.)")
+			elif len([r for r in matched_ds if r[1] == '13' and r[2] in ( '2', '4' )]) > 0: # some but not all are alg 13
+				output.print_ok("DNSSEC 'DS' record is set correctly at registrar. (Records using algorithm other than ECDSAP256SHA256 and digest types other than SHA-256/384 should be removed.)")
 				return
 			else: # no record uses alg 13
-				output.print_warning("DNSSEC 'DS' record set at registrar is valid but should be updated to ECDSAP256SHA256 (see below).")
+				output.print_warning("""DNSSEC 'DS' record set at registrar is valid but should be updated to ECDSAP256SHA256 and SHA-256 (see below).
+				IMPORTANT: Do not delete existing DNSSEC 'DS' records for this domain until confirmation that the new DNSSEC 'DS' record
+				for this domain is valid.""")
 		else:
 			if is_checking_primary:
 				output.print_error("""The DNSSEC 'DS' record for %s is incorrect. See further details below.""" % domain)
@@ -644,7 +652,8 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 
 	output.print_line("""Follow the instructions provided by your domain name registrar to set a DS record.
 		Registrars support different sorts of DS records. Use the first option that works:""")
-	preferred_ds_order = [(7, 1), (7, 2), (8, 4), (13, 4), (8, 1), (8, 2), (13, 1), (13, 2)] # low to high
+	preferred_ds_order = [(7, 2), (8, 4), (13, 4), (8, 2), (13, 2)] # low to high, see https://github.com/mail-in-a-box/mailinabox/issues/1998
+
 	def preferred_ds_order_func(ds_suggestion):
 		k = (int(ds_suggestion['alg']), int(ds_suggestion['digalg']))
 		if k in preferred_ds_order:
@@ -652,11 +661,12 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 		return -1 # index before first item
 	output.print_line("")
 	for i, ds_suggestion in enumerate(sorted(expected_ds_records.values(), key=preferred_ds_order_func, reverse=True)):
+		if preferred_ds_order_func(ds_suggestion) == -1: continue # don't offer record types that the RFC says we must not offer
 		output.print_line("")
 		output.print_line("Option " + str(i+1) + ":")
 		output.print_line("----------")
 		output.print_line("Key Tag: " + ds_suggestion['keytag'])
-		output.print_line("Key Flags: KSK")
+		output.print_line("Key Flags: KSK / 257")
 		output.print_line("Algorithm: %s / %s" % (ds_suggestion['alg'], ds_suggestion['alg_name']))
 		output.print_line("Digest Type: %s / %s" % (ds_suggestion['digalg'], ds_suggestion['digalg_name']))
 		output.print_line("Digest: " + ds_suggestion['digest'])
@@ -737,7 +747,7 @@ def check_mail_domain(domain, env, output):
 	# Stop if the domain is listed in the Spamhaus Domain Block List.
 	# The user might have chosen a domain that was previously in use by a spammer
 	# and will not be able to reliably send mail.
-	dbl = query_dns(domain+'.dbl.spamhaus.org', "A", nxdomain=None)
+	dbl = query_dns(domain+'.dbl.spamhaus.org', "A", nxdomain=None, retry=False)
 	if dbl is None:
 		output.print_ok("Domain is not blacklisted by dbl.spamhaus.org.")
 	elif dbl == "[timeout]":
@@ -773,7 +783,7 @@ def check_web_domain(domain, rounded_time, ssl_certificates, env, output):
 	# website for also needs a signed certificate.
 	check_ssl_cert(domain, rounded_time, ssl_certificates, env, output)
 
-def query_dns(qname, rtype, nxdomain='[Not Set]', at=None, as_list=False):
+def query_dns(qname, rtype, nxdomain='[Not Set]', at=None, as_list=False, retry=True):
 	# Make the qname absolute by appending a period. Without this, dns.resolver.query
 	# will fall back a failed lookup to a second query with this machine's hostname
 	# appended. This has been causing some false-positive Spamhaus reports. The
@@ -783,7 +793,7 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None, as_list=False):
 		qname += "."
 
 	# Use the default nameservers (as defined by the system, which is our locally
-	# running bind server), or if the 'at' argument is specified, use that host
+	# running unbound server), or if the 'at' argument is specified, use that host
 	# as the nameserver.
 	resolver = dns.resolver.get_default_resolver()
 	if at:
@@ -792,16 +802,29 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None, as_list=False):
 
 	# Set a timeout so that a non-responsive server doesn't hold us back.
 	resolver.timeout = 5
+	resolver.lifetime = 5
 
+	if retry:
+		tries = 2
+	else:
+		tries = 1
+	
 	# Do the query.
-	try:
-		response = resolver.resolve(qname, rtype)
-	except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
-		# Host did not have an answer for this query; not sure what the
-		# difference is between the two exceptions.
-		return nxdomain
-	except dns.exception.Timeout:
-		return "[timeout]"
+	while tries > 0:
+		tries = tries - 1
+		try:
+			response = resolver.resolve(qname, rtype, search=True)
+			tries = 0
+		except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+			# Host did not have an answer for this query; not sure what the
+			# difference is between the two exceptions.
+			logging.debug("No result for dns lookup %s, %s (%d)", qname, rtype, tries)
+			if tries < 1:
+				return nxdomain
+		except dns.exception.Timeout:
+			logging.debug("Timeout on dns lookup %s, %s (%d)", qname, rtype, tries)
+			if tries < 1:
+				return "[timeout]"
 
 	# Normalize IP addresses. IP address --- especially IPv6 addresses --- can
 	# be expressed in equivalent string forms. Canonicalize the form before
