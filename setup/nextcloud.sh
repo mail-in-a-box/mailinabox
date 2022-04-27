@@ -37,8 +37,8 @@ contacts_ver=4.1.0
 contacts_hash=697f6b4a664e928d72414ea2731cb2c9d1dc3077
 calendar_ver=3.2.2
 calendar_hash=ce4030ab57f523f33d5396c6a81396d440756f5f
-user_external_ver=1.0.0
-user_external_hash=3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
+user_external_ver=3.0.0
+user_external_hash=0df781b261f55bbde73d8c92da3f99397000972f
 
 # Clear prior packages and install dependencies from apt.
 
@@ -95,7 +95,7 @@ InstallNextcloud() {
 	# Starting with Nextcloud 15, the app user_external is no longer included in Nextcloud core,
 	# we will install from their github repository.
 	if [ -n "$version_user_external" ]; then
-		wget_verify https://github.com/nextcloud/user_external/releases/download/v$version_user_external/user_external-$version_user_external.tar.gz $hash_user_external /tmp/user_external.tgz
+		wget_verify https://github.com/nextcloud-releases/user_external/releases/download/v$version_user_external/user_external-v$version_user_external.tar.gz $hash_user_external /tmp/user_external.tgz
 		tar -xf /tmp/user_external.tgz -C /usr/local/lib/owncloud/apps/
 		rm /tmp/user_external.tgz
 	fi
@@ -217,10 +217,10 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
   'overwrite.cli.url' => '/cloud',
   'user_backends' => array(
     array(
-      'class' => 'OC_User_IMAP',
-        'arguments' => array(
-          '127.0.0.1', 143, null
-         ),
+      'class' => '\OCA\UserExternal\IMAP',
+      'arguments' => array(
+        '127.0.0.1', 143, null, null, false, false
+       ),
     ),
   ),
   'memcache.local' => '\OC\Memcache\APCu',
@@ -295,7 +295,14 @@ include("$STORAGE_ROOT/owncloud/config.php");
 
 \$CONFIG['mail_domain'] = '$PRIMARY_HOSTNAME';
 
-\$CONFIG['user_backends'] = array(array('class' => 'OC_User_IMAP','arguments' => array('127.0.0.1', 143, null),),);
+\$CONFIG['user_backends'] = array(
+  array(
+    'class' => '\OCA\UserExternal\IMAP',
+    'arguments' => array(
+      '127.0.0.1', 143, null, null, false, false
+    ),
+  ),
+);
 
 echo "<?php\n\\\$CONFIG = ";
 var_export(\$CONFIG);
@@ -343,6 +350,11 @@ tools/editconf.py /etc/php/$PHP_VER/cli/conf.d/10-opcache.ini -c ';' \
 	opcache.memory_consumption=128 \
 	opcache.save_comments=1 \
 	opcache.revalidate_freq=1
+
+# Migrate users_external data from <0.6.0 to version 3.0.0 (see https://github.com/nextcloud/user_external).
+# This version was probably in use in Mail-in-a-Box v0.41 (February 26, 2019) and earlier.
+# We moved to v0.6.3 in 193763f8.
+sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "UPDATE oc_users_external SET backend='127.0.0.1';"
 
 # Set up a cron job for Nextcloud.
 cat > /etc/cron.d/mailinabox-nextcloud << EOF;
