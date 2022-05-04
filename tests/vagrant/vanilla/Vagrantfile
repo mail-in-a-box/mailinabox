@@ -12,14 +12,14 @@ Vagrant.configure("2") do |config|
     m1.vm.provision :shell, :inline => <<-SH
 cat >/tmp/provision.sh <<EOF
 #!/bin/bash
-if [ \$EUID -ne 0 ]; then
+if [ \\$EUID -ne 0 ]; then
    echo "Must be root"
    exit 1
 fi
 cd /mailinabox
 export PRIMARY_HOSTNAME=vanilla.local
-export FEATURE_MUNIN=false
-export FEATURE_NEXTCLOUD=false
+#export FEATURE_MUNIN=false
+#export FEATURE_NEXTCLOUD=false
 export SKIP_SYSTEM_UPDATE=0
 tests/system-setup/vanilla.sh \
    --enable-mod=roundcube-master \
