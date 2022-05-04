@@ -36,9 +36,9 @@ nextcloud_hash=92cac708915f51ee2afc1787fd845476fd090c81
 # * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
 #   copying it from the error message when it doesn't match what is below.
 contacts_ver=4.0.7
-contacts_hash=8ab31d205408e4f12067d8a4daa3595d46b513e3
+contacts_hash=45e7cf4bfe99cd8d03625cf9e5a1bb2e90549136
 calendar_ver=3.0.4
-calendar_hash=6fb1e998d307c53245faf1c37a96eb982bbee8ba
+calendar_hash=d0284b68135777ec9ca713c307216165b294d0fe
 user_external_ver=1.0.0
 user_external_hash=3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
 
@@ -84,11 +84,11 @@ InstallNextcloud() {
 	# their github repositories.
 	mkdir -p /usr/local/lib/owncloud/apps
 
-	wget_verify https://github.com/nextcloud-releases/contacts/releases/download/v$version_contacts/contacts-v$version_contacts.tar.gz $hash_contacts /tmp/contacts.tgz
+	wget_verify https://github.com/nextcloud-releases/contacts/archive/refs/tags/v$version_contacts.tar.gz $hash_contacts /tmp/contacts.tgz
 	tar xf /tmp/contacts.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/contacts.tgz
 
-	wget_verify https://github.com/nextcloud-releases/calendar/releases/download/v$version_calendar/calendar-v$version_calendar.tar.gz $hash_calendar /tmp/calendar.tgz
+	wget_verify https://github.com/nextcloud-releases/calendar/archive/refs/tags/v$version_calendar.tar.gz $hash_calendar /tmp/calendar.tgz
 	tar xf /tmp/calendar.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/calendar.tgz
 
@@ -192,25 +192,25 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 			# During the upgrade from Nextcloud 14 to 15, user_external may cause the upgrade to fail.
 			# We will disable it here before the upgrade and install it again after the upgrade.
 			hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:disable user_external
-			InstallNextcloud 15.0.8 4129d8d4021c435f2e86876225fb7f15adf764a3 3.3.0 e55d0357c6785d3b1f3b5f21780cb6d41d32443a 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466 0.7.0 555a94811daaf5bdd336c5e48a78aa8567b86437
+			InstallNextcloud 15.0.8 4129d8d4021c435f2e86876225fb7f15adf764a3 3.3.0 e55d0357c6785d3b1f3b5f21780cb6d41d32443a 2.0.3 a1f3835c752929e3598eb94f22300516867ac6ab 0.7.0 555a94811daaf5bdd336c5e48a78aa8567b86437
 			CURRENT_NEXTCLOUD_VER="15.0.8"
 		fi
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^15 ]]; then
-                        InstallNextcloud 16.0.6 0bb3098455ec89f5af77a652aad553ad40a88819 3.3.0 e55d0357c6785d3b1f3b5f21780cb6d41d32443a 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466 0.7.0 555a94811daaf5bdd336c5e48a78aa8567b86437
+                        InstallNextcloud 16.0.6 0bb3098455ec89f5af77a652aad553ad40a88819 3.3.0 e55d0357c6785d3b1f3b5f21780cb6d41d32443a 2.0.3 a1f3835c752929e3598eb94f22300516867ac6ab 0.7.0 555a94811daaf5bdd336c5e48a78aa8567b86437
                         CURRENT_NEXTCLOUD_VER="16.0.6"
         	fi
 	        if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^16 ]]; then
-                        InstallNextcloud 17.0.6 50b98d2c2f18510b9530e558ced9ab51eb4f11b0 3.3.0 e55d0357c6785d3b1f3b5f21780cb6d41d32443a 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466 0.7.0 555a94811daaf5bdd336c5e48a78aa8567b86437
+                        InstallNextcloud 17.0.6 50b98d2c2f18510b9530e558ced9ab51eb4f11b0 3.3.0 e55d0357c6785d3b1f3b5f21780cb6d41d32443a 2.0.3 a1f3835c752929e3598eb94f22300516867ac6ab 0.7.0 555a94811daaf5bdd336c5e48a78aa8567b86437
                         CURRENT_NEXTCLOUD_VER="17.0.6"
 	        fi
 	        if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^17 ]]; then
 			# Don't exit the install if this column already exists (see #2076)
 			(echo "ALTER TABLE oc_flow_operations ADD COLUMN entity VARCHAR;" | sqlite3 $STORAGE_ROOT/owncloud/owncloud.db 2>/dev/null) || true
-                        InstallNextcloud 18.0.10 39c0021a8b8477c3f1733fddefacfa5ebf921c68 3.4.1 aee680a75e95f26d9285efd3c1e25cf7f3bfd27e 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
+                        InstallNextcloud 18.0.10 39c0021a8b8477c3f1733fddefacfa5ebf921c68 3.4.1 8f685e7dc99758636d660d595e389c324e51e9d1 2.0.3 a1f3835c752929e3598eb94f22300516867ac6ab 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
                         CURRENT_NEXTCLOUD_VER="18.0.10"
 	        fi
 	        if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^18 ]]; then
-                        InstallNextcloud 19.0.4 01e98791ba12f4860d3d4047b9803f97a1b55c60 3.4.1 aee680a75e95f26d9285efd3c1e25cf7f3bfd27e 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
+                        InstallNextcloud 19.0.4 01e98791ba12f4860d3d4047b9803f97a1b55c60 3.4.1 8f685e7dc99758636d660d595e389c324e51e9d1 2.0.3 a1f3835c752929e3598eb94f22300516867ac6ab 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
                         CURRENT_NEXTCLOUD_VER="19.0.4"
 	        fi
 	fi
