@@ -140,11 +140,17 @@ init_miab_testing() {
     # python3-dnspython: is used by the python scripts in 'tests' and is
     #   not installed by setup
     # also install 'jq' for json processing
-    echo "Install python3-dnspython, jq"
+    echo "Install python3-dnspython, jq, git"
     wait_for_apt
-    exec_no_output apt-get install -y python3-dnspython jq \
+    exec_no_output apt-get install -y python3-dnspython jq git \
         || die "Unable to install setup prerequisites !!"
-    
+
+
+    # tell git our directory is safe (new requirement for git 2.35.2)
+    if [ -d .git ]; then
+        git config --global --add safe.directory "$(pwd)"
+    fi
+
     # copy in pre-built MiaB-LDAP ssl files
     #   1. avoid the lengthy generation of DH params
     if ! mkdir -p $STORAGE_ROOT/ssl; then
