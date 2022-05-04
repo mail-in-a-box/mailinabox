@@ -294,13 +294,24 @@ get_nc_download_url() {
 
     if [ -z "$url" ]; then
         if [ -z "$ver" ]; then
-            url="https://download.nextcloud.com/server/releases/${REQUIRED_NC_FOR_FRESH_INSTALLS:-latest}.${ext#.}"
-            url_cache_id="${REQUIRED_NC_FOR_FRESH_INSTALLS:-latest}.${ext#.}"
+            ver=${REQUIRED_NC_FOR_FRESH_INSTALLS:-latest}
+        fi
+        
+        case "$ver" in
+            latest )
+                url="https://download.nextcloud.com/server/releases/latest.${ext#.}"
+                url_cache_id="latest.${ext#.}"
+                ;;
 
-        else
-            url="https://download.nextcloud.com/server/releases/nextcloud-${ver}.${ext#.}"
-            url_cache_id="nextcloud-${ver}.${ext#.}"
-        fi        
+            *rc* )
+                url="https://download.nextcloud.com/server/prereleases/nextcloud-${ver}.${ext#.}"
+                url_cache_id="nextcloud-${ver}.${ext#.}"
+                ;;
+            
+            * )
+                url="https://download.nextcloud.com/server/releases/nextcloud-${ver}.${ext#.}"
+                url_cache_id="nextcloud-${ver}.${ext#.}"
+        esac
     fi
 
     DOWNLOAD_URL="$url"
