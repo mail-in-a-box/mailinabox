@@ -12,7 +12,7 @@ import dateutil.parser, dateutil.relativedelta, dateutil.tz
 import rtyaml
 from exclusiveprocess import Lock
 
-from utils import load_environment, shell, wait_for_service, fix_boto
+from utils import load_environment, shell, wait_for_service, fix_boto, get_php_version
 
 rsync_ssh_options = [
 	"--ssh-options= -i /root/.ssh/id_rsa_miab",
@@ -20,7 +20,7 @@ rsync_ssh_options = [
 ]
 
 def backup_status(env):
-	# If backups are dissbled, return no status.
+	# If backups are disabled, return no status.
 	config = get_backup_config(env)
 	if config["target"] == "off":
 		return { }
@@ -212,9 +212,10 @@ def get_target_type(config):
 
 def perform_backup(full_backup):
 	env = load_environment()
+	php_fpm = f"php{get_php_version()}-fpm"
 
 	# Create an global exclusive lock so that the backup script
-	# cannot be run more than one.
+	# cannot be run more than once.
 	Lock(die=True).forever()
 
 	config = get_backup_config(env)
@@ -247,7 +248,7 @@ def perform_backup(full_backup):
 			if quit:
 				sys.exit(code)
 
-	service_command("php8.0-fpm", "stop", quit=True)
+	service_command(php_fpm, "stop", quit=True)
 	service_command("postfix", "stop", quit=True)
 	service_command("dovecot", "stop", quit=True)
 
@@ -281,7 +282,7 @@ def perform_backup(full_backup):
 		# Start services again.
 		service_command("dovecot", "start", quit=False)
 		service_command("postfix", "start", quit=False)
-		service_command("php8.0-fpm", "start", quit=False)
+		service_command(php_fpm, "start", quit=False)
 
 	# Remove old backups. This deletes all backup data no longer needed
 	# from more than 3 days ago.

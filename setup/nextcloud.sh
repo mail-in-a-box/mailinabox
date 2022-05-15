@@ -21,8 +21,8 @@ echo "Installing Nextcloud (contacts/calendar)..."
 #   we automatically install intermediate versions as needed.
 # * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
 #   copying it from the error message when it doesn't match what is below.
-nextcloud_ver=23.0.0
-nextcloud_hash=0d496eb0808c292502479e93cd37fe2daf95786a
+nextcloud_ver=24.0.0
+nextcloud_hash=f072f5863a15cefe577b47f72bb3e41d2a339335
 
 # Nextcloud apps
 # --------------
@@ -33,12 +33,12 @@ nextcloud_hash=0d496eb0808c292502479e93cd37fe2daf95786a
 #   https://github.com/nextcloud/user_external/blob/master/appinfo/info.xml
 # * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
 #   copying it from the error message when it doesn't match what is below.
-contacts_ver=4.0.7
-contacts_hash=8ab31d205408e4f12067d8a4daa3595d46b513e3
-calendar_ver=3.0.4
-calendar_hash=6fb1e998d307c53245faf1c37a96eb982bbee8ba
-user_external_ver=1.0.0
-user_external_hash=3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
+contacts_ver=4.0.8
+contacts_hash=fc626ec02732da13a4c600baae64ab40557afdca
+calendar_ver=3.0.6
+calendar_hash=e40d919b4b7988b46671a78cb32a43d8c7cba332
+user_external_ver=3.0.0
+user_external_hash=9e7aaf7288032bd463c480bc368ff91869122950
 
 # Clear prior packages and install dependencies from apt.
 
@@ -64,8 +64,8 @@ InstallNextcloud() {
 	echo "Upgrading to Nextcloud version $version"
 	echo
 
-        # Download and verify
-        wget_verify https://download.nextcloud.com/server/releases/nextcloud-$version.zip $hash /tmp/nextcloud.zip
+	# Download and verify
+	wget_verify https://download.nextcloud.com/server/releases/nextcloud-$version.zip $hash /tmp/nextcloud.zip
 
 	# Remove the current owncloud/Nextcloud
 	rm -rf /usr/local/lib/owncloud
@@ -79,18 +79,18 @@ InstallNextcloud() {
 	# their github repositories.
 	mkdir -p /usr/local/lib/owncloud/apps
 
-	wget_verify https://github.com/nextcloud-releases/contacts/releases/download/v$version_contacts/contacts-v$version_contacts.tar.gz $hash_contacts /tmp/contacts.tgz
+	wget_verify https://github.com/nextcloud-releases/contacts/archive/refs/tags/v$version_contacts.tar.gz $hash_contacts /tmp/contacts.tgz
 	tar xf /tmp/contacts.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/contacts.tgz
 
-	wget_verify https://github.com/nextcloud-releases/calendar/releases/download/v$version_calendar/calendar-v$version_calendar.tar.gz $hash_calendar /tmp/calendar.tgz
+	wget_verify https://github.com/nextcloud-releases/calendar/archive/refs/tags/v$version_calendar.tar.gz $hash_calendar /tmp/calendar.tgz
 	tar xf /tmp/calendar.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/calendar.tgz
 
 	# Starting with Nextcloud 15, the app user_external is no longer included in Nextcloud core,
 	# we will install from their github repository.
 	if [ -n "$version_user_external" ]; then
-		wget_verify https://github.com/nextcloud/user_external/releases/download/v$version_user_external/user_external-$version_user_external.tar.gz $hash_user_external /tmp/user_external.tgz
+		wget_verify https://github.com/nextcloud/user_external/archive/refs/tags/v$version_user_external.tar.gz $hash_user_external /tmp/user_external.tgz
 		tar -xf /tmp/user_external.tgz -C /usr/local/lib/owncloud/apps/
 		rm /tmp/user_external.tgz
 	fi
@@ -147,7 +147,7 @@ fi
 if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextcloud_ver ]]; then
 
 	# Stop php-fpm if running. If they are not running (which happens on a previously failed install), dont bail.
-	service php8.0-fpm stop &> /dev/null || /bin/true
+	service php$(php_version)-fpm stop &> /dev/null || /bin/true
 
 	# Backup the existing ownCloud/Nextcloud.
 	# Create a backup directory to store the current installation and database to
@@ -177,13 +177,16 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 		elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^1[3456789] ]]; then
 			echo "Upgrades from Mail-in-a-Box prior to v60 with Nextcloud 19 or earlier are not supported. Upgrade to the latest Mail-in-a-Box version supported on your machine first. Setup will continue, but skip the Nextcloud migration."
 			return 0
-    elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^20 ]]; then
-      InstallNextcloud 21.0.7 f5c7079c5b56ce1e301c6a27c0d975d608bb01c9 4.0.7 8ab31d205408e4f12067d8a4daa3595d46b513e3 3.0.4 6fb1e998d307c53245faf1c37a96eb982bbee8ba 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
-      CURRENT_NEXTCLOUD_VER="21.0.7"
-    elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^21 ]]; then
-      InstallNextcloud 22.2.2 489eaf4147ad1b59385847b7d7db293712cced88 4.0.7 8ab31d205408e4f12067d8a4daa3595d46b513e3 3.0.4 6fb1e998d307c53245faf1c37a96eb982bbee8ba 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
-      CURRENT_NEXTCLOUD_VER="22.2.2"
-    fi
+		elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^20 ]]; then
+			InstallNextcloud 21.0.7 f5c7079c5b56ce1e301c6a27c0d975d608bb01c9 4.0.7 8ab31d205408e4f12067d8a4daa3595d46b513e3 3.0.4 6fb1e998d307c53245faf1c37a96eb982bbee8ba 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
+			CURRENT_NEXTCLOUD_VER="21.0.7"
+		elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^21 ]]; then
+			InstallNextcloud 22.2.2 489eaf4147ad1b59385847b7d7db293712cced88 4.0.7 8ab31d205408e4f12067d8a4daa3595d46b513e3 3.0.4 6fb1e998d307c53245faf1c37a96eb982bbee8ba 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
+			CURRENT_NEXTCLOUD_VER="22.2.2"
+		elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^22 ]]; then
+			InstallNextcloud 23.0.2 645cba42cab57029ebe29fb93906f58f7abea5f8 4.0.8 9f368bb2be98c5555b7118648f4cc9fa51e8cb30 3.0.6 ca49bb1ce23f20e10911e39055fd59d7f7a84c30 2.1.0 6e5afe7f36f398f864bfdce9cad72200e70322aa
+			CURRENT_NEXTCLOUD_VER="23.0.2"
+		fi
 	fi
 
 	InstallNextcloud $nextcloud_ver $nextcloud_hash $contacts_ver $contacts_hash $calendar_ver $calendar_hash $user_external_ver $user_external_hash
@@ -212,8 +215,8 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
   'overwrite.cli.url' => '/cloud',
   'user_backends' => array(
     array(
-      'class' => 'OC_User_IMAP',
-        'arguments' => array(
+      'class' => '\OCA\UserExternal\IMAP',
+          'arguments' => array(
           '127.0.0.1', 143, null
          ),
     ),
@@ -290,7 +293,7 @@ include("$STORAGE_ROOT/owncloud/config.php");
 
 \$CONFIG['mail_domain'] = '$PRIMARY_HOSTNAME';
 
-\$CONFIG['user_backends'] = array(array('class' => 'OC_User_IMAP','arguments' => array('127.0.0.1', 143, null),),);
+\$CONFIG['user_backends'] = array(array('class' => '\OCA\UserExternal\IMAP','arguments' => array('127.0.0.1', 143, null),),);
 
 echo "<?php\n\\\$CONFIG = ";
 var_export(\$CONFIG);
@@ -321,7 +324,7 @@ sudo -u www-data \
 
 # Set PHP FPM values to support large file uploads
 # (semicolon is the comment character in this file, hashes produce deprecation warnings)
-tools/editconf.py /etc/php/8.0/fpm/php.ini -c ';' \
+tools/editconf.py /etc/php/$(php_version)/fpm/php.ini -c ';' \
 	upload_max_filesize=16G \
 	post_max_size=16G \
 	output_buffering=16384 \
@@ -330,7 +333,7 @@ tools/editconf.py /etc/php/8.0/fpm/php.ini -c ';' \
 	short_open_tag=On
 
 # Set Nextcloud recommended opcache settings
-tools/editconf.py /etc/php/8.0/cli/conf.d/10-opcache.ini -c ';' \
+tools/editconf.py /etc/php/$(php_version)/cli/conf.d/10-opcache.ini -c ';' \
 	opcache.enable=1 \
 	opcache.enable_cli=1 \
 	opcache.interned_strings_buffer=8 \
@@ -366,4 +369,4 @@ rm -f /etc/cron.hourly/mailinabox-owncloud
 # ```
 
 # Enable PHP modules and restart PHP.
-restart_service php8.0-fpm
+restart_service php$(php_version)-fpm

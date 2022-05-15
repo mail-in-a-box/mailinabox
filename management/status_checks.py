@@ -135,13 +135,15 @@ def check_service(i, service, env):
 
 			# IPv4 ok but IPv6 failed. Try the PRIVATE_IPV6 address to see if the service is bound to the interface.
 			elif service["port"] != 53 and try_connect(env["PRIVATE_IPV6"]):
-				output.print_error("%s is running (and available over IPv4 and the local IPv6 address), but it is not publicly accessible at %s:%d." % (service['name'], env['PUBLIC_IP'], service['port']))
+				output.print_error("%s is running (and available over IPv4 and the local IPv6 address), but it is not publicly accessible at %s:%d." % (service['name'], env['PUBLIC_IPV6'], service['port']))
 			else:
 				output.print_error("%s is running and available over IPv4 but is not accessible over IPv6 at %s port %d." % (service['name'], env['PUBLIC_IPV6'], service['port']))
 
 		# IPv4 failed. Try the private IP to see if the service is running but not accessible (except DNS because a different service runs on the private IP).
 		elif service["port"] != 53 and try_connect("127.0.0.1"):
 			output.print_error("%s is running but is not publicly accessible at %s:%d." % (service['name'], env['PUBLIC_IP'], service['port']))
+		elif try_connect(env["PUBLIC_IPV6"]):
+			output.print_warning("%s is only running on ipv6 (port %d)." % (service['name'], service['port']))
 		else:
 			output.print_error("%s is not running (port %d)." % (service['name'], service['port']))
 

@@ -82,6 +82,8 @@ fi
 # (See https://discourse.mailinabox.email/t/journalctl-reclaim-space-on-small-mailinabox/6728/11.)
 tools/editconf.py /etc/systemd/journald.conf MaxRetentionSec=10day
 
+hide_output systemctl restart systemd-journald.service
+
 # ### Add PPAs.
 
 # We install some non-standard Ubuntu packages maintained by other

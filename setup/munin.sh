@@ -23,14 +23,15 @@ includedir /etc/munin/munin-conf.d
 # path dynazoom uses for requests
 cgiurl_graph /admin/munin/cgi-graph
 
+# send alerts to the following address
+contact.admin.command mail -s "Munin notification \${var:host}" administrator@$PRIMARY_HOSTNAME
+contact.admin.always_send warning critical
+
 # a simple host tree
 [$PRIMARY_HOSTNAME]
 address 127.0.0.1
 
-# send alerts to the following address
 contacts admin
-contact.admin.command mail -s "Munin notification \${var:host}" administrator@$PRIMARY_HOSTNAME
-contact.admin.always_send warning critical
 EOF
 
 # The Debian installer touches these files and chowns them to www-data:adm for use with spawn-fcgi

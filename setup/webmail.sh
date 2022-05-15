@@ -83,12 +83,12 @@ if [ $needs_update == 1 ]; then
 
 	# download and verify the full release of the carddav plugin
 	wget_verify \
-		https://github.com/blind-coder/rcmcarddav/releases/download/v${CARDDAV_VERSION}/carddav-v${CARDDAV_VERSION}.tar.gz \
+		https://github.com/mstilkerich/rcmcarddav/releases/download/v${CARDDAV_VERSION}/carddav-v${CARDDAV_VERSION}.tar.gz \
 		$CARDDAV_HASH \
 		/tmp/carddav.tar.gz
 
 	# unzip and cleanup
-	tar -C ${RCM_PLUGIN_DIR} -zxf /tmp/carddav.tar.gz
+	tar -C ${RCM_PLUGIN_DIR} --no-same-owner -zxf /tmp/carddav.tar.gz
 	rm -f /tmp/carddav.tar.gz
 
 	# record the version we've installed
@@ -154,7 +154,7 @@ cat > ${RCM_PLUGIN_DIR}/carddav/config.inc.php <<EOF;
 	 'name'         =>  'ownCloud',
 	 'username'     =>  '%u', // login username
 	 'password'     =>  '%p', // login password
-	 'url'          =>  'https://${PRIMARY_HOSTNAME}/cloud/remote.php/carddav/addressbooks/%u/contacts',
+	 'url'          =>  'https://${PRIMARY_HOSTNAME}/cloud/remote.php/dav/addressbooks/users/%u/contacts',
 	 'active'       =>  true,
 	 'readonly'     =>  false,
 	 'refresh_time' => '02:00:00',
@@ -208,4 +208,4 @@ chmod 664 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 
 # Enable PHP modules.
 phpenmod -v php mcrypt imap
-restart_service php8.0-fpm
+restart_service php$(php_version)-fpm
