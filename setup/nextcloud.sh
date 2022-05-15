@@ -326,7 +326,7 @@ php <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP $STORAGE_ROOT/owncloud/config.php;
 <?php
 include("$STORAGE_ROOT/owncloud/config.php");
 
-\$CONFIG['config_is_read_only'] = false; # should prevent warnings from occ tool but doesn't
+\$CONFIG['config_is_read_only'] = true; # should prevent warnings from occ tool but doesn't
 
 \$CONFIG['trusted_domains'] = array('$PRIMARY_HOSTNAME');
 

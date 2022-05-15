@@ -336,6 +336,9 @@ fi #NODOC
 # remove bind9 in case it is still there
 apt-get purge -qq -y bind9 bind9-utils
 
+# Install unbound and dns utils (e.g. dig)
+apt_install unbound python3-unbound bind9-dnsutils
+
 # Configure unbound
 cp -f conf/unbound.conf /etc/unbound/unbound.conf.d/miabunbound.conf
 
@@ -343,8 +346,7 @@ if [ ! -d /etc/unbound/lists.d ]; then
 	mkdir /etc/unbound/lists.d
 fi
 
-# Install unbound and dns utils (e.g. dig)
-apt_install unbound python3-unbound bind9-dnsutils
+systemctl restart unbound
 
 unbound-control -q status
 
