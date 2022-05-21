@@ -49,6 +49,11 @@ apt_install php php-fpm \
 	php-dev php-gd php-xml php-mbstring php-zip php-apcu php-json \
 	php-intl php-imagick php-gmp php-bcmath
 
+# Enable apc
+tools/editconf.py /etc/php/$(php_version)/mods-available/apcu.ini -c ';' \
+	apc.enabled=1	\
+	apc.enable_cli=1
+
 InstallNextcloud() {
 
 	version=$1
@@ -386,11 +391,6 @@ tools/editconf.py /etc/php/$(php_version)/cli/conf.d/10-opcache.ini -c ';' \
 	opcache.save_comments=1 \
 	opcache.revalidate_freq=1
 
-# If apc is explicitly disabled we need to enable it
-if grep -q apc.enabled=0 /etc/php/$(php_version)/mods-available/apcu.ini; then
-	tools/editconf.py /etc/php/$(php_version)/mods-available/apcu.ini -c ';' \
-		apc.enabled=1
-fi
 
 # Set up a cron job for Nextcloud.
 cat > /etc/cron.d/mailinabox-nextcloud << EOF;
