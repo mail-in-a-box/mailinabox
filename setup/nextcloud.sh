@@ -387,8 +387,8 @@ tools/editconf.py /etc/php/$(php_version)/cli/conf.d/10-opcache.ini -c ';' \
 	opcache.revalidate_freq=1
 
 # If apc is explicitly disabled we need to enable it
-if grep -q apc.enabled=0 /etc/php/8.0/mods-available/apcu.ini; then
-	tools/editconf.py /etc/php/8.0/mods-available/apcu.ini -c ';' \
+if grep -q apc.enabled=0 /etc/php/$(php_version)/mods-available/apcu.ini; then
+	tools/editconf.py /etc/php/$(php_version)/mods-available/apcu.ini -c ';' \
 		apc.enabled=1
 fi
 

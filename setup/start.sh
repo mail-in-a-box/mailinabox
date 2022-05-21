@@ -51,6 +51,8 @@ source setup/start.sh
 EOF
 chmod +x /usr/local/bin/mailinabox
 
+git config --global --add safe.directory $(pwd)
+
 # Ask the user for the PRIMARY_HOSTNAME, PUBLIC_IP, and PUBLIC_IPV6,
 # if values have not already been set in environment variables. When running
 # non-interactively, be sure to set values for all! Also sets STORAGE_USER and
