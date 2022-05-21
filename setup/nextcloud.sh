@@ -230,7 +230,7 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 			CURRENT_NEXTCLOUD_VER="22.2.3"
 		fi
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^22 ]]; then
-			InstallNextcloud 23.0.2 645cba42cab57029ebe29fb93906f58f7abea5f8 4.0.8 9f368bb2be98c5555b7118648f4cc9fa51e8cb30 3.0.6 ca49bb1ce23f20e10911e39055fd59d7f7a84c30 2.1.0 6e5afe7f36f398f864bfdce9cad72200e70322aa
+			InstallNextcloud 23.0.2 645cba42cab57029ebe29fb93906f58f7abea5f8 4.0.8 9f368bb2be98c5555b7118648f4cc9fa51e8cb30 3.0.6 ca49bb1ce23f20e10911e39055fd59d7f7a84c30 3.0.0 9e7aaf7288032bd463c480bc368ff91869122950
 			CURRENT_NEXTCLOUD_VER="23.0.2"
 		fi
 	fi
