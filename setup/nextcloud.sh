@@ -177,17 +177,61 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 		elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^1[3456789] ]]; then
 			echo "Upgrades from Mail-in-a-Box prior to v60 with Nextcloud 19 or earlier are not supported. Upgrade to the latest Mail-in-a-Box version supported on your machine first. Setup will continue, but skip the Nextcloud migration."
 			return 0
-		elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^20 ]]; then
-			InstallNextcloud 21.0.7 f5c7079c5b56ce1e301c6a27c0d975d608bb01c9 4.0.7 8ab31d205408e4f12067d8a4daa3595d46b513e3 3.0.4 6fb1e998d307c53245faf1c37a96eb982bbee8ba 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
+		fi
+		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^20 ]]; then
+			# Version 20 is the latest version from the 18.04 version of miab. To upgrade to version 21, install php8.0. This is
+			# not supported by version 20, but that does not matter, as the InstallNextcloud function only runs the version 21 code.
+			
+			# Install the ppa
+			add-apt-repository ppa:ondrej/php
+			
+			# Install older php version
+			apt_install php8.0
+			
+			# set older php version as default
+			update-alternatives --set php /usr/bin/php8.0
+			
+			# Install nextcloud, this also updates user_external to 2.1.0
+			InstallNextcloud 21.0.7 f5c7079c5b56ce1e301c6a27c0d975d608bb01c9 4.0.7 8ab31d205408e4f12067d8a4daa3595d46b513e3 3.0.4 6fb1e998d307c53245faf1c37a96eb982bbee8ba 2.1.0 6e5afe7f36f398f864bfdce9cad72200e70322aa
 			CURRENT_NEXTCLOUD_VER="21.0.7"
-		elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^21 ]]; then
-			InstallNextcloud 22.2.2 489eaf4147ad1b59385847b7d7db293712cced88 4.0.7 8ab31d205408e4f12067d8a4daa3595d46b513e3 3.0.4 6fb1e998d307c53245faf1c37a96eb982bbee8ba 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
+		fi
+		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^21 ]]; then
+			InstallNextcloud 22.2.2 489eaf4147ad1b59385847b7d7db293712cced88 4.0.7 8ab31d205408e4f12067d8a4daa3595d46b513e3 3.0.4 6fb1e998d307c53245faf1c37a96eb982bbee8ba 2.1.0 6e5afe7f36f398f864bfdce9cad72200e70322aa
 			CURRENT_NEXTCLOUD_VER="22.2.2"
-		elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^22 ]]; then
-			InstallNextcloud 23.0.2 645cba42cab57029ebe29fb93906f58f7abea5f8 4.0.8 9f368bb2be98c5555b7118648f4cc9fa51e8cb30 3.0.6 ca49bb1ce23f20e10911e39055fd59d7f7a84c30 2.1.0 6e5afe7f36f398f864bfdce9cad72200e70322aa
+		fi
+		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^22 ]]; then
+			InstallNextcloud 23.0.2 645cba42cab57029ebe29fb93906f58f7abea5f8 4.0.8 9f368bb2be98c5555b7118648f4cc9fa51e8cb30 3.0.6 ca49bb1ce23f20e10911e39055fd59d7f7a84c30 3.0.0 9e7aaf7288032bd463c480bc368ff91869122950
 			CURRENT_NEXTCLOUD_VER="23.0.2"
+			
+			# Remove older php version
+			update-alternatives --auto php
+			apt-get purge -qq -y php8.0
+			
+			# Remove the ppa
+			add-apt-repository --remove ppa:ondrej/php
 		fi
 	fi
+
+# nextcloud version - supported php versions
+# 20                - 7.2, 7.3, 7.4
+# 21                - 7.3, 7.4, 8.0
+# 22                - 7.3, 7.4, 8.0
+# 23                - 7.3, 7.4, 8.0
+# 24                - 7.4, 8.0, 8.1
+#
+# ubuntu 18.04 has php 7.2
+# ubuntu 22.04 has php 8.1
+#
+# user_external 2.1.0 supports version 21-22
+# user_external 2.1.0 supports version 22-24
+#
+# upgrade path
+# - install ppa: sudo add-apt-repository ppa:ondrej/php
+# - upgrade php to version 8.0 (nextcloud will no longer function)
+# - upgrade nextcloud to 21 and user_external to 2.1.0
+# - upgrade nextcloud to 22
+# - upgrade nextcloud to 23 and user_external to 3.0.0
+# - upgrade nextcloud to 24
 
 	InstallNextcloud $nextcloud_ver $nextcloud_hash $contacts_ver $contacts_hash $calendar_ver $calendar_hash $user_external_ver $user_external_hash
 fi
