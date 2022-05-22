@@ -46,7 +46,7 @@ apt-get purge -qq -y owncloud* # we used to use the package manager
 
 apt_install php php-fpm \
 	php-cli php-sqlite3 php-gd php-imap php-curl php-pear curl \
-	php-dev php-gd php-xml php-mbstring php-zip php-apcu php-json \
+	php-dev php-xml php-mbstring php-zip php-apcu php-json \
 	php-intl php-imagick php-gmp php-bcmath
 
 # Enable apc
@@ -188,32 +188,43 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 			# not supported by version 20, but that does not matter, as the InstallNextcloud function only runs the version 21 code.
 			
 			# Install the ppa
-			add-apt-repository ppa:ondrej/php
+			add-apt-repository --yes ppa:ondrej/php
+			
+			# Prevent installation of old packages
+			apt-mark hold php7.0-apcu php7.1-apcu php7.2-apcu php7.3-apcu php7.4-apcu
 			
 			# Install older php version
-			apt_install php8.0
+			apt_install php8.0 php8.0-fpm php8.0-apcu php8.0-cli php8.0-sqlite3 php8.0-gd php8.0-imap \
+				php8.0-curl php8.0-dev php8.0-xml php8.0-mbstring php8.0-zip
 			
 			# set older php version as default
 			update-alternatives --set php /usr/bin/php8.0
 			
+			tools/editconf.py /etc/php/$(php_version)/mods-available/apcu.ini -c ';' \
+				apc.enabled=1	\
+				apc.enable_cli=1
+
 			# Install nextcloud, this also updates user_external to 2.1.0
-			InstallNextcloud 21.0.7 f5c7079c5b56ce1e301c6a27c0d975d608bb01c9 4.0.7 8ab31d205408e4f12067d8a4daa3595d46b513e3 3.0.4 6fb1e998d307c53245faf1c37a96eb982bbee8ba 2.1.0 6e5afe7f36f398f864bfdce9cad72200e70322aa
+			InstallNextcloud 21.0.7 f5c7079c5b56ce1e301c6a27c0d975d608bb01c9 4.0.7 45e7cf4bfe99cd8d03625cf9e5a1bb2e90549136 3.0.4 d0284b68135777ec9ca713c307216165b294d0fe 2.1.0 41d4c57371bd085d68421b52ab232092d7dfc882
 			CURRENT_NEXTCLOUD_VER="21.0.7"
 		fi
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^21 ]]; then
-			InstallNextcloud 22.2.2 489eaf4147ad1b59385847b7d7db293712cced88 4.0.7 8ab31d205408e4f12067d8a4daa3595d46b513e3 3.0.4 6fb1e998d307c53245faf1c37a96eb982bbee8ba 2.1.0 6e5afe7f36f398f864bfdce9cad72200e70322aa
+			InstallNextcloud 22.2.2 489eaf4147ad1b59385847b7d7db293712cced88 4.0.7 45e7cf4bfe99cd8d03625cf9e5a1bb2e90549136 3.0.4 d0284b68135777ec9ca713c307216165b294d0fe 2.1.0 41d4c57371bd085d68421b52ab232092d7dfc882
 			CURRENT_NEXTCLOUD_VER="22.2.2"
 		fi
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^22 ]]; then
-			InstallNextcloud 23.0.2 645cba42cab57029ebe29fb93906f58f7abea5f8 4.0.8 9f368bb2be98c5555b7118648f4cc9fa51e8cb30 3.0.6 ca49bb1ce23f20e10911e39055fd59d7f7a84c30 3.0.0 9e7aaf7288032bd463c480bc368ff91869122950
+			InstallNextcloud 23.0.2 645cba42cab57029ebe29fb93906f58f7abea5f8 4.0.8 fc626ec02732da13a4c600baae64ab40557afdca 3.0.6 e40d919b4b7988b46671a78cb32a43d8c7cba332 3.0.0 9e7aaf7288032bd463c480bc368ff91869122950
 			CURRENT_NEXTCLOUD_VER="23.0.2"
 			
 			# Remove older php version
 			update-alternatives --auto php
-			apt-get purge -qq -y php8.0
-			
+
+			apt-get purge -qq -y php8.0 php8.0-fpm php8.0-apcu php8.0-cli php8.0-sqlite3 php8.0-gd \
+				php8.0-imap php8.0-curl php8.0-dev php8.0-xml php8.0-mbstring php8.0-zip \
+				php8.0-common php8.0-opcache php8.0-readline
+	
 			# Remove the ppa
-			add-apt-repository --remove ppa:ondrej/php
+			add-apt-repository --yes --remove ppa:ondrej/php
 		fi
 	fi
 
