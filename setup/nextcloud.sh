@@ -46,7 +46,7 @@ apt-get purge -qq -y owncloud* # we used to use the package manager
 
 apt_install php php-fpm \
 	php-cli php-sqlite3 php-gd php-imap php-curl php-pear curl \
-	php-dev php-gd php-xml php-mbstring php-zip php-apcu php-json \
+	php-dev php-xml php-mbstring php-zip php-apcu php-json \
 	php-intl php-imagick php-gmp php-bcmath
 
 # Enable apc is required before installing nextcloud
@@ -54,8 +54,6 @@ tools/editconf.py /etc/php/$(php_version)/mods-available/apcu.ini -c ';' \
     apc.enabled=1 \
     apc.enable_cli=1
     
-restart_service php$(php_version)-fpm
-
 InstallNextcloud() {
 
 	version=$1
@@ -347,8 +345,6 @@ echo ";";
 ?>
 EOF
 chown www-data.www-data $STORAGE_ROOT/owncloud/config.php
-
-# Need to change config if external_user is version 3.0.0 or higher, above works only on new installs
 
 # Enable/disable apps. Note that this must be done after the Nextcloud setup.
 # The firstrunwizard gave Josh all sorts of problems, so disabling that.
