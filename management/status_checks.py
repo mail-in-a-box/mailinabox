@@ -138,7 +138,7 @@ def check_service(i, service, env):
 
 			# IPv4 ok but IPv6 failed. Try the PRIVATE_IPV6 address to see if the service is bound to the interface.
 			elif service["port"] != 53 and try_connect(env["PRIVATE_IPV6"]):
-				output.print_error("%s is running (and available over IPv4 and the local IPv6 address), but it is not publicly accessible at %s:%d." % (service['name'], env['PUBLIC_IP'], service['port']))
+				output.print_error("%s is running (and available over IPv4 and the local IPv6 address), but it is not publicly accessible at %s:%d." % (service['name'], env['PUBLIC_IPV6'], service['port']))
 			else:
 				output.print_error("%s is running and available over IPv4 but is not accessible over IPv6 at %s port %d." % (service['name'], env['PUBLIC_IPV6'], service['port']))
 
@@ -678,7 +678,7 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 	if len(ds) > 0:
 		output.print_line("")
 		output.print_line("The DS record is currently set to:")
-		for rr in ds:
+		for rr in sorted(ds):
 			output.print_line("Key Tag: {0}, Algorithm: {1}, Digest Type: {2}, Digest: {3}".format(*rr))
 
 def check_mail_domain(domain, env, output):

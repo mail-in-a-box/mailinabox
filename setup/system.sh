@@ -251,18 +251,14 @@ EOF
 
 # Adjust apt update and upgrade timers such that they're always before daily status
 # checks and thus never report upgrades unless user intervention is necessary.
-if [ ! -d /etc/systemd/system/apt-daily.timer.d ]; then
-	mkdir /etc/systemd/system/apt-daily.timer.d
-fi
+mkdir -p /etc/systemd/system/apt-daily.timer.d
 cat > /etc/systemd/system/apt-daily.timer.d/override.conf <<EOF;
 [Timer]
 RandomizedDelaySec=5h
 EOF
 
-if [ ! -d /etc/systemd/system/apt-daily-upgrade.timer.d ]; then
-	mkdir /etc/systemd/system/apt-daily-upgrade.timer.d
-fi
-cat /etc/systemd/system/apt-daily-upgrade.timer.d/override.conf <<EOF;
+mkdir -p /etc/systemd/system/apt-daily-upgrade.timer.d
+cat > /etc/systemd/system/apt-daily-upgrade.timer.d/override.conf <<EOF;
 [Timer]
 OnCalendar=
 OnCalendar=*-*-* 23:30
@@ -342,9 +338,7 @@ apt_install unbound python3-unbound bind9-dnsutils
 # Configure unbound
 cp -f conf/unbound.conf /etc/unbound/unbound.conf.d/miabunbound.conf
 
-if [ -d /etc/unbound/lists.d ]; then
-	mkdir /etc/unbound/lists.d
-fi
+mkdir -p /etc/unbound/lists.d
 
 systemctl restart unbound
 

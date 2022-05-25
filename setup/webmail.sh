@@ -23,7 +23,7 @@ echo "Installing Roundcube (webmail)..."
 apt_install \
 	dbconfig-common \
 	php-cli php-sqlite3 php-intl php-json php-common php-curl php-ldap \
-	php-gd php-pspell tinymce libjs-jquery libjs-jquery-mousewheel libmagic1 php-mbstring
+	php-gd php-pspell libjs-jquery libjs-jquery-mousewheel libmagic1 php-mbstring
 
 # Install Roundcube from source if it is not already present or if it is out of date.
 # Combine the Roundcube version number with the commit hash of plugins to track
@@ -156,16 +156,16 @@ EOF
 cat > ${RCM_PLUGIN_DIR}/carddav/config.inc.php <<EOF;
 <?php
 /* Do not edit. Written by Mail-in-a-Box. Regenerated on updates. */
-\$prefs['_GLOBAL']['hide_preferences'] = true;
+\$prefs['_GLOBAL']['hide_preferences'] = false;
 \$prefs['_GLOBAL']['suppress_version_warning'] = true;
 \$prefs['ownCloud'] = array(
 	 'name'         =>  'ownCloud',
 	 'username'     =>  '%u', // login username
 	 'password'     =>  '%p', // login password
-	 'url'          =>  'https://${PRIMARY_HOSTNAME}/cloud/remote.php/dav/addressbooks/users/%u/contacts',
+	 'url'          =>  'https://${PRIMARY_HOSTNAME}/cloud/remote.php/dav/addressbooks/users/%u/contacts/',
 	 'active'       =>  true,
 	 'readonly'     =>  false,
-	 'refresh_time' => '02:00:00',
+	 'refresh_time' => '00:30:00',
 	 'fixed'        =>  array('username'),
 	 'preemptive_auth' => '1',
 	 'hide'        =>  false,

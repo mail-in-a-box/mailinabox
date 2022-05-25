@@ -21,8 +21,8 @@ echo "Installing Nextcloud (contacts/calendar)..."
 #   we automatically install intermediate versions as needed.
 # * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
 #   copying it from the error message when it doesn't match what is below.
-nextcloud_ver=23.0.2
-nextcloud_hash=645cba42cab57029ebe29fb93906f58f7abea5f8
+nextcloud_ver=24.0.0
+nextcloud_hash=f072f5863a15cefe577b47f72bb3e41d2a339335
 
 # Nextcloud apps
 # --------------
@@ -34,11 +34,11 @@ nextcloud_hash=645cba42cab57029ebe29fb93906f58f7abea5f8
 # * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
 #   copying it from the error message when it doesn't match what is below.
 contacts_ver=4.0.8
-contacts_hash=9f368bb2be98c5555b7118648f4cc9fa51e8cb30
+contacts_hash=fc626ec02732da13a4c600baae64ab40557afdca
 calendar_ver=3.0.6
-calendar_hash=ca49bb1ce23f20e10911e39055fd59d7f7a84c30
+calendar_hash=e40d919b4b7988b46671a78cb32a43d8c7cba332
 user_external_ver=3.0.0
-user_external_hash=6e5afe7f36f398f864bfdce9cad72200e70322aa
+user_external_hash=9e7aaf7288032bd463c480bc368ff91869122950
 
 # Clear prior packages and install dependencies from apt.
 
@@ -46,15 +46,13 @@ apt-get purge -qq -y owncloud* # we used to use the package manager
 
 apt_install php php-fpm \
 	php-cli php-sqlite3 php-gd php-imap php-curl php-pear curl \
-	php-dev php-gd php-xml php-mbstring php-zip php-apcu php-json \
+	php-dev php-xml php-mbstring php-zip php-apcu php-json \
 	php-intl php-imagick php-gmp php-bcmath
 
 # Enable apc is required before installing nextcloud
 tools/editconf.py /etc/php/$(php_version)/mods-available/apcu.ini -c ';' \
     apc.enabled=1 \
     apc.enable_cli=1
-    
-restart_service php$(php_version)-fpm
 
 InstallNextcloud() {
 
@@ -89,23 +87,20 @@ InstallNextcloud() {
 	# their github repositories.
 	mkdir -p /usr/local/lib/owncloud/apps
 
-	wget_verify https://github.com/nextcloud-releases/contacts/releases/download/v$version_contacts/contacts-v$version_contacts.tar.gz $hash_contacts /tmp/contacts.tgz
+	wget_verify https://github.com/nextcloud-releases/contacts/archive/refs/tags/v$version_contacts.tar.gz $hash_contacts /tmp/contacts.tgz
 	tar xf /tmp/contacts.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/contacts.tgz
 
-	wget_verify https://github.com/nextcloud-releases/calendar/releases/download/v$version_calendar/calendar-v$version_calendar.tar.gz $hash_calendar /tmp/calendar.tgz
+	wget_verify https://github.com/nextcloud-releases/calendar/archive/refs/tags/v$version_calendar.tar.gz $hash_calendar /tmp/calendar.tgz
 	tar xf /tmp/calendar.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/calendar.tgz
 
 	# Starting with Nextcloud 15, the app user_external is no longer included in Nextcloud core,
 	# we will install from their github repository.
 	if [ -n "$version_user_external" ]; then
-		wget_verify https://github.com/nextcloud/user_external/releases/download/v$version_user_external/user_external-$version_user_external.tar.gz $hash_user_external /tmp/user_external.tgz
+		wget_verify https://github.com/nextcloud/user_external/archive/refs/tags/v$version_user_external.tar.gz $hash_user_external /tmp/user_external.tgz
 		tar -xf /tmp/user_external.tgz -C /usr/local/lib/owncloud/apps/
 		rm /tmp/user_external.tgz
-		
-		# (Temporary?) workaround to get user_external working with Nextcloud 23 (see https://github.com/nextcloud/user_external/issues/186)
-		# sed -i "s/nextcloud min-version=\"21\" max-version=\"22\"/nextcloud min-version=\"21\" max-version=\"23\"/g" /usr/local/lib/owncloud/apps/user_external/appinfo/info.xml
 	fi
 
 	# Fix weird permissions.
@@ -196,23 +191,23 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 			# During the upgrade from Nextcloud 14 to 15, user_external may cause the upgrade to fail.
 			# We will disable it here before the upgrade and install it again after the upgrade.
 			hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:disable user_external
-			InstallNextcloud 15.0.8 4129d8d4021c435f2e86876225fb7f15adf764a3 3.3.0 e55d0357c6785d3b1f3b5f21780cb6d41d32443a 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466 0.7.0 555a94811daaf5bdd336c5e48a78aa8567b86437
+			InstallNextcloud 15.0.8 4129d8d4021c435f2e86876225fb7f15adf764a3 3.3.0 e55d0357c6785d3b1f3b5f21780cb6d41d32443a 2.0.3 a1f3835c752929e3598eb94f22300516867ac6ab 0.7.0 555a94811daaf5bdd336c5e48a78aa8567b86437
 			CURRENT_NEXTCLOUD_VER="15.0.8"
 		fi
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^15 ]]; then
 			InstallNextcloud 16.0.6 0bb3098455ec89f5af77a652aad553ad40a88819 3.3.0 e55d0357c6785d3b1f3b5f21780cb6d41d32443a 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466 0.7.0 555a94811daaf5bdd336c5e48a78aa8567b86437
 			CURRENT_NEXTCLOUD_VER="16.0.6"
 		fi
-        if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^16 ]]; then
+		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^16 ]]; then
 			InstallNextcloud 17.0.6 50b98d2c2f18510b9530e558ced9ab51eb4f11b0 3.3.0 e55d0357c6785d3b1f3b5f21780cb6d41d32443a 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466 0.7.0 555a94811daaf5bdd336c5e48a78aa8567b86437
 			CURRENT_NEXTCLOUD_VER="17.0.6"
-        fi
-        if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^17 ]]; then
-        	# Don't exit the install if this column already exists (see #2076)
+		fi
+		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^17 ]]; then
+			# Don't exit the install if this column already exists (see #2076)
 			(echo "ALTER TABLE oc_flow_operations ADD COLUMN entity VARCHAR;" | sqlite3 $STORAGE_ROOT/owncloud/owncloud.db 2>/dev/null) || true
-            InstallNextcloud 18.0.10 39c0021a8b8477c3f1733fddefacfa5ebf921c68 3.4.1 aee680a75e95f26d9285efd3c1e25cf7f3bfd27e 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
-            CURRENT_NEXTCLOUD_VER="18.0.10"
-	    fi
+			InstallNextcloud 18.0.10 39c0021a8b8477c3f1733fddefacfa5ebf921c68 3.4.1 aee680a75e95f26d9285efd3c1e25cf7f3bfd27e 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
+			CURRENT_NEXTCLOUD_VER="18.0.10"
+		fi
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^18 ]]; then
 			InstallNextcloud 19.0.4 01e98791ba12f4860d3d4047b9803f97a1b55c60 3.4.1 aee680a75e95f26d9285efd3c1e25cf7f3bfd27e 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
 			CURRENT_NEXTCLOUD_VER="19.0.4"
@@ -231,6 +226,10 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^21 ]]; then
 			InstallNextcloud 22.2.3 58d2d897ba22a057aa03d29c762c5306211fefd2 4.0.7 8ab31d205408e4f12067d8a4daa3595d46b513e3 3.0.4 6fb1e998d307c53245faf1c37a96eb982bbee8ba 2.1.0 6e5afe7f36f398f864bfdce9cad72200e70322aa
 			CURRENT_NEXTCLOUD_VER="22.2.3"
+		fi
+		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^22 ]]; then
+			InstallNextcloud 23.0.2 645cba42cab57029ebe29fb93906f58f7abea5f8 4.0.8 9f368bb2be98c5555b7118648f4cc9fa51e8cb30 3.0.6 ca49bb1ce23f20e10911e39055fd59d7f7a84c30 3.0.0 9e7aaf7288032bd463c480bc368ff91869122950
+			CURRENT_NEXTCLOUD_VER="23.0.2"
 		fi
 	fi
 
@@ -338,7 +337,7 @@ include("$STORAGE_ROOT/owncloud/config.php");
 
 \$CONFIG['mail_domain'] = '$PRIMARY_HOSTNAME';
 
-\$CONFIG['user_backends'] = array(array('class' => 'OC_User_IMAP','arguments' => array('127.0.0.1', 143, null),),);
+\$CONFIG['user_backends'] = array(array('class' => '\OCA\UserExternal\IMAP','arguments' => array('127.0.0.1', 143, null),),);
 
 echo "<?php\n\\\$CONFIG = ";
 var_export(\$CONFIG);
