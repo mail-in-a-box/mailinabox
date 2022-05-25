@@ -5,7 +5,7 @@ This is not the original Mail-in-a-Box. See https://github.com/mail-in-a-box/mai
 I made a number of modifications to the original Mail-in-a-Box, some to fix bugs, some to ease maintenance for my personal installation, to learn and to add functionality. 
 
 Functionality changes and additions
-* Change installation target to Ubuntu 20.04. Thanks to [Power Mail-in-a-Box](https://github.com/ddavness/power-mailinabox)
+* Change installation target to Ubuntu 22.04.
 * Add geoipblocking on the admin web console  
   This applies geoip filtering on acces to the admin panel of the box. Order of filtering: block continents that are not allowed, block countries that are not allowed, allow countries that are allowed (overriding continent filtering). Edit /etc/nginx/conf.d/10-geoblock.conf to configure.
 * Add geoipblocking for ssh access  
@@ -20,10 +20,9 @@ Functionality changes and additions
 * Configure domain names for which only www will be hosted  
   Edit /etc/miabwwwdomains.conf to configure. The box will handle incoming traffic asking for these domain names. The DNS entries are entered in an external DNS provider! If you want this box to handle the DNS entries, simply add a mail alias. (existing functionality of the vanilla Mail-in-a-Box)
 * Add some munin plugins
-* Update nextcloud to 22.2.3
+* Update nextcloud to 24.0.0
   And updated apps
 * Add nextcloud notes app
-* Update roundcube carddav plugin to 4.1.1
 * Add roundcube context menu plugin
 * Add roundcube two factor authentication plugin
 * Use shorter TTL values in the DNS server  
