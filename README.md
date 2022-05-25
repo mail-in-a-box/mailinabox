@@ -37,6 +37,8 @@ Functionality changes and additions
 * Replace opendkim with dkimpy (https://launchpad.net/dkimpy-milter)
   Added support for Ed25519 signing
 * Replace bind9 with unbound DNS resolver
+* Make backup target folder configurable
+  set BACKUP_ROOT to the backup target folder (default is same as STORAGE_ROOT)
 
 Bug fixes
 * Munin error report fixed [see github issue](https://github.com/mail-in-a-box/mailinabox/issues/1555)
