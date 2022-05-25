@@ -40,6 +40,9 @@ apt_install openssl
 
 mkdir -p $STORAGE_ROOT/ssl
 
+# make directory readable
+chmod 755 $STORAGE_ROOT/ssl
+
 # Generate a new private key.
 #
 # The key is only as good as the entropy available to openssl so that it
