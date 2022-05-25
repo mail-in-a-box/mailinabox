@@ -553,6 +553,23 @@ def write_backup_config(env, newconfig):
 	with open(os.path.join(backup_root, 'custom.yaml'), "w") as f:
 		f.write(rtyaml.dump(newconfig))
 
+def get_backup_root(env):
+	# Define environment variable used to store backup path
+	backup_root_env = "BACKUP_ROOT"
+	
+	# Read STORAGE_ROOT
+	backup_root = env["STORAGE_ROOT"]
+	
+	# If BACKUP_ROOT exists, overwrite backup_root variable
+	if backup_root_env in env:
+		tmp = env[backup_root_env]
+		if tmp and os.path.isdir(tmp):
+			backup_root = tmp
+	
+	backup_root = os.path.join(backup_root, 'backup')
+	
+	return backup_root
+
 if __name__ == "__main__":
 	import sys
 	if sys.argv[-1] == "--verify":
@@ -582,19 +599,3 @@ if __name__ == "__main__":
 		full_backup = "--full" in sys.argv
 		perform_backup(full_backup)
 
-def get_backup_root(env):
-	# Define environment variable used to store backup path
-	backup_root_env = "BACKUP_ROOT"
-	
-	# Read STORAGE_ROOT
-	backup_root = env["STORAGE_ROOT"]
-	
-	# If BACKUP_ROOT exists, overwrite backup_root variable
-	if backup_root_env in env:
-		tmp = env[backup_root_env]
-		if not tmp && os.path.isdir(tmp):
-			backup_root = tmp
-	
-	backup_root = os.path.join(backup_root, 'backup')
-	
-	return backup_root
