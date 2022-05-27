@@ -410,3 +410,5 @@ tools/editconf.py /etc/fail2ban/fail2ban.conf dbpurgeage=7d
 # scripts will ensure the files exist and then fail2ban is given another
 # restart at the very end of setup.
 restart_service fail2ban
+
+systemctl enable fail2ban
