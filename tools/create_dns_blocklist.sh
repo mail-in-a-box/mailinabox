@@ -4,6 +4,20 @@ set -euo pipefail
 # Download select set of malware blocklists from The Firebog's "The Big Blocklist
 # Collection" [0] and block access to them with Unbound by returning NXDOMAIN.
 #
+# Usage:
+# # create the blocklist
+# create_dns_blocklist.sh > ~/blocklist.conf
+# sudo mv ~/blocklist.conf /etc/unbound/lists.d
+#
+# # check list contains valid syntax. If not valid, remove blocklist.conf,
+# # otherwise unbound will not work
+# sudo unbound-checkconf
+# > unbound-checkconf: no errors in /etc/unbound/unbound.con
+#
+# # reload unbound configuration
+# sudo unbound-control reload
+#
+#
 #   [0]: https://firebog.net
 (
   # Malicious Lists

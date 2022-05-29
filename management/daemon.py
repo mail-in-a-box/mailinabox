@@ -776,7 +776,7 @@ if __name__ == '__main__':
 
 	#app.logger.info('API key: ' + auth_service.key)
 
-	logging.basicConfig(level=logging_level, format='%(levelname)s:%(module)s.%(funcName)s %(message)s')
+	logging.basicConfig(level=logging_level, format='MiaB %(levelname)s:%(module)s.%(funcName)s %(message)s')
 	logging.info('Logging level set to %s', logging.getLevelName(logging_level))
 
 	# Start the application server. Listens on 127.0.0.1 (IPv4 only).
