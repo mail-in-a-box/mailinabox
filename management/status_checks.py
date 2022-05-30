@@ -723,7 +723,7 @@ def check_mail_domain(domain, env, output):
 		output.print_ok(good_news)
 
 		# Check MTA-STS policy.
-		loop = asyncio.get_event_loop()
+		loop = asyncio.new_event_loop()
 		sts_resolver = postfix_mta_sts_resolver.resolver.STSResolver(loop=loop)
 		valid, policy = loop.run_until_complete(sts_resolver.resolve(domain))
 		if valid == postfix_mta_sts_resolver.resolver.STSFetchResult.VALID:
