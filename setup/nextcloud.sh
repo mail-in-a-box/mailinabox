@@ -204,6 +204,11 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 	InstallNextcloud $nextcloud_ver $nextcloud_hash $contacts_ver $contacts_hash $calendar_ver $calendar_hash $user_external_ver $user_external_hash
 fi
 
+# ### Configure apcu
+cat > /etc/php/8.1/cli/conf.d/20-miab.ini <<EOF
+apc.enable_cli=1
+EOF
+
 # ### Configuring Nextcloud
 
 # Setup Nextcloud if the Nextcloud database does not yet exist. Running setup when
