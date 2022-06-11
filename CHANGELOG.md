@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+* Fixed S3 backups which broke with duplicity 0.8.23.
+
 Version 56 (January 19, 2022)
 -----------------------------
 
