@@ -1,6 +1,24 @@
 CHANGELOG
 =========
 
+Version 57 (June 12, 2022)
+--------------------------
+
+Setup:
+
+* Fixed issue upgrading from Mail-in-a-Box v0.40-v0.50 because of a changed URL that Nextcloud is downloaded from.
+
+Backups:
+
+* Fixed S3 backups which broke with duplicity 0.8.23.
+* Fixed Backblaze backups which broke with latest b2sdk package by rolling back its version.
+
+Control panel:
+
+* Fixed spurious changes in system status checks messages by sorting DNSSEC DS records.
+* Fixed fail2ban lockout over IPv6 from excessive loads of the system status checks.
+* Fixed an incorrect IPv6 system status check message.
+
 Version 56 (January 19, 2022)
 -----------------------------
 
