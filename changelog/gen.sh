@@ -109,7 +109,7 @@ else
             to_ref="$branch"
             title="Unmerged commits from feature branch _${branch}_"
         else
-            of="$scriptdir/$bs_tag"
+            of="$scriptdir/$bs_tag.md"
             tag_from_git || exit 1
             from_ref="$TAG"
             to_ref="HEAD"
