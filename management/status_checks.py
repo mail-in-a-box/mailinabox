@@ -258,6 +258,18 @@ def check_free_disk_space(rounded_values, env, output):
 		if rounded_values: disk_msg = "The disk has less than 15% free space."
 		output.print_error(disk_msg)
 
+	# Check that there's only one duplicity cache. If there's more than one,
+	# it's probably no longer in use, and we can recommend clearing the cache
+	# to save space. The cache directory may not exist yet, which is OK.
+	backup_cache_path = os.path.join(env['STORAGE_ROOT'], 'backup/cache')
+	try:
+		backup_cache_count = len(os.listdir(backup_cache_path))
+	except:
+		backup_cache_count = 0
+	if backup_cache_count > 1:
+		output.print_warning("The backup cache directory {} has more than one backup target cache. Consider clearing this directory to save disk space."
+			.format(backup_cache_path))
+
 def check_free_memory(rounded_values, env, output):
 	# Check free memory.
 	percent_free = 100 - psutil.virtual_memory().percent
