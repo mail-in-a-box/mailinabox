@@ -498,10 +498,12 @@ def list_target_files(config):
 		info = InMemoryAccountInfo()
 		b2_api = B2Api(info)
 		
-		# Extract information from target
-		b2_application_keyid = target.netloc[:target.netloc.index(':')]
-		b2_application_key = target.netloc[target.netloc.index(':')+1:target.netloc.index('@')]
-		b2_bucket = target.netloc[target.netloc.index('@')+1:]
+		unquoted_url = urllib.parse.unquote(target.netloc)
+
+		# Extract information from unquoted_url
+		b2_application_keyid = unquoted_url[:unquoted_url.index(':')]
+		b2_application_key = unquoted_url[unquoted_url.index(':')+1:unquoted_url.index('@')]
+		b2_bucket = unquoted_url[unquoted_url.index('@')+1:]
 
 		try:
 			b2_api.authorize_account("production", b2_application_keyid, b2_application_key)
@@ -521,7 +523,13 @@ def backup_set_custom(env, target, target_user, target_pass, min_age):
 	if isinstance(min_age, str):
 		min_age = int(min_age)
 
-	config["target"] = target
+	# b2 url must be escaped
+	if target.startswith('b2://'):
+		import urllib.parse
+		config["target"] = 'b2://' + urllib.parse.quote(target[5:], safe=':@')
+	else:
+		config["target"] = target
+
 	config["target_user"] = target_user
 	config["target_pass"] = target_pass
 	config["min_age_in_days"] = min_age
@@ -566,6 +574,11 @@ def get_backup_config(env, for_save=False, for_ui=False):
 		for field in ("target_user", "target_pass"):
 			if field in config:
 				del config[field]
+
+		if config["target"].startswith('b2://'):
+			import urllib.parse
+			# unquote the URL for the admin
+			config["target"] = urllib.parse.unquote(config["target"])
 
 	# helper fields for the admin
 	config["file_target_directory"] = os.path.join(backup_root, 'encrypted')
