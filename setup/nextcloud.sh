@@ -402,7 +402,6 @@ tools/editconf.py /etc/php/$(php_version)/cli/conf.d/10-opcache.ini -c ';' \
 	opcache.save_comments=1 \
 	opcache.revalidate_freq=1
 
-
 # Set up a cron job for Nextcloud.
 cat > /etc/cron.d/mailinabox-nextcloud << EOF;
 #!/bin/bash

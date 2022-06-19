@@ -42,8 +42,6 @@ if [ $needs_update == 1 ]; then
 	rm -rf /tmp/z-push.zip /tmp/z-push
 
 	rm -f /usr/sbin/z-push-{admin,top}
-	ln -s /usr/local/lib/z-push/z-push-admin.php /usr/sbin/z-push-admin
-	ln -s /usr/local/lib/z-push/z-push-top.php /usr/sbin/z-push-top
 	echo $VERSION > /usr/local/lib/z-push/version
 fi
 
@@ -106,4 +104,4 @@ restart_service php$(php_version)-fpm
 
 # Fix states after upgrade
 
-hide_output z-push-admin -a fixstates
+hide_output php /usr/local/lib/z-push/z-push-admin.php -a fixstates

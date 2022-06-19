@@ -12,12 +12,7 @@ import dateutil.parser, dateutil.relativedelta, dateutil.tz
 import rtyaml
 from exclusiveprocess import Lock
 
-from utils import load_environment, shell, wait_for_service, fix_boto, get_php_version
-
-rsync_ssh_options = [
-	"--ssh-options= -i /root/.ssh/id_rsa_miab",
-	"--rsync-options= -e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
-]
+from utils import load_environment, shell, wait_for_service, get_php_version
 
 def backup_status(env):
 	# If backups are disabled, return no status.
@@ -64,9 +59,9 @@ def backup_status(env):
 		"--archive-dir", backup_cache_dir,
 		"--gpg-options", "--cipher-algo=AES256",
 		"--log-fd", "1",
-		config["target"],
-		] + rsync_ssh_options,
-		get_env(env),
+		get_duplicity_target_url(config),
+		] + get_duplicity_additional_args(env),
+		get_duplicity_env_vars(env),
 		trap=True)
 	if code != 0:
 		# Command failed. This is likely due to an improperly configured remote
@@ -195,7 +190,43 @@ def get_passphrase(env):
 
 	return passphrase
 
-def get_env(env):
+def get_duplicity_target_url(config):
+	target = config["target"]
+
+	if get_target_type(config) == "s3":
+		from urllib.parse import urlsplit, urlunsplit
+		target = list(urlsplit(target))
+
+		# Although we store the S3 hostname in the target URL,
+		# duplicity no longer accepts it in the target URL. The hostname in
+		# the target URL must be the bucket name. The hostname is passed
+		# via get_duplicity_additional_args. Move the first part of the
+		# path (the bucket name) into the hostname URL component, and leave
+		# the rest for the path.
+		target[1], target[2] = target[2].lstrip('/').split('/', 1)
+
+		target = urlunsplit(target)
+
+	return target
+
+def get_duplicity_additional_args(env):
+	config = get_backup_config(env)
+
+	if get_target_type(config) == 'rsync':
+		return [
+			"--ssh-options= -i /root/.ssh/id_rsa_miab",
+			"--rsync-options= -e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
+		]
+	elif get_target_type(config) == 's3':
+		# See note about hostname in get_duplicity_target_url.
+		from urllib.parse import urlsplit, urlunsplit
+		target = urlsplit(config["target"])
+		endpoint_url = urlunsplit(("https", target.netloc, '', '', ''))
+		return ["--s3-endpoint-url",  endpoint_url]
+
+	return []
+
+def get_duplicity_env_vars(env):
 	config = get_backup_config(env)
 
 	env = { "PASSPHRASE" : get_passphrase(env) }
@@ -274,10 +305,10 @@ def perform_backup(full_backup):
 			"--volsize", "250",
 			"--gpg-options", "--cipher-algo=AES256",
 			env["STORAGE_ROOT"],
-			config["target"],
+			get_duplicity_target_url(config),
 			"--allow-source-mismatch"
-			] + rsync_ssh_options,
-			get_env(env))
+			] + get_duplicity_additional_args(env),
+			get_duplicity_env_vars(env))
 	finally:
 		# Start services again.
 		service_command("dovecot", "start", quit=False)
@@ -293,9 +324,9 @@ def perform_backup(full_backup):
 		"--verbosity", "error",
 		"--archive-dir", backup_cache_dir,
 		"--force",
-		config["target"]
-		] + rsync_ssh_options,
-		get_env(env))
+		get_duplicity_target_url(config)
+		] + get_duplicity_additional_args(env),
+		get_duplicity_env_vars(env))
 
 	# From duplicity's manual:
 	# "This should only be necessary after a duplicity session fails or is
@@ -308,9 +339,9 @@ def perform_backup(full_backup):
 		"--verbosity", "error",
 		"--archive-dir", backup_cache_dir,
 		"--force",
-		config["target"]
-		] + rsync_ssh_options,
-		get_env(env))
+		get_duplicity_target_url(config)
+		] + get_duplicity_additional_args(env),
+		get_duplicity_env_vars(env))
 
 	# Change ownership of backups to the user-data user, so that the after-bcakup
 	# script can access them.
@@ -346,9 +377,9 @@ def run_duplicity_verification():
 		"--compare-data",
 		"--archive-dir", backup_cache_dir,
 		"--exclude", backup_root,
-		config["target"],
+		get_duplicity_target_url(config),
 		env["STORAGE_ROOT"],
-	] + rsync_ssh_options, get_env(env))
+	] + get_duplicity_additional_args(env), get_duplicity_env_vars(env))
 
 def run_duplicity_restore(args):
 	env = load_environment()
@@ -358,9 +389,9 @@ def run_duplicity_restore(args):
 		"/usr/bin/duplicity",
 		"restore",
 		"--archive-dir", backup_cache_dir,
-		config["target"],
-		] + rsync_ssh_options + args,
-	get_env(env))
+		get_duplicity_target_url(config),
+		] + get_duplicity_additional_args(env) + args,
+	get_duplicity_env_vars(env))
 
 def list_target_files(config):
 	import urllib.parse
@@ -417,7 +448,6 @@ def list_target_files(config):
 
 	elif target.scheme == "s3":
 		# match to a Region
-		fix_boto() # must call prior to importing boto
 		import boto.s3
 		from boto.exception import BotoServerError
 		custom_region = False

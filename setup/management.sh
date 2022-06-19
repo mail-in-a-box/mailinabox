@@ -1,6 +1,7 @@
 #!/bin/bash
 
 source setup/functions.sh
+source /etc/mailinabox.conf # load global vars
 
 echo "Installing Mail-in-a-Box system management daemon..."
 
@@ -51,7 +52,8 @@ hide_output $venv/bin/pip install --upgrade \
 	rtyaml "email_validator>=1.0.0" "exclusiveprocess" \
 	flask dnspython python-dateutil expiringdict \
 	qrcode[pil] pyotp \
-	"idna>=2.0.0" "cryptography==2.2.2" boto psutil postfix-mta-sts-resolver b2sdk
+	"idna>=2.0.0" "cryptography==37.0.2" psutil postfix-mta-sts-resolver \
+	b2sdk boto
 
 # CONFIGURATION
 

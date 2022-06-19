@@ -202,10 +202,10 @@ chown -f -R root.www-data ${RCM_PLUGIN_DIR}/carddav
 chmod -R 774 ${RCM_PLUGIN_DIR}/carddav
 
 # Run Roundcube database migration script (database is created if it does not exist)
-${RCM_DIR}/bin/updatedb.sh --dir ${RCM_DIR}/SQL --package roundcube
+php ${RCM_DIR}/bin/updatedb.sh --dir ${RCM_DIR}/SQL --package roundcube
 chown www-data:www-data $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 chmod 664 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 
 # Enable PHP modules.
-phpenmod -v php mcrypt imap
+phpenmod -v php imap
 restart_service php$(php_version)-fpm
