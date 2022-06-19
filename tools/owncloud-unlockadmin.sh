@@ -20,4 +20,4 @@ echo
 echo Press enter to continue.
 read
 
-sudo -u www-data php /usr/local/lib/owncloud/occ group:adduser admin $ADMIN && echo Done.
+sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/occ group:adduser admin $ADMIN && echo Done.
