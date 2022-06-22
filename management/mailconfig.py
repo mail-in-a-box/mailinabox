@@ -14,9 +14,18 @@ import subprocess, shutil, os, sqlite3, re, ldap3, uuid, hashlib
 import utils, backend
 from email_validator import validate_email as validate_email_, EmailNotValidError
 import idna
+import socket
 import logging
 
 log = logging.getLogger(__name__)
+
+
+# remove "local" as a "special use domain" from email_validator
+# globally because validate validate_email_(email,
+# test_environment=True) is broken in email_validator 1.2.1
+# @TODO: remove once email_validator's test_environment argument is fixed (see validate_email() below)
+import email_validator as _evx
+_evx.SPECIAL_USE_DOMAIN_NAMES.remove("local")
 
 
 #
@@ -74,11 +83,18 @@ def validate_email(email, mode=None):
 
 	# Check the syntax of the address.
 	try:
+		# allow .local domains to pass when they refer to the local machine
+		email_domain = get_domain(email)
+		test_env = (
+			email_domain.endswith(".local") and
+			email_domain == socket.getfqdn()
+		)
 		validate_email_(email,
 			allow_smtputf8=False,
 			check_deliverability=False,
-			allow_empty_local=(mode=="alias")
-			)
+			allow_empty_local=(mode=="alias"),
+			test_environment=test_env
+		)
 	except EmailNotValidError:
 		return False
 
