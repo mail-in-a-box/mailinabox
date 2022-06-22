@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+Version 57a (June 19, 2022)
+---------------------------
+
+* The Backblaze backups fix posted in Version 57 was incomplete. It's now fixed.
+
 Version 57 (June 12, 2022)
 --------------------------
 
