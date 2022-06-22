@@ -247,9 +247,7 @@ roundcube_force_carddav_refresh() {
     [ -z "$carddav_major" ] && carddav_major="3"
 
     if [ $carddav_major -eq 3 ]; then
-        if [ ! -e "$RCM_DIR/bin/carddav_refresh.sh" ]; then
-            echo "Please ignore the following errors about no such table carddav_addressbooks and carddav_migrations"
-        fi
+        # old version
         sync_script="$assets_dir/mail/roundcube/carddav_refresh_v3.sh"
     else
         sync_script="$assets_dir/mail/roundcube/carddav_refresh.sh"
@@ -261,6 +259,7 @@ roundcube_force_carddav_refresh() {
     fi
     
     pushd "$RCM_DIR" >/dev/null
+    echo "Please ignore errors about 'no such table carddav_addressbooks' and 'no such table carddav_migrations'"
     bin/carddav_refresh.sh "$user" "$pass"
     code=$?
     popd >/dev/null
