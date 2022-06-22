@@ -55,10 +55,17 @@ installed_state_capture() {
     local gitver=$(git describe)
     echo "GIT_VERSION='$gitver'" >>"$info"
 
-    parse_miab_version_string "$gitver"
-    if [ $? -ne 0 ]; then
-        echo "Unable to parse version string: $gitver"
-        return 1
+    if [ -z "$gitver" ]; then
+        # git: "No names found, cannot describe anything"
+        MAJOR=999
+        MINOR=
+        RELEASE=
+    else
+        parse_miab_version_string "$gitver"
+        if [ $? -ne 0 ]; then
+            echo "Unable to parse version string: '$gitver'"
+            return 1
+        fi
     fi
     echo "MAJOR=$MAJOR" >>"$info"
     echo "MINOR=$MINOR" >>"$info"
