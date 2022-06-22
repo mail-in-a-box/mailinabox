@@ -97,6 +97,13 @@ fi
 # come from there and minimal Ubuntu installs may have it turned off.
 hide_output add-apt-repository -y universe
 
+# Install the duplicity PPA.
+hide_output add-apt-repository -y ppa:duplicity-team/duplicity-release-git
+
+# Stock PHP is now 8.1, but we're transitioning through 8.0 because
+# of Nextcloud.
+hide_output add-apt-repository --y ppa:ondrej/php
+
 # ### Update Packages
 
 # Update system packages to make sure we have the latest upstream versions
@@ -356,6 +363,7 @@ systemctl restart systemd-resolved
 rm -f /etc/fail2ban/jail.local # we used to use this file but don't anymore
 rm -f /etc/fail2ban/jail.d/defaults-debian.conf # removes default config so we can manage all of fail2ban rules in one config
 cat conf/fail2ban/jails.conf \
+    | sed "s/PUBLIC_IPV6/$PUBLIC_IPV6/g" \
 	| sed "s/PUBLIC_IP/$PUBLIC_IP/g" \
 	| sed "s#STORAGE_ROOT#$STORAGE_ROOT#" \
 	> /etc/fail2ban/jail.d/mailinabox.conf

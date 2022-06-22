@@ -6,7 +6,7 @@ Version 60 (date TBD)
 
 This is the first release for Ubuntu 22.04.
 
-**Before upgrading**, you must **first upgrade your existing Ubuntu 18.04 box to Mail-in-a-Box v0.51** (or any later version of Mail-in-a-Box supporting Ubuntu 18.04), if you haven't already done so. That may not be possible after Ubuntu 18.04 reaches its end of life in April 2023, so please compete the upgrade well before then. (If you are not using Nextcloud's contacts or calendar, you can migrate to the latest version of Mail-in-a-Box from any previous version.) 
+**Before upgrading**, you must **first upgrade your existing Ubuntu 18.04 box to Mail-in-a-Box v0.51 or later**, if you haven't already done so. That may not be possible after Ubuntu 18.04 reaches its end of life in April 2023, so please compete the upgrade well before then. (If you are not using Nextcloud's contacts or calendar, you can migrate to the latest version of Mail-in-a-Box from any previous version.)
 
 For complete upgrade instructions, see:
 
@@ -14,14 +14,32 @@ LINK TBD
 
 No features of Mail-in-a-Box have changed in this release, but with the newer version of Ubuntu the following software packages we use are updated:
 
-* dovecot is upgraded to 2.3.16, postfix to 3.6.3, opendmark to 1.4 (which adds ARC-Authentication-Results headers), and spampd to 2.53 (alleviating a mail delivery rate limiting bug).
+* dovecot is upgraded to 2.3.16, postfix to 3.6.4, opendmark to 1.4 (which adds ARC-Authentication-Results headers), and spampd to 2.53 (alleviating a mail delivery rate limiting bug).
 * Nextcloud is upgraded to 23.0.0 with PHP updated from 7.2 to 8.0.
 * certbot is upgraded to 1.21 (via the Ubuntu repository instead of a PPA).
 * fail2ban is upgraded to 0.11.2.
 * nginx is upgraded to 1.18.
 
-In Development
---------------
+Version 57 (June 12, 2022)
+--------------------------
+
+Setup:
+
+* Fixed issue upgrading from Mail-in-a-Box v0.40-v0.50 because of a changed URL that Nextcloud is downloaded from.
+
+Backups:
+
+* Fixed S3 backups which broke with duplicity 0.8.23.
+* Fixed Backblaze backups which broke with latest b2sdk package by rolling back its version.
+
+Control panel:
+
+* Fixed spurious changes in system status checks messages by sorting DNSSEC DS records.
+* Fixed fail2ban lockout over IPv6 from excessive loads of the system status checks.
+* Fixed an incorrect IPv6 system status check message.
+
+Version 56 (January 19, 2022)
+-----------------------------
 
 Software updates:
 

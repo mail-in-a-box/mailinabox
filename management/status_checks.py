@@ -135,7 +135,7 @@ def check_service(i, service, env):
 
 			# IPv4 ok but IPv6 failed. Try the PRIVATE_IPV6 address to see if the service is bound to the interface.
 			elif service["port"] != 53 and try_connect(env["PRIVATE_IPV6"]):
-				output.print_error("%s is running (and available over IPv4 and the local IPv6 address), but it is not publicly accessible at %s:%d." % (service['name'], env['PUBLIC_IP'], service['port']))
+				output.print_error("%s is running (and available over IPv4 and the local IPv6 address), but it is not publicly accessible at %s:%d." % (service['name'], env['PUBLIC_IPV6'], service['port']))
 			else:
 				output.print_error("%s is running and available over IPv4 but is not accessible over IPv6 at %s port %d." % (service['name'], env['PUBLIC_IPV6'], service['port']))
 
@@ -252,6 +252,18 @@ def check_free_disk_space(rounded_values, env, output):
 	else:
 		if rounded_values: disk_msg = "The disk has less than 15% free space."
 		output.print_error(disk_msg)
+
+	# Check that there's only one duplicity cache. If there's more than one,
+	# it's probably no longer in use, and we can recommend clearing the cache
+	# to save space. The cache directory may not exist yet, which is OK.
+	backup_cache_path = os.path.join(env['STORAGE_ROOT'], 'backup/cache')
+	try:
+		backup_cache_count = len(os.listdir(backup_cache_path))
+	except:
+		backup_cache_count = 0
+	if backup_cache_count > 1:
+		output.print_warning("The backup cache directory {} has more than one backup target cache. Consider clearing this directory to save disk space."
+			.format(backup_cache_path))
 
 def check_free_memory(rounded_values, env, output):
 	# Check free memory.
@@ -658,7 +670,7 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 	if len(ds) > 0:
 		output.print_line("")
 		output.print_line("The DS record is currently set to:")
-		for rr in ds:
+		for rr in sorted(ds):
 			output.print_line("Key Tag: {0}, Algorithm: {1}, Digest Type: {2}, Digest: {3}".format(*rr))
 
 def check_mail_domain(domain, env, output):

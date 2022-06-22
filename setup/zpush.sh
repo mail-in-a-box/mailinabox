@@ -17,9 +17,9 @@ source /etc/mailinabox.conf # load global vars
 
 echo "Installing Z-Push (Exchange/ActiveSync server)..."
 apt_install \
-	php-soap php-imap libawl-php php8.1-xml
+       php${PHP_VER}-soap php${PHP_VER}-imap libawl-php php$PHP_VER-xml
 
-phpenmod -v php imap
+phpenmod -v $PHP_VER imap
 
 # Copy Z-Push into place.
 VERSION=2.6.2
@@ -42,8 +42,6 @@ if [ $needs_update == 1 ]; then
 	rm -rf /tmp/z-push.zip /tmp/z-push
 
 	rm -f /usr/sbin/z-push-{admin,top}
-	ln -s /usr/local/lib/z-push/z-push-admin.php /usr/sbin/z-push-admin
-	ln -s /usr/local/lib/z-push/z-push-top.php /usr/sbin/z-push-top
 	echo $VERSION > /usr/local/lib/z-push/version
 fi
 
@@ -102,8 +100,8 @@ EOF
 
 # Restart service.
 
-restart_service php8.1-fpm
+restart_service php$PHP_VER-fpm
 
 # Fix states after upgrade
 
-hide_output z-push-admin -a fixstates
+hide_output php$PHP_VER /usr/local/lib/z-push/z-push-admin.php -a fixstates

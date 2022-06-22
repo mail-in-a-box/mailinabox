@@ -22,7 +22,6 @@ fi
 source tests/lib/system.sh
 source tests/lib/color-output.sh
 
-
 dry_run=true
 
 if [ "$1" == "--no-dry-run" ]; then
@@ -77,6 +76,11 @@ install_packages() {
         # don't install slapd - it requires user input
         pkgs="$(sed 's/slapd//g' <<< "$pkgs")"
 
+        # manually set PHP_VER if necessary
+        if grep "PHP_VER" <<<"$pkgs" >/dev/null; then
+            pkgs="$(sed "s/\${*PHP_VER}*/$PHP_VER/g" <<< "$pkgs")"
+        fi
+
         if [ $OS_MAJOR -ge 22 ]; then
             # don't install opendmarc on ubuntu 22 and higher - it requires
             # interactive user input
@@ -92,6 +96,26 @@ install_packages() {
         fi
     done
 }
+
+install_ppas() {
+    H1 "Add apt repositories"
+    grep 'hide_output add-apt-repository' setup/system.sh |
+        while read line; do
+            line=$(sed 's/^hide_output //' <<< "$line")
+            H2 "$line"
+            if ! $dry_run; then
+                exec_no_output $line
+            fi
+        done 
+}
+
+
+# install PPAs from sources
+install_ppas
+
+# obtain PHP_VER variable from sources
+PHP_VER=$(grep "^PHP_VER=" setup/functions.sh  | awk -F= '{ print $2 }')
+
 
 if ! $dry_run; then
     H1 "Upgrade system"
