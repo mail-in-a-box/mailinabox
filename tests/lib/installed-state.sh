@@ -12,11 +12,11 @@ parse_miab_version_string() {
     awk -F- '
 /^v[0-9]+\./ { split($1,a,"."); print "MAJOR="substr(a[1],2); print "MINOR="a[2]; print "RELEASE="$2; next }  
 
-/^v[0-9]+[a-z]$/ { print "MAJOR="substr($1,2,length($1)-2); print "MINOR="substr($1,length($1))-"a"+1; print "RELEASE="; next }
+$1 ~ /^v[0-9]+[a-z]$/ { print "MAJOR="substr($1,2,length($1)-2); print "MINOR="substr($1,length($1))-"a"+1; print "RELEASE="; next }
 
-/^v[0-9]+[A-Z]$/ { print "MAJOR="substr($1,2,length($1)-2); print "MINOR="substr($1,length($1))-"A"+1; print "RELEASE="; next }
+$1 ~ /^v[0-9]+[A-Z]$/ { print "MAJOR="substr($1,2,length($1)-2); print "MINOR="substr($1,length($1))-"A"+1; print "RELEASE="; next }
 
-/^v[0-9]+$/ { print "MAJOR="substr($1,2); print "MINOR="; print "RELEASE="; next } 
+$1 ~ /^v[0-9]+$/ { print "MAJOR="substr($1,2); print "MINOR="; print "RELEASE="; next } 
 
 { exit 1 }' >> "$tmpfile" <<< "$1"
     
