@@ -38,7 +38,7 @@ apt_install \
 # the error message.
 VERSION=1.5.2
 HASH=208ce4ca0be423cc0f7070ff59bd03588b4439bf
-PERSISTENT_LOGIN_VERSION=59ca1b0d3a02cff5fa621c1ad581d15f9d642fe8
+PERSISTENT_LOGIN_VERSION=version-5.3.0
 HTML5_NOTIFIER_VERSION=68d9ca194212e15b3c7225eb6085dbcf02fd13d7 # version 0.6.4+
 CARDDAV_VERSION=4.3.0
 CARDDAV_HASH=4ad7df8843951062878b1375f77c614f68bc5c61
@@ -245,10 +245,7 @@ chown www-data:www-data $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 chmod 664 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 
 # Create persistent login plugin's database tables
-#   TODO: use sql from this PR if it gets committed (been waiting 2
-#         weeks and counting...):
-#     https://github.com/mfreiholz/persistent_login/pull/63
-sqlite3 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite < conf/persistent_login-sqlite.sql
+sqlite3 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite < ${RCM_PLUGIN_DIR}/persistent_login/sql/sqlite.sql
 
 # Enable PHP modules.
 phpenmod -v php mcrypt imap ldap
