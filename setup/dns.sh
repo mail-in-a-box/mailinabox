@@ -38,6 +38,12 @@ server:
 
 EOF
 
+# nsd.log must exist or rsyslog won't write to it
+if [ ! -e /var/log/nsd.log ]; then
+    touch /var/log/nsd.log
+    chown syslog:adm /var/log/nsd.log
+fi
+
 # Since we have bind9 listening on localhost for locally-generated
 # DNS queries that require a recursive nameserver, and the system
 # might have other network interfaces for e.g. tunnelling, we have
