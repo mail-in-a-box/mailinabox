@@ -45,8 +45,8 @@ contacts_ver=4.0.7
 contacts_hash=45e7cf4bfe99cd8d03625cf9e5a1bb2e90549136
 calendar_ver=3.0.4
 calendar_hash=d0284b68135777ec9ca713c307216165b294d0fe
-user_external_ver=2.1.0
-user_external_hash=6e5afe7f36f398f864bfdce9cad72200e70322aa
+user_external_ver=v3.0.0
+user_external_hash=
 
 # Clear prior packages and install dependencies from apt.
 
@@ -101,9 +101,15 @@ InstallNextcloud() {
 	# Starting with Nextcloud 15, the app user_external is no longer included in Nextcloud core,
 	# we will install from their github repository.
 	if [ -n "$version_user_external" ]; then
-		wget_verify https://github.com/nextcloud/user_external/releases/download/v$version_user_external/user_external-$version_user_external.tar.gz $hash_user_external /tmp/user_external.tgz
-		tar -xf /tmp/user_external.tgz -C /usr/local/lib/owncloud/apps/
-		rm /tmp/user_external.tgz
+		if [ -z "$hash_user_external" ]; then
+			# if no hash given, clone the repository at version (treeish)
+			git_clone https://github.com/nextcloud/user_external.git "$version_user_external" '' /usr/local/lib/owncloud/apps/user_external
+	else
+			# otherwise, download a release
+			wget_verify https://github.com/nextcloud/user_external/releases/download/v$version_user_external/user_external-$version_user_external.tar.gz $hash_user_external /tmp/user_external.tgz
+			tar -xf /tmp/user_external.tgz -C /usr/local/lib/owncloud/apps/
+			rm /tmp/user_external.tgz
+		fi
 	fi
 
 	# Fix weird permissions.
@@ -232,7 +238,7 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
   'overwrite.cli.url' => '/cloud',
   'user_backends' => array(
     array(
-      'class' => 'OC_User_IMAP',
+      'class' => '\OCA\UserExternal\IMAP',
         'arguments' => array(
           '127.0.0.1', 143, null
          ),
@@ -310,7 +316,7 @@ include("$STORAGE_ROOT/owncloud/config.php");
 
 \$CONFIG['mail_domain'] = '$PRIMARY_HOSTNAME';
 
-\$CONFIG['user_backends'] = array(array('class' => 'OC_User_IMAP','arguments' => array('127.0.0.1', 143, null),),);
+\$CONFIG['user_backends'] = array(array('class' => '\OCA\UserExternal\IMAP','arguments' => array('127.0.0.1', 143, null),),);
 
 echo "<?php\n\\\$CONFIG = ";
 var_export(\$CONFIG);
