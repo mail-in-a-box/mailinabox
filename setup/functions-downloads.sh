@@ -318,3 +318,16 @@ get_nc_download_url() {
     DOWNLOAD_URL_CACHE_ID="$url_cache_id"
     return 0
 }
+
+
+
+install_composer() {
+    if [ ! -x /usr/local/bin/composer ]; then
+        pushd /usr/local/bin >/dev/null
+        curl -sS https://getcomposer.org/installer | hide_output php${PHP_VER}
+        mv composer.phar composer
+        popd >/dev/null
+    else
+        hide_output /usr/local/bin/composer selfupdate
+    fi
+}
