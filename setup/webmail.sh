@@ -132,8 +132,7 @@ cat > $RCM_CONFIG <<EOF;
 \$config['log_dir'] = '/var/log/roundcubemail/';
 \$config['temp_dir'] = '/var/tmp/roundcubemail/';
 \$config['db_dsnw'] = 'sqlite:///$STORAGE_ROOT/mail/roundcube/roundcube.sqlite?mode=0640';
-\$config['default_host'] = 'ssl://localhost';
-\$config['default_port'] = 993;
+\$config['imap_host'] = 'ssl://localhost:993';
 \$config['imap_conn_options'] = array(
   'ssl'         => array(
      'verify_peer'  => false,
@@ -141,7 +140,7 @@ cat > $RCM_CONFIG <<EOF;
    ),
  );
 \$config['imap_timeout'] = 15;
-\$config['smtp_server'] = 'tls://127.0.0.1';
+\$config['smtp_host'] = 'tls://127.0.0.1:587';
 \$config['smtp_conn_options'] = array(
   'ssl'         => array(
      'verify_peer'  => false,
@@ -162,8 +161,7 @@ cat > $RCM_CONFIG <<EOF;
 \$config['session_lifetime'] = 60;
 \$config['ldap_public']['public'] = array(
     'name'              => 'Directory',
-    'hosts'             => array('${LDAP_SERVER}'),
-    'port'              => ${LDAP_SERVER_PORT},
+    'hosts'             => array('${LDAP_URL}'),
     'user_specific'     => false,
     'scope'             => 'sub',
     'base_dn'           => '${LDAP_USERS_BASE}',
