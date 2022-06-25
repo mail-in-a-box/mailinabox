@@ -261,7 +261,7 @@ roundcube_force_carddav_refresh() {
     fi
     
     pushd "$RCM_DIR" >/dev/null
-    bin/carddav_refresh.sh "$user" "$pass"
+    /usr/bin/php${PHP_VER} bin/carddav_refresh.sh "$user" "$pass"
     code=$?
     popd >/dev/null
     return $code

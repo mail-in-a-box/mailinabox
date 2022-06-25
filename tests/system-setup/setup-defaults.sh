@@ -55,3 +55,6 @@ export UPSTREAM_TAG="${UPSTREAM_TAG:-}"
 export MIABLDAP_GIT="${MIABLDAP_GIT:-https://github.com/downtownallday/mailinabox-ldap.git}"
 export MIABLDAP_RELEASE_TAG="${MIABLDAP_RELEASE_TAG:-v55}"
 
+# When running tests that require php, use this version of php. This
+# should be the same as what's in setup/functions.sh.
+export PHP_VER=8.0

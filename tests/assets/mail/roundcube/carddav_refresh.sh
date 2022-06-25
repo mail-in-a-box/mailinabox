@@ -45,7 +45,7 @@ if (empty($password)) {
 // -----
 
 // init application, start session, init output class, etc.
-$RCMAIL = rcmail::get_instance(0, $GLOBALS['env']);
+$RCMAIL = rcmail::get_instance(0, isset($GLOBALS['env']) ? $GLOBALS['env'] : null);
 
 // trigger startup plugin hook
 $startup = $RCMAIL->plugins->exec_hook('startup', array('task' => $RCMAIL->task, 'action' => $RCMAIL->action));
