@@ -45,7 +45,7 @@ PERSISTENT_LOGIN_VERSION=59ca1b0d3a02cff5fa621c1ad581d15f9d642fe8
 HTML5_NOTIFIER_VERSION=68d9ca194212e15b3c7225eb6085dbcf02fd13d7 # version 0.6.4+
 CARDDAV_VERSION=4.4.1
 CARDDAV_VERSION_AND_VARIANT=4.4.1-roundcube16
-CARDDAV_HASH=4992577d40c56ca1636ee92519b3c571eda21ae6
+CARDDAV_HASH=1dca7a5f4b7265f2919bb33fd6995a2302987786
 
 UPDATE_KEY=$VERSION:$PERSISTENT_LOGIN_VERSION:$HTML5_NOTIFIER_VERSION:$CARDDAV_VERSION
 
@@ -95,18 +95,6 @@ if [ $needs_update == 1 ]; then
 	# unzip and cleanup
 	tar -C ${RCM_PLUGIN_DIR} -zxf /tmp/carddav.tar.gz
 	rm -f /tmp/carddav.tar.gz
-
-    # fix rcmcarddav dependencies
-    # 1. remove rcmcarddav/vendor/guzzlehttp and update autoload
-    if [ -d ${RCM_PLUGIN_DIR}/carddav/vendor/guzzlehttp ]; then
-        install_composer
-        pushd ${RCM_PLUGIN_DIR}/carddav >/dev/null
-        rm -rf vendor/.x_guzzlehttp
-        mv vendor/guzzlehttp vendor/.x_guzzlehttp
-        hide_output /usr/local/bin/composer dump-autoload -q -n --ignore-platform-req=php
-        popd >/dev/null
-    fi
-
 
 	# record the version we've installed
 	echo $UPDATE_KEY > ${RCM_DIR}/version
