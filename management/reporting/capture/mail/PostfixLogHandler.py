@@ -146,7 +146,7 @@ class PostfixLogHandler(CommonHandler):
         self.re_opendkim_ssl = re.compile('opendkim\[\d+\]: ([A-F0-9]+):(.*) SSL ?(.*)')
         #   1=postfix_msg_id
         #   2=error-msg
-        self.re_opendkim_error = re.compile('opendkim\[\d+\]: ([A-F0-9]+): (.*)')
+        self.re_opendkim_error = re.compile('opendkim\[\d+\]: ([A-F0-9]+): (?!DKIM-Signature field added)(.*)')
 
         # 7. opendmarc: POSTFIX-MSG-ID: result: [pass/fail]
         # Dec  6 08:21:33 mail opendmarc[729]: DD95A1F796 ignoring Authentication-Results at 18 from mx.google.com
