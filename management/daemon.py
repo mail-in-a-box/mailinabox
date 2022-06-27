@@ -678,7 +678,9 @@ def postgrey_whitelist_handler():
 			contents = request.form["contents"]
 			with open(conf_file, "w") as fp:
 				fp.write(contents)
-			utils.shell("check_call", ["/bin/systemctl", "reload", "postgrey"])
+                        # TODO: use "reload" when reload is fixed - it fails starting with ubuntu 22.04 jammy
+			#utils.shell("check_call", ["/bin/systemctl", "reload", "postgrey"])
+			utils.shell("check_call", ["/bin/systemctl", "restart", "postgrey"])
 		except KeyError:
 			return ("Missing required parameter", 400)
 		except subprocess.CalledProcessError as e:
