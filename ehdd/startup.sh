@@ -14,7 +14,9 @@ if [ -s /etc/mailinabox.conf ]; then
     systemctl restart mailinabox
     systemctl start miabldap-capture
     # since postgrey's local client whitelist is in user-data, reload
-    # to ensure postgrey daemon has it
-    systemctl reload postgrey
+    # to ensure postgrey daemon has it.
+    #
+    # TODO: this should be 'reload' but is broken in jammy (reload fails on a systemctl permissions issue accessing postgrey's pid file)
+    systemctl restart postgrey
 fi
 
