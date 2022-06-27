@@ -7,16 +7,16 @@ if [ -e "$EHDD_IMG" ]; then
     if [ -s /etc/mailinabox.conf ]; then
         echo ""
         echo "** Disabling system services **"
-        systemctl disable postfix
-        systemctl disable dovecot
-        systemctl disable cron
-        systemctl disable nginx
-        systemctl disable php8.0-fpm
-        systemctl disable mailinabox
-        systemctl disable fail2ban
-        systemctl disable miabldap-capture
+        systemctl disable --quiet postfix
+        systemctl disable --quiet dovecot
+        systemctl disable --quiet cron
+        systemctl disable --quiet nginx
+        systemctl disable --quiet php8.0-fpm
+        systemctl disable --quiet mailinabox
+        systemctl disable --quiet fail2ban
+        systemctl disable --quiet miabldap-capture
         #systemctl disable nsd
-        [ -x /usr/sbin/slapd ] && systemctl disable slapd
+        [ -x /usr/sbin/slapd ] && systemctl disable --quiet slapd
 
         echo ""
         echo "IMPORTANT:"
