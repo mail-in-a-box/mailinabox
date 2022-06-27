@@ -41,7 +41,7 @@ SH
 cd /mailinabox
 export PRIMARY_HOSTNAME=qa3.abc.com
 export UPSTREAM_TAG=jammyjellyfish2204
-tests/system-setup/upgrade-from-upstream.sh basic totpuser || exit 1
+tests/system-setup/upgrade-from-upstream.sh --populate=basic --populate=totpuser || exit 1
 tests/runner.sh upgrade-basic upgrade-totpuser default || exit 2
 SH
   end
@@ -57,7 +57,7 @@ SH
     m1.vm.provision :shell, :inline => <<-SH
 cd /mailinabox
 export PRIMARY_HOSTNAME=upgrade.abc.com
-tests/system-setup/upgrade.sh basic totpuser || exit 1
+tests/system-setup/upgrade.sh --populate=basic --populate=totpuser || exit 1
 tests/runner.sh upgrade-basic upgrade-totpuser default || exit 2
 SH
   end

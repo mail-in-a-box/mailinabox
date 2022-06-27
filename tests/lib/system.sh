@@ -1,3 +1,6 @@
+#
+# requires:
+#    scripts: [ misc.sh ]
 
 wait_for_apt() {
     # check to see if other package managers have a lock on new
@@ -139,4 +142,33 @@ exec_no_output() {
 	rm -f "$of"
     [ $code -ne 0 ] && return 1
 	return 0
+}
+
+git_clone() {
+    local REPO="$1"
+    local TREEISH="$2"
+    local TARGETPATH="$3"
+    local OPTIONS="$4"
+
+    if [ ! -x /usr/bin/git ]; then
+        exec_no_output apt-get install -y git || return 1
+    fi
+
+    if ! array_contains "keep-existing" $OPTIONS || \
+            [ ! -d "$TARGETPATH" ] || \
+            [ -z "$(ls -A "$TARGETPATH")" ]
+    then
+        rm -rf "$TARGETPATH"
+        git clone "$REPO" "$TARGETPATH"
+        if [ $? -ne 0 ]; then
+            rm -rf "$TARGETPATH"
+            return 1
+        fi
+    fi
+
+    if [ ! -z "$TREEISH" ]; then
+        pushd "$TARGETPATH" >/dev/null
+        git checkout "$TREEISH" || return 2
+        popd >/dev/null
+    fi
 }

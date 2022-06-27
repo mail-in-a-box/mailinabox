@@ -11,7 +11,7 @@ if [ ! -d "tests/system-setup" ]; then
 fi
 
 # load helper scripts
-. "tests/lib/all.sh" "tests/lib" || die "Could not load lib scripts"
+. "tests/lib/all.sh" || die "Could not load lib scripts"
 . "tests/system-setup/setup-defaults.sh" || die "Could not load setup-defaults"
 . "tests/system-setup/setup-funcs.sh" || die "Could not load setup-funcs"
 
@@ -31,14 +31,5 @@ init() {
 # initialize test system
 init "$@"
 
-if array_contains remote-nextcloud "$@"; then
-    H1 "Enable remote-nextcloud mod"
-    enable_miab_mod "remote-nextcloud" \
-        || die "Could not enable remote-nextcloud mod"
-else
-    disable_miab_mod "remote-nextcloud"
-fi
-    
-# run setup to use the remote Nextcloud (doesn't need to be available)
-miab_ldap_install
-
+# run setup
+miab_ldap_install "$@"

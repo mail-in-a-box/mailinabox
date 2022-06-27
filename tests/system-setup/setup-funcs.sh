@@ -2,7 +2,7 @@
 #
 # requires:
 #
-#   test scripts: [ lib/misc.sh, lib/system.sh, lib/color-output.sh ]
+#   test scripts: [ lib/misc.sh, lib/system.sh, lib/color-output.sh, lib/installed-state.sh ]
 #
 
 
@@ -255,8 +255,98 @@ workaround_dovecot_sieve_bug() {
 }
 
 
+say_release_info() {
+    H2 "Release info"
+    echo "Code version: $(git describe)"
+    echo "Migration version (miab): $(cat "$STORAGE_ROOT/mailinabox.version")"
+    echo "Migration version (miabldap): $(cat "$STORAGE_ROOT/mailinabox-ldap.version")"
+}
+
+clone_repo_and_pushd() {
+    local repo=""
+    local treeish=""
+    local targetdir=""
+    for arg; do
+        case "$arg" in
+            --checkout-repo=* )
+                repo=$(awk -F= '{print $2}' <<<"$arg")
+                ;;
+            --checkout-treeish=* | --checkout-tag=* )
+                treeish=$(awk -F= '{print $2}' <<<"$arg")
+                ;;
+            --checkout-targetdir=* )
+                targetdir=$(awk -F= '{print $2}' <<<"$arg")
+                ;;
+        esac
+    done
+    
+    if [ -z "$repo" -o -z "$treeish" -o -z "$targetdir" ]; then
+        return 1
+    fi
+
+    H1 "Clone release $treeish from $repo"
+    git_clone \
+        "$repo" \
+        "$treeish" \
+        "$targetdir" \
+        "keep-existing" \
+        || die "could not clone $repo ($treeish) to $targetdir"
+
+    pushd "$targetdir" >/dev/null
+    return 0
+}
+
+
+#
+# install mail-in-a-box (upstream)
+#
+upstream_install() {
+    local need_pop="no"
+    if clone_repo_and_pushd "$@"; then
+        need_pop="yes"
+    fi
+    
+    H1 "MIAB UPSTEAM INSTALL [$(git describe 2>/dev/null)]"
+
+    # ensure we're in a MiaB working directory
+    if [ -e setup/ldap.sh ]; then
+        die "Cannot install: the working directory is MiaB-LDAP!"
+    fi
+    if [ ! -e setup/start.sh ]; then
+        die "Cannot install: the working directory must contain the source"
+    fi
+    
+    if ! setup/start.sh; then
+        echo "$F_WARN"
+        dump_file /var/log/syslog 100
+        echo "$F_RESET"
+        die "Upstream setup failed!"
+    fi
+    
+    H2 "Post-setup actions"
+    workaround_dovecot_sieve_bug
+
+    # set actual STORAGE_ROOT, STORAGE_USER, PRIVATE_IP, etc
+    . /etc/mailinabox.conf || die "Could not source /etc/mailinabox.conf"
+    
+    H2 "miab install success"
+
+    if [ "need_pop" = "yes" ]; then
+        popd >/dev/null
+    fi
+       
+    # populate if specified on command line
+    populate_by_cli_argument "$@"
+}
+
+
 miab_ldap_install() {
-    H1 "MIAB-LDAP INSTALL"
+    local need_pop="no"
+    if clone_repo_and_pushd "$@"; then
+        need_pop="yes"
+    fi
+    
+    H1 "MIAB-LDAP INSTALL [$(git describe 2>/dev/null)]"
     # ensure we're in a MiaB-LDAP working directory
     if [ ! -e setup/ldap.sh ]; then
         die "Cannot install: the working directory is not MiaB-LDAP!"
@@ -302,8 +392,37 @@ miab_ldap_install() {
     fi
 
     H2 "miab-ldap install success"
+
+    if [ "need_pop" = "yes" ]; then
+        popd >/dev/null
+    fi
+       
+    # populate if specified on command line
+    populate_by_cli_argument "$@"
 }
 
+populate_by_cli_argument() {
+    # ...ignore unknown options they may be interpreted elsewhere
+    local populate_names=()
+    local state_dir=""
+    for arg; do
+        case "$arg" in
+            --populate=* )
+                populate_names+=( $(awk -F= '{print $2}' <<<"$arg") )
+                ;;
+            --capture-state=* )
+                state_dir=$(awk -F= '{print $2}' <<<"$arg")
+                ;;
+        esac
+    done
+
+    if [ ${#populate_names} -gt 0 ]; then
+        populate_by_name "${populate_names[@]}"
+    fi
+    if [ ! -z "$state_dir" ]; then
+        installed_state_capture "$state_dir"
+    fi
+}
 
 populate_by_name() {
     local populate_name

@@ -1,20 +1,20 @@
 #
 # source all lib scripts
 #
-# from your script, supply the path to this directory as the first argument
-#
-#    eg source "tests/lib/all.sh" "tests/lib"
+#    eg source "tests/lib/all.sh"
 #
 # failure to load any script is fatal!
 
-. "$1/color-output.sh" || exit 1
-. "$1/locations.sh"    || exit 2
-. "$1/misc.sh"         || exit 3
-. "$1/rest.sh"         || exit 4
-. "$1/system.sh"       || exit 5
-. "$1/carddav.sh"      || exit 6
+D=$(dirname "$BASH_SOURCE")
 
-. "$1/populate.sh"     || exit 7
-. "$1/installed-state.sh" || exit 8
-. "$1/totp.sh"         || exit 9
+. "$D/color-output.sh" || exit 1
+. "$D/locations.sh"    || exit 2
+. "$D/misc.sh"         || exit 3
+. "$D/rest.sh"         || exit 4
+. "$D/system.sh"       || exit 5
+. "$D/carddav.sh"      || exit 6
+
+. "$D/populate.sh"     || exit 7
+. "$D/installed-state.sh" || exit 8
+. "$D/totp.sh"         || exit 9
 
