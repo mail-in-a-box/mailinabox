@@ -7,7 +7,7 @@ if [ ! -e "$EHDD_IMG" ]; then
     exit 0
 fi
 
-if mount | grep "^/dev/mapper/$EHDD_LUKS_NAME on $EHDD_MOUNTPOINT" >/dev/null; then
+if is_mounted; then
     echo "$EHDD_IMG already mounted"
     exit 0
 fi

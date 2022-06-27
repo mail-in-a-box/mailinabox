@@ -2,7 +2,8 @@
 
 . "ehdd/ehdd_funcs.sh" || exit 1
 
-if ! mount | grep "$EHDD_MOUNTPOINT" >/dev/null; then
+
+if ! is_mounted; then
     # not mounted
     exit 0
 fi

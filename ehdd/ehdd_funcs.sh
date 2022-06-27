@@ -24,3 +24,18 @@ keyfile_option() {
         echo "--key-file $EHDD_KEYFILE"
     fi
 }
+
+hdd_exists() {
+    [ -e "$EHDD_IMG" ] && return 0
+    return 1
+}
+
+is_mounted() {
+    [ ! -e "$EHDD_IMG" ] && return 1
+    if mount | grep "^/dev/mapper/$EHDD_LUKS_NAME on $EHDD_MOUNTPOINT" >/dev/null; then
+        # mounted
+        return 0
+    else
+        return 1
+    fi
+}
