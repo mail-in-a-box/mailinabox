@@ -1,0 +1,46 @@
+load '../funcs.rb'
+
+# major upgrade Ubuntu 18.04 (bionic) -> Ubuntu 22.04 (jammy)
+
+Vagrant.configure("2") do |config|
+
+  config.vm.synced_folder "../../..", "/mailinabox", id: "mailinabox", automount: false
+  config.vm.network "public_network", bridge: "#$default_network_interface"
+
+  
+  config.vm.define "major-upgrade-oldvm" do |m1|
+      use_preloaded_box m1, "ubuntu/bionic64", ".."
+      m1.vm.provision :shell, :inline => <<-SH
+# setup vanilla system, populated with some data
+cd /mailinabox
+export PRIMARY_HOSTNAME=majorupgrade.local
+export FEATURE_MUNIN=false
+source tests/system-setup/setup-defaults.sh
+tests/system-setup/vanilla.sh \
+   --checkout-repo="$MIABLDAP_GIT" \
+   --checkout-treeish="$FINAL_RELEASE_TAG_BIONIC64" \
+   --checkout-targetdir="$HOME/miabldap-bionic" \
+   --populate=basic \
+   --populate=totpuser \
+   --capture-state=/tmp/state/oldvm \
+   || exit 1
+SH
+    end
+
+    config.vm.define "major-upgrade-newvm" do |m2|
+      use_preloaded_box m2, "ubuntu/jammy64", ".."
+      m2.vm.provision :shell, :inline => <<-SH
+cd /mailinabox
+export PRIMARY_HOSTNAME=majorupgrade.local
+export FEATURE_MUNIN=false
+tests/system-setup/from-backup.sh \
+   "#{ENV['storage_user']}" \
+   "#{ENV['duplicity_files']}" \
+   "#{ENV['secret_key']}" \
+   "#{ENV['restore_to']}" \
+   --capture-state=/tmp/state/newvm \
+   || exit 1
+SH
+    end
+
+end
