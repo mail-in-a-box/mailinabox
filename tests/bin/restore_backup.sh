@@ -59,13 +59,53 @@ if [ ! -x /usr/bin/duplicity ]; then
     apt-get install -y -qq duplicity
 fi
 
-if ! id openldap 2>/dev/null; then
-    # ensure there's an openldap user or duplicity assigns odd permissions
-    useradd --shell /bin/false -r -M -U -c "OpenLDAP Server Account" -d /var/lib/ldap openldap
-fi
+# Ensure users and groups are created so that duplicity properly
+# restores permissions.
 
-if ! id "$storage_user" 2>/dev/null; then
+# format:
+#    user:group:comment:homedir:shell
+system_users=(
+    "openldap:openldap:OpenLDAP Server Account:/var/lib/ldap:/bin/false"
+    "opendkim:opendkim::/run/opendkim:/usr/sbin/nologin"
+    "spampd:spampd::/nonexistent:/usr/sbin/nologin"
+    "www-data:www-data:www-data:/var/www:/usr/sbin/nologin"
+)
+system_groups=(
+    "ssl-cert"
+)
+
+# add system groups
+idx=0
+while [ $idx -lt ${#system_groups[*]} ]; do
+    group="${system_groups[$idx]}"
+    groupadd -fr "$group"
+    let idx+=1
+done
+
+# add system users
+idx=0
+while [ $idx -lt ${#system_users[*]} ]; do
+    user=$(awk -F: '{print $1}' <<<"${system_users[$idx]}")
+    group=$(awk -F: '{print $2}' <<<"${system_users[$idx]}")
+    comment=$(awk -F: '{print $3}' <<<"${system_users[$idx]}")
+    homedir=$(awk -F: '{print $4}' <<<"${system_users[$idx]}")
+    shellpath=$(awk -F: '{print $5}' <<<"${system_users[$idx]}")
+
+    if ! id "$user" >/dev/null 2>&1; then
+        opts="-g $group"
+        if [ "$group" = "$user" ]; then
+            opts="-U"
+        fi
+        echo "Add user $user"
+        useradd --shell "$shellpath" -r -M $opts -c "$comment" -d "$homedir" "$user"
+    fi
+    let idx+=1
+done
+
+# add regular user STORAGE_USER
+if ! id "$storage_user" >/dev/null 2>&1; then
     # ensure the storage user exists
+    echo "Add user $storage_user"
     useradd -m $storage_user
     chmod o+x /home/$storage_user
 fi
@@ -93,12 +133,13 @@ codes="${PIPESTATUS[0]}${PIPESTATUS[1]}"
 #
 # check that filesystem uid's/gid's mapped to actual users/groups
 #
-files_with_nouser="$(find "$restore_to_dir" -nouser -nogroup)"
-if [ "$files_with_nouser" != "" ]; then
+files_with_nouser="$(find "$restore_to_dir" -nouser)"
+files_with_nogroup="$(find "$restore_to_dir" -nogroup)"
+if [ "${files_with_nouser}${files_with_nogroup}" != "" ]; then
     echo ""
     echo "WARNING: some restored file/directory ownerships are unmatched"
     echo "They are:"
-    echo "$files_with_nouser"
+    (find "$restore_to_dir" -nouser; find "$restore_to_dir" -nogroup) | sort | uniq
 fi
 
 

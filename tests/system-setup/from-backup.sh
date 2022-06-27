@@ -41,6 +41,7 @@ secret_key="$3"      # /path/to/secret_key.txt
 restore_to="$4"      # eg. /home/user-data
 shift; shift; shift; shift;
 
+H1 "Restore from backup files"
 tests/bin/restore_backup.sh \
     "$storage_user" \
     "$duplicity_files" \
