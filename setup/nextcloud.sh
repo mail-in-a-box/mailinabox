@@ -41,10 +41,10 @@ nextcloud_hash=0d496eb0808c292502479e93cd37fe2daf95786a
 #   https://github.com/nextcloud/user_external/blob/master/appinfo/info.xml
 # * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
 #   copying it from the error message when it doesn't match what is below.
-contacts_ver=4.0.7
-contacts_hash=45e7cf4bfe99cd8d03625cf9e5a1bb2e90549136
-calendar_ver=3.0.4
-calendar_hash=d0284b68135777ec9ca713c307216165b294d0fe
+contacts_ver=4.1.1
+contacts_hash=7508069a6d2b46d216df5333e3295c19151dcc50
+calendar_ver=3.4.0
+calendar_hash=8667c3b47012bfee5545daa30dcc68ef8d39d493
 user_external_ver=v3.0.0
 user_external_hash=
 
@@ -56,6 +56,11 @@ apt_install curl php${PHP_VER} php${PHP_VER}-fpm \
 	php${PHP_VER}-cli php${PHP_VER}-sqlite3 php${PHP_VER}-gd php${PHP_VER}-imap php${PHP_VER}-curl \
 	php${PHP_VER}-dev php${PHP_VER}-gd php${PHP_VER}-xml php${PHP_VER}-mbstring php${PHP_VER}-zip php${PHP_VER}-apcu \
 	php${PHP_VER}-intl php${PHP_VER}-imagick php${PHP_VER}-gmp php${PHP_VER}-bcmath
+
+# Configure apcu for cli use - required for occ use
+cat > /etc/php/$PHP_VER/cli/conf.d/20-miab.ini <<EOF
+apc.enable_cli=1
+EOF
 
 InstallNextcloud() {
 
@@ -72,11 +77,11 @@ InstallNextcloud() {
 	echo "Upgrading to Nextcloud version $version"
 	echo
 
-        # Download and verify
-        get_nc_download_url $version .zip
-        download_link "$DOWNLOAD_URL" to-file use-cache "$DOWNLOAD_URL_CACHE_ID" "" "$hash"
-        rm -f /tmp/nextcloud.zip
-        $DOWNLOAD_FILE_REMOVE && mv "$DOWNLOAD_FILE" /tmp/nextcloud.zip || ln -s "$DOWNLOAD_FILE" /tmp/nextcloud.zip
+    # Download and verify
+	get_nc_download_url $version .zip
+	download_link "$DOWNLOAD_URL" to-file use-cache "$DOWNLOAD_URL_CACHE_ID" "" "$hash"
+	rm -f /tmp/nextcloud.zip
+	$DOWNLOAD_FILE_REMOVE && mv "$DOWNLOAD_FILE" /tmp/nextcloud.zip || ln -s "$DOWNLOAD_FILE" /tmp/nextcloud.zip
 
 	# Remove the current owncloud/Nextcloud
 	rm -rf /usr/local/lib/owncloud
@@ -90,11 +95,11 @@ InstallNextcloud() {
 	# their github repositories.
 	mkdir -p /usr/local/lib/owncloud/apps
 
-	wget_verify https://github.com/nextcloud-releases/contacts/archive/refs/tags/v$version_contacts.tar.gz $hash_contacts /tmp/contacts.tgz
+	wget_verify https://github.com/nextcloud-releases/contacts/releases/download/v$version_contacts/contacts-v$version_contacts.tar.gz $hash_contacts /tmp/contacts.tgz
 	tar xf /tmp/contacts.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/contacts.tgz
 
-	wget_verify https://github.com/nextcloud-releases/calendar/archive/refs/tags/v$version_calendar.tar.gz $hash_calendar /tmp/calendar.tgz
+	wget_verify https://github.com/nextcloud-releases/calendar/releases/download/v$version_calendar/calendar-v$version_calendar.tar.gz $hash_calendar /tmp/calendar.tgz
 	tar xf /tmp/calendar.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/calendar.tgz
 
@@ -198,10 +203,12 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 		elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^1[3456789] ]]; then
 			echo "Upgrades from Mail-in-a-Box prior to v60 with Nextcloud 19 or earlier are not supported. Upgrade to the latest Mail-in-a-Box version supported on your machine first. Setup will continue, but skip the Nextcloud migration."
 			return 0
-		elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^20 ]]; then
+		fi
+		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^20 ]]; then
 			InstallNextcloud 21.0.7 f5c7079c5b56ce1e301c6a27c0d975d608bb01c9 4.0.7 8ab31d205408e4f12067d8a4daa3595d46b513e3 3.0.4 6fb1e998d307c53245faf1c37a96eb982bbee8ba 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
 			CURRENT_NEXTCLOUD_VER="21.0.7"
-		elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^21 ]]; then
+		fi
+		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^21 ]]; then
 			InstallNextcloud 22.2.2 489eaf4147ad1b59385847b7d7db293712cced88 4.0.7 8ab31d205408e4f12067d8a4daa3595d46b513e3 3.0.4 6fb1e998d307c53245faf1c37a96eb982bbee8ba 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
 			CURRENT_NEXTCLOUD_VER="22.2.2"
 		fi
@@ -209,11 +216,6 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 
 	InstallNextcloud $nextcloud_ver $nextcloud_hash $contacts_ver $contacts_hash $calendar_ver $calendar_hash $user_external_ver $user_external_hash
 fi
-
-# ### Configure apcu
-cat > /etc/php/$PHP_VER/cli/conf.d/20-miab.ini <<EOF
-apc.enable_cli=1
-EOF
 
 # ### Configuring Nextcloud
 
