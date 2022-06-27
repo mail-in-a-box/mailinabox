@@ -1,12 +1,9 @@
 #!/bin/bash
 
-# load defaults for MIABLDAP_RELEASE_TAG and MIABLDAP_GIT
+# load defaults for MIABLDAP_GIT and FINAL_RELEASE_TAG_BIONIC64 (make available to Vagrantfile)
 pushd "../../.." >/dev/null
 source tests/system-setup/setup-defaults.sh || exit 1
 popd >/dev/null
-
-# TODO: replace MIABLDAP_RELEASE_TAG with the actual tag for the last supported version of miabldap for bionic64
-UBUNTU_BIONIC64_RELEASE_TAG=$MIABLDAP_RELEASE_TAG
 
 vagrant destroy -f
 rm -f prepcode.txt
@@ -28,7 +25,7 @@ boxes=(
 # preload packages from source of the following git tags. empty string
 # means use the current source tree
 tags=(
-    "$UBUNTU_BIONIC64_RELEASE_TAG"
+    "$FINAL_RELEASE_TAG_BIONIC64"
     ""
 )
 try_reboot=(

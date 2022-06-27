@@ -51,10 +51,13 @@ export NC_ADMIN_PASSWORD="${NC_ADMIN_PASSWORD:-Test_1234}"
 export MIAB_UPSTREAM_GIT="${MIAB_UPSTREAM_GIT:-https://github.com/mail-in-a-box/mailinabox.git}"
 export UPSTREAM_TAG="${UPSTREAM_TAG:-}"
 
-# For setup scripts that install miabldap releases
+# For setup scripts that install miabldap releases (eg. upgrade tests)
 export MIABLDAP_GIT="${MIABLDAP_GIT:-https://github.com/downtownallday/mailinabox-ldap.git}"
-export MIABLDAP_RELEASE_TAG="${MIABLDAP_RELEASE_TAG:-v55}"
+export MIABLDAP_RELEASE_TAG="${MIABLDAP_RELEASE_TAG:-v60}"
 
 # When running tests that require php, use this version of php. This
 # should be the same as what's in setup/functions.sh.
 export PHP_VER=8.0
+
+# Tag of last version supported on Ubuntu Bionic 18.04
+FINAL_RELEASE_TAG_BIONIC64=master #v57a

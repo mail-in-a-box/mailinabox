@@ -10,9 +10,8 @@
 # Nextcloud and Roundcube are downloaded with wget by the setup
 # scripts, so they are not included
 #
-# postfix, postgrey and slapd because they require terminal input
+# slapd - we want to test installation with setup/ldap.sh
 #
-
 
 if [ ! -d "setup" ]; then
     echo "Run from the miab root directory"
@@ -35,6 +34,9 @@ fi
 
 # prevent apt from running needrestart(1)
 export NEEDRESTART_SUSPEND=true
+
+# prevent interaction during package install
+export DEBIAN_FRONTEND=noninteractive
 
 # what major version of ubuntu are we installing on?
 OS_MAJOR=$(. /etc/os-release; echo $VERSION_ID | awk -F. '{print $1}')
@@ -66,31 +68,17 @@ install_packages() {
                  ;;
         esac
         
-        # don't install postfix - causes problems with setup scripts
-        # and requires user input. exclude postgrey because it will
-        # install postfix as a dependency
-        pkgs="$(sed 's/postgrey//g' <<< "$pkgs")"
-        pkgs="$(sed 's/postfix-[^ $]*//g' <<<"$pkgs")"
-        pkgs="$(sed 's/postfix//g' <<<"$pkgs")"
-
-        # don't install slapd - it requires user input
+        # don't install slapd
         pkgs="$(sed 's/slapd//g' <<< "$pkgs")"
 
         # manually set PHP_VER if necessary
         if grep "PHP_VER" <<<"$pkgs" >/dev/null; then
             pkgs="$(sed "s/\${*PHP_VER}*/$PHP_VER/g" <<< "$pkgs")"
         fi
-
-        if [ $OS_MAJOR -ge 22 ]; then
-            # don't install opendmarc on ubuntu 22 and higher - it requires
-            # interactive user input
-            pkgs="$(sed 's/opendmarc//g' <<< "$pkgs")"
-        fi
         
         if [ ! -z "$pkgs" ]; then
             H2 "install: $pkgs"
             if ! $dry_run; then
-                #apt-get install -y -qq $pkgs
                 exec_no_output apt-get install -y $pkgs
             fi
         fi
@@ -109,12 +97,26 @@ install_ppas() {
         done 
 }
 
+add_swap() {
+    H1 "Add a swap file to the system"
+    if ! $dry_run; then
+	    dd if=/dev/zero of=/swapfile bs=1024 count=$[1024*1024] status=none
+	    chmod 600 /swapfile
+	    mkswap /swapfile
+	    swapon /swapfile
+	    echo "/swapfile   none    swap    sw    0   0" >> /etc/fstab
+    fi
+}
+
 
 # install PPAs from sources
 install_ppas
 
+# add swap file
+add_swap
+
 # obtain PHP_VER variable from sources
-PHP_VER=$(grep "^PHP_VER=" setup/functions.sh  | awk -F= '{ print $2 }')
+PHP_VER=$(source setup/functions.sh; echo $PHP_VER)
 
 
 if ! $dry_run; then
@@ -138,11 +140,13 @@ if ! $dry_run; then
     H2 "openssh-server"
     exec_no_output apt-get install -y openssh-server
     # ssh-rsa no longer a default algorithm, but still used by vagrant
-    echo "PubkeyAcceptedAlgorithms +ssh-rsa" > /etc/ssh/sshd_config.d/miabldap.conf
+    # echo "PubkeyAcceptedAlgorithms +ssh-rsa" > /etc/ssh/sshd_config.d/miabldap.conf
     H2 "emacs"
     exec_no_output apt-get install -y emacs-nox
     H2 "nptdate"
     exec_no_output apt-get install -y ntpdate
+    H2 "net-tools"
+    exec_no_output apt-get install -y net-tools
 
     # these are added by system-setup scripts and needed for test runner
     H2 "python3-dnspython jq"
