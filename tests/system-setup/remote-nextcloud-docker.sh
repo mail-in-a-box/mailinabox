@@ -47,7 +47,7 @@ fi
 init() {
     H1 "INIT"
     init_test_system
-    init_miab_testing || die "Initialization failed"
+    init_miab_testing "$@" || die "Initialization failed"
 }
 
 
@@ -88,20 +88,6 @@ install_nextcloud_docker() {
     H2 "docker: apt-get update"
     docker exec NC apt-get update || die "docker: apt-get update failed"
 
-    # allow LDAP access from docker image
-    H2 "Allow ldaps through firewall so Nextcloud can perform LDAP searches"
-    ufw allow ldaps || die "Unable to modify firewall to permit ldaps"
-
-    # add MiaB-LDAP's ca_certificate.pem to docker's trusted cert list
-    # (because setup/ssl.sh created its own self-signed ca)
-    H2 "docker: update trusted CA list"
-    docker cp \
-           $STORAGE_ROOT/ssl/ca_certificate.pem \
-           NC:/usr/local/share/ca-certificates/mailinabox.crt \
-        || die "docker: copy ca_certificate.pem failed"
-    docker exec NC update-ca-certificates \
-        || die "docker: update-ca-certificates failed"
-
     # wait for Nextcloud installation to complete
     H2 "Wait for Nextcloud installation to complete"
     wait_for_docker_nextcloud NC installed || die "Giving up"
@@ -123,12 +109,38 @@ install_nextcloud_docker() {
     docker exec -u www-data NC ./occ app:enable user_ldap \
         || die "docker: enabling user_ldap failed ($?)"
 
+    # ldap queries from the container use the container's ip address,
+    # not the exposed docker port for nextcloud. the variable
+    # NC_HOST_SRC_IP is used by the remote-nextcloud mod to configure
+    # the firewall allowing ldap queries to reach slapd from the
+    # container
+    export NC_HOST_SRC_IP=$(get_container_ip)
+    [ $? -ne 0 ] && die "Unable to get docker container IP address"
+}
+
+get_container_ip() {
+    local id
+    id=$(docker ps -aqf "name=NC")
+    [ $? -ne 0 ] && return 1
+    docker exec NC grep "$id" /etc/hosts | awk '{print $1}'
+}
+
+connect_nextcloud_to_miab() {
     #
     # integrate Nextcloud with MiaB-LDAP
     #    
-    H2 "docker: integrate Nextcloud with MiaB-LDAP"
-    
+    # add MiaB-LDAP's ca_certificate.pem to containers's trusted cert
+    # list (because setup/ssl.sh created its own self-signed ca)
+    H2 "docker: update trusted CA list"
+    docker cp \
+           $STORAGE_ROOT/ssl/ca_certificate.pem \
+           NC:/usr/local/share/ca-certificates/mailinabox.crt \
+        || die "docker: copy ca_certificate.pem failed"
+    docker exec NC update-ca-certificates \
+        || die "docker: update-ca-certificates failed"
+
     # execute the script that sets up Nextcloud
+    H2 "docker: run remote-nextcloud-use-miab.sh"
     docker cp setup/mods.available/remote-nextcloud-use-miab.sh NC:/tmp \
         || die "docker: cp remote-nextcloud-use-miab.sh failed"
     docker exec NC /tmp/remote-nextcloud-use-miab.sh \
@@ -142,12 +154,9 @@ install_nextcloud_docker() {
 
 
 
-
 do_upgrade() {
-    local populate_name="$1"
-
     # initialize test system
-    init
+    init "$@"
 
     # we install w/o remote nextcloud first so we can add
     # a user w/contacts and ensure the contact exists in the
@@ -155,20 +164,21 @@ do_upgrade() {
     disable_miab_mod "remote-nextcloud"
 
     # install w/o remote Nextcloud
-    miab_ldap_install
-    
-    # populate some data
-    [ ! -z "$populate_name" ] && populate_by_name "$populate_name"
-    
-    # install Nextcloud in a Docker container (MiaB must be available)
+    miab_ldap_install "$@"
+        
+    # install Nextcloud in a Docker container. exports NC_HOST_SRC_IP.
     install_nextcloud_docker
     
-    H1 "Enable remote-nextcloud mod"
+    H1 "Enable the remote-nextcloud mod"
     enable_miab_mod "remote-nextcloud" \
         || die "Could not enable remote-nextcloud mod"
 
-    # re-run setup to use the remote Nextcloud
+    # re-run setup (miab_ldap_install) to use the remote Nextcloud
     miab_ldap_install
+
+    # connect the remote Nextcloud to miab
+    H1 "Connect Nextcloud to MiaB-LDAP (configure user_ldap)"
+    connect_nextcloud_to_miab
 }
 
 
@@ -176,15 +186,20 @@ do_default() {
     # initialize test system
     init
 
+    # install Nextcloud in a Docker container. exports NC_HOST_SRC_IP.
+    export PRIVATE_IP=$(source setup/functions.sh; get_default_privateip 4)
+    install_nextcloud_docker
+
     H1 "Enable remote-nextcloud mod"
     enable_miab_mod "remote-nextcloud" \
         || die "Could not enable remote-nextcloud mod"
     
     # run setup to use the remote Nextcloud (doesn't need to be available)
-    miab_ldap_install
+    miab_ldap_install "$@"
 
-    # install Nextcloud in a Docker container (MiaB must be available)
-    install_nextcloud_docker    
+    # connect the remote Nextcloud to miab
+    H1 "Connect Nextcloud to MiaB-LDAP (configure user_ldap)"
+    connect_nextcloud_to_miab
 }
 
 

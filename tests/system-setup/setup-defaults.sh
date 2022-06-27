@@ -42,6 +42,7 @@ export NC_PROTO=${NC_PROTO:-http}
 export NC_HOST=${NC_HOST:-127.0.0.1}
 export NC_PORT=${NC_PORT:-8000}
 export NC_PREFIX=${NC_PREFIX:-/}
+export NC_HOST_SRC_IP="${NC_HOST_SRC_IP:-}"
 
 # For setup scripts that may be installing a remote Nextcloud
 export NC_ADMIN_USER="${NC_ADMIN_USER:-admin}"

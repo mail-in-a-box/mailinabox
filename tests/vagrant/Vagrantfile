@@ -16,7 +16,7 @@ export FEATURE_MUNIN=false
 export EHDD_KEYFILE=$HOME/keyfile
 echo -n "boo" >$EHDD_KEYFILE
 tests/system-setup/remote-nextcloud-docker.sh || exit 1
-tests/runner.sh ehdd default remote-nextcloud || exit 2
+tests/runner.sh ehdd remote-nextcloud default || exit 2
 SH
     end
   end
@@ -28,8 +28,8 @@ SH
 cd /mailinabox
 export PRIMARY_HOSTNAME=qa2.abc.com
 export FEATURE_MUNIN=false
-tests/system-setup/remote-nextcloud-docker.sh upgrade basic || exit 1
-tests/runner.sh default remote-nextcloud upgrade-basic || exit 2
+tests/system-setup/remote-nextcloud-docker.sh upgrade --populate=basic || exit 1
+tests/runner.sh remote-nextcloud upgrade-basic default || exit 2
 SH
   end
 

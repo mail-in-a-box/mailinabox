@@ -144,7 +144,31 @@ remote_nextcloud_handler() {
     local new_url="$NC_PROTO://$NC_HOST:$NC_PORT$NC_PREFIX"
 
     if [ ! -z "$NC_HOST" ]; then
-        echo "Using Nextcloud ${new_url}"
+
+        echo ""
+        echo "Enter the source ip addresses, separated by spaces, that your remote Nextcloud uses to perform ldap queries. Include ip4 and ip6 addresses. Typically you'd leave this blank, unless you have a proxy in front of Nextcloud."
+        ans=""
+        if [ -z "${NC_HOST_SRC_IP:-}" ]; then
+            if [ -z "${NONINTERACTIVE:-}" ]; then
+                read -p "[your Nextcloud's source IP address for ldap queries] " ans
+            fi
+        else
+            if [ -z "${NONINTERACTIVE:-}" ]; then
+                read -p "[$NC_HOST_SRC_IP] " ans
+            fi
+            if [ -z "$ans" ]; then
+                ans="$NC_HOST_SRC_IP"
+            elif [ "$ans" = "none" ]; then
+                ans=""
+            fi
+        fi
+        NC_HOST_SRC_IP="$ans"
+
+        if [ -z "$NC_HOST_SRC_IP" ]; then
+            echo "Using Nextcloud ${new_url}"
+        else
+            echo "Using Nextcloud ${new_url} (but, the source ip of ldap queries will come from $NC_HOST_SRC_IP)"
+        fi
 
         # configure roundcube contacts
         configure_roundcube "$NC_HOST"
@@ -156,13 +180,42 @@ remote_nextcloud_handler() {
         # files and remove owncloud cron job
         chmod 000 /usr/local/lib/owncloud
         rm -f /etc/cron.d/mailinabox-nextcloud
+
+        # allow the remote nextcloud access to our ldap server
+        
+        # 1. remove existing firewall rules
+        local from_ips=( $(ufw status | awk '/remote_nextcloud/ {print $3}') )
+        for ip in "${from_ips[@]}"; do
+            hide_output ufw delete allow proto tcp from "$ip" to any port ldaps
+        done
+        
+        # 2. add new firewall rules
+        #
+        # if the ip address used by the Nextcloud server to contact
+        # this host with ldap queries is different than the one used
+        # by MiaB to interact with Nextcloud (eg. an nginx proxy in
+        # front of Nextcloud), then set NC_HOST_SRC_IP as an array of
+        # host or ip address expected to be used by the source
+        local ip
+        if [ ! -z "${NC_HOST_SRC_IP:-}" ]; then
+            from_ips=( $NC_HOST_SRC_IP )
+        else
+            from_ips=(
+                $(getent ahostsv4 "$NC_HOST" | head -1 | awk '{print $1}')
+                $(getent ahostsv6 "$NC_HOST" | head -1 | awk '{print $1}')
+            )
+        fi
+        for ip in "${from_ips[@]}"; do
+            hide_output ufw allow proto tcp from "$ip" to any port ldaps comment "remote_nextcloud"
+        done
     fi
     
     tools/editconf.py /etc/mailinabox_mods.conf \
                       "NC_PROTO=$NC_PROTO" \
                       "NC_HOST=$NC_HOST" \
                       "NC_PORT=$NC_PORT" \
-                      "NC_PREFIX=$NC_PREFIX"
+                      "NC_PREFIX=$NC_PREFIX" \
+                      "NC_HOST_SRC_IP='${NC_HOST_SRC_IP:-}'"
 }
 
 remote_nextcloud_handler
