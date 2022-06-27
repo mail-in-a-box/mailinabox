@@ -11,7 +11,7 @@ if [ -e "$EHDD_IMG" ]; then
         systemctl disable dovecot
         systemctl disable cron
         systemctl disable nginx
-        systemctl disable php7.2-fpm
+        systemctl disable php8.0-fpm
         systemctl disable mailinabox
         systemctl disable fail2ban
         systemctl disable miabldap-capture

@@ -2,7 +2,7 @@
 if [ -s /etc/mailinabox.conf ]; then
     systemctl stop mailinabox
     systemctl stop nginx
-    systemctl stop php7.2-fpm
+    systemctl stop php8.0-fpm
     systemctl stop postfix
     systemctl stop dovecot
     systemctl stop cron
