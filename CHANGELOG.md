@@ -20,6 +20,10 @@ No features of Mail-in-a-Box have changed in this release, but with the newer ve
 * fail2ban is upgraded to 0.11.2.
 * nginx is upgraded to 1.18.
 
+Also:
+
+* Roundcube's login session cookie was tightened. Existing sessions may require a manual logout.
+
 Version 57a (June 19, 2022)
 ---------------------------
 
