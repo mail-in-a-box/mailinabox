@@ -173,6 +173,12 @@ cat > $RCM_CONFIG <<EOF;
     # 	'member_filter'   => '(|(objectClass=mailGroup)(objectClass=mailUser))',
     # )
 );
+
+/* ensure roudcube session id's aren't leaked to other parts of the server */
+\$config['session_path'] = '/mail/';
+
+/* prevent CSRF, requires php 7.3+ */
+\$config['session_samesite'] = 'Strict';
 ?>
 EOF
 
