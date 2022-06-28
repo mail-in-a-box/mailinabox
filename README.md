@@ -21,7 +21,7 @@ Upstream changes are merged as they become available, and releases are numbered 
 
 ## How to connect to a remote Nextcloud
 
-To integrate Mail-in-a-Box w/LDAP (MiaB-LDAP) with Nextcloud, changes must be made on both sides.  These changes are mostly automated, you'll just need to copy a couple of files and apply a firewall rule.
+To integrate Mail-in-a-Box w/LDAP (MiaB-LDAP) with Nextcloud, changes must be made on both sides.  These changes are mostly automated, you'll just need to copy a couple of files.
 
 **On MiaB-LDAP**
 
