@@ -11,6 +11,15 @@
 #   4. optionally install and configure ssmtp so system mail is
 #      sent to MiaB-LDAP
 #
+# It should be run after configuring MiaB-LDAP to use a remote
+# nextcloud, which is accomplished by enabling the setup mod
+# "remote-nextcloud.sh." Creating a symbolic link to
+# remote-nextcloud.sh in the directory
+# <miab-installation-directory>/local with the same name enables the
+# mod. You'll have to re-run setup by executing setup/start.sh (or
+# ehdd/start-encrypted.sh if you're using encryption-at-rest).
+#
+
 VERBOSE=0
 
 

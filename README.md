@@ -31,7 +31,7 @@ Once enabled, you'll find that Roundcube and Z-Push (ActiveSync) will use the re
 
 **On the remote Nextcloud**
 
-Copy the file `setup/mods.available/remote-nextcloud-use-miab.sh` to the Nextcloud box and run it as root. This will configure Nextcloud's "LDAP user and group backend" with the MiaB-LDAP details and ensure the contacts and calendar apps are installed. *This does not replace or alter your ability to log into Nextcloud with any existing local Nextcloud accounts. It only allows MiaB-LDAP users to log into Nextcloud using their MiaB-LDAP credentials.*
+Copy the file `setup/mods.available/connect-nextcloud-to-miab.sh` to the Nextcloud box and run it as root. This will configure Nextcloud's "LDAP user and group backend" with the MiaB-LDAP details and ensure the contacts and calendar apps are installed. *This does not replace or alter your ability to log into Nextcloud with any existing local Nextcloud accounts. It only allows MiaB-LDAP users to log into Nextcloud using their MiaB-LDAP credentials.*
 
 ## Under-the-Hood
 

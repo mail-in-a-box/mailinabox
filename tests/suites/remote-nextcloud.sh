@@ -14,7 +14,7 @@
 #    - The remote Nextcloud has been configured to use MiaB-LDAP
 #      for users and groups.
 #
-#      ie. remote-nextcloud-use-miab.sh was copied to the remote Nextcloud
+#      ie. connect-nextcloud-to-miab.sh was copied to the remote Nextcloud
 #      server and was run successfully there
 #
 

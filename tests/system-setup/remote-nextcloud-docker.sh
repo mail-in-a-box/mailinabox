@@ -140,16 +140,16 @@ connect_nextcloud_to_miab() {
         || die "docker: update-ca-certificates failed"
 
     # execute the script that sets up Nextcloud
-    H2 "docker: run remote-nextcloud-use-miab.sh"
-    docker cp setup/mods.available/remote-nextcloud-use-miab.sh NC:/tmp \
-        || die "docker: cp remote-nextcloud-use-miab.sh failed"
-    docker exec NC /tmp/remote-nextcloud-use-miab.sh \
+    H2 "docker: run connect-nextcloud-to-miab.sh"
+    docker cp setup/mods.available/connect-nextcloud-to-miab.sh NC:/tmp \
+        || die "docker: cp connect-nextcloud-to-miab.sh failed"
+    docker exec NC /tmp/connect-nextcloud-to-miab.sh \
            . \
            "$NC_ADMIN_USER" \
            "$NC_ADMIN_PASSWORD" \
            "$PRIMARY_HOSTNAME" \
            "$LDAP_NEXTCLOUD_PASSWORD" \
-        || die "docker: error running remote-nextcloud-use-miab.sh"
+        || die "docker: error running connect-nextcloud-to-miab.sh"
 }
 
 
