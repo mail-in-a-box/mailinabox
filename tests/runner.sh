@@ -20,6 +20,7 @@ default_suites=(
 	mail-aliases
 	mail-access
 	management-users
+	z-push
 )
 
 extra_suites=(

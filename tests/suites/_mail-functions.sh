@@ -59,6 +59,16 @@ start_log_capture() {
 		MAIL_LOG_LINECOUNT=$(wc -l /var/log/mail.log 2>>$TEST_OF | awk '{print $1}') || die "could not access /var/log/mail.log"
 	fi
 	DOVECOT_LOG_LINECOUNT=$(doveadm log errors 2>>$TEST_OF | wc -l | awk '{print $1}') || die "could not access doveadm error logs"
+	ZPUSH_LOG_LINECOUNT=0
+	if [ -e /var/log/z-push/z-push.log ]; then
+		# z-push-errors.log only has errors, but z-push.log has errors
+		# and other logging, so use that
+		ZPUSH_LOG_LINECOUNT=$(wc -l /var/log/z-push/z-push.log 2>>$TEST_OF | awk '{print $1}') || die "could not access /var/log/z-push/z-push.log"
+	fi
+	NGINX_ACCESS_LOG_LINECOUNT=0
+	if [ -e /var/log/nginx/access.log ]; then
+		NGINX_ACCESS_LOG_LINECOUNT=$(wc -l /var/log/nginx/access.log 2>>$TEST_OF | awk '{print $1}') || die "could not access /var/log/nginx/access.log"
+	fi
 }
 
 start_mail_capture() {
@@ -101,6 +111,9 @@ dump_capture_logs() {
 	echo ""
 	echo "============= DOVECOT ERRORS =============="
 	doveadm log errors | tail --lines=+$DOVECOT_LOG_LINECOUNT 2>>$TEST_OF
+	echo ""
+	echo "============= Z-PUSH LOG =============="
+	tail --lines=+$ZPUSH_LOG_LINECOUND /var/log/z-push/z-push.log 2>>TEST_OF
 }
 
 detect_syslog_error() {
@@ -254,6 +267,86 @@ detect_mail_log_error() {
 	return ${x[2]}
 }
 
+detect_zpush_log_error() {
+	record
+	record "[Detect z-push log errors]"
+	local count
+	let count="$ZPUSH_LOG_LINECOUNT + 1"
+	tail --lines=+$count /var/log/z-push/z-push.log 2>>$TEST_OF | (
+		let ec=0 # error count
+		let wc=0 # warning count
+		let ignored=0
+		while read line; do
+			awk '
+/\[FATAL\]/ && /Unable to read filename .\/var\/lib\/z-push\/users. after 3 retries/ { exit 2 }
+/\[FATAL\]/ { exit 1 }
+/\[WARN\]/ { exit 2 }
+' \
+				>>$TEST_OF 2>&1 <<< "$line"
+			r=$?
+			if [ $r -eq 1 ]; then
+				let ec+=1
+				record "$F_DANGER[ERROR] $line$F_RESET"
+			elif [ $r -eq 2 ]; then
+				let wc+=1
+				record "$F_WARN[ WARN] $line$F_RESET"
+			elif [ $r -eq 3 ]; then
+				let ignored+=1
+			else
+				record "[   OK] $line"
+			fi
+		done
+		record "$ignored unreported/ignored log lines"
+		[ $ec -gt 0 ] && exit 0
+		exit 1 # no errors
+	)
+	local x=( ${PIPESTATUS[*]} )
+	[ ${x[0]} -ne 0 ] && die "Could not read /var/log/z-push/z-push.log"
+	return ${x[1]}
+}
+
+detect_nginx_access_log_error() {
+	record
+	record "[Detect nginx access log errors]"
+	local count
+	let count="$NGINX_ACCESS_LOG_LINECOUNT + 1"
+	tail --lines=+$count /var/log/nginx/access.log 2>>$TEST_OF | (
+		let ec=0 # error count
+		let wc=0 # warning count
+		let ignored=0
+		while read line; do
+			cat <<EOF | python3
+import csv,os,sys
+for row in csv.reader(sys.stdin, delimiter=' '):
+    try:
+        status=int(row[6])
+        if status >= 400: os.exit(1)
+    except:
+        pass
+    #print("ROW=( '%s' )" % "','".join(row))
+EOF
+			>>$TEST_OF 2>&1 <<< "$line"
+			r=$?
+			if [ $r -eq 1 ]; then
+				let ec+=1
+				record "$F_DANGER[ERROR] $line$F_RESET"
+			elif [ $r -eq 2 ]; then
+				let wc+=1
+				record "$F_WARN[ WARN] $line$F_RESET"
+			elif [ $r -eq 3 ]; then
+				let ignored+=1
+			else
+				record "[   OK] $line"
+			fi
+		done
+		record "$ignored unreported/ignored log lines"
+		[ $ec -gt 0 ] && exit 0
+		exit 1 # no errors
+	)
+	local x=( ${PIPESTATUS[*]} )
+	[ ${x[0]} -ne 0 ] && die "Could not read /var/log/nginx/access.log"
+	return ${x[1]}
+}
 
 check_logs() {
 	local assert="${1:-false}"
@@ -287,6 +380,17 @@ check_logs() {
 	if array_contains mail ${types[@]}; then
 		detect_mail_log_error && $assert &&
 			test_failure "detected errors in mail log"
+	fi
+
+	if array_contains zpush ${types[@]} || array_contains z-push ${types[@]}
+	then
+		detect_zpush_log_error && $assert &&
+			test_failure "detected errors in z-push.log"
+	fi
+
+	if array_contains nginx_access ${types[@]}; then
+		detect_nginx_access_log_error && $assert &&
+			test_failure "detected errors in nginx access log"
 	fi
 }
 

@@ -23,7 +23,7 @@ rest_urlencoded() {
     # Return values:
     #   0 indicates success (curl returned 0 or a code deemed to be
     #     successful and HTTP status is >=200  but <300)
-    #   1 curl returned with non-zero code that indicates and error
+    #   1 curl returned with non-zero code that indicates an error
     #   2 the response status was <200 or >= 300
     #
     # Debug messages are sent to stderr
@@ -78,7 +78,8 @@ rest_urlencoded() {
     done
 
 	echo "spawn: curl -w \"%{http_code}\" -X $verb --user \"${auth_user}:xxx\" ${data[@]} $url" 1>&2
-	output=$(curl -s -S -w "%{http_code}" -X $verb --user "${auth_user}:${auth_pass}" "${data[@]}" $url)
+	# pipe through 'tr' to avoid bash "warning: command substitution: ignored null byte in input" where curl places a \0 between output and http_code
+	output=$(curl -s -S -w "%{http_code}" -X $verb --user "${auth_user}:${auth_pass}" "${data[@]}" $url | tr -d '\0')
 	local code=$?
 
 	# http status is last 3 characters of output, extract it

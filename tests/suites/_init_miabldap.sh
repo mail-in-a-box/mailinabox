@@ -7,6 +7,7 @@ set +eu
 . suites/_ldap-functions.sh || exit 1
 . suites/_mail-functions.sh || exit 1
 . suites/_mgmt-functions.sh || exit 1
+. suites/_zpush-functions.sh || exit 1
 
 
 MIAB_DIR=".."
