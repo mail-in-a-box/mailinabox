@@ -1,30 +1,17 @@
 name: commit-tests
-on: [workflow_dispatch]
+on: [push, workflow_dispatch]
 jobs:
-  # MiaB-LDAP connected to a remote Nextcloud
-  remote-nextcloud-docker:
+  # MiaB-LDAP using encryption-at-rest and connected to a remote Nextcloud
+  remote-nextcloud-docker-ehdd:
     runs-on: ubuntu-22.04
     env:
       PRIMARY_HOSTNAME: box1.abc.com
-      FEATURE_MUNIN: false
+      EHDD_KEYFILE: /tmp/keyfile
     steps:
       - uses: actions/checkout@v2
+      - name: create ehdd keyfile
+        run: sudo -E echo -n "secret" >/tmp/keyfile
       - name: setup
-        run: sudo -E tests/system-setup/remote-nextcloud-docker.sh upgrade basic
+        run: sudo -E tests/system-setup/remote-nextcloud-docker.sh
       - name: test-runner
-        run: sudo -E tests/runner.sh -dumpoutput -no-smtp-remote default remote-nextcloud upgrade-basic
-
-
-  # Upgrade from upstream install
-  upgrade-from-upstream:
-    runs-on: ubuntu-22.04
-    env:
-      PRIMARY_HOSTNAME: box2.abc.com
-      UPSTREAM_TAG: main
-    steps:
-      - uses: actions/checkout@v2
-      - name: setup
-        run: sudo -E tests/system-setup/upgrade-from-upstream.sh basic totpuser
-      - name: test-runner
-        run: sudo -E tests/runner.sh -dumpoutput -no-smtp-remote upgrade-basic upgrade-totpuser default
-
+        run: sudo -E tests/runner.sh -dumpoutput -no-smtp-remote ehdd default remote-nextcloud
