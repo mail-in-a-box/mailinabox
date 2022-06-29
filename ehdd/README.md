@@ -16,7 +16,7 @@ continue normal setup operation.
 
 At the end of setup, services that utilize /home/user-data will be
 disabled from starting automatically after a reboot (because
-/home/user-data will not have been mounted). Run `ehdd/startup.sh`
+/home/user-data will not have been mounted). Run `ehdd/run-this-after-reboot.sh`
 after a reboot to remount the encrypted hard drive and launch the
 disabled services.
 

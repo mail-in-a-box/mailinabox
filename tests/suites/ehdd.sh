@@ -26,8 +26,8 @@ test_ehdd_restart() {
     [ $? -ne 0 ] && test_failure "Could not unmount encryption-at-rest drive"
 
     # startup
-    record "[Run ehdd/startup.sh]"
-    ehdd/startup.sh >>$TEST_OF 2>&1
+    record "[Run ehdd/run-this-after-reboot.sh]"
+    ehdd/run-this-after-reboot.sh >>$TEST_OF 2>&1
     [ $? -ne 0 ] && test_failure "Could not start encryption-at-rest"
 
     popd >/dev/null

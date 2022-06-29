@@ -21,7 +21,7 @@ if [ -e "$EHDD_IMG" ]; then
         echo ""
         echo "IMPORTANT:"
         echo "    Services have been disabled at startup because the encrypted HDD will"
-        echo "    be unavailable. Run ehdd/startup.sh after a reboot."
+        echo "    be unavailable. Run ehdd/run-this-after-reboot.sh after a reboot."
     fi
 
 fi
