@@ -106,11 +106,15 @@ rest_urlencoded() {
 		fi
 	fi
 	if [ $REST_HTTP_CODE -lt 200 -o $REST_HTTP_CODE -ge 300 ]; then
-		REST_ERROR="REST status $REST_HTTP_CODE: $REST_OUTPUT"
+        if [ -z "$REST_OUTPUT" ]; then
+            REST_ERROR="Server returned status $REST_HTTP_CODE"
+        else
+            REST_ERROR="Server returned status $REST_HTTP_CODE: $REST_OUTPUT"
+        fi
 		echo "${F_DANGER}$REST_ERROR${F_RESET}" 1>&2
         if $is_local && [ $REST_HTTP_CODE -ge 500 ]; then
             echo -n "$F_WARN"
-            tail -100 /var/log/syslog
+            tail -100 /var/log/syslog | grep -i "(traceback|err|warn|fail|fatal|uncaught)" 1>&2
             echo -n "$F_RESET"
         fi
 		return 2

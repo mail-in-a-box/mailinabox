@@ -16,7 +16,7 @@ test_zpush_logon() {
     start_log_capture
     rest_urlencoded POST "/Microsoft-Server-ActiveSync?Cmd=Ping&DeviceId=$devid&DeviceType=$devtype" "$alice" "$alice_pw" 2>>$TEST_OF
     if [ $? -ne 0 ]; then
-        test_failure "$REST_ERROR"
+        test_failure "Error in REST call to z-push: $REST_ERROR"
     fi
     record "$REST_OUTPUT"
     
@@ -49,7 +49,7 @@ test_zpush_logon() {
         local count
         let count="$ZPUSH_LOG_LINECOUNT + 1"
         local matches
-        matches=( $(tail --lines=+$count /var/log/z-push/z-push.log 2>>$TEST_OF | grep -F -- "->Logon(" 2>>$TEST_OF | sed -E "s/^.* (.*)->Logon\\(.*$/\\1/" 2>>%TEST_OF | sort | uniq) )
+        matches=( $(tail --lines=+$count /var/log/z-push/z-push.log 2>>$TEST_OF | grep -F -- "->Logon(" 2>>$TEST_OF | sed -E "s/^.* (.*)->Logon\\(.*$/\\1/" 2>>$TEST_OF | sort | uniq) )
         record "found successful logons for backends: ${matches[*]}"
         if [ "${matches[*]}" != "$expected_backends" ]
         then

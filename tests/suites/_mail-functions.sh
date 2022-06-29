@@ -96,24 +96,24 @@ start_mail_capture() {
 dump_capture_logs() {
 	# dump log files
 	record "[capture log dump]"
-	echo ""
-	echo "============= SYSLOG ================"
+	record ""
+	record "============= SYSLOG ================"
 	tail --lines=+$SYS_LOG_LINECOUNT /var/log/syslog 2>>$TEST_OF
-	echo ""
-	echo "============= SLAPD ================="
+	record ""
+	record "============= SLAPD ================="
 	tail --lines=+$SLAPD_LOG_LINECOUNT /var/log/ldap/slapd.log 2>>$TEST_OF
-	echo ""
-	echo "============= MAIL.ERR =============="
+	record ""
+	record "============= MAIL.ERR =============="
 	tail --lines=+$MAIL_ERRLOG_LINECOUNT /var/log/mail.err 2>>$TEST_OF
-	echo ""
-	echo "============= MAIL.LOG =============="
+	record ""
+	record "============= MAIL.LOG =============="
 	tail --lines=+$MAIL_LOG_LINECOUNT /var/log/mail.log 2>>$TEST_OF
-	echo ""
-	echo "============= DOVECOT ERRORS =============="
+	record ""
+	record "============= DOVECOT ERRORS =============="
 	doveadm log errors | tail --lines=+$DOVECOT_LOG_LINECOUNT 2>>$TEST_OF
-	echo ""
-	echo "============= Z-PUSH LOG =============="
-	tail --lines=+$ZPUSH_LOG_LINECOUND /var/log/z-push/z-push.log 2>>TEST_OF
+	record ""
+	record "============= Z-PUSH LOG =============="
+	tail --lines=+$ZPUSH_LOG_LINECOUND /var/log/z-push/z-push.log 2>>$TEST_OF
 }
 
 detect_syslog_error() {
