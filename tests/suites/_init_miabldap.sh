@@ -12,7 +12,7 @@ set +eu
 
 MIAB_DIR=".."
 PYMAIL="./test_mail.py"
-
+EDITCONF="../tools/editconf.py"
 
 # options
 SKIP_REMOTE_SMTP_TESTS=no

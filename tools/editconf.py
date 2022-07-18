@@ -40,9 +40,11 @@ settings = sys.argv[2:]
 delimiter = "="
 delimiter_re = r"\s*=\s*"
 erase_setting = False
+erase_setting_via_comment = True
 comment_char = "#"
 folded_lines = False
 testing = False
+ini_section = None
 while settings[0][0] == "-" and settings[0] != "--":
 	opt = settings.pop(0)
 	if opt == "-s":
@@ -52,12 +54,18 @@ while settings[0][0] == "-" and settings[0] != "--":
 	elif opt == "-e":
 		# Erase settings that have empty values.
 		erase_setting = True
+	elif opt == "-E":
+		# Erase settings (remove from file) that have empty values.
+		erase_setting = True
+		erase_setting_via_comment = False
 	elif opt == "-w":
 		# Line folding is possible in this file.
 		folded_lines = True
 	elif opt == "-c":
 		# Specifies a different comment character.
 		comment_char = settings.pop(0)
+	elif opt == "-ini-section":
+		ini_section = settings.pop(0)
 	elif opt == "-t":
 		testing = True
 	else:
@@ -77,6 +85,7 @@ for setting in settings:
 found = set()
 buf = ""
 input_lines = list(open(filename))
+cur_section = None
 
 while len(input_lines) > 0:
 	line = input_lines.pop(0)
@@ -86,6 +95,24 @@ while len(input_lines) > 0:
 	if folded_lines and line[0] not in (comment_char, " ", ""):
 		while len(input_lines) > 0 and input_lines[0][0] in " \t":
 			line += input_lines.pop(0)
+
+	# If an ini file, keep track of what section we're in
+	if ini_section and line.startswith('[') and line.strip().endswith(']'):
+		if cur_section == ini_section.lower():
+			# Put any settings we didn't see at the end of the section.
+			for i in range(len(settings)):
+				if i not in found:
+					name, val = settings[i].split("=", 1)
+					if not (not val and erase_setting):
+					        buf += name + delimiter + val + "\n"
+		cur_section = line.strip()[1:-1].strip().lower()
+		buf += line
+		continue
+
+	if ini_section and cur_section != ini_section.lower():
+		# we're not processing the desired section, just append
+		buf += line
+		continue
 
 	# See if this line is for any settings passed on the command line.
 	for i in range(len(settings)):
@@ -112,7 +139,8 @@ while len(input_lines) > 0:
 		
 		# comment-out the existing line (also comment any folded lines)
 		if is_comment is None:
-			buf += comment_char + line.rstrip().replace("\n", "\n" + comment_char) + "\n"
+			if val or not erase_setting or erase_setting_via_comment:
+				buf += comment_char + line.rstrip().replace("\n", "\n" + comment_char) + "\n"
 		else:
 			# the line is already commented, pass it through
 			buf += line
@@ -135,11 +163,12 @@ while len(input_lines) > 0:
 		
 # Put any settings we didn't see at the end of the file,
 # except settings being cleared.
-for i in range(len(settings)):
-	if (i not in found):
-		name, val = settings[i].split("=", 1)
-		if not (not val and erase_setting):
-			buf += name + delimiter + val + "\n"
+if not ini_section or cur_section == ini_section.lower():
+        for i in range(len(settings)):
+                if (i not in found):
+                        name, val = settings[i].split("=", 1)
+                        if not (not val and erase_setting):
+                                buf += name + delimiter + val + "\n"
 
 if not testing:
 	# Write out the new file.
