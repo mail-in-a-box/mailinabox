@@ -29,7 +29,7 @@ if [ -z "$TAG" ]; then
 	elif [ "$UBUNTU_VERSION" == "Ubuntu 20.04 LTS" ]; then
 		# This machine is running Ubuntu 20.04, which is supported by
 		# Mail-in-a-Box versions 56 and later.
-		TAG=v56
+		TAG=v57a
 	elif [ "$UBUNTU_VERSION" == "Ubuntu 18.04 LTS" ]; then
 		# This machine is running Ubuntu 18.04, which is supported by
 		# Mail-in-a-Box versions 0.40 through 5x.
@@ -37,7 +37,7 @@ if [ -z "$TAG" ]; then
 		echo "Please immediately begin to migrate your information to"
 		echo "a new machine running Ubuntu 22.04. See:"
 		echo "https://mailinabox.email/maintenance.html#upgrade"
-		TAG=v56
+		TAG=v57a
 		GITSRC=miab
 	elif [ "$UBUNTU_VERSION" == "Ubuntu 14.04 LTS" ]; then
 		# This machine is running Ubuntu 14.04, which is supported by
