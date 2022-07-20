@@ -297,7 +297,7 @@ def perform_backup(full_backup):
 	pre_script = os.path.join(backup_root, 'before-backup')
 	if os.path.exists(pre_script):
 		shell('check_call',
-			['su', env['STORAGE_USER'], '-c', pre_script, config["target"]],
+			['su', env['STORAGE_USER'], '--login', '-c', pre_script, config["target"]],
 			env=env)
 
 	# Run a backup of STORAGE_ROOT (but excluding the backups themselves!).
@@ -369,8 +369,8 @@ def perform_backup(full_backup):
 	post_script = os.path.join(backup_root, 'after-backup')
 	if os.path.exists(post_script):
 		shell('check_call',
-			['su', env['STORAGE_USER'], '-c', post_script, config["target"]],
-			env=env)
+			['su', env['STORAGE_USER'], '--login', '-c', post_script, config["target"]],
+			env=env, trap=True)
 
 def run_duplicity_verification():
 	env = load_environment()
