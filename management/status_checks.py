@@ -20,6 +20,7 @@ from ssl_certificates import get_ssl_certificates, get_domain_ssl_files, check_c
 from mailconfig import get_mail_domains, get_mail_aliases
 
 from utils import shell, sort_domains, load_env_vars_from_file, load_settings
+from backup import get_backup_root
 
 def get_services():
 	return [
@@ -261,7 +262,7 @@ def check_free_disk_space(rounded_values, env, output):
 	# Check that there's only one duplicity cache. If there's more than one,
 	# it's probably no longer in use, and we can recommend clearing the cache
 	# to save space. The cache directory may not exist yet, which is OK.
-	backup_cache_path = os.path.join(env['STORAGE_ROOT'], 'backup/cache')
+	backup_cache_path = os.path.join(get_backup_root(env), 'cache')
 	try:
 		backup_cache_count = len(os.listdir(backup_cache_path))
 	except:
