@@ -29,8 +29,8 @@ echo "Installing Nextcloud (contacts/calendar)..."
 #   we automatically install intermediate versions as needed.
 # * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
 #   copying it from the error message when it doesn't match what is below.
-nextcloud_ver=23.0.0
-nextcloud_hash=0d496eb0808c292502479e93cd37fe2daf95786a
+nextcloud_ver=23.0.4
+nextcloud_hash=87afec0bf90b3c66289e6fedd851867bc5a58f01
 
 # Nextcloud apps
 # --------------
@@ -57,10 +57,10 @@ apt_install curl php${PHP_VER} php${PHP_VER}-fpm \
 	php${PHP_VER}-dev php${PHP_VER}-gd php${PHP_VER}-xml php${PHP_VER}-mbstring php${PHP_VER}-zip php${PHP_VER}-apcu \
 	php${PHP_VER}-intl php${PHP_VER}-imagick php${PHP_VER}-gmp php${PHP_VER}-bcmath
 
-# Configure apcu for cli use - required for occ use
-cat > /etc/php/$PHP_VER/cli/conf.d/20-miab.ini <<EOF
-apc.enable_cli=1
-EOF
+# Enable APC before Nextcloud tools are run.
+tools/editconf.py /etc/php/$PHP_VER/mods-available/apcu.ini -c ';' \
+	apc.enabled=1 \
+	apc.enable_cli=1
 
 InstallNextcloud() {
 
@@ -203,14 +203,12 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 		elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^1[3456789] ]]; then
 			echo "Upgrades from Mail-in-a-Box prior to v60 with Nextcloud 19 or earlier are not supported. Upgrade to the latest Mail-in-a-Box version supported on your machine first. Setup will continue, but skip the Nextcloud migration."
 			return 0
-		fi
-		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^20 ]]; then
+		elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^20 ]]; then
 			InstallNextcloud 21.0.7 f5c7079c5b56ce1e301c6a27c0d975d608bb01c9 4.0.7 8ab31d205408e4f12067d8a4daa3595d46b513e3 3.0.4 6fb1e998d307c53245faf1c37a96eb982bbee8ba 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
 			CURRENT_NEXTCLOUD_VER="21.0.7"
-		fi
-		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^21 ]]; then
-			InstallNextcloud 22.2.2 489eaf4147ad1b59385847b7d7db293712cced88 4.0.7 8ab31d205408e4f12067d8a4daa3595d46b513e3 3.0.4 6fb1e998d307c53245faf1c37a96eb982bbee8ba 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
-			CURRENT_NEXTCLOUD_VER="22.2.2"
+		elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^21 ]]; then
+			InstallNextcloud 22.2.6 9d39741f051a8da42ff7df46ceef2653a1dc70d9 4.1.0 38653b507bd7d953816bbc5e8bea7855867eb1cd 3.2.2 54e9a836adc739be4a2a9301b8d6d2e9d88e02f4 3.0.0 0df781b261f55bbde73d8c92da3f99397000972f
+			CURRENT_NEXTCLOUD_VER="22.2.6"
 		fi
 	fi
 
@@ -241,9 +239,9 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
   'user_backends' => array(
     array(
       'class' => '\OCA\UserExternal\IMAP',
-        'arguments' => array(
-          '127.0.0.1', 143, null
-         ),
+      'arguments' => array(
+        '127.0.0.1', 143, null, null, false, false
+       ),
     ),
   ),
   'memcache.local' => '\OC\Memcache\APCu',
@@ -305,7 +303,7 @@ php$PHP_VER <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP $STORAGE_ROOT/owncloud/confi
 <?php
 include("$STORAGE_ROOT/owncloud/config.php");
 
-\$CONFIG['config_is_read_only'] = true; # should prevent warnings from occ tool but doesn't
+\$CONFIG['config_is_read_only'] = true;
 
 \$CONFIG['trusted_domains'] = array('$PRIMARY_HOSTNAME');
 
@@ -318,7 +316,14 @@ include("$STORAGE_ROOT/owncloud/config.php");
 
 \$CONFIG['mail_domain'] = '$PRIMARY_HOSTNAME';
 
-\$CONFIG['user_backends'] = array(array('class' => '\OCA\UserExternal\IMAP','arguments' => array('127.0.0.1', 143, null),),);
+\$CONFIG['user_backends'] = array(
+  array(
+    'class' => '\OCA\UserExternal\IMAP',
+    'arguments' => array(
+      '127.0.0.1', 143, null, null, false, false
+    ),
+  ),
+);
 
 echo "<?php\n\\\$CONFIG = ";
 var_export(\$CONFIG);
@@ -367,11 +372,10 @@ tools/editconf.py /etc/php/$PHP_VER/cli/conf.d/10-opcache.ini -c ';' \
 	opcache.save_comments=1 \
 	opcache.revalidate_freq=1
 
-# If apc is explicitly disabled we need to enable it
-if grep -q apc.enabled=0 /etc/php/$PHP_VER/mods-available/apcu.ini; then
-	tools/editconf.py /etc/php/$PHP_VER/mods-available/apcu.ini -c ';' \
-		apc.enabled=1
-fi
+# Migrate users_external data from <0.6.0 to version 3.0.0 (see https://github.com/nextcloud/user_external).
+# This version was probably in use in Mail-in-a-Box v0.41 (February 26, 2019) and earlier.
+# We moved to v0.6.3 in 193763f8.
+sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "UPDATE oc_users_external SET backend='127.0.0.1';"
 
 # Set up a cron job for Nextcloud.
 cat > /etc/cron.d/mailinabox-nextcloud << EOF;

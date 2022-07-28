@@ -31,7 +31,7 @@ if [ -z "$TAG" ]; then
 		echo "Please immediately begin to migrate your data to"
 		echo "a new machine running Ubuntu 22.04. See:"
 		echo "https://mailinabox.email/maintenance.html#upgrade"
-		TAG=v57
+		TAG=v57a
 	elif [ "$UBUNTU_VERSION" == "Ubuntu 14.04 LTS" ]; then
 		# This machine is running Ubuntu 14.04, which is supported by
 		# Mail-in-a-Box versions 1 through v0.30.
