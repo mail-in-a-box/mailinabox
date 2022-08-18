@@ -386,7 +386,7 @@ install_app() {
     if [ ! -x /usr/bin/sudo ]; then
         say "WARNING: sudo is not installed: Unable to run occ to check and/or install Nextcloud app \"$app\"."
         
-    elif [ -z "$(sudo -E -u www-data php $NCDIR/occ app:list | grep $app)" ]; then
+    elif [ -z "$(sudo -E -u www-data php $NCDIR/occ app:list | grep -F $app:)" ]; then
         say_verbose "Install app '$app'"
         sudo -E -u www-data php $NCDIR/occ app:install $app
         [ $? -ne 0 ] && die "Unable to install Nextcloud app '$app'"
