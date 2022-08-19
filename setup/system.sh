@@ -412,3 +412,6 @@ tools/editconf.py /etc/fail2ban/fail2ban.conf dbpurgeage=7d
 restart_service fail2ban
 
 systemctl enable fail2ban
+
+# Create a logrotate entry
+cp -f conf/logrotate/mailinabox /etc/logrotate.d/

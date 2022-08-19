@@ -1,0 +1,11 @@
+/var/log/roundcubemail/errors.log
+/var/log/roundcubemail/sendmail.log
+{
+	rotate 4
+	weekly
+	missingok
+	notifempty
+	compress
+	delaycompress
+	sharedscripts
+}
