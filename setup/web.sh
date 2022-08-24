@@ -57,6 +57,11 @@ tools/editconf.py /etc/php/7.2/fpm/php.ini -c ';' \
 tools/editconf.py /etc/php/7.2/fpm/pool.d/www.conf -c ';' \
 	env[PATH]=/usr/local/bin:/usr/bin:/bin \
 
+# Increase the default fastcgi read timeout, this is reached when searching
+# large mailboxes from rouncube. See #1715.
+tools/editconf.py /etc/nginx/nginx.conf -s \
+	fastcgi_read_timeout="300;"
+
 # Configure php-fpm based on the amount of memory the machine has
 # This is based on the nextcloud manual for performance tuning: https://docs.nextcloud.com/server/17/admin_manual/installation/server_tuning.html
 # Some synchronisation issues can occur when many people access the site at once.
