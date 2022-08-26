@@ -563,7 +563,7 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 			# Choose the first IP if nameserver returns multiple
 			ns_ip = ns_ips.split('; ')[0]
 
-			if ns_ip == '[Not Set]':
+			if ns_ip in {'[Not Set]', '[timeout]'}:
 				output.print_error("Secondary nameserver %s could not be resolved correctly. (dns result: %s used %s)" % (ns, ns_ips, ns_ip))
 			else:
 				# Now query it to see what it says about this domain.
@@ -809,10 +809,15 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None, as_list=False, retry=
 	# running unbound server), or if the 'at' argument is specified, use that host
 	# as the nameserver.
 	resolver = dns.resolver.get_default_resolver()
+	
+	# Make sure at is not a string that cannot be used as a nameserver
 	if at:
-		resolver = dns.resolver.Resolver()
-		resolver.nameservers = [at]
-
+		if at not in {'[Not set]', '[timeout]'}:
+        		resolver = dns.resolver.Resolver()
+        		resolver.nameservers = [at]
+		else:
+			logging.error("at not set to a usable nameserver, %s", at)
+			
 	# Set a timeout so that a non-responsive server doesn't hold us back.
 	resolver.timeout = 5
 	resolver.lifetime = 5
