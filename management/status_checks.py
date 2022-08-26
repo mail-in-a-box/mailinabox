@@ -557,23 +557,20 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 		for ns in custom_secondary_ns:
 			# We must first resolve the nameserver to an IP address so we can query it.
 			ns_ips = query_dns(ns, "A")
-			if not ns_ips:
+			if not ns_ips or ns_ips in {'[Not Set]', '[timeout]'}:
 				output.print_error("Secondary nameserver %s is not valid (it doesn't resolve to an IP address)." % ns)
 				continue
 			# Choose the first IP if nameserver returns multiple
 			ns_ip = ns_ips.split('; ')[0]
 
-			if ns_ip in {'[Not Set]', '[timeout]'}:
-				output.print_error("Secondary nameserver %s could not be resolved correctly. (dns result: %s used %s)" % (ns, ns_ips, ns_ip))
+			# Now query it to see what it says about this domain.
+			ip = query_dns(domain, "A", at=ns_ip, nxdomain=None)
+			if ip == correct_ip:
+				output.print_ok("Secondary nameserver %s resolved the domain correctly." % ns)
+			elif ip is None:
+				output.print_error("Secondary nameserver %s is not configured to resolve this domain." % ns)
 			else:
-				# Now query it to see what it says about this domain.
-				ip = query_dns(domain, "A", at=ns_ip, nxdomain=None)
-				if ip == correct_ip:
-					output.print_ok("Secondary nameserver %s resolved the domain correctly." % ns)
-				elif ip is None:
-					output.print_error("Secondary nameserver %s is not configured to resolve this domain." % ns)
-				else:
-					output.print_error("Secondary nameserver %s is not configured correctly. (It resolved this domain as %s. It should be %s.)" % (ns, ip, correct_ip))
+				output.print_error("Secondary nameserver %s is not configured correctly. (It resolved this domain as %s. It should be %s.)" % (ns, ip, correct_ip))
 
 def check_dns_zone_suggestions(domain, env, output, dns_zonefiles, domains_with_a_records):
 	# Warn if a custom DNS record is preventing this or the automatic www redirect from
