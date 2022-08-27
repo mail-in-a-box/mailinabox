@@ -54,6 +54,10 @@ cat > /etc/logrotate.d/nsd <<EOF;
 }
 EOF
 
+if [[ -n "$LX_ZONE" ]]; then
+  sed -i -e "s/ip-transparent: yes/ip-transparent: no/" /etc/nsd/nsd.conf
+fi
+
 # Since we have bind9 listening on localhost for locally-generated
 # DNS queries that require a recursive nameserver, and the system
 # might have other network interfaces for e.g. tunnelling, we have
