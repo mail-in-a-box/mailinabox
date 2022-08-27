@@ -39,6 +39,7 @@ apt_install openssl
 # Create a directory to store TLS-related things like "SSL" certificates.
 
 mkdir -p $STORAGE_ROOT/ssl
+mkdir -p $STORAGE_ROOT/ssl-backup  # creating a backup directory for ssl certs just to be safe
 
 # Generate a new private key.
 #
@@ -64,6 +65,13 @@ if [ ! -f $STORAGE_ROOT/ssl/ssl_private_key.pem ]; then
 	# Set the umask so the key file is never world-readable.
 	(umask 077; hide_output \
 		openssl genrsa -out $STORAGE_ROOT/ssl/ssl_private_key.pem 2048)
+fi
+
+# for Double TLSA scheme. More details here (https://mail.sys4.de/pipermail/dane-users/2018-February/000440.html)
+if [ ! -f $STORAGE_ROOT/ssl/next_ssl_private_key.pem ]; then
+	# Set the umask so the key file is never world-readable.
+	(umask 077; hide_output \
+		openssl genrsa -out $STORAGE_ROOT/ssl/next_ssl_private_key.pem 2048)
 fi
 
 # Generate a self-signed SSL certificate because things like nginx, dovecot,

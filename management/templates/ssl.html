@@ -40,7 +40,10 @@
 
 <h3 id="ssl_install_header">Install certificate</h3>
 
-<p>If you don't want to use our automatic Let's Encrypt integration, you can give any other certificate provider a try. You can generate the needed CSR below.</p>
+<p>If you don't want to use our automatic Let's Encrypt integration, you can give any other certificate provider a try. Click on install certificate button
+    if there is no certificate for your intended domain or
+    click on renew or replace certificate button and click replace if there is an existing certificate and you want to replace it with a new one from a different CA.
+    You can generate the needed CSR below.</p>
 
 <p>Which domain are you getting a certificate for?</p>
 
@@ -101,7 +104,8 @@ function show_tls(keep_provisioning_shown) {
       $('#ssldomain').html('<option value="">(select)</option>');
       $('#ssl_domains').show();
       for (var i = 0; i < domains.length; i++) {
-        var row = $("<tr><th class='domain'><a href=''></a></th><td class='status'></td> <td class='actions'><a href='#' onclick='return ssl_install(this);' class='btn btn-xs'>Install Certificate</a></td></tr>");
+        var row = $("<tr><th class='domain'><a href=''></a></th><td class='status'></td> " +
+                "<td class='actions'><a href='#' onclick='return ssl_install(this);' class='btn btn-xs'>Install Certificate</a></td></tr>");
         tb.append(row);
         row.attr('data-domain', domains[i].domain);
         row.find('.domain a').text(domains[i].domain);
@@ -113,7 +117,10 @@ function show_tls(keep_provisioning_shown) {
         row.addClass("text-" + domains[i].status);
         row.find('.status').text(domains[i].text);
         if (domains[i].status == "success") {
-          row.find('.actions a').addClass('btn-default').text('Replace Certificate');
+          row.find('.actions a').addClass('btn-default').text('Renew or replace Certificate');
+          row.find('.actions a').addClass('btn-default').on("click", function () {
+              ssl_renew_or_replace_modal(this);
+          });
         } else {
           row.find('.actions a').addClass('btn-primary').text('Install Certificate');
         }
@@ -129,6 +136,87 @@ function ssl_install(elem) {
   show_csr();
   $('html, body').animate({ scrollTop: $('#ssl_install_header').offset().top - $('.navbar-fixed-top').height() - 20 })
   return false;
+}
+let flag = false;
+
+function ssl_renew_or_replace_modal(elem) {
+    if (!flag) {
+        $('#global_modal .modal-footer').append('<button type="button" class="btn btn-warning" data-dismiss="modal">Renew</button>');
+        flag = true;
+    }
+    $('#global_modal .btn-warning').click(function() {
+        global_modal_state = 2; // Renew
+    });
+    show_modal_confirm(
+    "Options",
+    "Do you want to replace the certificate with a new one or just renew this one?",
+    "Replace",
+    function () {
+        $('#global_modal .modal-footer .btn-warning').remove();
+        flag = false;
+        ssl_install(elem);
+    }, function() {$('#global_modal .modal-footer .btn-warning').remove();flag = false;},
+    function () {
+        $('#global_modal .modal-footer .btn-warning').remove();
+        flag = false;
+        ssl_cert_renew(elem);
+    });
+}
+function ssl_cert_renew(elem) {
+    if (!flag) {
+        $('#global_modal .modal-footer').append('<button type="button" class="btn btn-warning" data-dismiss="modal">Yes</button>');
+        flag = true;
+    }
+    $('#global_modal .btn-warning').click(function() {
+        global_modal_state = 2; // Renew
+    });
+    var domain = $(elem).parents('tr').attr('data-domain');
+    show_modal_confirm(
+    "Renewing options",
+    "Do you want to renew with the existing key?",
+    "No",
+    function () {
+        $('#global_modal .modal-footer .btn-warning').remove();flag = false;
+        $('#ajax_loading_indicator').show();
+        api(
+        "/ssl/renew/" + domain,
+        "POST",
+        {
+            existing_key: "no"
+        },
+        function(data) {
+            $('#ajax_loading_indicator').stop(true).hide();
+            show_modal_error(data["title"], data["log"]);
+            show_tls(true);
+        },
+        function () {
+            $('#ajax_loading_indicator').stop(true).hide();
+            show_modal_error("Error", "Something is not right, sorry!");
+            show_tls(true);
+        }
+        );
+    }, function() {$('#global_modal .modal-footer .btn-warning').remove();flag = false;},
+    function () {
+        $('#global_modal .modal-footer .btn-warning').remove();
+        flag = false;
+        $('#ajax_loading_indicator').show();
+        api(
+        "/ssl/renew/" + domain,
+        "POST",
+        {
+            existing_key: "yes"
+        },
+        function(data) {
+            $('#ajax_loading_indicator').stop(true).hide();
+          show_modal_error(data["title"], data["log"]);
+          show_tls(true);
+        },
+        function () {
+            $('#ajax_loading_indicator').stop(true).hide();
+            show_modal_error("Error", "Something is not right, sorry!");
+            show_tls(true);
+        });
+    },);
 }
 
 function show_csr() {

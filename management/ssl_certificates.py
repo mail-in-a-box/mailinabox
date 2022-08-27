@@ -45,7 +45,7 @@ def get_ssl_certificates(env):
 
 	# Remember stuff.
 	private_keys = { }
-	certificates = [ ]
+	certificates = []
 
 	# Scan each of the files to find private keys and certificates.
 	# We must load all of the private keys first before processing
@@ -73,6 +73,7 @@ def get_ssl_certificates(env):
 	domains = { }
 	for cert in certificates:
 		# What domains is this certificate good for?
+		# cert_domains = cert common name + all SANs, primary_domain = cert common name
 		cert_domains, primary_domain = get_certificate_domains(cert)
 		cert._primary_domain = primary_domain
 
@@ -186,8 +187,16 @@ def get_certificates_to_provision(env, limit_domains=None, show_valid_certs=True
 	from web_update import get_web_domains
 	from status_checks import query_dns, normalize_ip
 
+	# existing_certs = all valid certificates that are in /home/user-data/ssl or 1 level deep
+	# validity indicator -> private key exists for the cert public key?, not_expired?
+	# if multiple valid certs exist, then the one with the furthest expiry date and filename
+	# lexicographically smallest is returned
 	existing_certs = get_ssl_certificates(env)
 
+	# this function returns the list of domain names of all the email addresses and adds
+	# autoconfig, www, mta-sts, autodiscover subdomain to each of these domains
+	# if exclude_dns_elsewhere flag is set, then all the domains having A/AAAA record not on this machine
+	# are excluded
 	plausible_web_domains = get_web_domains(env, exclude_dns_elsewhere=False)
 	actual_web_domains = get_web_domains(env)
 
@@ -212,7 +221,8 @@ def get_certificates_to_provision(env, limit_domains=None, show_valid_certs=True
 			# how Let's Encrypt will connect.
 			bad_dns = []
 			for rtype, value in [("A", env["PUBLIC_IP"]), ("AAAA", env.get("PUBLIC_IPV6"))]:
-				if not value: continue # IPv6 is not configured
+				if not value:
+					continue  # IPv6 is not configured
 				response = query_dns(domain, rtype)
 				if response != normalize_ip(value):
 					bad_dns.append("%s (%s)" % (response, rtype))
@@ -226,6 +236,7 @@ def get_certificates_to_provision(env, limit_domains=None, show_valid_certs=True
 				# DNS is all good.
 
 				# Check for a good existing cert.
+				# existing_cert = existing cert for domain
 				existing_cert = get_domain_ssl_files(domain, existing_certs, env, use_main_cert=False, allow_missing_cert=True)
 				if existing_cert:
 					existing_cert_check = check_certificate(domain, existing_cert['certificate'], existing_cert['private-key'],
@@ -242,19 +253,30 @@ def get_certificates_to_provision(env, limit_domains=None, show_valid_certs=True
 
 	return (domains_to_provision, domains_cant_provision)
 
-def provision_certificates(env, limit_domains):
+def provision_certificates(env, limit_domains, domain_to_be_renewed=None, new_key=False):
 	# What domains should we provision certificates for? And what
 	# errors prevent provisioning for other domains.
-	domains, domains_cant_provision = get_certificates_to_provision(env, limit_domains=limit_domains)
-
-	# Build a list of what happened on each domain or domain-set.
 	ret = []
-	for domain, error in domains_cant_provision.items():
-		ret.append({
-			"domains": [domain],
-			"log": [error],
-			"result": "skipped",
-		})
+	is_tlsa_update_required = False
+	if new_key:
+		from web_update import get_web_domains
+		domains = get_web_domains(env)
+	elif domain_to_be_renewed:
+		existing_certs = get_ssl_certificates(env)
+		existing_cert = get_domain_ssl_files(domain_to_be_renewed, existing_certs, env, use_main_cert=False, allow_missing_cert=True)
+		domains, primary_domain = get_certificate_domains(load_pem(load_cert_chain(existing_cert["certificate"])[0]))
+	else:
+		# domains = domains for which a certificate can be provisioned
+		# domains_cant_provision = domains for which a certificate can't be provisioned and the reason
+		domains, domains_cant_provision = get_certificates_to_provision(env, limit_domains=limit_domains)
+
+		# Build a list of what happened on each domain or domain-set.
+		for domain, error in domains_cant_provision.items():
+			ret.append({
+				"domains": [domain],
+				"log": [error],
+				"result": "skipped",
+			})
 
 	# Break into groups by DNS zone: Group every domain with its parent domain, if
 	# its parent domain is in the list of domains to request a certificate for.
@@ -309,6 +331,8 @@ def provision_certificates(env, limit_domains):
 			# Create a CSR file for our master private key so that certbot
 			# uses our private key.
 			key_file = os.path.join(env['STORAGE_ROOT'], 'ssl', 'ssl_private_key.pem')
+			if new_key:
+				key_file = os.path.join(env['STORAGE_ROOT'], 'ssl', 'next_ssl_private_key.pem')
 			with tempfile.NamedTemporaryFile() as csr_file:
 				# We could use openssl, but certbot requires
 				# that the CN domain and SAN domains match
@@ -345,9 +369,9 @@ def provision_certificates(env, limit_domains):
 						"certbot",
 						"certonly",
 						#"-v", # just enough to see ACME errors
-						"--non-interactive", # will fail if user hasn't registered during Mail-in-a-Box setup
+						"--non-interactive",  # will fail if user hasn't registered during Mail-in-a-Box setup
 
-						"-d", ",".join(domain_list), # first will be main domain
+						"-d", ",".join(domain_list),  # first will be main domain
 
 						"--csr", csr_file.name, # use our private key; unfortunately this doesn't work with auto-renew so we need to save cert manually
 						"--cert-path", os.path.join(d, 'cert'), # we only use the full chain
@@ -363,6 +387,8 @@ def provision_certificates(env, limit_domains):
 
 			ret[-1]["log"].append(certbotret)
 			ret[-1]["result"] = "installed"
+			if new_key and env['PRIMARY_HOSTNAME'] in domains:
+				is_tlsa_update_required = True
 		except subprocess.CalledProcessError as e:
 			ret[-1]["log"].append(e.output.decode("utf8"))
 			ret[-1]["result"] = "error"
@@ -371,7 +397,7 @@ def provision_certificates(env, limit_domains):
 			ret[-1]["result"] = "error"
 
 	# Run post-install steps.
-	ret.extend(post_install_func(env))
+	ret.extend(post_install_func(env, is_tlsa_update_required=is_tlsa_update_required))
 
 	# Return what happened with each certificate request.
 	return ret
@@ -466,7 +492,7 @@ def install_cert_copy_file(fn, env):
 	shutil.move(fn, ssl_certificate)
 
 
-def post_install_func(env):
+def post_install_func(env, is_tlsa_update_required=False):
 	ret = []
 
 	# Get the certificate to use for PRIMARY_HOSTNAME.
@@ -496,6 +522,25 @@ def post_install_func(env):
 		# The DANE TLSA record will remain valid so long as the private key
 		# hasn't changed. We don't ever change the private key automatically.
 		# If the user does it, they must manually update DNS.
+		if is_tlsa_update_required:
+			from dns_update import do_dns_update, set_custom_dns_record, build_tlsa_record
+			subprocess.check_output([
+				"mv", env["STORAGE_ROOT"] + "/ssl/next_ssl_private_key.pem",
+					  env["STORAGE_ROOT"] + "/ssl/ssl_private_key.pem"
+			])
+			subprocess.check_output([
+				"openssl", "genrsa",
+				"-out", env["STORAGE_ROOT"] + "/ssl/next_ssl_private_key.pem",
+				"2048"])
+			qname1 = "_25._tcp." + env['PRIMARY_HOSTNAME']
+			qname2 = "_443._tcp." + env['PRIMARY_HOSTNAME']
+			rtype = "TLSA"
+			value = build_tlsa_record(env, from_cert=False)
+			action = "add"
+			if set_custom_dns_record(qname1, rtype, value, action, env):
+				set_custom_dns_record(qname2, rtype, value, action, env)
+				ret.append(do_dns_update(env))
+
 
 	# Update the web configuration so nginx picks up the new certificate file.
 	from web_update import do_web_update

@@ -256,17 +256,17 @@ $(function() {
     // so that we don't attempt to show another modal while this one
     // is closing.
     global_modal_state = 0; // OK
-  })
+  });
   $('#global_modal .btn-default').click(function() {
     global_modal_state = 1; // Cancel
-  })
+  });
   $('#global_modal').on('hidden.bs.modal', function (e) {
     // do the cancel function
     if (global_modal_state == null) global_modal_state = 1; // cancel if the user hit ESC or clicked outside of the modal
     if (global_modal_funcs && global_modal_funcs[global_modal_state])
       global_modal_funcs[global_modal_state]();
   })
-})
+});
 
 function show_modal_error(title, message, callback) {
   $('#global_modal h4').text(title);
@@ -286,7 +286,7 @@ function show_modal_error(title, message, callback) {
   return false; // handy when called from onclick
 }
 
-function show_modal_confirm(title, question, verb, yes_callback, cancel_callback) {
+function show_modal_confirm(title, question, verb, yes_callback, cancel_callback, extra_callback=null) {
   $('#global_modal h4').text(title);
   if (typeof question == 'string') {
     $('#global_modal .modal-dialog').addClass("modal-sm");
@@ -303,7 +303,8 @@ function show_modal_confirm(title, question, verb, yes_callback, cancel_callback
     $('#global_modal .btn-default').show().text(verb[1]);
     $('#global_modal .btn-danger').show().text(verb[0]);
   }
-  global_modal_funcs = [yes_callback, cancel_callback];
+  if (extra_callback) global_modal_funcs = [yes_callback, cancel_callback, extra_callback];
+  else global_modal_funcs = [yes_callback, cancel_callback];
   global_modal_state = null;
   $('#global_modal').modal({});
   return false; // handy when called from onclick

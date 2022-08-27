@@ -4,9 +4,10 @@ Mail-in-a-Box is an open source project. Your contributions and pull requests ar
 
 ## Development
 
-To start developing Mail-in-a-Box, [clone the repository](https://github.com/mail-in-a-box/mailinabox) and familiarize yourself with the code.
+To start developing Mail-in-a-Box, [clone the repository](https://github.com/mail-in-a-box/mailinabox) and familiarize yourself with the code. Then move to the cloned mailinabox directory.
 
     $ git clone https://github.com/mail-in-a-box/mailinabox
+	$ cd mailinabox
 
 ### Vagrant and VirtualBox
 
@@ -15,8 +16,8 @@ We recommend you use [Vagrant](https://www.vagrantup.com/intro/getting-started/i
 With Vagrant set up, the following should boot up Mail-in-a-Box inside a virtual machine:
 
     $ vagrant up --provision
-
 _If you're seeing an error message about your *IP address being listed in the Spamhaus Block List*, simply uncomment the `export SKIP_NETWORK_CHECKS=1` line in `Vagrantfile`. It's normal, you're probably using a dynamic IP address assigned by your Internet provider–they're almost all listed._
+
 
 ### Modifying your `hosts` file
 

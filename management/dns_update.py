@@ -198,9 +198,11 @@ def build_zone(domain, domain_properties, additional_records, env, is_zone=True)
 
 		# Add a DANE TLSA record for SMTP.
 		records.append(("_25._tcp", "TLSA", build_tlsa_record(env), "Recommended when DNSSEC is enabled. Advertises to mail servers connecting to the box that mandatory encryption should be used."))
+		records.append(("_25._tcp", "TLSA", build_tlsa_record(env, from_cert=False), "Recommended when DNSSEC is enabled. Advertises to mail servers connecting to the box that mandatory encryption should be used."))
 
 		# Add a DANE TLSA record for HTTPS, which some browser extensions might make use of.
 		records.append(("_443._tcp", "TLSA", build_tlsa_record(env), "Optional. When DNSSEC is enabled, provides out-of-band HTTPS certificate validation for a few web clients that support it."))
+		records.append(("_443._tcp", "TLSA", build_tlsa_record(env, from_cert=False), "Optional. When DNSSEC is enabled, provides out-of-band HTTPS certificate validation for a few web clients that support it."))
 
 		# Add a SSHFP records to help SSH key validation. One per available SSH key on this system.
 		for value in build_sshfp_records():
@@ -382,7 +384,7 @@ def is_domain_cert_signed_and_valid(domain, env):
 
 ########################################################################
 
-def build_tlsa_record(env):
+def build_tlsa_record(env, from_cert=True):
 	# A DANE TLSA record in DNS specifies that connections on a port
 	# must use TLS and the certificate must match a particular criteria.
 	#
@@ -405,11 +407,16 @@ def build_tlsa_record(env):
 	from ssl_certificates import load_cert_chain, load_pem
 	from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 
-	fn = os.path.join(env["STORAGE_ROOT"], "ssl", "ssl_certificate.pem")
-	cert = load_pem(load_cert_chain(fn)[0])
-
-	subject_public_key = cert.public_key().public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo)
-	# We could have also loaded ssl_private_key.pem and called priv_key.public_key().public_bytes(...)
+	if from_cert:
+		fn = os.path.join(env["STORAGE_ROOT"], "ssl", "ssl_certificate.pem")
+		cert = load_pem(load_cert_chain(fn)[0])
+		subject_public_key = cert.public_key().public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo)
+	else:
+		# this is for Double TLSA scheme of key rollover.
+		# More details here (https://mail.sys4.de/pipermail/dane-users/2018-February/000440.html)
+		fn = os.path.join(env["STORAGE_ROOT"], "ssl", "next_ssl_private_key.pem")
+		private_key = load_pem(open(fn, 'rb').read())
+		subject_public_key = private_key.public_key().public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo)
 
 	pk_hash = hashlib.sha256(subject_public_key).hexdigest()
 
@@ -926,6 +933,8 @@ def set_custom_dns_record(qname, rtype, value, action, env):
 
 			if not re.search(DOMAIN_RE, value):
 				raise ValueError("Invalid value.")
+		elif rtype == "TLSA":
+			pass
 		elif rtype in ("CNAME", "TXT", "SRV", "MX", "SSHFP", "CAA"):
 			# anything goes
 			pass
