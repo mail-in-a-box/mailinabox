@@ -5,6 +5,10 @@
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
+if [ "$NEXTCLOUD_ENABLE" -ne "1" ]; then
+	echo "Skipping Nextcloud installation."
+else
+
 # ### Installing Nextcloud
 
 echo "Installing Nextcloud (contacts/calendar)..."
@@ -378,3 +382,5 @@ rm -f /etc/cron.hourly/mailinabox-owncloud
 
 # Enable PHP modules and restart PHP.
 restart_service php$PHP_VER-fpm
+
+fi

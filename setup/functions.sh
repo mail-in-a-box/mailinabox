@@ -1,10 +1,12 @@
+#!/bin/bash
+
 # Turn on "strict mode." See http://redsymbol.net/articles/unofficial-bash-strict-mode/.
 # -e: exit if any command unexpectedly fails.
 # -u: exit if we have a variable typo.
 # -o pipefail: don't ignore errors in the non-last command in a pipeline
 set -euo pipefail
 
-PHP_VER=8.0
+export PHP_VER=8.0
 
 function hide_output {
 	# This function hides the output of a command unless the command fails
@@ -16,7 +18,7 @@ function hide_output {
 	# Execute command, redirecting stderr/stdout to the temporary file. Since we
 	# check the return code ourselves, disable 'set -e' temporarily.
 	set +e
-	"$@" &> $OUTPUT
+	"$@" &> "$OUTPUT"
 	E=$?
 	set -e
 

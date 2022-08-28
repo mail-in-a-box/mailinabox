@@ -13,81 +13,85 @@
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
-# Prereqs.
+if [ "$ZPUSH_ENABLE" -ne "1" ]; then
+	echo "Skipping Roundcube (webmail) installation."
+else
 
-echo "Installing Z-Push (Exchange/ActiveSync server)..."
-apt_install \
-       php${PHP_VER}-soap php${PHP_VER}-imap libawl-php php$PHP_VER-xml
+	# Prereqs.
 
-phpenmod -v $PHP_VER imap
+	echo "Installing Z-Push (Exchange/ActiveSync server)..."
+	apt_install \
+		php${PHP_VER}-soap php${PHP_VER}-imap libawl-php php$PHP_VER-xml
 
-# Copy Z-Push into place.
-VERSION=2.6.2
-TARGETHASH=f0e8091a8030e5b851f5ba1f9f0e1a05b8762d80
-needs_update=0 #NODOC
-if [ ! -f /usr/local/lib/z-push/version ]; then
-	needs_update=1 #NODOC
-elif [[ $VERSION != $(cat /usr/local/lib/z-push/version) ]]; then
-	# checks if the version
-	needs_update=1 #NODOC
-fi
-if [ $needs_update == 1 ]; then
-	# Download
-	wget_verify "https://github.com/Z-Hub/Z-Push/archive/refs/tags/$VERSION.zip" $TARGETHASH /tmp/z-push.zip
+	phpenmod -v $PHP_VER imap
 
-	# Extract into place.
-	rm -rf /usr/local/lib/z-push /tmp/z-push
-	unzip -q /tmp/z-push.zip -d /tmp/z-push
-	mv /tmp/z-push/*/src /usr/local/lib/z-push
-	rm -rf /tmp/z-push.zip /tmp/z-push
+	# Copy Z-Push into place.
+	VERSION=2.6.2
+	TARGETHASH=f0e8091a8030e5b851f5ba1f9f0e1a05b8762d80
+	needs_update=0 #NODOC
+	if [ ! -f /usr/local/lib/z-push/version ]; then
+		needs_update=1 #NODOC
+	elif [[ $VERSION != $(cat /usr/local/lib/z-push/version) ]]; then
+		# checks if the version
+		needs_update=1 #NODOC
+	fi
+	if [ $needs_update == 1 ]; then
+		# Download
+		wget_verify "https://github.com/Z-Hub/Z-Push/archive/refs/tags/$VERSION.zip" $TARGETHASH /tmp/z-push.zip
 
-	rm -f /usr/sbin/z-push-{admin,top}
-	echo $VERSION > /usr/local/lib/z-push/version
-fi
+		# Extract into place.
+		rm -rf /usr/local/lib/z-push /tmp/z-push
+		unzip -q /tmp/z-push.zip -d /tmp/z-push
+		mv /tmp/z-push/*/src /usr/local/lib/z-push
+		rm -rf /tmp/z-push.zip /tmp/z-push
 
-# Configure default config.
-sed -i "s^define('TIMEZONE', .*^define('TIMEZONE', '$(cat /etc/timezone)');^" /usr/local/lib/z-push/config.php
-sed -i "s/define('BACKEND_PROVIDER', .*/define('BACKEND_PROVIDER', 'BackendCombined');/" /usr/local/lib/z-push/config.php
-sed -i "s/define('USE_FULLEMAIL_FOR_LOGIN', .*/define('USE_FULLEMAIL_FOR_LOGIN', true);/" /usr/local/lib/z-push/config.php
-sed -i "s/define('LOG_MEMORY_PROFILER', .*/define('LOG_MEMORY_PROFILER', false);/" /usr/local/lib/z-push/config.php
-sed -i "s/define('BUG68532FIXED', .*/define('BUG68532FIXED', false);/" /usr/local/lib/z-push/config.php
-sed -i "s/define('LOGLEVEL', .*/define('LOGLEVEL', LOGLEVEL_ERROR);/" /usr/local/lib/z-push/config.php
+		rm -f /usr/sbin/z-push-{admin,top}
+		echo $VERSION > /usr/local/lib/z-push/version
+	fi
 
-# Configure BACKEND
-rm -f /usr/local/lib/z-push/backend/combined/config.php
-cp conf/zpush/backend_combined.php /usr/local/lib/z-push/backend/combined/config.php
+	# Configure default config.
+	sed -i "s^define('TIMEZONE', .*^define('TIMEZONE', '$(cat /etc/timezone)');^" /usr/local/lib/z-push/config.php
+	sed -i "s/define('BACKEND_PROVIDER', .*/define('BACKEND_PROVIDER', 'BackendCombined');/" /usr/local/lib/z-push/config.php
+	sed -i "s/define('USE_FULLEMAIL_FOR_LOGIN', .*/define('USE_FULLEMAIL_FOR_LOGIN', true);/" /usr/local/lib/z-push/config.php
+	sed -i "s/define('LOG_MEMORY_PROFILER', .*/define('LOG_MEMORY_PROFILER', false);/" /usr/local/lib/z-push/config.php
+	sed -i "s/define('BUG68532FIXED', .*/define('BUG68532FIXED', false);/" /usr/local/lib/z-push/config.php
+	sed -i "s/define('LOGLEVEL', .*/define('LOGLEVEL', LOGLEVEL_ERROR);/" /usr/local/lib/z-push/config.php
 
-# Configure IMAP
-rm -f /usr/local/lib/z-push/backend/imap/config.php
-cp conf/zpush/backend_imap.php /usr/local/lib/z-push/backend/imap/config.php
-sed -i "s%STORAGE_ROOT%$STORAGE_ROOT%" /usr/local/lib/z-push/backend/imap/config.php
+	# Configure BACKEND
+	rm -f /usr/local/lib/z-push/backend/combined/config.php
+	cp conf/zpush/backend_combined.php /usr/local/lib/z-push/backend/combined/config.php
 
-# Configure CardDav
-rm -f /usr/local/lib/z-push/backend/carddav/config.php
-cp conf/zpush/backend_carddav.php /usr/local/lib/z-push/backend/carddav/config.php
+	# Configure IMAP
+	rm -f /usr/local/lib/z-push/backend/imap/config.php
+	cp conf/zpush/backend_imap.php /usr/local/lib/z-push/backend/imap/config.php
+	sed -i "s%STORAGE_ROOT%$STORAGE_ROOT%" /usr/local/lib/z-push/backend/imap/config.php
 
-# Configure CalDav
-rm -f /usr/local/lib/z-push/backend/caldav/config.php
-cp conf/zpush/backend_caldav.php /usr/local/lib/z-push/backend/caldav/config.php
+	# Configure CardDav
+	rm -f /usr/local/lib/z-push/backend/carddav/config.php
+	cp conf/zpush/backend_carddav.php /usr/local/lib/z-push/backend/carddav/config.php
 
-# Configure Autodiscover
-rm -f /usr/local/lib/z-push/autodiscover/config.php
-cp conf/zpush/autodiscover_config.php /usr/local/lib/z-push/autodiscover/config.php
-sed -i "s/PRIMARY_HOSTNAME/$PRIMARY_HOSTNAME/" /usr/local/lib/z-push/autodiscover/config.php
-sed -i "s^define('TIMEZONE', .*^define('TIMEZONE', '$(cat /etc/timezone)');^" /usr/local/lib/z-push/autodiscover/config.php
+	# Configure CalDav
+	rm -f /usr/local/lib/z-push/backend/caldav/config.php
+	cp conf/zpush/backend_caldav.php /usr/local/lib/z-push/backend/caldav/config.php
 
-# Some directories it will use.
+	# Configure Autodiscover
+	rm -f /usr/local/lib/z-push/autodiscover/config.php
+	cp conf/zpush/autodiscover_config.php /usr/local/lib/z-push/autodiscover/config.php
+	sed -i "s/PRIMARY_HOSTNAME/$PRIMARY_HOSTNAME/" /usr/local/lib/z-push/autodiscover/config.php
+	sed -i "s^define('TIMEZONE', .*^define('TIMEZONE', '$(cat /etc/timezone)');^" /usr/local/lib/z-push/autodiscover/config.php
 
-mkdir -p /var/log/z-push
-mkdir -p /var/lib/z-push
-chmod 750 /var/log/z-push
-chmod 750 /var/lib/z-push
-chown www-data:www-data /var/log/z-push
-chown www-data:www-data /var/lib/z-push
+	# Some directories it will use.
 
-# Add log rotation
+	mkdir -p /var/log/z-push
+	mkdir -p /var/lib/z-push
+	chmod 750 /var/log/z-push
+	chmod 750 /var/lib/z-push
+	chown www-data:www-data /var/log/z-push
+	chown www-data:www-data /var/lib/z-push
 
-cat > /etc/logrotate.d/z-push <<EOF;
+	# Add log rotation
+
+	cat > /etc/logrotate.d/z-push <<EOF;
 /var/log/z-push/*.log {
 	weekly
 	missingok
@@ -98,10 +102,12 @@ cat > /etc/logrotate.d/z-push <<EOF;
 }
 EOF
 
-# Restart service.
+	# Restart service.
 
-restart_service php$PHP_VER-fpm
+	restart_service php$PHP_VER-fpm
 
-# Fix states after upgrade
+	# Fix states after upgrade
 
-hide_output php$PHP_VER /usr/local/lib/z-push/z-push-admin.php -a fixstates
+	hide_output php$PHP_VER /usr/local/lib/z-push/z-push-admin.php -a fixstates
+
+fi

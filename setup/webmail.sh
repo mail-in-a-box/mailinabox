@@ -5,112 +5,116 @@
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
-# ### Installing Roundcube
+if [ "$WEBMAIL_ENABLE" -ne "1" ]; then
+	echo "Skipping Roundcube (webmail) installation."
+else
 
-# We install Roundcube from sources, rather than from Ubuntu, because:
-#
-# 1. Ubuntu's `roundcube-core` package has dependencies on Apache & MySQL, which we don't want.
-#
-# 2. The Roundcube shipped with Ubuntu is consistently out of date.
-#
-# 3. It's packaged incorrectly --- it seems to be missing a directory of files.
-#
-# So we'll use apt-get to manually install the dependencies of roundcube that we know we need,
-# and then we'll manually install roundcube from source.
+	# ### Installing Roundcube
 
-# These dependencies are from `apt-cache showpkg roundcube-core`.
-echo "Installing Roundcube (webmail)..."
-apt_install \
-	dbconfig-common \
-	php${PHP_VER}-cli php${PHP_VER}-sqlite3 php${PHP_VER}-intl php${PHP_VER}-common php${PHP_VER}-curl php${PHP_VER}-imap \
-	php${PHP_VER}-gd php${PHP_VER}-pspell php${PHP_VER}-mbstring libjs-jquery libjs-jquery-mousewheel libmagic1
+	# We install Roundcube from sources, rather than from Ubuntu, because:
+	#
+	# 1. Ubuntu's `roundcube-core` package has dependencies on Apache & MySQL, which we don't want.
+	#
+	# 2. The Roundcube shipped with Ubuntu is consistently out of date.
+	#
+	# 3. It's packaged incorrectly --- it seems to be missing a directory of files.
+	#
+	# So we'll use apt-get to manually install the dependencies of roundcube that we know we need,
+	# and then we'll manually install roundcube from source.
 
-# Install Roundcube from source if it is not already present or if it is out of date.
-# Combine the Roundcube version number with the commit hash of plugins to track
-# whether we have the latest version of everything.
-# For the latest versions, see:
-#   https://github.com/roundcube/roundcubemail/releases
-#   https://github.com/mfreiholz/persistent_login/commits/master
-#   https://github.com/stremlau/html5_notifier/commits/master
-#   https://github.com/mstilkerich/rcmcarddav/releases
-# The easiest way to get the package hashes is to run this script and get the hash from
-# the error message.
-VERSION=1.5.2
-HASH=208ce4ca0be423cc0f7070ff59bd03588b4439bf
-PERSISTENT_LOGIN_VERSION=59ca1b0d3a02cff5fa621c1ad581d15f9d642fe8
-HTML5_NOTIFIER_VERSION=68d9ca194212e15b3c7225eb6085dbcf02fd13d7 # version 0.6.4+
-CARDDAV_VERSION=4.3.0
-CARDDAV_HASH=4ad7df8843951062878b1375f77c614f68bc5c61
+	# These dependencies are from `apt-cache showpkg roundcube-core`.
+	echo "Installing Roundcube (webmail)..."
+	apt_install \
+		dbconfig-common \
+		php${PHP_VER}-cli php${PHP_VER}-sqlite3 php${PHP_VER}-intl php${PHP_VER}-common php${PHP_VER}-curl php${PHP_VER}-imap \
+		php${PHP_VER}-gd php${PHP_VER}-pspell php${PHP_VER}-mbstring libjs-jquery libjs-jquery-mousewheel libmagic1
 
-UPDATE_KEY=$VERSION:$PERSISTENT_LOGIN_VERSION:$HTML5_NOTIFIER_VERSION:$CARDDAV_VERSION
+	# Install Roundcube from source if it is not already present or if it is out of date.
+	# Combine the Roundcube version number with the commit hash of plugins to track
+	# whether we have the latest version of everything.
+	# For the latest versions, see:
+	#   https://github.com/roundcube/roundcubemail/releases
+	#   https://github.com/mfreiholz/persistent_login/commits/master
+	#   https://github.com/stremlau/html5_notifier/commits/master
+	#   https://github.com/mstilkerich/rcmcarddav/releases
+	# The easiest way to get the package hashes is to run this script and get the hash from
+	# the error message.
+	VERSION=1.5.2
+	HASH=208ce4ca0be423cc0f7070ff59bd03588b4439bf
+	PERSISTENT_LOGIN_VERSION=59ca1b0d3a02cff5fa621c1ad581d15f9d642fe8
+	HTML5_NOTIFIER_VERSION=68d9ca194212e15b3c7225eb6085dbcf02fd13d7 # version 0.6.4+
+	CARDDAV_VERSION=4.3.0
+	CARDDAV_HASH=4ad7df8843951062878b1375f77c614f68bc5c61
 
-# paths that are often reused.
-RCM_DIR=/usr/local/lib/roundcubemail
-RCM_PLUGIN_DIR=${RCM_DIR}/plugins
-RCM_CONFIG=${RCM_DIR}/config/config.inc.php
+	UPDATE_KEY=$VERSION:$PERSISTENT_LOGIN_VERSION:$HTML5_NOTIFIER_VERSION:$CARDDAV_VERSION
 
-needs_update=0 #NODOC
-if [ ! -f /usr/local/lib/roundcubemail/version ]; then
-	# not installed yet #NODOC
-	needs_update=1 #NODOC
-elif [[ "$UPDATE_KEY" != $(cat /usr/local/lib/roundcubemail/version) ]]; then
-	# checks if the version is what we want
-	needs_update=1 #NODOC
-fi
-if [ $needs_update == 1 ]; then
-  # if upgrading from 1.3.x, clear the temp_dir
-  if [ -f /usr/local/lib/roundcubemail/version ]; then
-    if [ "$(cat /usr/local/lib/roundcubemail/version | cut -c1-3)" == '1.3' ]; then
-      find /var/tmp/roundcubemail/ -type f ! -name 'RCMTEMP*' -delete
-    fi
-  fi
+	# paths that are often reused.
+	RCM_DIR=/usr/local/lib/roundcubemail
+	RCM_PLUGIN_DIR=${RCM_DIR}/plugins
+	RCM_CONFIG=${RCM_DIR}/config/config.inc.php
 
-	# install roundcube
-	wget_verify \
-		https://github.com/roundcube/roundcubemail/releases/download/$VERSION/roundcubemail-$VERSION-complete.tar.gz \
-		$HASH \
-		/tmp/roundcube.tgz
-	tar -C /usr/local/lib --no-same-owner -zxf /tmp/roundcube.tgz
-	rm -rf /usr/local/lib/roundcubemail
-	mv /usr/local/lib/roundcubemail-$VERSION/ $RCM_DIR
-	rm -f /tmp/roundcube.tgz
+	needs_update=0 #NODOC
+	if [ ! -f /usr/local/lib/roundcubemail/version ]; then
+		# not installed yet #NODOC
+		needs_update=1 #NODOC
+	elif [[ "$UPDATE_KEY" != $(cat /usr/local/lib/roundcubemail/version) ]]; then
+		# checks if the version is what we want
+		needs_update=1 #NODOC
+	fi
+	if [ $needs_update == 1 ]; then
+	# if upgrading from 1.3.x, clear the temp_dir
+	if [ -f /usr/local/lib/roundcubemail/version ]; then
+		if [ "$(cat /usr/local/lib/roundcubemail/version | cut -c1-3)" == '1.3' ]; then
+		find /var/tmp/roundcubemail/ -type f ! -name 'RCMTEMP*' -delete
+		fi
+	fi
 
-	# install roundcube persistent_login plugin
-	git_clone https://github.com/mfreiholz/Roundcube-Persistent-Login-Plugin.git $PERSISTENT_LOGIN_VERSION '' ${RCM_PLUGIN_DIR}/persistent_login
+		# install roundcube
+		wget_verify \
+			https://github.com/roundcube/roundcubemail/releases/download/$VERSION/roundcubemail-$VERSION-complete.tar.gz \
+			$HASH \
+			/tmp/roundcube.tgz
+		tar -C /usr/local/lib --no-same-owner -zxf /tmp/roundcube.tgz
+		rm -rf /usr/local/lib/roundcubemail
+		mv /usr/local/lib/roundcubemail-$VERSION/ $RCM_DIR
+		rm -f /tmp/roundcube.tgz
 
-	# install roundcube html5_notifier plugin
-	git_clone https://github.com/kitist/html5_notifier.git $HTML5_NOTIFIER_VERSION '' ${RCM_PLUGIN_DIR}/html5_notifier
+		# install roundcube persistent_login plugin
+		git_clone https://github.com/mfreiholz/Roundcube-Persistent-Login-Plugin.git $PERSISTENT_LOGIN_VERSION '' ${RCM_PLUGIN_DIR}/persistent_login
 
-	# download and verify the full release of the carddav plugin
-	wget_verify \
-		https://github.com/blind-coder/rcmcarddav/releases/download/v${CARDDAV_VERSION}/carddav-v${CARDDAV_VERSION}.tar.gz \
-		$CARDDAV_HASH \
-		/tmp/carddav.tar.gz
+		# install roundcube html5_notifier plugin
+		git_clone https://github.com/kitist/html5_notifier.git $HTML5_NOTIFIER_VERSION '' ${RCM_PLUGIN_DIR}/html5_notifier
 
-	# unzip and cleanup
-	tar -C ${RCM_PLUGIN_DIR} -zxf /tmp/carddav.tar.gz
-	rm -f /tmp/carddav.tar.gz
+		# download and verify the full release of the carddav plugin
+		wget_verify \
+			https://github.com/blind-coder/rcmcarddav/releases/download/v${CARDDAV_VERSION}/carddav-v${CARDDAV_VERSION}.tar.gz \
+			$CARDDAV_HASH \
+			/tmp/carddav.tar.gz
 
-	# record the version we've installed
-	echo $UPDATE_KEY > ${RCM_DIR}/version
-fi
+		# unzip and cleanup
+		tar -C ${RCM_PLUGIN_DIR} -zxf /tmp/carddav.tar.gz
+		rm -f /tmp/carddav.tar.gz
 
-# ### Configuring Roundcube
+		# record the version we've installed
+		echo $UPDATE_KEY > ${RCM_DIR}/version
+	fi
 
-# Generate a secret key of PHP-string-safe characters appropriate
-# for the cipher algorithm selected below.
-SECRET_KEY=$(dd if=/dev/urandom bs=1 count=32 2>/dev/null | base64 | sed s/=//g)
+	# ### Configuring Roundcube
 
-# Create a configuration file.
-#
-# For security, temp and log files are not stored in the default locations
-# which are inside the roundcube sources directory. We put them instead
-# in normal places.
-cat > $RCM_CONFIG <<EOF;
+	# Generate a secret key of PHP-string-safe characters appropriate
+	# for the cipher algorithm selected below.
+	SECRET_KEY=$(dd if=/dev/urandom bs=1 count=32 2>/dev/null | base64 | sed s/=//g)
+
+	# Create a configuration file.
+	#
+	# For security, temp and log files are not stored in the default locations
+	# which are inside the roundcube sources directory. We put them instead
+	# in normal places.
+	cat > $RCM_CONFIG <<EOF;
 <?php
 /*
- * Do not edit. Written by Mail-in-a-Box. Regenerated on updates.
- */
+* Do not edit. Written by Mail-in-a-Box. Regenerated on updates.
+*/
 \$config = array();
 \$config['log_dir'] = '/var/log/roundcubemail/';
 \$config['temp_dir'] = '/var/tmp/roundcubemail/';
@@ -118,19 +122,19 @@ cat > $RCM_CONFIG <<EOF;
 \$config['default_host'] = 'ssl://localhost';
 \$config['default_port'] = 993;
 \$config['imap_conn_options'] = array(
-  'ssl'         => array(
-     'verify_peer'  => false,
-     'verify_peer_name'  => false,
-   ),
- );
+'ssl'         => array(
+	'verify_peer'  => false,
+	'verify_peer_name'  => false,
+),
+);
 \$config['imap_timeout'] = 15;
 \$config['smtp_server'] = 'tls://127.0.0.1';
 \$config['smtp_conn_options'] = array(
-  'ssl'         => array(
-     'verify_peer'  => false,
-     'verify_peer_name'  => false,
-   ),
- );
+'ssl'         => array(
+	'verify_peer'  => false,
+	'verify_peer_name'  => false,
+),
+);
 \$config['support_url'] = 'https://mailinabox.email/';
 \$config['product_name'] = '$PRIMARY_HOSTNAME Webmail';
 \$config['cipher_method'] = 'AES-256-CBC'; # persistent login cookie and potentially other things
@@ -144,68 +148,70 @@ cat > $RCM_CONFIG <<EOF;
 ?>
 EOF
 
-# Configure CardDav
-cat > ${RCM_PLUGIN_DIR}/carddav/config.inc.php <<EOF;
+	# Configure CardDav
+	cat > ${RCM_PLUGIN_DIR}/carddav/config.inc.php <<EOF;
 <?php
 /* Do not edit. Written by Mail-in-a-Box. Regenerated on updates. */
 \$prefs['_GLOBAL']['hide_preferences'] = true;
 \$prefs['_GLOBAL']['suppress_version_warning'] = true;
 \$prefs['ownCloud'] = array(
-	 'name'         =>  'ownCloud',
-	 'username'     =>  '%u', // login username
-	 'password'     =>  '%p', // login password
-	 'url'          =>  'https://${PRIMARY_HOSTNAME}/cloud/remote.php/carddav/addressbooks/%u/contacts',
-	 'active'       =>  true,
-	 'readonly'     =>  false,
-	 'refresh_time' => '02:00:00',
-	 'fixed'        =>  array('username','password'),
-	 'preemptive_auth' => '1',
-	 'hide'        =>  false,
+	'name'         =>  'ownCloud',
+	'username'     =>  '%u', // login username
+	'password'     =>  '%p', // login password
+	'url'          =>  'https://${PRIMARY_HOSTNAME}/cloud/remote.php/carddav/addressbooks/%u/contacts',
+	'active'       =>  true,
+	'readonly'     =>  false,
+	'refresh_time' => '02:00:00',
+	'fixed'        =>  array('username','password'),
+	'preemptive_auth' => '1',
+	'hide'        =>  false,
 );
 ?>
 EOF
 
-# Create writable directories.
-mkdir -p /var/log/roundcubemail /var/tmp/roundcubemail $STORAGE_ROOT/mail/roundcube
-chown -R www-data.www-data /var/log/roundcubemail /var/tmp/roundcubemail $STORAGE_ROOT/mail/roundcube
+	# Create writable directories.
+	mkdir -p /var/log/roundcubemail /var/tmp/roundcubemail $STORAGE_ROOT/mail/roundcube
+	chown -R www-data.www-data /var/log/roundcubemail /var/tmp/roundcubemail $STORAGE_ROOT/mail/roundcube
 
-# Ensure the log file monitored by fail2ban exists, or else fail2ban can't start.
-sudo -u www-data touch /var/log/roundcubemail/errors.log
+	# Ensure the log file monitored by fail2ban exists, or else fail2ban can't start.
+	sudo -u www-data touch /var/log/roundcubemail/errors.log
 
-# Password changing plugin settings
-# The config comes empty by default, so we need the settings
-# we're not planning to change in config.inc.dist...
-cp ${RCM_PLUGIN_DIR}/password/config.inc.php.dist \
-	${RCM_PLUGIN_DIR}/password/config.inc.php
+	# Password changing plugin settings
+	# The config comes empty by default, so we need the settings
+	# we're not planning to change in config.inc.dist...
+	cp ${RCM_PLUGIN_DIR}/password/config.inc.php.dist \
+		${RCM_PLUGIN_DIR}/password/config.inc.php
 
-tools/editconf.py ${RCM_PLUGIN_DIR}/password/config.inc.php \
-	"\$config['password_minimum_length']=8;" \
-	"\$config['password_db_dsn']='sqlite:///$STORAGE_ROOT/mail/users.sqlite';" \
-	"\$config['password_query']='UPDATE users SET password=%D WHERE email=%u';" \
-	"\$config['password_dovecotpw']='/usr/bin/doveadm pw';" \
-	"\$config['password_dovecotpw_method']='SHA512-CRYPT';" \
-	"\$config['password_dovecotpw_with_method']=true;"
+	tools/editconf.py ${RCM_PLUGIN_DIR}/password/config.inc.php \
+		"\$config['password_minimum_length']=8;" \
+		"\$config['password_db_dsn']='sqlite:///$STORAGE_ROOT/mail/users.sqlite';" \
+		"\$config['password_query']='UPDATE users SET password=%D WHERE email=%u';" \
+		"\$config['password_dovecotpw']='/usr/bin/doveadm pw';" \
+		"\$config['password_dovecotpw_method']='SHA512-CRYPT';" \
+		"\$config['password_dovecotpw_with_method']=true;"
 
-# so PHP can use doveadm, for the password changing plugin
-usermod -a -G dovecot www-data
+	# so PHP can use doveadm, for the password changing plugin
+	usermod -a -G dovecot www-data
 
-# set permissions so that PHP can use users.sqlite
-# could use dovecot instead of www-data, but not sure it matters
-chown root.www-data $STORAGE_ROOT/mail
-chmod 775 $STORAGE_ROOT/mail
-chown root.www-data $STORAGE_ROOT/mail/users.sqlite
-chmod 664 $STORAGE_ROOT/mail/users.sqlite
+	# set permissions so that PHP can use users.sqlite
+	# could use dovecot instead of www-data, but not sure it matters
+	chown root.www-data $STORAGE_ROOT/mail
+	chmod 775 $STORAGE_ROOT/mail
+	chown root.www-data $STORAGE_ROOT/mail/users.sqlite
+	chmod 664 $STORAGE_ROOT/mail/users.sqlite
 
-# Fix Carddav permissions:
-chown -f -R root.www-data ${RCM_PLUGIN_DIR}/carddav
-# root.www-data need all permissions, others only read
-chmod -R 774 ${RCM_PLUGIN_DIR}/carddav
+	# Fix Carddav permissions:
+	chown -f -R root.www-data ${RCM_PLUGIN_DIR}/carddav
+	# root.www-data need all permissions, others only read
+	chmod -R 774 ${RCM_PLUGIN_DIR}/carddav
 
-# Run Roundcube database migration script (database is created if it does not exist)
-php$PHP_VER ${RCM_DIR}/bin/updatedb.sh --dir ${RCM_DIR}/SQL --package roundcube
-chown www-data:www-data $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
-chmod 664 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
+	# Run Roundcube database migration script (database is created if it does not exist)
+	php$PHP_VER ${RCM_DIR}/bin/updatedb.sh --dir ${RCM_DIR}/SQL --package roundcube
+	chown www-data:www-data $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
+	chmod 664 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 
-# Enable PHP modules.
-phpenmod -v $PHP_VER imap
-restart_service php$PHP_VER-fpm
+	# Enable PHP modules.
+	phpenmod -v $PHP_VER imap
+	restart_service php$PHP_VER-fpm
+
+fi
