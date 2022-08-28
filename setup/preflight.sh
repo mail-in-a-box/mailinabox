@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Are we running as root?
 if [[ $EUID -ne 0 ]]; then
 	echo "This script must be run as root. Please re-run like this:"
@@ -7,7 +9,7 @@ if [[ $EUID -ne 0 ]]; then
 	exit 1
 fi
 
-# Check that we are running on Ubuntu 20.04 LTS (or 20.04.xx).
+# Check that we are running on Ubuntu 22.04 LTS (or 22.04.xx).
 if [ "$( lsb_release --id --short )" != "Ubuntu" ] || [ "$( lsb_release --release --short )" != "22.04" ]; then
 	echo "Mail-in-a-Box only supports being installed on Ubuntu 22.04, sorry. You are running:"
 	echo
@@ -26,7 +28,7 @@ fi
 #
 # Skip the check if we appear to be running inside of Vagrant, because that's really just for testing.
 TOTAL_PHYSICAL_MEM=$(head -n 1 /proc/meminfo | awk '{print $2}')
-if [ $TOTAL_PHYSICAL_MEM -lt 490000 ]; then
+if [ "$TOTAL_PHYSICAL_MEM" -lt 490000 ]; then
 if [ ! -d /vagrant ]; then
 	TOTAL_PHYSICAL_MEM=$(expr \( \( $TOTAL_PHYSICAL_MEM \* 1024 \) / 1000 \) / 1000)
 	echo "Your Mail-in-a-Box needs more memory (RAM) to function properly."
@@ -35,7 +37,7 @@ if [ ! -d /vagrant ]; then
 	exit
 fi
 fi
-if [ $TOTAL_PHYSICAL_MEM -lt 750000 ]; then
+if [ "$TOTAL_PHYSICAL_MEM" -lt 750000 ]; then
 	echo "WARNING: Your Mail-in-a-Box has less than 768 MB of memory."
 	echo "         It might run unreliably when under heavy load."
 fi

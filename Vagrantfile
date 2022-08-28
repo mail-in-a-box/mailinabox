@@ -19,7 +19,12 @@ Vagrant.configure("2") do |config|
     export PUBLIC_IP=auto
     export PUBLIC_IPV6=auto
     export PRIMARY_HOSTNAME=auto
-    #export SKIP_NETWORK_CHECKS=1
+
+    export SKIP_NETWORK_CHECKS=1
+    
+    export NEXTCLOUD_ENABLE=0
+    export WEBMAIL_ENABLE=0
+    export ZPUSH_ENABLE=0
 
     # Start the setup script.
     cd /vagrant

@@ -1,3 +1,5 @@
+#!/bin/bash
+
 if [ -z "${NONINTERACTIVE:-}" ]; then
 	# Install 'dialog' so we can ask the user questions. The original motivation for
 	# this was being able to ask the user for input even if stdin has been redirected,
@@ -141,15 +143,19 @@ if [ -z "${PUBLIC_IPV6:-}" ]; then
 			"Enter the public IPv6 address of this machine, as given to you by your ISP.
 			\n\nLeave blank if the machine does not have an IPv6 address.
 			\n\nPublic IPv6 address:" \
-			${DEFAULT_PUBLIC_IPV6:-} \
+			"${DEFAULT_PUBLIC_IPV6:-}" \
 			PUBLIC_IPV6
 
-		if [ ! $PUBLIC_IPV6_EXITCODE ]; then
+		if [ ! "$PUBLIC_IPV6_EXITCODE" ]; then
 			# user hit ESC/cancel
 			exit
 		fi
 	fi
 fi
+
+export NEXTCLOUD_ENABLE=$NEXTCLOUD_ENABLE
+export WEBMAIL_ENABLE=$WEBMAIL_ENABLE
+export ZPUSH_ENABLE=$ZPUSH_ENABLE
 
 # Get the IP addresses of the local network interface(s) that are connected
 # to the Internet. We need these when we want to have services bind only to

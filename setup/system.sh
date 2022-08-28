@@ -1,3 +1,5 @@
+#!/bin/bash
+
 source /etc/mailinabox.conf
 source setup/functions.sh # load our functions
 
@@ -11,8 +13,8 @@ source setup/functions.sh # load our functions
 #
 # First set the hostname in the configuration file, then activate the setting
 
-echo $PRIMARY_HOSTNAME > /etc/hostname
-hostname $PRIMARY_HOSTNAME
+echo "$PRIMARY_HOSTNAME" > /etc/hostname
+hostname "$PRIMARY_HOSTNAME"
 
 # ### Fix permissions
 
@@ -43,7 +45,7 @@ chmod g-w /etc /etc/default /usr
 # See https://www.digitalocean.com/community/tutorials/how-to-add-swap-on-ubuntu-14-04
 # for reference
 
-SWAP_MOUNTED=$(cat /proc/swaps | tail -n+2)
+SWAP_MOUNTED=$(tail -n+2 /proc/swaps)
 SWAP_IN_FSTAB=$(grep "swap" /etc/fstab || /bin/true)
 ROOT_IS_BTRFS=$(grep "\/ .*btrfs" /proc/mounts || /bin/true)
 TOTAL_PHYSICAL_MEM=$(head -n 1 /proc/meminfo | awk '{print $2}' || /bin/true)
@@ -53,14 +55,14 @@ if
 	[ -z "$SWAP_IN_FSTAB" ] &&
 	[ ! -e /swapfile ] &&
 	[ -z "$ROOT_IS_BTRFS" ] &&
-	[ $TOTAL_PHYSICAL_MEM -lt 1900000 ] &&
-	[ $AVAILABLE_DISK_SPACE -gt 5242880 ]
+	[ "$TOTAL_PHYSICAL_MEM" -lt 1900000 ] &&
+	[ "$AVAILABLE_DISK_SPACE" -gt 5242880 ]
 then
 	echo "Adding a swap file to the system..."
 
 	# Allocate and activate the swap file. Allocate in 1KB chuncks
 	# doing it in one go, could fail on low memory systems
-	dd if=/dev/zero of=/swapfile bs=1024 count=$[1024*1024] status=none
+	dd if=/dev/zero of=/swapfile bs=1024 count=$((1024*1024)) status=none
 	if [ -e /swapfile ]; then
 		chmod 600 /swapfile
 		hide_output mkswap /swapfile
@@ -164,7 +166,7 @@ fi
 # not likely the user will want to change this, so we only ask on first
 # setup.
 if [ -z "${NONINTERACTIVE:-}" ]; then
-	if [ ! -f /etc/timezone ] || [ ! -z ${FIRST_TIME_SETUP:-} ]; then
+	if [ ! -f /etc/timezone ] || [ -n "${FIRST_TIME_SETUP:-}" ]; then
 		# If the file is missing or this is the user's first time running
 		# Mail-in-a-Box setup, run the interactive timezone configuration
 		# tool.
@@ -273,8 +275,8 @@ if [ -z "${DISABLE_FIREWALL:-}" ]; then
 	if [ ! -z "$SSH_PORT" ]; then
 	if [ "$SSH_PORT" != "22" ]; then
 
-	echo Opening alternate SSH port $SSH_PORT. #NODOC
-	ufw_limit $SSH_PORT #NODOC
+	echo Opening alternate SSH port "$SSH_PORT". #NODOC
+	ufw_limit "$SSH_PORT" #NODOC
 
 	fi
 	fi
