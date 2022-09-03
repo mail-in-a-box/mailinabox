@@ -29,9 +29,9 @@ done
 apt_install duplicity python3-pip virtualenv certbot rsync
 
 # b2sdk is used for backblaze backups.
-# boto is used for amazon aws backups.
+# boto3 is used for amazon aws backups.
 # Both are installed outside the pipenv, so they can be used by duplicity
-hide_output pip3 install --upgrade b2sdk boto
+hide_output pip3 install --upgrade b2sdk boto3
 
 # Create a virtualenv for the installation of Python 3 packages
 # used by the management daemon.
@@ -53,7 +53,7 @@ hide_output $venv/bin/pip install --upgrade \
 	flask dnspython python-dateutil expiringdict \
 	qrcode[pil] pyotp \
 	"idna>=2.0.0" "cryptography==37.0.2" psutil postfix-mta-sts-resolver \
-	b2sdk boto
+	b2sdk boto3
 
 # CONFIGURATION
 
