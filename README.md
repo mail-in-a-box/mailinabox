@@ -84,7 +84,7 @@ Additionally, this project has a [Code of Conduct](CODE_OF_CONDUCT.md), which su
 In The Box
 ----------
 
-Mail-in-a-Box turns a fresh Ubuntu 22.04 or 20.04 LTS 64-bit machine into a working mail server by installing and configuring various components.
+Mail-in-a-Box turns a fresh Ubuntu 22.04 LTS 64-bit machine into a working mail server by installing and configuring various components.
 
 It is a one-click email appliance. There are no user-configurable setup options. It "just works."
 

@@ -34,7 +34,7 @@ if [ -z "$TAG" ]; then
 		# This machine is running Ubuntu 18.04, which is supported by
 		# Mail-in-a-Box versions 0.40 through 5x.
 		echo "Support is ending for Ubuntu 18.04."
-		echo "Please immediately begin to migrate your information to"
+		echo "Please immediately begin to migrate your data to"
 		echo "a new machine running Ubuntu 22.04. See:"
 		echo "https://mailinabox.email/maintenance.html#upgrade"
 		TAG=v57a

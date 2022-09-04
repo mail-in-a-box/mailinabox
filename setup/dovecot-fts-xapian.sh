@@ -35,8 +35,6 @@ if [ ! -f /usr/lib/dovecot/decode2text.sh ]; then
 	cp -f /usr/share/doc/dovecot-core/examples/decode2text.sh /usr/lib/dovecot
 fi
 
-#cp -f lib/lib21_fts_xapian_plugin.so /usr/lib/dovecot/modules/
-
 # Create configuration file
 cat > /etc/dovecot/conf.d/90-plugin-fts.conf << EOF;
 plugin {

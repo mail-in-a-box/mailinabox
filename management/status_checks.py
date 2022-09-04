@@ -338,9 +338,9 @@ def run_domain_checks(rounded_time, env, output, pool, domains_to_check=None):
 	domains_to_check = [
 		d for d in domains_to_check
 		if not (
-		   d.split(".", 1)[0] in ("www", "autoconfig", "autodiscover", "mta-sts")
-		   and len(d.split(".", 1)) == 2
-		   and d.split(".", 1)[1] in domains_to_check
+			d.split(".", 1)[0] in ("www", "autoconfig", "autodiscover", "mta-sts")
+			and len(d.split(".", 1)) == 2
+			and d.split(".", 1)[1] in domains_to_check
 		)
 	]
 
@@ -810,8 +810,8 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None, as_list=False, retry=
 	# Make sure at is not a string that cannot be used as a nameserver
 	if at:
 		if at not in {'[Not set]', '[timeout]'}:
-        		resolver = dns.resolver.Resolver()
-        		resolver.nameservers = [at]
+			resolver = dns.resolver.Resolver()
+			resolver.nameservers = [at]
 		else:
 			logging.error("at not set to a usable nameserver, %s", at)
 			
@@ -941,13 +941,13 @@ def what_version_is_this(env):
 def get_latest_miab_version():
 	# This pings https://mailinabox.email/setup.sh and extracts the tag named in
 	# the script to determine the current product version.
-    from urllib.request import urlopen, HTTPError, URLError
-    from socket import timeout
+	from urllib.request import urlopen, HTTPError, URLError
+	from socket import timeout
 
-    try:
-        return re.search(b'TAG=(.*)', urlopen("https://mailinabox.email/setup.sh?ping=1", timeout=5).read()).group(1).decode("utf8")
-    except (HTTPError, URLError, timeout):
-        return None
+	try:
+		return re.search(b'TAG=(.*)', urlopen("https://mailinabox.email/setup.sh?ping=1", timeout=5).read()).group(1).decode("utf8")
+	except (HTTPError, URLError, timeout):
+		return None
 
 def check_miab_version(env, output):
 	config = load_settings(env)
