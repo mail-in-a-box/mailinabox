@@ -203,11 +203,13 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 		elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^1[3456789] ]]; then
 			echo "Upgrades from Mail-in-a-Box prior to v60 with Nextcloud 19 or earlier are not supported. Upgrade to the latest Mail-in-a-Box version supported on your machine first. Setup will continue, but skip the Nextcloud migration."
 			return 0
-		elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^20 ]]; then
-			InstallNextcloud 21.0.7 f5c7079c5b56ce1e301c6a27c0d975d608bb01c9 4.0.7 8ab31d205408e4f12067d8a4daa3595d46b513e3 3.0.4 6fb1e998d307c53245faf1c37a96eb982bbee8ba 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
+		fi
+		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^20 ]]; then
+			InstallNextcloud 21.0.7 f5c7079c5b56ce1e301c6a27c0d975d608bb01c9 4.0.7 45e7cf4bfe99cd8d03625cf9e5a1bb2e90549136 3.0.4 d0284b68135777ec9ca713c307216165b294d0fe
 			CURRENT_NEXTCLOUD_VER="21.0.7"
-		elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^21 ]]; then
-			InstallNextcloud 22.2.6 9d39741f051a8da42ff7df46ceef2653a1dc70d9 4.1.0 38653b507bd7d953816bbc5e8bea7855867eb1cd 3.2.2 54e9a836adc739be4a2a9301b8d6d2e9d88e02f4 3.0.0 0df781b261f55bbde73d8c92da3f99397000972f
+		fi
+		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^21 ]]; then
+			InstallNextcloud 22.2.6 9d39741f051a8da42ff7df46ceef2653a1dc70d9 4.1.0 697f6b4a664e928d72414ea2731cb2c9d1dc3077 3.2.2 ce4030ab57f523f33d5396c6a81396d440756f5f 3.0.0 0df781b261f55bbde73d8c92da3f99397000972f
 			CURRENT_NEXTCLOUD_VER="22.2.6"
 		fi
 	fi
@@ -374,8 +376,9 @@ tools/editconf.py /etc/php/$PHP_VER/cli/conf.d/10-opcache.ini -c ';' \
 
 # Migrate users_external data from <0.6.0 to version 3.0.0 (see https://github.com/nextcloud/user_external).
 # This version was probably in use in Mail-in-a-Box v0.41 (February 26, 2019) and earlier.
-# We moved to v0.6.3 in 193763f8.
-sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "UPDATE oc_users_external SET backend='127.0.0.1';"
+# We moved to v0.6.3 in 193763f8. Ignore errors - maybe there are duplicated users with the
+# correct backend already.
+sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "UPDATE oc_users_external SET backend='127.0.0.1';" || /bin/true
 
 # Set up a cron job for Nextcloud.
 cat > /etc/cron.d/mailinabox-nextcloud << EOF;
@@ -384,9 +387,6 @@ cat > /etc/cron.d/mailinabox-nextcloud << EOF;
 */5 * * * *	root	sudo -u www-data php$PHP_VER -f /usr/local/lib/owncloud/cron.php
 EOF
 chmod +x /etc/cron.d/mailinabox-nextcloud
-
-# Remove previous hourly cronjob
-rm -f /etc/cron.hourly/mailinabox-owncloud
 
 # There's nothing much of interest that a user could do as an admin for Nextcloud,
 # and there's a lot they could mess up, so we don't make any users admins of Nextcloud.
