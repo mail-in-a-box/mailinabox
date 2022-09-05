@@ -52,7 +52,7 @@ def add_user(env, ldapconn, search_base, users_base, domains_base, email, passwo
 	for priv in privs:
 		if priv.strip() != '': privs_uniq[priv] = True
 	if len(privs_uniq) > 0:
-		attrs['mailaccess'] = privs_uniq.keys()
+		attrs['mailaccess'] = list(privs_uniq.keys())
 
 	# Get a common name
 	localpart, domainpart = email.split("@")
@@ -238,7 +238,7 @@ def add_permitted_senders_group(ldapconn, users_base, group_base, source, permit
 		ldapconn.add(group_dn, [ "mailGroup" ], {
 			"cn" : gid,
 			"mail" : source,
-			"member" : permitted_dn.keys(),
+			"member" : list(permitted_dn.keys()),
 			"description": "Permitted to MAIL FROM this address"
 		})
 	except ldap3.core.exceptions.LDAPEntryAlreadyExistsResult:
