@@ -1,4 +1,4 @@
-from daemon import app
+from management.daemon import app
 import utils
 
 app.logger.addHandler(utils.create_syslog_handler())

@@ -99,8 +99,7 @@ export LANG=en_US.UTF-8
 export LC_TYPE=en_US.UTF-8
 
 source $venv/bin/activate
-cd $(pwd)/management
-exec gunicorn -b localhost:10222 -w 2 wsgi:app
+exec gunicorn -b localhost:10222 -w 2 management.wsgi:app
 EOF
 chmod +x $inst_dir/start
 cp --remove-destination conf/mailinabox.service /lib/systemd/system/mailinabox.service # target was previously a symlink so remove it first
