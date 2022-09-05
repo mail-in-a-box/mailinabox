@@ -14,7 +14,7 @@ define('CARDDAV_DEFAULT_PATH', 'NC_PREFIX/remote.php/dav/addressbooks/users/%u/c
 define('CARDDAV_GAL_PATH', ''); /* readonly, searchable, not syncd */
 define('CARDDAV_GAL_MIN_LENGTH', 5);
 define('CARDDAV_CONTACTS_FOLDER_NAME', '%u Addressbook');
-define('CARDDAV_SUPPORTS_SYNC', false);
+define('CARDDAV_SUPPORTS_SYNC', true);
 
 // If the CardDAV server supports the FN attribute for searches
 // DAViCal supports it, but SabreDav, Nextcloud and SOGo don't
