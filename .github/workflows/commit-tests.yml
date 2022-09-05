@@ -15,3 +15,15 @@ jobs:
         run: sudo -E tests/system-setup/remote-nextcloud-docker.sh
       - name: test-runner
         run: sudo -E tests/runner.sh -dumpoutput -no-smtp-remote ehdd default remote-nextcloud
+  # install upstream miab, then migrate to miabldap
+  upgrade-from-upstream:
+    runs-on: ubuntu-22.04
+    env:
+      PRIMARY_HOSTNAME: box2.abc.com
+      UPSTREAM_TAG: jammyjellyfish2204
+    steps:
+      - uses: actions/checkout@v2
+      - name: setup
+        run: sudo -E tests/system-setup/upgrade-from-upstream.sh --populate=basic --populate=totpuser
+      - name: test-runner
+        run: sudo -E tests/runner.sh -dumpoutput -no-smtp-remote upgrade-basic upgrade-totpuser default
