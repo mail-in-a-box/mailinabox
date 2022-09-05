@@ -331,7 +331,7 @@ upstream_install() {
     
     H2 "miab install success"
 
-    if [ "need_pop" = "yes" ]; then
+    if [ "$need_pop" = "yes" ]; then
         popd >/dev/null
     fi
        
