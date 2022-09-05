@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # setup MiaB-LDAP by:
-#    1. installing older version of MiaB-LDAP
+#    1. installing a prior version of MiaB-LDAP
 #    2. adding some data (users/aliases/etc)
-#    3. upgrading to latest MiaB-LDAP
+#    3. upgrading to master branch version of MiaB-LDAP
 #
 # See setup-defaults.sh for usernames and passwords
 #

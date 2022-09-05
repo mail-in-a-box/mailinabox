@@ -19,6 +19,10 @@
 #	   no anonymous binds to root DSE
 #	   no anonymous binds to database
 #
+# Exception: the nextcloud service account is allowed to change user
+# passwords until this issue is fixed:
+#
+#    https://github.com/nextcloud/server/issues/18406
 
 
 test_user_change_password() {
@@ -112,6 +116,30 @@ test_user_access() {
 	test_end	
 }
 
+
+test_nextcloud_service_access() {
+	# The nextcloud service account is allowed to change user
+	# passwords until issue #18406 is fixed
+	test_start "nextcloud-service-access"
+
+	# create regular user with password "alice"
+	local alice="alice@somedomain.com"	  
+	create_user "alice@somedomain.com" "alice"
+	local alice_dn="$ATTR_DN"
+
+	# allowed: update userPassword of a user account
+	assert_w_access "$alice_dn" "$LDAP_NEXTCLOUD_DN" "$LDAP_NEXTCLOUD_PASSWORD" write "userPassword=$(slappasswd_hash "alice-new")"
+
+	# not allowed: update userPassword of service account
+	assert_w_access "$LDAP_POSTFIX_DN" "$LDAP_NEXTCLOUD_DN" "$LDAP_NEXTCLOUD_PASSWORD" no-write "userPassword=$(slappasswd_hash "test-new")"
+	
+	# not allowed: update userPassword of own account
+	assert_w_access "$LDAP_NEXTCLOUD_DN" "$LDAP_NEXTCLOUD_DN" "$LDAP_NEXTCLOUD_PASSWORD" no-write "userPassword=$(slappasswd_hash "test-new")"
+	
+	delete_user "$alice"
+	
+	test_end
+}
 
 
 test_service_change_password() {
@@ -249,6 +277,7 @@ test_user_change_password
 test_user_access
 test_service_change_password
 test_service_access
+test_nextcloud_service_access
 test_root_dse
 test_anon_bind
 

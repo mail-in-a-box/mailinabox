@@ -6,6 +6,29 @@
 # installations to a subsequent MiaB-LDAP upgrade
 #
 
+parse_miab_version_string() {
+    local tmpfile
+    tmpfile=$(mktemp)
+    awk -F- '
+/^v[0-9]+\./ { split($1,a,"."); print "MAJOR="substr(a[1],2); print "MINOR="a[2]; print "RELEASE="$2; next }  
+
+$1 ~ /^v[0-9]+[a-z]$/ { print "MAJOR="substr($1,2,length($1)-2); print "MINOR="substr($1,length($1))-"a"+1; print "RELEASE="; next }
+
+$1 ~ /^v[0-9]+[A-Z]$/ { print "MAJOR="substr($1,2,length($1)-2); print "MINOR="substr($1,length($1))-"A"+1; print "RELEASE="; next }
+
+$1 ~ /^v[0-9]+$/ { print "MAJOR="substr($1,2); print "MINOR="; print "RELEASE="; next } 
+
+{ exit 1 }' >> "$tmpfile" <<< "$1"
+    
+    if [ $? -ne 0 ]; then
+        rm -f "$tmpfile"
+        return 1
+    fi
+    source "$tmpfile"
+    rm -f "$tmpfile"
+    return 0
+}
+
 
 installed_state_capture() {
     # users and aliases
@@ -29,8 +52,25 @@ installed_state_capture() {
     fi
     H2 "create info.txt"
     echo "STATE_VERSION=1" > "$info"
-    echo "GIT_VERSION='$(git describe)'" >>"$info"
-    git describe | awk -F- '{ split($1,a,"."); print "MAJOR="substr(a[1],2); print "MINOR="a[2]; print "RELEASE="$2 }' >>"$info"
+    local gitver=$(git describe)
+    echo "GIT_VERSION='$gitver'" >>"$info"
+
+    if [ -z "$gitver" ]; then
+        # git: "No names found, cannot describe anything"
+        MAJOR=999
+        MINOR=
+        RELEASE=
+    else
+        parse_miab_version_string "$gitver"
+        if [ $? -ne 0 ]; then
+            echo "Unable to parse version string: '$gitver'"
+            return 1
+        fi
+    fi
+    echo "MAJOR=$MAJOR" >>"$info"
+    echo "MINOR=$MINOR" >>"$info"
+    echo "RELEASE=$RELEASE" >>"$info"
+    
     echo "GIT_ORIGIN='$(git remote -v | grep ^origin | grep 'fetch)$' | awk '{print $2}')'" >>"$info"
     echo "MIGRATION_VERSION=$([ -e "$STORAGE_ROOT/mailinabox.version" ] && cat "$STORAGE_ROOT/mailinabox.version")" >>"$info"
     echo "MIGRATION_ML_VERSION=$([ -e "$STORAGE_ROOT/mailinabox-ldap.version" ] && cat "$STORAGE_ROOT/mailinabox-ldap.version")" >>"$info"
@@ -85,14 +125,14 @@ installed_state_compare() {
     #
     source "$s1/info.txt"
     MAJOR_A="$MAJOR"
-    MINOR_A="$MINOR"
+    MINOR_A="${MINOR:-0}"
     RELEASE_A="${RELEASE:-0}"
     PROD_A="miab"
     grep "mailinabox-ldap" <<<"$GIT_ORIGIN" >/dev/null && PROD_A="miabldap"
     
     source "$s2/info.txt"
     MAJOR_B="$MAJOR"
-    MINOR_B="$MINOR"
+    MINOR_B="${MINOR:-0}"
     RELEASE_B="${RELEASE:-0}"
     PROD_B="miab"
     grep "mailinabox-ldap" <<<"$GIT_ORIGIN" >/dev/null && PROD_B="miabldap"

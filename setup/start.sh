@@ -168,7 +168,9 @@ fi
 if [ -d "${LOCAL_MODS_DIR:-local}" ]; then
     for mod in $(ls "${LOCAL_MODS_DIR:-local}" | grep -v '~$'); do
         if [ -x ${LOCAL_MODS_DIR:-local}/$mod ]; then
-            ${LOCAL_MODS_DIR:-local}/$mod |& sed -e "s/^/mod(${mod%%.*}): /"
+            echo ""
+            echo "Running mod: ${LOCAL_MODS_DIR:-local}/$mod"
+            ${LOCAL_MODS_DIR:-local}/$mod
         fi
     done
 fi

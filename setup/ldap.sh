@@ -589,6 +589,15 @@ apply_access_control() {
 	ldapmodify -Q -Y EXTERNAL -H ldapi:/// >/dev/null <<EOF
 dn: $cdn
 replace: olcAccess
+# the next line is for nextcloud to be able to change user account
+# passwords. remove it when nextcloud server issue #18406 is fixed
+olcAccess: to dn.subtree="${LDAP_USERS_BASE}" attrs=userPassword
+  by dn.exact="cn=management,${LDAP_SERVICES_BASE}" write
+  by dn.exact="gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth" read
+  by dn.exact="cn=nextcloud,${LDAP_SERVICES_BASE}" write
+  by self =wx
+  by anonymous auth
+  by * none
 olcAccess: to attrs=userPassword
   by dn.exact="cn=management,${LDAP_SERVICES_BASE}" write
   by dn.exact="gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth" read

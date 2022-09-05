@@ -8,6 +8,7 @@ log="./mail.log"
 pos="./pos.json"
 sqlite="./capture.sqlite"
 config="./config.json"
+loglevel="debug"  #debug | info
 
 if [ -e "./debug.log" ]; then
     log="./debug.log"
@@ -31,4 +32,5 @@ fi
 
 echo "USING LOG: $log"
 echo "DB: $sqlite"
-python3 ../capture.py -d -loglevel info $@ -logfile "$log" -posfile "$pos" -sqlitefile "$sqlite" -config "$config"
+echo "LOGLEVEL: $loglevel"
+python3 ../capture.py -d -loglevel $loglevel $@ -logfile "$log" -posfile "$pos" -sqlitefile "$sqlite" -config "$config"

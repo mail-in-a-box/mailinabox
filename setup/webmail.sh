@@ -41,7 +41,7 @@ apt_install php${PHP_VER}-ldap
 # the error message.
 VERSION=1.6-rc
 HASH=c44c683a06117162f4fccf5bd5883d4ed3595e45
-PERSISTENT_LOGIN_VERSION=59ca1b0d3a02cff5fa621c1ad581d15f9d642fe8
+PERSISTENT_LOGIN_VERSION=version-5.3.0
 HTML5_NOTIFIER_VERSION=68d9ca194212e15b3c7225eb6085dbcf02fd13d7 # version 0.6.4+
 CARDDAV_VERSION=4.4.1
 CARDDAV_VERSION_AND_VARIANT=4.4.1-roundcube16
@@ -203,6 +203,15 @@ cat > ${RCM_PLUGIN_DIR}/carddav/config.inc.php <<EOF;
 ?>
 EOF
 
+# Configure persistent_login (required database tables are created
+# later in this script)
+cat > ${RCM_PLUGIN_DIR}/persistent_login/config.inc.php <<EOF
+<?php
+/* Do not edit. Written by Mail-in-a-Box. Regenerated on updates. */
+\$rcmail_config['ifpl_use_auth_tokens'] = true;  # enable AuthToken cookies
+?>
+EOF
+
 # Create writable directories.
 mkdir -p /var/log/roundcubemail /var/tmp/roundcubemail $STORAGE_ROOT/mail/roundcube
 chown -R www-data.www-data /var/log/roundcubemail /var/tmp/roundcubemail $STORAGE_ROOT/mail/roundcube
@@ -243,6 +252,19 @@ php$PHP_VER ${RCM_DIR}/bin/updatedb.sh --dir ${RCM_DIR}/SQL --package roundcube
 chown www-data:www-data $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 chmod 664 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 
+# Create persistent login plugin's database tables
+sqlite3 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite < ${RCM_PLUGIN_DIR}/persistent_login/sql/sqlite.sql
+
 # Enable PHP modules.
 phpenmod -v $PHP_VER imap ldap
 restart_service php$PHP_VER-fpm
+
+# Periodically clean the roundcube database (see roundcubemail/INSTALL)
+cat > /etc/cron.daily/mailinabox-roundcubemail << EOF
+#!/bin/bash
+# Mail-in-a-Box
+# Clean up the roundcube database
+cd $RCM_DIR && bin/cleandb.sh >/dev/null
+EOF
+chmod +x /etc/cron.daily/mailinabox-roundcubemail
+
