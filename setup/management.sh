@@ -99,7 +99,7 @@ export LANG=en_US.UTF-8
 export LC_TYPE=en_US.UTF-8
 
 source $venv/bin/activate
-export PYTHONPATH=$(pwd)
+export PYTHONPATH=$(pwd)/management
 exec gunicorn -b localhost:10222 -w 1 wsgi:app
 EOF
 chmod +x $inst_dir/start
