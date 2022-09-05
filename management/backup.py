@@ -450,15 +450,15 @@ def list_target_files(config):
 		from botocore.exceptions import ClientError
 		
 		# separate bucket from path in target
-		bucket = target.path.split('/')[1]
-		path = '/'.join(target.path.split('/')[2:]) + '/'
+		bucket = target.path[1:].split('/')[0]
+		path = '/'.join(target.path[1:].split('/')[1:]) + '/'
 
 		# If no prefix is specified, set the path to '', otherwise boto won't list the files
 		if path == '/':
 			path = ''
 
 		if bucket == "":
-			raise ValueError(f"Enter an S3 bucket name. // {url}")
+			raise ValueError("Enter an S3 bucket name.")
 
 		# connect to the region & bucket
 		try:
@@ -466,7 +466,7 @@ def list_target_files(config):
 				endpoint_url=f'https://{target.hostname}', \
 				aws_access_key_id=config['target_user'], \
 				aws_secret_access_key=config['target_pass'])
-			bucket_objects = s3.list_objects_v2(Bucket=bucket)['Contents']
+			bucket_objects = s3.list_objects_v2(Bucket=bucket, Prefix=path)['Contents']
 			backup_list = [(key['Key'][len(path):], key['Size']) for key in bucket_objects]
 		except ClientError as e:
 			raise ValueError(e)
