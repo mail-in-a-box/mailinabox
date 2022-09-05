@@ -332,11 +332,27 @@ upstream_install() {
     H2 "miab install success"
 
     if [ "$need_pop" = "yes" ]; then
+        if [ ! -e tests/vagrant ]; then
+            # if this is an upstream install, then populate using
+            # miabldap's populate scripts (upstream doesn't have any)
+            local d
+            d=$(pwd)
+            popd >/dev/null
+            populate_by_cli_argument "$@"
+            pushd "$d" >/dev/null
+        else
+            # otherwise populate using branch-supplied populate scripts
+            populate_by_cli_argument "$@"
+        fi
+        # state capture must be run from the source tree corresponding to the
+        # the installed state
+        capture_state_by_cli_argument "$@"
         popd >/dev/null
+    else
+        # populate if specified on command line
+        populate_by_cli_argument "$@"
+        capture_state_by_cli_argument "$@"
     fi
-       
-    # populate if specified on command line
-    populate_by_cli_argument "$@"
 }
 
 
@@ -392,35 +408,48 @@ miab_ldap_install() {
     fi
 
     H2 "miab-ldap install success"
-
-    if [ "need_pop" = "yes" ]; then
-        popd >/dev/null
-    fi
        
     # populate if specified on command line
     populate_by_cli_argument "$@"
+    capture_state_by_cli_argument "$@"
+    
+    if [ "need_pop" = "yes" ]; then
+        popd >/dev/null
+    fi
 }
 
-populate_by_cli_argument() {
+capture_state_by_cli_argument() {
+    # this must be run with the working directory set to the source
+    # tree corresponding to the the installed state
+    
     # ...ignore unknown options they may be interpreted elsewhere
-    local populate_names=()
     local state_dir=""
     for arg; do
         case "$arg" in
-            --populate=* )
-                populate_names+=( $(awk -F= '{print $2}' <<<"$arg") )
-                ;;
             --capture-state=* )
                 state_dir=$(awk -F= '{print $2}' <<<"$arg")
                 ;;
         esac
     done
 
-    if [ ${#populate_names} -gt 0 ]; then
-        populate_by_name "${populate_names[@]}"
-    fi
     if [ ! -z "$state_dir" ]; then
         installed_state_capture "$state_dir"
+    fi
+}
+
+populate_by_cli_argument() {
+    # ...ignore unknown options they may be interpreted elsewhere
+    local populate_names=()
+    for arg; do
+        case "$arg" in
+            --populate=* )
+                populate_names+=( $(awk -F= '{print $2}' <<<"$arg") )
+                ;;
+        esac
+    done
+
+    if [ ${#populate_names} -gt 0 ]; then
+        populate_by_name "${populate_names[@]}"
     fi
 }
 
