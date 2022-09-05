@@ -50,7 +50,7 @@ hide_output $venv/bin/pip install --upgrade pip
 # NOTE: email_validator is repeated in setup/questions.sh, so please keep the versions synced.
 hide_output $venv/bin/pip install --upgrade \
 	rtyaml "email_validator>=1.0.0" "exclusiveprocess" \
-	flask dnspython python-dateutil expiringdict \
+	flask dnspython python-dateutil expiringdict gunicorn \
 	qrcode[pil] pyotp \
 	"idna>=2.0.0" "cryptography==37.0.2" psutil postfix-mta-sts-resolver \
 	b2sdk boto3
