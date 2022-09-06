@@ -1,7 +1,4 @@
 import base64, os, os.path, hmac, json, secrets
-from datetime import timedelta
-
-from expiringdict import ExpiringDict
 
 import utils
 from mailconfig import get_mail_password, get_mail_user_privileges
@@ -11,31 +8,17 @@ DEFAULT_KEY_PATH   = '/var/lib/mailinabox/api.key'
 DEFAULT_AUTH_REALM = 'Mail-in-a-Box Management Server'
 
 class AuthService:
-	def __init__(self):
+	def __init__(self, session):
 		self.auth_realm = DEFAULT_AUTH_REALM
 		self.key_path = DEFAULT_KEY_PATH
 		self.max_session_duration = timedelta(days=2)
 
 		self.init_system_api_key()
-		self.sessions = ExpiringDict(max_len=64, max_age_seconds=self.max_session_duration.total_seconds())
+		self.sessions = session
 
 	def init_system_api_key(self):
 		"""Write an API key to a local file so local processes can use the API"""
 
-		# def create_file_with_mode(path, mode):
-		# 	# Based on answer by A-B-B: http://stackoverflow.com/a/15015748
-		# 	old_umask = os.umask(0)
-		# 	try:
-		# 		return os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT, mode), 'w')
-		# 	finally:
-		# 		os.umask(old_umask)
-
-		# self.key = secrets.token_hex(32)
-
-		# os.makedirs(os.path.dirname(self.key_path), exist_ok=True)
-
-		# with create_file_with_mode(self.key_path, 0o640) as key_file:
-		# 	key_file.write(self.key + '\n')
 		with open(self.key_path, 'r') as file:
 			self.key = file.read()
 

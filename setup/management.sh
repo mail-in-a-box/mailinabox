@@ -101,7 +101,8 @@ export LC_TYPE=en_US.UTF-8
 
 mkdir -p /var/lib/mailinabox
 tr -cd '[:xdigit:]' < /dev/urandom | head -c 32 > /var/lib/mailinabox/api.key
-chmod 640 /var/lib/mailinabox/api.key
+tr -cd '[:alnum:]'  < /dev/urandom | head -c 64 > /var/lib/mailinabox/session.key
+chmod 640 /var/lib/mailinabox/{api,session}.key
 
 source $venv/bin/activate
 export PYTHONPATH=$(pwd)/management
