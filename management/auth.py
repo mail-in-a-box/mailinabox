@@ -11,7 +11,6 @@ class AuthService:
 	def __init__(self, session):
 		self.auth_realm = DEFAULT_AUTH_REALM
 		self.key_path = DEFAULT_KEY_PATH
-		self.max_session_duration = timedelta(days=2)
 
 		self.init_system_api_key()
 		self.sessions = session
