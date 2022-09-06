@@ -99,7 +99,7 @@ export LANG=en_US.UTF-8
 export LC_TYPE=en_US.UTF-8
 
 mkdir -p /var/lib/mailinabox
-{ tr -cd '[:xdigit:]' < /dev/urandom | head -c 32 } > /var/lib/mailinabox/api.key
+tr -cd '[:xdigit:]' < /dev/urandom | head -c 32 > /var/lib/mailinabox/api.key
 
 source $venv/bin/activate
 export PYTHONPATH=$(pwd)/management
