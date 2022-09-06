@@ -15,18 +15,17 @@ import multiprocessing.pool, subprocess
 
 from functools import wraps
 
-from flask import Flask, request, render_template, abort, Response, send_from_directory, make_response, session
+from flask import Flask, request, render_template, abort, Response, send_from_directory, make_response
 
 import auth, utils
 from mailconfig import get_mail_users, get_mail_users_ex, get_admins, add_mail_user, set_mail_password, remove_mail_user
 from mailconfig import get_mail_user_privileges, add_remove_mail_user_privilege
 from mailconfig import get_mail_aliases, get_mail_aliases_ex, get_mail_domains, add_mail_alias, remove_mail_alias
 from mfa import get_public_mfa_state, provision_totp, validate_totp_secret, enable_mfa, disable_mfa
-from datetime import timedelta
-
-DEFAULT_SESSION_SECRET_PATH = '/var/lib/mailinabox/session.key'
 
 env = utils.load_environment()
+
+auth_service = auth.AuthService()
 
 # We may deploy via a symbolic link, which confuses flask's template finding.
 me = __file__
@@ -44,16 +43,6 @@ with open(os.path.join(os.path.dirname(me), "csr_country_codes.tsv")) as f:
 		csr_country_codes.append((code, name))
 
 app = Flask(__name__, template_folder=os.path.abspath(os.path.join(os.path.dirname(me), "templates")))
-
-# sets up Flask session to be permanent and lasting 2 days.
-with open(DEFAULT_SESSION_SECRET_PATH, 'r') as file:
-	app.secret_key = file.read()
-app.config['SESSION_PERMANENT'] = True
-app.config['SESSION_TYPE'] = 'filesystem'
-app.config['PERMANENT_SESSION_LIFETIME']=timedelta(days=2)
-
-# AuthService uses the Flask session
-auth_service = auth.AuthService(session)
 
 # Decorator to protect views that require a user with 'admin' privileges.
 def authorized_personnel_only(viewfunc):
@@ -173,7 +162,7 @@ def login():
 		"privileges": privs,
 		"api_key": auth_service.create_session_key(email, env, type='login'),
 	}
-	session.permanent = True
+
 	app.logger.info("New login session created for {}".format(email))
 
 	# Return.
