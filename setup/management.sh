@@ -90,6 +90,7 @@ rm -f /tmp/bootstrap.zip
 
 # Create an init script to start the management daemon and keep it
 # running after a reboot.
+# Note: Authentication currently breaks with more than 1 gunicorn worker.
 cat > $inst_dir/start <<EOF;
 #!/bin/bash
 # Set character encoding flags to ensure that any non-ASCII don't cause problems.
@@ -100,10 +101,11 @@ export LC_TYPE=en_US.UTF-8
 
 mkdir -p /var/lib/mailinabox
 tr -cd '[:xdigit:]' < /dev/urandom | head -c 32 > /var/lib/mailinabox/api.key
+chmod 640 /var/lib/mailinabox/api.key
 
 source $venv/bin/activate
 export PYTHONPATH=$(pwd)/management
-exec gunicorn -b localhost:10222 -w 2 wsgi:app
+exec gunicorn -b localhost:10222 -w 1 wsgi:app
 EOF
 chmod +x $inst_dir/start
 cp --remove-destination conf/mailinabox.service /lib/systemd/system/mailinabox.service # target was previously a symlink so remove it first
