@@ -101,12 +101,11 @@ export LC_TYPE=en_US.UTF-8
 
 mkdir -p /var/lib/mailinabox
 tr -cd '[:xdigit:]' < /dev/urandom | head -c 32 > /var/lib/mailinabox/api.key
-tr -cd '[:alnum:]'  < /dev/urandom | head -c 64 > /var/lib/mailinabox/session.key
-chmod 640 /var/lib/mailinabox/{api,session}.key
+chmod 640 /var/lib/mailinabox/api.key
 
 source $venv/bin/activate
 export PYTHONPATH=$(pwd)/management
-exec gunicorn -b localhost:10222 -w 2 wsgi:app
+exec gunicorn -b localhost:10222 -w 1 wsgi:app
 EOF
 chmod +x $inst_dir/start
 cp --remove-destination conf/mailinabox.service /lib/systemd/system/mailinabox.service # target was previously a symlink so remove it first

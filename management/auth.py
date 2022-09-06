@@ -1,4 +1,7 @@
 import base64, os, os.path, hmac, json, secrets
+from datetime import timedelta
+
+from expiringdict import ExpiringDict
 
 import utils
 from mailconfig import get_mail_password, get_mail_user_privileges
@@ -8,12 +11,13 @@ DEFAULT_KEY_PATH   = '/var/lib/mailinabox/api.key'
 DEFAULT_AUTH_REALM = 'Mail-in-a-Box Management Server'
 
 class AuthService:
-	def __init__(self, session):
+	def __init__(self):
 		self.auth_realm = DEFAULT_AUTH_REALM
 		self.key_path = DEFAULT_KEY_PATH
+		self.max_session_duration = timedelta(days=2)
 
 		self.init_system_api_key()
-		self.sessions = session
+		self.sessions = ExpiringDict(max_len=64, max_age_seconds=self.max_session_duration.total_seconds())
 
 	def init_system_api_key(self):
 		"""Write an API key to a local file so local processes can use the API"""
