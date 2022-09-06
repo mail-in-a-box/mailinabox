@@ -2,7 +2,7 @@
 
 usage() {
     echo ""
-    echo "Restore a Mail-In-A-Box user-data directory from a LOCAL backup"
+    echo "Restore a Mail-In-A-Box or Cloud-In-A-Box user-data directory from a local backup"
     echo ""
     echo "usage: $0 <storage-user> <path-to-encrypted-dir> <path-to-secret-key.txt> [path-to-restore-to]"
     echo "  storage-user:"
@@ -61,15 +61,30 @@ fi
 
 # Ensure users and groups are created so that duplicity properly
 # restores permissions.
-
-# format:
+#
+# system_users format:
 #    user:group:comment:homedir:shell
-system_users=(
-    "openldap:openldap:OpenLDAP Server Account:/var/lib/ldap:/bin/false"
-    "opendkim:opendkim::/run/opendkim:/usr/sbin/nologin"
-    "spampd:spampd::/nonexistent:/usr/sbin/nologin"
-    "www-data:www-data:www-data:/var/www:/usr/sbin/nologin"
-)
+#
+# if the user name and group of `system_users` are identical, the
+# group is created, otherwise the group must already exist (see
+# system_groups below, which are created before users)
+
+if [ -e "setup/ldap.sh" ]; then
+    # Mail-In-A-Box
+    system_users=(
+        "openldap:openldap:OpenLDAP Server Account:/var/lib/ldap:/bin/false"
+        "opendkim:opendkim::/run/opendkim:/usr/sbin/nologin"
+        "spampd:spampd::/nonexistent:/usr/sbin/nologin"
+        "www-data:www-data:www-data:/var/www:/usr/sbin/nologin"
+    )
+else
+    # Cloud-In-A-Box
+    system_users=(
+        "mysql:mysql:MySQL Server:/nonexistent:/bin/false"
+        "www-data:www-data:www-data:/var/www:/usr/sbin/nologin"
+    )    
+fi
+
 system_groups=(
     "ssl-cert"
 )
