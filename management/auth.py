@@ -36,6 +36,8 @@ class AuthService:
 
 		# with create_file_with_mode(self.key_path, 0o640) as key_file:
 		# 	key_file.write(self.key + '\n')
+		with open(self.key_path, 'r') as file:
+			self.key = file.read()
 
 	def authenticate(self, request, env, login_only=False, logout=False):
 		"""Test if the HTTP Authorization header's username matches the system key, a session key,
