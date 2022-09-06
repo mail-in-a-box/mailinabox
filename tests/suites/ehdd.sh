@@ -30,6 +30,13 @@ test_ehdd_restart() {
     ehdd/run-this-after-reboot.sh >>$TEST_OF 2>&1
     [ $? -ne 0 ] && test_failure "Could not start encryption-at-rest"
 
+    # wait for management daemon
+    record "wait for management daemon"
+    while ! management/cli.py user >>$TEST_OF 2>&1; do
+        record "sleep 1"
+        sleep 1
+    done
+
     popd >/dev/null
     
     test_end
