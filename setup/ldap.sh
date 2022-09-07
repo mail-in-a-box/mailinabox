@@ -436,8 +436,10 @@ olcTLSCertificateKeyFile: $STORAGE_ROOT/ssl/ssl_private_key.pem
 replace: olcTLSDHParamFile
 olcTLSDHParamFile: $STORAGE_ROOT/ssl/dh2048.pem
 -
+# TLS ciphers. To see expanded corresponding cipher suites run:
+#   gnutls-cli --priority PFS:-VERS-TLS1.0:-VERS-TLS1.1 -l
 replace: olcTLSCipherSuite
-olcTLSCipherSuite: PFS
+olcTLSCipherSuite: PFS:-VERS-TLS1.0:-VERS-TLS1.1
 -
 replace: olcTLSVerifyClient
 olcTLSVerifyClient: never
