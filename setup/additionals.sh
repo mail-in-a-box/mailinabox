@@ -13,6 +13,9 @@ sed -i "s/\*\.\*;auth,authpriv.none.*\-\/var\/log\/syslog/\*\.\*;mail,auth,authp
 # Reduce logs by only logging ufw in ufw.log
 sed -i "s/#\& stop/\& stop/g" /etc/rsyslog.d/20-ufw.conf
 
+# Add nextcloud logging
+hide_output install -m 644 conf/rsyslog/20-nextcloud.conf /etc/rsyslog.d/
+
 restart_service rsyslog
 
 # Create forward for root emails

@@ -334,6 +334,8 @@ include("$STORAGE_ROOT/owncloud/config.php");
 
 \$CONFIG['logtimezone'] = '$TIMEZONE';
 \$CONFIG['logdateformat'] = 'Y-m-d H:i:s';
+\$CONFIG['log_type'] = 'syslog',
+\$CONFIG['syslog_tag'] = 'Nextcloud',
 
 \$CONFIG['mail_domain'] = '$PRIMARY_HOSTNAME';
 
