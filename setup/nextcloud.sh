@@ -21,8 +21,8 @@ echo "Installing Nextcloud (contacts/calendar)..."
 #   we automatically install intermediate versions as needed.
 # * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
 #   copying it from the error message when it doesn't match what is below.
-nextcloud_ver=24.0.0
-nextcloud_hash=f072f5863a15cefe577b47f72bb3e41d2a339335
+nextcloud_ver=24.0.5
+nextcloud_hash=a1ecc0db61584ed5fb6f7cf80a492b2fae17ba26
 
 # Nextcloud apps
 # --------------
@@ -33,10 +33,10 @@ nextcloud_hash=f072f5863a15cefe577b47f72bb3e41d2a339335
 #   https://github.com/nextcloud/user_external/blob/master/appinfo/info.xml
 # * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
 #   copying it from the error message when it doesn't match what is below.
-contacts_ver=4.1.1
-contacts_hash=c2dab4572494eb15de8f1ae565f707d0fcc6ae9b
-calendar_ver=3.3.1
-calendar_hash=8ca2ebe1d57501949df2a0229501a99736ba8779
+contacts_ver=4.2.0
+contacts_hash=79b506574834db5e1b6ab47aadd4041e12ad9a9c
+calendar_ver=3.5.0
+calendar_hash=941381536287a015081669513f8f79f6f262508a
 user_external_ver=3.0.0
 user_external_hash=9e7aaf7288032bd463c480bc368ff91869122950
 
@@ -324,7 +324,7 @@ php <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP $STORAGE_ROOT/owncloud/config.php;
 <?php
 include("$STORAGE_ROOT/owncloud/config.php");
 
-\$CONFIG['config_is_read_only'] = true; # should prevent warnings from occ tool but doesn't
+\$CONFIG['config_is_read_only'] = false; # should prevent warnings from occ tool but doesn't
 
 \$CONFIG['trusted_domains'] = array('$PRIMARY_HOSTNAME');
 
