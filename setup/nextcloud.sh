@@ -328,7 +328,7 @@ sudo -u www-data \
 		photos dashboard activity circles federation files_sharing \
 		notifications files_pdfviewer password_policy systemtags comments \
 		privacy recommendations files_rightclick sharebymail support text \
-		theming survey_client user_status weather_status files_videoplayer
+		theming survey_client user_status weather_status files_videoplayer \
 	| (grep -v "No such app enabled" || /bin/true)
 
 # Update config.php.
