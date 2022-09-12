@@ -173,6 +173,42 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 	if [ ! -z ${CURRENT_NEXTCLOUD_VER} ]; then
 		# Database migrations from ownCloud are no longer possible because ownCloud cannot be run under
 		# PHP 7.
+
+		# Need to set config_is_read_only to false to perform the 23-24 upgrade.
+		TIMEZONE=$(cat /etc/timezone)
+		CONFIG_TEMP=$(/bin/mktemp)
+		php$PHP_VER <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP $STORAGE_ROOT/owncloud/config.php;
+		<?php
+		include("$STORAGE_ROOT/owncloud/config.php");
+
+		\$CONFIG['config_is_read_only'] = false;
+
+		\$CONFIG['trusted_domains'] = array('$PRIMARY_HOSTNAME');
+
+		\$CONFIG['memcache.local'] = '\OC\Memcache\APCu';
+		\$CONFIG['overwrite.cli.url'] = '/cloud';
+		\$CONFIG['mail_from_address'] = 'administrator'; # just the local part, matches our master administrator address
+
+		\$CONFIG['logtimezone'] = '$TIMEZONE';
+		\$CONFIG['logdateformat'] = 'Y-m-d H:i:s';
+
+		\$CONFIG['mail_domain'] = '$PRIMARY_HOSTNAME';
+
+		\$CONFIG['user_backends'] = array(
+		  array(
+		    'class' => '\OCA\UserExternal\IMAP',
+		    'arguments' => array(
+		      '127.0.0.1', 143, null, null, false, false
+		    ),
+		  ),
+		);
+
+		echo "<?php\n\\\$CONFIG = ";
+		var_export(\$CONFIG);
+		echo ";";
+		?>
+EOF
+
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^[89] ]]; then
 			echo "Upgrades from Mail-in-a-Box prior to v0.28 (dated July 30, 2018) with Nextcloud < 13.0.6 (you have ownCloud 8 or 9) are not supported. Upgrade to Mail-in-a-Box version v0.30 first. Setup will continue, but skip the Nextcloud migration."
 			return 0
@@ -271,6 +307,26 @@ EOF
 	(cd /usr/local/lib/owncloud; sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/index.php;)
 fi
 
+# Enable/disable apps. Note that this must be done after the Nextcloud setup.
+# The firstrunwizard gave Josh all sorts of problems, so disabling that.
+# user_external is what allows Nextcloud to use IMAP for login. The contacts
+# and calendar apps are the extensions we really care about here.
+hide_output sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/console.php app:disable firstrunwizard
+hide_output sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/console.php app:enable user_external
+hide_output sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/console.php app:enable contacts
+hide_output sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/console.php app:enable calendar
+
+# When upgrading, run the upgrade script again now that apps are enabled. It seems like
+# the first upgrade at the top won't work because apps may be disabled during upgrade?
+# Check for success (0=ok, 3=no upgrade needed).
+sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/occ upgrade
+if [ \( $? -ne 0 \) -a \( $? -ne 3 \) ]; then exit 1; fi
+
+# Disable default apps that we don't support
+sudo -u www-data \
+	php$PHP_VER /usr/local/lib/owncloud/occ app:disable photos dashboard activity \
+	| (grep -v "No such app enabled" || /bin/true)
+
 # Update config.php.
 # * trusted_domains is reset to localhost by autoconfig starting with ownCloud 8.1.1,
 #   so set it here. It also can change if the box's PRIMARY_HOSTNAME changes, so
@@ -288,7 +344,7 @@ php$PHP_VER <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP $STORAGE_ROOT/owncloud/confi
 <?php
 include("$STORAGE_ROOT/owncloud/config.php");
 
-\$CONFIG['config_is_read_only'] = false;
+\$CONFIG['config_is_read_only'] = true;
 
 \$CONFIG['trusted_domains'] = array('$PRIMARY_HOSTNAME');
 
@@ -317,25 +373,6 @@ echo ";";
 EOF
 chown www-data.www-data $STORAGE_ROOT/owncloud/config.php
 
-# Enable/disable apps. Note that this must be done after the Nextcloud setup.
-# The firstrunwizard gave Josh all sorts of problems, so disabling that.
-# user_external is what allows Nextcloud to use IMAP for login. The contacts
-# and calendar apps are the extensions we really care about here.
-hide_output sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/console.php app:disable firstrunwizard
-hide_output sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/console.php app:enable user_external
-hide_output sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/console.php app:enable contacts
-hide_output sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/console.php app:enable calendar
-
-# When upgrading, run the upgrade script again now that apps are enabled. It seems like
-# the first upgrade at the top won't work because apps may be disabled during upgrade?
-# Check for success (0=ok, 3=no upgrade needed).
-sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/occ upgrade
-if [ \( $? -ne 0 \) -a \( $? -ne 3 \) ]; then exit 1; fi
-
-# Disable default apps that we don't support
-sudo -u www-data \
-	php$PHP_VER /usr/local/lib/owncloud/occ app:disable photos dashboard activity \
-	| (grep -v "No such app enabled" || /bin/true)
 
 # Set PHP FPM values to support large file uploads
 # (semicolon is the comment character in this file, hashes produce deprecation warnings)
