@@ -329,6 +329,7 @@ sudo -u www-data \
 		notifications files_pdfviewer password_policy systemtags comments \
 		privacy recommendations files_rightclick sharebymail support text \
 		theming survey_client user_status weather_status files_videoplayer \
+		contactsinteraction \
 	| (grep -v "No such app enabled" || /bin/true)
 
 # Update config.php.
