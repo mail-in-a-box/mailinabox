@@ -47,7 +47,7 @@ apt-get purge -qq -y owncloud* # we used to use the package manager
 apt_install curl php${PHP_VER} php${PHP_VER}-fpm \
 	php${PHP_VER}-cli php${PHP_VER}-sqlite3 php${PHP_VER}-gd php${PHP_VER}-imap php${PHP_VER}-curl \
 	php${PHP_VER}-dev php${PHP_VER}-gd php${PHP_VER}-xml php${PHP_VER}-mbstring php${PHP_VER}-zip php${PHP_VER}-apcu \
-	php${PHP_VER}-intl php${PHP_VER}-imagick php${PHP_VER}-gmp php${PHP_VER}-bcmath
+	php${PHP_VER}-intl php${PHP_VER}-imagick php${PHP_VER}-gmp php${PHP_VER}-bcmath php${PHP_VER}-imagick
 
 # Enable APC before Nextcloud tools are run.
 tools/editconf.py /etc/php/$PHP_VER/mods-available/apcu.ini -c ';' \
@@ -349,13 +349,14 @@ include("$STORAGE_ROOT/owncloud/config.php");
 \$CONFIG['trusted_domains'] = array('$PRIMARY_HOSTNAME');
 
 \$CONFIG['memcache.local'] = '\OC\Memcache\APCu';
-\$CONFIG['overwrite.cli.url'] = '/cloud';
+\$CONFIG['overwrite.cli.url'] = 'https://$PRIMARY_HOSTNAME/cloud';
 \$CONFIG['mail_from_address'] = 'administrator'; # just the local part, matches our master administrator address
 
 \$CONFIG['logtimezone'] = '$TIMEZONE';
 \$CONFIG['logdateformat'] = 'Y-m-d H:i:s';
 
 \$CONFIG['mail_domain'] = '$PRIMARY_HOSTNAME';
+\$CONFIG['default_phone_region'] = '$(locale | grep TELEPHONE | sed -e 's/LC_.*=".*_//' | sed -e 's/\..*//')'
 
 \$CONFIG['user_backends'] = array(
   array(
