@@ -356,7 +356,7 @@ include("$STORAGE_ROOT/owncloud/config.php");
 \$CONFIG['logdateformat'] = 'Y-m-d H:i:s';
 
 \$CONFIG['mail_domain'] = '$PRIMARY_HOSTNAME';
-\$CONFIG['default_phone_region'] = '$(locale | grep TELEPHONE | sed -e 's/LC_.*=".*_//' | sed -e 's/\..*//')'
+\$CONFIG['default_phone_region'] = '$(locale | grep TELEPHONE | sed -e 's/LC_.*=".*_//' | sed -e 's/\..*//')';
 
 \$CONFIG['user_backends'] = array(
   array(
