@@ -324,7 +324,11 @@ if [ \( $? -ne 0 \) -a \( $? -ne 3 \) ]; then exit 1; fi
 
 # Disable default apps that we don't support
 sudo -u www-data \
-	php$PHP_VER /usr/local/lib/owncloud/occ app:disable photos dashboard activity \
+	php$PHP_VER /usr/local/lib/owncloud/occ app:disable \
+		photos dashboard activity circles federation files_sharing \
+		notifications files_pdfviewer password_policy systemtags comments \
+		privacy recommendations files_rightclick sharebymail support text \
+		theming survey_client user_status weather_status files_videoplayer
 	| (grep -v "No such app enabled" || /bin/true)
 
 # Update config.php.
