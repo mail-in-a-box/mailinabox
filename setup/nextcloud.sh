@@ -414,6 +414,19 @@ cat > /etc/cron.d/mailinabox-nextcloud << EOF;
 EOF
 chmod +x /etc/cron.d/mailinabox-nextcloud
 
+# Rotate the nextcloud.log file
+cat > /etc/logrotate.d/nextcloud <<EOF
+# Nextcloud logs 
+$STORAGE_ROOT/owncloud/nextcloud.log { 
+		size 10M
+		create 640 www-data www-data
+		rotate 30
+		copytruncate
+		missingok
+		compress 
+}
+EOF
+
 # There's nothing much of interest that a user could do as an admin for Nextcloud,
 # and there's a lot they could mess up, so we don't make any users admins of Nextcloud.
 # But if we wanted to, we would do this:
