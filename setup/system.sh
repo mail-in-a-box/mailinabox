@@ -75,6 +75,36 @@ then
 	fi
 fi
 
+# Add zram to compress the last 50% of memory. This will squeeze out a little more
+# performance for systems with a small memory footprint and is not harmful to larger
+# memory systems.
+apt_install linux-image-extra-virtual
+cat > /etc/default/zramswap <<-EOF
+	# Compression algorithm selection
+	# speed: lz4 > zstd > lzo
+	# compression: zstd > lzo > lz4
+	# This is not inclusive of all that is available in latest kernels
+	# See /sys/block/zram0/comp_algorithm (when zram module is loaded) to see
+	# what is currently set and available for your kernel[1]
+	# [1]  https://github.com/torvalds/linux/blob/master/Documentation/blockdev/zram.txt#L86
+	ALGO=zstd
+
+	# Specifies the amount of RAM that should be used for zram
+	# based on a percentage the total amount of available memory
+	# This takes precedence and overrides SIZE below
+	PERCENT=50
+
+	# Specifies a static amount of RAM that should be used for
+	# the ZRAM devices, this is in MiB
+	#SIZE=256
+
+	# Specifies the priority for the swap devices, see swapon(2)
+	# for more details. Higher number = higher priority
+	# This should probably be higher than hdd/ssd swaps.
+	#PRIORITY=100
+	ALGO=zstd
+EOF
+
 # ### Set log retention policy.
 
 # Set the systemd journal log retention from infinite to 10 days,
