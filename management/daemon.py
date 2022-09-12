@@ -123,7 +123,8 @@ def index():
 
 	import boto3.s3
 	from urllib.parse import urlparse
-	backup_s3_hosts = [(r, urlparse(boto3.client('s3', region_name=r).meta.endpoint_url).netloc) for r in boto3.session.Session().get_available_regions('s3')]
+	backup_s3_hosts = [(r, f"s3.{r}.amazonaws.com") for r in boto3.session.Session().get_available_regions('s3')]
+
 
 	return render_template('index.html',
 		hostname=env['PRIMARY_HOSTNAME'],
