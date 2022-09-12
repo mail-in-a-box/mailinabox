@@ -381,7 +381,7 @@ tools/editconf.py /etc/php/$PHP_VER/fpm/php.ini -c ';' \
 	upload_max_filesize=16G \
 	post_max_size=16G \
 	output_buffering=16384 \
-	memory_limit=1024M \
+	memory_limit=512M \
 	max_execution_time=600 \
 	short_open_tag=On
 
