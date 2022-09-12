@@ -33,9 +33,9 @@ nextcloud_hash=a1ecc0db61584ed5fb6f7cf80a492b2fae17ba26
 #   https://github.com/nextcloud/user_external/blob/master/appinfo/info.xml
 # * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
 #   copying it from the error message when it doesn't match what is below.
-contacts_ver=4.2.0
+contacts_ver=4.1.0
 contacts_hash=697f6b4a664e928d72414ea2731cb2c9d1dc3077
-calendar_ver=3.5.0
+calendar_ver=3.2.2
 calendar_hash=ce4030ab57f523f33d5396c6a81396d440756f5f
 user_external_ver=3.0.0
 user_external_hash=0df781b261f55bbde73d8c92da3f99397000972f
@@ -192,8 +192,8 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 			CURRENT_NEXTCLOUD_VER="22.2.6"
 		fi
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^22 ]]; then
-			InstallNextcloud 23.0.4 87afec0bf90b3c66289e6fedd851867bc5a58f01 4.1.0 697f6b4a664e928d72414ea2731cb2c9d1dc3077 3.2.2 ce4030ab57f523f33d5396c6a81396d440756f5f 3.0.0 0df781b261f55bbde73d8c92da3f99397000972f
-			CURRENT_NEXTCLOUD_VER="22.2.6"
+			InstallNextcloud 23.0.9 b6ac7ffa6c1c1c6187fea7d9efc7a32300cdc377 4.1.0 697f6b4a664e928d72414ea2731cb2c9d1dc3077 3.2.2 ce4030ab57f523f33d5396c6a81396d440756f5f 3.0.0 0df781b261f55bbde73d8c92da3f99397000972f
+			CURRENT_NEXTCLOUD_VER="23.0.9"
 		fi
 	fi
 
@@ -288,7 +288,7 @@ php$PHP_VER <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP $STORAGE_ROOT/owncloud/confi
 <?php
 include("$STORAGE_ROOT/owncloud/config.php");
 
-\$CONFIG['config_is_read_only'] = true;
+\$CONFIG['config_is_read_only'] = false;
 
 \$CONFIG['trusted_domains'] = array('$PRIMARY_HOSTNAME');
 
@@ -343,7 +343,7 @@ tools/editconf.py /etc/php/$PHP_VER/fpm/php.ini -c ';' \
 	upload_max_filesize=16G \
 	post_max_size=16G \
 	output_buffering=16384 \
-	memory_limit=512M \
+	memory_limit=1024M \
 	max_execution_time=600 \
 	short_open_tag=On
 
