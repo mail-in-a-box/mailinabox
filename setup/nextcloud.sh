@@ -173,42 +173,6 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 	if [ ! -z ${CURRENT_NEXTCLOUD_VER} ]; then
 		# Database migrations from ownCloud are no longer possible because ownCloud cannot be run under
 		# PHP 7.
-
-		# Need to set config_is_read_only to false to perform the 23-24 upgrade.
-		TIMEZONE=$(cat /etc/timezone)
-		CONFIG_TEMP=$(/bin/mktemp)
-		php$PHP_VER <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP $STORAGE_ROOT/owncloud/config.php;
-		<?php
-		include("$STORAGE_ROOT/owncloud/config.php");
-
-		\$CONFIG['config_is_read_only'] = false;
-
-		\$CONFIG['trusted_domains'] = array('$PRIMARY_HOSTNAME');
-
-		\$CONFIG['memcache.local'] = '\OC\Memcache\APCu';
-		\$CONFIG['overwrite.cli.url'] = '/cloud';
-		\$CONFIG['mail_from_address'] = 'administrator'; # just the local part, matches our master administrator address
-
-		\$CONFIG['logtimezone'] = '$TIMEZONE';
-		\$CONFIG['logdateformat'] = 'Y-m-d H:i:s';
-
-		\$CONFIG['mail_domain'] = '$PRIMARY_HOSTNAME';
-
-		\$CONFIG['user_backends'] = array(
-		  array(
-		    'class' => '\OCA\UserExternal\IMAP',
-		    'arguments' => array(
-		      '127.0.0.1', 143, null, null, false, false
-		    ),
-		  ),
-		);
-
-		echo "<?php\n\\\$CONFIG = ";
-		var_export(\$CONFIG);
-		echo ";";
-		?>
-EOF
-
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^[89] ]]; then
 			echo "Upgrades from Mail-in-a-Box prior to v0.28 (dated July 30, 2018) with Nextcloud < 13.0.6 (you have ownCloud 8 or 9) are not supported. Upgrade to Mail-in-a-Box version v0.30 first. Setup will continue, but skip the Nextcloud migration."
 			return 0
@@ -227,6 +191,10 @@ EOF
 			InstallNextcloud 22.2.6 9d39741f051a8da42ff7df46ceef2653a1dc70d9 4.1.0 697f6b4a664e928d72414ea2731cb2c9d1dc3077 3.2.2 ce4030ab57f523f33d5396c6a81396d440756f5f 3.0.0 0df781b261f55bbde73d8c92da3f99397000972f
 			CURRENT_NEXTCLOUD_VER="22.2.6"
 		fi
+
+		# Remove the read-onlyness of the config.
+		sed -ie '/config_is_read_only/d' $STORAGE_ROOT/owncloud/config.php
+
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^22 ]]; then
 			InstallNextcloud 23.0.9 b6ac7ffa6c1c1c6187fea7d9efc7a32300cdc377 4.1.0 697f6b4a664e928d72414ea2731cb2c9d1dc3077 3.2.2 ce4030ab57f523f33d5396c6a81396d440756f5f 3.0.0 0df781b261f55bbde73d8c92da3f99397000972f
 			CURRENT_NEXTCLOUD_VER="23.0.9"
@@ -246,38 +214,37 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
 
 	# Create an initial configuration file.
 	instanceid=oc$(echo $PRIMARY_HOSTNAME | sha1sum | fold -w 10 | head -n 1)
-	cat > $STORAGE_ROOT/owncloud/config.php <<EOF;
-<?php
-\$CONFIG = array (
-  'datadirectory' => '$STORAGE_ROOT/owncloud',
-
-  'instanceid' => '$instanceid',
-
-  'forcessl' => true, # if unset/false, Nextcloud sends a HSTS=0 header, which conflicts with nginx config
-
-  'overwritewebroot' => '/cloud',
-  'overwrite.cli.url' => '/cloud',
-  'user_backends' => array(
-    array(
-      'class' => '\OCA\UserExternal\IMAP',
-      'arguments' => array(
-        '127.0.0.1', 143, null, null, false, false
-       ),
-    ),
-  ),
-  'memcache.local' => '\OC\Memcache\APCu',
-  'mail_smtpmode' => 'sendmail',
-  'mail_smtpsecure' => '',
-  'mail_smtpauthtype' => 'LOGIN',
-  'mail_smtpauth' => false,
-  'mail_smtphost' => '',
-  'mail_smtpport' => '',
-  'mail_smtpname' => '',
-  'mail_smtppassword' => '',
-  'mail_from_address' => 'owncloud',
-);
-?>
+	CONFIG_TEMP=/tmp/cfg-$instanceid.json
+	cat > $CONFIG_TEMP <<EOF
+	{
+		"system": {
+			"datadirectory": "$STORAGE_ROOT/owncloud",
+			"instanceid": "$instanceid",
+			"forcessl": true,
+			"overwritewebroot": "/cloud",
+			"overwrite.cli.url": "https://${PRIMARY_HOSTNAME}/cloud",
+			"user_backends": [
+				{
+					"class": "\\\OCA\\\UserExternal\\\IMAP",
+					"arguments": [ "127.0.0.1", 143, null, null, false, false ]
+				}
+			],
+		  "memcache.local": "\\\OC\\\Memcache\\\APCu",
+		  "mail_smtpmode": "sendmail",
+		  "mail_smtpsecure": "",
+		  "mail_smtpauthtype": "LOGIN",
+		  "mail_smtpauth": false,
+		  "mail_smtphost": "",
+		  "mail_smtpport": "",
+		  "mail_smtpname": "",
+		  "mail_smtppassword": "",
+		  "mail_from_address": "owncloud"
+		}
+	}
 EOF
+
+	sudo -u www-data php8.0 /usr/local/lib/owncloud/occ config:import $CONFIG_TEMP
+	rm -f $CONFIG_TEMP
 
 	# Create an auto-configuration file to fill in database settings
 	# when the install script is run. Make an administrator account
@@ -344,41 +311,31 @@ sudo -u www-data \
 #   the correct domain name if the domain is being change from the previous setup.
 # Use PHP to read the settings file, modify it, and write out the new settings array.
 TIMEZONE=$(cat /etc/timezone)
-CONFIG_TEMP=$(/bin/mktemp)
-php$PHP_VER <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP $STORAGE_ROOT/owncloud/config.php;
-<?php
-include("$STORAGE_ROOT/owncloud/config.php");
-
-\$CONFIG['config_is_read_only'] = true;
-
-\$CONFIG['trusted_domains'] = array('$PRIMARY_HOSTNAME');
-
-\$CONFIG['memcache.local'] = '\OC\Memcache\APCu';
-\$CONFIG['overwrite.cli.url'] = 'https://$PRIMARY_HOSTNAME/cloud';
-\$CONFIG['mail_from_address'] = 'administrator'; # just the local part, matches our master administrator address
-
-\$CONFIG['logtimezone'] = '$TIMEZONE';
-\$CONFIG['logdateformat'] = 'Y-m-d H:i:s';
-
-\$CONFIG['mail_domain'] = '$PRIMARY_HOSTNAME';
-\$CONFIG['default_phone_region'] = '$(locale | grep TELEPHONE | sed -e 's/LC_.*=".*_//' | sed -e 's/\..*//')';
-
-\$CONFIG['user_backends'] = array(
-  array(
-    'class' => '\OCA\UserExternal\IMAP',
-    'arguments' => array(
-      '127.0.0.1', 143, null, null, false, false
-    ),
-  ),
-);
-
-echo "<?php\n\\\$CONFIG = ";
-var_export(\$CONFIG);
-echo ";";
-?>
+instanceid=oc$(echo $PRIMARY_HOSTNAME | sha1sum | fold -w 10 | head -n 1)
+CONFIG_TEMP=/tmp/cfg-$instanceid.json
+PHONE_REGION=$(locale | grep TELEPHONE | sed -e 's/LC_.*=".*_//' | sed -e 's/\..*//')
+cat > $CONFIG_TEMP <<-EOF
+{
+	"system": {
+		"config_is_read_only": true,
+		"trusted_domains": ["$PRIMARY_HOSTNAME"],
+	  "memcache.local": "\\\OC\\\Memcache\\\APCu",
+	  "mail_from_address": "administrator",
+	  "logtimezone": "$TIMEZONE",
+	  "logdateformat": "Y-m-d H:i:s",
+	  "mail_domain": "$PRIMARY_HOSTNAME",
+	  "default_phone_region": "$PHONE_REGION",
+		"user_backends": [
+			{
+				"class": "\\\OCA\\\UserExternal\\\IMAP",
+				"arguments": [ "127.0.0.1", 143, null, null, false, false ]
+			}
+		]
+	}
+}
 EOF
-chown www-data.www-data $STORAGE_ROOT/owncloud/config.php
-
+sudo -u www-data php8.0 /usr/local/lib/owncloud/occ config:import $CONFIG_TEMP
+rm -f $CONFIG_TEMP
 
 # Set PHP FPM values to support large file uploads
 # (semicolon is the comment character in this file, hashes produce deprecation warnings)
