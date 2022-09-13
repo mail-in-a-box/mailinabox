@@ -289,6 +289,9 @@ hide_output sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/console.php app
 sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/occ upgrade
 if [ \( $? -ne 0 \) -a \( $? -ne 3 \) ]; then exit 1; fi
 
+# Turn off read only in case it wasn't turned off before.
+sed -ie '/config_is_read_only/d' $STORAGE_ROOT/owncloud/config.php
+
 # Disable default apps that we don't support
 sudo -u www-data \
 	php$PHP_VER /usr/local/lib/owncloud/occ app:disable \
@@ -296,6 +299,7 @@ sudo -u www-data \
 		notifications files_pdfviewer password_policy systemtags comments \
 		privacy recommendations files_rightclick sharebymail support text \
 		theming survey_client user_status weather_status files_videoplayer \
+		contactsinteraction \
 	| (grep -v "No such app enabled" || /bin/true)
 
 # Update config.php.
