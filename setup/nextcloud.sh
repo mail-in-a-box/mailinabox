@@ -126,8 +126,9 @@ InstallNextcloud() {
 			echo "...which seemed to work."
 		fi
 
-		# Add missing indices. NextCloud didn't include this in the normal upgrade because it might take some time.
+		# Add missing indices and primary keys. NextCloud didn't include this in the normal upgrade because it might take some time.
 		sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/occ db:add-missing-indices
+		sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/occ db:add-missing-primary-keys
 
 		# Run conversion to BigInt identifiers, this process may take some time on large tables.
 		sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/occ db:convert-filecache-bigint --no-interaction
@@ -193,7 +194,7 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 		fi
 
 		# Remove the read-onlyness of the config.
-		sed -ie '/config_is_read_only/d' $STORAGE_ROOT/owncloud/config.php
+		sed -i -e '/config_is_read_only/d' $STORAGE_ROOT/owncloud/config.php
 
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^22 ]]; then
 			InstallNextcloud 23.0.9 b6ac7ffa6c1c1c6187fea7d9efc7a32300cdc377 4.1.0 697f6b4a664e928d72414ea2731cb2c9d1dc3077 3.2.2 ce4030ab57f523f33d5396c6a81396d440756f5f 3.0.0 0df781b261f55bbde73d8c92da3f99397000972f
@@ -225,20 +226,20 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
 			"overwrite.cli.url": "https://${PRIMARY_HOSTNAME}/cloud",
 			"user_backends": [
 				{
-					"class": "\\\OCA\\\UserExternal\\\IMAP",
+					"class": "\\\\OCA\\\\UserExternal\\\\IMAP",
 					"arguments": [ "127.0.0.1", 143, null, null, false, false ]
 				}
 			],
-		  "memcache.local": "\\\OC\\\Memcache\\\APCu",
-		  "mail_smtpmode": "sendmail",
-		  "mail_smtpsecure": "",
-		  "mail_smtpauthtype": "LOGIN",
-		  "mail_smtpauth": false,
-		  "mail_smtphost": "",
-		  "mail_smtpport": "",
-		  "mail_smtpname": "",
-		  "mail_smtppassword": "",
-		  "mail_from_address": "owncloud"
+		 	"memcache.local": "\\\\OC\\\\Memcache\\\\APCu",
+		 	"mail_smtpmode": "sendmail",
+		 	"mail_smtpsecure": "",
+		 	"mail_smtpauthtype": "LOGIN",
+		 	"mail_smtpauth": false,
+		 	"mail_smtphost": "",
+		 	"mail_smtpport": "",
+			"mail_smtpname": "",
+			"mail_smtppassword": "",
+			"mail_from_address": "owncloud"
 		}
 	}
 EOF
@@ -290,7 +291,7 @@ sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/occ upgrade
 if [ \( $? -ne 0 \) -a \( $? -ne 3 \) ]; then exit 1; fi
 
 # Turn off read only in case it wasn't turned off before.
-sed -ie '/config_is_read_only/d' $STORAGE_ROOT/owncloud/config.php
+sed -i -e '/config_is_read_only/d' $STORAGE_ROOT/owncloud/config.php
 
 # Disable default apps that we don't support
 sudo -u www-data \
@@ -316,18 +317,32 @@ sudo -u www-data \
 TIMEZONE=$(cat /etc/timezone)
 instanceid=oc$(echo $PRIMARY_HOSTNAME | sha1sum | fold -w 10 | head -n 1)
 CONFIG_TEMP=/tmp/cfg-$instanceid.json
-PHONE_REGION=$(locale | grep TELEPHONE | sed -e 's/LC_.*=".*_//' | sed -e 's/\..*//')
-cat > $CONFIG_TEMP <<-EOF
+
+#try to get the phone region, otherwise leave blank
+locale=$(locale | grep LC_TELEPHONE | sed -E 's/(.*=")(.*)\..*/\2/')
+shopt -s extglob
+case "$locale" in
+	+([[:alnum:]])_+([[:alnum:]]))
+		PHONE_REGION=$(sed -E 's/.*_//' <<< "$locale")
+	;;
+	*)
+		PHONE_REGION=''
+	;;
+esac
+shopt -u extglob
+
+cat > $CONFIG_TEMP <<EOF
 {
 	"system": {
 		"config_is_read_only": true,
 		"trusted_domains": ["$PRIMARY_HOSTNAME"],
-	  "memcache.local": "\\\OC\\\Memcache\\\APCu",
-	  "mail_from_address": "administrator",
-	  "logtimezone": "$TIMEZONE",
-	  "logdateformat": "Y-m-d H:i:s",
-	  "mail_domain": "$PRIMARY_HOSTNAME",
-	  "default_phone_region": "$PHONE_REGION",
+		"memcache.local": "\\\OC\\\Memcache\\\APCu",
+		"mail_from_address": "administrator",
+		"logtimezone": "$TIMEZONE",
+		"logdateformat": "Y-m-d H:i:s",
+		"mail_domain": "$PRIMARY_HOSTNAME",
+		"default_phone_region": "$PHONE_REGION",
+		"overwrite.cli.url": "https://${PRIMARY_HOSTNAME}/cloud",
 		"user_backends": [
 			{
 				"class": "\\\OCA\\\UserExternal\\\IMAP",
