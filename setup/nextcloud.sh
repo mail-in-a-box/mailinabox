@@ -342,6 +342,7 @@ cat > $CONFIG_TEMP <<EOF
 		"logdateformat": "Y-m-d H:i:s",
 		"mail_domain": "$PRIMARY_HOSTNAME",
 		"default_phone_region": "$PHONE_REGION",
+		"overwrite.cli.url": "https://${PRIMARY_HOSTNAME}/cloud",
 		"user_backends": [
 			{
 				"class": "\\\OCA\\\UserExternal\\\IMAP",
