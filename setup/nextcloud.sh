@@ -347,6 +347,7 @@ echo ";";
 ?>
 EOF
 chown www-data.www-data $STORAGE_ROOT/owncloud/config.php
+chmod 640 $STORAGE_ROOT/owncloud/config.php
 
 # Enable/disable apps. Note that this must be done after the Nextcloud setup.
 # The firstrunwizard gave Josh all sorts of problems, so disabling that.
