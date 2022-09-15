@@ -199,9 +199,9 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 
 	# Add the HSTS header.
 	if hsts == "yes":
-		nginx_conf_extra += "\tadd_header Strict-Transport-Security \"max-age=15768000\" always;\n"
+		nginx_conf_extra += "\tadd_header Strict-Transport-Security \"max-age=63072000\" always;\n"
 	elif hsts == "preload":
-		nginx_conf_extra += "\tadd_header Strict-Transport-Security \"max-age=15768000; includeSubDomains; preload\" always;\n"
+		nginx_conf_extra += "\tadd_header Strict-Transport-Security \"max-age=63072000; includeSubDomains; preload\" always;\n"
 
 	# Add in any user customizations in the includes/ folder.
 	nginx_conf_custom_include = os.path.join(env["STORAGE_ROOT"], "www", safe_domain_name(domain) + ".conf")
