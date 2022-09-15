@@ -19,10 +19,10 @@ echo "Installing Nextcloud (contacts/calendar)..."
 #   for whether it supports the version of PHP available on this machine.
 # * Since Nextcloud only supports upgrades from consecutive major versions,
 #   we automatically install intermediate versions as needed.
-# * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
+# * The hash is the SHA256 hash of the ZIP package, which you can find by just running this script and
 #   copying it from the error message when it doesn't match what is below.
 nextcloud_ver=24.0.5
-nextcloud_hash=a1ecc0db61584ed5fb6f7cf80a492b2fae17ba26
+nextcloud_hash=5f4656ef04be114a431b1de0e4993858b57c2de2d9f0c993d753acb266086d0c
 
 # Nextcloud apps
 # --------------
@@ -31,14 +31,14 @@ nextcloud_hash=a1ecc0db61584ed5fb6f7cf80a492b2fae17ba26
 #   https://github.com/nextcloud-releases/contacts/blob/master/appinfo/info.xml
 #   https://github.com/nextcloud-releases/calendar/blob/master/appinfo/info.xml
 #   https://github.com/nextcloud/user_external/blob/master/appinfo/info.xml
-# * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
+# * The hash is the SHA256 hash of the ZIP package, which you can find by just running this script and
 #   copying it from the error message when it doesn't match what is below.
 contacts_ver=4.1.0
-contacts_hash=697f6b4a664e928d72414ea2731cb2c9d1dc3077
+contacts_hash=13aba48b776eb62c100175a5bb2574d7f4aa35e8b03faaca4c59308ea1601557
 calendar_ver=3.2.2
-calendar_hash=ce4030ab57f523f33d5396c6a81396d440756f5f
+calendar_hash=f078db962954ef797cda2c0400fb7d0d8a2f2e0c9399f55ee49b4dcde3be7772
 user_external_ver=3.0.0
-user_external_hash=0df781b261f55bbde73d8c92da3f99397000972f
+user_external_hash=25cd717780993091bac9e76f81c01fad02a1844917d2ac3973481f93a31ff276
 
 # Clear prior packages and install dependencies from apt.
 
@@ -185,11 +185,18 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 			return 0
 		fi
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^20 ]]; then
-			InstallNextcloud 21.0.7 f5c7079c5b56ce1e301c6a27c0d975d608bb01c9 4.0.7 45e7cf4bfe99cd8d03625cf9e5a1bb2e90549136 3.0.4 d0284b68135777ec9ca713c307216165b294d0fe
+			InstallNextcloud \
+				21.0.7 2be2c2eebe42b41fdbb53e82b1dffc82d3324baeff1ce5392de0fd804052404f \
+				4.0.7  b03d4ae20ebcb65dcb452d492efe2be1257ed53c08e80029f4fa5f6552ab9039 \
+				3.0.4  13359f71076ff415d94ab090d9d762c329211aadcef290c67b1c5ff31b30496f
 			CURRENT_NEXTCLOUD_VER="21.0.7"
 		fi
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^21 ]]; then
-			InstallNextcloud 22.2.6 9d39741f051a8da42ff7df46ceef2653a1dc70d9 4.1.0 697f6b4a664e928d72414ea2731cb2c9d1dc3077 3.2.2 ce4030ab57f523f33d5396c6a81396d440756f5f 3.0.0 0df781b261f55bbde73d8c92da3f99397000972f
+			InstallNextcloud \
+				22.2.6 164c53eaa5ed6d45329935bd33266c16e8a0355541c3c92a39f01af3d359abae \
+				4.1.0  13aba48b776eb62c100175a5bb2574d7f4aa35e8b03faaca4c59308ea1601557 \
+				3.2.2  f078db962954ef797cda2c0400fb7d0d8a2f2e0c9399f55ee49b4dcde3be7772 \
+				3.0.0  25cd717780993091bac9e76f81c01fad02a1844917d2ac3973481f93a31ff276
 			CURRENT_NEXTCLOUD_VER="22.2.6"
 		fi
 
@@ -197,12 +204,20 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 		sed -i -e '/config_is_read_only/d' $STORAGE_ROOT/owncloud/config.php
 
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^22 ]]; then
-			InstallNextcloud 23.0.9 b6ac7ffa6c1c1c6187fea7d9efc7a32300cdc377 4.1.0 697f6b4a664e928d72414ea2731cb2c9d1dc3077 3.2.2 ce4030ab57f523f33d5396c6a81396d440756f5f 3.0.0 0df781b261f55bbde73d8c92da3f99397000972f
+			InstallNextcloud \
+				23.0.9 5a4d3fd88935771465cf073bce5f3bdd3ec0bc99d16002bd9d01bfc022edb3f3 \
+				4.1.0  13aba48b776eb62c100175a5bb2574d7f4aa35e8b03faaca4c59308ea1601557 \
+				3.2.2  f078db962954ef797cda2c0400fb7d0d8a2f2e0c9399f55ee49b4dcde3be7772 \
+				3.0.0  25cd717780993091bac9e76f81c01fad02a1844917d2ac3973481f93a31ff276
 			CURRENT_NEXTCLOUD_VER="23.0.9"
 		fi
 	fi
 
-	InstallNextcloud $nextcloud_ver $nextcloud_hash $contacts_ver $contacts_hash $calendar_ver $calendar_hash $user_external_ver $user_external_hash
+	InstallNextcloud \
+		$nextcloud_ver $nextcloud_hash \
+		$contacts_ver $contacts_hash \
+		$calendar_ver $calendar_hash \
+		$user_external_ver $user_external_hash
 fi
 
 # ### Configuring Nextcloud
@@ -250,7 +265,7 @@ EOF
 	# Create an auto-configuration file to fill in database settings
 	# when the install script is run. Make an administrator account
 	# here or else the install can't finish.
-	adminpassword=$(dd if=/dev/urandom bs=1 count=40 2>/dev/null | sha1sum | fold -w 30 | head -n 1)
+	adminpassword=$(dd if=/dev/urandom bs=1 count=40 2>/dev/null | sha256sum | fold -w 30 | head -n 1)
 	cat > /usr/local/lib/owncloud/config/autoconfig.php <<EOF;
 <?php
 \$AUTOCONFIG = array (
