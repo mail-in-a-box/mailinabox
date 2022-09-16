@@ -244,7 +244,7 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
 	}
 EOF
 
-	sudo -u www-data php8.0 /usr/local/lib/owncloud/occ config:import $CONFIG_TEMP
+	sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/occ config:import $CONFIG_TEMP
 	rm -f $CONFIG_TEMP
 
 	# Create an auto-configuration file to fill in database settings
@@ -352,7 +352,7 @@ cat > $CONFIG_TEMP <<EOF
 	}
 }
 EOF
-sudo -u www-data php8.0 /usr/local/lib/owncloud/occ config:import $CONFIG_TEMP
+sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/occ config:import $CONFIG_TEMP
 rm -f $CONFIG_TEMP
 
 # Set PHP FPM values to support large file uploads
