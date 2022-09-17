@@ -19,10 +19,10 @@ echo "Installing Nextcloud (contacts/calendar)..."
 #   for whether it supports the version of PHP available on this machine.
 # * Since Nextcloud only supports upgrades from consecutive major versions,
 #   we automatically install intermediate versions as needed.
-# * The hash is the SHA256 hash of the ZIP package, which you can find by just running this script and
+# * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
 #   copying it from the error message when it doesn't match what is below.
-nextcloud_ver=24.0.5
-nextcloud_hash=5f4656ef04be114a431b1de0e4993858b57c2de2d9f0c993d753acb266086d0c
+nextcloud_ver=23.0.4
+nextcloud_hash=0724a20ad00e9c1e6e2aff1e8a37a0df922107c2d9bf31d754469dd9d5dfa64c
 
 # Nextcloud apps
 # --------------
@@ -31,7 +31,7 @@ nextcloud_hash=5f4656ef04be114a431b1de0e4993858b57c2de2d9f0c993d753acb266086d0c
 #   https://github.com/nextcloud-releases/contacts/blob/master/appinfo/info.xml
 #   https://github.com/nextcloud-releases/calendar/blob/master/appinfo/info.xml
 #   https://github.com/nextcloud/user_external/blob/master/appinfo/info.xml
-# * The hash is the SHA256 hash of the ZIP package, which you can find by just running this script and
+# * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
 #   copying it from the error message when it doesn't match what is below.
 contacts_ver=4.1.0
 contacts_hash=13aba48b776eb62c100175a5bb2574d7f4aa35e8b03faaca4c59308ea1601557
@@ -47,7 +47,7 @@ apt-get purge -qq -y owncloud* # we used to use the package manager
 apt_install curl php${PHP_VER} php${PHP_VER}-fpm \
 	php${PHP_VER}-cli php${PHP_VER}-sqlite3 php${PHP_VER}-gd php${PHP_VER}-imap php${PHP_VER}-curl \
 	php${PHP_VER}-dev php${PHP_VER}-gd php${PHP_VER}-xml php${PHP_VER}-mbstring php${PHP_VER}-zip php${PHP_VER}-apcu \
-	php${PHP_VER}-intl php${PHP_VER}-imagick php${PHP_VER}-gmp php${PHP_VER}-bcmath libmagickcore-6.q16-6-extra
+	php${PHP_VER}-intl php${PHP_VER}-imagick php${PHP_VER}-gmp php${PHP_VER}-bcmath
 
 # Enable APC before Nextcloud tools are run.
 tools/editconf.py /etc/php/$PHP_VER/mods-available/apcu.ini -c ';' \
@@ -126,9 +126,8 @@ InstallNextcloud() {
 			echo "...which seemed to work."
 		fi
 
-		# Add missing indices and primary keys. NextCloud didn't include this in the normal upgrade because it might take some time.
+		# Add missing indices. NextCloud didn't include this in the normal upgrade because it might take some time.
 		sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/occ db:add-missing-indices
-		sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/occ db:add-missing-primary-keys
 
 		# Run conversion to BigInt identifiers, this process may take some time on large tables.
 		sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/occ db:convert-filecache-bigint --no-interaction
@@ -199,25 +198,9 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 				3.0.0  25cd717780993091bac9e76f81c01fad02a1844917d2ac3973481f93a31ff276
 			CURRENT_NEXTCLOUD_VER="22.2.6"
 		fi
-
-		# Remove the read-onlyness of the config.
-		sed -i -e '/config_is_read_only/d' $STORAGE_ROOT/owncloud/config.php
-
-		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^22 ]]; then
-			InstallNextcloud \
-				23.0.9 5a4d3fd88935771465cf073bce5f3bdd3ec0bc99d16002bd9d01bfc022edb3f3 \
-				4.1.0  13aba48b776eb62c100175a5bb2574d7f4aa35e8b03faaca4c59308ea1601557 \
-				3.2.2  f078db962954ef797cda2c0400fb7d0d8a2f2e0c9399f55ee49b4dcde3be7772 \
-				3.0.0  25cd717780993091bac9e76f81c01fad02a1844917d2ac3973481f93a31ff276
-			CURRENT_NEXTCLOUD_VER="23.0.9"
-		fi
 	fi
 
-	InstallNextcloud \
-		$nextcloud_ver $nextcloud_hash \
-		$contacts_ver $contacts_hash \
-		$calendar_ver $calendar_hash \
-		$user_external_ver $user_external_hash
+	InstallNextcloud $nextcloud_ver $nextcloud_hash $contacts_ver $contacts_hash $calendar_ver $calendar_hash $user_external_ver $user_external_hash
 fi
 
 # ### Configuring Nextcloud
@@ -230,42 +213,43 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
 
 	# Create an initial configuration file.
 	instanceid=oc$(echo $PRIMARY_HOSTNAME | sha1sum | fold -w 10 | head -n 1)
-	CONFIG_TEMP=/tmp/cfg-$instanceid.json
-	cat > $CONFIG_TEMP <<EOF
-	{
-		"system": {
-			"datadirectory": "$STORAGE_ROOT/owncloud",
-			"instanceid": "$instanceid",
-			"forcessl": true,
-			"overwritewebroot": "/cloud",
-			"overwrite.cli.url": "https://${PRIMARY_HOSTNAME}/cloud",
-			"user_backends": [
-				{
-					"class": "\\\\OCA\\\\UserExternal\\\\IMAP",
-					"arguments": [ "127.0.0.1", 143, null, null, false, false ]
-				}
-			],
-		 	"memcache.local": "\\\\OC\\\\Memcache\\\\APCu",
-		 	"mail_smtpmode": "sendmail",
-		 	"mail_smtpsecure": "",
-		 	"mail_smtpauthtype": "LOGIN",
-		 	"mail_smtpauth": false,
-		 	"mail_smtphost": "",
-		 	"mail_smtpport": "",
-			"mail_smtpname": "",
-			"mail_smtppassword": "",
-			"mail_from_address": "owncloud"
-		}
-	}
-EOF
+	cat > $STORAGE_ROOT/owncloud/config.php <<EOF;
+<?php
+\$CONFIG = array (
+  'datadirectory' => '$STORAGE_ROOT/owncloud',
 
-	sudo -u www-data php8.0 /usr/local/lib/owncloud/occ config:import $CONFIG_TEMP
-	rm -f $CONFIG_TEMP
+  'instanceid' => '$instanceid',
+
+  'forcessl' => true, # if unset/false, Nextcloud sends a HSTS=0 header, which conflicts with nginx config
+
+  'overwritewebroot' => '/cloud',
+  'overwrite.cli.url' => '/cloud',
+  'user_backends' => array(
+    array(
+      'class' => '\OCA\UserExternal\IMAP',
+      'arguments' => array(
+        '127.0.0.1', 143, null, null, false, false
+       ),
+    ),
+  ),
+  'memcache.local' => '\OC\Memcache\APCu',
+  'mail_smtpmode' => 'sendmail',
+  'mail_smtpsecure' => '',
+  'mail_smtpauthtype' => 'LOGIN',
+  'mail_smtpauth' => false,
+  'mail_smtphost' => '',
+  'mail_smtpport' => '',
+  'mail_smtpname' => '',
+  'mail_smtppassword' => '',
+  'mail_from_address' => 'owncloud',
+);
+?>
+EOF
 
 	# Create an auto-configuration file to fill in database settings
 	# when the install script is run. Make an administrator account
 	# here or else the install can't finish.
-	adminpassword=$(dd if=/dev/urandom bs=1 count=40 2>/dev/null | sha256sum | fold -w 30 | head -n 1)
+	adminpassword=$(dd if=/dev/urandom bs=1 count=40 2>/dev/null | sha1sum | fold -w 30 | head -n 1)
 	cat > /usr/local/lib/owncloud/config/autoconfig.php <<EOF;
 <?php
 \$AUTOCONFIG = array (
@@ -290,6 +274,52 @@ EOF
 	(cd /usr/local/lib/owncloud; sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/index.php;)
 fi
 
+# Update config.php.
+# * trusted_domains is reset to localhost by autoconfig starting with ownCloud 8.1.1,
+#   so set it here. It also can change if the box's PRIMARY_HOSTNAME changes, so
+#   this will make sure it has the right value.
+# * Some settings weren't included in previous versions of Mail-in-a-Box.
+# * We need to set the timezone to the system timezone to allow fail2ban to ban
+#   users within the proper timeframe
+# * We need to set the logdateformat to something that will work correctly with fail2ban
+# * mail_domain' needs to be set every time we run the setup. Making sure we are setting
+#   the correct domain name if the domain is being change from the previous setup.
+# Use PHP to read the settings file, modify it, and write out the new settings array.
+TIMEZONE=$(cat /etc/timezone)
+CONFIG_TEMP=$(/bin/mktemp)
+php$PHP_VER <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP $STORAGE_ROOT/owncloud/config.php;
+<?php
+include("$STORAGE_ROOT/owncloud/config.php");
+
+\$CONFIG['config_is_read_only'] = true;
+
+\$CONFIG['trusted_domains'] = array('$PRIMARY_HOSTNAME');
+
+\$CONFIG['memcache.local'] = '\OC\Memcache\APCu';
+\$CONFIG['overwrite.cli.url'] = '/cloud';
+\$CONFIG['mail_from_address'] = 'administrator'; # just the local part, matches our master administrator address
+
+\$CONFIG['logtimezone'] = '$TIMEZONE';
+\$CONFIG['logdateformat'] = 'Y-m-d H:i:s';
+
+\$CONFIG['mail_domain'] = '$PRIMARY_HOSTNAME';
+
+\$CONFIG['user_backends'] = array(
+  array(
+    'class' => '\OCA\UserExternal\IMAP',
+    'arguments' => array(
+      '127.0.0.1', 143, null, null, false, false
+    ),
+  ),
+);
+
+echo "<?php\n\\\$CONFIG = ";
+var_export(\$CONFIG);
+echo ";";
+?>
+EOF
+chown www-data.www-data $STORAGE_ROOT/owncloud/config.php
+
 # Enable/disable apps. Note that this must be done after the Nextcloud setup.
 # The firstrunwizard gave Josh all sorts of problems, so disabling that.
 # user_external is what allows Nextcloud to use IMAP for login. The contacts
@@ -305,70 +335,10 @@ hide_output sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/console.php app
 sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/occ upgrade
 if [ \( $? -ne 0 \) -a \( $? -ne 3 \) ]; then exit 1; fi
 
-# Turn off read only in case it wasn't turned off before.
-sed -i -e '/config_is_read_only/d' $STORAGE_ROOT/owncloud/config.php
-
 # Disable default apps that we don't support
 sudo -u www-data \
-	php$PHP_VER /usr/local/lib/owncloud/occ app:disable \
-		photos dashboard activity circles federation files_sharing \
-		notifications files_pdfviewer password_policy systemtags comments \
-		privacy recommendations files_rightclick sharebymail support text \
-		theming survey_client user_status weather_status files_videoplayer \
-		contactsinteraction \
+	php$PHP_VER /usr/local/lib/owncloud/occ app:disable photos dashboard activity \
 	| (grep -v "No such app enabled" || /bin/true)
-
-# Update config.php.
-# * trusted_domains is reset to localhost by autoconfig starting with ownCloud 8.1.1,
-#   so set it here. It also can change if the box's PRIMARY_HOSTNAME changes, so
-#   this will make sure it has the right value.
-# * Some settings weren't included in previous versions of Mail-in-a-Box.
-# * We need to set the timezone to the system timezone to allow fail2ban to ban
-#   users within the proper timeframe
-# * We need to set the logdateformat to something that will work correctly with fail2ban
-# * mail_domain' needs to be set every time we run the setup. Making sure we are setting
-#   the correct domain name if the domain is being change from the previous setup.
-# Use PHP to read the settings file, modify it, and write out the new settings array.
-TIMEZONE=$(cat /etc/timezone)
-instanceid=oc$(echo $PRIMARY_HOSTNAME | sha1sum | fold -w 10 | head -n 1)
-CONFIG_TEMP=/tmp/cfg-$instanceid.json
-
-#try to get the phone region, otherwise leave blank
-locale=$(locale | grep LC_TELEPHONE | sed -E 's/(.*=")(.*)\..*/\2/')
-shopt -s extglob
-case "$locale" in
-	+([[:alnum:]])_+([[:alnum:]]))
-		PHONE_REGION=$(sed -E 's/.*_//' <<< "$locale")
-	;;
-	*)
-		PHONE_REGION=''
-	;;
-esac
-shopt -u extglob
-
-cat > $CONFIG_TEMP <<EOF
-{
-	"system": {
-		"config_is_read_only": true,
-		"trusted_domains": ["$PRIMARY_HOSTNAME"],
-		"memcache.local": "\\\OC\\\Memcache\\\APCu",
-		"mail_from_address": "administrator",
-		"logtimezone": "$TIMEZONE",
-		"logdateformat": "Y-m-d H:i:s",
-		"mail_domain": "$PRIMARY_HOSTNAME",
-		"default_phone_region": "$PHONE_REGION",
-		"overwrite.cli.url": "https://${PRIMARY_HOSTNAME}/cloud",
-		"user_backends": [
-			{
-				"class": "\\\OCA\\\UserExternal\\\IMAP",
-				"arguments": [ "127.0.0.1", 143, null, null, false, false ]
-			}
-		]
-	}
-}
-EOF
-sudo -u www-data php8.0 /usr/local/lib/owncloud/occ config:import $CONFIG_TEMP
-rm -f $CONFIG_TEMP
 
 # Set PHP FPM values to support large file uploads
 # (semicolon is the comment character in this file, hashes produce deprecation warnings)
@@ -403,19 +373,6 @@ cat > /etc/cron.d/mailinabox-nextcloud << EOF;
 */5 * * * *	root	sudo -u www-data php$PHP_VER -f /usr/local/lib/owncloud/cron.php
 EOF
 chmod +x /etc/cron.d/mailinabox-nextcloud
-
-# Rotate the nextcloud.log file
-cat > /etc/logrotate.d/nextcloud <<EOF
-# Nextcloud logs 
-$STORAGE_ROOT/owncloud/nextcloud.log { 
-		size 10M
-		create 640 www-data www-data
-		rotate 30
-		copytruncate
-		missingok
-		compress 
-}
-EOF
 
 # There's nothing much of interest that a user could do as an admin for Nextcloud,
 # and there's a lot they could mess up, so we don't make any users admins of Nextcloud.

@@ -78,7 +78,7 @@ tools/editconf.py /etc/dovecot/conf.d/10-auth.conf \
 	"auth_mechanisms=plain login"
 
 # Enable SSL, specify the location of the SSL certificate and private key files.
-# Use Mozilla's "Intermediate" recommendations at https://ssl-config.mozilla.org/#server=dovecot&server-version=2.3.16&config=intermediate&openssl-version=3.0.2,
+# Use Mozilla's "Intermediate" recommendations at https://ssl-config.mozilla.org/#server=dovecot&server-version=2.2.33&config=intermediate&openssl-version=1.1.1,
 # except that the current version of Dovecot does not have a TLSv1.3 setting, so we only use TLSv1.2.
 tools/editconf.py /etc/dovecot/conf.d/10-ssl.conf \
 	ssl=required \

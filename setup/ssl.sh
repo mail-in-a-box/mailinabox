@@ -27,8 +27,9 @@ source /etc/mailinabox.conf # load global vars
 # Show a status line if we are going to take any action in this file.
 if  [ ! -f /usr/bin/openssl ] \
  || [ ! -f $STORAGE_ROOT/ssl/ssl_private_key.pem ] \
- || [ ! -f $STORAGE_ROOT/ssl/ssl_certificate.pem ]; then
-	echo "Creating initial SSL certificate..."
+ || [ ! -f $STORAGE_ROOT/ssl/ssl_certificate.pem ] \
+ || [ ! -f $STORAGE_ROOT/ssl/dh2048.pem ]; then
+	echo "Creating initial SSL certificate and perfect forward secrecy Diffie-Hellman parameters..."
 fi
 
 # Install openssl.
@@ -89,20 +90,9 @@ if [ ! -f $STORAGE_ROOT/ssl/ssl_certificate.pem ]; then
 	ln -s $CERT $STORAGE_ROOT/ssl/ssl_certificate.pem
 fi
 
-# Use the RFC 7919 finite-field DHE parameters instead of self-generating.
-rm -f "$STORAGE_ROOT/ssl/dh2048.pem"
-cat > "$STORAGE_ROOT/ssl/ffdhe4096.pem" <<EOF
------BEGIN DH PARAMETERS-----
-MIICCAKCAgEA//////////+t+FRYortKmq/cViAnPTzx2LnFg84tNpWp4TZBFGQz
-+8yTnc4kmz75fS/jY2MMddj2gbICrsRhetPfHtXV/WVhJDP1H18GbtCFY2VVPe0a
-87VXE15/V8k1mE8McODmi3fipona8+/och3xWKE2rec1MKzKT0g6eXq8CrGCsyT7
-YdEIqUuyyOP7uWrat2DX9GgdT0Kj3jlN9K5W7edjcrsZCwenyO4KbXCeAvzhzffi
-7MA0BM0oNC9hkXL+nOmFg/+OTxIy7vKBg8P+OxtMb61zO7X8vC7CIAXFjvGDfRaD
-ssbzSibBsu/6iGtCOGEfz9zeNVs7ZRkDW7w09N75nAI4YbRvydbmyQd62R0mkff3
-7lmMsPrBhtkcrv4TCYUTknC0EwyTvEN5RPT9RFLi103TZPLiHnH1S/9croKrnJ32
-nuhtK8UiNjoNq8Uhl5sN6todv5pC1cRITgq80Gv6U93vPBsg7j/VnXwl5B0rZp4e
-8W5vUsMWTfT7eTDp5OWIV7asfV9C1p9tGHdjzx1VA0AEh/VbpX4xzHpxNciG77Qx
-iu1qHgEtnmgyqQdgCpGBMMRtx3j5ca0AOAkpmaMzy4t6Gh25PXFAADwqTs6p+Y0K
-zAqCkc3OyX3Pjsm1Wn+IpGtNtahR9EGC4caKAH5eZV9q//////////8CAQI=
------END DH PARAMETERS-----
-EOF
+# Generate some Diffie-Hellman cipher bits.
+# openssl's default bit length for this is 1024 bits, but we'll create
+# 2048 bits of bits per the latest recommendations.
+if [ ! -f $STORAGE_ROOT/ssl/dh2048.pem ]; then
+	openssl dhparam -out $STORAGE_ROOT/ssl/dh2048.pem 2048
+fi
