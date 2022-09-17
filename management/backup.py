@@ -242,6 +242,13 @@ def get_target_type(config):
 	protocol = config["target"].split(":")[0]
 	return protocol
 
+def nuke_local_files(backup_dir, backup_cache_dir, config, env):
+	# the files must be removed manually, duplicity won't do
+	# it. eg. `duplicity remove-older-than "1s"` will fail with
+	# "manually purge the repository"
+	for fn, size in list_target_files(config):
+		os.unlink(os.path.join(backup_dir,fn))
+
 def perform_backup(full_backup):
 	env = load_environment()
 
@@ -269,6 +276,15 @@ def perform_backup(full_backup):
 		# be an error already.
 		print(e)
 		sys.exit(1)
+
+	# Nuke local files: when short on disk space and storing backups
+	# locally, delete all local backups before a new one is created.
+	# Otherwise, enough disk space for a minimum of 2 full backups is
+	# needed, which may not be available.
+	if full_backup and "nuke_before_full_backup" in config and config["nuke_before_full_backup"] is True:
+		if config["target"] != "local" and not config["target"].startswith("file://"):
+			raise ValueError("custom.yaml option 'nuke_before_full_backup' is only supported for local backups")
+		nuke_local_files(backup_dir, backup_cache_dir, config, env)
 
 	# Stop services.
 	def service_command(service, command, quit=None):
