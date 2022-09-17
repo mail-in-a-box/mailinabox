@@ -192,15 +192,14 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 			InstallNextcloud 22.2.6 9d39741f051a8da42ff7df46ceef2653a1dc70d9 4.1.0 697f6b4a664e928d72414ea2731cb2c9d1dc3077 3.2.2 ce4030ab57f523f33d5396c6a81396d440756f5f 3.0.0 0df781b261f55bbde73d8c92da3f99397000972f
 			CURRENT_NEXTCLOUD_VER="22.2.6"
 		fi
-
-		# Remove the read-onlyness of the config.
-		sed -i -e '/config_is_read_only/d' $STORAGE_ROOT/owncloud/config.php
-
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^22 ]]; then
 			InstallNextcloud 23.0.9 b6ac7ffa6c1c1c6187fea7d9efc7a32300cdc377 4.1.0 697f6b4a664e928d72414ea2731cb2c9d1dc3077 3.2.2 ce4030ab57f523f33d5396c6a81396d440756f5f 3.0.0 0df781b261f55bbde73d8c92da3f99397000972f
 			CURRENT_NEXTCLOUD_VER="23.0.9"
 		fi
 	fi
+
+	# Remove the read-onlyness of the config, which is needed for Version 24
+	sed -i -e '/config_is_read_only/d' $STORAGE_ROOT/owncloud/config.php
 
 	InstallNextcloud $nextcloud_ver $nextcloud_hash $contacts_ver $contacts_hash $calendar_ver $calendar_hash $user_external_ver $user_external_hash
 fi
@@ -215,37 +214,38 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
 
 	# Create an initial configuration file.
 	instanceid=oc$(echo $PRIMARY_HOSTNAME | sha1sum | fold -w 10 | head -n 1)
-	CONFIG_TEMP=/tmp/cfg-$instanceid.json
-	cat > $CONFIG_TEMP <<EOF
-	{
-		"system": {
-			"datadirectory": "$STORAGE_ROOT/owncloud",
-			"instanceid": "$instanceid",
-			"forcessl": true,
-			"overwritewebroot": "/cloud",
-			"overwrite.cli.url": "https://${PRIMARY_HOSTNAME}/cloud",
-			"user_backends": [
-				{
-					"class": "\\\\OCA\\\\UserExternal\\\\IMAP",
-					"arguments": [ "127.0.0.1", 143, null, null, false, false ]
-				}
-			],
-		 	"memcache.local": "\\\\OC\\\\Memcache\\\\APCu",
-		 	"mail_smtpmode": "sendmail",
-		 	"mail_smtpsecure": "",
-		 	"mail_smtpauthtype": "LOGIN",
-		 	"mail_smtpauth": false,
-		 	"mail_smtphost": "",
-		 	"mail_smtpport": "",
-			"mail_smtpname": "",
-			"mail_smtppassword": "",
-			"mail_from_address": "owncloud"
-		}
-	}
-EOF
+	cat > $STORAGE_ROOT/owncloud/config.php <<EOF;
+<?php
+\$CONFIG = array (
+  'datadirectory' => '$STORAGE_ROOT/owncloud',
 
-	sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/occ config:import $CONFIG_TEMP
-	rm -f $CONFIG_TEMP
+  'instanceid' => '$instanceid',
+
+  'forcessl' => true, # if unset/false, Nextcloud sends a HSTS=0 header, which conflicts with nginx config
+
+  'overwritewebroot' => '/cloud',
+  'overwrite.cli.url' => '/cloud',
+  'user_backends' => array(
+    array(
+      'class' => '\OCA\UserExternal\IMAP',
+      'arguments' => array(
+        '127.0.0.1', 143, null, null, false, false
+       ),
+    ),
+  ),
+  'memcache.local' => '\OC\Memcache\APCu',
+  'mail_smtpmode' => 'sendmail',
+  'mail_smtpsecure' => '',
+  'mail_smtpauthtype' => 'LOGIN',
+  'mail_smtpauth' => false,
+  'mail_smtphost' => '',
+  'mail_smtpport' => '',
+  'mail_smtpname' => '',
+  'mail_smtppassword' => '',
+  'mail_from_address' => 'owncloud',
+);
+?>
+EOF
 
 	# Create an auto-configuration file to fill in database settings
 	# when the install script is run. Make an administrator account
@@ -275,6 +275,68 @@ EOF
 	(cd /usr/local/lib/owncloud; sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/index.php;)
 fi
 
+# Update config.php.
+# * trusted_domains is reset to localhost by autoconfig starting with ownCloud 8.1.1,
+#   so set it here. It also can change if the box's PRIMARY_HOSTNAME changes, so
+#   this will make sure it has the right value.
+# * Some settings weren't included in previous versions of Mail-in-a-Box.
+# * We need to set the timezone to the system timezone to allow fail2ban to ban
+#   users within the proper timeframe
+# * We need to set the logdateformat to something that will work correctly with fail2ban
+# * mail_domain' needs to be set every time we run the setup. Making sure we are setting
+#   the correct domain name if the domain is being change from the previous setup.
+# Use PHP to read the settings file, modify it, and write out the new settings array.
+
+# Try to get the phone region, otherwise leave blank
+locale=$(locale | grep LC_TELEPHONE | sed -E 's/(.*=")(.*)\..*/\2/')
+shopt -s extglob
+case "$locale" in
+	+([[:alnum:]])_+([[:alnum:]]))
+		PHONE_REGION=$(sed -E 's/.*_//' <<< "$locale")
+	;;
+	*)
+		PHONE_REGION=''
+	;;
+esac
+shopt -u extglob
+
+TIMEZONE=$(cat /etc/timezone)
+CONFIG_TEMP=$(/bin/mktemp)
+php$PHP_VER <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP $STORAGE_ROOT/owncloud/config.php;
+<?php
+include("$STORAGE_ROOT/owncloud/config.php");
+
+\$CONFIG['config_is_read_only'] = true;
+
+\$CONFIG['trusted_domains'] = array('$PRIMARY_HOSTNAME');
+
+\$CONFIG['memcache.local'] = '\OC\Memcache\APCu';
+\$CONFIG['overwrite.cli.url'] = 'https://${PRIMARY_HOSTNAME}/cloud';
+\$CONFIG['mail_from_address'] = 'administrator'; # just the local part, matches our master administrator address
+
+\$CONFIG['logtimezone'] = '$TIMEZONE';
+\$CONFIG['logdateformat'] = 'Y-m-d H:i:s';
+
+\$CONFIG['mail_domain'] = '$PRIMARY_HOSTNAME';
+
+\$CONFIG['default_phone_region'] = '$PHONE_REGION';
+
+\$CONFIG['user_backends'] = array(
+  array(
+    'class' => '\OCA\UserExternal\IMAP',
+    'arguments' => array(
+      '127.0.0.1', 143, null, null, false, false
+    ),
+  ),
+);
+
+echo "<?php\n\\\$CONFIG = ";
+var_export(\$CONFIG);
+echo ";";
+?>
+EOF
+chown www-data.www-data $STORAGE_ROOT/owncloud/config.php
+
 # Enable/disable apps. Note that this must be done after the Nextcloud setup.
 # The firstrunwizard gave Josh all sorts of problems, so disabling that.
 # user_external is what allows Nextcloud to use IMAP for login. The contacts
@@ -290,70 +352,10 @@ hide_output sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/console.php app
 sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/occ upgrade
 if [ \( $? -ne 0 \) -a \( $? -ne 3 \) ]; then exit 1; fi
 
-# Turn off read only in case it wasn't turned off before.
-sed -i -e '/config_is_read_only/d' $STORAGE_ROOT/owncloud/config.php
-
 # Disable default apps that we don't support
 sudo -u www-data \
-	php$PHP_VER /usr/local/lib/owncloud/occ app:disable \
-		photos dashboard activity circles federation files_sharing \
-		notifications files_pdfviewer password_policy systemtags comments \
-		privacy recommendations files_rightclick sharebymail support text \
-		theming survey_client user_status weather_status files_videoplayer \
-		contactsinteraction \
+	php$PHP_VER /usr/local/lib/owncloud/occ app:disable photos dashboard activity \
 	| (grep -v "No such app enabled" || /bin/true)
-
-# Update config.php.
-# * trusted_domains is reset to localhost by autoconfig starting with ownCloud 8.1.1,
-#   so set it here. It also can change if the box's PRIMARY_HOSTNAME changes, so
-#   this will make sure it has the right value.
-# * Some settings weren't included in previous versions of Mail-in-a-Box.
-# * We need to set the timezone to the system timezone to allow fail2ban to ban
-#   users within the proper timeframe
-# * We need to set the logdateformat to something that will work correctly with fail2ban
-# * mail_domain' needs to be set every time we run the setup. Making sure we are setting
-#   the correct domain name if the domain is being change from the previous setup.
-# Use PHP to read the settings file, modify it, and write out the new settings array.
-TIMEZONE=$(cat /etc/timezone)
-instanceid=oc$(echo $PRIMARY_HOSTNAME | sha1sum | fold -w 10 | head -n 1)
-CONFIG_TEMP=/tmp/cfg-$instanceid.json
-
-#try to get the phone region, otherwise leave blank
-locale=$(locale | grep LC_TELEPHONE | sed -E 's/(.*=")(.*)\..*/\2/')
-shopt -s extglob
-case "$locale" in
-	+([[:alnum:]])_+([[:alnum:]]))
-		PHONE_REGION=$(sed -E 's/.*_//' <<< "$locale")
-	;;
-	*)
-		PHONE_REGION=''
-	;;
-esac
-shopt -u extglob
-
-cat > $CONFIG_TEMP <<EOF
-{
-	"system": {
-		"config_is_read_only": true,
-		"trusted_domains": ["$PRIMARY_HOSTNAME"],
-		"memcache.local": "\\\OC\\\Memcache\\\APCu",
-		"mail_from_address": "administrator",
-		"logtimezone": "$TIMEZONE",
-		"logdateformat": "Y-m-d H:i:s",
-		"mail_domain": "$PRIMARY_HOSTNAME",
-		"default_phone_region": "$PHONE_REGION",
-		"overwrite.cli.url": "https://${PRIMARY_HOSTNAME}/cloud",
-		"user_backends": [
-			{
-				"class": "\\\OCA\\\UserExternal\\\IMAP",
-				"arguments": [ "127.0.0.1", 143, null, null, false, false ]
-			}
-		]
-	}
-}
-EOF
-sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/occ config:import $CONFIG_TEMP
-rm -f $CONFIG_TEMP
 
 # Set PHP FPM values to support large file uploads
 # (semicolon is the comment character in this file, hashes produce deprecation warnings)
