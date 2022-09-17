@@ -22,20 +22,8 @@ class AuthService:
 	def init_system_api_key(self):
 		"""Write an API key to a local file so local processes can use the API"""
 
-		def create_file_with_mode(path, mode):
-			# Based on answer by A-B-B: http://stackoverflow.com/a/15015748
-			old_umask = os.umask(0)
-			try:
-				return os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT, mode), 'w')
-			finally:
-				os.umask(old_umask)
-
-		self.key = secrets.token_hex(32)
-
-		os.makedirs(os.path.dirname(self.key_path), exist_ok=True)
-
-		with create_file_with_mode(self.key_path, 0o640) as key_file:
-			key_file.write(self.key + '\n')
+		with open(self.key_path, 'r') as file:
+			self.key = file.read()
 
 	def authenticate(self, request, env, login_only=False, logout=False):
 		"""Test if the HTTP Authorization header's username matches the system key, a session key,
