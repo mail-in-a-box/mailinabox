@@ -21,8 +21,8 @@ echo "Installing Nextcloud (contacts/calendar)..."
 #   we automatically install intermediate versions as needed.
 # * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
 #   copying it from the error message when it doesn't match what is below.
-nextcloud_ver=24.0.0
-nextcloud_hash=f072f5863a15cefe577b47f72bb3e41d2a339335
+nextcloud_ver=24.0.5
+nextcloud_hash=a1ecc0db61584ed5fb6f7cf80a492b2fae17ba26
 
 # Nextcloud apps
 # --------------
@@ -33,10 +33,10 @@ nextcloud_hash=f072f5863a15cefe577b47f72bb3e41d2a339335
 #   https://github.com/nextcloud/user_external/blob/master/appinfo/info.xml
 # * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
 #   copying it from the error message when it doesn't match what is below.
-contacts_ver=4.1.1
-contacts_hash=c2dab4572494eb15de8f1ae565f707d0fcc6ae9b
-calendar_ver=3.3.1
-calendar_hash=8ca2ebe1d57501949df2a0229501a99736ba8779
+contacts_ver=4.2.0
+contacts_hash=79b506574834db5e1b6ab47aadd4041e12ad9a9c
+calendar_ver=3.5.0
+calendar_hash=941381536287a015081669513f8f79f6f262508a
 user_external_ver=3.0.0
 user_external_hash=9e7aaf7288032bd463c480bc368ff91869122950
 
@@ -187,7 +187,28 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 			return 0
 		fi
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^20 ]]; then
-			InstallNextcloud 21.0.7 f5c7079c5b56ce1e301c6a27c0d975d608bb01c9 4.0.0 f893ca57a543b260c9feeecbb5958c00b6998e18 2.2.2 923846d48afb5004a456b9079cf4b46d23b3ef3a 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
+			# Version 20 is the latest version from the 18.04 version of miab. To upgrade to version 21, install php8.0. This is
+			# not supported by version 20, but that does not matter, as the InstallNextcloud function only runs the version 21 code.
+			
+			# Install the ppa
+			add-apt-repository --yes ppa:ondrej/php
+			
+			# Prevent installation of old packages
+			apt-mark hold php7.0-apcu php7.1-apcu php7.2-apcu php7.3-apcu php7.4-apcu
+			
+			# Install older php version
+			apt_install php8.0 php8.0-fpm php8.0-apcu php8.0-cli php8.0-sqlite3 php8.0-gd php8.0-imap \
+				php8.0-curl php8.0-dev php8.0-xml php8.0-mbstring php8.0-zip
+			
+			# set older php version as default
+			update-alternatives --set php /usr/bin/php8.0
+			
+			tools/editconf.py /etc/php/$(php_version)/mods-available/apcu.ini -c ';' \
+				apc.enabled=1	\
+				apc.enable_cli=1
+
+			# Install nextcloud, this also updates user_external to 2.1.0
+			InstallNextcloud 21.0.7 f5c7079c5b56ce1e301c6a27c0d975d608bb01c9 4.0.7 45e7cf4bfe99cd8d03625cf9e5a1bb2e90549136 3.0.4 d0284b68135777ec9ca713c307216165b294d0fe 2.1.0 41d4c57371bd085d68421b52ab232092d7dfc882
 			CURRENT_NEXTCLOUD_VER="21.0.7"
 		fi
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^21 ]]; then
@@ -197,8 +218,39 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^22 ]]; then
 			InstallNextcloud 23.0.2 645cba42cab57029ebe29fb93906f58f7abea5f8 4.0.8 9f368bb2be98c5555b7118648f4cc9fa51e8cb30 3.0.6 ca49bb1ce23f20e10911e39055fd59d7f7a84c30 3.0.0 9e7aaf7288032bd463c480bc368ff91869122950
 			CURRENT_NEXTCLOUD_VER="23.0.2"
+			
+			# Remove older php version
+			update-alternatives --auto php
+
+			apt-get purge -qq -y php8.0 php8.0-fpm php8.0-apcu php8.0-cli php8.0-sqlite3 php8.0-gd \
+				php8.0-imap php8.0-curl php8.0-dev php8.0-xml php8.0-mbstring php8.0-zip \
+				php8.0-common php8.0-opcache php8.0-readline
+	
+			# Remove the ppa
+			add-apt-repository --yes --remove ppa:ondrej/php
 		fi
 	fi
+
+# nextcloud version - supported php versions
+# 20                - 7.2, 7.3, 7.4
+# 21                - 7.3, 7.4, 8.0
+# 22                - 7.3, 7.4, 8.0
+# 23                - 7.3, 7.4, 8.0
+# 24                - 7.4, 8.0, 8.1
+#
+# ubuntu 18.04 has php 7.2
+# ubuntu 22.04 has php 8.1
+#
+# user_external 2.1.0 supports version 21-22
+# user_external 2.1.0 supports version 22-24
+#
+# upgrade path
+# - install ppa: sudo add-apt-repository ppa:ondrej/php
+# - upgrade php to version 8.0 (nextcloud will no longer function)
+# - upgrade nextcloud to 21 and user_external to 2.1.0
+# - upgrade nextcloud to 22
+# - upgrade nextcloud to 23 and user_external to 3.0.0
+# - upgrade nextcloud to 24
 
 	InstallNextcloud $nextcloud_ver $nextcloud_hash $contacts_ver $contacts_hash $calendar_ver $calendar_hash $user_external_ver $user_external_hash
 fi
@@ -291,7 +343,7 @@ php <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP $STORAGE_ROOT/owncloud/config.php;
 <?php
 include("$STORAGE_ROOT/owncloud/config.php");
 
-\$CONFIG['config_is_read_only'] = true;
+\$CONFIG['config_is_read_only'] = false;
 
 \$CONFIG['trusted_domains'] = array('$PRIMARY_HOSTNAME');
 
@@ -301,6 +353,8 @@ include("$STORAGE_ROOT/owncloud/config.php");
 
 \$CONFIG['logtimezone'] = '$TIMEZONE';
 \$CONFIG['logdateformat'] = 'Y-m-d H:i:s';
+\$CONFIG['log_type'] = 'syslog';
+\$CONFIG['syslog_tag'] = 'Nextcloud';
 
 \$CONFIG['mail_domain'] = '$PRIMARY_HOSTNAME';
 
@@ -319,6 +373,7 @@ echo ";";
 ?>
 EOF
 chown www-data.www-data $STORAGE_ROOT/owncloud/config.php
+chmod 640 $STORAGE_ROOT/owncloud/config.php
 
 # Enable/disable apps. Note that this must be done after the Nextcloud setup.
 # The firstrunwizard gave Josh all sorts of problems, so disabling that.
