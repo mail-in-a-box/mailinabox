@@ -35,12 +35,12 @@ apt_install \
 #   https://github.com/mstilkerich/rcmcarddav/releases
 # The easiest way to get the package hashes is to run this script and get the hash from
 # the error message.
-VERSION=1.5.2
-HASH=208ce4ca0be423cc0f7070ff59bd03588b4439bf
-PERSISTENT_LOGIN_VERSION=59ca1b0d3a02cff5fa621c1ad581d15f9d642fe8
+VERSION=1.6.0
+HASH=fd84b4fac74419bb73e7a3bcae1978d5589c52de
+PERSISTENT_LOGIN_VERSION=bde7b6840c7d91de627ea14e81cf4133cbb3c07a # version 5.2
 HTML5_NOTIFIER_VERSION=68d9ca194212e15b3c7225eb6085dbcf02fd13d7 # version 0.6.4+
-CARDDAV_VERSION=4.3.0
-CARDDAV_HASH=4ad7df8843951062878b1375f77c614f68bc5c61
+CARDDAV_VERSION=4.4.3
+CARDDAV_HASH=74f8ba7aee33e78beb9de07f7f44b81f6071b644
 
 UPDATE_KEY=$VERSION:$PERSISTENT_LOGIN_VERSION:$HTML5_NOTIFIER_VERSION:$CARDDAV_VERSION
 
@@ -83,7 +83,7 @@ if [ $needs_update == 1 ]; then
 
 	# download and verify the full release of the carddav plugin
 	wget_verify \
-		https://github.com/blind-coder/rcmcarddav/releases/download/v${CARDDAV_VERSION}/carddav-v${CARDDAV_VERSION}.tar.gz \
+		https://github.com/mstilkerich/rcmcarddav/releases/download/v${CARDDAV_VERSION}/carddav-v${CARDDAV_VERSION}.tar.gz \
 		$CARDDAV_HASH \
 		/tmp/carddav.tar.gz
 
@@ -115,8 +115,7 @@ cat > $RCM_CONFIG <<EOF;
 \$config['log_dir'] = '/var/log/roundcubemail/';
 \$config['temp_dir'] = '/var/tmp/roundcubemail/';
 \$config['db_dsnw'] = 'sqlite:///$STORAGE_ROOT/mail/roundcube/roundcube.sqlite?mode=0640';
-\$config['default_host'] = 'ssl://localhost';
-\$config['default_port'] = 993;
+\$config['imap_host'] = 'ssl://localhost:993';
 \$config['imap_conn_options'] = array(
   'ssl'         => array(
      'verify_peer'  => false,
@@ -124,7 +123,7 @@ cat > $RCM_CONFIG <<EOF;
    ),
  );
 \$config['imap_timeout'] = 15;
-\$config['smtp_server'] = 'tls://127.0.0.1';
+\$config['smtp_host'] = 'tls://127.0.0.1';
 \$config['smtp_conn_options'] = array(
   'ssl'         => array(
      'verify_peer'  => false,
@@ -141,6 +140,10 @@ cat > $RCM_CONFIG <<EOF;
 \$config['login_username_filter'] = 'email';
 \$config['password_charset'] = 'UTF-8';
 \$config['junk_mbox'] = 'Spam';
+/* ensure roudcube session id's aren't leaked to other parts of the server */
+\$config['session_path'] = '/mail/';
+/* prevent CSRF, requires php 7.3+ */
+\$config['session_samesite'] = 'Strict';
 ?>
 EOF
 
@@ -154,7 +157,7 @@ cat > ${RCM_PLUGIN_DIR}/carddav/config.inc.php <<EOF;
 	 'name'         =>  'ownCloud',
 	 'username'     =>  '%u', // login username
 	 'password'     =>  '%p', // login password
-	 'url'          =>  'https://${PRIMARY_HOSTNAME}/cloud/remote.php/carddav/addressbooks/%u/contacts',
+	 'url'          =>  'https://${PRIMARY_HOSTNAME}/cloud/remote.php/dav/addressbooks/users/%u/contacts/',
 	 'active'       =>  true,
 	 'readonly'     =>  false,
 	 'refresh_time' => '02:00:00',

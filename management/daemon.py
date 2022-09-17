@@ -121,8 +121,9 @@ def index():
 	no_users_exist = (len(get_mail_users(env)) == 0)
 	no_admins_exist = (len(get_admins(env)) == 0)
 
-	import boto.s3
-	backup_s3_hosts = [(r.name, r.endpoint) for r in boto.s3.regions()]
+	import boto3.s3
+	backup_s3_hosts = [(r, f"s3.{r}.amazonaws.com") for r in boto3.session.Session().get_available_regions('s3')]
+
 
 	return render_template('index.html',
 		hostname=env['PRIMARY_HOSTNAME'],
