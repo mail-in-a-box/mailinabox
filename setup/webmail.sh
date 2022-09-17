@@ -43,9 +43,9 @@ VERSION=1.6.0
 HASH=fd84b4fac74419bb73e7a3bcae1978d5589c52de
 PERSISTENT_LOGIN_VERSION=version-5.3.0
 HTML5_NOTIFIER_VERSION=68d9ca194212e15b3c7225eb6085dbcf02fd13d7 # version 0.6.4+
-CARDDAV_VERSION=4.4.1
-CARDDAV_VERSION_AND_VARIANT=4.4.1-roundcube16
-CARDDAV_HASH=1dca7a5f4b7265f2919bb33fd6995a2302987786
+CARDDAV_VERSION=4.4.3
+CARDDAV_VERSION_AND_VARIANT=4.4.3
+CARDDAV_HASH=74f8ba7aee33e78beb9de07f7f44b81f6071b644
 
 UPDATE_KEY=$VERSION:$PERSISTENT_LOGIN_VERSION:$HTML5_NOTIFIER_VERSION:$CARDDAV_VERSION
 
@@ -192,7 +192,7 @@ cat > ${RCM_PLUGIN_DIR}/carddav/config.inc.php <<EOF;
 	 'name'         =>  'ownCloud',
 	 'username'     =>  '%u', // login username
 	 'password'     =>  '%p', // login password
-	 'url'          =>  'https://${PRIMARY_HOSTNAME}/cloud/remote.php/carddav/addressbooks/%u/contacts',
+	 'url'          =>  'https://${PRIMARY_HOSTNAME}/cloud/remote.php/dav/addressbooks/users/%u/contacts/',
 	 'active'       =>  true,
 	 'readonly'     =>  false,
 	 'refresh_time' => '02:00:00',
