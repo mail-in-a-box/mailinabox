@@ -15,10 +15,12 @@ LINK TBD
 No features of Mail-in-a-Box have changed in this release, but with the newer version of Ubuntu the following software packages we use are updated:
 
 * dovecot is upgraded to 2.3.16, postfix to 3.6.4, opendmark to 1.4 (which adds ARC-Authentication-Results headers), and spampd to 2.53 (alleviating a mail delivery rate limiting bug).
-* Nextcloud is upgraded to 23.0.4 with PHP updated from 7.2 to 8.0.
+* Nextcloud is upgraded to 23.0.4.
+* Roundcube is upgraded to 1.6.0.
 * certbot is upgraded to 1.21 (via the Ubuntu repository instead of a PPA).
 * fail2ban is upgraded to 0.11.2.
 * nginx is upgraded to 1.18.
+* PHP is upgraded from 7.2 to 8.0.
 
 Also:
 
