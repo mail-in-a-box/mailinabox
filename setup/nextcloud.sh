@@ -182,45 +182,33 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 		elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^1[012] ]]; then
 			echo "Upgrades from Mail-in-a-Box prior to v0.28 (dated July 30, 2018) with Nextcloud < 13.0.6 (you have ownCloud 10, 11 or 12) are not supported. Upgrade to Mail-in-a-Box version v0.30 first. Setup will continue, but skip the Nextcloud migration."
 			return 0
-		elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^13 ]]; then
-			# If we are running Nextcloud 13, upgrade to Nextcloud 14
-			InstallNextcloud 14.0.6 4e43a57340f04c2da306c8eea98e30040399ae5a 3.3.0 e55d0357c6785d3b1f3b5f21780cb6d41d32443a 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466
-			CURRENT_NEXTCLOUD_VER="14.0.6"
-		fi
-		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^14 ]]; then
-			# During the upgrade from Nextcloud 14 to 15, user_external may cause the upgrade to fail.
-			# We will disable it here before the upgrade and install it again after the upgrade.
-			hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:disable user_external
-			InstallNextcloud 15.0.8 4129d8d4021c435f2e86876225fb7f15adf764a3 3.3.0 e55d0357c6785d3b1f3b5f21780cb6d41d32443a 2.0.3 a1f3835c752929e3598eb94f22300516867ac6ab 0.7.0 555a94811daaf5bdd336c5e48a78aa8567b86437
-			CURRENT_NEXTCLOUD_VER="15.0.8"
-		fi
-		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^15 ]]; then
-			InstallNextcloud 16.0.6 0bb3098455ec89f5af77a652aad553ad40a88819 3.3.0 e55d0357c6785d3b1f3b5f21780cb6d41d32443a 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466 0.7.0 555a94811daaf5bdd336c5e48a78aa8567b86437
-			CURRENT_NEXTCLOUD_VER="16.0.6"
-		fi
-		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^16 ]]; then
-			InstallNextcloud 17.0.6 50b98d2c2f18510b9530e558ced9ab51eb4f11b0 3.3.0 e55d0357c6785d3b1f3b5f21780cb6d41d32443a 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466 0.7.0 555a94811daaf5bdd336c5e48a78aa8567b86437
-			CURRENT_NEXTCLOUD_VER="17.0.6"
-		fi
-		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^17 ]]; then
-			# Don't exit the install if this column already exists (see #2076)
-			(echo "ALTER TABLE oc_flow_operations ADD COLUMN entity VARCHAR;" | sqlite3 $STORAGE_ROOT/owncloud/owncloud.db 2>/dev/null) || true
-			InstallNextcloud 18.0.10 39c0021a8b8477c3f1733fddefacfa5ebf921c68 3.4.1 aee680a75e95f26d9285efd3c1e25cf7f3bfd27e 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
-			CURRENT_NEXTCLOUD_VER="18.0.10"
-		fi
-		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^18 ]]; then
-			InstallNextcloud 19.0.4 01e98791ba12f4860d3d4047b9803f97a1b55c60 3.4.1 aee680a75e95f26d9285efd3c1e25cf7f3bfd27e 2.0.3 9d9717b29337613b72c74e9914c69b74b346c466 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
-			CURRENT_NEXTCLOUD_VER="19.0.4"
-		fi
-		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^19 ]]; then
-			InstallNextcloud 20.0.14 92cac708915f51ee2afc1787fd845476fd090c81 4.0.0 f893ca57a543b260c9feeecbb5958c00b6998e18 2.2.2 923846d48afb5004a456b9079cf4b46d23b3ef3a 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
-			CURRENT_NEXTCLOUD_VER="20.0.14"
-			
-			# Nextcloud 20 needs to have some optional columns added
-			sudo -u www-data php /usr/local/lib/owncloud/occ db:add-missing-columns
+		elif [[ ${CURRENT_NEXTCLOUD_VER} =~ ^1[3456789] ]]; then
+			echo "Upgrades from Mail-in-a-Box prior to v60 with Nextcloud 19 or earlier are not supported. Upgrade to the latest Mail-in-a-Box version supported on your machine first. Setup will continue, but skip the Nextcloud migration."
+			return 0
 		fi
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^20 ]]; then
-			InstallNextcloud 21.0.7 f5c7079c5b56ce1e301c6a27c0d975d608bb01c9 4.0.0 f893ca57a543b260c9feeecbb5958c00b6998e18 2.2.2 923846d48afb5004a456b9079cf4b46d23b3ef3a 1.0.0 3bf2609061d7214e7f0f69dd8883e55c4ec8f50a
+			# Version 20 is the latest version from the 18.04 version of miab. To upgrade to version 21, install php8.0. This is
+			# not supported by version 20, but that does not matter, as the InstallNextcloud function only runs the version 21 code.
+			
+			# Install the ppa
+			add-apt-repository --yes ppa:ondrej/php
+			
+			# Prevent installation of old packages
+			apt-mark hold php7.0-apcu php7.1-apcu php7.2-apcu php7.3-apcu php7.4-apcu
+			
+			# Install older php version
+			apt_install php8.0 php8.0-fpm php8.0-apcu php8.0-cli php8.0-sqlite3 php8.0-gd php8.0-imap \
+				php8.0-curl php8.0-dev php8.0-xml php8.0-mbstring php8.0-zip
+			
+			# set older php version as default
+			update-alternatives --set php /usr/bin/php8.0
+			
+			tools/editconf.py /etc/php/$(php_version)/mods-available/apcu.ini -c ';' \
+				apc.enabled=1	\
+				apc.enable_cli=1
+
+			# Install nextcloud, this also updates user_external to 2.1.0
+			InstallNextcloud 21.0.7 f5c7079c5b56ce1e301c6a27c0d975d608bb01c9 4.0.7 45e7cf4bfe99cd8d03625cf9e5a1bb2e90549136 3.0.4 d0284b68135777ec9ca713c307216165b294d0fe 2.1.0 41d4c57371bd085d68421b52ab232092d7dfc882
 			CURRENT_NEXTCLOUD_VER="21.0.7"
 		fi
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^21 ]]; then
@@ -230,8 +218,39 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^22 ]]; then
 			InstallNextcloud 23.0.2 645cba42cab57029ebe29fb93906f58f7abea5f8 4.0.8 9f368bb2be98c5555b7118648f4cc9fa51e8cb30 3.0.6 ca49bb1ce23f20e10911e39055fd59d7f7a84c30 3.0.0 9e7aaf7288032bd463c480bc368ff91869122950
 			CURRENT_NEXTCLOUD_VER="23.0.2"
+			
+			# Remove older php version
+			update-alternatives --auto php
+
+			apt-get purge -qq -y php8.0 php8.0-fpm php8.0-apcu php8.0-cli php8.0-sqlite3 php8.0-gd \
+				php8.0-imap php8.0-curl php8.0-dev php8.0-xml php8.0-mbstring php8.0-zip \
+				php8.0-common php8.0-opcache php8.0-readline
+	
+			# Remove the ppa
+			add-apt-repository --yes --remove ppa:ondrej/php
 		fi
 	fi
+
+# nextcloud version - supported php versions
+# 20                - 7.2, 7.3, 7.4
+# 21                - 7.3, 7.4, 8.0
+# 22                - 7.3, 7.4, 8.0
+# 23                - 7.3, 7.4, 8.0
+# 24                - 7.4, 8.0, 8.1
+#
+# ubuntu 18.04 has php 7.2
+# ubuntu 22.04 has php 8.1
+#
+# user_external 2.1.0 supports version 21-22
+# user_external 2.1.0 supports version 22-24
+#
+# upgrade path
+# - install ppa: sudo add-apt-repository ppa:ondrej/php
+# - upgrade php to version 8.0 (nextcloud will no longer function)
+# - upgrade nextcloud to 21 and user_external to 2.1.0
+# - upgrade nextcloud to 22
+# - upgrade nextcloud to 23 and user_external to 3.0.0
+# - upgrade nextcloud to 24
 
 	InstallNextcloud $nextcloud_ver $nextcloud_hash $contacts_ver $contacts_hash $calendar_ver $calendar_hash $user_external_ver $user_external_hash
 fi
