@@ -26,10 +26,6 @@ if [ -z "$TAG" ]; then
 		# This machine is running Ubuntu 22.04, which is supported by
 		# Mail-in-a-Box versions 60 and later.
 		TAG=v60
-	elif [ "$UBUNTU_VERSION" == "Ubuntu 20.04 LTS" ]; then
-		# This machine is running Ubuntu 20.04, which is supported by
-		# Mail-in-a-Box versions 56 and later.
-		TAG=v57a
 	elif [ "$UBUNTU_VERSION" == "Ubuntu 18.04 LTS" ]; then
 		# This machine is running Ubuntu 18.04, which is supported by
 		# Mail-in-a-Box versions 0.40 through 5x.
@@ -46,7 +42,7 @@ if [ -z "$TAG" ]; then
 		echo "The last version of Mail-in-a-Box supporting Ubuntu 14.04 will be installed."
 		TAG=v0.30
 	else
-		echo "This script may be used only on a machine running Ubuntu 14.04, 18.04, 20.04 or 22.04."
+		echo "This script may be used only on a machine running Ubuntu 14.04, 18.04, or 22.04."
 		exit 1
 	fi
 fi

@@ -386,9 +386,6 @@ cat > /etc/cron.d/mailinabox-nextcloud << EOF;
 EOF
 chmod +x /etc/cron.d/mailinabox-nextcloud
 
-# Remove previous hourly cronjob
-rm -f /etc/cron.hourly/mailinabox-owncloud
-
 # There's nothing much of interest that a user could do as an admin for Nextcloud,
 # and there's a lot they could mess up, so we don't make any users admins of Nextcloud.
 # But if we wanted to, we would do this:

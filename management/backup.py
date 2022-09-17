@@ -463,7 +463,7 @@ def list_target_files(config):
 			path = ''
 
 		if bucket == "":
-			raise ValueError(f"Enter an S3 bucket name. // {url}")
+			raise ValueError("Enter an S3 bucket name.")
 
 		# connect to the region & bucket
 		try:

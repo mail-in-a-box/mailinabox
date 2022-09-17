@@ -22,7 +22,7 @@ source /etc/mailinabox.conf # load global vars
 echo "Installing Roundcube (webmail)..."
 apt_install \
 	dbconfig-common \
-	php-cli php-sqlite3 php-intl php-json php-common php-curl php-ldap \
+	php-cli php-sqlite3 php-intl php-json php-common php-curl php-imap \
 	php-gd php-pspell libjs-jquery libjs-jquery-mousewheel libmagic1 php-mbstring
 
 # Install Roundcube from source if it is not already present or if it is out of date.
@@ -124,8 +124,7 @@ cat > $RCM_CONFIG <<EOF;
 \$config['log_dir'] = '/var/log/roundcubemail/';
 \$config['temp_dir'] = '/var/tmp/roundcubemail/';
 \$config['db_dsnw'] = 'sqlite:///$STORAGE_ROOT/mail/roundcube/roundcube.sqlite?mode=0640';
-\$config['default_host'] = 'ssl://localhost';
-\$config['default_port'] = 993;
+\$config['imap_host'] = 'ssl://localhost:993';
 \$config['imap_conn_options'] = array(
   'ssl'         => array(
      'verify_peer'  => false,
@@ -133,7 +132,7 @@ cat > $RCM_CONFIG <<EOF;
    ),
  );
 \$config['imap_timeout'] = 180;
-\$config['smtp_server'] = 'tls://127.0.0.1';
+\$config['smtp_host'] = 'tls://127.0.0.1';
 \$config['smtp_conn_options'] = array(
   'ssl'         => array(
      'verify_peer'  => false,
@@ -150,6 +149,10 @@ cat > $RCM_CONFIG <<EOF;
 \$config['login_username_filter'] = 'email';
 \$config['password_charset'] = 'UTF-8';
 \$config['junk_mbox'] = 'Spam';
+/* ensure roudcube session id's aren't leaked to other parts of the server */
+\$config['session_path'] = '/mail/';
+/* prevent CSRF, requires php 7.3+ */
+\$config['session_samesite'] = 'Strict';
 ?>
 EOF
 
@@ -216,5 +219,5 @@ chown www-data:www-data $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 chmod 664 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 
 # Enable PHP modules.
-phpenmod -v php mcrypt imap
+phpenmod -v php imap
 restart_service php$PHP_VER-fpm
