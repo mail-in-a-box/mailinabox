@@ -115,8 +115,7 @@ cat > $RCM_CONFIG <<EOF;
 \$config['log_dir'] = '/var/log/roundcubemail/';
 \$config['temp_dir'] = '/var/tmp/roundcubemail/';
 \$config['db_dsnw'] = 'sqlite:///$STORAGE_ROOT/mail/roundcube/roundcube.sqlite?mode=0640';
-\$config['imap_host'] = 'ssl://localhost';
-\$config['imap_port'] = 993;
+\$config['imap_host'] = 'ssl://localhost:993';
 \$config['imap_conn_options'] = array(
   'ssl'         => array(
      'verify_peer'  => false,
@@ -141,6 +140,10 @@ cat > $RCM_CONFIG <<EOF;
 \$config['login_username_filter'] = 'email';
 \$config['password_charset'] = 'UTF-8';
 \$config['junk_mbox'] = 'Spam';
+/* ensure roudcube session id's aren't leaked to other parts of the server */
+\$config['session_path'] = '/mail/';
+/* prevent CSRF, requires php 7.3+ */
+\$config['session_samesite'] = 'Strict';
 ?>
 EOF
 

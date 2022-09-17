@@ -122,7 +122,6 @@ def index():
 	no_admins_exist = (len(get_admins(env)) == 0)
 
 	import boto3.s3
-	from urllib.parse import urlparse
 	backup_s3_hosts = [(r, f"s3.{r}.amazonaws.com") for r in boto3.session.Session().get_available_regions('s3')]
 
 
