@@ -67,7 +67,7 @@ configure_roundcube() {
 	 'name'         =>  '$name',
 	 'username'     =>  '%u', // login username
 	 'password'     =>  '%p', // login password
-	 'url'          =>  '${baseurl%/}/remote.php/carddav/addressbooks/%u/contacts',
+	 'url'          =>  '${baseurl%/}/remote.php/dav/addressbooks/users/%u/contacts/',
 	 'active'       =>  true,
 	 'readonly'     =>  false,
 	 'refresh_time' => '02:00:00',
