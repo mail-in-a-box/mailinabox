@@ -391,6 +391,16 @@ cat > /etc/cron.d/mailinabox-nextcloud << EOF;
 EOF
 chmod +x /etc/cron.d/mailinabox-nextcloud
 
+# Set up a cron job for Calendar updates, per advice in the Nextcloud docs
+# https://docs.nextcloud.com/server/24/admin_manual/groupware/calendar.html#background-jobs
+cat > /etc/cron.d/mailinabox-nextcloud-dav << EOF;
+#!/bin/bash
+# Mail-in-a-Box
+*/5 * * * *	root	sudo -u www-data php$PHP_VER -f /usr/local/lib/owncloud/occ dav:send-event-reminders
+EOF
+chmod +x /etc/cron.d/mailinabox-nextcloud
+sudo -u www-data php$PHP_VER -f /usr/local/lib/owncloud/occ config:app:set dav sendEventRemindersMode --value occ
+
 # Rotate the nextcloud.log file
 cat > /etc/logrotate.d/nextcloud <<EOF
 # Nextcloud logs 
