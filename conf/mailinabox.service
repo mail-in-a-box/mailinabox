@@ -5,6 +5,16 @@ After=multi-user.target
 [Service]
 Type=idle
 IgnoreSIGPIPE=False
+ProtectSystem=yes
+ProtectHome=read-only
+ReadWritePaths=STORAGE_ROOT
+PrivateDevices=yes
+PrivateNetwork=no
+ProtectClock=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+SyslogIdentifier=mailinabox
 ExecStart=/usr/local/lib/mailinabox/start
 
 [Install]
