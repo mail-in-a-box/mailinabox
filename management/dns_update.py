@@ -301,6 +301,7 @@ def build_zone(domain, domain_properties, additional_records, env, is_zone=True)
 			records.append(("_dmarc", "TXT", 'v=DMARC1; p=quarantine', "Recommended. Specifies that mail that does not originate from the box but claims to be from @%s or which does not have a valid DKIM signature is suspect and should be quarantined by the recipient's mail system." % domain))
 
 	if domain_properties[domain]["user"]:
+		# https://sabre.io/dav/service-discovery/
 		# Add CardDAV/CalDAV SRV records on the non-primary hostname that points to the primary hostname
 		# for autoconfiguration of mail clients (so only domains hosting user accounts need it).
 		# The SRV record format is priority (0, whatever), weight (0, whatever), port, service provider hostname (w/ trailing dot).
@@ -309,6 +310,8 @@ def build_zone(domain, domain_properties, additional_records, env, is_zone=True)
 				qname = "_" + dav + "davs._tcp"
 				if not has_rec(qname, "SRV"):
 					records.append((qname, "SRV", "0 0 443 " + env["PRIMARY_HOSTNAME"] + ".", "Recommended. Specifies the hostname of the server that handles CardDAV/CalDAV services for email addresses on this domain."))
+				if not has_rec(qname, "TXT"):
+					records.append((qname, "TXT", "path=/cloud/remote.php/dav", "Recommended. Specifies the path to the CardDAV/CalDAV services for email addresses on this domain."))
 
 	# If this is a domain name that there are email addresses configured for, i.e. "something@"
 	# this domain name, then the domain name is a MTA-STS (https://tools.ietf.org/html/rfc8461)
