@@ -1,3 +1,12 @@
+/////
+///// This file is part of Mail-in-a-Box-LDAP which is released under the
+///// terms of the GNU Affero General Public License as published by the
+///// Free Software Foundation, either version 3 of the License, or (at
+///// your option) any later version. See file LICENSE or go to
+///// https://github.com/downtownallday/mailinabox-ldap for full license
+///// details.
+/////
+
 import page_layout from '../../ui-common/page-layout.js';
 import reports_page_header from './reports-page-header.js';
 import date_range_picker from './date-range-picker.js';

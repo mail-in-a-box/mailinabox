@@ -1,3 +1,12 @@
+#####
+##### This file is part of Mail-in-a-Box-LDAP which is released under the
+##### terms of the GNU Affero General Public License as published by the
+##### Free Software Foundation, either version 3 of the License, or (at
+##### your option) any later version. See file LICENSE or go to
+##### https://github.com/downtownallday/mailinabox-ldap for full license
+##### details.
+#####
+
 # LDAP Admin Extensions for Postfix MTA support
 #
 # MiaB LDAP UUID(v4): 7392cdda-5ec8-431f-9936-0000273c0167
