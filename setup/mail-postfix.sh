@@ -250,10 +250,10 @@ tools/editconf.py /etc/default/postgrey \
 if [ ! -d $STORAGE_ROOT/mail/postgrey/db ]; then
 	# Stop the service
 	service postgrey stop
-	# Ensure the new base path for postgrey exists
-	mkdir -p $STORAGE_ROOT/mail/postgrey
-	# Move over database
-	mv /var/lib/postgrey $STORAGE_ROOT/mail/postgrey/db
+	# Ensure the new paths for postgrey db exists
+	mkdir -p $STORAGE_ROOT/mail/postgrey $STORAGE_ROOT/mail/postgrey/db
+	# Move over database files
+	mv /var/lib/postgrey/* $STORAGE_ROOT/mail/postgrey/db/ || true
 fi
 # Ensure permissions are set
 chown -R postgrey:postgrey $STORAGE_ROOT/mail/postgrey/
