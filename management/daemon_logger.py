@@ -102,19 +102,21 @@ def add_python_logging(app):
 	if app.debug:
 		log_level = logging.DEBUG
 		log_handler = logging.StreamHandler()
+		logging.basicConfig(level=log_level, handlers=[])
+		log_handler.setLevel(log_level)
+		log_handler.addFilter(AuthLogFilter(
+			app.debug,
+			get_session_username
+		))
+		log_handler.setFormatter(AuthLogFormatter())
+		log = logging.getLogger('')
+		log.addHandler(log_handler)
 
-	# log to syslog in production mode
+	# hook python log to gunicorn in production mode
 	else:
-		import utils
-		log_level = logging.INFO
-		log_handler = utils.create_syslog_handler()
+		gunicorn_logger = logging.getLogger('gunicorn.error')
+		log = logging.getLogger('')
+		log.handlers = gunicorn_logger.handlers
+		log.setLevel(gunicorn_logger.level)
+
 		
-	logging.basicConfig(level=log_level, handlers=[])
-	log_handler.setLevel(log_level)
-	log_handler.addFilter(AuthLogFilter(
-		app.debug,
-		get_session_username
-	))
-	log_handler.setFormatter(AuthLogFormatter())
-	log = logging.getLogger('')
-	log.addHandler(log_handler)
