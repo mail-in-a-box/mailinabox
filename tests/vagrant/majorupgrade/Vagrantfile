@@ -18,8 +18,8 @@ Vagrant.configure("2") do |config|
 
   
   config.vm.define "major-upgrade-oldvm" do |m1|
-      use_preloaded_box m1, "ubuntu/bionic64", ".."
-      m1.vm.provision :shell, :inline => <<-SH
+    use_preloaded_box m1, "ubuntu/bionic64", ".."
+    m1.vm.provision :shell, :inline => <<-SH
 # setup vanilla system, populated with some data
 cd /mailinabox
 export PRIMARY_HOSTNAME=majorupgrade.local
@@ -34,11 +34,17 @@ tests/system-setup/vanilla.sh \
    --capture-state=/tmp/state/oldvm \
    || exit 1
 SH
-    end
+  end
 
-    config.vm.define "major-upgrade-newvm" do |m2|
-      use_preloaded_box m2, "ubuntu/jammy64", ".."
-      m2.vm.provision :shell, :inline => <<-SH
+
+  # config.vm.provider "virtualbox" do |v|
+  #   v.memory = 512
+  # end
+
+  
+  config.vm.define "major-upgrade-newvm" do |m2|
+    use_preloaded_box m2, "ubuntu/jammy64", ".."
+    m2.vm.provision :shell, :inline => <<-SH
 cd /mailinabox
 export PRIMARY_HOSTNAME=majorupgrade.local
 export FEATURE_MUNIN=true
@@ -50,6 +56,6 @@ tests/system-setup/from-backup.sh \
    --capture-state=/tmp/state/newvm \
    || exit 1
 SH
-    end
+  end
 
 end
