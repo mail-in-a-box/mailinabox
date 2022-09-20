@@ -143,7 +143,7 @@ InstallNextcloud() {
 	if [ -e $STORAGE_ROOT/owncloud/owncloud.db ]; then
 		# ownCloud 8.1.1 broke upgrades. It may fail on the first attempt, but
 		# that can be OK.
-		sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/occ upgrade
+		hide_output sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/occ upgrade
 		if [ \( $? -ne 0 \) -a \( $? -ne 3 \) ]; then
 			echo "Trying ownCloud upgrade again to work around ownCloud upgrade bug..."
 			sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/occ upgrade
@@ -153,10 +153,10 @@ InstallNextcloud() {
 		fi
 
 		# Add missing indices. NextCloud didn't include this in the normal upgrade because it might take some time.
-		sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/occ db:add-missing-indices
+		hide_output sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/occ db:add-missing-indices
 
 		# Run conversion to BigInt identifiers, this process may take some time on large tables.
-		sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/occ db:convert-filecache-bigint --no-interaction
+		hide_output sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/occ db:convert-filecache-bigint --no-interaction
 	fi
 }
 
