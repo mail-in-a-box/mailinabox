@@ -14,35 +14,44 @@ cd $(dirname "$0")
 
 source ../../lib/color-output.sh
 
-warn "Destroy existing VMs"
-vagrant destroy -f
-
-artifact_dir_local="$(dirname "$0")/../../out/majorupgrade"
-artifact_dir_vm="/mailinabox/tests/out/majorupgrade"
+artifact_dir_local="$(dirname "$0")/../../out/majorupgrade_artifacts"
+artifact_dir_vm="/mailinabox/tests/out/majorupgrade_artifacts"
 oldvm="major-upgrade-oldvm"
 newvm="major-upgrade-newvm"
 
-#
-# bring up oldvm
-# ... then install, populate, and backup
-# ... installed source is in $HOME/miabldap-bionic ($HOME is /root)
-#
+warn "Artifacts directory: $(realpath "$artifact_dir_local")"
 
-warn "Bring up $oldvm"
-vagrant up $oldvm || exit 1
+warn "Destroy existing VMs"
+vagrant destroy -f
 
-warn "Run managment/backup.py"
-vagrant ssh $oldvm -- "sudo -H bash -c 'cd \$HOME/miabldap-bionic; management/backup.py' && echo 'backup successful'" || exit 2
 
-# copy artifacts from oldvm to host
-warn "Copy artifacts"
-rm -rf "$artifact_dir_local"
-mkdir -p "$artifact_dir_local"
-vagrant ssh $oldvm -- "cd \"$artifact_dir_vm\" || exit 1; sudo -H cp -R /tmp/state/oldvm state || exit 2; sudo -H cp -R /home/user-data/backup backup || exit 3"  || exit $?
+if [ "$1" != "--no-oldvm" ]; then
+    #
+    # bring up oldvm
+    # ... then install, populate, and backup
+    # ... installed source is in $HOME/miabldap-bionic ($HOME is /root)
+    #
 
-# destroy oldvm - bring up newvm
-warn "Destroy $oldvm - no longer needed"
-vagrant destroy $oldvm -f
+    warn "Bring up $oldvm"
+    vagrant up $oldvm || exit 1
+
+    warn "Run managment/backup.py"
+    vagrant ssh $oldvm -- "sudo -H bash -c 'cd \$HOME/miabldap-bionic; management/backup.py' && echo 'backup successful'" || exit 2
+
+    # copy artifacts from oldvm to host
+    warn "Copy artifacts"
+    rm -rf "$artifact_dir_local"
+    mkdir -p "$artifact_dir_local"
+    vagrant ssh $oldvm -- "cd \"$artifact_dir_vm\" || exit 1; sudo -H cp -R /tmp/state/oldvm state || exit 2; sudo -H cp -R /home/user-data/backup backup || exit 3"  || exit $?
+    
+    # destroy oldvm - bring up newvm
+    warn "Destroy $oldvm - no longer needed"
+    vagrant destroy $oldvm -f
+
+else
+    # remove --no-oldvm from argument list
+    shift
+fi
 
 
 #
@@ -62,6 +71,12 @@ vagrant up $newvm || exit 1
 vagrant ssh $newvm -- "cd /mailinabox; sudo -H bash -c 'source tests/lib/all.sh; installed_state_compare $artifact_dir_vm/state /tmp/state/newvm'" || exit 2
 
 # run tests
-vagrant ssh $newvm -- "cd /mailinabox; sudo -H tests/runner.sh upgrade-basic upgrade-totpuser default" || exit 3
+if [ "$1" != "--no-tests" ]; then
+    vagrant ssh $newvm -- "cd /mailinabox; sudo -H tests/runner.sh upgrade-basic upgrade-totpuser default" || exit 3
+
+else
+    # remove --no-tests from argument list
+    shift
+fi
 
 success 'Success'
