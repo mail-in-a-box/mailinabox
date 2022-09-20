@@ -45,6 +45,24 @@ function hide_output {
 	rm -f $OUTPUT
 }
 
+function wait_for_apt_lock {
+	# check to see if other package managers have a lock on new
+	# installs, and wait for them to finish
+	local count=0
+	while fuser /var/lib/dpkg/lock >/dev/null 2>&1 || fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+		if [ $count -eq 0 ]; then
+			echo "Waiting for apt to become unlocked..."
+		fi
+		sleep 6
+		let count+=1
+		if [ $count -gt 100 ]; then
+			echo "Timeout waiting for apt to become unlocked - another process may be using it"
+			break
+		fi
+	done
+	return 0
+}
+
 function apt_get_quiet {
 	# Run apt-get in a totally non-interactive mode.
 	#
@@ -56,6 +74,7 @@ function apt_get_quiet {
 	# Although we could pass -qq to apt-get to make output quieter, many packages write to stdout
 	# and stderr things that aren't really important. Use our hide_output function to capture
 	# all of that and only show it if there is a problem (i.e. if apt_get returns a failure exit status).
+	wait_for_apt_lock
 	DEBIAN_FRONTEND=noninteractive hide_output apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" "$@"
 }
 
