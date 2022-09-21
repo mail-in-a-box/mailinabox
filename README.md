@@ -25,13 +25,21 @@ To integrate Mail-in-a-Box w/LDAP (MiaB-LDAP) with Nextcloud, changes must be ma
 
 **On MiaB-LDAP**
 
-Enable the setup mod `remote-nextcloud.sh` by creating the directory `local` in the directory where mailinabox is installed (usually $HOME/mailinabox), then creat a symbolic link to remote-nextcloud.sh. e.g. run this command from the mailinabox directory: `mkdir -p local; ln -s ../setup/mods.available/remote-nextcloud.sh local/remote-nextcloud.sh`. *During setup you will be prompted for the hostname and web prefix of your remote Nextcloud box.*
+1. Enable the remote-nextcloud mod, then run setup.
+
+To enable the mod, create the directory `local` in the directory where mailinabox is installed (usually $HOME/mailinabox), then create a symbolic link to setup/mods.available/remote-nextcloud.sh. e.g. run this command from the mailinabox directory:
+
+`mkdir -p local; ln -s ../setup/mods.available/remote-nextcloud.sh local/remote-nextcloud.sh`
+
+Re-run setup, by executing setup/start.sh (or ehdd/start-encrypted.sh if using encryption-at-rest) as root. *During setup you will be prompted for the hostname and web prefix of your remote Nextcloud box.*
 
 Once enabled, you'll find that Roundcube and Z-Push (ActiveSync) will use the remote Nextcloud for contacts and calendar instead of the local Nextcloud, which will be disabled. If you upgraded, old contacts will still be available in Roundcube, but will be read-only. Users can drag them into the remote Nextcloud from Roundcube.
 
 **On the remote Nextcloud**
 
-Copy the file `setup/mods.available/connect-nextcloud-to-miab.sh` to the Nextcloud box and run it as root. This will configure Nextcloud's "LDAP user and group backend" with the MiaB-LDAP details and ensure the contacts and calendar apps are installed. *This does not replace or alter your ability to log into Nextcloud with any existing local Nextcloud accounts. It only allows MiaB-LDAP users to log into Nextcloud using their MiaB-LDAP credentials.*
+2\. Hook Nextcloud to MiaB-LDAP by running connect-nextcloud-to-miab.sh
+
+Copy the file `setup/mods.available/connect-nextcloud-to-miab.sh` to the Nextcloud box and run it as root (if you installed Cloud-in-a-Box, this script is already available in the setup directory). This will configure Nextcloud's "LDAP user and group backend" with the MiaB-LDAP details and ensure the contacts and calendar apps are installed. *This does not replace or alter your ability to log into Nextcloud with any existing local Nextcloud accounts. It only allows MiaB-LDAP users to log into Nextcloud using their MiaB-LDAP credentials.*
 
 ## Under-the-Hood
 
