@@ -87,7 +87,7 @@
       <key>CardDAVPort</key>
       <integer>443</integer>
       <key>CardDAVPrincipalURL</key>
-      <string>/cloud/remote.php/carddav/addressbooks/</string>
+      <string>/cloud/remote.php/dav/addressbooks/</string>
       <key>CardDAVUseSSL</key>
       <true/>
       <key>PayloadDescription</key>
