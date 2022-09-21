@@ -14,6 +14,7 @@ if [ -s /etc/mailinabox.conf ]; then
     systemctl stop php8.0-fpm
     systemctl stop postfix
     systemctl stop dovecot
+    systemctl stop postgrey
     systemctl stop cron
     #systemctl stop nsd
     [ -x /usr/sbin/slapd ] && systemctl stop slapd
