@@ -57,6 +57,10 @@ rest_urlencoded() {
     
 	local data=()
 	local item output onlydata="false"
+
+	if [ ! -z "$auth_user" ]; then
+		data+=("--user" "${auth_user}:${auth_pass}")
+	fi
 	
 	for item; do
         case "$item" in
@@ -86,9 +90,9 @@ rest_urlencoded() {
         esac
     done
 
-	echo "spawn: curl -w \"%{http_code}\" -X $verb --user \"${auth_user}:xxx\" ${data[@]} $url" 1>&2
+	echo "spawn: curl -w \"%{http_code}\" -X $verb ${data[@]} $url" 1>&2
 	# pipe through 'tr' to avoid bash "warning: command substitution: ignored null byte in input" where curl places a \0 between output and http_code
-	output=$(curl -s -S -w "%{http_code}" -X $verb --user "${auth_user}:${auth_pass}" "${data[@]}" $url | tr -d '\0')
+	output=$(curl -s -S -w "%{http_code}" -X $verb "${data[@]}" $url | tr -d '\0')
 	local code=$?
 
 	# http status is last 3 characters of output, extract it

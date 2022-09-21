@@ -316,3 +316,14 @@ say_verbose() {
 say() {
 	echo "$@"
 }
+
+install_hook_handler() {
+	# this is used by local setup mods to install a hook handler for
+	# the management daemon
+	local handler_file="$1"
+	local dst="${LOCAL_MODS_DIR:-local}/management_hooks_d"
+	mkdir -p "$dst"	
+	cp "$handler_file" "$dst"
+	# let the daemon know there's a new hook handler
+	tools/hooks_update >/dev/null
+}

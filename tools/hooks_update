@@ -8,15 +8,11 @@
 ##### details.
 #####
 
+# use this when a hook handler is added or removed from managment to
+# enable the hook without having to restart the management daemon.
+#
+# this only works for an addition or removal, if a hook handler file
+# was replaced, the daemon must be restarted
+#
 
-cd "$(dirname "$0")/../../management" || exit 1
-systemctl stop mailinabox
-source /usr/local/lib/mailinabox/env/bin/activate
-export DEBUG=1
-export FLASK_DEBUG=1
-if ! systemctl is-active --quiet miabldap-capture; then
-    export CAPTURE_STORAGE_ROOT=/mailinabox/management/reporting/capture/tests
-fi
-export PYTHONPATH=${LOCAL_MODS_DIR:-/local}
-python3 --version
-python3 ./daemon.py
+curl -s -d POSTDATA --user $(</var/lib/mailinabox/api.key): http://127.0.0.1:10222/hooks/update

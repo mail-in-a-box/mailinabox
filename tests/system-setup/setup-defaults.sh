@@ -33,6 +33,7 @@ else
 fi
 export DOWNLOAD_CACHE_DIR="${DOWNLOAD_CACHE_DIR:-$(pwd)/downloads}"
 export DOWNLOAD_NEXTCLOUD_FROM_GITHUB="${DOWNLOAD_NEXTCLOUD_FROM_GITHUB:-false}"
+export MGMT_LOG_LEVEL=${MGMT_LOG_LEVEL:-debug}
 
 
 # Used by ehdd/start-encrypted.sh

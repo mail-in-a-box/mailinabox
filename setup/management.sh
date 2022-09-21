@@ -113,8 +113,8 @@ tr -cd '[:xdigit:]' < /dev/urandom | head -c 32 > /var/lib/mailinabox/api.key
 chmod 640 /var/lib/mailinabox/api.key
 
 source $venv/bin/activate
-export PYTHONPATH=$(pwd)/management
-exec gunicorn -b localhost:10222 -w 1 wsgi:app
+export PYTHONPATH=$(pwd)/management:${LOCAL_MODS_DIR:-$(pwd)/local}
+exec gunicorn --log-level ${MGMT_LOG_LEVEL:-info} -b localhost:10222 -w 1 wsgi:app
 EOF
 chmod +x $inst_dir/start
 cp --remove-destination conf/mailinabox.service /lib/systemd/system/mailinabox.service # target was previously a symlink so remove it first

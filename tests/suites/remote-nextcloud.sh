@@ -140,10 +140,66 @@ test_nextcloud_contacts() {
     test_end
 }
 
+test_web_config() {
+    test_start "web-config"
+
+	if ! assert_is_configured; then
+		test_end
+		return
+	fi
+
+	local code
+	
+	# nginx should be configured to redirect .well-known/caldav and
+	# .well-known/carddav to the remote nextcloud
+	if grep '\.well-known/carddav[\t ]*/cloud/' /etc/nginx/conf.d/local.conf >/dev/null; then
+		test_failure "/.well-known/carddav redirects to the local nextcloud, but should redirect to $NC_HOST:$NC_PORT"
+	else
+		# ensure the url works
+		record "[test /.well-known/carddav url]"
+		rest_urlencoded GET "/.well-known/carddav" "" "" --location 2>>$TEST_OF
+		code=$?
+		record "code=$code"
+		record "status=$REST_HTTP_CODE"
+		record "output=$REST_OUTPUT"
+		if [ $code -eq 0 ]; then
+			test_failure "carddav url works, but expecting 401/NotAuthenticated from server"
+		elif [ $code -eq 1 -o $REST_HTTP_CODE -ne 401 ] || ! grep "NotAuthenticated" <<<"$REST_OUTPUT" >/dev/null; then
+			test_failure "carddav url doesn't work: $REST_ERROR"
+		fi
+	fi
+	
+	if grep '\.well-known/caldav[\t ]*/cloud/' /etc/nginx/conf.d/local.conf >/dev/null; then
+		test_failure "/.well-known/caldav redirects to the local nextcloud, but should redirect to $NC_HOST:$NC_PORT"
+	else
+		# ensure the url works
+		record "[test /.well-known/caldav url]"
+		rest_urlencoded GET "/.well-known/caldav" "" "" --location 2>>$TEST_OF
+		code=$?
+		record "code=$code"
+		record "status=$REST_HTTP_CODE"
+		record "output=$REST_OUTPUT"
+		if [ $code -eq 0 ]; then
+			test_failure "caldav url works, but expecting 401/NotAuthenticated from server"
+		elif [ $code -eq 1 -o $REST_HTTP_CODE -ne 401 ] || ! grep "NotAuthenticated" <<<"$REST_OUTPUT" >/dev/null; then
+			test_failure "caldav url doesn't work: $REST_ERROR"
+		fi
+	fi
+
+	# ios/osx mobileconfig should be configured to redirect carddav to the
+	# remote nectcloud
+	if grep -A 1 CardDAVPrincipalURL /var/lib/mailinabox/mobileconfig.xml | tail -1 | grep -F "<string>/cloud/remote.php" >/dev/null; then
+		test_failure "ios mobileconfig redirects to the local nextcloud, but should redirect to $NC_HOST:$NC_PORT"
+	fi
+	
+    test_end    
+}
+
 
 suite_start "remote-nextcloud" mgmt_start
 
 #test_mail_from_nextcloud
+test_web_config
 test_nextcloud_contacts
 
 suite_end mgmt_end

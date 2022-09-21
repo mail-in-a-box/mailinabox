@@ -89,6 +89,12 @@ EOF
 }
 
 
+update_mobileconfig() {
+    local url="$1"
+    sed -i "s|<string>/cloud/remote.php|<string>${url%/}/remote.php|g" /var/lib/mailinabox/mobileconfig.xml
+}
+
+
 
 remote_nextcloud_handler() {
     echo ""
@@ -184,6 +190,10 @@ remote_nextcloud_handler() {
         
         # configure zpush (which links to contacts & calendar)
         configure_zpush
+
+        # update ios mobileconfig.xml
+        update_mobileconfig "$new_url"
+
         
         # prevent nginx from serving any miab-installed nextcloud
         # files and remove owncloud cron job
@@ -225,6 +235,16 @@ remote_nextcloud_handler() {
                       "NC_PORT=$NC_PORT" \
                       "NC_PREFIX=$NC_PREFIX" \
                       "NC_HOST_SRC_IP='${NC_HOST_SRC_IP:-}'"
+
+    # Hook the management daemon, even if no remote nextcloud
+    # (NC_HOST==''). Must be done after writing mailinabox_mods.conf
+
+    # 1. install hooking code
+    install_hook_handler "setup/mods.available/hooks/remote-nextcloud-mgmt-hooks.py"
+    # 2. trigger hooking code for a web_update event, which updates
+    # the systems nginx configuration
+    tools/web_update
 }
 
 remote_nextcloud_handler
+

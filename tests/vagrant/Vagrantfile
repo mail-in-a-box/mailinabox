@@ -25,7 +25,7 @@ export FEATURE_MUNIN=false
 export EHDD_KEYFILE=$HOME/keyfile
 echo -n "boo" >$EHDD_KEYFILE
 tests/system-setup/remote-nextcloud-docker.sh || exit 1
-tests/runner.sh ehdd remote-nextcloud default || exit 2
+tests/runner.sh remote-nextcloud ehdd default || exit 2
 SH
     end
   end

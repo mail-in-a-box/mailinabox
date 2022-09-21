@@ -549,6 +549,13 @@ def web_update():
 	from web_update import do_web_update
 	return do_web_update(env)
 
+@app.route('/hooks/update', methods=['POST'])
+@authorized_personnel_only
+def hooks_update():
+	from hooks import update_hook_handlers
+	update_hook_handlers()
+	return "OK"
+
 # System
 
 @app.route('/system/version', methods=["GET"])
@@ -820,6 +827,8 @@ add_ui_common(app)
 from daemon_reports import add_reports
 add_reports(app, env, authorized_personnel_only)
 
+from hooks import update_hook_handlers
+update_hook_handlers()
 
 if __name__ == '__main__':
 	if "DEBUG" in os.environ:

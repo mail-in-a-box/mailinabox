@@ -18,6 +18,7 @@ from mailconfig import get_mail_domains
 from dns_update import get_custom_dns_config, get_dns_zones
 from ssl_certificates import get_ssl_certificates, get_domain_ssl_files, check_certificate
 from utils import shell, safe_domain_name, sort_domains
+import hooks
 
 def get_web_domains(env, include_www_redirects=True, include_auto=True, exclude_dns_elsewhere=True, categories=['mail', 'ssl']):
 	# What domains should we serve HTTP(S) for?
@@ -113,6 +114,11 @@ def do_web_update(env):
 		else:
 			# Add default 'www.' redirect.
 			nginx_conf += make_domain_config(domain, [template0, template3], ssl_certificates, env)
+
+	# execute hooks
+	hook_data = {'nginx_conf': nginx_conf}
+	hooks.exec_hooks('web_update', hook_data)
+	nginx_conf = hook_data['nginx_conf']
 
 	# Did the file change? If not, don't bother writing & restarting nginx.
 	nginx_conf_fn = "/etc/nginx/conf.d/local.conf"
