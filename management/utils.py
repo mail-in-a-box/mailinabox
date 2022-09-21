@@ -39,7 +39,7 @@ def load_env_vars_from_file(fn, strip_quotes=False, merge_env=None):
     for line in open(fn):
         env.setdefault(*line.strip().split("=", 1))
     if strip_quotes:
-        for k in env: env[k]=env[k].strip('"')
+        for k in env: env[k]=('' if env[k] is None else env[k].strip('"'))
     if merge_env is not None:
         for k in env: merge_env[k]=env[k]
     return env
