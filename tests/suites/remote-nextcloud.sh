@@ -154,6 +154,8 @@ test_web_config() {
 	# .well-known/carddav to the remote nextcloud
 	if grep '\.well-known/carddav[\t ]*/cloud/' /etc/nginx/conf.d/local.conf >/dev/null; then
 		test_failure "/.well-known/carddav redirects to the local nextcloud, but should redirect to $NC_HOST:$NC_PORT"
+		record "[grep for mailinabox in syslog]"
+		grep mailinabox /var/log/syslog >>$TEST_OF
 	else
 		# ensure the url works
 		record "[test /.well-known/carddav url]"
