@@ -18,6 +18,7 @@ if [ -e "$EHDD_IMG" ]; then
         echo "** Disabling system services **"
         systemctl disable --quiet postfix
         systemctl disable --quiet dovecot
+        systemctl disable --quiet postgrey
         systemctl disable --quiet cron
         systemctl disable --quiet nginx
         systemctl disable --quiet php8.0-fpm
