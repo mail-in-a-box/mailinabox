@@ -29,7 +29,7 @@ if lsmod | grep "^vboxguest[\t ]" >/dev/null; then
     # under virtualbox / vagrant.
     export LOCAL_MODS_DIR="${LOCAL_MODS_DIR:-/local}"
 else
-    export LOCAL_MODS_DIR="${LOCAL_MODS_DIR:-local}"
+    export LOCAL_MODS_DIR="${LOCAL_MODS_DIR:-$(pwd)/local}"
 fi
 export DOWNLOAD_CACHE_DIR="${DOWNLOAD_CACHE_DIR:-$(pwd)/downloads}"
 export DOWNLOAD_NEXTCLOUD_FROM_GITHUB="${DOWNLOAD_NEXTCLOUD_FROM_GITHUB:-false}"
