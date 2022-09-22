@@ -227,7 +227,7 @@ remote_nextcloud_handler() {
             )
             if [ ${#from_ips[*]} -eq 0 ]; then
                 echo ""
-                echo "Warning: $NC_HOST could not be resolved to an IP address, so no firewall rules were added to allow $NC_HOST to query our LDAP server. You may have to add ufw rules manually to allow the remote nextcloud to query ldaps port 636/tcp."
+                echo "Warning: $NC_HOST could not be resolved to an IP address, so no firewall rules were added to allow $NC_HOST to query the LDAP server. You may have to add ufw rules manually to allow the remote nextcloud to query ldaps port 636/tcp."
             fi
         fi
             
