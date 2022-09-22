@@ -92,6 +92,11 @@ init_test_system() {
     wait_for_apt
     exec_no_output apt-get update -qq || die "apt-get update failed!"
 
+    # install .emacs file, if available
+    if [ -e tests/assets/.emacs -a -d /root ]; then
+        cp tests/assets/.emacs /root 1>/dev/null 2>&1
+    fi
+
     # upgrade packages - if we don't do this and something like bind
     # is upgraded through automatic upgrades (because maybe MiaB was
     # previously installed), it may cause problems with the rest of
