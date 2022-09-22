@@ -136,6 +136,11 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 
 	nginx_conf_extra = ""
 
+	# Add .well-known redirects for CalDAV and CardDAV to TLD, which may make for better service discovery
+	if len(domain.split('.'))==2:
+		nginx_conf_extra += f"\n\trewrite ^/.well-known/caldav https://{env['PRIMARY_HOSTNAME']}/cloud/remote.php/dav/ redirect;"
+		nginx_conf_extra += f"\n\trewrite ^/.well-known/carddav https://{env['PRIMARY_HOSTNAME']}/cloud/remote.php/dav/ redirect;\n\n"
+
 	# Because the certificate may change, we should recognize this so we
 	# can trigger an nginx update.
 	def hashfile(filepath):
