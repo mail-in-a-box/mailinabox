@@ -366,10 +366,6 @@ flush_logs() {
 	else
 		pid=$(/usr/bin/pidof rsyslogd)
 	fi
-	# if [ "$GITHUB_ACTIONS" = "true" ]; then
-	# 	systemctl restart rsyslog >>$TEST_OF 2>&1
-	# 	sleep 5
-	# elif [ ! -z "$pid" ]; then
 	if [ ! -z "$pid" ]; then
 		kill -HUP $pid >>$TEST_OF 2>&1
 		sleep 2

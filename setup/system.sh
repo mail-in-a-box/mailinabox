@@ -408,4 +408,5 @@ EOF
 # prevent rsyslog from writing to it. Fix the ownership.
 [ -e /var/log/nsd.log ] && chown syslog:adm /var/log/nsd.log
 [ -e /var/log/mail.log ] && chown syslog:adm /var/log/mail.log
+[ -e /var/log/mail.err ] && chown syslog:adm /var/log/mail.err
 restart_service rsyslog
