@@ -72,17 +72,20 @@ def exec_hooks(hook_name, data):
 	cur_handlers = handlers
 	cur_mods_env = mods_env
 	mutex.release()
+
+	handled_count = 0
 	
 	for handler in cur_handlers:
 		if handler['type'] == 'py':
 			# load the python code and run the `do_hook` function
-			log.debug('calling %s hook handler: %s' % (hook_name, handler['path']))
 			module = importlib.import_module(handler['path'])
 			do_hook = getattr(module, "do_hook")
-			do_hook(hook_name, data, cur_mods_env)
+			r = do_hook(hook_name, data, cur_mods_env)
+			log.debug('hook handler %s(%s) returned: %s', handler['path'], hook_name, r)
+			if r: handled_count = handled_count + 1
 
 		else:
 			log.error('Unknown hook handler type in %s: %s', handler['path'], handler['type'])
 
-	return len(cur_handlers)
+	return handled_count > 0
 

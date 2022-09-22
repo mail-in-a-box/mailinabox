@@ -116,9 +116,12 @@ def do_web_update(env):
 			nginx_conf += make_domain_config(domain, [template0, template3], ssl_certificates, env)
 
 	# execute hooks
-	hook_data = {'nginx_conf': nginx_conf}
-	hooks.exec_hooks('web_update', hook_data)
-	nginx_conf = hook_data['nginx_conf']
+	hook_data = {
+		'op':'pre-save',
+		'nginx_conf':nginx_conf
+	}
+	if hooks.exec_hooks('web_update', hook_data):
+		nginx_conf = hook_data['nginx_conf']
 
 	# Did the file change? If not, don't bother writing & restarting nginx.
 	nginx_conf_fn = "/etc/nginx/conf.d/local.conf"
