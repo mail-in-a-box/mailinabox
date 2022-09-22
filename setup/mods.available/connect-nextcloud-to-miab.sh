@@ -54,6 +54,29 @@ die_with_code() {
     exit $code
 }
 
+exec_no_output() {
+	# This function hides the output of a command unless the command
+	# fails
+	local of=$(mktemp)
+	"$@" &> "$of"
+	local code=$?
+
+	if [ $code -ne 0 ]; then
+		echo "" 1>&2
+		echo "FAILED: $@" 1>&2
+		echo "-----------------------------------------" 1>&2
+        echo "Return code: $code" 1>&2
+        echo "Output:" 1>&2
+		cat "$of" 1>&2
+		echo "-----------------------------------------" 1>&2
+	fi
+
+	# Remove temporary file.
+	rm -f "$of"
+    [ $code -ne 0 ] && return 1
+	return 0
+}
+
 
 usage() {
     cat <<EOF
@@ -118,7 +141,7 @@ miab_constants() {
 
 test_ldap_connection() {
     say_verbose "Installing system package ldap-utils"
-    apt-get install -y -qq ldap-utils || die "Could not install required packages"
+    exec_no_output apt-get install -y -qq ldap-utils || die "Could not install required packages"
     
     local count=0
     local ldap_debug=""
@@ -281,7 +304,7 @@ config_user_ldap() {
     local starttls=0
     [ "$LDAP_SERVER_STARTTLS" == "yes" ] && starttls=1
 
-    apt-get install -y -qq python3 || die "Could not install required packages"
+    exec_no_output apt-get install -y -qq python3 || die "Could not install required packages"
 
     local c=(
         "--data-urlencode configData[ldapHost]=$LDAP_URL"
@@ -376,7 +399,7 @@ enable_user_ldap() {
             fi
         fi
         say_verbose "Installing system package $php-ldap"
-        apt-get install -y -qq $php-ldap || die "Could not install $php-ldap package"
+        exec_no_output apt-get install -y -qq $php-ldap || die "Could not install $php-ldap package"
         #restart_service $php-fpm
     fi
     
@@ -412,7 +435,7 @@ setup_ssmtp() {
     fi
     
     say_verbose "Installing system package ssmtp"
-    apt-get install -y -qq ssmtp
+    exec_no_output apt-get install -y -qq ssmtp
 
     if [ ! -e /etc/ssmtp/ssmtp.conf.orig ]; then
         cp /etc/ssmtp/ssmtp.conf /etc/ssmtp/ssmtp.conf.orig
