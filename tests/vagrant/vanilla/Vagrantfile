@@ -15,10 +15,44 @@ Vagrant.configure("2") do |config|
   config.vm.network "public_network", bridge: "#$default_network_interface"
   use_preloaded_box config, "ubuntu/jammy64", ".."
 
-  # vanilla install
+  if ENV['tests']=='ciab'
 
-  config.vm.define "vanilla" do |m1|
-    m1.vm.provision :shell, :inline => <<-SH
+    # vanilla connected to ciab (ciab does not need to be up)
+
+    config.vm.define "vanilla" do |m1|
+      m1.vm.provision :shell, :inline => <<-SH
+cat >/tmp/provision.sh <<EOF
+#!/bin/bash
+if [ \\$EUID -ne 0 ]; then
+   echo "Must be root"
+   exit 1
+fi
+cd /mailinabox
+export PRIMARY_HOSTNAME=vanilla.local
+export NC_PROTO=https
+export NC_HOST=vanilla-ciab.local
+export NC_PORT=443
+export NC_PREFIX=/
+export SKIP_SYSTEM_UPDATE=0
+tests/system-setup/vanilla.sh --qa-ca --enable-mod=remote-nextcloud
+if ! ufw status | grep remote_nextcloud >/dev/null; then
+   # firewall rules aren't added when ciab is down
+   # allow ldaps from anywhere
+   ufw allow ldaps
+fi
+EOF
+chmod +x /tmp/provision.sh
+/tmp/provision.sh
+SH
+    end  # vanilla connected to ciab
+
+  else
+
+
+    # vanilla (default) install
+
+    config.vm.define "vanilla" do |m1|
+      m1.vm.provision :shell, :inline => <<-SH
 cat >/tmp/provision.sh <<EOF
 #!/bin/bash
 if [ \\$EUID -ne 0 ]; then
@@ -38,7 +72,7 @@ EOF
 chmod +x /tmp/provision.sh
 /tmp/provision.sh
 SH
-  end
+    end  # vanilla (default)
 
-
+  end  
 end
