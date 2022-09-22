@@ -180,8 +180,10 @@ remote_nextcloud_handler() {
         NC_HOST_SRC_IP="$ans"
 
         if [ -z "$NC_HOST_SRC_IP" ]; then
+            echo ""
             echo "Using Nextcloud ${new_url}"
         else
+            echo ""
             echo "Using Nextcloud ${new_url} (but, the source ip of ldap queries will come from $NC_HOST_SRC_IP)"
         fi
 
@@ -220,10 +222,15 @@ remote_nextcloud_handler() {
             from_ips=( $NC_HOST_SRC_IP )
         else
             from_ips=(
-                $(getent ahostsv4 "$NC_HOST" | head -1 | awk '{print $1}')
-                $(getent ahostsv6 "$NC_HOST" | head -1 | awk '{print $1}')
+                $(getent ahostsv4 "$NC_HOST" | head -1 | awk '{print $1}'; exit 0)
+                $(getent ahostsv6 "$NC_HOST" | head -1 | awk '{print $1}'; exit 0)
             )
+            if [ ${#from_ips[*]} -eq 0 ]; then
+                echo ""
+                echo "Warning: $NC_HOST could not be resolved to an IP address, so no firewall rules were added to allow $NC_HOST to query our LDAP server. You may have to add ufw rules manually to allow the remote nextcloud to query ldaps port 636/tcp."
+            fi
         fi
+            
         for ip in "${from_ips[@]}"; do
             hide_output ufw allow proto tcp from "$ip" to any port ldaps comment "remote_nextcloud"
         done
