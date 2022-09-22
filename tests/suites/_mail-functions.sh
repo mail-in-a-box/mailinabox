@@ -133,9 +133,16 @@ detect_syslog_error() {
 	tail --lines=+$count /var/log/syslog 2>>$TEST_OF | (
 		let ec=0 # error count
 		let wc=0 # warning count
+		rsyslog_hup="no"
 		while read line; do
 			# named[7940]: dispatch 0x7f460c02c3a0: shutting down due to TCP receive error: 199.249.112.1#53: connection reset
+			# rsyslogd:  message repeated 7 times: [[origin software="rsyslogd" swVersion="8.2112.0" x-pid="42237" x-info="https://www.rsyslog.com"] rsyslogd was HUPed]
+			# rsyslogd: file '/var/log/mail.log': open error: Permission denied [v8.2112.0 try https://www.rsyslog.com/e/2433 ]
+			# rsyslogd: action 'action-0-builtin:omfile' suspended (module 'builtin:omfile'), retry 0. There should be messages before this one giving the reason for suspension. [v8.2112.0 try https://www.rsyslog.com/e/2007 ]
+			# rsyslogd: action 'action-0-builtin:omfile' resumed (module 'builtin:omfile') [v8.2112.0 try https://www.rsyslog.com/e/2359 ]
 			awk '
+/rsyslogd was HUPed/ { exit 3; }
+/rsyslogd: action .* (suspended|resumed)/ { exit 2 }
 !/nsd\[[0-9]+\]/ && /warning:/	{ exit 1 }
 /nsd\[[0-9]+\]: error: Cannot open .*nsd\.log/ { exit 2 }
 /named\[[0-9]+\]:.* receive error: .*: connection reset/ { exit 2 }
@@ -146,12 +153,26 @@ detect_syslog_error() {
 ' \
 				>>$TEST_OF 2>&1 <<< "$line"
 			r=$?
+			if [ "$rsyslog_hup" = "yes" ]; then
+				if ! grep "rsyslogd: " <<< "$line" >/dev/null
+				then
+					rsyslog_hup="no"
+					
+				elif [ $r -eq 1 ] && grep "open error: " <<< "$line" >/dev/null
+				then
+					# handle "open error: Permission denied" occuring
+					# soon after a rsyslogd HUP. set to warning
+					r=2
+				fi
+			fi
 			if [ $r -eq 1 ]; then
 				let ec+=1
 				record "$F_DANGER[ERROR] $line$F_RESET"
 			elif [ $r -eq 2 ]; then
 				let wc+=1
 				record "$F_WARN[ WARN] $line$F_RESET"
+			elif [ $r -eq 3 ]; then
+				rsyslog_hup=yes
 			else
 				if [ "$DETECT_SYSLOG_ERROR_OUTPUT" != "brief" ]; then
 					record "[   OK] $line"
