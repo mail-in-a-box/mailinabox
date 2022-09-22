@@ -307,7 +307,7 @@ test_mailbox_pipe() {
 	local outfile="/tmp/pipedrop.$$.out"
 	cat 2>>$TEST_OF >$cmd <<EOF
 #!/bin/bash
-cat > $outfile
+echo "boo" > $outfile
 EOF
 	chmod 755 $cmd
 	rm -f $outfile
@@ -332,7 +332,6 @@ EOF
 		assert_python_failure $code "$output" SMTPAuthenticationError
 		check_logs
 	else
-		sleep 5
 		if grep_postfix_log "User doesn't exist: |$cmd@"; then
 			# ok
 			check_logs

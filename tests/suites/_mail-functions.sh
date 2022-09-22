@@ -358,13 +358,7 @@ EOF
 	return ${x[1]}
 }
 
-check_logs() {
-	local assert="${1:-false}"
-	[ "$1" == "true" -o "$1" == "false" ] && shift
-	local types=($@)
-	[ ${#types[@]} -eq 0 ] && types=(syslog slapd mail)
-	
-	# flush records
+flush_logs() {
 	local pid
 	if [ -e /var/run/rsyslogd.pid ]; then
 		# the pid file won't exist if rsyslogd was started with -iNONE
@@ -373,12 +367,22 @@ check_logs() {
 		pid=$(/usr/bin/pidof rsyslogd)
 	fi
 	if [ "$GITHUB_ACTIONS" = "true" ]; then
-		systemctl restart rsyslogd >>$TEST_OF 2>&1
+		systemctl restart rsyslog >>$TEST_OF 2>&1
 		sleep 5
 	elif [ ! -z "$pid" ]; then
 		kill -HUP $pid >>$TEST_OF 2>&1
 		sleep 2
 	fi
+}
+
+check_logs() {
+	local assert="${1:-false}"
+	[ "$1" == "true" -o "$1" == "false" ] && shift
+	local types=($@)
+	[ ${#types[@]} -eq 0 ] && types=(syslog slapd mail)
+	
+	# flush records
+	flush_logs
 
 	if array_contains syslog ${types[@]}; then
 		detect_syslog_error && $assert &&
@@ -415,6 +419,7 @@ grep_postfix_log() {
 	local msg="$1"
 	local count
 	let count="$MAIL_LOG_LINECOUNT + 1"
+	flush_logs
 	tail --lines=+$count /var/log/mail.log 2>>$TEST_OF | grep -iF "$msg" >/dev/null 2>>$TEST_OF
 	return $?
 }
