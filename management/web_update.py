@@ -125,6 +125,8 @@ def do_web_update(env):
 
 def make_domain_config(domain, templates, ssl_certificates, env):
 	# GET SOME VARIABLES
+	mail_domains = set()
+	mail_domains |= get_mail_domains(env)
 
 	# Where will its root directory be for static files?
 	root = get_web_root(domain, env)
@@ -136,8 +138,8 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 
 	nginx_conf_extra = ""
 
-	# Add .well-known redirects for CalDAV and CardDAV to TLD, which may make for better service discovery
-	if len(domain.count('.'))==1: # something.tld
+	# Add .well-known redirects for CalDAV and CardDAV to mail domains, which may make for better service discovery
+	if domain in mail_domains: # something.tld
 		nginx_conf_extra += f"\n\trewrite ^/.well-known/caldav https://{env['PRIMARY_HOSTNAME']}/cloud/remote.php/dav/ redirect;"
 		nginx_conf_extra += f"\n\trewrite ^/.well-known/carddav https://{env['PRIMARY_HOSTNAME']}/cloud/remote.php/dav/ redirect;\n"
 		nginx_conf_extra += f"\n\tlocation /dav {{"
