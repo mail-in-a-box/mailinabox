@@ -251,7 +251,7 @@ if [ ! -d $STORAGE_ROOT/mail/postgrey/db ]; then
 	# Stop the service
 	service postgrey stop
 	# Ensure the new paths for postgrey db exists
-	mkdir -p $STORAGE_ROOT/mail/postgrey $STORAGE_ROOT/mail/postgrey/db
+	mkdir -p $STORAGE_ROOT/mail/postgrey/db
 	# Move over database files
 	mv /var/lib/postgrey/* $STORAGE_ROOT/mail/postgrey/db/ || true
 fi
