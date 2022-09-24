@@ -25,6 +25,7 @@ No features of Mail-in-a-Box have changed in this release, but with the newer ve
 Also:
 
 * Roundcube's login session cookie was tightened. Existing sessions may require a manual logout.
+* Move Postgrey's database under $STORAGE_ROOT
 
 Version 57a (June 19, 2022)
 ---------------------------
