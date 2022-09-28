@@ -139,7 +139,9 @@
                 <li><a href="#mfa" onclick="return show_panel(this);">Two-Factor Authentication</a></li>
               </ul>
             </li>
+            {% if nextcloud_enable==1 %}
             <li><a href="#sync_guide" onclick="return show_panel(this);" class="if-logged-in">Contacts/Calendar</a></li>
+            {% endif %}
             <li><a href="#web" onclick="return show_panel(this);" class="if-logged-in-admin">Web</a></li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
@@ -190,9 +192,11 @@
       {% include "aliases.html" %}
       </div>
 
+      {% if nextcloud_enable==1 %}
       <div id="panel_sync_guide" class="admin_panel">
       {% include "sync-guide.html" %}
       </div>
+      {% endif %}
 
       <div id="panel_web" class="admin_panel">
       {% include "web.html" %}

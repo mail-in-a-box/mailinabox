@@ -133,6 +133,8 @@ def index():
 
 		backup_s3_hosts=backup_s3_hosts,
 		csr_country_codes=csr_country_codes,
+
+		nextcloud_enable=env['NEXTCLOUD_ENABLE']
 	)
 
 # Create a session key by checking the username/password in the Authorization header.

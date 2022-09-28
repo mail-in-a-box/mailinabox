@@ -98,6 +98,8 @@ export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 export LC_TYPE=en_US.UTF-8
 
+source /etc/mailinabox.conf
+
 source $venv/bin/activate
 exec python $(pwd)/management/daemon.py
 EOF
