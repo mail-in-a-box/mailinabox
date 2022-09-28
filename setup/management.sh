@@ -103,6 +103,8 @@ mkdir -p /var/lib/mailinabox
 tr -cd '[:xdigit:]' < /dev/urandom | head -c 32 > /var/lib/mailinabox/api.key
 chmod 640 /var/lib/mailinabox/api.key
 
+source /etc/mailinabox.conf
+
 source $venv/bin/activate
 export PYTHONPATH=$(pwd)/management
 exec gunicorn -b localhost:10222 -w 1 wsgi:app
