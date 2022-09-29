@@ -85,6 +85,7 @@ if [ -e "setup/ldap.sh" ]; then
         "opendkim:opendkim::/run/opendkim:/usr/sbin/nologin"
         "spampd:spampd::/nonexistent:/usr/sbin/nologin"
         "www-data:www-data:www-data:/var/www:/usr/sbin/nologin"
+        "postgrey:postgrey::/var/lib/postgrey:/usr/sbin/nologin"
     )
 else
     # Cloud-In-A-Box

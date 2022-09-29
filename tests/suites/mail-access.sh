@@ -42,7 +42,7 @@ _test_greylisting_x() {
 
 postgrey_whitelist_recipents() {
 	local wl="/etc/postgrey/whitelist_recipients.local"
-	rm -f "$wl"
+	truncate --size=0 "$wl" || die "Could not truncate $wl"
 	local recipient
 	for recipient; do
 		echo "$recipient" >> "$wl" || \
@@ -56,7 +56,7 @@ postgrey_whitelist_recipents() {
 
 postgrey_reset_whitelists() {
 	local wl="/etc/postgrey/whitelist_recipients.local"
-	rm -f "$wl"
+	truncate --size=0 --no-create "$wl" || die "Could not truncate $wl"
 	if ! systemctl reload postgrey >/dev/null 2>&1; then
 		systemctl restart postgrey >>$TEST_OF 2>&1
 	fi
@@ -76,13 +76,15 @@ postgrey_reset_state() {
 	# testing scenario
 	#
 	record "[Reset postgrey]"
-	if [ ! -d "/var/lib/postgrey" ]; then
-		die "Postgrey database directory /var/lib/postgrey does not exist!"
+	#local db="/var/lib/postgrey"
+	local db="$STORAGE_ROOT/mail/postgrey/db"
+	if [ ! -d "$db" ]; then
+		die "Postgrey database directory $db does not exist!"
 	fi
 	systemctl stop postgrey >>$TEST_OF 2>&1 || die "unble to stop postgrey"
-	if ! rm -f /var/lib/postgrey/* >>$TEST_OF 2>&1; then
+	if ! rm -f "$db/*" >>$TEST_OF 2>&1; then
 		systemctl start postgrey >>$TEST_OF 2>&1
-		die "unable to remove the postgrey database files"
+		die "unable to remove the postgrey database files in $db"
 	fi
 
 	systemctl start postgrey >>$TEST_OF 2>&1 || die "unble to start postgrey"
