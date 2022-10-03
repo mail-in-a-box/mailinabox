@@ -96,9 +96,9 @@ def do_dns_update(env, force=False):
 		if len(updated_domains) == 0:
 			updated_domains.append("DNS configuration")
 
-	# Kick nsd if anything changed.
+	# Tell nsd to reload changed zone files.
 	if len(updated_domains) > 0:
-		shell('check_call', ["/usr/sbin/service", "nsd", "restart"])
+		shell('check_call', ["/usr/sbin/nsd-control", "reload"])
 
 	# Write the OpenDKIM configuration tables for all of the mail domains.
 	from mailconfig import get_mail_domains
