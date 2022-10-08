@@ -7,18 +7,6 @@ echo "Installing Mail-in-a-Box system management daemon..."
 
 # DEPENDENCIES
 
-# We used to install management daemon-related Python packages
-# directly to /usr/local/lib. We moved to a virtualenv because
-# these packages might conflict with apt-installed packages.
-# We may have a lingering version of acme that conflcits with
-# certbot, which we're about to install below, so remove it
-# first. Once acme is installed by an apt package, this might
-# break the package version and `apt-get install --reinstall python3-acme`
-# might be needed in that case.
-while [ -d /usr/local/lib/python3.4/dist-packages/acme ]; do
-	pip3 uninstall -y acme;
-done
-
 # duplicity is used to make backups of user data.
 #
 # virtualenv is used to isolate the Python 3 packages we
