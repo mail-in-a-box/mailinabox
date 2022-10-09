@@ -38,8 +38,8 @@ echo "Installing Nextcloud (contacts/calendar)..."
 #   we automatically install intermediate versions as needed.
 # * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
 #   copying it from the error message when it doesn't match what is below.
-nextcloud_ver=23.0.4
-nextcloud_hash=87afec0bf90b3c66289e6fedd851867bc5a58f01
+nextcloud_ver=23.0.8
+nextcloud_hash=9d63416a0697eeecf243d09461f5881f8997f50a
 
 # Nextcloud apps
 # --------------
@@ -50,12 +50,12 @@ nextcloud_hash=87afec0bf90b3c66289e6fedd851867bc5a58f01
 #   https://github.com/nextcloud/user_external/blob/master/appinfo/info.xml
 # * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
 #   copying it from the error message when it doesn't match what is below.
-contacts_ver=4.1.1
-contacts_hash=7508069a6d2b46d216df5333e3295c19151dcc50
-calendar_ver=3.4.0
-calendar_hash=8667c3b47012bfee5545daa30dcc68ef8d39d493
-user_external_ver=v3.0.0
-user_external_hash=
+contacts_ver=4.2.0
+contacts_hash=79b506574834db5e1b6ab47aadd4041e12ad9a9c
+calendar_ver=3.5.0
+calendar_hash=941381536287a015081669513f8f79f6f262508a
+user_external_ver=3.0.0
+user_external_hash=0df781b261f55bbde73d8c92da3f99397000972f
 
 # Clear prior packages and install dependencies from apt.
 
@@ -104,11 +104,11 @@ InstallNextcloud() {
 	# their github repositories.
 	mkdir -p /usr/local/lib/owncloud/apps
 
-	wget_verify https://github.com/nextcloud-releases/contacts/releases/download/v$version_contacts/contacts-v$version_contacts.tar.gz $hash_contacts /tmp/contacts.tgz
+	wget_verify https://github.com/nextcloud-releases/contacts/archive/refs/tags/v$version_contacts.tar.gz $hash_contacts /tmp/contacts.tgz
 	tar xf /tmp/contacts.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/contacts.tgz
 
-	wget_verify https://github.com/nextcloud-releases/calendar/releases/download/v$version_calendar/calendar-v$version_calendar.tar.gz $hash_calendar /tmp/calendar.tgz
+	wget_verify https://github.com/nextcloud-releases/calendar/archive/refs/tags/v$version_calendar.tar.gz $hash_calendar /tmp/calendar.tgz
 	tar xf /tmp/calendar.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/calendar.tgz
 
@@ -120,7 +120,7 @@ InstallNextcloud() {
 			git_clone https://github.com/nextcloud/user_external.git "$version_user_external" '' /usr/local/lib/owncloud/apps/user_external
 	else
 			# otherwise, download a release
-			wget_verify https://github.com/nextcloud/user_external/releases/download/v$version_user_external/user_external-$version_user_external.tar.gz $hash_user_external /tmp/user_external.tgz
+			wget_verify https://github.com/nextcloud-releases/user_external/releases/download/v$version_user_external/user_external-v$version_user_external.tar.gz $hash_user_external /tmp/user_external.tgz
 			tar -xf /tmp/user_external.tgz -C /usr/local/lib/owncloud/apps/
 			rm /tmp/user_external.tgz
 		fi

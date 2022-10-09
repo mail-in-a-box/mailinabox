@@ -329,6 +329,18 @@ upstream_install() {
     if [ ! -e setup/start.sh ]; then
         die "Cannot install: the working directory must contain the source"
     fi
+
+    # Upstream expects a virgin system and we may have preinstalled
+    # nsd that was unable to start and is in the failed state
+    # (eg. could not bind to ::53 because named is also
+    # installed). Using `systemctl reset-failed` won't work becuase
+    # upstream's setup/dns.sh script doesn't start nsd - it only
+    # installs nsd using apt after creating nsd's configuration.
+    if systemctl is-failed --quiet nsd; then
+        echo "notice: removing nsd because systemd has it in the failed state"
+        exec_no_output apt-get remove -y nsd
+        #systemctl reset-failed nsd
+    fi
     
     if ! setup/start.sh; then
         echo "$F_WARN"

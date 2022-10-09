@@ -107,6 +107,9 @@ EOF
 echo "Installing nsd (DNS server)..."
 apt_install nsd ldnsutils openssh-client
 
+# Make sure nsd is running and has the latest configuration
+restart_service nsd
+
 # Create DNSSEC signing keys.
 
 mkdir -p "$STORAGE_ROOT/dns/dnssec";

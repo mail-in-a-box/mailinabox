@@ -16,18 +16,6 @@ echo "Installing Mail-in-a-Box system management daemon..."
 
 # DEPENDENCIES
 
-# We used to install management daemon-related Python packages
-# directly to /usr/local/lib. We moved to a virtualenv because
-# these packages might conflict with apt-installed packages.
-# We may have a lingering version of acme that conflcits with
-# certbot, which we're about to install below, so remove it
-# first. Once acme is installed by an apt package, this might
-# break the package version and `apt-get install --reinstall python3-acme`
-# might be needed in that case.
-while [ -d /usr/local/lib/python3.4/dist-packages/acme ]; do
-	pip3 uninstall -y acme;
-done
-
 # duplicity is used to make backups of user data.
 #
 # virtualenv is used to isolate the Python 3 packages we
@@ -99,6 +87,8 @@ rm -f /tmp/bootstrap.zip
 
 # Create an init script to start the management daemon and keep it
 # running after a reboot.
+# Set a long timeout since some commands take a while to run, matching
+# the timeout we set for PHP (fastcgi_read_timeout in the nginx confs).
 # Note: Authentication currently breaks with more than 1 gunicorn worker.
 cat > $inst_dir/start <<EOF;
 #!/bin/bash
@@ -114,7 +104,7 @@ chmod 640 /var/lib/mailinabox/api.key
 
 source $venv/bin/activate
 export PYTHONPATH=$(pwd)/management:${LOCAL_MODS_DIR:-$(pwd)/local}
-exec gunicorn --log-level ${MGMT_LOG_LEVEL:-info} -b localhost:10222 -w 1 wsgi:app
+exec gunicorn --log-level ${MGMT_LOG_LEVEL:-info} -b localhost:10222 -w 1 --timeout 630 wsgi:app
 EOF
 chmod +x $inst_dir/start
 cp --remove-destination conf/mailinabox.service /lib/systemd/system/mailinabox.service # target was previously a symlink so remove it first
