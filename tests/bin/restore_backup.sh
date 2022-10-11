@@ -65,7 +65,16 @@ echo "Shutting down services"
 ehdd/shutdown.sh || exit 1
 
 if [ ! -x /usr/bin/duplicity ]; then
-    apt-get install -y -qq duplicity
+    echo "Installing duplicity"
+    tmpf=$(mktemp)
+    apt-get install -y duplicity &> "$tmpf"
+    if [ $? -ne 0 ]; then
+        echo "Failed: " 1>&2
+        cat "$tmpf" 1>&2
+        rm -f "$tmpf"
+        exit 1
+    fi
+    rm -f "$tmpf"
 fi
 
 # Ensure users and groups are created so that duplicity properly
