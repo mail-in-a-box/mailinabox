@@ -27,7 +27,7 @@ export FEATURE_MUNIN=false
 source tests/system-setup/setup-defaults.sh
 tests/system-setup/vanilla.sh \
    --checkout-repo="$MIABLDAP_GIT" \
-   --checkout-treeish="$FINAL_RELEASE_TAG_BIONIC64" \
+   --checkout-treeish="$MIABLDAP_FINAL_RELEASE_TAG_BIONIC64" \
    --checkout-targetdir="$HOME/miabldap-bionic" \
    --populate=basic \
    --populate=totpuser \

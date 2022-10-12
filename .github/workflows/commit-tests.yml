@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-22.04
     env:
       PRIMARY_HOSTNAME: box2.abc.com
-      UPSTREAM_TAG: jammyjellyfish2204
+      UPSTREAM_TAG: main
     steps:
       - uses: actions/checkout@v2
       - name: setup

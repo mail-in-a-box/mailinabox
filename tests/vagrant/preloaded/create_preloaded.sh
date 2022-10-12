@@ -9,7 +9,7 @@
 #####
 
 
-# load defaults for MIABLDAP_GIT and FINAL_RELEASE_TAG_BIONIC64 (make available to Vagrantfile)
+# load defaults for MIABLDAP_GIT and MIABLDAP_FINAL_RELEASE_TAG_BIONIC64 (make available to Vagrantfile)
 pushd "../../.." >/dev/null
 source tests/system-setup/setup-defaults.sh || exit 1
 popd >/dev/null
@@ -34,7 +34,7 @@ boxes=(
 # preload packages from source of the following git tags. empty string
 # means use the current source tree
 tags=(
-    "$FINAL_RELEASE_TAG_BIONIC64"
+    "$MIABLDAP_FINAL_RELEASE_TAG_BIONIC64"
     ""
 )
 try_reboot=(
