@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-Version 60 (date TBD)
----------------------
+Version 60 (October 11, 2022)
+-----------------------------
 
 This is the first release for Ubuntu 22.04.
 
@@ -10,9 +10,11 @@ This is the first release for Ubuntu 22.04.
 
 For complete upgrade instructions, see:
 
-LINK TBD
+https://discourse.mailinabox.email/t/version-60-for-ubuntu-22-04-is-about-to-be-released/9558
 
-No features of Mail-in-a-Box have changed in this release, but with the newer version of Ubuntu the following software packages we use are updated:
+No major features of Mail-in-a-Box have changed in this release, although some minor fixes were made.
+
+With the newer version of Ubuntu the following software packages we use are updated:
 
 * dovecot is upgraded to 2.3.16, postfix to 3.6.4, opendmark to 1.4 (which adds ARC-Authentication-Results headers), and spampd to 2.53 (alleviating a mail delivery rate limiting bug).
 * Nextcloud is upgraded to 23.0.4.
@@ -25,7 +27,7 @@ No features of Mail-in-a-Box have changed in this release, but with the newer ve
 Also:
 
 * Roundcube's login session cookie was tightened. Existing sessions may require a manual logout.
-* Move Postgrey's database under $STORAGE_ROOT
+* Moved Postgrey's database under $STORAGE_ROOT.
 
 Version 57a (June 19, 2022)
 ---------------------------
