@@ -97,11 +97,12 @@ fi
 # come from there and minimal Ubuntu installs may have it turned off.
 hide_output add-apt-repository -y universe
 
-# Install the certbot PPA.
-hide_output add-apt-repository -y ppa:certbot/certbot
-
 # Install the duplicity PPA.
 hide_output add-apt-repository -y ppa:duplicity-team/duplicity-release-git
+
+# Stock PHP is now 8.1, but we're transitioning through 8.0 because
+# of Nextcloud.
+hide_output add-apt-repository --y ppa:ondrej/php
 
 # ### Update Packages
 
@@ -123,9 +124,6 @@ apt_get_quiet autoremove
 
 # Install basic utilities.
 #
-# * haveged: Provides extra entropy to /dev/random so it doesn't stall
-#	         when generating random numbers for private keys (e.g. during
-#	         ldns-keygen).
 # * unattended-upgrades: Apt tool to install security updates automatically.
 # * cron: Runs background processes periodically.
 # * ntp: keeps the system time correct
@@ -139,8 +137,8 @@ apt_get_quiet autoremove
 
 echo Installing system packages...
 apt_install python3 python3-dev python3-pip python3-setuptools \
-	netcat-openbsd wget curl git sudo coreutils bc \
-	haveged pollinate openssh-client unzip \
+	netcat-openbsd wget curl git sudo coreutils bc file \
+	pollinate openssh-client unzip \
 	unattended-upgrades cron ntp fail2ban rsyslog
 
 # ### Suppress Upgrade Prompts
@@ -331,7 +329,7 @@ fi #NODOC
 #  	If more queries than specified are sent, bind9 returns SERVFAIL. After flushing the cache during system checks,
 #	we ran into the limit thus we are increasing it from 75 (default value) to 100.
 apt_install bind9
-tools/editconf.py /etc/default/bind9 \
+tools/editconf.py /etc/default/named \
 	"OPTIONS=\"-u bind -4\""
 if ! grep -q "listen-on " /etc/bind/named.conf.options; then
 	# Add a listen-on directive if it doesn't exist inside the options block.

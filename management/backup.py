@@ -12,7 +12,7 @@ import dateutil.parser, dateutil.relativedelta, dateutil.tz
 import rtyaml
 from exclusiveprocess import Lock
 
-from utils import load_environment, shell, wait_for_service, fix_boto
+from utils import load_environment, shell, wait_for_service
 
 def backup_status(env):
 	# If backups are dissbled, return no status.
@@ -197,12 +197,7 @@ def get_duplicity_target_url(config):
 		from urllib.parse import urlsplit, urlunsplit
 		target = list(urlsplit(target))
 
-		# Duplicity now defaults to boto3 as the backend for S3, but we have
-		# legacy boto installed (boto3 doesn't support Ubuntu 18.04) so
-		# we retarget for classic boto.
-		target[0] = "boto+" + target[0]
-
-		# In addition, although we store the S3 hostname in the target URL,
+		# Although we store the S3 hostname in the target URL,
 		# duplicity no longer accepts it in the target URL. The hostname in
 		# the target URL must be the bucket name. The hostname is passed
 		# via get_duplicity_additional_args. Move the first part of the
@@ -283,9 +278,10 @@ def perform_backup(full_backup):
 			if quit:
 				sys.exit(code)
 
-	service_command("php7.2-fpm", "stop", quit=True)
+	service_command("php8.0-fpm", "stop", quit=True)
 	service_command("postfix", "stop", quit=True)
 	service_command("dovecot", "stop", quit=True)
+	service_command("postgrey", "stop", quit=True)
 
 	# Execute a pre-backup script that copies files outside the homedir.
 	# Run as the STORAGE_USER user, not as root. Pass our settings in
@@ -315,9 +311,10 @@ def perform_backup(full_backup):
 			get_duplicity_env_vars(env))
 	finally:
 		# Start services again.
+		service_command("postgrey", "start", quit=False)
 		service_command("dovecot", "start", quit=False)
 		service_command("postfix", "start", quit=False)
-		service_command("php7.2-fpm", "start", quit=False)
+		service_command("php8.0-fpm", "start", quit=False)
 
 	# Remove old backups. This deletes all backup data no longer needed
 	# from more than 3 days ago.
@@ -451,25 +448,12 @@ def list_target_files(config):
 			raise ValueError("Connection to rsync host failed: {}".format(reason))
 
 	elif target.scheme == "s3":
-		# match to a Region
-		fix_boto() # must call prior to importing boto
-		import boto.s3
-		from boto.exception import BotoServerError
-		custom_region = False
-		for region in boto.s3.regions():
-			if region.endpoint == target.hostname:
-				break
-		else:
-			# If region is not found this is a custom region
-			custom_region = True
-
+		import boto3.s3
+		from botocore.exceptions import ClientError
+		
+		# separate bucket from path in target
 		bucket = target.path[1:].split('/')[0]
 		path = '/'.join(target.path[1:].split('/')[1:]) + '/'
-
-		# Create a custom region with custom endpoint
-		if custom_region:
-			from boto.s3.connection import S3Connection
-			region = boto.s3.S3RegionInfo(name=bucket, endpoint=target.hostname, connection_cls=S3Connection)
 
 		# If no prefix is specified, set the path to '', otherwise boto won't list the files
 		if path == '/':
@@ -480,18 +464,15 @@ def list_target_files(config):
 
 		# connect to the region & bucket
 		try:
-			conn = region.connect(aws_access_key_id=config["target_user"], aws_secret_access_key=config["target_pass"])
-			bucket = conn.get_bucket(bucket)
-		except BotoServerError as e:
-			if e.status == 403:
-				raise ValueError("Invalid S3 access key or secret access key.")
-			elif e.status == 404:
-				raise ValueError("Invalid S3 bucket name.")
-			elif e.status == 301:
-				raise ValueError("Incorrect region for this bucket.")
-			raise ValueError(e.reason)
-
-		return [(key.name[len(path):], key.size) for key in bucket.list(prefix=path)]
+			s3 = boto3.client('s3', \
+				endpoint_url=f'https://{target.hostname}', \
+				aws_access_key_id=config['target_user'], \
+				aws_secret_access_key=config['target_pass'])
+			bucket_objects = s3.list_objects_v2(Bucket=bucket, Prefix=path)['Contents']
+			backup_list = [(key['Key'][len(path):], key['Size']) for key in bucket_objects]
+		except ClientError as e:
+			raise ValueError(e)
+		return backup_list
 	elif target.scheme == 'b2':
 		from b2sdk.v1 import InMemoryAccountInfo, B2Api
 		from b2sdk.v1.exception import NonExistentBucket

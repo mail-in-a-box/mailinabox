@@ -4,6 +4,7 @@ After=multi-user.target
 
 [Service]
 Type=idle
+IgnoreSIGPIPE=False
 ExecStart=/usr/local/lib/mailinabox/start
 
 [Install]

@@ -715,7 +715,7 @@ def check_mail_domain(domain, env, output):
 		output.print_ok(good_news)
 
 		# Check MTA-STS policy.
-		loop = asyncio.get_event_loop()
+		loop = asyncio.new_event_loop()
 		sts_resolver = postfix_mta_sts_resolver.resolver.STSResolver(loop=loop)
 		valid, policy = loop.run_until_complete(sts_resolver.resolve(domain))
 		if valid == postfix_mta_sts_resolver.resolver.STSFetchResult.VALID:
@@ -797,7 +797,7 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None, as_list=False):
 
 	# Do the query.
 	try:
-		response = resolver.query(qname, rtype)
+		response = resolver.resolve(qname, rtype)
 	except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
 		# Host did not have an answer for this query; not sure what the
 		# difference is between the two exceptions.

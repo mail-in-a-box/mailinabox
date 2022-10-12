@@ -13,8 +13,8 @@
 # destinations according to aliases, and passses email on to
 # another service for local mail delivery.
 #
-# The first hop in local mail delivery is to Spamassassin via
-# LMTP. Spamassassin then passes mail over to Dovecot for
+# The first hop in local mail delivery is to spampd via
+# LMTP. spampd then passes mail over to Dovecot for
 # storage in the user's mailbox.
 #
 # Postfix also listens on ports 465/587 (SMTPS, SMTP+STARTLS) for
@@ -193,16 +193,17 @@ tools/editconf.py /etc/postfix/main.cf \
 
 # ### Incoming Mail
 
-# Pass any incoming mail over to a local delivery agent. Spamassassin
-# will act as the LDA agent at first. It is listening on port 10025
-# with LMTP. Spamassassin will pass the mail over to Dovecot after.
+# Pass mail to spampd, which acts as the local delivery agent (LDA),
+# which then passes the mail over to the Dovecot LMTP server after.
+# spampd runs on port 10025 by default.
 #
 # In a basic setup we would pass mail directly to Dovecot by setting
 # virtual_transport to `lmtp:unix:private/dovecot-lmtp`.
 tools/editconf.py /etc/postfix/main.cf "virtual_transport=lmtp:[127.0.0.1]:10025"
-# Because of a spampd bug, limit the number of recipients in each connection.
+# Clear the lmtp_destination_recipient_limit setting which in previous
+# versions of Mail-in-a-Box was set to 1 because of a spampd bug.
 # See https://github.com/mail-in-a-box/mailinabox/issues/1523.
-tools/editconf.py /etc/postfix/main.cf lmtp_destination_recipient_limit=1
+tools/editconf.py /etc/postfix/main.cf  -e lmtp_destination_recipient_limit=
 
 
 # Who can send mail to us? Some basic filters.
@@ -232,10 +233,31 @@ tools/editconf.py /etc/postfix/main.cf \
 # As a matter of fact RFC is not strict about retry timer so postfix and
 # other MTA have their own intervals. To fix the problem of receiving
 # e-mails really latter, delay of greylisting has been set to
-# 180 seconds (default is 300 seconds).
+# 180 seconds (default is 300 seconds). We will move the postgrey database
+# under $STORAGE_ROOT. This prevents a "warming up" that would have occured
+# previously with a migrated or reinstalled OS.  We will specify this new path
+# with the --dbdir=... option. Arguments within POSTGREY_OPTS can not have spaces,
+# including dbdir. This is due to the way the init script sources the
+# /etc/default/postgrey file. --dbdir=... either needs to be a path without spaces
+# (luckily $STORAGE_ROOT does not currently work with spaces), or it needs to be a
+# symlink without spaces that can point to a folder with spaces).  We'll just assume
+# $STORAGE_ROOT won't have spaces to simplify things.
 tools/editconf.py /etc/default/postgrey \
-	POSTGREY_OPTS=\"'--inet=127.0.0.1:10023 --delay=180'\"
+	POSTGREY_OPTS=\""--inet=127.0.0.1:10023 --delay=180 --dbdir=$STORAGE_ROOT/mail/postgrey/db"\"
 
+
+# If the $STORAGE_ROOT/mail/postgrey is empty, copy the postgrey database over from the old location
+if [ ! -d $STORAGE_ROOT/mail/postgrey/db ]; then
+	# Stop the service
+	service postgrey stop
+	# Ensure the new paths for postgrey db exists
+	mkdir -p $STORAGE_ROOT/mail/postgrey/db
+	# Move over database files
+	mv /var/lib/postgrey/* $STORAGE_ROOT/mail/postgrey/db/ || true
+fi
+# Ensure permissions are set
+chown -R postgrey:postgrey $STORAGE_ROOT/mail/postgrey/
+chmod 700 $STORAGE_ROOT/mail/postgrey/{,db}
 
 # We are going to setup a newer whitelist for postgrey, the version included in the distribution is old
 cat > /etc/cron.daily/mailinabox-postgrey-whitelist << EOF;

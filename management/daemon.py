@@ -121,9 +121,9 @@ def index():
 	no_users_exist = (len(get_mail_users(env)) == 0)
 	no_admins_exist = (len(get_admins(env)) == 0)
 
-	utils.fix_boto() # must call prior to importing boto
-	import boto.s3
-	backup_s3_hosts = [(r.name, r.endpoint) for r in boto.s3.regions()]
+	import boto3.s3
+	backup_s3_hosts = [(r, f"s3.{r}.amazonaws.com") for r in boto3.session.Session().get_available_regions('s3')]
+
 
 	return render_template('index.html',
 		hostname=env['PRIMARY_HOSTNAME'],
@@ -571,6 +571,8 @@ def system_status():
 	# Create a temporary pool of processes for the status checks
 	with multiprocessing.pool.Pool(processes=5) as pool:
 		run_checks(False, env, output, pool)
+		pool.close()
+		pool.join()
 	return json_response(output.items)
 
 @app.route('/system/updates')
