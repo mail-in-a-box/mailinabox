@@ -274,7 +274,7 @@ fi
 #
 # get the url used to access nextcloud as NC_ADMIN_USER
 #
-NC_CONFIG_CLI_URL="$(cd "$NCDIR/config"; php -n -r 'include "config.php"; print $CONFIG["overwrite.cli.url"];')"
+NC_CONFIG_CLI_URL="$(cd "$NCDIR/config"; ${REQUIRED_PHP_EXECUTABLE:-php} -n -r 'include "config.php"; print $CONFIG["overwrite.cli.url"];')"
 case "$NC_CONFIG_CLI_URL" in
     http:* | https:* )
         urlproto=$(awk -F/ '{print $1}' <<< "$NC_CONFIG_CLI_URL")
@@ -386,7 +386,7 @@ enable_user_ldap() {
     if [ ! -e /etc/apt/preferences.d/no-debian-php ]; then        
         # on a cloud-in-a-box installation, get the php version that
         # nextcloud uses, otherwise install the system php
-        local php="php"
+        local php="${REQUIRED_PHP_PACKAGE:-php}"
         local ciab_site_conf="/etc/nginx/sites-enabled/cloudinabox-nextcloud"
         if [ -e "$ciab_site_conf" ]; then
             php=$(grep 'php[0-9].[0-9]-fpm.sock' "$ciab_site_conf" | \
@@ -395,7 +395,7 @@ enable_user_ldap() {
                       sed 's/-fpm.*$//')
             if [ $? -ne 0 ]; then
                 say "Warning: this looks like a Cloud-In-A-Box system, but detecting the php version used by Nextcloud failed. Using the system php-ldap module..."
-                php="php"
+                php="${REQUIRED_PHP_PACKAGE:-php}"
             fi
         fi
         say_verbose "Installing system package $php-ldap"
@@ -408,7 +408,7 @@ enable_user_ldap() {
         say "WARNING: sudo is not installed: Unable to run occ to check and/or enable Nextcloud app \"user-ldap\"."
     else
         say_verbose "Enable user-ldap"
-        sudo -E -u www-data php $NCDIR/occ app:enable user_ldap -q
+        sudo -E -u www-data ${REQUIRED_PHP_EXECUTABLE:-php} $NCDIR/occ app:enable user_ldap -q
         [ $? -ne 0 ] && die "Unable to enable user_ldap nextcloud app"
     fi
 }
@@ -418,9 +418,9 @@ install_app() {
     if [ ! -x /usr/bin/sudo ]; then
         say "WARNING: sudo is not installed: Unable to run occ to check and/or install Nextcloud app \"$app\"."
         
-    elif [ -z "$(sudo -E -u www-data php $NCDIR/occ app:list | grep -F "${app}:")" ]; then
+    elif [ -z "$(sudo -E -u www-data ${REQUIRED_PHP_EXECUTABLE:-php} $NCDIR/occ app:list | grep -F "${app}:")" ]; then
         say_verbose "Install app '$app'"
-        sudo -E -u www-data php $NCDIR/occ app:install $app
+        sudo -E -u www-data ${REQUIRED_PHP_EXECUTABLE:-php} $NCDIR/occ app:install $app
         [ $? -ne 0 ] && die "Unable to install Nextcloud app '$app'"
     fi
 }
