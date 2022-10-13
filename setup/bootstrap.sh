@@ -11,7 +11,23 @@
 
 # This script is intended to be run like this:
 #
-#   curl https://mailinabox.email/setup.sh | sudo bash
+# --- For a typical installation. No encryption-at-rest. No remote Nextcloud.
+#
+#     curl -s https://raw.githubusercontent.com/downtownallday/mailinabox-ldap/master/setup/bootstrap.sh | sudo bash
+#
+# --- Installation with encryption-at-rest, add ENCRYPTION_AT_REST=true.
+#
+#     curl -s https://raw.githubusercontent.com/downtownallday/mailinabox-ldap/master/setup/bootstrap.sh | sudo ENCRYPTION_AT_REST=true bash
+#
+# --- Installation using a remote Nextcloud, add REMOTE_NEXTCLOUD=true.
+#
+#     curl -s https://raw.githubusercontent.com/downtownallday/mailinabox-ldap/master/setup/bootstrap.sh | sudo REMOTE_NEXTCLOUD=true bash
+#
+#     Important: after completing setup you MUST also connect the
+#     remote Nextcloud to MiaB-LDAP by copying the file
+#     setup/mods.available/connect-nextcloud-to-miab.sh to the remote
+#     Nextcloud system, then run it as root.
+#
 #
 #########################################################
 
@@ -92,6 +108,22 @@ if [ "$TAG" != $(git describe) ]; then
 	echo
 fi
 
+# Enable the remote Nextcloud setup mod
+if [ "${REMOTE_NEXTCLOUD:-false}" = "true" ]; then
+    mkdir -p local
+    if ! ln -sf ../setup/mods.available/remote-nextcloud.sh local/remote-nextcloud.sh; then
+        echo "Unable to create the symbolic link required to enable the remote Nextcloud setup mod"
+        exit 1
+    fi
+elif [ -e local/remote-nextcloud.sh -a "${REMOTE_NEXTCLOUD:-}" = "false" ]; then
+    # Disable remote Nextcloud support - go back to the local Nextcloud
+    rm -f local/remote-nextcloud.sh
+fi
+
 # Start setup script.
-setup/start.sh
+if [ "${ENCRYPTION_AT_REST:-false}" = "true" ]; then
+    ehdd/start-encrypted.sh </dev/tty
+else
+    setup/start.sh </dev/tty
+fi
 

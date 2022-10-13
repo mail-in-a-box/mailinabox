@@ -18,26 +18,41 @@ To add a new account to Nextcloud, simply add a new email account with MiaB-LDAP
 
 Upstream changes are merged as they become available, and releases are numbered the same as upstream.
 
+## How to install
 
-## How to connect to a remote Nextcloud
+Decide what features you want to enable and add the corresponding values to bash:
 
-To integrate Mail-in-a-Box w/LDAP (MiaB-LDAP) with Nextcloud, changes must be made on both sides.  These changes are mostly automated, you'll just need to copy a couple of files.
+### Encryption-at-rest: add `ENCRYPTION_AT_REST=true`.
 
-**On MiaB-LDAP**
+If encryption-at-rest is used, ENCRYPTION_AT_REST=true must be added every time setup is run. Enable encryption-at-rest the very first time setup is run on a fresh system, because it will create a new user-data area. Existing user-data files can be moved to an encrypted drive by manually renaming /home/user-data, running ehdd/create_hdd.sh, ehdd/mount.sh, then copying everything into the newly created encrypted disk mounted at /home/user-data.
 
-1. Enable the remote-nextcloud mod, then run setup.
+### Remote Nextcloud: add `REMOTE_NEXTCLOUD=true`.
 
-To enable the mod, create the directory `local` in the directory where mailinabox is installed (usually $HOME/mailinabox), then create a symbolic link to setup/mods.available/remote-nextcloud.sh. e.g. run this command from the mailinabox directory:
+This enables remote Nextcloud support and only needs to be done once. Once enabled, it will remain enabled until the symbolic link to the local setup mod (in the `local` directory), is manually removed or REMOTE_NEXTCLOUD=flase is given. The remote Nextcloud must also be set up. See the instructions below for those steps.
 
-`mkdir -p local; ln -s ../setup/mods.available/remote-nextcloud.sh local/remote-nextcloud.sh`
+### Some examples:
 
-Re-run setup, by executing setup/start.sh (or ehdd/start-encrypted.sh if using encryption-at-rest) as root. *During setup you will be prompted for the hostname and web prefix of your remote Nextcloud box.*
+#### A typical installation. No encryption-at-rest. No remote Nextcloud.
 
-Once enabled, you'll find that Roundcube and Z-Push (ActiveSync) will use the remote Nextcloud for contacts and calendar instead of the local Nextcloud, which will be disabled. If you upgraded, old contacts will still be available in Roundcube, but will be read-only. Users can drag them into the remote Nextcloud from Roundcube.
+`curl -s https://raw.githubusercontent.com/downtownallday/mailinabox-ldap/master/setup/bootstrap.sh | sudo bash`
+ 
+#### Installation with encryption-at-rest.
 
-**On the remote Nextcloud**
+`curl -s https://raw.githubusercontent.com/downtownallday/mailinabox-ldap/master/setup/bootstrap.sh | sudo ENCRYPTION_AT_REST=true bash`
 
-2\. Hook Nextcloud to MiaB-LDAP by running connect-nextcloud-to-miab.sh
+#### Installation with a remote Nextcloud.
+
+To integrate Mail-in-a-Box w/LDAP (MiaB-LDAP) with Nextcloud, changes must be made on both sides. These changes are mostly automated.
+
+**1. On MiaB-LDAP**
+
+`curl -s https://raw.githubusercontent.com/downtownallday/mailinabox-ldap/master/setup/bootstrap.sh | sudo REMOTE_NEXTCLOUD=true bash`
+
+During setup you will be prompted for the hostname and web prefix of your remote Nextcloud box.
+
+When remote Nextcloud is enabled, Roundcube and Z-Push (ActiveSync) will use the remote Nextcloud for contacts and calendar. The local Nextcloud is disabled. If you upgraded, old contacts will still be available in Roundcube, but will be read-only. Users can drag them into the remote Nextcloud from Roundcube.
+
+**2. On the remote Nextcloud**
 
 Copy the file `setup/mods.available/connect-nextcloud-to-miab.sh` to the Nextcloud box and run it as root (if you installed Cloud-in-a-Box, this script is already available in the setup directory). This will configure Nextcloud's "LDAP user and group backend" with the MiaB-LDAP details and ensure the contacts and calendar apps are installed. *This does not replace or alter your ability to log into Nextcloud with any existing local Nextcloud accounts. It only allows MiaB-LDAP users to log into Nextcloud using their MiaB-LDAP credentials.*
 
