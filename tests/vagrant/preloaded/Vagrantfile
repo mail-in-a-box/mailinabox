@@ -14,7 +14,12 @@ def checkout_tag_and_mount(obj, tag)
     _srcdir="src/maibldap-#{tag}"
     if not Dir.exist?(_srcdir)
       puts "Cloning tag #{tag} to #{_srcdir}"
-      system("git clone -b #{tag} --depth 1 #{ENV['MIABLDAP_GIT']} #{_srcdir}")
+      if tag.size==40 and tag.match?(/\A[0-9a-fA-F]+\Z/)
+        system("git clone #{ENV['MIABLDAP_GIT']} #{_srcdir}")
+        system("cd #{_srcdir}; git reset --hard #{tag}")
+      else
+        system("git clone -b #{tag} --depth 1 #{ENV['MIABLDAP_GIT']} #{_srcdir}")
+      end
     end
     obj.vm.synced_folder _srcdir, "/mailinabox", id: "mailinabox", automount: false
   end
