@@ -62,7 +62,7 @@ if [ ! -d "$backup_files_dir" ]; then
 fi
 
 echo "Shutting down services"
-ehdd/shutdown.sh || exit 1
+ehdd/shutdown.sh --no-umount || exit 1
 
 if [ ! -x /usr/bin/duplicity ]; then
     echo "Installing duplicity"
