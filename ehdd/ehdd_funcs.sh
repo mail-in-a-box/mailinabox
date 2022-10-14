@@ -8,11 +8,13 @@
 #####
 
 
-if [ -s /etc/mailinabox.conf ]; then
-    source /etc/mailinabox.conf
-    [ $? -eq 0 ] || exit 1
-else
-    STORAGE_ROOT="/home/${STORAGE_USER:-user-data}"
+if [ -z "${STORAGE_ROOT:-}" ]; then
+    if [ -s /etc/mailinabox.conf ]; then
+        source /etc/mailinabox.conf
+        [ $? -eq 0 ] || exit 1
+    else
+        STORAGE_ROOT="/home/${STORAGE_USER:-user-data}"
+    fi
 fi
 
 EHDD_IMG="$STORAGE_ROOT.HDD"
