@@ -253,5 +253,15 @@ remote_nextcloud_handler() {
     tools/web_update
 }
 
-remote_nextcloud_handler
-
+if [ $# -gt 0 ]; then
+    if [ "$1" = "cleanup" ]; then
+        [ -e /etc/mailinabox_mods.conf ] && \
+            tools/editconf.py /etc/mailinabox_mods.conf "NC_HOST="
+        remove_hook_handler "remote-nextcloud-mgmt-hooks.py"
+    else
+        echo "Unknown argument: $1"
+        exit 1
+    fi
+else
+    remote_nextcloud_handler
+fi

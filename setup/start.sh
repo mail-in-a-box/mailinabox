@@ -59,7 +59,7 @@ fi
 cat > /usr/local/bin/mailinabox << EOF;
 #!/bin/bash
 cd $(pwd)
-source setup/start.sh
+source $(source ehdd/ehdd_funcs.sh; if hdd_exists; then echo 'ehdd/start-encrypted.sh'; else echo 'setup/start.sh'; fi)
 EOF
 chmod +x /usr/local/bin/mailinabox
 
@@ -176,10 +176,11 @@ fi
 #
 if [ -d "${LOCAL_MODS_DIR:-local}" ]; then
     for mod in $(ls "${LOCAL_MODS_DIR:-local}" | grep -v '~$'); do
-        if [ -x ${LOCAL_MODS_DIR:-local}/$mod ]; then
+        mod_path="${LOCAL_MODS_DIR:-local}/$mod"
+        if [ -f "$mod_path" -a -x "$mod_path" ]; then
             echo ""
-            echo "Running mod: ${LOCAL_MODS_DIR:-local}/$mod"
-            ${LOCAL_MODS_DIR:-local}/$mod
+            echo "Running mod: $mod_path"
+            "$mod_path"
         fi
     done
 fi

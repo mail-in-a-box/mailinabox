@@ -20,17 +20,15 @@ Upstream changes are merged as they become available, and releases are numbered 
 
 ## How to install
 
-Decide what features you want to enable and add the corresponding values to bash:
+Decide what features to enable and add the corresponding values to bash:
 
 ### Encryption-at-rest: add `ENCRYPTION_AT_REST=true`.
 
-Enable encryption-at-rest the very first time setup is run on a fresh system, because it will create a new user-data area on an encrypted drive. To move existing user-data files to an encrypted drive, a manual step is required that involves renaming /home/user-data, running ehdd/create_hdd.sh, ehdd/mount.sh, and then copying everything into the newly created encrypted disk mounted at /home/user-data.
-
-Once encryption-at-rest is enabled, ENCRYPTION_AT_REST=true must be added every time bootstrap setup is run.
+Enable encryption-at-rest the very first time setup is run on a new system to create a fresh user-data area (where mail is stored) on an encrypted drive. To enable encryption-at-rest for an existing server and retain the current user-data, manually create an encrypted drive with ehdd/create_hdd.sh, rename the old user-data directory so it won't conflict with the mounted encrypted drive at /home/user-data, then mount it with ehdd/mount.sh, and finally copy everything into it.
 
 ### Remote Nextcloud: add `REMOTE_NEXTCLOUD=true`.
 
-This enables remote Nextcloud support and only needs to be done once. Once enabled, it will remain enabled until the symbolic link to the local setup mod (in the `local` directory), is manually removed or REMOTE_NEXTCLOUD=flase is given to boostrap setup. See the instructions below for more detail on using a remote Nextcloud.
+This enables remote Nextcloud support. See the instructions below for more detail on using a remote Nextcloud.
 
 ### Some examples:
 

@@ -327,3 +327,16 @@ install_hook_handler() {
 	# let the daemon know there's a new hook handler
 	tools/hooks_update >/dev/null
 }
+
+remove_hook_handler() {
+	local hook_py=$(basename "$1")
+	local dst="${LOCAL_MODS_DIR:-local}/management_hooks_d/$hook_py"
+	if [ -e "$dst" ]; then
+		rm -f "$dst"
+		# let the daemon know installed hooks have been updated
+		if systemctl is-active --quiet mailinabox; then
+			tools/hooks_update >/dev/null
+		fi
+	fi
+}
+

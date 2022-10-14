@@ -28,6 +28,9 @@
 #     setup/mods.available/connect-nextcloud-to-miab.sh to the remote
 #     Nextcloud system, then run it as root.
 #
+# REMOTE_NEXTCLOUD and/or ENCRYPTION_AT_REST only need to be specified
+# once as future bootstrap setup runs will automatically detect the
+# setup options already installed.
 #
 #########################################################
 
@@ -108,8 +111,9 @@ if [ "$TAG" != $(git describe) ]; then
 	echo
 fi
 
-# Enable the remote Nextcloud setup mod
-if [ "${REMOTE_NEXTCLOUD:-false}" = "true" ]; then
+# Remote Nextcloud.
+if [ "${REMOTE_NEXTCLOUD:-}" = "true" ]; then
+    # Enable the remote Nextcloud setup mod
     mkdir -p local
     if ! ln -sf ../setup/mods.available/remote-nextcloud.sh local/remote-nextcloud.sh; then
         echo "Unable to create the symbolic link required to enable the remote Nextcloud setup mod"
@@ -117,7 +121,20 @@ if [ "${REMOTE_NEXTCLOUD:-false}" = "true" ]; then
     fi
 elif [ -e local/remote-nextcloud.sh -a "${REMOTE_NEXTCLOUD:-}" = "false" ]; then
     # Disable remote Nextcloud support - go back to the local Nextcloud
+    local/remote-nextcloud.sh cleanup
     rm -f local/remote-nextcloud.sh
+fi
+
+# Encryption-at-rest.
+if [ -z "${ENCRYPTION_AT_REST:-}" ]; then
+    source ehdd/ehdd_funcs.sh || exit 1
+    hdd_exists && ENCRYPTION_AT_REST=true
+elif [ "${ENCRYPTION_AT_REST:-}" = "false" ]; then 
+    source ehdd/ehdd_funcs.sh || exit 1
+    if hdd_exists; then
+        echo "Encryption-at-rest must be disabled manually"
+        exit 1
+    fi
 fi
 
 # Start setup script.
