@@ -46,11 +46,11 @@ tools/editconf.py /etc/nginx/nginx.conf -s \
 	ssl_protocols="TLSv1.2 TLSv1.3;"
 
 # Tell PHP not to expose its version number in the X-Powered-By header.
-tools/editconf.py /etc/php/$(php_version)/fpm/php.ini -c ';' \
+tools/editconf.py /etc/php/$PHP_VER/fpm/php.ini -c ';' \
 	expose_php=Off
 
 # Set PHPs default charset to UTF-8, since we use it. See #367.
-tools/editconf.py /etc/php/$(php_version)/fpm/php.ini -c ';' \
+tools/editconf.py /etc/php/$PHP_VER/fpm/php.ini -c ';' \
         default_charset="UTF-8"
 
 # Set higher timeout since fts searches with Roundcube may take longer
@@ -60,7 +60,7 @@ tools/editconf.py /etc/php/$(php_version)/fpm/php.ini -c ';' \
         default_socket_timeout=180
 
 # Configure the path environment for php-fpm
-tools/editconf.py /etc/php/$(php_version)/fpm/pool.d/www.conf -c ';' \
+tools/editconf.py /etc/php/$PHP_VER/fpm/pool.d/www.conf -c ';' \
 	env[PATH]=/usr/local/bin:/usr/bin:/bin \
 
 # Configure php-fpm based on the amount of memory the machine has
@@ -70,7 +70,7 @@ tools/editconf.py /etc/php/$(php_version)/fpm/pool.d/www.conf -c ';' \
 TOTAL_PHYSICAL_MEM=$(head -n 1 /proc/meminfo | awk '{print $2}' || /bin/true)
 if [ $TOTAL_PHYSICAL_MEM -lt 1000000 ]
 then
-        tools/editconf.py /etc/php/$(php_version)/fpm/pool.d/www.conf -c ';' \
+        tools/editconf.py /etc/php/$PHP_VER/fpm/pool.d/www.conf -c ';' \
                 pm=ondemand \
                 pm.max_children=8 \
                 pm.start_servers=2 \
@@ -78,7 +78,7 @@ then
                 pm.max_spare_servers=3
 elif [ $TOTAL_PHYSICAL_MEM -lt 2000000 ]
 then
-        tools/editconf.py /etc/php/$(php_version)/fpm/pool.d/www.conf -c ';' \
+        tools/editconf.py /etc/php/$PHP_VER/fpm/pool.d/www.conf -c ';' \
                 pm=ondemand \
                 pm.max_children=16 \
                 pm.start_servers=4 \
@@ -86,14 +86,14 @@ then
                 pm.max_spare_servers=6
 elif [ $TOTAL_PHYSICAL_MEM -lt 3000000 ]
 then
-        tools/editconf.py /etc/php/$(php_version)/fpm/pool.d/www.conf -c ';' \
+        tools/editconf.py /etc/php/$PHP_VER/fpm/pool.d/www.conf -c ';' \
                 pm=dynamic \
                 pm.max_children=60 \
                 pm.start_servers=6 \
                 pm.min_spare_servers=3 \
                 pm.max_spare_servers=9
 else
-        tools/editconf.py /etc/php/$(php_version)/fpm/pool.d/www.conf -c ';' \
+        tools/editconf.py /etc/php/$PHP_VER/fpm/pool.d/www.conf -c ';' \
                 pm=dynamic \
                 pm.max_children=120 \
                 pm.start_servers=12 \
@@ -162,7 +162,7 @@ chown www-data /var/log/nginx/geoipblock.log
 
 # Start services.
 restart_service nginx
-restart_service php$(php_version)-fpm
+restart_service php$PHP_VER-fpm
 
 # Open ports.
 ufw_allow http

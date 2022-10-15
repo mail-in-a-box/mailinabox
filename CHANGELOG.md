@@ -1,28 +1,34 @@
 CHANGELOG
 =========
 
-Version 60 (date TBD)
----------------------
+Version 60 (October 11, 2022)
+-----------------------------
 
 This is the first release for Ubuntu 22.04.
 
-**Before upgrading**, you must **first upgrade your existing Ubuntu 18.04 box to Mail-in-a-Box v0.51** (or any later version of Mail-in-a-Box supporting Ubuntu 18.04), if you haven't already done so. That may not be possible after Ubuntu 18.04 reaches its end of life in April 2023, so please compete the upgrade well before then. (If you are not using Nextcloud's contacts or calendar, you can migrate to the latest version of Mail-in-a-Box from any previous version.) 
+**Before upgrading**, you must **first upgrade your existing Ubuntu 18.04 box to Mail-in-a-Box v0.51 or later**, if you haven't already done so. That may not be possible after Ubuntu 18.04 reaches its end of life in April 2023, so please complete the upgrade well before then. (If you are not using Nextcloud's contacts or calendar, you can migrate to the latest version of Mail-in-a-Box from any previous version.)
 
 For complete upgrade instructions, see:
 
-LINK TBD
+https://discourse.mailinabox.email/t/version-60-for-ubuntu-22-04-is-about-to-be-released/9558
 
-No features of Mail-in-a-Box have changed in this release, but with the newer version of Ubuntu the following software packages we use are updated:
+No major features of Mail-in-a-Box have changed in this release, although some minor fixes were made.
 
-* dovecot is upgraded to 2.3.16, postfix to 3.6.3, opendmark to 1.4 (which adds ARC-Authentication-Results headers), and spampd to 2.53 (alleviating a mail delivery rate limiting bug).
-* Nextcloud is upgraded to 23.0.0 with PHP updated from 7.2 to 8.0.
+With the newer version of Ubuntu the following software packages we use are updated:
+
+* dovecot is upgraded to 2.3.16, postfix to 3.6.4, opendmark to 1.4 (which adds ARC-Authentication-Results headers), and spampd to 2.53 (alleviating a mail delivery rate limiting bug).
+* Nextcloud is upgraded to 24.0.0
+* Roundcube is upgraded to 1.6.0.
 * certbot is upgraded to 1.21 (via the Ubuntu repository instead of a PPA).
 * fail2ban is upgraded to 0.11.2.
 * nginx is upgraded to 1.18.
+* PHP is upgraded from 7.2 to 8.1.
 * bind9 is replaced with unbound
 
-In Development
---------------
+Also:
+
+* Roundcube's login session cookie was tightened. Existing sessions may require a manual logout.
+* Moved Postgrey's database under $STORAGE_ROOT.
 
 Version 57a (June 19, 2022)
 ---------------------------

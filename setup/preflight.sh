@@ -7,9 +7,9 @@ if [[ $EUID -ne 0 ]]; then
 	exit 1
 fi
 
-# Check that we are running on Ubuntu 20.04 LTS or Ubuntu 22.04 LTS
-if [ "$( lsb_release --id --short )" != "Ubuntu" ] || [ "$( lsb_release --release --short )" != "22.04" -a "$( lsb_release --release --short )" != "20.04" ]; then
-	echo "Mail-in-a-Box only supports being installed on Ubuntu 20.04 or 22.04, sorry. You are running:"
+# Check that we are running on Ubuntu 22.04 LTS (or 22.04.xx).
+if [ "$( lsb_release --id --short )" != "Ubuntu" ] || [ "$( lsb_release --release --short )" != "22.04" ]; then
+	echo "Mail-in-a-Box only supports being installed on Ubuntu 22.04, sorry. You are running:"
 	echo
 	lsb_release --description --short
 	echo

@@ -49,8 +49,8 @@ apt_install php php-fpm \
 	php-dev php-xml php-mbstring php-zip php-apcu php-json \
 	php-intl php-imagick php-gmp php-bcmath
 
-# Enable apc is required before installing nextcloud
-tools/editconf.py /etc/php/$(php_version)/mods-available/apcu.ini -c ';' \
+# Enable APC before Nextcloud tools are run.
+tools/editconf.py /etc/php/$PHP_VER/mods-available/apcu.ini -c ';' \
     apc.enabled=1 \
     apc.enable_cli=1
 
@@ -155,7 +155,7 @@ fi
 if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextcloud_ver ]]; then
 
 	# Stop php-fpm if running. If they are not running (which happens on a previously failed install), dont bail.
-	service php$(php_version)-fpm stop &> /dev/null || /bin/true
+	service php$PHP_VER-fpm stop &> /dev/null || /bin/true
 
 	# Backup the existing ownCloud/Nextcloud.
 	# Create a backup directory to store the current installation and database to
@@ -280,7 +280,7 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
     array(
       'class' => '\OCA\UserExternal\IMAP',
           'arguments' => array(
-          '127.0.0.1', 143, null
+        '127.0.0.1', 143, null, null, false, false
          ),
     ),
   ),
@@ -343,7 +343,7 @@ php <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP $STORAGE_ROOT/owncloud/config.php;
 <?php
 include("$STORAGE_ROOT/owncloud/config.php");
 
-\$CONFIG['config_is_read_only'] = false; # should prevent warnings from occ tool but doesn't
+\$CONFIG['config_is_read_only'] = true;
 
 \$CONFIG['trusted_domains'] = array('$PRIMARY_HOSTNAME');
 
@@ -358,7 +358,14 @@ include("$STORAGE_ROOT/owncloud/config.php");
 
 \$CONFIG['mail_domain'] = '$PRIMARY_HOSTNAME';
 
-\$CONFIG['user_backends'] = array(array('class' => '\OCA\UserExternal\IMAP','arguments' => array('127.0.0.1', 143, null),),);
+\$CONFIG['user_backends'] = array(
+  array(
+    'class' => '\OCA\UserExternal\IMAP',
+    'arguments' => array(
+      '127.0.0.1', 143, null, null, false, false
+    ),
+  ),
+);
 
 echo "<?php\n\\\$CONFIG = ";
 var_export(\$CONFIG);
@@ -366,7 +373,7 @@ echo ";";
 ?>
 EOF
 chown www-data.www-data $STORAGE_ROOT/owncloud/config.php
-chmod 640 $STORAGE_ROOT/owncloud/config.php
+#chmod 640 $STORAGE_ROOT/owncloud/config.php
 
 # Enable/disable apps. Note that this must be done after the Nextcloud setup.
 # The firstrunwizard gave Josh all sorts of problems, so disabling that.
@@ -402,7 +409,7 @@ sudo -u www-data php /usr/local/lib/owncloud/occ app:update --all
 
 # Set PHP FPM values to support large file uploads
 # (semicolon is the comment character in this file, hashes produce deprecation warnings)
-tools/editconf.py /etc/php/$(php_version)/fpm/php.ini -c ';' \
+tools/editconf.py /etc/php/$PHP_VER/fpm/php.ini -c ';' \
 	upload_max_filesize=16G \
 	post_max_size=16G \
 	output_buffering=16384 \
@@ -411,7 +418,7 @@ tools/editconf.py /etc/php/$(php_version)/fpm/php.ini -c ';' \
 	short_open_tag=On
 
 # Set Nextcloud recommended opcache settings
-tools/editconf.py /etc/php/$(php_version)/cli/conf.d/10-opcache.ini -c ';' \
+tools/editconf.py /etc/php/$PHP_VER/cli/conf.d/10-opcache.ini -c ';' \
 	opcache.enable=1 \
 	opcache.enable_cli=1 \
 	opcache.interned_strings_buffer=8 \
@@ -420,6 +427,12 @@ tools/editconf.py /etc/php/$(php_version)/cli/conf.d/10-opcache.ini -c ';' \
 	opcache.save_comments=1 \
 	opcache.revalidate_freq=1
 
+# Migrate users_external data from <0.6.0 to version 3.0.0 (see https://github.com/nextcloud/user_external).
+# This version was probably in use in Mail-in-a-Box v0.41 (February 26, 2019) and earlier.
+# We moved to v0.6.3 in 193763f8. Ignore errors - maybe there are duplicated users with the
+# correct backend already.
+sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "UPDATE oc_users_external SET backend='127.0.0.1';" || /bin/true
+
 # Set up a cron job for Nextcloud.
 cat > /etc/cron.d/mailinabox-nextcloud << EOF;
 #!/bin/bash
@@ -427,9 +440,6 @@ cat > /etc/cron.d/mailinabox-nextcloud << EOF;
 */5 * * * *	root	sudo -u www-data php -f /usr/local/lib/owncloud/cron.php
 EOF
 chmod +x /etc/cron.d/mailinabox-nextcloud
-
-# Remove previous hourly cronjob
-rm -f /etc/cron.hourly/mailinabox-owncloud
 
 # There's nothing much of interest that a user could do as an admin for Nextcloud,
 # and there's a lot they could mess up, so we don't make any users admins of Nextcloud.
@@ -441,4 +451,4 @@ rm -f /etc/cron.hourly/mailinabox-owncloud
 # ```
 
 # Enable PHP modules and restart PHP.
-restart_service php$(php_version)-fpm
+restart_service php$PHP_VER-fpm

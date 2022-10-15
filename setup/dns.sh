@@ -10,8 +10,6 @@
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
-echo "Installing nsd (DNS server)..."
-
 # Prepare nsd's configuration.
 # We configure nsd before installation as we only want it to bind to some addresses
 # and it otherwise will have port / bind conflicts with unbound used as the local resolver
@@ -68,19 +66,12 @@ cat > /etc/logrotate.d/nsd <<EOF;
 }
 EOF
 
-# Add systemd override file to fix some permissions
-mkdir -p /etc/systemd/system/nsd.service.d/
-cat > /etc/systemd/system/nsd.service.d/nsd-permissions.conf << EOF
-[Service]
-ReadWritePaths=/var/lib/nsd /etc/nsd /run /var/log /run/nsd
-CapabilityBoundingSet=CAP_CHOWN CAP_IPC_LOCK CAP_NET_BIND_SERVICE CAP_SETGID CAP_SETUID CAP_SYS_CHROOT CAP_NET_ADMIN
-EOF
-
 # Install the packages.
 #
 # * nsd: The non-recursive nameserver that publishes our DNS records.
 # * ldnsutils: Helper utilities for signing DNSSEC zones.
 # * openssh-client: Provides ssh-keyscan which we use to create SSHFP records.
+echo "Installing nsd (DNS server)..."
 apt_install nsd ldnsutils openssh-client
 
 # Create DNSSEC signing keys.

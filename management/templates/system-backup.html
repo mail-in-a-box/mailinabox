@@ -269,6 +269,7 @@ function show_custom_backup() {
           $("#backup-target-type").val("s3");
           var hostpath = r.target.substring(5).split('/');
           var host = hostpath.shift();
+          $("#backup-target-s3-host-select").val(host);
           $("#backup-target-s3-host").val(host);
           $("#backup-target-s3-path").val(hostpath.join('/'));
         } else if (r.target.substring(0, 5) == "b2://") {

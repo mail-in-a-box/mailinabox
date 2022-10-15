@@ -83,6 +83,9 @@ fi
 tools/editconf.py /etc/systemd/journald.conf MaxRetentionSec=10day
 
 hide_output systemctl restart systemd-journald.service
+
+# ### Add PPAs.
+
 # We install some non-standard Ubuntu packages maintained by other
 # third-party providers. First ensure add-apt-repository is installed.
 
@@ -96,6 +99,8 @@ fi
 # come from there and minimal Ubuntu installs may have it turned off.
 hide_output add-apt-repository -y universe
 
+# Install the duplicity PPA.
+hide_output add-apt-repository -y ppa:duplicity-team/duplicity-release-git
 # ### Update Packages
 
 # Update system packages to make sure we have the latest upstream versions
