@@ -343,7 +343,7 @@ php <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP $STORAGE_ROOT/owncloud/config.php;
 <?php
 include("$STORAGE_ROOT/owncloud/config.php");
 
-\$CONFIG['config_is_read_only'] = false;
+\$CONFIG['config_is_read_only'] = true;
 
 \$CONFIG['trusted_domains'] = array('$PRIMARY_HOSTNAME');
 
@@ -373,7 +373,7 @@ echo ";";
 ?>
 EOF
 chown www-data.www-data $STORAGE_ROOT/owncloud/config.php
-chmod 640 $STORAGE_ROOT/owncloud/config.php
+#chmod 640 $STORAGE_ROOT/owncloud/config.php
 
 # Enable/disable apps. Note that this must be done after the Nextcloud setup.
 # The firstrunwizard gave Josh all sorts of problems, so disabling that.

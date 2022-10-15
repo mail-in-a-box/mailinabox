@@ -285,6 +285,7 @@ def perform_backup(full_backup):
 	service_command(php_fpm, "stop", quit=True)
 	service_command("postfix", "stop", quit=True)
 	service_command("dovecot", "stop", quit=True)
+	service_command("postgrey", "stop", quit=True)
 
 	# Execute a pre-backup script that copies files outside the homedir.
 	# Run as the STORAGE_USER user, not as root. Pass our settings in
@@ -314,6 +315,7 @@ def perform_backup(full_backup):
 			get_duplicity_env_vars(env))
 	finally:
 		# Start services again.
+		service_command("postgrey", "start", quit=False)
 		service_command("dovecot", "start", quit=False)
 		service_command("postfix", "start", quit=False)
 		service_command(php_fpm, "start", quit=False)

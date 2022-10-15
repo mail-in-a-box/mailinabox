@@ -573,6 +573,8 @@ def system_status():
 	# Create a temporary pool of processes for the status checks
 	with multiprocessing.pool.Pool(processes=5) as pool:
 		run_checks(False, env, output, pool)
+		pool.close()
+		pool.join()
 	return json_response(output.items)
 
 @app.route('/system/updates')
