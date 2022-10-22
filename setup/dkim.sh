@@ -33,13 +33,11 @@ tools/editconf.py /etc/dkimpy-milter/dkimpy-milter.conf -s \
     "MacroListVerify=daemon_name|VERIFYING" \
     "Canonicalization=relaxed/simple" \
     "MinimumKeyBits=1024" \
-    "ExternalIgnoreList=refile:/etc/dkim/TrustedHosts" \
     "InternalHosts=refile:/etc/dkim/TrustedHosts" \
     "KeyTable=refile:/etc/dkim/KeyTable" \
     "KeyTableEd25519=refile:/etc/dkim/KeyTableEd25519" \
     "SigningTable=refile:/etc/dkim/SigningTable" \
-    "Socket=inet:8892@127.0.0.1" \
-    "RequireSafeKeys=false"
+    "Socket=inet:8892@127.0.0.1"
 
 # Create a new DKIM key. This creates mail.private and mail.txt
 # in $STORAGE_ROOT/mail/dkim. The former is the private key and
@@ -90,15 +88,6 @@ tools/editconf.py /etc/opendmarc.conf -s \
 
 tools/editconf.py /etc/opendmarc.conf -s \
         "FailureReportsOnNone=true"
-
-# AlwaysAddARHeader Adds an "Authentication-Results:" header field even to
-# unsigned messages from domains with no "signs all" policy. The reported DKIM
-# result will be  "none" in such cases. Normally unsigned mail from non-strict
-# domains does not cause the results header field to be added. This added header
-# is used by spamassassin to evaluate the mail for spamminess.
-
-tools/editconf.py /etc/dkimpy-milter/dkimpy-milter.conf -s \
-        "AlwaysAddARHeader=true"
 
 # Add DKIMpy and OpenDMARC as milters to postfix, which is how DKIMpy
 # intercepts outgoing mail to perform the signing (by adding a mail header)
