@@ -983,6 +983,7 @@ def set_custom_dns_record(qname, rtype, value, action, env):
 def get_secondary_dns(custom_dns, mode=None):
 	resolver = dns.resolver.get_default_resolver()
 	resolver.timeout = 10
+	resolver.lifetime = 10
 
 	values = []
 	for qname, rtype, value in custom_dns:
@@ -1000,10 +1001,17 @@ def get_secondary_dns(custom_dns, mode=None):
 			# doesn't.
 			if not hostname.startswith("xfr:"):
 				if mode == "xfr":
-					response = dns.resolver.resolve(hostname+'.', "A", raise_on_no_answer=False)
-					values.extend(map(str, response))
-					response = dns.resolver.resolve(hostname+'.', "AAAA", raise_on_no_answer=False)
-					values.extend(map(str, response))
+					try:
+						response = resolver.resolve(hostname+'.', "A", raise_on_no_answer=False)
+						values.extend(map(str, response))
+					except dns.exception.DNSException:
+						pass
+						
+					try:
+						response = resolver.resolve(hostname+'.', "AAAA", raise_on_no_answer=False)
+						values.extend(map(str, response))
+					except dns.exception.DNSException:
+						pass
 					continue
 				values.append(hostname)
 
@@ -1021,6 +1029,8 @@ def set_secondary_dns(hostnames, env):
 		# Validate that all hostnames are valid and that all zone-xfer IP addresses are valid.
 		resolver = dns.resolver.get_default_resolver()
 		resolver.timeout = 5
+		resolver.lifetime = 5
+		
 		for item in hostnames:
 			if not item.startswith("xfr:"):
 				# Resolve hostname.
@@ -1030,7 +1040,11 @@ def set_secondary_dns(hostnames, env):
 					try:
 						response = resolver.resolve(item, "AAAA")
 					except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
-						raise ValueError("Could not resolve the IP address of %s." % item)
+						pass
+					except (dns.resolver.Timeout):
+						raise ValueError("Could not resolve the IP address of %s due to timeout." % item)
+				except (dns.resolver.Timeout):
+					raise ValueError("Could not resolve the IP address of %s due to timeout." % item)
 			else:
 				# Validate IP address.
 				try:
@@ -1062,7 +1076,7 @@ def get_custom_dns_records(custom_dns, qname, rtype):
 def build_recommended_dns(env):
 	ret = []
 	for (domain, zonefile, records) in build_zones(env):
-		# remove records that we don't dislay
+		# remove records that we don't display
 		records = [r for r in records if r[3] is not False]
 
 		# put Required at the top, then Recommended, then everythiing else
