@@ -20,12 +20,29 @@ log = logging.getLogger(__name__)
 # update_hook_handlers() for the format
 #
 mutex = Lock()
+initialized = False
 handlers = [] 
-mods_env = {}  # dict derived from /etc/mailinabox_mods.conf
+mods_env = {}  # dict of /etc/mailinabox.conf and /etc/mailinabox_mods.conf
 
 def update_hook_handlers():
 	global handlers, mods_env
+
+	# load /etc/mailinabox.conf and /etc/mailinabox_mods.conf
+	new_mods_env = load_environment()
+	if os.path.isfile('/etc/mailinabox_mods.conf'):    
+		load_env_vars_from_file(
+			'/etc/mailinabox_mods.conf',
+			strip_quotes=True,
+			merge_env=new_mods_env
+		)
+
 	new_handlers= []
+
+	if 'LOCAL_MODS_DIR' in new_mods_env:
+		dir = new_mods_env['LOCAL_MODS_DIR']
+		if dir not in sys.path:
+			sys.path.append(dir)
+						
 	for dir in sys.path:
 		hooks_dir = os.path.join(dir, "management_hooks_d")
 		if not os.path.isdir(hooks_dir):
@@ -47,19 +64,11 @@ def update_hook_handlers():
 	new_handlers = sorted(new_handlers, key=lambda path: path['sort_id'])
 	log.info('%s hook handlers', len(new_handlers))
 
-	# load /etc/mailinabox_mods.conf
-	new_mods_env = load_environment()
-	if os.path.isfile('/etc/mailinabox_mods.conf'):    
-		load_env_vars_from_file(
-			'/etc/mailinabox_mods.conf',
-			strip_quotes=True,
-			merge_env=new_mods_env
-		)
-
 	# update globals
 	mutex.acquire()
 	handlers = new_handlers
 	mods_env = new_mods_env
+	initialized = True
 	mutex.release()
 
 
@@ -68,6 +77,9 @@ def exec_hooks(hook_name, data):
 	# contents of which are specific to the type of hook. Handlers may
 	# modify the dictionary to return updates to the caller.
 
+	if not initialized:
+		update_hook_handlers()
+		
 	mutex.acquire()
 	cur_handlers = handlers
 	cur_mods_env = mods_env

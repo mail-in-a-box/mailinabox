@@ -103,7 +103,7 @@ tr -cd '[:xdigit:]' < /dev/urandom | head -c 32 > /var/lib/mailinabox/api.key
 chmod 640 /var/lib/mailinabox/api.key
 
 source $venv/bin/activate
-export PYTHONPATH=$(pwd)/management:${LOCAL_MODS_DIR:-$(pwd)/local}
+export PYTHONPATH=$(pwd)/management
 exec gunicorn --log-level ${MGMT_LOG_LEVEL:-info} -b localhost:10222 -w 1 --timeout 630 wsgi:app
 EOF
 chmod +x $inst_dir/start

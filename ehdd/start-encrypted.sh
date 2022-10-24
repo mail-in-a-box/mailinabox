@@ -35,5 +35,6 @@ if [ $? -eq 0 ]; then
     ehdd/postinstall.sh || exit 1
 else
     echo "setup/start.sh failed"
+    exit 1
 fi
 

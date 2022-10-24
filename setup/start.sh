@@ -105,6 +105,9 @@ if [ ! -f $STORAGE_ROOT/mailinabox-ldap.version ]; then
 	chown $STORAGE_USER.$STORAGE_USER $STORAGE_ROOT/mailinabox-ldap.version
 fi
 
+# normalize the directory path for setup mods
+LOCAL_MODS_DIR="$(realpath -m "${LOCAL_MODS_DIR:-${DEFAULT_LOCAL_MODS_DIR:-local}}")"
+
 # Save the global options in /etc/mailinabox.conf so that standalone
 # tools know where to look for data. The default MTA_STS_MODE setting
 # is blank unless set by an environment variable, but see web.sh for
@@ -118,6 +121,7 @@ PUBLIC_IPV6=$PUBLIC_IPV6
 PRIVATE_IP=$PRIVATE_IP
 PRIVATE_IPV6=$PRIVATE_IPV6
 MTA_STS_MODE=${DEFAULT_MTA_STS_MODE:-enforce}
+LOCAL_MODS_DIR=$LOCAL_MODS_DIR
 EOF
 
 # Start service configuration.
@@ -139,11 +143,7 @@ source setup/management-capture.sh
 source setup/munin.sh
 
 # Wait for the management daemon to start...
-until nc -z -w 4 127.0.0.1 10222
-do
-	echo Waiting for the Mail-in-a-Box management daemon to start...
-	sleep 2
-done
+wait_for_management_daemon progress forever
 
 # ...and then have it write the DNS and nginx configuration files and start those
 # services.
@@ -174,9 +174,9 @@ fi
 #
 # Run setup mods 
 #
-if [ -d "${LOCAL_MODS_DIR:-local}" ]; then
-    for mod in $(ls "${LOCAL_MODS_DIR:-local}" | grep -v '~$'); do
-        mod_path="${LOCAL_MODS_DIR:-local}/$mod"
+if [ -d "$LOCAL_MODS_DIR" ]; then
+    for mod in $(ls "$LOCAL_MODS_DIR" | grep -v '~$'); do
+        mod_path="$LOCAL_MODS_DIR/$mod"
         if [ -f "$mod_path" -a -x "$mod_path" ]; then
             echo ""
             echo "Running mod: $mod_path"
