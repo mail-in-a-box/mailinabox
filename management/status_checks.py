@@ -1103,10 +1103,14 @@ if __name__ == "__main__":
 	if len(sys.argv) == 1:
 		with multiprocessing.pool.Pool(processes=10) as pool:
 			run_checks(False, env, ConsoleOutput(), pool)
+			pool.close()
+			pool.join()
 
 	elif sys.argv[1] == "--show-changes":
 		with multiprocessing.pool.Pool(processes=10) as pool:
 			run_and_output_changes(env, pool)
+			pool.close()
+			pool.join()
 
 	elif sys.argv[1] == "--check-primary-hostname":
 		# See if the primary hostname appears resolvable and has a signed certificate.
@@ -1128,3 +1132,5 @@ if __name__ == "__main__":
 	elif sys.argv[1] == "--only":
 		with multiprocessing.pool.Pool(processes=10) as pool:
 			run_checks(False, env, ConsoleOutput(), pool, domains_to_check=sys.argv[2:])
+			pool.close()
+			pool.join()
