@@ -1030,17 +1030,29 @@ def set_secondary_dns(hostnames, env):
 		resolver = dns.resolver.get_default_resolver()
 		resolver.timeout = 5
 		resolver.lifetime = 5
-		
+				
 		for item in hostnames:
 			if not item.startswith("xfr:"):
 				# Resolve hostname.
-				try:
-					response = resolver.resolve(item, "A")
-				except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.Timeout):
+				tries = 2
+				
+				while tries > 0:
+					tries = tries - 1
 					try:
-						response = resolver.resolve(item, "AAAA")
-					except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.Timeout):
-						raise ValueError("Could not resolve the IP address of %s." % item)
+						response = resolver.resolve(item, "A")
+						tries = 0
+					except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+						try:
+							response = resolver.resolve(item, "AAAA")
+							tries = 0
+						except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+							raise ValueError("Could not resolve the IP address of %s." % item)
+						except (dns.resolver.Timeout):
+							if tries < 1:
+								raise ValueError("Could not resolve the IP address of %s due to timeout." % item)
+					except (dns.resolver.Timeout):
+						if tries < 1:
+							raise ValueError("Could not resolve the IP address of %s due to timeout." % item)
 			else:
 				# Validate IP address.
 				try:
