@@ -184,7 +184,8 @@ cp ${RCM_PLUGIN_DIR}/password/config.inc.php.dist \
 tools/editconf.py ${RCM_PLUGIN_DIR}/password/config.inc.php \
 	"\$config['password_minimum_length']=8;" \
 	"\$config['password_db_dsn']='sqlite:///$STORAGE_ROOT/mail/users.sqlite';" \
-	"\$config['password_query']='UPDATE users SET password=%D WHERE email=%u';" \
+	"\$config['password_query']='UPDATE users SET password=%P WHERE email=%u';" \
+	"\$config['password_algorithm'] = 'dovecot';" \
 	"\$config['password_dovecotpw']='/usr/bin/doveadm pw';" \
 	"\$config['password_dovecotpw_method']='SHA512-CRYPT';" \
 	"\$config['password_dovecotpw_with_method']=true;"
