@@ -27,6 +27,7 @@ if [ ! -d "setup" ]; then
     exit 1
 fi
 
+source tests/lib/misc.sh
 source tests/lib/system.sh
 source tests/lib/color-output.sh
 
@@ -63,6 +64,7 @@ C==1             { printf("%s",substr($0,0,length($0)-1)); next }
 }
 
 install_packages() {
+    local return_code=0
     while read line; do
         pkgs=""
         case "$line" in
@@ -89,9 +91,11 @@ install_packages() {
             H2 "install: $pkgs"
             if ! $dry_run; then
                 exec_no_output apt-get install -y $pkgs
+                let return_code+=$?
             fi
         fi
     done
+    return $return_code
 }
 
 install_ppas() {
@@ -138,9 +142,47 @@ if ! $dry_run; then
     exec_no_output apt-get autoremove -y
 fi
 
-for file in $(ls setup/*.sh); do
+# without using the same installation order as setup/start.sh, we end
+# up with the system's php getting installed in addition to the
+# non-system php that may also installed by setup (don't know why,
+# probably one of the packages has a dependency). create an ordered
+# list of files to process so we get a similar system setup.
+
+setup_files=( $(ls setup/*.sh) )
+desired_order=(
+    setup/functions.sh
+    setup/preflight.sh
+    setup/questions.sh
+    setup/network-checks.sh
+    setup/system.sh
+    setup/ssl.sh
+    setup/dns.sh
+    setup/ldap.sh
+    setup/mail-postfix.sh
+    setup/mail-dovecot.sh
+    setup/mail-users.sh
+    setup/dkim.sh
+    setup/spamassassin.sh
+    setup/web.sh
+    setup/webmail.sh
+    setup/nextcloud.sh
+    setup/zpush.sh
+    setup/management.sh
+    setup/management-capture.sh
+    setup/munin.sh
+    setup/firstuser.sh
+)
+ordered_files=()
+for file in "${desired_order[@]}" "${setup_files[@]}"; do
+    if [ -e "$file" ] && ! array_contains "$file" "${ordered_files[@]}"; then
+        ordered_files+=( "$file" )
+    fi
+done
+
+for file in ${ordered_files[@]}; do
     H1 "$file"
     remove_line_continuation "$file" | install_packages
+    [ $? -ne 0 ] && exit 1
 done
 
 if ! $dry_run; then
@@ -152,14 +194,16 @@ if ! $dry_run; then
     # echo "PubkeyAcceptedAlgorithms +ssh-rsa" > /etc/ssh/sshd_config.d/miabldap.conf
     H2 "emacs"
     exec_no_output apt-get install -y emacs-nox
-    H2 "nptdate"
+    H2 "ntpdate"
     exec_no_output apt-get install -y ntpdate
     H2 "net-tools"
     exec_no_output apt-get install -y net-tools
 
     # these are added by system-setup scripts and needed for test runner
-    H2 "python3-dnspython jq"
-    exec_no_output apt-get install -y python3-dnspython jq
+    H2 "python3-dnspython"
+    exec_no_output apt-get install -y python3-dnspython
+    H2 "jq"
+    exec_no_output apt-get install -y jq
 
     # remove apache, which is what setup will do
     H2 "remove apache2"
