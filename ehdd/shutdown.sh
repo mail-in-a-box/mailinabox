@@ -33,6 +33,9 @@ if [ "$1" != "--no-umount" ]; then
         code=$?
         let tries+=1
     done
+    if [ $code -eq 2 ]; then
+        echo "Giving up! (lsof: $(/usr/bin/lsof | grep "$STORAGE_ROOT"))"
+    fi
 else
     code=0
 fi
