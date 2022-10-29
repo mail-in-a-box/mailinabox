@@ -11,12 +11,15 @@
 
 # load defaults for MIABLDAP_GIT and MIABLDAP_FINAL_RELEASE_TAG_BIONIC64 (make available to Vagrantfile)
 pushd "../../.." >/dev/null
+source tests/lib/color-output.sh
 source tests/system-setup/setup-defaults.sh || exit 1
 popd >/dev/null
 
+H1 "Destroy any running boxes"
 vagrant destroy -f
 rm -f prepcode.txt
 
+H1 "Ensure plugins are installed"
 for plugin in "vagrant-vbguest" "vagrant-reload"
 do
     if ! vagrant plugin list | grep -F "$plugin" >/dev/null; then
@@ -24,32 +27,40 @@ do
     fi
 done
 
+H1 "Upgrade base boxes"
 vagrant box update
 
 
 boxes=(
-    "preloaded-ubuntu-bionic64"
     "preloaded-ubuntu-jammy64"
+    "preloaded-ubuntu-bionic64"
 )
 # preload packages from source of the following git tags. empty string
 # means use the current source tree
 tags=(
-    "$MIABLDAP_FINAL_RELEASE_TAG_BIONIC64"
     ""
+    "$MIABLDAP_FINAL_RELEASE_TAG_BIONIC64"
 )
 try_reboot=(
-    false
     true
+    false
 )
 idx=0
 
 for box in "${boxes[@]}"
 do
-    if [ ! -z "$1" -a "$1" != "$box" ]; then
-        let idx+=1
-        continue
+    if [ -z "$1" ]; then
+        # no cli arguments - only process first box
+       [ $idx -ge 1 ] && break
+    else
+        # cli argument specifies "all" or a named box
+        if [ "$1" != "all" -a "$1" != "$box" ]; then
+            let idx+=1
+            continue
+        fi
     fi
 
+    H1 "Provision: $box"
     export RELEASE_TAG="${tags[$idx]}"
     vagrant up $box | tee /tmp/$box.out
     upcode=$?
