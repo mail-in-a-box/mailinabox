@@ -1,4 +1,5 @@
 #!/usr/local/lib/mailinabox/env/bin/python
+# -*- indent-tabs-mode: t; tab-width: 4; python-indent-offset: 4; -*-
 #####
 ##### This file is part of Mail-in-a-Box-LDAP which is released under the
 ##### terms of the GNU Affero General Public License as published by the
@@ -28,6 +29,7 @@ from ssl_certificates import get_ssl_certificates, get_domain_ssl_files, check_c
 from mailconfig import get_mail_domains, get_mail_aliases
 
 from utils import shell, sort_domains, load_env_vars_from_file, load_settings
+import hooks
 
 def get_services():
 	return [
@@ -74,6 +76,7 @@ def run_checks(rounded_values, env, output, pool, domains_to_check=None):
 
 	run_network_checks(env, output)
 	run_domain_checks(rounded_values, env, output, pool, domains_to_check=domains_to_check)
+
 
 def get_ssh_port():
 	# Returns ssh port
@@ -1006,10 +1009,20 @@ def run_and_output_changes(env, pool):
 				out.add_heading(category)
 				out.print_warning("This section was removed.")
 
+	# execute hooks
+	hook_data = {
+		'op':'output_changes_end',
+		'since': os.stat(cache_fn).st_mtime if os.path.exists(cache_fn) else 0,
+		'env':env,
+		'output':out
+	}
+	hooks.exec_hooks('status_checks', hook_data)
+	
 	# Store the current status checks output for next time.
 	os.makedirs(os.path.dirname(cache_fn), exist_ok=True)
 	with open(cache_fn, "w") as f:
 		json.dump(cur.buf, f, indent=True)
+
 
 def normalize_ip(ip):
 	# Use ipaddress module to normalize the IPv6 notation and
@@ -1097,6 +1110,10 @@ class BufferedOutput:
 
 if __name__ == "__main__":
 	from utils import load_environment
+	import logging
+
+	if os.environ.get('DEBUG','0') == '1':
+		logging.basicConfig(level=logging.DEBUG)
 
 	env = load_environment()
 
