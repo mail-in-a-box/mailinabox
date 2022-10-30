@@ -121,7 +121,7 @@ Clone this repository and checkout the tag corresponding to the most recent rele
 
 	$ git clone https://github.com/mail-in-a-box/mailinabox
 	$ cd mailinabox
-	$ git checkout v60
+	$ git checkout v60.1
 
 Begin the installation.
 

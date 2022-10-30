@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+Version 60.1 (October 30, 2022)
+-------------------------------
+
+* A setup issue where the DNS server nsd isn't running at the end of setup is (hopefully) fixed.
+* Nextcloud is updated to 23.0.10 (contacts to 4.2.2, calendar to 3.5.1).
+
 Version 60 (October 11, 2022)
 -----------------------------
 

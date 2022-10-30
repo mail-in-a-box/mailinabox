@@ -104,7 +104,16 @@ def do_dns_update(env, force=False):
 
 	# Tell nsd to reload changed zone files.
 	if len(updated_domains) > 0:
-		shell('check_call', ["/usr/sbin/nsd-control", "reload"])
+		# 'reconfig' is needed if there are added or removed zones, but
+		# it may not reload existing zones, so we call 'reload' too. If
+		# nsd isn't running, nsd-control fails, so in that case revert
+		# to restarting nsd to make sure it is running. Restarting nsd
+		# should also refresh everything.
+		try:
+			shell('check_call', ["/usr/sbin/nsd-control", "reconfig"])
+			shell('check_call', ["/usr/sbin/nsd-control", "reload"])
+		except:
+			shell('check_call', ["/usr/sbin/service", "nsd", "restart"])
 
 	# Write the DKIM configuration tables for all of the mail domains.
 	from mailconfig import get_mail_domains
