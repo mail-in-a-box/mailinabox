@@ -24,6 +24,7 @@ cd "$(dirname $0)"
 default_suites=(
 	ldap-connection
 	ldap-access
+	dns-basic
 	mail-basic
 	mail-from
 	mail-aliases

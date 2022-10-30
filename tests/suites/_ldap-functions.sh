@@ -321,6 +321,12 @@ test_r_access() {
 }
 
 
+domain_exists() {
+	get_attribute "$LDAP_DOMAINS_BASE" "dc=$1" dn
+	[ -z "$ATTR_DN" ] && return 1
+	return 0
+}
+
 assert_r_access() {
 	# asserts read or unreadable access
 	FAILURE=""
