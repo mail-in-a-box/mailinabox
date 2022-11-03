@@ -56,7 +56,7 @@ def run_checks(rounded_values, env, output, pool, domains_to_check=None):
 	# clear unbound's DNS cache so our DNS checks are up to date
 	# (ignore errors; if unbound isn't running we'd already report
 	# that in run_services checks.)
-	shell('check_call', ["/usr/sbin/unbound-control", "flush_zone", "."], trap=True)
+	shell('check_call', ["/usr/sbin/unbound-control", "flush_zone", ".", "-q"], trap=True)
 
 	run_system_checks(rounded_values, env, output)
 
