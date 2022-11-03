@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+Version 60.1 (October 30, 2022)
+-------------------------------
+
+* A setup issue where the DNS server nsd isn't running at the end of setup is (hopefully) fixed.
+* Nextcloud is updated to 23.0.10 (contacts to 4.2.2, calendar to 3.5.1).
+
 Version 60 (October 11, 2022)
 -----------------------------
 
@@ -17,7 +23,7 @@ No major features of Mail-in-a-Box have changed in this release, although some m
 With the newer version of Ubuntu the following software packages we use are updated:
 
 * dovecot is upgraded to 2.3.16, postfix to 3.6.4, opendmark to 1.4 (which adds ARC-Authentication-Results headers), and spampd to 2.53 (alleviating a mail delivery rate limiting bug).
-* Nextcloud is upgraded to 23.0.4.
+* Nextcloud is upgraded to 23.0.4 (contacts to 4.2.0, calendar to 3.5.0).
 * Roundcube is upgraded to 1.6.0.
 * certbot is upgraded to 1.21 (via the Ubuntu repository instead of a PPA).
 * fail2ban is upgraded to 0.11.2.
