@@ -23,7 +23,8 @@ echo "Installing Roundcube (webmail)..."
 apt_install \
 	dbconfig-common \
 	php${PHP_VER}-cli php${PHP_VER}-sqlite3 php${PHP_VER}-intl php${PHP_VER}-common php${PHP_VER}-curl php${PHP_VER}-imap \
-	php${PHP_VER}-gd php${PHP_VER}-pspell php${PHP_VER}-mbstring libjs-jquery libjs-jquery-mousewheel libmagic1
+	php${PHP_VER}-gd php${PHP_VER}-pspell php${PHP_VER}-mbstring libjs-jquery libjs-jquery-mousewheel libmagic1 \
+	sqlite3
 
 # Install Roundcube from source if it is not already present or if it is out of date.
 # Combine the Roundcube version number with the commit hash of plugins to track
@@ -208,6 +209,16 @@ chmod -R 774 ${RCM_PLUGIN_DIR}/carddav
 php$PHP_VER ${RCM_DIR}/bin/updatedb.sh --dir ${RCM_DIR}/SQL --package roundcube
 chown www-data:www-data $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
 chmod 664 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
+
+# Patch the Roundcube code to eliminate an issue that causes postfix to reject our sqlite
+# user database (see https://github.com/mail-in-a-box/mailinabox/issues/2185)
+sed -i.miabold 's/^[^#]\+.\+PRAGMA journal_mode = WAL.\+$/#&/' \
+/usr/local/lib/roundcubemail/program/lib/Roundcube/db/sqlite.php
+
+# Because Roundcube wants to set the PRAGMA we just deleted from the source, we apply it here
+# to the roundcube database (see https://github.com/roundcube/roundcubemail/issues/8035)
+# Database should exist, created by migration script
+sqlite3 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite 'PRAGMA journal_mode=WAL;'
 
 # Enable PHP modules.
 phpenmod -v $PHP_VER imap
