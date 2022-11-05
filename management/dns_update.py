@@ -127,7 +127,7 @@ def do_dns_update(env, force=False):
 
 	# Clear unbound's DNS cache so our own DNS resolver is up to date.
 	# (ignore errors with trap=True)
-	shell('check_call', ["/usr/sbin/unbound-control", "flush_zone", "."], trap=True, capture_stdout=False)
+	shell('check_call', ["/usr/sbin/unbound-control", "flush_zone", ".", "-q"], trap=True)
 
 	if len(updated_domains) == 0:
 		# if nothing was updated (except maybe DKIM's files), don't show any output
