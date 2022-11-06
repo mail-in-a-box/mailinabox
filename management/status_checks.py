@@ -961,6 +961,16 @@ def run_and_output_changes(env, pool):
 	if os.path.exists(cache_fn):
 		prev = json.load(open(cache_fn))
 
+		# execute hooks
+		hook_data = {
+			'op':'output_changes_begin',
+			'env':env,
+			'cur': cur,
+			'prev': prev,
+			'output':out
+		}
+		hooks.exec_hooks('status_checks', hook_data)
+
 		# Group the serial output into categories by the headings.
 		def group_by_heading(lines):
 			from collections import OrderedDict
@@ -1051,7 +1061,10 @@ class FileOutput:
 		self.print_block(message, first_line="✖  ")
 
 	def print_warning(self, message):
-		self.print_block(message, first_line="?  ")
+		self.print_block(message, first_line="⚠  ")
+
+	def print_info(self, message):
+		self.print_block(message, first_line="ℹ  ")
 
 	def print_block(self, message, first_line="   "):
 		print(first_line, end='', file=self.buf)
@@ -1097,7 +1110,7 @@ class BufferedOutput:
 	def __init__(self, with_lines=None):
 		self.buf = [] if not with_lines else with_lines
 	def __getattr__(self, attr):
-		if attr not in ("add_heading", "print_ok", "print_error", "print_warning", "print_block", "print_line"):
+		if attr not in ("add_heading", "print_ok", "print_error", "print_warning", "print_info", "print_block", "print_line"):
 			raise AttributeError
 		# Return a function that just records the call & arguments to our buffer.
 		def w(*args, **kwargs):

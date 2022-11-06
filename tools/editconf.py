@@ -54,6 +54,8 @@ comment_char = "#"
 folded_lines = False
 testing = False
 ini_section = None
+case_insensitive_names = False
+case_insensitive_values = False
 while settings[0][0] == "-" and settings[0] != "--":
 	opt = settings.pop(0)
 	if opt == "-s":
@@ -75,19 +77,34 @@ while settings[0][0] == "-" and settings[0] != "--":
 		comment_char = settings.pop(0)
 	elif opt == "-ini-section":
 		ini_section = settings.pop(0)
+	elif opt == "-case-insensitive":
+		case_insensitive_names = True
+		case_insensitive_values = True
 	elif opt == "-t":
 		testing = True
 	else:
 		print("Invalid option.")
 		sys.exit(1)
 
+class Setting(object):
+	def __init__(self, setting):
+		self.name, self.val = setting.split("=", 1)
+                # add_only: do not modify existing value
+		self.add_only = self.name.startswith("+")
+		if self.add_only: self.name=self.name[1:]
+	def val_eq(self, other_val, case_insensitive):
+		if not case_insensitive:
+			r = self.val == other_val
+		else:
+			r = self.val.lower() == other_val.lower()
+		return r
 # sanity check command line
-for setting in settings:
-	try:
-		name, value = setting.split("=", 1)
-	except:
-		import subprocess
-		print("Invalid command line: ", subprocess.list2cmdline(sys.argv))
+try:
+	settings = [ Setting(x) for x in settings ]
+except:
+	import subprocess
+	print("Invalid command line: ", subprocess.list2cmdline(sys.argv))
+
 
 # create the new config file in memory
 
@@ -111,7 +128,7 @@ while len(input_lines) > 0:
 			# Put any settings we didn't see at the end of the section.
 			for i in range(len(settings)):
 				if i not in found:
-					name, val = settings[i].split("=", 1)
+					name, val = (settings[i].name, settings[i].val)
 					if not (not val and erase_setting):
 					        buf += name + delimiter + val + "\n"
 		cur_section = line.strip()[1:-1].strip().lower()
@@ -126,19 +143,26 @@ while len(input_lines) > 0:
 	# See if this line is for any settings passed on the command line.
 	for i in range(len(settings)):
 		# Check if this line contain this setting from the command-line arguments.
-		name, val = settings[i].split("=", 1)
+		name, val = (settings[i].name, settings[i].val)
+		flags = re.S | (re.I if case_insensitive_names else 0)
 		m = re.match(
 			   "(\s*)"
 			 + "(" + re.escape(comment_char) + "\s*)?"
 			 + re.escape(name) + delimiter_re + "(.*?)\s*$",
-			 line, re.S)
+			 line, flags)
 		if not m: continue
 		indent, is_comment, existing_val = m.groups()
+
+                # With + before the name, don't modify the existing value
+		if settings[i].add_only:
+			found.add(i)
+			buf += line
+			break
 
 		# If this is already the setting, keep it in the file, except:
 		# * If we've already seen it before, then remove this duplicate line.
 		# * If val is empty and erase_setting is on, then comment it out.
-		if is_comment is None and existing_val == val and not (not val and erase_setting):
+		if is_comment is None and settings[i].val_eq(existing_val, case_insensitive_values) and not (not val and erase_setting):
 			# It may be that we've already inserted this setting higher
 			# in the file so check for that first.
 			if i in found: break
@@ -173,11 +197,11 @@ while len(input_lines) > 0:
 # Put any settings we didn't see at the end of the file,
 # except settings being cleared.
 if not ini_section or cur_section == ini_section.lower():
-        for i in range(len(settings)):
-                if (i not in found):
-                        name, val = settings[i].split("=", 1)
-                        if not (not val and erase_setting):
-                                buf += name + delimiter + val + "\n"
+	for i in range(len(settings)):
+		if (i not in found):
+			name, val = (settings[i].name, settings[i].val)
+			if not (not val and erase_setting):
+				buf += name + delimiter + val + "\n"
 
 if not testing:
 	# Write out the new file.
