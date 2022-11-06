@@ -3,8 +3,7 @@ This directory contains optional scripts that are run as part of setup (as the l
 For example, to add coturn support for Nextcloud Talk do the following from the root directory of your installation:
 
 ```
-mkdir -p local
-ln -s ../setup/mods.available/coturn.sh local/coturn.sh
+setup/enmod.sh coturn
 ```
 
 When `setup/start.sh` (or `ehdd/start-encrypted.sh`) are run, these scripts will be executed after setup has completed.
@@ -15,7 +14,7 @@ Before enabling any mod scripts from `setup/mods.available` (or elsewhere), be a
 
 **USE OF SETUP MODS IS AT YOUR OWN RISK**
 
-If you're creating your own setup mod, it should not store files in STORAGE_ROOT (/home/user-data) that are required at runtime due to encryption-at-rest issues. With encryption-at-rest enabled, STORAGE_ROOT (/home/user-data) is not available until the encrypted drive has been mounted (the sysadmin has manually keyed in the EHDD drive password) and any mod with a system service that starts without the drive available may fail or behave in unexpected ways.
+If you're creating your own setup mod, it should not store files in STORAGE_ROOT (/home/user-data) that are required at boot due to encryption-at-rest issues. With encryption-at-rest enabled, STORAGE_ROOT (/home/user-data) is not available until the encrypted drive has been mounted (the sysadmin has manually keyed in the EHDD drive password) and any mod with a system service that starts without the drive available may fail or behave in unexpected ways.
 
 If you wish to contribute your own mod, please create a PR to add it
 to this directory. Ensure the script contains the author's name, when
