@@ -235,7 +235,7 @@ cp ${RCM_PLUGIN_DIR}/password/config.inc.php.dist \
 	${RCM_PLUGIN_DIR}/password/config.inc.php
 
 tools/editconf.py ${RCM_PLUGIN_DIR}/password/config.inc.php \
-	"\$config['password_driver']='ldap';" \
+	"\$config['password_driver']='ldap_simple';" \
 	"\$config['password_ldap_host']='${LDAP_SERVER}';" \
 	"\$config['password_ldap_port']=${LDAP_SERVER_PORT};" \
 	"\$config['password_ldap_starttls']=$([ ${LDAP_SERVER_STARTTLS} == yes ] && echo true || echo false);" \
