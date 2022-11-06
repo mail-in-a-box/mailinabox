@@ -59,6 +59,7 @@ if [ \\$EUID -ne 0 ]; then
    echo "Must be root"
    exit 1
 fi
+start=\\$(date +%s)
 cd /mailinabox
 export PRIMARY_HOSTNAME=vanilla.local
 #export FEATURE_MUNIN=false
@@ -68,6 +69,8 @@ tests/system-setup/vanilla.sh
 #   --enable-mod=roundcube-master \
 #   --enable-mod=roundcube-debug \
 #   --enable-mod=rcmcarddav-composer
+end=\\$(date +%s)
+echo "Provisioning took \\$(source tests/lib/misc.sh; elapsed_pretty \\$start \\$end)"
 EOF
 chmod +x /tmp/provision.sh
 /tmp/provision.sh
