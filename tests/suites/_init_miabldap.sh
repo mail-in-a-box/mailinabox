@@ -17,11 +17,14 @@ set +eu
 . suites/_mail-functions.sh || exit 1
 . suites/_mgmt-functions.sh || exit 1
 . suites/_zpush-functions.sh || exit 1
+. suites/_ui-functions.sh || exit 1
 
 
 MIAB_DIR=".."
 PYMAIL="./test_mail.py"
 EDITCONF="../tools/editconf.py"
+UI_TESTS_PYTHONPATH=$(realpath "lib/python")
+UI_TESTS_VERBOSITY=2
 
 # options
 SKIP_REMOTE_SMTP_TESTS=no

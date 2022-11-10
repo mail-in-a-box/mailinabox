@@ -91,6 +91,8 @@ init_test_system() {
     H2 "apt-get update"
     wait_for_apt
     exec_no_output apt-get update -qq || die "apt-get update failed!"
+    H2 "snap refresh"
+    exec_no_output snap refresh || echo "snap refresh failed! ignoring..."
 
     # install .emacs file, if available
     if [ -e tests/assets/.emacs -a -d /root ]; then
@@ -150,15 +152,22 @@ init_miab_testing() {
     
     H2 "QA prerequisites"
     local rc=0
-    
+
+    # python3-pip: installed by setup, but we need it now
     # python3-dnspython: is used by the python scripts in 'tests' and is
     #   not installed by setup
     # also install 'jq' for json processing
-    echo "Install python3-dnspython, jq, git"
+    echo "Install python3-pip, python3-dnspython, jq, git"
     wait_for_apt
-    exec_no_output apt-get install -y python3-dnspython jq git \
+    exec_no_output apt-get install -y python3-pip python3-dnspython jq git \
         || die "Unable to install setup prerequisites !!"
 
+    # browser-based tests
+    echo "Install chromium, selenium"
+    exec_no_output snap install chromium \
+        || die "Unable to install chromium!"
+    exec_no_output python3 -m pip install selenium --quiet \
+        || die "Selenium install failed!"
 
     # tell git our directory is safe (new requirement for git 2.35.2)
     if [ -d .git ]; then

@@ -31,6 +31,7 @@ default_suites=(
 	mail-access
 	management-users
 	z-push
+	roundcube     # browser tests
 )
 
 extra_suites=(
