@@ -26,16 +26,13 @@ if [ "$1" != "--no-umount" ]; then
     ehdd/umount.sh
     code=$?
     tries=1
-    while [ $code -eq 2 -a $tries -le 3 ]; do
+    while [ $code -eq 2 -a $tries -le 9 ]; do
         echo "Trying again in 10 seconds..."
         sleep 10
         ehdd/umount.sh
         code=$?
         let tries+=1
     done
-    if [ $code -eq 2 ]; then
-        echo "Giving up! (lsof: $(/usr/bin/lsof | grep "$STORAGE_ROOT"))"
-    fi
 else
     code=0
 fi
