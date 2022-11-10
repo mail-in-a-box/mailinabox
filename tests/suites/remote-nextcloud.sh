@@ -127,12 +127,6 @@ test_nextcloud_contacts() {
     carddav_delete_contact "$alice" "$alice_pw" "$c_uid" 2>>$TEST_OF || \
         test_failure "Unable to delete contact for $alice in Nextcloud"
     
-
-    #
-    # 2. create contact in Roundcube - ensure contact appears in Nextcloud
-    #
-    # TODO
-
     
     # clean up
     mgmt_assert_delete_user "$alice"

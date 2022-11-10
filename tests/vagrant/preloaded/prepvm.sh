@@ -32,6 +32,7 @@ source tests/lib/system.sh
 source tests/lib/color-output.sh
 
 dry_run=true
+start=$(date +%s)
 
 if [ "$1" == "--no-dry-run" ]; then
     dry_run=false
@@ -135,9 +136,9 @@ PHP_VER=$(source setup/functions.sh; echo $PHP_VER)
 if ! $dry_run; then
     H1 "Upgrade system"
     H2 "apt update"
-    exec_no_output apt-get update -y
+    exec_no_output apt-get update -y || exit 1
     H2 "apt upgrade"
-    exec_no_output apt-get upgrade -y --with-new-pkgs
+    exec_no_output apt-get upgrade -y --with-new-pkgs || exit 1
     H2 "apt autoremove"
     exec_no_output apt-get autoremove -y
 fi
@@ -179,38 +180,52 @@ for file in "${desired_order[@]}" "${setup_files[@]}"; do
     fi
 done
 
+failed=0
+    
 for file in ${ordered_files[@]}; do
     H1 "$file"
     remove_line_continuation "$file" | install_packages
-    [ $? -ne 0 ] && exit 1
+    [ $? -ne 0 ] && let failed+=1
 done
 
 if ! $dry_run; then
     # bonus
     H1 "install extras"
-    H2 "openssh-server"
-    exec_no_output apt-get install -y openssh-server
-    # ssh-rsa no longer a default algorithm, but still used by vagrant
-    # echo "PubkeyAcceptedAlgorithms +ssh-rsa" > /etc/ssh/sshd_config.d/miabldap.conf
-    H2 "emacs"
-    exec_no_output apt-get install -y emacs-nox
-    H2 "ntpdate"
-    exec_no_output apt-get install -y ntpdate
-    H2 "net-tools"
-    exec_no_output apt-get install -y net-tools
+
+    H2 "openssh, emacs, ntpdate, net-tools, jq"
+    exec_no_output apt-get install -y openssh-server emacs-nox ntpdate net-tools jq || let failed+=1
 
     # these are added by system-setup scripts and needed for test runner
     H2 "python3-dnspython"
-    exec_no_output apt-get install -y python3-dnspython
-    H2 "jq"
-    exec_no_output apt-get install -y jq
+    exec_no_output apt-get install -y python3-dnspython || let failed+=1
+    H2 "pyotp(pip)"
+    exec_no_output python3 -m pip install pyotp --quiet || let failed+=1
+
+    # ...and for browser-based tests
+    #H2 "x11"  # needed for chromium w/head (not --headless)
+    #exec_no_output apt-get install -y xorg openbox xvfb gtk2-engines-pixbuf dbus-x11 xfonts-base xfonts-100dpi xfonts-75dpi xfonts-cyrillic xfonts-scalable x11-apps imagemagick || let failed+=1
+    H2 "chromium"
+    #exec_no_output apt-get install -y chromium-browser || let failed+=1
+    exec_no_output snap install chromium || let failed+=1
+    H2 "selenium(pip)"
+    exec_no_output python3 -m pip install selenium --quiet || let failed+=1
 
     # remove apache, which is what setup will do
     H2 "remove apache2"
     exec_no_output apt-get -y purge apache2 apache2-\*
 
-    echo ""
-    echo ""
-    echo "Done. Take a snapshot...."
-    echo ""
 fi
+
+end=$(date +%s)
+echo ""
+echo ""
+if [ $failed -gt 0 ]; then
+    echo "$failed failures! ($(elapsed_pretty $start $end))"
+    echo ""
+    exit 1
+else
+    echo "Successfully prepped in $(elapsed_pretty $start $end). Take a snapshot...."
+    echo ""
+    exit 0
+fi
+
