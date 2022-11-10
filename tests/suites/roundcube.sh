@@ -112,6 +112,7 @@ test_create_contact() {
         fi
     fi
     
+    delete_user "$alice"
     test_end
     
 }

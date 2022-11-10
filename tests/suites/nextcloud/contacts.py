@@ -41,11 +41,16 @@ try:
     d.say_verbose('url: ' + d.current_url())
 
     #
-    # login, then open the contacts app
+    # login
     #
     nc.login(login, pw)
     nc.wait_for_app_load()
-    nc.open_contacts()
+
+    #
+    # open Contacts
+    #
+    d.start("Open contacts app")
+    contacts = nc.open_contacts()
     nc.wait_for_app_load()
 
     #
@@ -53,18 +58,13 @@ try:
     #
     if op=='exists':
         d.start("Check that contact %s exists", contact['email'])
-        nc.click_contact(contact) # raises NoSuchElementException if not found
+        contacts.click_contact(contact) # raises NoSuchElementException if not found
         
     elif op=='delete':
         d.start("Delete contact %s", contact['email'])
-        nc.click_contact(contact)
-        nc.wait_contact_loaded()
-        # click "..." menu
-        d.find_el('.contact-header__actions button.action-item__menutoggle').click()
-        d.wait_for_el('.popover', must_be_displayed=True, secs=2)
-        # click "delete"
-        d.find_el('.popover span.icon-delete').parent().click()
-        d.wait_for_el('div.empty-content', secs=2)
+        contacts.click_contact(contact)
+        contacts.wait_contact_loaded()
+        contacts.delete_current_contact()
         
     else:
         raise ValueError('Invalid operation: %s' % op)
@@ -72,13 +72,14 @@ try:
     #
     # logout
     #
+    d.start("Logout")
     nc.logout()
     nc.wait_for_login_screen()
 
     #
     # done
     #
-    d.say("Success!")
+    d.start("Success!")
 
 except Exception as e:
     d.fail(e)

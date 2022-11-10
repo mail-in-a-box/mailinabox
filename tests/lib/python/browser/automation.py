@@ -24,6 +24,7 @@ from selenium.common.exceptions import (
 
 import os
 import subprocess
+import time
 
 
 #
@@ -96,7 +97,10 @@ class FirefoxTestDriver(Firefox):
 
 class TestDriver(object):
     def __init__(self, driver=None, verbose=None, base_url=None, output_path=None):
+        self.first_start_time = None
+        self.start_time = None
         self.start_msg = []
+        self.next_tick_id = 0
         
         if driver is None:
             if 'BROWSER_TESTS_BROWSER' in os.environ:
@@ -139,7 +143,6 @@ class TestDriver(object):
             return FirefoxTestDriver()
         raise ValueError('no such driver named "%s"' % name)
 
-    
     def _say(self, loglevel, heirarchy_level, *args):
         if self.verbose >= loglevel:
             for i in range(len(self.start_msg), heirarchy_level+1):
@@ -163,6 +166,13 @@ class TestDriver(object):
         self._say(1, 1, *args)
 
     def start(self, *args):
+        now = time.time()
+        if self.start_time is not None:
+            elapsed = format(now - self.start_time, '.1f')
+            self._say(2, 0, '[%s: %s seconds]\n', self.start_msg[0], elapsed)
+        else:
+            self.first_start_time = now
+        self.start_time = now
         self._say(1, 0, *args)
     
     def last_start(self):
@@ -264,6 +274,22 @@ class TestDriver(object):
             if throws: raise e
             else: return None
 
+    def wait_for_el_not_exists(self, css_selector, secs=5, throws=True):
+        self.say_verbose("wait for selector '%s' (%ss) to not exist",
+                             css_selector, secs)
+        def test_fn(driver):
+            found_el = driver.find_element(By.CSS_SELECTOR, css_selector)
+            if found_el: raise NoSuchElementException()
+        wait = WebDriverWait(self.driver, secs, ignored_exceptions= (
+            NoSuchElementException
+        ))
+        try:
+            wait.until(test_fn)
+            return True
+        except TimeoutException as e:
+            if throws: raise e
+            else: return None
+
     def wait_for_text(self, text, tag='*', secs=5, exact=False, throws=True, case_sensitive=False):
         self.say_verbose("wait for text '%s'", text)
         def test_fn(driver):
@@ -278,12 +304,13 @@ class TestDriver(object):
             if throws: raise e
             else: return None
 
-    def find_el(self, css_selector, nth=0, throws=True):
-        self.say_verbose("find element: '%s'", css_selector)
+    def find_el(self, css_selector, nth=0, throws=True, quiet=False):
         try:
             els = self.driver.find_elements(By.CSS_SELECTOR, css_selector)
             if len(els)==0:
+                if not quiet: self.say_verbose("find element: '%s' (not found)", css_selector)
                 raise NoSuchElementException("selector=%s" % css_selector)
+            if not quiet: self.say_verbose("find element: '%s' (returning #%s/%s)", css_selector, nth+1, len(els))
             return ElWrapper(self, els[nth])
         except (IndexError, NoSuchElementException) as e:
             if throws: raise e
@@ -336,12 +363,14 @@ class TestDriver(object):
         except TimeoutException as e:
             pass
 
-    def execute_script(self, script, *args):
+    def execute_script(self, script, quiet=False, *args):
         ''' Synchronously Executes JavaScript in the current window/frame '''
         newargs = []
         for arg in args:
             if isinstance(arg, ElWrapper): newargs.append(arg.el)
             else: newargs.append(arg)
+        if not quiet:
+            self.say_verbose('execute script: %s', script.replace('\n',' '))
         return self.driver.execute_script(script, *newargs)
 
     def execute_async_script(self, script, secs=5, *args):
@@ -356,7 +385,7 @@ class TestDriver(object):
             pass
         def test_fn(driver):
             nonlocal script, args
-            p = driver.execute_script(script, *args)
+            p = driver.execute_script(script, quiet=True, *args)
             driver.say_verbose("script returned: %s", p)
             if not p: raise NotTrue()
             return True
@@ -364,7 +393,12 @@ class TestDriver(object):
             NotTrue
         ))
         wait.until(test_fn)  # throws TimeoutException
-            
+
+    def wait_tick(self, delay_ms, secs=5):
+        # allow time for vue to render (delay_ms>=1)
+        cancel_id = self.execute_script('window.qa_ticked=false; return window.setTimeout(() => { window.qa_ticked=true; }, %s)' % delay_ms);
+        self.wait_until_true('return window.qa_ticked === true', secs=secs)
+    
     def close(self):
         ''' close the window/tab '''
         self.say_verbose("closing %s", self.driver.current_url)
@@ -372,6 +406,10 @@ class TestDriver(object):
 
     def quit(self):
         ''' closes the browser and shuts down the chromedriver executable '''
+        now = time.time()
+        if self.first_start_time is not None:
+            elapsed = format(now - self.first_start_time, '.1f')
+            self._say(2, 0, '[TOTAL TIME: %s seconds]\n', elapsed)
         self.driver.quit()
 
     def fail(self, exception):
@@ -395,12 +433,13 @@ class ElWrapper(object):
         self.driver = driver
         self.el = el
 
-    def find_el(self, css_selector, nth=0, throws=True):
-        self.driver.say_verbose("find element: '%s'", css_selector)
+    def find_el(self, css_selector, nth=0, throws=True, quiet=False):
         try:
             els = self.el.find_elements(By.CSS_SELECTOR, css_selector)
             if len(els)==0:
+                if not quiet: self.driver.say_verbose("find element: '%s' (not found)", css_selector)
                 raise NoSuchElementException("selector=%s" % css_selector)
+            if not quiet: self.driver.say_verbose("find element: '%s' (returning #%s/%s)", css_selector, nth+1, len(els))
             return ElWrapper(self.driver, els[nth])
         except (IndexError, NoSuchElementException) as e:
             if throws: raise e
