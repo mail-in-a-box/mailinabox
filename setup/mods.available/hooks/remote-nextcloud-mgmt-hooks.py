@@ -9,12 +9,17 @@
 
 
 #
-# This is a web_update management hook for the remote-nextcloud setup
-# mod.
+# This hooks management's dns_update and web_update for the
+# remote-nextcloud setup mod.
 #
-# When management/web_update.py creates a new nginx configuration file
-# "local.conf", this mod will ensure that .well-known/caldav and
-# .well-known/carddav urls are redirected to the remote nextcloud.
+# dns_update: When management/dns_update.py creates a new zone, this mod will
+# change _caldavs._tcp and _carddavs._tcp to point to the remote
+# nextcloud.
+#
+# web_update: When management/web_update.py creates a new nginx
+# configuration file "/etc/nginx/conf.d/local.conf", this mod will
+# ensure that .well-known/caldav and .well-known/carddav urls are
+# redirected to the remote nextcloud.
 #
 # The hook is enabled by placing the file in directory
 # LOCAL_MODS_DIR/managment_hooks_d.
@@ -56,7 +61,10 @@ def do_hook_dns_update(hook_name, hook_data, mods_env):
         rtype = record[1]
         if rtype=='SRV' and rname in ('_caldavs._tcp', '_carddavs._tcp'):
             newrec = list(record)
-            newrec[2] = '10 10 443 %s.' % mods_env['NC_HOST']
+            newrec[2] = '10 10 %s %s.' % (
+                mods_env['NC_PORT'],
+                mods_env['NC_HOST']
+            )
             records[idx] = tuple(newrec)
             changed = True
     return changed
