@@ -27,29 +27,58 @@ log = logging.getLogger(__name__)
 
 
 def do_hook(hook_name, hook_data, mods_env):
-    if hook_name != 'web_update':
-        # we only care about hooking web_update
-        log.debug('hook - ignoring hook %s', hook_name)
-        return False
-    
-    if hook_data['op'] != 'pre-save':
-        log.debug('hook - ignoring hook op %s:%s', hook_name, hook_data['op'])
-        return False
-
     if 'NC_HOST' not in mods_env or mods_env['NC_HOST'].strip() == '':
         # not configured for a remote nextcloud
         log.debug('hook - not configured for a remote nextcloud')
         return False
-    
-    # get the remote nextcloud url and ensure no tailing /
-    
+
+    if hook_name == 'web_update':
+        return do_hook_web_update(hook_name, hook_data, mods_env)
+
+    elif hook_name == 'dns_update':
+        return do_hook_dns_update(hook_name, hook_data, mods_env)
+
+    else:
+        log.debug('hook - ignoring hook %s', hook_name)
+        return False
+
+
+def do_hook_dns_update(hook_name, hook_data, mods_env):
+    if hook_data['op'] != 'build_zone_end':
+        log.debug('hook - ignoring hook op %s:%s', hook_name, hook_data['op'])
+        return False
+    changed = False
+    records = hook_data['records']
+    for idx in range(len(records)):
+        # record format (name, record-type, record-value, "help-text" or False)
+        record = records[idx]
+        rname = record[0]
+        rtype = record[1]
+        if rtype=='SRV' and rname in ('_caldavs._tcp', '_carddavs._tcp'):
+            newrec = list(record)
+            newrec[2] = '10 10 443 %s.' % mods_env['NC_HOST']
+            records[idx] = tuple(newrec)
+            changed = True
+    return changed
+
+
+def get_nc_url(mods_env):
+    # return the remote nextcloud url - ensures no tailing /
     nc_url = "%s://%s:%s%s" % (
         mods_env['NC_PROTO'],
         mods_env['NC_HOST'],
         mods_env['NC_PORT'],
         mods_env['NC_PREFIX'][0:-1] if mods_env['NC_PREFIX'].endswith('/') else mods_env['NC_PREFIX']
     )
+    return nc_url
 
+
+def do_hook_web_update(hook_name, hook_data, mods_env):
+    if hook_data['op'] != 'pre-save':
+        log.debug('hook - ignoring hook op %s:%s', hook_name, hook_data['op'])
+        return False
+    
+    nc_url = get_nc_url(mods_env)
 
     # find start and end of Nextcloud configuration section
     

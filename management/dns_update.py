@@ -17,6 +17,7 @@ import sys, os, os.path, urllib.parse, datetime, re, hashlib, base64
 import ipaddress
 import rtyaml
 import dns.resolver
+import hooks
 
 from utils import shell, load_env_vars_from_file, safe_domain_name, sort_domains
 from ssl_certificates import get_ssl_certificates, check_certificate
@@ -389,6 +390,12 @@ def build_zone(domain, domain_properties, additional_records, env, is_zone=True)
 
 	# Sort the records. The None records *must* go first in the nsd zone file. Otherwise it doesn't matter.
 	records.sort(key = lambda rec : list(reversed(rec[0].split(".")) if rec[0] is not None else ""))
+
+	# execute hooks
+	hooks.exec_hooks('dns_update', {
+		'op':'build_zone_end',
+		'records':records
+	})
 
 	return records
 
