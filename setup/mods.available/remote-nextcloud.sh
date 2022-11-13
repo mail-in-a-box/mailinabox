@@ -90,8 +90,59 @@ EOF
 
 
 update_mobileconfig() {
-    local url="$1"
-    sed -i "s|<string>/cloud/remote.php|<string>${url%/}/remote.php|g" /var/lib/mailinabox/mobileconfig.xml
+    local nc_host="$1"
+    local nc_port="$2"
+    local nc_proto="$3"
+    local carddav_principal_url="$4"
+
+    local mobileconfig="/var/lib/mailinabox/mobileconfig.xml"
+
+    # don't redirect directly to mobileconfig, in case the program fails
+    local tmpfile=$(mktemp)
+
+    python3 -c "
+import xml.etree.ElementTree as ET
+import sys
+
+def plist_val(root, name):
+    nodes = root.findall(\".//dict[key='%s']\" % name)
+    if len(nodes)==0: return None
+    if len(nodes)>1: raise ValueError('Matched more than one plist setting named \"%s\" (matched %s)!' % (name, len(nodes)))
+    iter = nodes[0].iter()
+    for item in iter:
+        if item.tag=='key' and ''.join(item.itertext())==name:
+           return iter.__iter__().__next__()
+    return None
+
+path = '$mobileconfig'
+use_ssl = 'true' if '$nc_proto' == 'https' else 'false'
+root = ET.parse(path)
+plist_val(root, 'CalDAVHostName').text = '$nc_host'
+plist_val(root, 'CalDAVPort').text = '$nc_port'
+plist_val(root, 'CalDAVUseSSL').tag = use_ssl
+plist_val(root, 'CardDAVHostName').text = '$nc_host'
+plist_val(root, 'CardDAVPort').text = '$nc_port'
+plist_val(root, 'CardDAVUseSSL').tag = use_ssl
+plist_val(root, 'CardDAVPrincipalURL').text = '$carddav_principal_url'
+
+# output the xml declaration from the original file
+# we're using sys.stdout.buffer becasue Etree won't accept sys.stdout
+with open(path) as fp:
+    for line in fp.read().split('\n'):
+        if line.startswith('<' + root.getroot().tag): break
+        sys.stdout.buffer.write(line.encode('utf-8'))
+        sys.stdout.buffer.write('\n'.encode('utf-8'))
+
+# output the modified xml
+root.write(
+    sys.stdout.buffer,
+    encoding='utf-8', 
+    xml_declaration=False, 
+    short_empty_elements=False
+)
+" > $tmpfile
+    cp $tmpfile "$mobileconfig"
+    rm $tmpfile
 }
 
 
@@ -194,7 +245,7 @@ remote_nextcloud_handler() {
         configure_zpush
 
         # update ios mobileconfig.xml
-        update_mobileconfig "$new_url"
+        update_mobileconfig "$NC_HOST" "$NC_PORT" "$NC_PROTO" "$new_url/remote.php/dav/addressbooks/"
 
         
         # prevent nginx from serving any miab-installed nextcloud
