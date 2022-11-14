@@ -47,6 +47,7 @@ STATIC_AUTH_SECRET='$(generate_password 64)'
 TURNSERVER_HOSTNAME=
 EOF
 	fi
+	chmod 640 "$STORAGE_ROOT/voip/turnserver.conf"
 	. "$STORAGE_ROOT/voip/turnserver.conf"
 }
 
