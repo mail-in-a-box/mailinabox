@@ -359,7 +359,9 @@ install_hook_handler() {
 	else
 		cp "$handler_file" "$dst"
 		# let the daemon know there's a new hook handler
-		tools/hooks_update >/dev/null
+		if systemctl is-active --quiet mailinabox; then
+			tools/hooks_update >/dev/null
+		fi
 	fi
 }
 

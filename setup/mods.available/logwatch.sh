@@ -10,8 +10,14 @@
 # author: downtownallday
 # removal: run `local/logwatch.sh remove`, then delete symbolic link
 #          (`rm local/logwatch.sh`)
+#
+# Warning for cloud-in-a-box users: if ssmtp (or some other
+# mail-transport-agent) is not installed, installing logwatch will
+# pull in postfix
+#
 
-. /etc/mailinabox.conf
+[ -e /etc/mailinabox.conf ] && source /etc/mailinabox.conf
+[ -e /etc/cloudinabox.conf ] && source /etc/cloudinabox.conf
 . setup/functions.sh
 
 logwatch_remove() {
