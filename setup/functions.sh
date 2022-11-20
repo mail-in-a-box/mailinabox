@@ -16,6 +16,12 @@ set -euo pipefail
 
 PHP_VER=8.0
 
+# ansi escapes for hilighting text
+F_DANGER=$(echo -e "\033[31m")
+F_WARN=$(echo -e "\033[93m")
+F_SUCCESS=$(echo -e "\033[32m")
+F_RESET=$(echo -e "\033[39m")
+
 function hide_output {
 	# This function hides the output of a command unless the command fails
 	# and returns a non-zero exit code.

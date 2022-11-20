@@ -172,18 +172,8 @@ certbot register --register-unsafely-without-email --agree-tos --config-dir $STO
 fi
 
 #
-# Run setup mods 
-#
-if [ -d "$LOCAL_MODS_DIR" ]; then
-    for mod in $(ls "$LOCAL_MODS_DIR" | grep -v '~$'); do
-        mod_path="$LOCAL_MODS_DIR/$mod"
-        if [ -f "$mod_path" -a -x "$mod_path" ]; then
-            echo ""
-            echo "Running mod: $mod_path"
-            "$mod_path"
-        fi
-    done
-fi
+# Setup mods
+source setup/setupmods.sh
 
 # Done.
 echo
