@@ -93,7 +93,11 @@ def validate_email(email, mode=None):
 	# Check the syntax of the address.
 	try:
 		# allow .local domains to pass when they refer to the local machine
-		email_domain = get_domain(email)
+		try:
+			email_domain = get_domain(email)
+		except IndexError:
+			raise EmailNotValidError(email)
+		
 		test_env = (
 			email_domain.endswith(".local") and
 			email_domain == socket.getfqdn()
