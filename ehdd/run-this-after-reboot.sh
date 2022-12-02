@@ -8,21 +8,25 @@
 ##### details.
 #####
 
-ehdd/mount.sh || exit 1
+if [ "${1:-}" != "--no-mount" ]; then
+    ehdd/mount.sh || exit 1
+fi
 
-if [ -s /etc/mailinabox.conf ]; then
+.  ehdd/ehdd_funcs.sh || exit 1
+
+if system_installed_with_encryption_at_rest; then
     [ -x /usr/sbin/slapd ] && systemctl start slapd
     systemctl start php8.0-fpm
     systemctl start dovecot
     systemctl start postfix
     # postgrey's main database and local client whitelist are in user-data
-    systemctl restart postgrey
+    systemctl start postgrey
     systemctl start nginx
     systemctl start cron
     #systemctl start nsd
-    systemctl link -f $(pwd)/conf/mailinabox.service
+    systemctl link -q -f /lib/systemd/system/mailinabox.service
     systemctl start fail2ban
-    systemctl restart mailinabox
+    systemctl start mailinabox
     systemctl start miabldap-capture
 fi
 

@@ -1,0 +1,7 @@
+[Unit]
+Description=Starts ehdd services
+
+[Service]
+Type=oneshot
+WorkingDirectory=<INSTALL_ROOT>
+ExecStart=<INSTALL_ROOT>/ehdd/run-this-after-reboot.sh --no-mount

@@ -410,3 +410,32 @@ EOF
 [ -e /var/log/mail.log ] && chown syslog:adm /var/log/mail.log
 [ -e /var/log/mail.err ] && chown syslog:adm /var/log/mail.err
 restart_service rsyslog
+
+
+# Encryption-at-rest disables certain services after setup runs (see
+# ehdd/postinstall.sh) because the STORAGE_ROOT directory won't be
+# mounted after a reboot and those services would fail. This causes a
+# problem if one of those services is upgraded by unattended-upgrades.
+#
+# The issue: when the system is running normally and
+# unattended-upgrades updates a disabled (but running) service
+# (eg. mariadb), the service is stopped for the upgrade but is
+# never re-started.
+#
+# The fix: have systemd watch unattended-upgrades, then start all
+# disabled services that were upgraded after updates have been
+# applied.
+
+cp conf/ehdd-unattended-upgrades-after.path \
+   conf/ehdd-unattended-upgrades-after.service \
+   /etc/systemd/system
+
+tools/editconf.py \
+     /etc/systemd/system/ehdd-unattended-upgrades-after.service \
+    -ini-section Service \
+    "WorkingDirectory=$(pwd)" \
+    "ExecStart=$(pwd)/ehdd/run-this-after-reboot.sh --no-mount"
+
+systemctl daemon-reload
+systemctl enable -q ehdd-unattended-upgrades-after.path
+systemctl start -q ehdd-unattended-upgrades-after.path

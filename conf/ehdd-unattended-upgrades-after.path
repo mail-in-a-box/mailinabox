@@ -1,0 +1,9 @@
+[Unit]
+Description=Monitor unattended upgrades and ensure ehdd services are started after upgrades
+
+[Path]
+PathModified=/var/lib/apt/periodic/unattended-upgrades-stamp
+Unit=ehdd-unattended-upgrades-after.service
+
+[Install]
+WantedBy=paths.target
