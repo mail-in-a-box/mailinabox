@@ -31,13 +31,16 @@ backup_mods() {
     if [ -d "$LOCAL_MODS_DIR" -a ! -z "$(ls -A "$LOCAL_MODS_DIR" 2>/dev/null)" ]; then
         local tmp="$dst.new"
         mkdir -p "$(dirname "$dst")"
+        chmod 750 "$(dirname "$dst")"
         pushd "$LOCAL_MODS_DIR" >/dev/null
+        rm -f "$tmp"
         tar czf "$tmp" \
             --exclude-backups \
             --exclude-caches \
             --exclude=*/__pycache__/* \
             --exclude=*/__pycache__ \
             *
+        chmod 640 "$tmp"
         popd >/dev/null
         rm -f "$dst"
         mv "$tmp" "$dst"
