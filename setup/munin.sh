@@ -10,9 +10,12 @@ echo "Installing Munin (system monitoring)..."
 apt_install munin munin-node libcgi-fast-perl munin-plugins-extra
 # libcgi-fast-perl is needed by /usr/lib/munin/cgi/munin-cgi-graph
 
+mkdir -p $STORAGE_ROOT/munin
+chown munin:munin $STORAGE_ROOT/munin
+
 # edit config
 cat > /etc/munin/munin.conf <<EOF;
-dbdir /var/lib/munin
+dbdir $STORAGE_ROOT/munin
 htmldir /var/cache/munin/www
 logdir /var/log/munin
 rundir /var/run/munin
