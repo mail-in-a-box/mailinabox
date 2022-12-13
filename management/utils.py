@@ -122,13 +122,16 @@ def shell(method, cmd_args, env={}, capture_stderr=False, return_bytes=False, tr
     if method == "check_output" and input is not None:
         kwargs['input'] = input
 
-    if not trap:
+    try:
         ret = getattr(subprocess, method)(cmd_args, **kwargs)
-    else:
-        try:
-            ret = getattr(subprocess, method)(cmd_args, **kwargs)
-            code = 0
-        except subprocess.CalledProcessError as e:
+        code = 0
+    except subprocess.CalledProcessError as e:
+        if not trap:
+            # Reformat exception.
+            msg = "Command failed with exit code {}: {}".format(e.returncode, subprocess.list2cmdline(cmd_args))
+            if e.output: msg += "\n\nOutput:\n" + e.output
+            raise Exception(msg)
+        else:
             ret = e.output
             code = e.returncode
     if not return_bytes and isinstance(ret, bytes): ret = ret.decode("utf8")
