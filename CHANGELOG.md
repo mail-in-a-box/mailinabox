@@ -12,6 +12,7 @@ Control panel:
 
 * Control panel pages can be opened in a new tab/window and bookmarked and browser history navigation now works.
 * Add a Copy button to put the rsync backup public key on clipboard.
+* Allow secondary DNS xfr: items added in the control panel to be hostnames too.
 * Fixed issue where sshkeygen fails when IPv6 is disabled.
 * Fixed issue opening munin reports.
 * Fixed report formatting in status emails sent to the administrator.
