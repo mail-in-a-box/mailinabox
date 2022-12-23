@@ -222,7 +222,8 @@ def get_duplicity_additional_args(env):
 		from urllib.parse import urlsplit, urlunsplit
 		target = urlsplit(config["target"])
 		endpoint_url = urlunsplit(("https", target.netloc, '', '', ''))
-		return ["--s3-endpoint-url",  endpoint_url]
+		region = config["target_region"]
+		return ["--s3-endpoint-url",  endpoint_url, "--s3-region-name", region]
 
 	return []
 
@@ -495,7 +496,7 @@ def list_target_files(config):
 		raise ValueError(config["target"])
 
 
-def backup_set_custom(env, target, target_user, target_pass, min_age):
+def backup_set_custom(env, target, target_user, target_pass, target_region, min_age):
 	config = get_backup_config(env, for_save=True)
 
 	# min_age must be an int
@@ -505,6 +506,7 @@ def backup_set_custom(env, target, target_user, target_pass, min_age):
 	config["target"] = target
 	config["target_user"] = target_user
 	config["target_pass"] = target_pass
+	config["target_region"] = target_region
 	config["min_age_in_days"] = min_age
 
 	# Validate.

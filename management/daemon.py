@@ -121,10 +121,6 @@ def index():
 	no_users_exist = (len(get_mail_users(env)) == 0)
 	no_admins_exist = (len(get_admins(env)) == 0)
 
-	import boto3.s3
-	backup_s3_hosts = [(r, f"s3.{r}.amazonaws.com") for r in boto3.session.Session().get_available_regions('s3')]
-
-
 	return render_template('index.html',
 		hostname=env['PRIMARY_HOSTNAME'],
 		storage_root=env['STORAGE_ROOT'],
@@ -132,7 +128,6 @@ def index():
 		no_users_exist=no_users_exist,
 		no_admins_exist=no_admins_exist,
 
-		backup_s3_hosts=backup_s3_hosts,
 		csr_country_codes=csr_country_codes,
 	)
 
@@ -636,6 +631,7 @@ def backup_set_custom():
 		request.form.get('target', ''),
 		request.form.get('target_user', ''),
 		request.form.get('target_pass', ''),
+		request.form.get('target_region', ''),
 		request.form.get('min_age', '')
 	))
 

@@ -468,6 +468,7 @@ paths:
                   target: s3://s3.eu-central-1.amazonaws.com/box-example-com
                   target_user: ACCESS_KEY
                   target_pass: SECRET_ACCESS_KEY
+                  target_region: eu-central-1
                   minAge: 3
               local:
                 summary: Local backup
@@ -475,6 +476,7 @@ paths:
                   target: local
                   target_user: ''
                   target_pass: ''
+                  target_region: ''
                   minAge: 3
               rsync:
                 summary: Rsync backup
@@ -482,6 +484,7 @@ paths:
                   target: rsync://username@box.example.com//backups/box.example.com
                   target_user: ''
                   target_pass: ''
+                  target_region: ''
                   minAge: 3
               off:
                 summary: Disable backups
@@ -489,6 +492,7 @@ paths:
                   target: 'off'
                   target_user: ''
                   target_pass: ''
+                  target_region: ''
                   minAge: 0
       x-codeSamples:
         - lang: curl
@@ -497,6 +501,7 @@ paths:
               -d "target=<hostname>" \
               -d "target_user=<string>" \
               -d "target_pass=<password>" \
+              -d "target_region=<region>" \
               -d "min_age=<integer>" \
               -u "<email>:<password>"
       responses:
@@ -2460,6 +2465,7 @@ components:
         - target
         - target_user
         - target_pass
+        - target_region
         - min_age
       properties:
         target:
@@ -2473,6 +2479,9 @@ components:
           type: string
           example: password
           format: password
+        target_region:
+          type: string
+          example: eu-central-1
         min_age:
           type: integer
           format: int32
@@ -2514,6 +2523,9 @@ components:
           type: string
         target_pass:
           type: string
+        target_region:
+          type: string
+          example: eu-central-1
       description: Backup config response.
     SystemBackupStatusResponse:
       type: object
