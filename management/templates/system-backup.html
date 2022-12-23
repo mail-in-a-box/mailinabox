@@ -285,11 +285,13 @@ function set_custom_backup() {
   var target_pass = $("#backup-target-pass").val();
 
   var target;
-  if (target_type == "local" || target_type == "off")
+  var target_region = '';
+  if (target_type == "local" || target_type == "off") {
     target = target_type;
-  else if (target_type == "s3")
+  } else if (target_type == "s3") {
     target = "s3://" + $("#backup-target-s3-host").val() + "/" + $("#backup-target-s3-path").val();
-  else if (target_type == "rsync") {
+    target_region = $("#backup-target-s3-region").val();
+  } else if (target_type == "rsync") {
     target = "rsync://" + $("#backup-target-rsync-user").val() + "@" + $("#backup-target-rsync-host").val()
                                                                 + "/" + $("#backup-target-rsync-path").val();
     target_user = '';
@@ -300,10 +302,8 @@ function set_custom_backup() {
     target_pass = '';
   }
 
-
-  var target_region = $("#backup-target-s3-region").val();
-
   var min_age = $("#min-age").val();
+
   api(
     "/system/backup/config",
     "POST",
