@@ -222,8 +222,18 @@ def get_duplicity_additional_args(env):
 		from urllib.parse import urlsplit, urlunsplit
 		target = urlsplit(config["target"])
 		endpoint_url = urlunsplit(("https", target.netloc, '', '', ''))
-		region = config["target_region"]
-		return ["--s3-endpoint-url",  endpoint_url, "--s3-region-name", region]
+
+		# The target_region parameter has been added since duplicity
+		# now requires it for most cases in which
+		# the S3-compatible service is not provided by AWS.
+		# Nevertheless, some users who use mail-in-a-box
+		# from before version v60 and who use AWS's S3 service
+		# may not have this parameter in the configuration.
+		if "target_region" in config:
+			region = config["target_region"]
+			return ["--s3-endpoint-url",  endpoint_url, "--s3-region-name", region]
+		else:
+			return ["--s3-endpoint-url",  endpoint_url]
 
 	return []
 
