@@ -48,6 +48,11 @@ tools/editconf.py /etc/dkimpy-milter/dkimpy-milter.conf -s \
 if [ ! -f "$STORAGE_ROOT/mail/dkim/box-rsa.key" ]; then
 	# All defaults are supposed to be ok, default key for rsa is 2048 bit
 	dknewkey --ktype rsa $STORAGE_ROOT/mail/dkim/box-rsa
+	# Change format from pkcs#8 to pkcs#1, dkimpy seemingly is not able to handle the #8 format
+	openssl pkey -in $STORAGE_ROOT/mail/dkim/box-rsa.key -traditional -out $STORAGE_ROOT/mail/dkim/box-rsa.key.1
+	mv $STORAGE_ROOT/mail/dkim/box-rsa.key $STORAGE_ROOT/mail/dkim/box-rsa.key.8
+	cp -f $STORAGE_ROOT/mail/dkim/box-rsa.key.1 $STORAGE_ROOT/mail/dkim/box-rsa.key
+	
 	dknewkey --ktype ed25519 $STORAGE_ROOT/mail/dkim/box-ed25519
 	
 	# Force them into the format dns_update.py expects
