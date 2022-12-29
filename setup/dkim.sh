@@ -49,6 +49,7 @@ if [ ! -f "$STORAGE_ROOT/mail/dkim/box-rsa.key" ]; then
 	# All defaults are supposed to be ok, default key for rsa is 2048 bit
 	dknewkey --ktype rsa $STORAGE_ROOT/mail/dkim/box-rsa
 	# Change format from pkcs#8 to pkcs#1, dkimpy seemingly is not able to handle the #8 format
+	# See bug https://bugs.launchpad.net/dkimpy/+bug/1978835
 	openssl pkey -in $STORAGE_ROOT/mail/dkim/box-rsa.key -traditional -out $STORAGE_ROOT/mail/dkim/box-rsa.key.1
 	mv -f $STORAGE_ROOT/mail/dkim/box-rsa.key $STORAGE_ROOT/mail/dkim/box-rsa.key.8
 	cp -f $STORAGE_ROOT/mail/dkim/box-rsa.key.1 $STORAGE_ROOT/mail/dkim/box-rsa.key
