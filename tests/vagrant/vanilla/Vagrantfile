@@ -37,9 +37,15 @@ export SKIP_SYSTEM_UPDATE=0
 tests/system-setup/vanilla.sh --qa-ca --enable-mod=remote-nextcloud
 if ! ufw status | grep remote_nextcloud >/dev/null; then
    # firewall rules aren't added when ciab is down
-   # allow ldaps from anywhere
+   echo "For testing, allow ldaps from anywhere"
    ufw allow ldaps
 fi
+echo "Add smart host alias - so \\$NC_HOST can send mail to/via this host"
+(
+ source tests/lib/all.sh
+ rest_urlencoded POST /admin/mail/aliases/add qa@abc.com Test_1234 "address=@\\$NC_HOST" "description=smart-host" "permitted_senders=qa@abc.com" 2>/dev/null
+ echo "\\$REST_HTTP_CODE: \\$REST_OUTPUT"
+)
 EOF
 chmod +x /tmp/provision.sh
 /tmp/provision.sh
