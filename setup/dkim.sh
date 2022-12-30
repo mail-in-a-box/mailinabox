@@ -39,26 +39,39 @@ tools/editconf.py /etc/dkimpy-milter/dkimpy-milter.conf -s \
     "SigningTable=refile:/etc/dkim/SigningTable" \
     "Socket=inet:8892@127.0.0.1"
 
-# Create a new DKIM key. This creates mail.private and mail.txt
+# Create a new DKIM key. This creates mail.key and mail.dns
 # in $STORAGE_ROOT/mail/dkim. The former is the private key and
 # the latter is the suggested DNS TXT entry which we'll include
 # in our DNS setup. Note that the files are named after the
 # 'selector' of the key, which we can change later on to support
 # key rotation.
-if [ ! -f "$STORAGE_ROOT/mail/dkim/box-rsa.key" ]; then
-	# All defaults are supposed to be ok, default key for rsa is 2048 bit
-	dknewkey --ktype rsa $STORAGE_ROOT/mail/dkim/box-rsa
-	# Change format from pkcs#8 to pkcs#1, dkimpy seemingly is not able to handle the #8 format
-	# See bug https://bugs.launchpad.net/dkimpy/+bug/1978835
-	openssl pkey -in $STORAGE_ROOT/mail/dkim/box-rsa.key -traditional -out $STORAGE_ROOT/mail/dkim/box-rsa.key.1
-	mv -f $STORAGE_ROOT/mail/dkim/box-rsa.key $STORAGE_ROOT/mail/dkim/box-rsa.key.8
-	cp -f $STORAGE_ROOT/mail/dkim/box-rsa.key.1 $STORAGE_ROOT/mail/dkim/box-rsa.key
-	
+if [ ! -f "$STORAGE_ROOT/mail/dkim/mail.key" ]; then
+	# Check if there is an existing rsa key
+	if [ -f "$STORAGE_ROOT/mail/dkim/mail.private" ]; then
+		# Re-use existing key
+		cp -f $STORAGE_ROOT/mail/dkim/mail.private $STORAGE_ROOT/mail/dkim/mail.key
+		cp -f $STORAGE_ROOT/mail/dkim/mail.txt $STORAGE_ROOT/mail/dkim/mail.dns
+	else
+		# All defaults are supposed to be ok, default key for rsa is 2048 bit
+		dknewkey --ktype rsa $STORAGE_ROOT/mail/dkim/mail
+		# Change format from pkcs#8 to pkcs#1, dkimpy seemingly is not able to handle the #8 format
+		# See bug https://bugs.launchpad.net/dkimpy/+bug/1978835
+		openssl pkey -in $STORAGE_ROOT/mail/dkim/mail.key -traditional -out $STORAGE_ROOT/mail/dkim/mail.key.1
+		mv -f $STORAGE_ROOT/mail/dkim/mail.key $STORAGE_ROOT/mail/dkim/mail.key.8
+		cp -f $STORAGE_ROOT/mail/dkim/mail.key.1 $STORAGE_ROOT/mail/dkim/mail.key
+		
+		# Force dns entry into the format dns_update.py expects
+		# We use selector mail for the rsa key, to be compatible with earlier installations of Mail-in-a-Box
+		sed -i 's/v=DKIM1;/mail._domainkey IN      TXT      ( "v=DKIM1; s=email;/' $STORAGE_ROOT/mail/dkim/mail.dns
+		echo '" )' >> $STORAGE_ROOT/mail/dkim/mail.dns
+	fi
+fi
+
+if [ ! -f "$STORAGE_ROOT/mail/dkim/box-ed25519.key" ]; then
+	# Generate ed25519 key
 	dknewkey --ktype ed25519 $STORAGE_ROOT/mail/dkim/box-ed25519
 	
-	# Force them into the format dns_update.py expects
-	sed -i 's/v=DKIM1;/box-rsa._domainkey IN      TXT      ( "v=DKIM1; s=email;/' $STORAGE_ROOT/mail/dkim/box-rsa.dns
-	echo '" )' >> $STORAGE_ROOT/mail/dkim/box-rsa.dns
+	# For the ed25519 dns entry, we use selector box-ed25519
 	sed -i 's/v=DKIM1;/box-ed25519._domainkey IN      TXT      ( "v=DKIM1; s=email;/' $STORAGE_ROOT/mail/dkim/box-ed25519.dns
 	echo '" )' >> $STORAGE_ROOT/mail/dkim/box-ed25519.dns
 fi
