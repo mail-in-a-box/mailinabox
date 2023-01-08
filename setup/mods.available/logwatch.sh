@@ -27,7 +27,8 @@ logwatch_remove() {
 
 logwatch_install() {
     echo "Installing logwatch"
-    apt_install logwatch
+    # also install some perl modules used by our nextcloud logfilter
+    apt_install logwatch libjson-perl libtry-tiny-perl
     # remove cron entry added by logwatch installer, which emails daily
     rm -f /etc/cron.daily/00logwatch
     mkdir -p /var/cache/logwatch
@@ -48,6 +49,11 @@ logwatch_install() {
             "Service=All"
             "Detail=Low"
         )
+    fi
+
+    # install our custom logwatch filters
+    if [ -d setup/mods.available/conf/logwatch ]; then
+        cp -R setup/mods.available/conf/logwatch/* /etc/logwatch/
     fi
 
     tools/editconf.py /etc/logwatch/conf/logwatch.conf -case-insensitive "${settings[@]}"    
