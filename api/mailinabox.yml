@@ -227,6 +227,32 @@ paths:
             text/html:
               schema:
                 type: string
+  /system/ssh-public-key:
+    get:
+      tags:
+        - System
+      summary: Get system SSH public key
+      description: Returns system SSH public key.
+      operationId: getSystemSSHPublicKey
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/system/ssh-public-key" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/SystemSSHPublicKeyResponse'
+              example: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDb root@box.example.com\n
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
   /system/update-packages:
     post:
       tags:
@@ -424,6 +450,32 @@ paths:
             text/html:
               schema:
                 type: string
+  /system/backup/info:
+    get:
+      tags:
+        - System
+      summary: Get system backup info
+      description: |
+        Returns the system backup info, such as the directory of the system where backups are stored.
+      operationId: getSystemBackupInfo
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X GET "https://{host}/admin/system/backup/info" \
+              -u "<email>:<password>"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemBackupInfoResponse'
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
   /system/backup/config:
     get:
       tags:
@@ -442,7 +494,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SystemBackupConfigResponse'
+                oneOf:
+                  - $ref: '#/components/schemas/SystemBackupOffConfigResponse'
+                  - $ref: '#/components/schemas/SystemBackupLocalConfigResponse'
+                  - $ref: '#/components/schemas/SystemBackupRSyncConfigResponse'
+                  - $ref: '#/components/schemas/SystemBackupS3ConfigResponse'
+                  - $ref: '#/components/schemas/SystemBackupB2ConfigResponse'
+                discriminator:
+                  propertyName: type
+                  mapping:
+                    off: '#/components/schemas/SystemBackupOffConfigResponse'
+                    local: '#/components/schemas/SystemBackupLocalConfigResponse'
+                    rsync: '#/components/schemas/SystemBackupRSyncConfigResponse'
+                    s3: '#/components/schemas/SystemBackupS3ConfigResponse'
+                    b2: '#/components/schemas/SystemBackupB2ConfigResponse'
         403:
           description: Forbidden
           content:
@@ -460,49 +525,58 @@ paths:
         content:
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/SystemBackupConfigUpdateRequest'
+              oneOf:
+                - $ref: '#/components/schemas/SystemBackupOffConfigUpdateRequest'
+                - $ref: '#/components/schemas/SystemBackupLocalConfigUpdateRequest'
+                - $ref: '#/components/schemas/SystemBackupRSyncConfigUpdateRequest'
+                - $ref: '#/components/schemas/SystemBackupS3ConfigUpdateRequest'
+                - $ref: '#/components/schemas/SystemBackupB2ConfigUpdateRequest'
+              discriminator:
+                propertyName: type
+                mapping:
+                  off: '#/components/schemas/SystemBackupOffConfigUpdateRequest'
+                  local: '#/components/schemas/SystemBackupLocalConfigUpdateRequest'
+                  rsync: '#/components/schemas/SystemBackupRSyncConfigUpdateRequest'
+                  s3: '#/components/schemas/SystemBackupS3ConfigUpdateRequest'
+                  b2: '#/components/schemas/SystemBackupB2ConfigUpdateRequest'
             examples:
-              s3:
-                summary: S3 backup
-                value:
-                  target: s3://s3.eu-central-1.amazonaws.com/box-example-com
-                  target_user: ACCESS_KEY
-                  target_pass: SECRET_ACCESS_KEY
-                  target_region: eu-central-1
-                  minAge: 3
-              local:
-                summary: Local backup
-                value:
-                  target: local
-                  target_user: ''
-                  target_pass: ''
-                  target_region: ''
-                  minAge: 3
-              rsync:
-                summary: Rsync backup
-                value:
-                  target: rsync://username@box.example.com//backups/box.example.com
-                  target_user: ''
-                  target_pass: ''
-                  target_region: ''
-                  minAge: 3
               off:
                 summary: Disable backups
                 value:
-                  target: 'off'
-                  target_user: ''
-                  target_pass: ''
-                  target_region: ''
-                  minAge: 0
+                  type: 'off'
+              local:
+                summary: Local backup
+                value:
+                  type: local
+                  min_age_in_days: 3
+              rsync:
+                summary: Rsync backup
+                value:
+                  type: rsync
+                  target_url: rsync://user@example.org/mail-in-a-box
+                  min_age_in_days: 3
+              s3:
+                summary: S3 backup
+                value:
+                  type: s3
+                  target_url: s3://your-bucket-name/your-backup-directory
+                  s3_access_key_id: ACCESS_KEY_ID
+                  s3_secret_access_key: SECRET_ACCESS_KEY
+                  s3_endpoint_url: https://objectstorage.example.org:9199
+                  s3_region_name: region-name-1
+                  min_age_in_days: 3
+              b2:
+                summary: B2 backup
+                value:
+                  type: b2
+                  target_url: b2://account_id:application_key@bucket_name/folder/
+                  min_age_in_days: 3
       x-codeSamples:
         - lang: curl
           source: |
             curl -X POST "https://{host}/admin/system/backup/config" \
-              -d "target=<hostname>" \
-              -d "target_user=<string>" \
-              -d "target_pass=<password>" \
-              -d "target_region=<region>" \
-              -d "min_age=<integer>" \
+              -d "type=local" \
+              -d "min_age_in_days=<integer>" \
               -u "<email>:<password>"
       responses:
         200:
@@ -2380,6 +2454,10 @@ components:
       example: |
         libgnutls30 (3.5.18-1ubuntu1.4)
         libxau6 (1:1.0.8-1ubuntu1)
+    SystemSSHPublicKeyResponse:
+      type: string
+      description: System SSH public key response.
+      example: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDb root@box.example.com\n
     SystemUpdatePackagesResponse:
       type: string
       example: |
@@ -2459,74 +2537,212 @@ components:
           type: string
           example: 'Digest Type: 2 / SHA-256'
       description: System entry extra information.
-    SystemBackupConfigUpdateRequest:
+    SystemBackupOffConfigUpdateRequest:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          example: off
+      description: Backup "off" config update request.
+    SystemBackupLocalConfigUpdateRequest:
       type: object
       required:
         - target
-        - target_user
-        - target_pass
-        - target_region
-        - min_age
-      properties:
-        target:
-          type: string
-          format: hostname
-          example: s3://s3.eu-central-1.amazonaws.com/box-example-com
-        target_user:
-          type: string
-          example: username
-        target_pass:
-          type: string
-          example: password
-          format: password
-        target_region:
-          type: string
-          example: eu-central-1
-        min_age:
-          type: integer
-          format: int32
-          minimum: 1
-          example: 3
-      description: Backup config update request.
-    SystemBackupConfigUpdateResponse:
-      type: string
-      example: OK
-      description: Backup config update response.
-    SystemBackupConfigResponse:
-      type: object
-      required:
-        - enc_pw_file
-        - file_target_directory
         - min_age_in_days
-        - ssh_pub_key
-        - target
       properties:
-        enc_pw_file:
+        type:
           type: string
-          example: /home/user-data/backup/secret_key.txt
-        file_target_directory:
-          type: string
-          example: /home/user-data/backup/encrypted
+          example: local
         min_age_in_days:
           type: integer
           format: int32
           minimum: 1
           example: 3
-        ssh_pub_key:
+      description: Backup "local" config update request.
+    SystemBackupRSyncConfigUpdateRequest:
+      type: object
+      required:
+        - type
+        - target_url
+        - min_age_in_days
+      properties:
+        type:
           type: string
-          example: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDb root@box.example.com\n
-        target:
+          example: rsync
+        target_url:
           type: string
-          format: hostname
-          example: s3://s3.eu-central-1.amazonaws.com/box-example-com
-        target_user:
+          format: uri
+          example: rsync://user@example.org/mail-in-a-box
+        min_age_in_days:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 3
+      description: Backup "rsync" config update request.
+    SystemBackupS3ConfigUpdateRequest:
+      type: object
+      required:
+        - type
+        - s3_access_key_id
+        - s3_secret_access_key
+        - min_age_in_days
+        - target_url
+        - s3_endpoint_url
+      properties:
+        type:
           type: string
-        target_pass:
+          example: s3
+        target_url:
           type: string
-        target_region:
+          format: uri
+          example: s3://your-bucket-name/your-backup-directory
+        s3_endpoint_url:
           type: string
-          example: eu-central-1
-      description: Backup config response.
+          format: uri
+          example: https://objectstorage.example.org:9199
+        s3_region_name:
+          type: string
+          example: region-name-1
+        s3_access_key_id:
+          type: string
+          example: access_key_id
+        s3_secret_access_key:
+          type: string
+          example: secret_access_key
+          format: password
+        min_age_in_days:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 3
+      description: Backup "s3" config update request.
+    SystemBackupB2ConfigUpdateRequest:
+      type: object
+      required:
+        - type
+        - target_url
+        - min_age_in_days
+      properties:
+        target_url:
+          type: string
+          format: uri
+          example: b2://account_id:application_key@bucket_name/folder/
+        type:
+          type: string
+          example: b2
+        min_age_in_days:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 3
+      description: Backup "b2" config update request.
+    SystemBackupConfigUpdateResponse:
+      type: string
+      example: OK
+      description: Backup config update response.
+    SystemBackupOffConfigResponse:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          example: off
+      description: Backup "off" config response.
+    SystemBackupLocalConfigResponse:
+      type: object
+      required:
+        - type
+        - target_url
+        - min_age_in_days
+      properties:
+        type:
+          type: string
+          example: local
+        target_url:
+          type: string
+          format: uri
+          example: file:///home/user-data/backup/encrypted
+        min_age_in_days:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 3
+      description: Backup "local" config response.
+    SystemBackupRSyncConfigResponse:
+      type: object
+      required:
+        - type
+        - target_url
+        - min_age_in_days
+      properties:
+        type:
+          type: string
+          example: rsync
+        target_url:
+          type: string
+          format: uri
+          example: rsync://user@example.org/mail-in-a-box
+        min_age_in_days:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 3
+      description: Backup "rsync" config response.
+    SystemBackupS3ConfigResponse:
+      type: object
+      required:
+        - type
+        - target_url
+        - s3_endpoint_url
+        - min_age_in_days
+      properties:
+        type:
+          type: string
+          example: s3
+        s3_access_key_id:
+          type: string
+        s3_secret_access_key:
+          type: string
+        target_url:
+          type: string
+          format: uri
+          example: s3://your-bucket-name/your-backup-directory
+        s3_endpoint_url:
+          type: string
+          format: uri
+          example: https://objectstorage.example.org:9199
+        s3_region_name:
+          type: string
+          example: region-name-1
+        min_age_in_days:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 3
+      description: Backup "s3" config response.
+    SystemBackupB2ConfigResponse:
+      type: object
+      required:
+        - type
+        - target_url
+        - min_age_in_days
+      properties:
+        type:
+          type: string
+          example: b2
+        target_url:
+          type: string
+          format: uri
+          example: b2://account_id:application_key@bucket_name/folder/
+        min_age_in_days:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 3
+      description: Backup "b2" config response.
     SystemBackupStatusResponse:
       type: object
       required:
@@ -2540,6 +2756,34 @@ components:
           type: integer
           format: int32
           example: 0
+        error:
+          type: string
+          example: Something is wrong with the backup
+      description: Backup status response. Lists the status for all backups.
+    SystemBackupInfoResponse:
+      type: object
+      required:
+        - cache_directory
+        - configuration_file
+        - encrypted_directory
+        - encryption_key_file
+        - root_directory
+      properties:
+        cache_directory:
+          type: string
+          example: /home/user-data/backup/cache
+        configuration_file:
+          type: string
+          example: /home/user-data/backup/custom.yaml
+        encrypted_directory:
+          type: string
+          example: /home/user-data/backup/encrypted
+        encryption_key_file:
+          type: string
+          example: /home/user-data/backup/secret_key.txt
+        root_directory:
+          type: string
+          example: "/home/user-data/backup"
         error:
           type: string
           example: Something is wrong with the backup
@@ -2742,3 +2986,4 @@ components:
       properties:
         status:
           type: string
+

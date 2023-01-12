@@ -14,10 +14,25 @@ from exclusiveprocess import Lock
 
 from utils import load_environment, shell, wait_for_service
 
+def get_backup_root_directory(env):
+	return os.path.join(env["STORAGE_ROOT"], 'backup')
+
+def get_backup_cache_directory(env):
+	return os.path.join(get_backup_root_directory(env), 'cache')
+
+def get_backup_encrypted_directory(env):
+	return os.path.join(get_backup_root_directory(env), 'encrypted')
+
+def get_backup_configuration_file(env):
+	return os.path.join(get_backup_root_directory(env), 'custom.yaml')
+
+def get_backup_encryption_key_file(env):
+	return os.path.join(get_backup_root_directory(env), 'secret_key.txt')
+
 def backup_status(env):
-	# If backups are dissbled, return no status.
+	# If backups are disabled, return no status.
 	config = get_backup_config(env)
-	if config["target"] == "off":
+	if config["type"] == "off":
 		return { }
 
 	# Query duplicity to get a list of all full and incremental
@@ -25,8 +40,8 @@ def backup_status(env):
 
 	backups = { }
 	now = datetime.datetime.now(dateutil.tz.tzlocal())
-	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
-	backup_cache_dir = os.path.join(backup_root, 'cache')
+	backup_root = get_backup_root_directory(env)
+	backup_cache_dir = get_backup_cache_directory(env)
 
 	def reldate(date, ref, clip):
 		if ref < date: return clip
@@ -59,7 +74,7 @@ def backup_status(env):
 		"--archive-dir", backup_cache_dir,
 		"--gpg-options", "--cipher-algo=AES256",
 		"--log-fd", "1",
-		get_duplicity_target_url(config),
+		config["target_url"],
 		] + get_duplicity_additional_args(env),
 		get_duplicity_env_vars(env),
 		trap=True)
@@ -183,57 +198,28 @@ def get_passphrase(env):
 	# that line is long enough to be a reasonable passphrase. It
 	# only needs to be 43 base64-characters to match AES256's key
 	# length of 32 bytes.
-	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
-	with open(os.path.join(backup_root, 'secret_key.txt')) as f:
+	with open(get_backup_encryption_key_file(env)) as f:
 		passphrase = f.readline().strip()
 	if len(passphrase) < 43: raise Exception("secret_key.txt's first line is too short!")
 
 	return passphrase
 
-def get_duplicity_target_url(config):
-	target = config["target"]
-
-	if get_target_type(config) == "s3":
-		from urllib.parse import urlsplit, urlunsplit
-		target = list(urlsplit(target))
-
-		# Although we store the S3 hostname in the target URL,
-		# duplicity no longer accepts it in the target URL. The hostname in
-		# the target URL must be the bucket name. The hostname is passed
-		# via get_duplicity_additional_args. Move the first part of the
-		# path (the bucket name) into the hostname URL component, and leave
-		# the rest for the path.
-		target[1], target[2] = target[2].lstrip('/').split('/', 1)
-
-		target = urlunsplit(target)
-
-	return target
-
 def get_duplicity_additional_args(env):
 	config = get_backup_config(env)
 
-	if get_target_type(config) == 'rsync':
+	if config["type"] == 'rsync':
 		return [
 			"--ssh-options= -i /root/.ssh/id_rsa_miab",
 			"--rsync-options= -e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
 		]
-	elif get_target_type(config) == 's3':
-		# See note about hostname in get_duplicity_target_url.
-		from urllib.parse import urlsplit, urlunsplit
-		target = urlsplit(config["target"])
-		endpoint_url = urlunsplit(("https", target.netloc, '', '', ''))
+	elif config["type"] == 's3':
+		additional_args = ["--s3-endpoint-url", config["s3_endpoint_url"]]
 
-		# The target_region parameter has been added since duplicity
-		# now requires it for most cases in which
-		# the S3-compatible service is not provided by AWS.
-		# Nevertheless, some users who use mail-in-a-box
-		# from before version v60 and who use AWS's S3 service
-		# may not have this parameter in the configuration.
-		if "target_region" in config:
-			region = config["target_region"]
-			return ["--s3-endpoint-url",  endpoint_url, "--s3-region-name", region]
-		else:
-			return ["--s3-endpoint-url",  endpoint_url]
+		if "s3_region_name" in config:
+			additional_args.append("--s3-region-name")
+			additional_args.append(config["s3_region_name"])
+
+		return additional_args
 
 	return []
 
@@ -242,15 +228,11 @@ def get_duplicity_env_vars(env):
 
 	env = { "PASSPHRASE" : get_passphrase(env) }
 
-	if get_target_type(config) == 's3':
-		env["AWS_ACCESS_KEY_ID"] = config["target_user"]
-		env["AWS_SECRET_ACCESS_KEY"] = config["target_pass"]
+	if config["type"] == 's3':
+		env["AWS_ACCESS_KEY_ID"] = config["s3_access_key_id"]
+		env["AWS_SECRET_ACCESS_KEY"] = config["s3_secret_access_key"]
 
 	return env
-
-def get_target_type(config):
-	protocol = config["target"].split(":")[0]
-	return protocol
 
 def perform_backup(full_backup):
 	env = load_environment()
@@ -260,12 +242,12 @@ def perform_backup(full_backup):
 	Lock(die=True).forever()
 
 	config = get_backup_config(env)
-	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
-	backup_cache_dir = os.path.join(backup_root, 'cache')
-	backup_dir = os.path.join(backup_root, 'encrypted')
+	backup_root = get_backup_root_directory(env)
+	backup_cache_dir = get_backup_cache_directory(env)
+	backup_dir = get_backup_encrypted_directory(env)
 
 	# Are backups disabled?
-	if config["target"] == "off":
+	if config["type"] == "off":
 		return
 
 	# On the first run, always do a full backup. Incremental
@@ -300,7 +282,7 @@ def perform_backup(full_backup):
 	pre_script = os.path.join(backup_root, 'before-backup')
 	if os.path.exists(pre_script):
 		shell('check_call',
-			['su', env['STORAGE_USER'], '-c', pre_script, config["target"]],
+			['su', env['STORAGE_USER'], '-c', pre_script, config["target_url"]],
 			env=env)
 
 	# Run a backup of STORAGE_ROOT (but excluding the backups themselves!).
@@ -316,7 +298,7 @@ def perform_backup(full_backup):
 			"--volsize", "250",
 			"--gpg-options", "--cipher-algo=AES256",
 			env["STORAGE_ROOT"],
-			get_duplicity_target_url(config),
+			config["target_url"],
 			"--allow-source-mismatch"
 			] + get_duplicity_additional_args(env),
 			get_duplicity_env_vars(env))
@@ -336,7 +318,7 @@ def perform_backup(full_backup):
 		"--verbosity", "error",
 		"--archive-dir", backup_cache_dir,
 		"--force",
-		get_duplicity_target_url(config)
+		config["target_url"]
 		] + get_duplicity_additional_args(env),
 		get_duplicity_env_vars(env))
 
@@ -351,13 +333,13 @@ def perform_backup(full_backup):
 		"--verbosity", "error",
 		"--archive-dir", backup_cache_dir,
 		"--force",
-		get_duplicity_target_url(config)
+		config["target_url"]
 		] + get_duplicity_additional_args(env),
 		get_duplicity_env_vars(env))
 
 	# Change ownership of backups to the user-data user, so that the after-bcakup
 	# script can access them.
-	if get_target_type(config) == 'file':
+	if config["type"] == 'local':
 		shell('check_call', ["/bin/chown", "-R", env["STORAGE_USER"], backup_dir])
 
 	# Execute a post-backup script that does the copying to a remote server.
@@ -366,7 +348,7 @@ def perform_backup(full_backup):
 	post_script = os.path.join(backup_root, 'after-backup')
 	if os.path.exists(post_script):
 		shell('check_call',
-			['su', env['STORAGE_USER'], '-c', post_script, config["target"]],
+			['su', env['STORAGE_USER'], '-c', post_script, config["target_url"]],
 			env=env)
 
 	# Our nightly cron job executes system status checks immediately after this
@@ -378,9 +360,9 @@ def perform_backup(full_backup):
 
 def run_duplicity_verification():
 	env = load_environment()
-	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
+	backup_root = get_backup_root_directory(env)
 	config = get_backup_config(env)
-	backup_cache_dir = os.path.join(backup_root, 'cache')
+	backup_cache_dir = get_backup_cache_directory(env)
 
 	shell('check_call', [
 		"/usr/bin/duplicity",
@@ -389,41 +371,47 @@ def run_duplicity_verification():
 		"--compare-data",
 		"--archive-dir", backup_cache_dir,
 		"--exclude", backup_root,
-		get_duplicity_target_url(config),
+		config["target_url"],
 		env["STORAGE_ROOT"],
 	] + get_duplicity_additional_args(env), get_duplicity_env_vars(env))
 
 def run_duplicity_restore(args):
 	env = load_environment()
 	config = get_backup_config(env)
-	backup_cache_dir = os.path.join(env["STORAGE_ROOT"], 'backup', 'cache')
+	backup_cache_dir = get_backup_cache_directory(env)
 	shell('check_call', [
 		"/usr/bin/duplicity",
 		"restore",
 		"--archive-dir", backup_cache_dir,
-		get_duplicity_target_url(config),
+		config["target_url"],
 		] + get_duplicity_additional_args(env) + args,
 	get_duplicity_env_vars(env))
 
 def list_target_files(config):
-	import urllib.parse
-	try:
-		target = urllib.parse.urlparse(config["target"])
-	except ValueError:
-		return "invalid target"
+	if config["type"] == "local":
+		import urllib.parse
+		try:
+			url = urllib.parse.urlparse(config["target_url"])
+		except ValueError:
+			return "invalid target"
 
-	if target.scheme == "file":
-		return [(fn, os.path.getsize(os.path.join(target.path, fn))) for fn in os.listdir(target.path)]
+		return [(fn, os.path.getsize(os.path.join(url.path, fn))) for fn in os.listdir(url.path)]
 
-	elif target.scheme == "rsync":
+	elif config["type"] == "rsync":
+		import urllib.parse
+		try:
+			url = urllib.parse.urlparse(config["target_url"])
+		except ValueError:
+			return "invalid target"
+
 		rsync_fn_size_re = re.compile(r'.*    ([^ ]*) [^ ]* [^ ]* (.*)')
 		rsync_target = '{host}:{path}'
 
-		target_path = target.path
-		if not target_path.endswith('/'):
-			target_path = target_path + '/'
-		if target_path.startswith('/'):
-			target_path = target_path[1:]
+		url_path = url.path
+		if not url_path.endswith('/'):
+			url_path = url_path + '/'
+		if url_path.startswith('/'):
+			url_path = url_path[1:]
 
 		rsync_command = [ 'rsync',
 					'-e',
@@ -431,8 +419,8 @@ def list_target_files(config):
 					'--list-only',
 					'-r',
 					rsync_target.format(
-						host=target.netloc,
-						path=target_path)
+						host=url.netloc,
+						path=url_path)
 				]
 
 		code, listing = shell('check_output', rsync_command, trap=True, capture_stderr=True)
@@ -447,24 +435,29 @@ def list_target_files(config):
 			if 'Permission denied (publickey).' in listing:
 				reason = "Invalid user or check you correctly copied the SSH key."
 			elif 'No such file or directory' in listing:
-				reason = "Provided path {} is invalid.".format(target_path)
+				reason = "Provided path {} is invalid.".format(url_path)
 			elif 'Network is unreachable' in listing:
-				reason = "The IP address {} is unreachable.".format(target.hostname)
+				reason = "The IP address {} is unreachable.".format(url.hostname)
 			elif 'Could not resolve hostname' in listing:
-				reason = "The hostname {} cannot be resolved.".format(target.hostname)
+				reason = "The hostname {} cannot be resolved.".format(url.hostname)
 			else:
 				reason = "Unknown error." \
 						"Please check running 'management/backup.py --verify'" \
 						"from mailinabox sources to debug the issue."
 			raise ValueError("Connection to rsync host failed: {}".format(reason))
 
-	elif target.scheme == "s3":
+	elif config["type"] == "s3":
+		import urllib.parse
+		try:
+			url = urllib.parse.urlparse(config["target_url"])
+		except ValueError:
+			return "invalid target"
+
 		import boto3.s3
 		from botocore.exceptions import ClientError
-		
-		# separate bucket from path in target
-		bucket = target.path[1:].split('/')[0]
-		path = '/'.join(target.path[1:].split('/')[1:]) + '/'
+
+		bucket = url.hostname
+		path = url.path
 
 		# If no prefix is specified, set the path to '', otherwise boto won't list the files
 		if path == '/':
@@ -475,25 +468,42 @@ def list_target_files(config):
 
 		# connect to the region & bucket
 		try:
-			s3 = boto3.client('s3', \
-				endpoint_url=f'https://{target.hostname}', \
-				aws_access_key_id=config['target_user'], \
-				aws_secret_access_key=config['target_pass'])
+			s3 = None
+			if "s3_region_name" in config:
+				s3 = boto3.client('s3', \
+					endpoint_url=config["s3_endpoint_url"], \
+					region_name=config["s3_region_name"], \
+					aws_access_key_id=config["s3_access_key_id"], \
+					aws_secret_access_key=config["s3_secret_access_key"])
+			else:
+				s3 = boto3.client('s3', \
+					endpoint_url=config["s3_endpoint_url"], \
+					aws_access_key_id=config["s3_access_key_id"], \
+					aws_secret_access_key=config["s3_secret_access_key"])
+
 			bucket_objects = s3.list_objects_v2(Bucket=bucket, Prefix=path)['Contents']
 			backup_list = [(key['Key'][len(path):], key['Size']) for key in bucket_objects]
 		except ClientError as e:
 			raise ValueError(e)
 		return backup_list
-	elif target.scheme == 'b2':
+
+	elif config["type"] == "b2":
+		import urllib.parse
+		try:
+			url = urllib.parse.urlparse(config["target_url"])
+		except ValueError:
+			return "invalid target"
+
+
 		from b2sdk.v1 import InMemoryAccountInfo, B2Api
 		from b2sdk.v1.exception import NonExistentBucket
 		info = InMemoryAccountInfo()
 		b2_api = B2Api(info)
-		
+
 		# Extract information from target
-		b2_application_keyid = target.netloc[:target.netloc.index(':')]
-		b2_application_key = target.netloc[target.netloc.index(':')+1:target.netloc.index('@')]
-		b2_bucket = target.netloc[target.netloc.index('@')+1:]
+		b2_application_keyid = url.netloc[:url.netloc.index(':')]
+		b2_application_key = url.netloc[url.netloc.index(':')+1:url.netloc.index('@')]
+		b2_bucket = url.netloc[url.netloc.index('@')+1:]
 
 		try:
 			b2_api.authorize_account("production", b2_application_keyid, b2_application_key)
@@ -503,28 +513,46 @@ def list_target_files(config):
 		return [(key.file_name, key.size) for key, _ in bucket.ls()]
 
 	else:
-		raise ValueError(config["target"])
+		raise ValueError(config["type"])
 
 
-def backup_set_custom(env, target, target_user, target_pass, target_region, min_age):
-	config = get_backup_config(env, for_save=True)
+def set_off_backup_config(env):
+	config = {
+		"type": "off"
+	}
 
-	# min_age must be an int
-	if isinstance(min_age, str):
-		min_age = int(min_age)
+	write_backup_config(env, config)
 
-	config["target"] = target
-	config["target_user"] = target_user
-	config["target_pass"] = target_pass
-	config["target_region"] = target_region
-	config["min_age_in_days"] = min_age
+	return "OK"
+
+def set_local_backup_config(env, min_age_in_days):
+	# min_age_in_days must be an int
+	if isinstance(min_age_in_days, str):
+		min_age_in_days = int(min_age_in_days)
+
+	config = {
+		"type": "local",
+		"min_age_in_days": min_age_in_days
+	}
+
+	write_backup_config(env, config)
+
+	return "OK"
+
+def set_rsync_backup_config(env, min_age_in_days, target_url):
+	# min_age_in_days must be an int
+	if isinstance(min_age_in_days, str):
+		min_age_in_days = int(min_age_in_days)
+
+	config = {
+		"type": "rsync",
+		"target_url": target_url,
+		"min_age_in_days": min_age_in_days
+	}
 
 	# Validate.
 	try:
-		if config["target"] not in ("off", "local"):
-			# these aren't supported by the following function, which expects a full url in the target key,
-			# which is what is there except when loading the config prior to saving
-			list_target_files(config)
+		list_target_files(config)
 	except ValueError as e:
 		return str(e)
 
@@ -532,49 +560,128 @@ def backup_set_custom(env, target, target_user, target_pass, target_region, min_
 
 	return "OK"
 
-def get_backup_config(env, for_save=False, for_ui=False):
-	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
+def set_s3_backup_config(env, min_age_in_days, s3_access_key_id, s3_secret_access_key, target_url, s3_endpoint_url, s3_region_name=None):
+	# min_age_in_days must be an int
+	if isinstance(min_age_in_days, str):
+		min_age_in_days = int(min_age_in_days)
+
+	config = {
+		"type": "s3",
+		"target_url": target_url,
+		"s3_endpoint_url": s3_endpoint_url,
+		"s3_region_name": s3_region_name,
+		"s3_access_key_id": s3_access_key_id,
+		"s3_secret_access_key": s3_secret_access_key,
+		"min_age_in_days": min_age_in_days
+	}
+
+	if s3_region_name is not None:
+		config["s3_region_name"] = s3_region_name
+
+	# Validate.
+	try:
+		list_target_files(config)
+	except ValueError as e:
+		return str(e)
+
+	write_backup_config(env, config)
+
+	return "OK"
+
+def set_b2_backup_config(env, min_age_in_days, target_url):
+	# min_age_in_days must be an int
+	if isinstance(min_age_in_days, str):
+		min_age_in_days = int(min_age_in_days)
+
+	config = {
+		"type": "b2",
+		"target_url": target_url,
+		"min_age_in_days": min_age_in_days
+	}
+
+	# Validate.
+	try:
+		list_target_files(config)
+	except ValueError as e:
+		return str(e)
+
+	write_backup_config(env, config)
+
+	return "OK"
+
+def get_backup_config(env):
+	backup_root = get_backup_root_directory(env)
 
 	# Defaults.
 	config = {
-		"min_age_in_days": 3,
-		"target": "local",
+		"type": "local",
+		"min_age_in_days": 3
 	}
 
 	# Merge in anything written to custom.yaml.
 	try:
-		custom_config = rtyaml.load(open(os.path.join(backup_root, 'custom.yaml')))
+		custom_config = rtyaml.load(open(get_backup_configuration_file(env)))
 		if not isinstance(custom_config, dict): raise ValueError() # caught below
+
+		# Converting the previous configuration (which was not very clear)
+		# into the new configuration format which also provides
+		# a "type" attribute to distinguish the type of backup.
+		if "type" not in custom_config:
+			scheme = custom_config["target"].split(":")[0]
+			if scheme == "off":
+				custom_config = {
+					"type": "off"
+				}
+			elif scheme == "file":
+				custom_config = {
+					"type": "local",
+					"min_age_in_days": custom_config["min_age_in_days"]
+				}
+			elif scheme == "rsync":
+				custom_config = {
+					"type": "rsync",
+					"target_url": custom_config["target"],
+					"min_age_in_days": custom_config["min_age_in_days"]
+				}
+			elif scheme == "s3":
+				import urllib.parse
+				url = urllib.parse.urlparse(custom_config["target"])
+				target_url = url.scheme + ":/" + url.path
+				s3_endpoint_url = "https://" + url.netloc
+				s3_access_key_id = custom_config["target_user"]
+				s3_secret_access_key = custom_config["target_pass"]
+				custom_config = {
+					"type": "s3",
+					"target_url": target_url,
+					"s3_endpoint_url": s3_endpoint_url,
+					"s3_access_key_id": custom_config["target_user"],
+					"s3_secret_access_key": custom_config["target_pass"],
+					"min_age_in_days": custom_config["min_age_in_days"]
+				}
+			elif scheme == "b2":
+				custom_config = {
+					"type": "b2",
+					"target_url": custom_config["target"],
+					"min_age_in_days": custom_config["min_age_in_days"]
+				}
+			else:
+				raise ValueError("Unexpected scheme during the conversion of the previous config to the new format.")
+
 		config.update(custom_config)
 	except:
 		pass
 
-	# When updating config.yaml, don't do any further processing on what we find.
-	if for_save:
-		return config
-
-	# When passing this back to the admin to show the current settings, do not include
-	# authentication details. The user will have to re-enter it.
-	if for_ui:
-		for field in ("target_user", "target_pass"):
-			if field in config:
-				del config[field]
-
-	# helper fields for the admin
-	config["file_target_directory"] = os.path.join(backup_root, 'encrypted')
-	config["enc_pw_file"] = os.path.join(backup_root, 'secret_key.txt')
-	if config["target"] == "local":
-		# Expand to the full URL.
-		config["target"] = "file://" + config["file_target_directory"]
-	ssh_pub_key = os.path.join('/root', '.ssh', 'id_rsa_miab.pub')
-	if os.path.exists(ssh_pub_key):
-		config["ssh_pub_key"] = open(ssh_pub_key, 'r').read()
+	# Adding an implicit information (for "local" backup, the target_url corresponds
+	# to the encrypted directory) because in the backup_status function it is easier
+	# to pass to duplicity the value of "target_url" without worrying about
+	# distinguishing between "local" or "rsync" or "s3" or "b2"  backup types.
+	if config["type"] == "local":
+		config["target_url"] = "file://" + get_backup_encrypted_directory(env)
 
 	return config
 
 def write_backup_config(env, newconfig):
-	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
-	with open(os.path.join(backup_root, 'custom.yaml'), "w") as f:
+	with open(get_backup_configuration_file(env), "w") as f:
 		f.write(rtyaml.dump(newconfig))
 
 if __name__ == "__main__":

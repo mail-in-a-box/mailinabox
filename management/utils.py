@@ -40,6 +40,18 @@ def load_settings(env):
     except:
         return { }
 
+# THE SSH KEYS AT /root/.ssh
+
+def load_ssh_public_key():
+	ssh_public_key_file = os.path.join('/root', '.ssh', 'id_rsa_miab.pub')
+	if os.path.exists(ssh_public_key_file):
+		return open(ssh_public_key_file, 'r').read()
+
+def load_ssh_private_key():
+	ssh_private_key_file = os.path.join('/root', '.ssh', 'id_rsa_miab')
+	if os.path.exists(ssh_private_key_file):
+		return open(ssh_private_key_file, 'r').read()
+
 # UTILITIES
 
 def safe_domain_name(name):

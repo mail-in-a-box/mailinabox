@@ -579,6 +579,13 @@ def show_updates():
 		% (p["package"], p["version"])
 		for p in list_apt_updates())
 
+@app.route('/system/ssh-public-key')
+@authorized_personnel_only
+def get_ssh_public_key():
+	from utils import load_ssh_public_key
+	return load_ssh_public_key()
+	# return json_response({"ssh_public_key": load_ssh_public_key()})
+
 @app.route('/system/update-packages', methods=["POST"])
 @authorized_personnel_only
 def do_updates():
@@ -617,23 +624,70 @@ def backup_status():
 	except Exception as e:
 		return json_response({ "error": str(e) })
 
+@app.route('/system/backup/info')
+@authorized_personnel_only
+def backup_info():
+	from backup import get_backup_root_directory, get_backup_cache_directory, get_backup_encrypted_directory, get_backup_configuration_file, get_backup_encryption_key_file
+	try:
+		info = {
+			"root_directory": get_backup_root_directory(env),
+			"cache_directory": get_backup_cache_directory(env),
+			"encrypted_directory": get_backup_encrypted_directory(env),
+			"configuration_file": get_backup_configuration_file(env),
+			"encryption_key_file": get_backup_encryption_key_file(env)
+                }
+		return json_response(info)
+	except Exception as e:
+		return json_response({ "error": str(e) })
+
 @app.route('/system/backup/config', methods=["GET"])
 @authorized_personnel_only
 def backup_get_custom():
 	from backup import get_backup_config
-	return json_response(get_backup_config(env, for_ui=True))
+
+	config = get_backup_config(env)
+
+	# When passing this back to the admin to show the current settings, do not include
+	# authentication details. The user will have to re-enter it.
+	for field in ("s3_access_key_id", "s3_secret_access_key"):
+		if field in config:
+			del config[field]
+
+	return json_response(config)
 
 @app.route('/system/backup/config', methods=["POST"])
 @authorized_personnel_only
 def backup_set_custom():
-	from backup import backup_set_custom
-	return json_response(backup_set_custom(env,
-		request.form.get('target', ''),
-		request.form.get('target_user', ''),
-		request.form.get('target_pass', ''),
-		request.form.get('target_region', ''),
-		request.form.get('min_age', '')
-	))
+	from backup import set_off_backup_config, set_local_backup_config, set_rsync_backup_config, set_s3_backup_config, set_b2_backup_config
+
+	type = request.form.get('type', '')
+	if type == "off":
+		return json_response(set_off_backup_config(env))
+	elif type == "local":
+		return json_response(set_local_backup_config(env,
+			request.form.get('min_age_in_days', '')
+		))
+	elif type == "rsync":
+		return json_response(set_rsync_backup_config(env,
+			request.form.get('min_age_in_days', ''),
+			request.form.get('target_url', '')
+		))
+	elif type == "s3":
+		return json_response(set_s3_backup_config(env,
+			request.form.get('min_age_in_days', ''),
+			request.form.get('s3_access_key_id', ''),
+			request.form.get('s3_secret_access_key', ''),
+			request.form.get('target_url', ''),
+			request.form.get('s3_endpoint_url', ''),
+			request.form.get('s3_region_name', None)
+		))
+	elif type == "b2":
+		return json_response(set_b2_backup_config(env,
+			request.form.get('min_age_in_days', ''),
+			request.form.get('target_url', '')
+		))
+	else:
+		return json_response({"error": "unknown config type"})
 
 @app.route('/system/privacy', methods=["GET"])
 @authorized_personnel_only
