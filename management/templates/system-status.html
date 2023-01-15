@@ -103,9 +103,7 @@ function show_system_status() {
       const error_symbol = "✖";
       const warning_symbol = "?";
 
-      let num_ok = 0;
-      let num_error = 0;
-      let num_warning = 0;
+      let count_by_status = { ok: 0, error: 0, warning: 0 };
 
       for (var i = 0; i < r.length; i++) {
         var n = $("<tr><td class='status'/><td class='message'><p style='margin: 0'/><div class='extra'/><a class='showhide' href='#'/></tr>");
@@ -115,18 +113,10 @@ function show_system_status() {
         else
                 n.addClass("status-" + r[i].type)
 
-	if (r[i].type == "ok") {
-	    ++num_ok;
-	    n.find('td.status').text(ok_symbol);
-	}
-	else if (r[i].type == "error") {
-	    ++num_error;
-	    n.find('td.status').text(error_symbol);
-	}
-	else if (r[i].type == "warning") {
-	    ++num_warning;
-	    n.find('td.status').text(warning_symbol);
-	}
+        if (r[i].type == "ok") n.find('td.status').text(ok_symbol);
+        if (r[i].type == "error") n.find('td.status').text(error_symbol);
+        if (r[i].type == "warning") n.find('td.status').text(warning_symbol);
+        count_by_status[r[i].type]++;
 
         n.find('td.message p').text(r[i].text)
         $('#system-checks tbody').append(n);
@@ -149,11 +139,14 @@ function show_system_status() {
       }
 
       // Summary counts
-      const all_ok = (num_error + num_warning == 0) ? 'All ' : '';
-      summary.append($('<span class="summary-ok"/>').text(`${all_ok}${num_ok} ${ok_symbol} Ok`));
-      if (num_error > 0) summary.append($('<span class="summary-error"/>').text(`, ${num_error} ${error_symbol} Error`));
-      if (num_warning > 0) summary.append($('<span class="summary-warning"/>').text(`, ${num_warning} ${warning_symbol} Warning`));
-      if (num_error > 0 || num_warning > 0) summary.append($('<span/>').text(`, out of ${num_ok + num_error + num_warning} checks`));
+      summary.html("Summary: ");
+      if (count_by_status['error'] + count_by_status['warning'] == 0) {
+        summary.append($('<span class="summary-ok"/>').text(`All ${count_by_status['ok']} ${ok_symbol} OK`));
+      } else {
+        summary.append($('<span class="summary-ok"/>').text(`${count_by_status['ok']} ${ok_symbol} OK, `));
+        summary.append($('<span class="summary-error"/>').text(`${count_by_status['error']} ${error_symbol} Error, `));
+        summary.append($('<span class="summary-warning"/>').text(`${count_by_status['warning']} ${warning_symbol} Warning`));
+      }
     })
 }
 
