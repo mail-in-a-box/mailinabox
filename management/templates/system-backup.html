@@ -45,6 +45,10 @@
     <label for="backup-target-rsync-host" class="col-sm-2 control-label">Hostname</label>
     <div class="col-sm-8">
       <input type="text" placeholder="hostname.local" class="form-control" rows="1" id="backup-target-rsync-host">
+      <div class="small" style="margin-top: 2px">
+	The hostname at your rsync provider, e.g. <tt>da2327.rsync.net</tt>.  Optionally includes a colon
+	and the provider's non-standard ssh port number, e.g. <tt>u215843.your-storagebox.de:23</tt>. 
+      </div>
     </div>
   </div>
   <div class="form-group backup-target-rsync">
@@ -266,12 +270,11 @@ function show_backup_configuration() {
           $("#min-age").val(r.min_age_in_days);
         } else if(r.type == "rsync") {
           $("#min-age").val(r.min_age_in_days);
-          $("#backup-target-type").val("rsync");
-          var path = r.target_url.substring(8).split('//');
-          var host_parts = path.shift().split('@');
-          $("#backup-target-rsync-user").val(host_parts[0]);
-          $("#backup-target-rsync-host").val(host_parts[1]);
-          $("#backup-target-rsync-path").val('/'+path[0]);
+          const spec = url_split(r.target_url);
+          $("#backup-target-type").val(spec.scheme);
+	  $("#backup-target-rsync-user").val(spec.user);
+	  $("#backup-target-rsync-host").val(spec.host);
+	  $("#backup-target-rsync-path").val(spec.path);
         } else if(r.type == "s3") {
           $("#backup-s3-access-key-id").val(r.s3_access_key_id);
           $("#backup-s3-secret-access-key").val(r.s3_secret_access_key);
@@ -335,4 +338,31 @@ function set_backup_configuration() {
     });
   return false;
 }
+
+// Return a two-element array of the substring preceding and the substring following
+// the first occurence of separator in string. Return [undefined, string] if the
+// separator does not appear in string.
+const split1_rest = (string, separator) => {
+    const index = string.indexOf(separator);
+    return (index >= 0) ? [string.substring(0, index), string.substring(index + separator.length)] : [undefined, string];
+};
+
+// Note: The manifest JS URL class does not work in some security-conscious
+// settings, e.g. Brave browser, so we roll our own that handles only what we need.
+//
+// Use greedy separator parsing to get parts of a MIAB backup target url.
+// Note: path will not include a leading forward slash '/'
+const url_split = url => {
+    const [ scheme, scheme_rest ] = split1_rest(url, '://');
+    const [ user, user_rest ] = split1_rest(scheme_rest, '@');
+    const [ host, path ] = split1_rest(user_rest, '/');
+
+    return {
+	scheme,
+	user,
+	host,
+	path,
+    }
+};
+
 </script>

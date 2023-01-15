@@ -1,6 +1,27 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+System:
+
+* fail2ban didn't start after setup.
+
+Mail:
+
+* Disable Roundcube password plugin since it was corrupting the user database.
+
+Control panel:
+
+* Fix changing existing backup settings when the rsync type is used.
+* Allow setting a custom port for rsync backups.
+* Fixes to DNS lookups during status checks when there are timeouts, enforce timeouts better.
+* A new check is added to ensure fail2ban is running.
+* Fixed a color.
+* Disable Roundcube password plugin since it was corrupting the user database
+* Improve error messages in the management tools when external command-line tools are run.
+
 Version 60.1 (October 30, 2022)
 -------------------------------
 
