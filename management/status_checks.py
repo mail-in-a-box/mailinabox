@@ -308,6 +308,8 @@ def run_network_checks(env, output):
 		output.print_ok("IP address is not blacklisted by zen.spamhaus.org.")
 	elif zen == "[timeout]":
 		output.print_warning("Connection to zen.spamhaus.org timed out. We could not determine whether your server's IP address is blacklisted. Please try again later.")
+	elif zen == "[Not Set]":
+		output.print_warning("Could not connect to zen.spamhaus.org. We could not determine whether your server's IP address is blacklisted. Please try again later.")
 	else:
 		output.print_error("""The IP address of this machine %s is listed in the Spamhaus Block List (code %s),
 			which may prevent recipients from receiving your email. See http://www.spamhaus.org/query/ip/%s."""
@@ -541,7 +543,7 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 		for ns in custom_secondary_ns:
 			# We must first resolve the nameserver to an IP address so we can query it.
 			ns_ips = query_dns(ns, "A")
-			if not ns_ips:
+			if not ns_ips or ns_ips in {'[Not Set]', '[timeout]'}:
 				output.print_error("Secondary nameserver %s is not valid (it doesn't resolve to an IP address)." % ns)
 				continue
 			# Choose the first IP if nameserver returns multiple
@@ -744,6 +746,8 @@ def check_mail_domain(domain, env, output):
 		output.print_ok("Domain is not blacklisted by dbl.spamhaus.org.")
 	elif dbl == "[timeout]":
 		output.print_warning("Connection to dbl.spamhaus.org timed out. We could not determine whether the domain {} is blacklisted. Please try again later.".format(domain))
+	elif dbl == "[Not Set]":
+		output.print_warning("Could not connect to dbl.spamhaus.org. We could not determine whether the domain {} is blacklisted. Please try again later.".format(domain))
 	else:
 		output.print_error("""This domain is listed in the Spamhaus Domain Block List (code %s),
 			which may prevent recipients from receiving your mail.
@@ -788,12 +792,17 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None, as_list=False):
 	# running bind server), or if the 'at' argument is specified, use that host
 	# as the nameserver.
 	resolver = dns.resolver.get_default_resolver()
-	if at:
+	
+	# Make sure at is not a string that cannot be used as a nameserver
+	if at and at not in {'[Not set]', '[timeout]'}:
 		resolver = dns.resolver.Resolver()
 		resolver.nameservers = [at]
 
 	# Set a timeout so that a non-responsive server doesn't hold us back.
 	resolver.timeout = 5
+	# The number of seconds to spend trying to get an answer to the question. If the
+	# lifetime expires a dns.exception.Timeout exception will be raised.
+	resolver.lifetime = 5
 
 	# Do the query.
 	try:
