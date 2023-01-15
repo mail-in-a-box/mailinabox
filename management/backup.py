@@ -531,7 +531,8 @@ def get_backup_config(env, for_save=False, for_ui=False):
 
 	# Merge in anything written to custom.yaml.
 	try:
-		custom_config = rtyaml.load(open(os.path.join(backup_root, 'custom.yaml')))
+		with open(os.path.join(backup_root, 'custom.yaml'), 'r') as f:
+			custom_config = rtyaml.load(f)
 		if not isinstance(custom_config, dict): raise ValueError() # caught below
 		config.update(custom_config)
 	except:
@@ -556,7 +557,8 @@ def get_backup_config(env, for_save=False, for_ui=False):
 		config["target"] = "file://" + config["file_target_directory"]
 	ssh_pub_key = os.path.join('/root', '.ssh', 'id_rsa_miab.pub')
 	if os.path.exists(ssh_pub_key):
-		config["ssh_pub_key"] = open(ssh_pub_key, 'r').read()
+		with open(ssh_pub_key, 'r') as f:
+			config["ssh_pub_key"] = f.read()
 
 	return config
 
