@@ -620,7 +620,8 @@ def get_backup_config(env):
 
 	# Merge in anything written to custom.yaml.
 	try:
-		custom_config = rtyaml.load(open(get_backup_configuration_file(env)))
+		with open(os.path.join(backup_root, 'custom.yaml'), 'r') as f:
+			custom_config = rtyaml.load(f)
 		if not isinstance(custom_config, dict): raise ValueError() # caught below
 
 		# Converting the previous configuration (which was not very clear)

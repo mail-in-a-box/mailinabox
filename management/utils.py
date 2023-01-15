@@ -14,7 +14,9 @@ def load_env_vars_from_file(fn):
     # Load settings from a KEY=VALUE file.
     import collections
     env = collections.OrderedDict()
-    for line in open(fn): env.setdefault(*line.strip().split("=", 1))
+    with open(fn, 'r')  as f:
+        for line in f:
+            env.setdefault(*line.strip().split("=", 1))
     return env
 
 def save_environment(env):
@@ -34,7 +36,8 @@ def load_settings(env):
     import rtyaml
     fn = os.path.join(env['STORAGE_ROOT'], 'settings.yaml')
     try:
-        config = rtyaml.load(open(fn, "r"))
+        with open(fn, "r") as f:
+            config = rtyaml.load(f)
         if not isinstance(config, dict): raise ValueError() # caught below
         return config
     except:
@@ -43,14 +46,16 @@ def load_settings(env):
 # THE SSH KEYS AT /root/.ssh
 
 def load_ssh_public_key():
-	ssh_public_key_file = os.path.join('/root', '.ssh', 'id_rsa_miab.pub')
-	if os.path.exists(ssh_public_key_file):
-		return open(ssh_public_key_file, 'r').read()
+    ssh_public_key_file = os.path.join('/root', '.ssh', 'id_rsa_miab.pub')
+    if os.path.exists(ssh_public_key_file):
+        with open(ssh_public_key_file, 'r') as f:
+            return f.read()
 
 def load_ssh_private_key():
-	ssh_private_key_file = os.path.join('/root', '.ssh', 'id_rsa_miab')
-	if os.path.exists(ssh_private_key_file):
-		return open(ssh_private_key_file, 'r').read()
+    ssh_private_key_file = os.path.join('/root', '.ssh', 'id_rsa_miab')
+    if os.path.exists(ssh_private_key_file):
+        with open(ssh_private_key_file, 'r') as f:
+            return f.read()
 
 # UTILITIES
 
