@@ -95,6 +95,12 @@ def run_services_checks(env, output, pool):
 		fatal = fatal or fatal2
 		output2.playback(output)
 
+	# Check fail2ban.
+	code, ret = shell('check_output', ["fail2ban-client", "status"], capture_stderr=True, trap=True)
+	if code != 0:
+		output.print_error("fail2ban is not running.")
+		all_running = False
+
 	if all_running:
 		output.print_ok("All system services are running.")
 
