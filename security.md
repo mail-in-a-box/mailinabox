@@ -1,7 +1,7 @@
 Mail-in-a-Box Security Guide
 ============================
 
-Mail-in-a-Box turns a fresh Ubuntu 18.04 LTS 64-bit machine into a mail server appliance by installing and configuring various components.
+Mail-in-a-Box turns a fresh Ubuntu 22.04 LTS 64-bit machine into a mail server appliance by installing and configuring various components.
 
 This page documents the security posture of Mail-in-a-Box. The term “box” is used below to mean a configured Mail-in-a-Box.
 
