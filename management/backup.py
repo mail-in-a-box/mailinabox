@@ -213,9 +213,18 @@ def get_duplicity_additional_args(env):
 	config = get_backup_config(env)
 
 	if get_target_type(config) == 'rsync':
+		# Extract a port number for the ssh transport.  Duplicity accepts the
+		# optional port number syntax in the target, but it doesn't appear to act
+		# on it, so we set the ssh port explicitly via the duplicity options.
+		from urllib.parse import urlsplit
+		try:
+			port = urlsplit(config["target"]).port
+		except ValueError:
+			port = 22
+
 		return [
-			"--ssh-options= -i /root/.ssh/id_rsa_miab",
-			"--rsync-options= -e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
+			f"--ssh-options= -i /root/.ssh/id_rsa_miab -p {port}",
+			f"--rsync-options= -e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p {port} -i /root/.ssh/id_rsa_miab\"",
 		]
 	elif get_target_type(config) == 's3':
 		# See note about hostname in get_duplicity_target_url.
@@ -408,6 +417,14 @@ def list_target_files(config):
 		rsync_fn_size_re = re.compile(r'.*    ([^ ]*) [^ ]* [^ ]* (.*)')
 		rsync_target = '{host}:{path}'
 
+		# Strip off any trailing port specifier because it's not valid in rsync's
+		# DEST syntax.  Explicitly set the port number for the ssh transport.
+		user_host, *_ = target.netloc.rsplit(':', 1)
+		try:
+			port = target.port
+		except ValueError:
+			 port = 22
+
 		target_path = target.path
 		if not target_path.endswith('/'):
 			target_path = target_path + '/'
@@ -416,11 +433,11 @@ def list_target_files(config):
 
 		rsync_command = [ 'rsync',
 					'-e',
-					'/usr/bin/ssh -i /root/.ssh/id_rsa_miab -oStrictHostKeyChecking=no -oBatchMode=yes',
+					f'/usr/bin/ssh -i /root/.ssh/id_rsa_miab -oStrictHostKeyChecking=no -oBatchMode=yes -p {port}',
 					'--list-only',
 					'-r',
 					rsync_target.format(
-						host=target.netloc,
+						host=user_host,
 						path=target_path)
 				]
 
