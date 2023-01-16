@@ -66,7 +66,6 @@ popd >/dev/null
 
 # install master miab-ldap and capture state
 H2 "New miabldap"
-echo "git branch: $(git branch | grep '*')"
 miab_ldap_install --capture-state="/tmp/state/master"
 
 # compare states

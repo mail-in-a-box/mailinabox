@@ -136,7 +136,7 @@ InstallNextcloud() {
 	# Make sure permissions are correct or the upgrade step won't run.
 	# $STORAGE_ROOT/owncloud may not yet exist, so use -f to suppress
 	# that error.
-	chown -f -R www-data.www-data $STORAGE_ROOT/owncloud /usr/local/lib/owncloud || /bin/true
+	chown -f -R www-data:www-data $STORAGE_ROOT/owncloud /usr/local/lib/owncloud || /bin/true
 
 	# If this isn't a new installation, immediately run the upgrade script.
 	# Then check for success (0=ok and 3=no upgrade needed, both are success).
@@ -289,7 +289,7 @@ EOF
 EOF
 
 	# Set permissions
-	chown -R www-data.www-data $STORAGE_ROOT/owncloud /usr/local/lib/owncloud
+	chown -R www-data:www-data $STORAGE_ROOT/owncloud /usr/local/lib/owncloud
 
 	# Execute Nextcloud's setup step, which creates the Nextcloud sqlite database.
 	# It also wipes it if it exists. And it updates config.php with database
@@ -341,7 +341,7 @@ var_export(\$CONFIG);
 echo ";";
 ?>
 EOF
-chown www-data.www-data $STORAGE_ROOT/owncloud/config.php
+chown www-data:www-data $STORAGE_ROOT/owncloud/config.php
 
 # Enable/disable apps. Note that this must be done after the Nextcloud setup.
 # The firstrunwizard gave Josh all sorts of problems, so disabling that.

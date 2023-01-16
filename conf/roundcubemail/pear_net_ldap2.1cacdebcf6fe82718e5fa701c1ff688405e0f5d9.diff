@@ -1,0 +1,15 @@
+--- a/Net/LDAP2/Entry.php
++++ b/Net/LDAP2/Entry.php
+@@ -363,10 +363,9 @@ protected function setAttributes($attributes = null)
+             $attributes = array();
+             do {
+                 if (empty($attr)) {
+-                    $ber  = null;
+-                    $attr = @ldap_first_attribute($this->_link, $this->_entry, $ber);
++                    $attr = @ldap_first_attribute($this->_link, $this->_entry);
+                 } else {
+-                    $attr = @ldap_next_attribute($this->_link, $this->_entry, $ber);
++                    $attr = @ldap_next_attribute($this->_link, $this->_entry);
+                 }
+                 if ($attr) {
+                     $func = 'ldap_get_values'; // standard function to fetch value

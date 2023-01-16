@@ -548,7 +548,8 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 	# Second, check that the certificate matches the private key.
 	if ssl_private_key is not None:
 		try:
-			priv_key = load_pem(open(ssl_private_key, 'rb').read())
+			with open(ssl_private_key, 'rb') as f:
+				priv_key = load_pem(f.read())
 		except ValueError as e:
 			return ("The private key file %s is not a private key file: %s" % (ssl_private_key, str(e)), None)
 

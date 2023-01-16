@@ -133,13 +133,14 @@ def generate_documentation():
  """)
 
 	parser = Source.parser()
-	for line in open("setup/start.sh"):
-		try:
-			fn = parser.parse_string(line).filename()
-		except:
-			continue
-		if fn in ("setup/start.sh", "setup/preflight.sh", "setup/questions.sh", "setup/firstuser.sh", "setup/management.sh"):
-			continue
+	with open("setup/start.sh", "r") as start_file: 
+                for line in start_file:
+                        try:
+                                fn = parser.parse_string(line).filename()
+                        except:
+                                continue
+                        if fn in ("setup/start.sh", "setup/preflight.sh", "setup/questions.sh", "setup/firstuser.sh", "setup/management.sh"):
+                                continue
 
 		import sys
 		print(fn, file=sys.stderr)
@@ -410,7 +411,8 @@ class BashScript(Grammar):
 	@staticmethod
 	def parse(fn):
 		if fn in ("setup/functions.sh", "/etc/mailinabox.conf"): return ""
-		string = open(fn).read()
+		with open(fn, "r") as f:
+			string = f.read()
 
 		# tokenize
 		string = re.sub(".* #NODOC\n", "", string)

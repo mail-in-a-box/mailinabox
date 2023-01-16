@@ -110,7 +110,8 @@ except:
 
 found = set()
 buf = ""
-input_lines = list(open(filename))
+with open(filename, "r") as f:
+	input_lines = list(f)
 cur_section = None
 
 while len(input_lines) > 0:

@@ -397,7 +397,7 @@ miab_ldap_install() {
         need_pop="yes"
     fi
     
-    H1 "MIAB-LDAP INSTALL [$(git describe 2>/dev/null)]"
+    H1 "MIAB-LDAP INSTALL [$(pwd)] [$(git describe 2>/dev/null)]"
     # ensure we're in a MiaB-LDAP working directory
     if [ ! -e setup/ldap.sh ]; then
         die "Cannot install: the working directory is not MiaB-LDAP!"
@@ -448,7 +448,7 @@ miab_ldap_install() {
     populate_by_cli_argument "$@"
     capture_state_by_cli_argument "$@"
     
-    if [ "need_pop" = "yes" ]; then
+    if [ "$need_pop" = "yes" ]; then
         popd >/dev/null
     fi
 }

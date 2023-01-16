@@ -439,3 +439,4 @@ tools/editconf.py \
 systemctl daemon-reload
 systemctl enable -q ehdd-unattended-upgrades-after.path
 systemctl start -q ehdd-unattended-upgrades-after.path
+systemctl enable fail2ban

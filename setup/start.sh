@@ -101,8 +101,8 @@ fi
 f=$STORAGE_ROOT
 while [[ $f != / ]]; do chmod a+rx "$f"; f=$(dirname "$f"); done;
 if [ ! -f $STORAGE_ROOT/mailinabox-ldap.version ]; then
-	echo $(setup/migrate.py --current) > $STORAGE_ROOT/mailinabox-ldap.version
-	chown $STORAGE_USER.$STORAGE_USER $STORAGE_ROOT/mailinabox-ldap.version
+	setup/migrate.py --current > $STORAGE_ROOT/mailinabox-ldap.version
+	chown $STORAGE_USER:$STORAGE_USER $STORAGE_ROOT/mailinabox-ldap.version
 fi
 
 # normalize the directory path for setup mods

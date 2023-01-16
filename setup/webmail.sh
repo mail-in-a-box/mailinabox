@@ -109,6 +109,31 @@ if [ $needs_update == 1 ]; then
 	echo $UPDATE_KEY > ${RCM_DIR}/version
 fi
 
+# ### TEMPORARY PATCHES
+
+# vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+# REMOVE BELOW ONCE ROUNDCUBE INCLUDES A PEAR/NET_LDAP2 > 2.2.0
+#
+# Core php (>=8.0) changed the ldap ABI, which breaks the password
+# plugin (which uses pear/net_ldap2 that itself calls the PHP ldap
+# api). There is an unreleased, but accepted, fix that we apply here
+# manually. see:
+# https://github.com/pear/Net_LDAP2/commit/1cacdebcf6fe82718e5fa701c1ff688405e0f5d9
+#
+# The patch below is from github for the commit, which will presumably
+# be included with the next net_ldap2 release.
+#
+# All this can be removed once the net_ldap2 library is released with
+# the fix *AND* roundcube incorporates it with it's release (MIAB is
+# not using composer).
+if grep ldap_first_attribute "/usr/local/lib/roundcubemail/vendor/pear/net_ldap2/Net/LDAP2/Entry.php" | grep -F '$ber' >/dev/null; then
+    patch -p1 --unified --quiet --directory=/usr/local/lib/roundcubemail/vendor/pear/net_ldap2 <$(pwd)/conf/roundcubemail/pear_net_ldap2.1cacdebcf6fe82718e5fa701c1ff688405e0f5d9.diff
+elif [ $needs_update = 1 ]; then
+    say_verbose "Reminder: it is safe to remove net_ldap2 patch applied by webmail.sh"
+fi
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
 # ### Configuring Roundcube
 
 # Generate a secret key of PHP-string-safe characters appropriate
@@ -223,7 +248,7 @@ EOF
 
 # Create writable directories.
 mkdir -p /var/log/roundcubemail /var/tmp/roundcubemail $STORAGE_ROOT/mail/roundcube
-chown -R www-data.www-data /var/log/roundcubemail /var/tmp/roundcubemail $STORAGE_ROOT/mail/roundcube
+chown -R www-data:www-data /var/log/roundcubemail /var/tmp/roundcubemail $STORAGE_ROOT/mail/roundcube
 
 # Ensure the log file monitored by fail2ban exists, or else fail2ban can't start.
 sudo -u www-data touch /var/log/roundcubemail/errors.log
@@ -252,8 +277,8 @@ tools/editconf.py ${RCM_PLUGIN_DIR}/password/config.inc.php \
 	"\$config['password_minimum_length']=8;"
 
 # Fix Carddav permissions:
-chown -f -R root.www-data ${RCM_PLUGIN_DIR}/carddav
-# root.www-data need all permissions, others only read
+chown -f -R root:www-data ${RCM_PLUGIN_DIR}/carddav
+# root:www-data need all permissions, others only read
 chmod -R 774 ${RCM_PLUGIN_DIR}/carddav
 
 # Run Roundcube database migration script (database is created if it does not exist)
