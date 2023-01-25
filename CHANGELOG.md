@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-In Development
---------------
+Version 61 (January 21, 2023)
+-----------------------------
 
 System:
 
@@ -19,7 +19,6 @@ Control panel:
 * Fixes to DNS lookups during status checks when there are timeouts, enforce timeouts better.
 * A new check is added to ensure fail2ban is running.
 * Fixed a color.
-* Disable Roundcube password plugin since it was corrupting the user database
 * Improve error messages in the management tools when external command-line tools are run.
 
 Version 60.1 (October 30, 2022)
