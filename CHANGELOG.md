@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+* Reverted "Improve error messages in the management tools when external command-line tools are run." because of the possibility of user secrets being included in error messages.
+
 Version 61 (January 21, 2023)
 -----------------------------
 
