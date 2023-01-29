@@ -897,7 +897,8 @@ def write_dkim_tables(domains, env):
 
 def get_custom_dns_config(env, only_real_records=False):
 	try:
-		custom_dns = rtyaml.load(open(os.path.join(env['STORAGE_ROOT'], 'dns/custom.yaml')))
+		with open(os.path.join(env['STORAGE_ROOT'], 'dns/custom.yaml'), 'r') as f:
+			custom_dns = rtyaml.load(f)
 		if not isinstance(custom_dns, dict): raise ValueError() # caught below
 	except:
 		return [ ]
@@ -1121,6 +1122,7 @@ def set_secondary_dns(hostnames, env):
 		resolver = dns.resolver.get_default_resolver()
 		resolver.timeout = 5
 		resolver.lifetime = 5
+
 		for item in hostnames:
 			if not item.startswith("xfr:"):
 				# Resolve hostname.

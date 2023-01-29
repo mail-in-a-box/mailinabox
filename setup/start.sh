@@ -90,7 +90,7 @@ f=$STORAGE_ROOT
 while [[ $f != / ]]; do chmod a+rx "$f"; f=$(dirname "$f"); done;
 if [ ! -f $STORAGE_ROOT/mailinabox.version ]; then
 	setup/migrate.py --current > $STORAGE_ROOT/mailinabox.version
-	chown $STORAGE_USER.$STORAGE_USER $STORAGE_ROOT/mailinabox.version
+	chown $STORAGE_USER:$STORAGE_USER $STORAGE_ROOT/mailinabox.version
 fi
 
 # Save the global options in /etc/mailinabox.conf so that standalone
@@ -177,7 +177,7 @@ if management/status_checks.py --check-primary-hostname; then
 	echo "If you have a DNS problem put the box's IP address in the URL"
 	echo "(https://$PUBLIC_IP/admin) but then check the TLS fingerprint:"
 	openssl x509 -in $STORAGE_ROOT/ssl/ssl_certificate.pem -noout -fingerprint -sha256\
-        	| sed "s/SHA256 Fingerprint=//"
+        	| sed "s/SHA256 Fingerprint=//i"
 else
 	echo https://$PUBLIC_IP/admin
 	echo
@@ -185,7 +185,7 @@ else
 	echo the certificate fingerprint matches:
 	echo
 	openssl x509 -in $STORAGE_ROOT/ssl/ssl_certificate.pem -noout -fingerprint -sha256\
-        	| sed "s/SHA256 Fingerprint=//"
+        	| sed "s/SHA256 Fingerprint=//i"
 	echo
 	echo Then you can confirm the security exception and continue.
 	echo

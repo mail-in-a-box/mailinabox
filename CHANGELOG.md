@@ -1,6 +1,33 @@
 CHANGELOG
 =========
 
+Version 61.1 (January 28, 2022)
+-------------------------------
+
+* Fixed rsync backups not working with the default port.
+* Reverted "Improve error messages in the management tools when external command-line tools are run." because of the possibility of user secrets being included in error messages.
+* Fix for TLS certificate SHA fingerprint not being displayed during setup.
+
+Version 61 (January 21, 2023)
+-----------------------------
+
+System:
+
+* fail2ban didn't start after setup.
+
+Mail:
+
+* Disable Roundcube password plugin since it was corrupting the user database.
+
+Control panel:
+
+* Fix changing existing backup settings when the rsync type is used.
+* Allow setting a custom port for rsync backups.
+* Fixes to DNS lookups during status checks when there are timeouts, enforce timeouts better.
+* A new check is added to ensure fail2ban is running.
+* Fixed a color.
+* Improve error messages in the management tools when external command-line tools are run.
+
 Version 60.1 (October 30, 2022)
 -------------------------------
 

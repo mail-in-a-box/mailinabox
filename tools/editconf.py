@@ -76,7 +76,8 @@ for setting in settings:
 
 found = set()
 buf = ""
-input_lines = list(open(filename))
+with open(filename, "r") as f:
+        input_lines = list(f)
 
 while len(input_lines) > 0:
 	line = input_lines.pop(0)

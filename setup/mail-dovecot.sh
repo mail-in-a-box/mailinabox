@@ -202,14 +202,14 @@ chmod -R o-rwx /etc/dovecot
 # Ensure mailbox files have a directory that exists and are owned by the mail user.
 mkdir -p $STORAGE_ROOT/mail/mailboxes
 mkdir -p $STORAGE_ROOT/mail/homes
-chown -R mail.mail $STORAGE_ROOT/mail/mailboxes
-chown -R mail.mail $STORAGE_ROOT/mail/homes
+chown -R mail:mail $STORAGE_ROOT/mail/mailboxes
+chown -R mail:mail $STORAGE_ROOT/mail/homes
 
 # Same for the sieve scripts.
 mkdir -p $STORAGE_ROOT/mail/sieve
 mkdir -p $STORAGE_ROOT/mail/sieve/global_before
 mkdir -p $STORAGE_ROOT/mail/sieve/global_after
-chown -R mail.mail $STORAGE_ROOT/mail/sieve
+chown -R mail:mail $STORAGE_ROOT/mail/sieve
 
 # Allow the IMAP/POP ports in the firewall.
 ufw_allow imaps

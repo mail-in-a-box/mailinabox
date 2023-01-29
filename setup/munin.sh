@@ -38,8 +38,8 @@ contacts admin
 EOF
 
 # The Debian installer touches these files and chowns them to www-data:adm for use with spawn-fcgi
-chown munin. /var/log/munin/munin-cgi-html.log
-chown munin. /var/log/munin/munin-cgi-graph.log
+chown munin /var/log/munin/munin-cgi-html.log
+chown munin /var/log/munin/munin-cgi-graph.log
 
 # ensure munin-node knows the name of this machine
 # and reduce logging level to warning
