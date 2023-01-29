@@ -216,6 +216,8 @@ def get_duplicity_additional_args(env):
 			port = urlsplit(config["target_url"]).port
 		except ValueError:
 			port = 22
+		if port is None:
+			port = 22
 
 		return [
 			f"--ssh-options= -i /root/.ssh/id_rsa_miab -p {port}",
@@ -422,6 +424,8 @@ def list_target_files(config):
 		try:
 			port = url.port
 		except ValueError:
+			port = 22
+		if port is None:
 			port = 22
 
 		url_path = url.path
