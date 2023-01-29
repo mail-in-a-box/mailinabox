@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+Version 61.1 (January 28, 2022)
+-------------------------------
+
+* Fixed rsync backups not working with the default port.
+* Reverted "Improve error messages in the management tools when external command-line tools are run." because of the possibility of user secrets being included in error messages.
+* Fix for TLS certificate SHA fingerprint not being displayed during setup.
+
 Version 61 (January 21, 2023)
 -----------------------------
 
