@@ -51,12 +51,6 @@ def load_ssh_public_key():
         with open(ssh_public_key_file, 'r') as f:
             return f.read()
 
-def load_ssh_private_key():
-    ssh_private_key_file = os.path.join('/root', '.ssh', 'id_rsa_miab')
-    if os.path.exists(ssh_private_key_file):
-        with open(ssh_private_key_file, 'r') as f:
-            return f.read()
-
 # UTILITIES
 
 def safe_domain_name(name):
