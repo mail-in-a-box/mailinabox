@@ -377,7 +377,8 @@ const url_split = url => {
     }
 };
   
-// hide Copy button if not in a modern clipboard-supporting environment
+// Hide Copy button if not in a modern clipboard-supporting environment.
+// Using document API because jQuery is not necessarily available in this script scope.
 if (!(navigator && navigator.clipboard && navigator.clipboard.writeText)) {
     document.getElementById('copy_pub_key_div').hidden = true;
 }
