@@ -631,7 +631,6 @@ def set_b2_backup_config(env, min_age_in_days, target_url):
 	return "OK"
 
 def get_backup_config(env):
-	backup_root = get_backup_root_directory(env)
 
 	# Defaults.
 	config = {
@@ -641,7 +640,7 @@ def get_backup_config(env):
 
 	# Merge in anything written to custom.yaml.
 	try:
-		with open(os.path.join(backup_root, 'custom.yaml'), 'r') as f:
+		with open(get_backup_configuration_file(env), 'r') as f:
 			custom_config = rtyaml.load(f)
 		if not isinstance(custom_config, dict): raise ValueError() # caught below
 
