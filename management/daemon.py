@@ -582,8 +582,7 @@ def show_updates():
 @app.route('/system/ssh-public-key')
 @authorized_personnel_only
 def get_ssh_public_key():
-	from utils import load_ssh_public_key
-	return load_ssh_public_key()
+	return utils.load_ssh_public_key()
 
 @app.route('/system/update-packages', methods=["POST"])
 @authorized_personnel_only
