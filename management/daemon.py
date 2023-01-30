@@ -584,7 +584,6 @@ def show_updates():
 def get_ssh_public_key():
 	from utils import load_ssh_public_key
 	return load_ssh_public_key()
-	# return json_response({"ssh_public_key": load_ssh_public_key()})
 
 @app.route('/system/update-packages', methods=["POST"])
 @authorized_personnel_only
