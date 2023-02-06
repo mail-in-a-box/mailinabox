@@ -195,10 +195,9 @@ cp ${RCM_PLUGIN_DIR}/password/config.inc.php.dist \
 tools/editconf.py ${RCM_PLUGIN_DIR}/password/config.inc.php \
 	"\$config['password_minimum_length']=8;" \
 	"\$config['password_db_dsn']='sqlite:///$STORAGE_ROOT/mail/users.sqlite';" \
-	"\$config['password_query']='UPDATE users SET password=%D WHERE email=%u';" \
-	"\$config['password_dovecotpw']='/usr/bin/doveadm pw';" \
-	"\$config['password_dovecotpw_method']='SHA512-CRYPT';" \
-	"\$config['password_dovecotpw_with_method']=true;"
+	"\$config['password_query']='UPDATE users SET password=%P WHERE email=%u';" \
+	"\$config['password_algorithm']='sha512-crypt';" \
+	"\$config['password_algorithm_prefix']='{SHA512-CRYPT}';"
 
 # so PHP can use doveadm, for the password changing plugin
 usermod -a -G dovecot www-data
