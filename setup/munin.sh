@@ -7,12 +7,15 @@ source /etc/mailinabox.conf # load global vars
 
 # install Munin
 echo "Installing Munin (system monitoring)..."
-apt_install munin munin-node libcgi-fast-perl
+apt_install munin munin-node libcgi-fast-perl munin-plugins-extra
 # libcgi-fast-perl is needed by /usr/lib/munin/cgi/munin-cgi-graph
+
+mkdir -p $STORAGE_ROOT/munin
+chown munin:munin $STORAGE_ROOT/munin
 
 # edit config
 cat > /etc/munin/munin.conf <<EOF;
-dbdir /var/lib/munin
+dbdir $STORAGE_ROOT/munin
 htmldir /var/cache/munin/www
 logdir /var/log/munin
 rundir /var/run/munin
@@ -23,19 +26,20 @@ includedir /etc/munin/munin-conf.d
 # path dynazoom uses for requests
 cgiurl_graph /admin/munin/cgi-graph
 
+# send alerts to the following address
+contact.admin.command mail -s "Munin notification \${var:host}" administrator@$PRIMARY_HOSTNAME
+contact.admin.always_send warning critical
+
 # a simple host tree
 [$PRIMARY_HOSTNAME]
 address 127.0.0.1
 
-# send alerts to the following address
 contacts admin
-contact.admin.command mail -s "Munin notification \${var:host}" administrator@$PRIMARY_HOSTNAME
-contact.admin.always_send warning critical
 EOF
 
 # The Debian installer touches these files and chowns them to www-data:adm for use with spawn-fcgi
-chown munin. /var/log/munin/munin-cgi-html.log
-chown munin. /var/log/munin/munin-cgi-graph.log
+chown munin /var/log/munin/munin-cgi-html.log
+chown munin /var/log/munin/munin-cgi-graph.log
 
 # ensure munin-node knows the name of this machine
 # and reduce logging level to warning
@@ -69,6 +73,23 @@ hide_output systemctl link -f /lib/systemd/system/munin.service
 hide_output systemctl daemon-reload
 hide_output systemctl unmask munin.service
 hide_output systemctl enable munin.service
+
+# Some more munin plugins
+if [ -f /usr/share/munin/plugins/postfix_mailstats ] && [ ! -h /etc/munin/plugins/postfix_mailstats ]; then
+	ln -fs /usr/share/munin/plugins/postfix_mailstats /etc/munin/plugins/
+fi
+
+if [ -f /usr/share/munin/plugins/spamstats ] && [ ! -h /etc/munin/plugins/spamstats ]; then
+	ln -fs /usr/share/munin/plugins/spamstats /etc/munin/plugins/
+fi
+
+if [ -f /usr/share/munin/plugins/df_abs ] && [ ! -h /etc/munin/plugins/df_abs ]; then
+	ln -fs /usr/share/munin/plugins/df_abs /etc/munin/plugins/
+fi
+
+if [ -f /usr/share/munin/plugins/fail2ban ] && [ ! -h /etc/munin/plugins/fail2ban ]; then
+	ln -fs /usr/share/munin/plugins/fail2ban /etc/munin/plugins/
+fi
 
 # Restart services.
 restart_service munin

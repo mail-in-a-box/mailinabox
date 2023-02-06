@@ -343,6 +343,8 @@ def provision_certificates(env, limit_domains):
 						"certonly",
 						#"-v", # just enough to see ACME errors
 						"--non-interactive", # will fail if user hasn't registered during Mail-in-a-Box setup
+						"--agree-tos", # Automatically agrees to Let's Encrypt TOS
+						"--register-unsafely-without-email", # The daemon takes care of renewals
 
 						"-d", ",".join(domain_list), # first will be main domain
 
@@ -535,7 +537,8 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 	# Second, check that the certificate matches the private key.
 	if ssl_private_key is not None:
 		try:
-			priv_key = load_pem(open(ssl_private_key, 'rb').read())
+			with open(ssl_private_key, 'rb') as f:
+				priv_key = load_pem(f.read())
 		except ValueError as e:
 			return ("The private key file %s is not a private key file: %s" % (ssl_private_key, str(e)), None)
 

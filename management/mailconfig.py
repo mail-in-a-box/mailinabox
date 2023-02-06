@@ -533,6 +533,9 @@ def get_required_aliases(env):
 
 	# The hostmaster alias is exposed in the DNS SOA for each zone.
 	aliases.add("hostmaster@" + env['PRIMARY_HOSTNAME'])
+	
+	# Setup root alias
+	aliases.add("root@" + env['PRIMARY_HOSTNAME'])
 
 	# Get a list of domains we serve mail for, except ones for which the only
 	# email on that domain are the required aliases or a catch-all/domain-forwarder.
@@ -566,7 +569,7 @@ def kick(env, mail_result=None):
 
 	auto_aliases = { }
 
-	# Mape required aliases to the administrator alias (which should be created manually).
+	# Map required aliases to the administrator alias (which should be created manually).
 	administrator = get_system_administrator(env)
 	required_aliases = get_required_aliases(env)
 	for alias in required_aliases:

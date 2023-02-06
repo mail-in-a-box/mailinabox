@@ -78,7 +78,7 @@ tools/editconf.py /etc/dovecot/conf.d/10-auth.conf \
 	"auth_mechanisms=plain login"
 
 # Enable SSL, specify the location of the SSL certificate and private key files.
-# Use Mozilla's "Intermediate" recommendations at https://ssl-config.mozilla.org/#server=dovecot&server-version=2.2.33&config=intermediate&openssl-version=1.1.1,
+# Use Mozilla's "Intermediate" recommendations at https://ssl-config.mozilla.org/#server=dovecot&server-version=2.3.7.2&config=intermediate&openssl-version=1.1.1,
 # except that the current version of Dovecot does not have a TLSv1.3 setting, so we only use TLSv1.2.
 tools/editconf.py /etc/dovecot/conf.d/10-ssl.conf \
 	ssl=required \
@@ -86,9 +86,8 @@ tools/editconf.py /etc/dovecot/conf.d/10-ssl.conf \
 	"ssl_key=<$STORAGE_ROOT/ssl/ssl_private_key.pem" \
 	"ssl_min_protocol=TLSv1.2" \
 	"ssl_cipher_list=ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384" \
-	"ssl_prefer_server_ciphers=no" \
-	"ssl_dh_parameters_length=2048" \
-	"ssl_dh=<$STORAGE_ROOT/ssl/dh2048.pem"
+	"ssl_prefer_server_ciphers=yes" \
+	"ssl_dh=<$STORAGE_ROOT/ssl/dh4096.pem"
 
 # Disable in-the-clear IMAP/POP because there is no reason for a user to transmit
 # login credentials outside of an encrypted connection. Only the over-TLS versions
@@ -202,13 +201,15 @@ chmod -R o-rwx /etc/dovecot
 
 # Ensure mailbox files have a directory that exists and are owned by the mail user.
 mkdir -p $STORAGE_ROOT/mail/mailboxes
-chown -R mail.mail $STORAGE_ROOT/mail/mailboxes
+mkdir -p $STORAGE_ROOT/mail/homes
+chown -R mail:mail $STORAGE_ROOT/mail/mailboxes
+chown -R mail:mail $STORAGE_ROOT/mail/homes
 
 # Same for the sieve scripts.
 mkdir -p $STORAGE_ROOT/mail/sieve
 mkdir -p $STORAGE_ROOT/mail/sieve/global_before
 mkdir -p $STORAGE_ROOT/mail/sieve/global_after
-chown -R mail.mail $STORAGE_ROOT/mail/sieve
+chown -R mail:mail $STORAGE_ROOT/mail/sieve
 
 # Allow the IMAP/POP ports in the firewall.
 ufw_allow imaps

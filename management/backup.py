@@ -1,21 +1,24 @@
 #!/usr/local/lib/mailinabox/env/bin/python
 
-# This script performs a backup of all user data:
+# This script performs a backup of all user data stored under STORAGE_ROOT:
 # 1) System services are stopped.
-# 2) STORAGE_ROOT/backup/before-backup is executed if it exists.
+# 2) BACKUP_ROOT/backup/before-backup is executed if it exists.
 # 3) An incremental encrypted backup is made using duplicity.
 # 4) The stopped services are restarted.
-# 5) STORAGE_ROOT/backup/after-backup is executed if it exists.
+# 5) BACKUP_ROOT/backup/after-backup is executed if it exists.
+#
+# By default BACKUP_ROOT is equal to STORAGE_ROOT. If the variable BACKUP_ROOT is defined in /etc/mailinabox.conf and
+# the referenced folder exists, this new target is used instead to store the backups. 
 
 import os, os.path, shutil, glob, re, datetime, sys
 import dateutil.parser, dateutil.relativedelta, dateutil.tz
 import rtyaml
 from exclusiveprocess import Lock
 
-from utils import load_environment, shell, wait_for_service
+from utils import load_environment, shell, wait_for_service, get_php_version
 
 def backup_status(env):
-	# If backups are dissbled, return no status.
+	# If backups are disabled, return no status.
 	config = get_backup_config(env)
 	if config["target"] == "off":
 		return { }
@@ -25,7 +28,7 @@ def backup_status(env):
 
 	backups = { }
 	now = datetime.datetime.now(dateutil.tz.tzlocal())
-	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
+	backup_root = get_backup_root(env)
 	backup_cache_dir = os.path.join(backup_root, 'cache')
 
 	def reldate(date, ref, clip):
@@ -183,7 +186,7 @@ def get_passphrase(env):
 	# that line is long enough to be a reasonable passphrase. It
 	# only needs to be 43 base64-characters to match AES256's key
 	# length of 32 bytes.
-	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
+	backup_root = get_backup_root(env)
 	with open(os.path.join(backup_root, 'secret_key.txt')) as f:
 		passphrase = f.readline().strip()
 	if len(passphrase) < 43: raise Exception("secret_key.txt's first line is too short!")
@@ -213,9 +216,21 @@ def get_duplicity_additional_args(env):
 	config = get_backup_config(env)
 
 	if get_target_type(config) == 'rsync':
+		# Extract a port number for the ssh transport.  Duplicity accepts the
+		# optional port number syntax in the target, but it doesn't appear to act
+		# on it, so we set the ssh port explicitly via the duplicity options.
+		from urllib.parse import urlsplit
+		try:
+			port = urlsplit(config["target"]).port
+		except ValueError:
+			port = 22
+
+		if port is None:
+			port = 22
+		
 		return [
-			"--ssh-options= -i /root/.ssh/id_rsa_miab",
-			"--rsync-options= -e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p 22 -i /root/.ssh/id_rsa_miab\"",
+			f"--ssh-options= -i /root/.ssh/id_rsa_miab -p {port}",
+			f"--rsync-options= -e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p {port} -i /root/.ssh/id_rsa_miab\"",
 		]
 	elif get_target_type(config) == 's3':
 		# See note about hostname in get_duplicity_target_url.
@@ -243,13 +258,14 @@ def get_target_type(config):
 
 def perform_backup(full_backup):
 	env = load_environment()
+	php_fpm = f"php{get_php_version()}-fpm"
 
 	# Create an global exclusive lock so that the backup script
-	# cannot be run more than one.
+	# cannot be run more than once.
 	Lock(die=True).forever()
 
 	config = get_backup_config(env)
-	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
+	backup_root = get_backup_root(env)
 	backup_cache_dir = os.path.join(backup_root, 'cache')
 	backup_dir = os.path.join(backup_root, 'encrypted')
 
@@ -278,7 +294,7 @@ def perform_backup(full_backup):
 			if quit:
 				sys.exit(code)
 
-	service_command("php8.0-fpm", "stop", quit=True)
+	service_command(php_fpm, "stop", quit=True)
 	service_command("postfix", "stop", quit=True)
 	service_command("dovecot", "stop", quit=True)
 	service_command("postgrey", "stop", quit=True)
@@ -289,7 +305,7 @@ def perform_backup(full_backup):
 	pre_script = os.path.join(backup_root, 'before-backup')
 	if os.path.exists(pre_script):
 		shell('check_call',
-			['su', env['STORAGE_USER'], '-c', pre_script, config["target"]],
+			['su', env['STORAGE_USER'], '--login', '-c', pre_script, config["target"]],
 			env=env)
 
 	# Run a backup of STORAGE_ROOT (but excluding the backups themselves!).
@@ -314,7 +330,7 @@ def perform_backup(full_backup):
 		service_command("postgrey", "start", quit=False)
 		service_command("dovecot", "start", quit=False)
 		service_command("postfix", "start", quit=False)
-		service_command("php8.0-fpm", "start", quit=False)
+		service_command(php_fpm, "start", quit=False)
 
 	# Remove old backups. This deletes all backup data no longer needed
 	# from more than 3 days ago.
@@ -344,19 +360,10 @@ def perform_backup(full_backup):
 		] + get_duplicity_additional_args(env),
 		get_duplicity_env_vars(env))
 
-	# Change ownership of backups to the user-data user, so that the after-bcakup
+	# Change ownership of backups to the user-data user, so that the after-backup
 	# script can access them.
 	if get_target_type(config) == 'file':
 		shell('check_call', ["/bin/chown", "-R", env["STORAGE_USER"], backup_dir])
-
-	# Execute a post-backup script that does the copying to a remote server.
-	# Run as the STORAGE_USER user, not as root. Pass our settings in
-	# environment variables so the script has access to STORAGE_ROOT.
-	post_script = os.path.join(backup_root, 'after-backup')
-	if os.path.exists(post_script):
-		shell('check_call',
-			['su', env['STORAGE_USER'], '-c', post_script, config["target"]],
-			env=env)
 
 	# Our nightly cron job executes system status checks immediately after this
 	# backup. Since it checks that dovecot and postfix are running, block for a
@@ -364,10 +371,19 @@ def perform_backup(full_backup):
 	# before the status checks might catch them down. See #381.
 	wait_for_service(25, True, env, 10)
 	wait_for_service(993, True, env, 10)
+	
+	# Execute a post-backup script that does the copying to a remote server.
+	# Run as the STORAGE_USER user, not as root. Pass our settings in
+	# environment variables so the script has access to STORAGE_ROOT.
+	post_script = os.path.join(backup_root, 'after-backup')
+	if os.path.exists(post_script):
+		shell('check_call',
+			['su', env['STORAGE_USER'], '--login', '-c', post_script, config["target"]],
+			env=env, trap=True)
 
 def run_duplicity_verification():
 	env = load_environment()
-	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
+	backup_root = get_backup_root(env)
 	config = get_backup_config(env)
 	backup_cache_dir = os.path.join(backup_root, 'cache')
 
@@ -385,7 +401,8 @@ def run_duplicity_verification():
 def run_duplicity_restore(args):
 	env = load_environment()
 	config = get_backup_config(env)
-	backup_cache_dir = os.path.join(env["STORAGE_ROOT"], 'backup', 'cache')
+	backup_root = get_backup_root(env)
+	backup_cache_dir = os.path.join(backup_root, 'cache')
 	shell('check_call', [
 		"/usr/bin/duplicity",
 		"restore",
@@ -408,6 +425,17 @@ def list_target_files(config):
 		rsync_fn_size_re = re.compile(r'.*    ([^ ]*) [^ ]* [^ ]* (.*)')
 		rsync_target = '{host}:{path}'
 
+		# Strip off any trailing port specifier because it's not valid in rsync's
+		# DEST syntax.  Explicitly set the port number for the ssh transport.
+		user_host, *_ = target.netloc.rsplit(':', 1)
+		try:
+			port = target.port
+		except ValueError:
+			 port = 22
+
+		if port is None:
+			port = 22
+
 		target_path = target.path
 		if not target_path.endswith('/'):
 			target_path = target_path + '/'
@@ -416,11 +444,11 @@ def list_target_files(config):
 
 		rsync_command = [ 'rsync',
 					'-e',
-					'/usr/bin/ssh -i /root/.ssh/id_rsa_miab -oStrictHostKeyChecking=no -oBatchMode=yes',
+					f'/usr/bin/ssh -i /root/.ssh/id_rsa_miab -oStrictHostKeyChecking=no -oBatchMode=yes -p {port}',
 					'--list-only',
 					'-r',
 					rsync_target.format(
-						host=target.netloc,
+						host=user_host,
 						path=target_path)
 				]
 
@@ -454,7 +482,7 @@ def list_target_files(config):
 		# separate bucket from path in target
 		bucket = target.path[1:].split('/')[0]
 		path = '/'.join(target.path[1:].split('/')[1:]) + '/'
-
+		
 		# If no prefix is specified, set the path to '', otherwise boto won't list the files
 		if path == '/':
 			path = ''
@@ -521,7 +549,7 @@ def backup_set_custom(env, target, target_user, target_pass, min_age):
 	return "OK"
 
 def get_backup_config(env, for_save=False, for_ui=False):
-	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
+	backup_root = get_backup_root(env)
 
 	# Defaults.
 	config = {
@@ -531,7 +559,8 @@ def get_backup_config(env, for_save=False, for_ui=False):
 
 	# Merge in anything written to custom.yaml.
 	try:
-		custom_config = rtyaml.load(open(os.path.join(backup_root, 'custom.yaml')))
+		with open(os.path.join(backup_root, 'custom.yaml'), 'r') as f:
+			custom_config = rtyaml.load(f)
 		if not isinstance(custom_config, dict): raise ValueError() # caught below
 		config.update(custom_config)
 	except:
@@ -556,14 +585,32 @@ def get_backup_config(env, for_save=False, for_ui=False):
 		config["target"] = "file://" + config["file_target_directory"]
 	ssh_pub_key = os.path.join('/root', '.ssh', 'id_rsa_miab.pub')
 	if os.path.exists(ssh_pub_key):
-		config["ssh_pub_key"] = open(ssh_pub_key, 'r').read()
+		with open(ssh_pub_key, 'r') as f:
+			config["ssh_pub_key"] = f.read()
 
 	return config
 
 def write_backup_config(env, newconfig):
-	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
+	backup_root = get_backup_root(env)
 	with open(os.path.join(backup_root, 'custom.yaml'), "w") as f:
 		f.write(rtyaml.dump(newconfig))
+
+def get_backup_root(env):
+	# Define environment variable used to store backup path
+	backup_root_env = "BACKUP_ROOT"
+	
+	# Read STORAGE_ROOT
+	backup_root = env["STORAGE_ROOT"]
+	
+	# If BACKUP_ROOT exists, overwrite backup_root variable
+	if backup_root_env in env:
+		tmp = env[backup_root_env]
+		if tmp and os.path.isdir(tmp):
+			backup_root = tmp
+	
+	backup_root = os.path.join(backup_root, 'backup')
+	
+	return backup_root
 
 if __name__ == "__main__":
 	import sys

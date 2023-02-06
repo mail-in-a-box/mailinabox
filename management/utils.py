@@ -14,7 +14,9 @@ def load_env_vars_from_file(fn):
     # Load settings from a KEY=VALUE file.
     import collections
     env = collections.OrderedDict()
-    for line in open(fn): env.setdefault(*line.strip().split("=", 1))
+    with open(fn, 'r')  as f:
+        for line in f:
+            env.setdefault(*line.strip().split("=", 1))
     return env
 
 def save_environment(env):
@@ -34,7 +36,8 @@ def load_settings(env):
     import rtyaml
     fn = os.path.join(env['STORAGE_ROOT'], 'settings.yaml')
     try:
-        config = rtyaml.load(open(fn, "r"))
+        with open(fn, "r") as f:
+            config = rtyaml.load(f)
         if not isinstance(config, dict): raise ValueError() # caught below
         return config
     except:
@@ -174,6 +177,10 @@ def wait_for_service(port, public, env, timeout):
 			if time.perf_counter() > start+timeout:
 				return False
 		time.sleep(min(timeout/4, 1))
+
+def get_php_version():
+	# Gets the version of PHP installed in the system.
+	return shell("check_output", ["/usr/bin/php", "-v"])[4:7]
 
 if __name__ == "__main__":
 	from web_update import get_web_domains

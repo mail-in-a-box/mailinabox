@@ -12,7 +12,7 @@ source /etc/mailinabox.conf # load global vars
 
 # Prepare nsd's configuration.
 # We configure nsd before installation as we only want it to bind to some addresses
-# and it otherwise will have port / bind conflicts with bind9 used as the local resolver
+# and it otherwise will have port / bind conflicts with unbound used as the local resolver
 mkdir -p /var/run/nsd
 mkdir -p /etc/nsd
 mkdir -p /etc/nsd/zones
@@ -38,7 +38,7 @@ server:
 
 EOF
 
-# Since we have bind9 listening on localhost for locally-generated
+# Since we have unbound listening on localhost for locally-generated
 # DNS queries that require a recursive nameserver, and the system
 # might have other network interfaces for e.g. tunnelling, we have
 # to be specific about the network interfaces that nsd binds to.

@@ -1,0 +1,12 @@
+/var/log/roundcubemail/errors.log
+/var/log/roundcubemail/sendmail.log
+/var/log/nextcloud.log
+{
+	rotate 4
+	weekly
+	missingok
+	notifempty
+	compress
+	delaycompress
+	sharedscripts
+}

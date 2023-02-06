@@ -19,7 +19,7 @@ fi
 
 echo "Installing Nginx (web server)..."
 
-apt_install nginx php${PHP_VER}-cli php${PHP_VER}-fpm idn2
+apt_install nginx php-cli php-fpm idn2 libnginx-mod-http-geoip
 
 rm -f /etc/nginx/sites-enabled/default
 
@@ -52,6 +52,12 @@ tools/editconf.py /etc/php/$PHP_VER/fpm/php.ini -c ';' \
 # Set PHPs default charset to UTF-8, since we use it. See #367.
 tools/editconf.py /etc/php/$PHP_VER/fpm/php.ini -c ';' \
         default_charset="UTF-8"
+
+# Set higher timeout since fts searches with Roundcube may take longer
+# than the default 60 seconds. We will also match Roundcube's timeout to the
+# same value
+tools/editconf.py /etc/php/$(php_version)/fpm/php.ini -c ';' \
+        default_socket_timeout=180
 
 # Configure the path environment for php-fpm
 tools/editconf.py /etc/php/$PHP_VER/fpm/pool.d/www.conf -c ';' \
@@ -144,6 +150,15 @@ if [ ! -f $STORAGE_ROOT/www/default/index.html ]; then
 	cp conf/www_default.html $STORAGE_ROOT/www/default/index.html
 fi
 chown -R $STORAGE_USER $STORAGE_ROOT/www
+
+# Copy geoblock config file, but only if it does not exist to keep user config
+if [ ! -f /etc/nginx/conf.d/10-geoblock.conf ]; then
+    cp -f conf/nginx/conf.d/10-geoblock.conf /etc/nginx/conf.d/
+fi
+
+# touch logfiles that might not exist
+touch /var/log/nginx/geoipblock.log
+chown www-data /var/log/nginx/geoipblock.log
 
 # Start services.
 restart_service nginx

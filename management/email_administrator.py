@@ -2,7 +2,7 @@
 
 # Reads in STDIN. If the stream is not empty, mail it to the system administrator.
 
-import sys
+import sys, traceback
 
 import html
 import smtplib
@@ -25,7 +25,12 @@ subject = sys.argv[1]
 admin_addr = "administrator@" + env['PRIMARY_HOSTNAME']
 
 # Read in STDIN.
-content = sys.stdin.read().strip()
+try:
+        content = sys.stdin.read().strip()
+except:
+        print("error occured while cleaning input text")
+        traceback.print_exc()
+        sys.exit(1)
 
 # If there's nothing coming in, just exit.
 if content == "":

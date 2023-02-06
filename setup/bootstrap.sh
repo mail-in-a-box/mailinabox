@@ -6,6 +6,8 @@
 #
 #########################################################
 
+GITSRC=kj
+	
 if [ -z "$TAG" ]; then
 	# If a version to install isn't explicitly given as an environment
 	# variable, then install the latest version. But the latest version
@@ -19,11 +21,11 @@ if [ -z "$TAG" ]; then
 	# want to display in status checks.
 	#
 	# Allow point-release versions of the major releases, e.g. 22.04.1 is OK.
-	UBUNTU_VERSION=$( lsb_release -d | sed 's/.*:\s*//' | sed 's/\([0-9]*\.[0-9]*\)\.[0-9]/\1/' )
+	UBUNTU_VERSION=$( lsb_release -d | sed 's/.*:\s*//' | sed 's/\([0-9]*\.[0-9]*\)\.[0-9]/\1/' )"
 	if [ "$UBUNTU_VERSION" == "Ubuntu 22.04 LTS" ]; then
 		# This machine is running Ubuntu 22.04, which is supported by
 		# Mail-in-a-Box versions 60 and later.
-		TAG=v60.1
+		TAG=v61.1
 	elif [ "$UBUNTU_VERSION" == "Ubuntu 18.04 LTS" ]; then
 		# This machine is running Ubuntu 18.04, which is supported by
 		# Mail-in-a-Box versions 0.40 through 5x.
@@ -32,6 +34,7 @@ if [ -z "$TAG" ]; then
 		echo "a new machine running Ubuntu 22.04. See:"
 		echo "https://mailinabox.email/maintenance.html#upgrade"
 		TAG=v57a
+		GITSRC=miab
 	elif [ "$UBUNTU_VERSION" == "Ubuntu 14.04 LTS" ]; then
 		# This machine is running Ubuntu 14.04, which is supported by
 		# Mail-in-a-Box versions 1 through v0.30.
@@ -60,12 +63,20 @@ if [ ! -d $HOME/mailinabox ]; then
 	fi
 
 	echo Downloading Mail-in-a-Box $TAG. . .
-	git clone \
-		-b $TAG --depth 1 \
-		https://github.com/mail-in-a-box/mailinabox \
-		$HOME/mailinabox \
-		< /dev/null 2> /dev/null
-
+	if [ "$GITSRC" == "miab" ]; then
+		git clone \
+			-b $TAG --depth 1 \
+			https://github.com/mail-in-a-box/mailinabox \
+			$HOME/mailinabox \
+			< /dev/null 2> /dev/null
+	else
+		git clone \
+			-b $TAG --depth 1 \
+			https://github.com/kiekerjan/mailinabox \
+			$HOME/mailinabox \
+			< /dev/null 2> /dev/null
+	fi
+	
 	echo
 fi
 
@@ -73,7 +84,7 @@ fi
 cd $HOME/mailinabox
 
 # Update it.
-if [ "$TAG" != $(git describe) ]; then
+if [ "$TAG" != $(git describe --tags) ]; then
 	echo Updating Mail-in-a-Box to $TAG . . .
 	git fetch --depth 1 --force --prune origin tag $TAG
 	if ! git checkout -q $TAG; then

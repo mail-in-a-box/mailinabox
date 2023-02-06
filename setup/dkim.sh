@@ -1,46 +1,43 @@
 #!/bin/bash
-# OpenDKIM
+# DKIM
 # --------
 #
-# OpenDKIM provides a service that puts a DKIM signature on outbound mail.
+# DKIMpy provides a service that puts a DKIM signature on outbound mail.
 #
 # The DNS configuration for DKIM is done in the management daemon.
 
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
-# Install DKIM...
-echo Installing OpenDKIM/OpenDMARC...
-apt_install opendkim opendkim-tools opendmarc
+# Remove openDKIM if present
+apt-get purge -qq -y opendkim opendkim-tools
+
+# Install DKIMpy-Milter
+echo Installing DKIMpy/OpenDMARC...
+apt_install dkimpy-milter python3-dkim opendmarc
 
 # Make sure configuration directories exist.
-mkdir -p /etc/opendkim;
+mkdir -p /etc/dkim;
 mkdir -p $STORAGE_ROOT/mail/dkim
 
 # Used in InternalHosts and ExternalIgnoreList configuration directives.
 # Not quite sure why.
-echo "127.0.0.1" > /etc/opendkim/TrustedHosts
+echo "127.0.0.1" > /etc/dkim/TrustedHosts
 
 # We need to at least create these files, since we reference them later.
-# Otherwise, opendkim startup will fail
-touch /etc/opendkim/KeyTable
-touch /etc/opendkim/SigningTable
+touch /etc/dkim/KeyTable
+touch /etc/dkim/SigningTable
 
-if grep -q "ExternalIgnoreList" /etc/opendkim.conf; then
-	true # already done #NODOC
-else
-	# Add various configuration options to the end of `opendkim.conf`.
-	cat >> /etc/opendkim.conf << EOF;
-Canonicalization		relaxed/simple
-MinimumKeyBits          1024
-ExternalIgnoreList      refile:/etc/opendkim/TrustedHosts
-InternalHosts           refile:/etc/opendkim/TrustedHosts
-KeyTable                refile:/etc/opendkim/KeyTable
-SigningTable            refile:/etc/opendkim/SigningTable
-Socket                  inet:8891@127.0.0.1
-RequireSafeKeys         false
-EOF
-fi
+tools/editconf.py /etc/dkimpy-milter/dkimpy-milter.conf -s \
+    "MacroList=daemon_name|ORIGINATING" \
+    "MacroListVerify=daemon_name|VERIFYING" \
+    "Canonicalization=relaxed/simple" \
+    "MinimumKeyBits=1024" \
+    "InternalHosts=refile:/etc/dkim/TrustedHosts" \
+    "KeyTable=refile:/etc/dkim/KeyTable" \
+    "KeyTableEd25519=refile:/etc/dkim/KeyTableEd25519" \
+    "SigningTable=refile:/etc/dkim/SigningTable" \
+    "Socket=inet:8892@127.0.0.1"
 
 # Create a new DKIM key. This creates mail.private and mail.txt
 # in $STORAGE_ROOT/mail/dkim. The former is the private key and
@@ -48,16 +45,20 @@ fi
 # in our DNS setup. Note that the files are named after the
 # 'selector' of the key, which we can change later on to support
 # key rotation.
-#
-# A 1024-bit key is seen as a minimum standard by several providers
-# such as Google. But they and others use a 2048 bit key, so we'll
-# do the same. Keys beyond 2048 bits may exceed DNS record limits.
-if [ ! -f "$STORAGE_ROOT/mail/dkim/mail.private" ]; then
-	opendkim-genkey -b 2048 -r -s mail -D $STORAGE_ROOT/mail/dkim
+if [ ! -f "$STORAGE_ROOT/mail/dkim/box-rsa.key" ]; then
+	# All defaults are supposed to be ok, default key for rsa is 2048 bit
+	dknewkey --ktype rsa $STORAGE_ROOT/mail/dkim/box-rsa
+	dknewkey --ktype ed25519 $STORAGE_ROOT/mail/dkim/box-ed25519
+	
+	# Force them into the format dns_update.py expects
+	sed -i 's/v=DKIM1;/box-rsa._domainkey IN      TXT      ( "v=DKIM1; s=email;/' $STORAGE_ROOT/mail/dkim/box-rsa.dns
+	echo '" )' >> $STORAGE_ROOT/mail/dkim/box-rsa.dns
+	sed -i 's/v=DKIM1;/box-ed25519._domainkey IN      TXT      ( "v=DKIM1; s=email;/' $STORAGE_ROOT/mail/dkim/box-ed25519.dns
+	echo '" )' >> $STORAGE_ROOT/mail/dkim/box-ed25519.dns
 fi
 
-# Ensure files are owned by the opendkim user and are private otherwise.
-chown -R opendkim:opendkim $STORAGE_ROOT/mail/dkim
+# Ensure files are owned by the dkimpy-milter user and are private otherwise.
+chown -R dkimpy-milter:dkimpy-milter $STORAGE_ROOT/mail/dkim
 chmod go-rwx $STORAGE_ROOT/mail/dkim
 
 tools/editconf.py /etc/opendmarc.conf -s \
@@ -88,29 +89,20 @@ tools/editconf.py /etc/opendmarc.conf -s \
 tools/editconf.py /etc/opendmarc.conf -s \
         "FailureReportsOnNone=true"
 
-# AlwaysAddARHeader Adds an "Authentication-Results:" header field even to
-# unsigned messages from domains with no "signs all" policy. The reported DKIM
-# result will be  "none" in such cases. Normally unsigned mail from non-strict
-# domains does not cause the results header field to be added. This added header
-# is used by spamassassin to evaluate the mail for spamminess.
-
-tools/editconf.py /etc/opendkim.conf -s \
-        "AlwaysAddARHeader=true"
-
-# Add OpenDKIM and OpenDMARC as milters to postfix, which is how OpenDKIM
+# Add DKIMpy and OpenDMARC as milters to postfix, which is how DKIMpy
 # intercepts outgoing mail to perform the signing (by adding a mail header)
 # and how they both intercept incoming mail to add Authentication-Results
 # headers. The order possibly/probably matters: OpenDMARC relies on the
-# OpenDKIM Authentication-Results header already being present.
+# DKIM Authentication-Results header already being present.
 #
 # Be careful. If we add other milters later, this needs to be concatenated
 # on the smtpd_milters line.
 #
 # The OpenDMARC milter is skipped in the SMTP submission listener by
-# configuring smtpd_milters there to only list the OpenDKIM milter
+# configuring smtpd_milters there to only list the DKIMpy milter
 # (see mail-postfix.sh).
 tools/editconf.py /etc/postfix/main.cf \
-	"smtpd_milters=inet:127.0.0.1:8891 inet:127.0.0.1:8893"\
+	"smtpd_milters=inet:127.0.0.1:8892 inet:127.0.0.1:8893"\
 	non_smtpd_milters=\$smtpd_milters \
 	milter_default_action=accept
 
@@ -118,7 +110,7 @@ tools/editconf.py /etc/postfix/main.cf \
 hide_output systemctl enable opendmarc
 
 # Restart services.
-restart_service opendkim
+restart_service dkimpy-milter
 restart_service opendmarc
 restart_service postfix
 

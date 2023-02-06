@@ -91,12 +91,14 @@ tools/editconf.py /etc/postfix/master.cf -s -w \
 	  -o smtpd_tls_wrappermode=yes
 	  -o smtpd_sasl_auth_enable=yes
 	  -o syslog_name=postfix/submission
-	  -o smtpd_milters=inet:127.0.0.1:8891
+	  -o smtpd_milters=inet:127.0.0.1:8892
+	  -o milter_macro_daemon_name=ORIGINATING
 	  -o cleanup_service_name=authclean" \
 	"submission=inet n       -       -       -       -       smtpd
 	  -o smtpd_sasl_auth_enable=yes
 	  -o syslog_name=postfix/submission
-	  -o smtpd_milters=inet:127.0.0.1:8891
+	  -o smtpd_milters=inet:127.0.0.1:8892
+	  -o milter_macro_daemon_name=ORIGINATING
 	  -o smtpd_tls_security_level=encrypt
 	  -o cleanup_service_name=authclean" \
 	"authclean=unix  n       -       -       -       0       cleanup
@@ -122,18 +124,18 @@ sed -i "s/PUBLIC_IP/$PUBLIC_IP/" /etc/postfix/outgoing_mail_header_filters
 #   the world are very far behind and if we disable too much, they may not be able to use TLS and
 #   won't fall back to cleartext. So we don't disable too much. smtpd_tls_exclude_ciphers applies to
 #   both port 25 and port 587, but because we override the cipher list for both, it probably isn't used.
-#   Use Mozilla's "Old" recommendations at https://ssl-config.mozilla.org/#server=postfix&server-version=3.3.0&config=old&openssl-version=1.1.1
+#   Use Mozilla's "Old" recommendations at https://ssl-config.mozilla.org/#server=postfix&server-version=3.4.13&config=old&openssl-version=1.1.1
 tools/editconf.py /etc/postfix/main.cf \
 	smtpd_tls_security_level=may\
 	smtpd_tls_auth_only=yes \
 	smtpd_tls_cert_file=$STORAGE_ROOT/ssl/ssl_certificate.pem \
 	smtpd_tls_key_file=$STORAGE_ROOT/ssl/ssl_private_key.pem \
-	smtpd_tls_dh1024_param_file=$STORAGE_ROOT/ssl/dh2048.pem \
-	smtpd_tls_protocols="!SSLv2,!SSLv3" \
+	smtpd_tls_dh1024_param_file=$STORAGE_ROOT/ssl/dh4096.pem \
+	smtpd_tls_protocols="!SSLv2,!SSLv3,!TLSv1,!TLSv1.1" \
 	smtpd_tls_ciphers=medium \
-	tls_medium_cipherlist=ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES256-SHA256:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:DES-CBC3-SHA \
-	smtpd_tls_exclude_ciphers=aNULL,RC4 \
-	tls_preempt_cipherlist=no \
+	tls_medium_cipherlist=ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384 \
+	smtpd_tls_exclude_ciphers="MD5, DES, ADH, RC4, PSD, SRP, 3DES, eNULL, aNULL" \
+	tls_preempt_cipherlist=yes \
 	smtpd_tls_received_header=yes
 
 # For ports 465/587 (via the 'mandatory' settings):
@@ -143,7 +145,15 @@ tools/editconf.py /etc/postfix/main.cf \
 	smtpd_tls_mandatory_protocols="!SSLv2,!SSLv3,!TLSv1,!TLSv1.1" \
 	smtpd_tls_mandatory_ciphers=high \
 	tls_high_cipherlist=ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384 \
-	smtpd_tls_mandatory_exclude_ciphers=aNULL,DES,3DES,MD5,DES+MD5,RC4
+	smtpd_tls_mandatory_exclude_ciphers="MD5, DES, ADH, RC4, PSD, SRP, 3DES, eNULL, aNULL"
+
+# Add block_root_external to block mail send to root@PRIMARY_HOSTNAME. This mail address is only supposed to be used for local
+# mail delivery (cron etc)
+cat > /etc/postfix/block_root_external << EOF;
+root@$PRIMARY_HOSTNAME REJECT
+EOF
+
+postmap /etc/postfix/block_root_external
 
 # Prevent non-authenticated users from sending mail that requires being
 # relayed elsewhere. We don't want to be an "open relay". On outbound
@@ -152,9 +162,10 @@ tools/editconf.py /etc/postfix/main.cf \
 # * `permit_sasl_authenticated`: Authenticated users (i.e. on port 465/587).
 # * `permit_mynetworks`: Mail that originates locally.
 # * `reject_unauth_destination`: No one else. (Permits mail whose destination is local and rejects other mail.)
+# * `block_root_external`: Block mail addressed at root@PRIMARY_HOSTNAME. Root mail is only to receive mails locally send to root.
+#    permit_mynetworks will allow delivery of mail for root originating locally.
 tools/editconf.py /etc/postfix/main.cf \
-	smtpd_relay_restrictions=permit_sasl_authenticated,permit_mynetworks,reject_unauth_destination
-
+	smtpd_relay_restrictions=permit_sasl_authenticated,permit_mynetworks,reject_unauth_destination,hash:/etc/postfix/block_root_external
 
 # ### DANE
 
@@ -181,9 +192,10 @@ tools/editconf.py /etc/postfix/main.cf \
 # even if we don't know if it's to the right party, than to not encrypt at all. Instead we'll
 # now see notices about trusted certs. The CA file is provided by the package `ca-certificates`.
 tools/editconf.py /etc/postfix/main.cf \
-	smtp_tls_protocols=\!SSLv2,\!SSLv3 \
+	smtp_tls_protocols="!SSLv2,!SSLv3,!TLSv1,!TLSv1.1" \
 	smtp_tls_ciphers=medium \
-	smtp_tls_exclude_ciphers=aNULL,RC4 \
+	smtp_tls_exclude_ciphers="MD5, DES, ADH, RC4, PSD, SRP, 3DES, eNULL, aNULL" \
+	smtp_tls_mandatory_exclude_ciphers="MD5, DES, ADH, RC4, PSD, SRP, 3DES, eNULL, aNULL" \
 	smtp_tls_security_level=dane \
 	smtp_dns_support_level=dnssec \
 	smtp_tls_mandatory_protocols="!SSLv2,!SSLv3,!TLSv1,!TLSv1.1" \
@@ -232,7 +244,7 @@ tools/editconf.py /etc/postfix/main.cf \
 # A lot of legit mail servers try to resend before 300 seconds.
 # As a matter of fact RFC is not strict about retry timer so postfix and
 # other MTA have their own intervals. To fix the problem of receiving
-# e-mails really latter, delay of greylisting has been set to
+# e-mails really later, delay of greylisting has been set to
 # 180 seconds (default is 300 seconds). We will move the postgrey database
 # under $STORAGE_ROOT. This prevents a "warming up" that would have occured
 # previously with a migrated or reinstalled OS.  We will specify this new path
@@ -242,8 +254,9 @@ tools/editconf.py /etc/postfix/main.cf \
 # (luckily $STORAGE_ROOT does not currently work with spaces), or it needs to be a
 # symlink without spaces that can point to a folder with spaces).  We'll just assume
 # $STORAGE_ROOT won't have spaces to simplify things.
+# Postgrey removes entries after 185 days of not being used.
 tools/editconf.py /etc/default/postgrey \
-	POSTGREY_OPTS=\""--inet=127.0.0.1:10023 --delay=180 --dbdir=$STORAGE_ROOT/mail/postgrey/db"\"
+	POSTGREY_OPTS=\""--inet=127.0.0.1:10023 --delay=180 --max-age=185 --dbdir=$STORAGE_ROOT/mail/postgrey/db"\"
 
 
 # If the $STORAGE_ROOT/mail/postgrey is empty, copy the postgrey database over from the old location

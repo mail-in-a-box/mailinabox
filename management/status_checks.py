@@ -12,6 +12,7 @@ import dateutil.parser, dateutil.tz
 import idna
 import psutil
 import postfix_mta_sts_resolver.resolver
+import logging
 
 from dns_update import get_dns_zones, build_tlsa_record, get_custom_dns_config, get_secondary_dns, get_custom_dns_records
 from web_update import get_web_domains, get_domains_with_a_records
@@ -19,16 +20,16 @@ from ssl_certificates import get_ssl_certificates, get_domain_ssl_files, check_c
 from mailconfig import get_mail_domains, get_mail_aliases
 
 from utils import shell, sort_domains, load_env_vars_from_file, load_settings
+from backup import get_backup_root
 
 def get_services():
 	return [
-		{ "name": "Local DNS (bind9)", "port": 53, "public": False, },
-		#{ "name": "NSD Control", "port": 8952, "public": False, },
-		{ "name": "Local DNS Control (bind9/rndc)", "port": 953, "public": False, },
+		{ "name": "Local DNS (unbound)", "port": 53, "public": False, },
+		{ "name": "Local DNS Control (unbound)", "port": 953, "public": False, },
 		{ "name": "Dovecot LMTP LDA", "port": 10026, "public": False, },
 		{ "name": "Postgrey", "port": 10023, "public": False, },
 		{ "name": "Spamassassin", "port": 10025, "public": False, },
-		{ "name": "OpenDKIM", "port": 8891, "public": False, },
+		{ "name": "DKIMpy", "port": 8892, "public": False, },
 		{ "name": "OpenDMARC", "port": 8893, "public": False, },
 		{ "name": "Mail-in-a-Box Management Daemon", "port": 10222, "public": False, },
 		{ "name": "SSH Login (ssh)", "port": get_ssh_port(), "public": True, },
@@ -49,15 +50,15 @@ def run_checks(rounded_values, env, output, pool, domains_to_check=None):
 
 	# check that services are running
 	if not run_services_checks(env, output, pool):
-		# If critical services are not running, stop. If bind9 isn't running,
+		# If critical services are not running, stop. If unbound isn't running,
 		# all later DNS checks will timeout and that will take forever to
 		# go through, and if running over the web will cause a fastcgi timeout.
 		return
 
-	# clear bind9's DNS cache so our DNS checks are up to date
-	# (ignore errors; if bind9/rndc isn't running we'd already report
+	# clear unbound's DNS cache so our DNS checks are up to date
+	# (ignore errors; if unbound isn't running we'd already report
 	# that in run_services checks.)
-	shell('check_call', ["/usr/sbin/rndc", "flush"], trap=True)
+	shell('check_call', ["/usr/sbin/unbound-control", "flush_zone", ".", "-q"], trap=True)
 
 	run_system_checks(rounded_values, env, output)
 
@@ -72,6 +73,9 @@ def get_ssh_port():
 		output = shell('check_output', ['sshd', '-T'])
 	except FileNotFoundError:
 		# sshd is not installed. That's ok.
+		return None
+	except subprocess.CalledProcessError:
+		# error while calling shell command
 		return None
 
 	returnNext = False
@@ -94,6 +98,12 @@ def run_services_checks(env, output, pool):
 		all_running = all_running and running
 		fatal = fatal or fatal2
 		output2.playback(output)
+
+	# Check fail2ban.
+	code, ret = shell('check_output', ["fail2ban-client", "status"], capture_stderr=True, trap=True)
+	if code != 0:
+		output.print_error("fail2ban is not running.")
+		all_running = False
 
 	if all_running:
 		output.print_ok("All system services are running.")
@@ -142,6 +152,8 @@ def check_service(i, service, env):
 		# IPv4 failed. Try the private IP to see if the service is running but not accessible (except DNS because a different service runs on the private IP).
 		elif service["port"] != 53 and try_connect("127.0.0.1"):
 			output.print_error("%s is running but is not publicly accessible at %s:%d." % (service['name'], env['PUBLIC_IP'], service['port']))
+		elif try_connect(env["PUBLIC_IPV6"]):
+			output.print_warning("%s is only running on ipv6 (port %d)." % (service['name'], service['port']))
 		else:
 			output.print_error("%s is not running (port %d)." % (service['name'], service['port']))
 
@@ -207,7 +219,8 @@ def check_ssh_password(env, output):
 	# the configuration file.
 	if not os.path.exists("/etc/ssh/sshd_config"):
 		return
-	sshd = open("/etc/ssh/sshd_config").read()
+	with open("/etc/ssh/sshd_config", "r") as f:
+		sshd = f.read()
 	if re.search("\nPasswordAuthentication\s+yes", sshd) \
 		or not re.search("\nPasswordAuthentication\s+no", sshd):
 		output.print_error("""The SSH server on this machine permits password-based login. A more secure
@@ -256,7 +269,7 @@ def check_free_disk_space(rounded_values, env, output):
 	# Check that there's only one duplicity cache. If there's more than one,
 	# it's probably no longer in use, and we can recommend clearing the cache
 	# to save space. The cache directory may not exist yet, which is OK.
-	backup_cache_path = os.path.join(env['STORAGE_ROOT'], 'backup/cache')
+	backup_cache_path = os.path.join(get_backup_root(env), 'cache')
 	try:
 		backup_cache_count = len(os.listdir(backup_cache_path))
 	except:
@@ -303,11 +316,13 @@ def run_network_checks(env, output):
 	# by a spammer, or the user may be deploying on a residential network. We
 	# will not be able to reliably send mail in these cases.
 	rev_ip4 = ".".join(reversed(env['PUBLIC_IP'].split('.')))
-	zen = query_dns(rev_ip4+'.zen.spamhaus.org', 'A', nxdomain=None)
+	zen = query_dns(rev_ip4+'.zen.spamhaus.org', 'A', nxdomain=None, retry = False)
 	if zen is None:
 		output.print_ok("IP address is not blacklisted by zen.spamhaus.org.")
 	elif zen == "[timeout]":
 		output.print_warning("Connection to zen.spamhaus.org timed out. We could not determine whether your server's IP address is blacklisted. Please try again later.")
+	elif zen == "[Not Set]":
+		output.print_warning("Could not connect to zen.spamhaus.org. We could not determine whether your server's IP address is blacklisted. Please try again later.")
 	else:
 		output.print_error("""The IP address of this machine %s is listed in the Spamhaus Block List (code %s),
 			which may prevent recipients from receiving your email. See http://www.spamhaus.org/query/ip/%s."""
@@ -332,9 +347,9 @@ def run_domain_checks(rounded_time, env, output, pool, domains_to_check=None):
 	domains_to_check = [
 		d for d in domains_to_check
 		if not (
-		   d.split(".", 1)[0] in ("www", "autoconfig", "autodiscover", "mta-sts")
-		   and len(d.split(".", 1)) == 2
-		   and d.split(".", 1)[1] in domains_to_check
+			d.split(".", 1)[0] in ("www", "autoconfig", "autodiscover", "mta-sts")
+			and len(d.split(".", 1)) == 2
+			and d.split(".", 1)[1] in domains_to_check
 		)
 	]
 
@@ -517,7 +532,17 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 	secondary_ns = custom_secondary_ns or ["ns2." + env['PRIMARY_HOSTNAME']]
 
 	existing_ns = query_dns(domain, "NS")
+
 	correct_ns = "; ".join(sorted(["ns1." + env['PRIMARY_HOSTNAME']] + secondary_ns))
+	
+	# Take hidden master dns into account, the mail-in-a-box is not known as nameserver in that case
+	if os.path.exists("/etc/usehiddenmasterdns") and len(secondary_ns) > 1:
+		with open("/etc/usehiddenmasterdns") as f:
+			for line in f:
+				if line.strip() == domain or line.strip() == "usehiddenmasterdns":
+					correct_ns = "; ".join(sorted(secondary_ns))
+					break
+	
 	ip = query_dns(domain, "A")
 
 	probably_external_dns = False
@@ -541,7 +566,7 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 		for ns in custom_secondary_ns:
 			# We must first resolve the nameserver to an IP address so we can query it.
 			ns_ips = query_dns(ns, "A")
-			if not ns_ips:
+			if not ns_ips or ns_ips in {'[Not Set]', '[timeout]'}:
 				output.print_error("Secondary nameserver %s is not valid (it doesn't resolve to an IP address)." % ns)
 				continue
 			# Choose the first IP if nameserver returns multiple
@@ -592,18 +617,19 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 			# record that we suggest using is for the KSK (and that's how the DS records were generated).
 			# We'll also give the nice name for the key algorithm.
 			dnssec_keys = load_env_vars_from_file(os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/%s.conf' % alg_name_map[ds_alg]))
-			dnsssec_pubkey = open(os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/' + dnssec_keys['KSK'] + '.key')).read().split("\t")[3].split(" ")[3]
+			with open(os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/' + dnssec_keys['KSK'] + '.key'), 'r') as f:
+				dnsssec_pubkey = f.read().split("\t")[3].split(" ")[3]
 
-			expected_ds_records[ (ds_keytag, ds_alg, ds_digalg, ds_digest) ] = {
-				"record": rr_ds,
-				"keytag": ds_keytag,
-				"alg": ds_alg,
-				"alg_name": alg_name_map[ds_alg],
-				"digalg": ds_digalg,
-				"digalg_name": digalg_name_map[ds_digalg],
-				"digest": ds_digest,
-				"pubkey": dnsssec_pubkey,
-			}
+				expected_ds_records[ (ds_keytag, ds_alg, ds_digalg, ds_digest) ] = {
+					"record": rr_ds,
+					"keytag": ds_keytag,
+					"alg": ds_alg,
+					"alg_name": alg_name_map[ds_alg],
+					"digalg": ds_digalg,
+					"digalg_name": digalg_name_map[ds_digalg],
+					"digest": ds_digest,
+					"pubkey": dnsssec_pubkey,
+				}
 
 	# Query public DNS for the DS record at the registrar.
 	ds = query_dns(domain, "DS", nxdomain=None, as_list=True)
@@ -739,11 +765,13 @@ def check_mail_domain(domain, env, output):
 	# Stop if the domain is listed in the Spamhaus Domain Block List.
 	# The user might have chosen a domain that was previously in use by a spammer
 	# and will not be able to reliably send mail.
-	dbl = query_dns(domain+'.dbl.spamhaus.org', "A", nxdomain=None)
+	dbl = query_dns(domain+'.dbl.spamhaus.org', "A", nxdomain=None, retry=False)
 	if dbl is None:
 		output.print_ok("Domain is not blacklisted by dbl.spamhaus.org.")
 	elif dbl == "[timeout]":
 		output.print_warning("Connection to dbl.spamhaus.org timed out. We could not determine whether the domain {} is blacklisted. Please try again later.".format(domain))
+	elif dbl == "[Not Set]":
+		output.print_warning("Could not connect to dbl.spamhaus.org. We could not determine whether the domain {} is blacklisted. Please try again later.".format(domain))
 	else:
 		output.print_error("""This domain is listed in the Spamhaus Domain Block List (code %s),
 			which may prevent recipients from receiving your mail.
@@ -775,7 +803,7 @@ def check_web_domain(domain, rounded_time, ssl_certificates, env, output):
 	# website for also needs a signed certificate.
 	check_ssl_cert(domain, rounded_time, ssl_certificates, env, output)
 
-def query_dns(qname, rtype, nxdomain='[Not Set]', at=None, as_list=False):
+def query_dns(qname, rtype, nxdomain='[Not Set]', at=None, as_list=False, retry=True):
 	# Make the qname absolute by appending a period. Without this, dns.resolver.query
 	# will fall back a failed lookup to a second query with this machine's hostname
 	# appended. This has been causing some false-positive Spamhaus reports. The
@@ -785,25 +813,42 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None, as_list=False):
 		qname += "."
 
 	# Use the default nameservers (as defined by the system, which is our locally
-	# running bind server), or if the 'at' argument is specified, use that host
+	# running unbound server), or if the 'at' argument is specified, use that host
 	# as the nameserver.
 	resolver = dns.resolver.get_default_resolver()
-	if at:
+	
+	# Make sure at is not a string that cannot be used as a nameserver
+	if at and at not in {'[Not set]', '[timeout]'}:
 		resolver = dns.resolver.Resolver()
 		resolver.nameservers = [at]
 
 	# Set a timeout so that a non-responsive server doesn't hold us back.
 	resolver.timeout = 5
+	# The number of seconds to spend trying to get an answer to the question. If the
+	# lifetime expires a dns.exception.Timeout exception will be raised.
+	resolver.lifetime = 5
 
+	if retry:
+		tries = 2
+	else:
+		tries = 1
+	
 	# Do the query.
-	try:
-		response = resolver.resolve(qname, rtype)
-	except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
-		# Host did not have an answer for this query; not sure what the
-		# difference is between the two exceptions.
-		return nxdomain
-	except dns.exception.Timeout:
-		return "[timeout]"
+	while tries > 0:
+		tries = tries - 1
+		try:
+			response = resolver.resolve(qname, rtype, search=True)
+			tries = 0
+		except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+			# Host did not have an answer for this query; not sure what the
+			# difference is between the two exceptions.
+			logging.debug("No result for dns lookup %s, %s (%d)", qname, rtype, tries)
+			if tries < 1:
+				return nxdomain
+		except dns.exception.Timeout:
+			logging.debug("Timeout on dns lookup %s, %s (%d)", qname, rtype, tries)
+			if tries < 1:
+				return "[timeout]"
 
 	# Normalize IP addresses. IP address --- especially IPv6 addresses --- can
 	# be expressed in equivalent string forms. Canonicalize the form before
@@ -899,19 +944,19 @@ def what_version_is_this(env):
 	# Git may not be installed and Mail-in-a-Box may not have been cloned from github,
 	# so this function may raise all sorts of exceptions.
 	miab_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-	tag = shell("check_output", ["/usr/bin/git", "describe", "--abbrev=0"], env={"GIT_DIR": os.path.join(miab_dir, '.git')}).strip()
+	tag = shell("check_output", ["/usr/bin/git", "describe", "--tags", "--abbrev=0"], env={"GIT_DIR": os.path.join(miab_dir, '.git')}).strip()
 	return tag
 
 def get_latest_miab_version():
 	# This pings https://mailinabox.email/setup.sh and extracts the tag named in
 	# the script to determine the current product version.
-    from urllib.request import urlopen, HTTPError, URLError
-    from socket import timeout
+	from urllib.request import urlopen, HTTPError, URLError
+	from socket import timeout
 
-    try:
-        return re.search(b'TAG=(.*)', urlopen("https://mailinabox.email/setup.sh?ping=1", timeout=5).read()).group(1).decode("utf8")
-    except (HTTPError, URLError, timeout):
-        return None
+	try:
+		return re.search(b'TAG=(.*)', urlopen("https://mailinabox.email/setup.sh?ping=1", timeout=5).read()).group(1).decode("utf8")
+	except (HTTPError, URLError, timeout):
+		return None
 
 def check_miab_version(env, output):
 	config = load_settings(env)
@@ -922,17 +967,23 @@ def check_miab_version(env, output):
 		this_ver = "Unknown"
 
 	if config.get("privacy", True):
-		output.print_warning("You are running version Mail-in-a-Box %s. Mail-in-a-Box version check disabled by privacy setting." % this_ver)
+		output.print_warning("You are running version Mail-in-a-Box %s Kiekerjan Edition. Mail-in-a-Box version check disabled by privacy setting." % this_ver)
 	else:
 		latest_ver = get_latest_miab_version()
-
-		if this_ver == latest_ver:
-			output.print_ok("Mail-in-a-Box is up to date. You are running version %s." % this_ver)
-		elif latest_ver is None:
-			output.print_error("Latest Mail-in-a-Box version could not be determined. You are running version %s." % this_ver)
+		
+		if this_ver[-6:] == "-20.04":
+			this_ver_tag = this_ver[:-6]
+		elif this_ver[-3:] == "-kj":
+			this_ver_tag = this_ver[:-3]
 		else:
-			output.print_error("A new version of Mail-in-a-Box is available. You are running version %s. The latest version is %s. For upgrade instructions, see https://mailinabox.email. "
-				% (this_ver, latest_ver))
+			this_ver_tag = this_ver
+
+		if this_ver_tag == latest_ver:
+			output.print_ok("Mail-in-a-Box is up to date. You are running version %s Kiekerjan Edition." % this_ver)
+		elif latest_ver is None:
+			output.print_error("Latest Mail-in-a-Box version could not be determined. You are running version %s Kiekerjan Edition." % this_ver)
+		else:
+			output.print_error("A new upstream version of Mail-in-a-Box is available. You are running version %s Kiekerjan Edition. The latest version is %s. " % (this_ver, latest_ver))
 
 def run_and_output_changes(env, pool):
 	import json
@@ -947,7 +998,8 @@ def run_and_output_changes(env, pool):
 	# Load previously saved status checks.
 	cache_fn = "/var/cache/mailinabox/status_checks.json"
 	if os.path.exists(cache_fn):
-		prev = json.load(open(cache_fn))
+		with open(cache_fn, 'r') as f:
+			prev = json.load(f)
 
 		# Group the serial output into categories by the headings.
 		def group_by_heading(lines):

@@ -1,6 +1,33 @@
 CHANGELOG
 =========
 
+Version 61.1 (January 28, 2022)
+-------------------------------
+
+* Fixed rsync backups not working with the default port.
+* Reverted "Improve error messages in the management tools when external command-line tools are run." because of the possibility of user secrets being included in error messages.
+* Fix for TLS certificate SHA fingerprint not being displayed during setup.
+
+Version 61 (January 21, 2023)
+-----------------------------
+
+System:
+
+* fail2ban didn't start after setup.
+
+Mail:
+
+* Disable Roundcube password plugin since it was corrupting the user database.
+
+Control panel:
+
+* Fix changing existing backup settings when the rsync type is used.
+* Allow setting a custom port for rsync backups.
+* Fixes to DNS lookups during status checks when there are timeouts, enforce timeouts better.
+* A new check is added to ensure fail2ban is running.
+* Fixed a color.
+* Improve error messages in the management tools when external command-line tools are run.
+
 Version 60.1 (October 30, 2022)
 -------------------------------
 
@@ -23,12 +50,13 @@ No major features of Mail-in-a-Box have changed in this release, although some m
 With the newer version of Ubuntu the following software packages we use are updated:
 
 * dovecot is upgraded to 2.3.16, postfix to 3.6.4, opendmark to 1.4 (which adds ARC-Authentication-Results headers), and spampd to 2.53 (alleviating a mail delivery rate limiting bug).
-* Nextcloud is upgraded to 23.0.4 (contacts to 4.2.0, calendar to 3.5.0).
+* Nextcloud is upgraded to 24.0.0
 * Roundcube is upgraded to 1.6.0.
 * certbot is upgraded to 1.21 (via the Ubuntu repository instead of a PPA).
 * fail2ban is upgraded to 0.11.2.
 * nginx is upgraded to 1.18.
-* PHP is upgraded from 7.2 to 8.0.
+* PHP is upgraded from 7.2 to 8.1.
+* bind9 is replaced with unbound
 
 Also:
 

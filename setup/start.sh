@@ -14,9 +14,14 @@ source setup/preflight.sh
 # Python may not be able to read/write files. This is also
 # in the management daemon startup script and the cron script.
 
+# Make sure we have locales at all (some images are THAT minimal)
+apt_get_quiet install locales
+
 if ! locale -a | grep en_US.utf8 > /dev/null; then
+	echo "Generating locales..."
     # Generate locale if not exists
-    hide_output locale-gen en_US.UTF-8
+	echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
+    hide_output locale-gen
 fi
 
 export LANGUAGE=en_US.UTF-8
@@ -53,8 +58,8 @@ chmod +x /usr/local/bin/mailinabox
 
 # Ask the user for the PRIMARY_HOSTNAME, PUBLIC_IP, and PUBLIC_IPV6,
 # if values have not already been set in environment variables. When running
-# non-interactively, be sure to set values for all! Also sets STORAGE_USER and
-# STORAGE_ROOT.
+# non-interactively, be sure to set values for all! Also sets STORAGE_USER, 
+# STORAGE_ROOT and BACKUP_ROOT.
 source setup/questions.sh
 
 # Run some network checks to make sure setup on this machine makes sense.
@@ -85,7 +90,7 @@ f=$STORAGE_ROOT
 while [[ $f != / ]]; do chmod a+rx "$f"; f=$(dirname "$f"); done;
 if [ ! -f $STORAGE_ROOT/mailinabox.version ]; then
 	setup/migrate.py --current > $STORAGE_ROOT/mailinabox.version
-	chown $STORAGE_USER.$STORAGE_USER $STORAGE_ROOT/mailinabox.version
+	chown $STORAGE_USER:$STORAGE_USER $STORAGE_ROOT/mailinabox.version
 fi
 
 # Save the global options in /etc/mailinabox.conf so that standalone
@@ -95,29 +100,34 @@ fi
 cat > /etc/mailinabox.conf << EOF;
 STORAGE_USER=$STORAGE_USER
 STORAGE_ROOT=$STORAGE_ROOT
+BACKUP_ROOT=$BACKUP_ROOT
 PRIMARY_HOSTNAME=$PRIMARY_HOSTNAME
 PUBLIC_IP=$PUBLIC_IP
 PUBLIC_IPV6=$PUBLIC_IPV6
 PRIVATE_IP=$PRIVATE_IP
 PRIVATE_IPV6=$PRIVATE_IPV6
 MTA_STS_MODE=${DEFAULT_MTA_STS_MODE:-enforce}
+ADMIN_HOME_IP=$ADMIN_HOME_IP
+ADMIN_HOME_IPV6=
 EOF
 
 # Start service configuration.
 source setup/system.sh
+source setup/geoiptoolssetup.sh
 source setup/ssl.sh
 source setup/dns.sh
 source setup/mail-postfix.sh
 source setup/mail-dovecot.sh
 source setup/mail-users.sh
+source setup/dovecot-fts-xapian.sh
 source setup/dkim.sh
 source setup/spamassassin.sh
 source setup/web.sh
 source setup/webmail.sh
 source setup/nextcloud.sh
-source setup/zpush.sh
 source setup/management.sh
 source setup/munin.sh
+source setup/additionals.sh
 
 # Wait for the management daemon to start...
 until nc -z -w 4 127.0.0.1 10222
@@ -167,7 +177,7 @@ if management/status_checks.py --check-primary-hostname; then
 	echo "If you have a DNS problem put the box's IP address in the URL"
 	echo "(https://$PUBLIC_IP/admin) but then check the TLS fingerprint:"
 	openssl x509 -in $STORAGE_ROOT/ssl/ssl_certificate.pem -noout -fingerprint -sha256\
-        	| sed "s/SHA256 Fingerprint=//"
+        	| sed "s/SHA256 Fingerprint=//i"
 else
 	echo https://$PUBLIC_IP/admin
 	echo
@@ -175,7 +185,7 @@ else
 	echo the certificate fingerprint matches:
 	echo
 	openssl x509 -in $STORAGE_ROOT/ssl/ssl_certificate.pem -noout -fingerprint -sha256\
-        	| sed "s/SHA256 Fingerprint=//"
+        	| sed "s/SHA256 Fingerprint=//i"
 	echo
 	echo Then you can confirm the security exception and continue.
 	echo

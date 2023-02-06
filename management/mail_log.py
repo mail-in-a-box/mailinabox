@@ -73,7 +73,8 @@ def scan_files(collector):
             continue
         elif fn[-3:] == '.gz':
             tmp_file = tempfile.NamedTemporaryFile()
-            shutil.copyfileobj(gzip.open(fn), tmp_file)
+            with gzip.open(fn, 'rb') as f:
+                shutil.copyfileobj(f, tmp_file)
 
         if VERBOSE:
             print("Processing file", fn, "...")
@@ -376,7 +377,7 @@ def scan_mail_log_line(line, collector):
         if SCAN_BLOCKED:
             scan_postfix_smtpd_line(date, log, collector)
     elif service in ("postfix/qmgr", "postfix/pickup", "postfix/cleanup", "postfix/scache",
-                     "spampd", "postfix/anvil", "postfix/master", "opendkim", "postfix/lmtp",
+                     "spampd", "postfix/anvil", "postfix/master", "dkimpy", "postfix/lmtp",
                      "postfix/tlsmgr", "anvil"):
         # nothing to look at
         return True
