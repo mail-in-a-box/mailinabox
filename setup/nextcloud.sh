@@ -21,8 +21,8 @@ echo "Installing Nextcloud (contacts/calendar)..."
 #   we automatically install intermediate versions as needed.
 # * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
 #   copying it from the error message when it doesn't match what is below.
-nextcloud_ver=24.0.5
-nextcloud_hash=a1ecc0db61584ed5fb6f7cf80a492b2fae17ba26
+nextcloud_ver=24.0.9
+nextcloud_hash=e7e7e580f95772c4e390e3b656129282b3967a16
 
 # Nextcloud apps
 # --------------
@@ -33,12 +33,12 @@ nextcloud_hash=a1ecc0db61584ed5fb6f7cf80a492b2fae17ba26
 #   https://github.com/nextcloud/user_external/blob/master/appinfo/info.xml
 # * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
 #   copying it from the error message when it doesn't match what is below.
-contacts_ver=4.2.0
-contacts_hash=79b506574834db5e1b6ab47aadd4041e12ad9a9c
-calendar_ver=3.5.0
-calendar_hash=941381536287a015081669513f8f79f6f262508a
-user_external_ver=3.0.0
-user_external_hash=9e7aaf7288032bd463c480bc368ff91869122950
+contacts_ver=4.2.2
+contacts_hash=ca13d608ed8955aa374cb4f31b6026b57ef88887
+calendar_ver=3.5.5
+calendar_hash=8505abcf7b3ab2f32d7ca1593b545e577cbeedb4
+user_external_ver=3.1.0
+user_external_hash=399fe1150b28a69aaf5bfcad3227e85706604a44
 
 # Clear prior packages and install dependencies from apt.
 
@@ -144,8 +144,26 @@ InstallNextcloud() {
 # application version than the database.
 
 # If config.php exists, get version number, otherwise CURRENT_NEXTCLOUD_VER is empty.
+
+#
+# Config unlocking, power-mailinabox#86
+# If a configuration file already exists, remove the "readonly" tag before starting the upgrade. This is
+# necessary (otherwise upgrades will fail).
+#
+# The lock will be re-applied further down the line when it's safe to do so.
+CONFIG_TEMP=$(/bin/mktemp)
 if [ -f "$STORAGE_ROOT/owncloud/config.php" ]; then
 	CURRENT_NEXTCLOUD_VER=$(php -r "include(\"$STORAGE_ROOT/owncloud/config.php\"); echo(\$CONFIG['version']);")
+	# Unlock configuration directory for upgrades
+	php <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP $STORAGE_ROOT/owncloud/config.php;
+	<?php
+	include("$STORAGE_ROOT/owncloud/config.php");
+	\$CONFIG['config_is_read_only'] = false;
+	echo "<?php\n\\\$CONFIG = ";
+	var_export(\$CONFIG);
+	echo ";";
+	?>
+	EOF
 else
 	CURRENT_NEXTCLOUD_VER=""
 fi
@@ -338,7 +356,6 @@ fi
 #   the correct domain name if the domain is being change from the previous setup.
 # Use PHP to read the settings file, modify it, and write out the new settings array.
 TIMEZONE=$(cat /etc/timezone)
-CONFIG_TEMP=$(/bin/mktemp)
 php <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP $STORAGE_ROOT/owncloud/config.php;
 <?php
 include("$STORAGE_ROOT/owncloud/config.php");
