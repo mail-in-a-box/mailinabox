@@ -502,8 +502,10 @@ def list_target_files(config):
 					aws_access_key_id=config["s3_access_key_id"], \
 					aws_secret_access_key=config["s3_secret_access_key"])
 
-			bucket_objects = s3.list_objects_v2(Bucket=bucket, Prefix=path)['Contents']
-			backup_list = [(key['Key'][len(path):], key['Size']) for key in bucket_objects]
+			backup_list = []
+			bucket_objects = s3.list_objects_v2(Bucket=bucket, Prefix=path)
+			if "Contents" in bucket_objects:
+				backup_list = [(key['Key'][len(path):], key['Size']) for key in bucket_objects['Contents']]
 		except ClientError as e:
 			raise ValueError(e)
 		return backup_list
