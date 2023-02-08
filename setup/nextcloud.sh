@@ -247,6 +247,10 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 			# Remove the ppa
 			add-apt-repository --yes --remove ppa:ondrej/php
 		fi
+		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^23 ]]; then
+			InstallNextcloud 24.0.9 e7e7e580f95772c4e390e3b656129282b3967a16 4.2.2 ca13d608ed8955aa374cb4f31b6026b57ef88887 3.5.5 8505abcf7b3ab2f32d7ca1593b545e577cbeedb4 3.1.0 399fe1150b28a69aaf5bfcad3227e85706604a44
+			CURRENT_NEXTCLOUD_VER="24.0.9"
+		fi
 	fi
 
 # nextcloud version - supported php versions
