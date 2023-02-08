@@ -42,8 +42,8 @@ VERSION=1.6.1
 HASH=0e1c771ab83ea03bde1fd0be6ab5d09e60b4f293
 PERSISTENT_LOGIN_VERSION=bde7b6840c7d91de627ea14e81cf4133cbb3c07a # version 5.2
 HTML5_NOTIFIER_VERSION=68d9ca194212e15b3c7225eb6085dbcf02fd13d7   # version 0.6.4+
-CARDDAV_VERSION=4.4.6
-CARDDAV_HASH=82c5428f7086a09c9a77576d8887d65bb24a1da4
+CARDDAV_VERSION=5.0.1
+CARDDAV_HASH=e4871f5f6692dab7f237bf22e817931125c47b0f
 CONTEXT_MENU_VERSION=dd13a92a9d8910cce7b2234f45a0b2158214956c     # version 3.3.1
 TWOFACT_COMMIT=06e21b0c03aeeb650ee4ad93538873185f776f8b # master @ 21-04-2022
 
@@ -165,16 +165,20 @@ cat > ${RCM_PLUGIN_DIR}/carddav/config.inc.php <<EOF;
 \$prefs['_GLOBAL']['hide_preferences'] = false;
 \$prefs['_GLOBAL']['suppress_version_warning'] = true;
 \$prefs['ownCloud'] = array(
-	 'name'         =>  'ownCloud',
-	 'username'     =>  '%u', // login username
-	 'password'     =>  '%p', // login password
-	 'url'          =>  'https://${PRIMARY_HOSTNAME}/cloud/remote.php/dav/addressbooks/users/%u/contacts/',
-	 'active'       =>  true,
-	 'readonly'     =>  false,
-	 'refresh_time' => '00:30:00',
-	 'fixed'        =>  array('username'),
-	 'preemptive_auth' => '1',
-	 'hide'        =>  false,
+	 'name'             =>  'ownCloud',
+	 'username'         =>  '%u', // login username
+	 'password'         =>  '%p', // login password
+	 'extra_addressbooks' =>  [
+	     [
+	         'url'    =>  'https://${PRIMARY_HOSTNAME}/cloud/remote.php/dav/addressbooks/users/%u/contacts/',
+		 'active'           =>  true,
+	         'readonly'         =>  false,
+	         'refresh_time'     => '00:30:00',
+	         'fixed'            =>  array('username'),
+	         'preemptive_auth'  => '1',
+	         'hide'             =>  false,
+	     ],
+	 ],
 );
 ?>
 EOF
