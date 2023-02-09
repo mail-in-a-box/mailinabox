@@ -646,50 +646,6 @@ def get_backup_config(env):
 			custom_config = rtyaml.load(f)
 		if not isinstance(custom_config, dict): raise ValueError() # caught below
 
-		# Converting the previous configuration (which was not very clear)
-		# into the new configuration format which also provides
-		# a "type" attribute to distinguish the type of backup.
-		if "type" not in custom_config:
-			scheme = custom_config["target"].split(":")[0]
-			if scheme == "off":
-				custom_config = {
-					"type": "off"
-				}
-			elif scheme == "file":
-				custom_config = {
-					"type": "local",
-					"min_age_in_days": custom_config["min_age_in_days"]
-				}
-			elif scheme == "rsync":
-				custom_config = {
-					"type": "rsync",
-					"target_url": custom_config["target"],
-					"min_age_in_days": custom_config["min_age_in_days"]
-				}
-			elif scheme == "s3":
-				import urllib.parse
-				url = urllib.parse.urlparse(custom_config["target"])
-				target_url = url.scheme + ":/" + url.path
-				s3_endpoint_url = "https://" + url.netloc
-				s3_access_key_id = custom_config["target_user"]
-				s3_secret_access_key = custom_config["target_pass"]
-				custom_config = {
-					"type": "s3",
-					"target_url": target_url,
-					"s3_endpoint_url": s3_endpoint_url,
-					"s3_access_key_id": custom_config["target_user"],
-					"s3_secret_access_key": custom_config["target_pass"],
-					"min_age_in_days": custom_config["min_age_in_days"]
-				}
-			elif scheme == "b2":
-				custom_config = {
-					"type": "b2",
-					"target_url": custom_config["target"],
-					"min_age_in_days": custom_config["min_age_in_days"]
-				}
-			else:
-				raise ValueError("Unexpected scheme during the conversion of the previous config to the new format.")
-
 		config.update(custom_config)
 	except:
 		pass
