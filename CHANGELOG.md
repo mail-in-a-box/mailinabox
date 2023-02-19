@@ -10,6 +10,7 @@ Package updates:
 
 Control panel:
 
+* Allow setting the backup location's S3 region name for non-AWS S3-compatible backup hosts.
 * Control panel pages can be opened in a new tab/window and bookmarked and browser history navigation now works.
 * Add a Copy button to put the rsync backup public key on clipboard.
 * Allow secondary DNS xfr: items added in the control panel to be hostnames too.
