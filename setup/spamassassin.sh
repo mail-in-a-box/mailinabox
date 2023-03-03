@@ -194,5 +194,3 @@ chmod 770 $STORAGE_ROOT/mail/spamassassin
 # Kick services.
 restart_service spampd
 restart_service dovecot
-
-systemctl enable spamassassin.service
