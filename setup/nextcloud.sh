@@ -21,8 +21,8 @@ echo "Installing Nextcloud (contacts/calendar)..."
 #   we automatically install intermediate versions as needed.
 # * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
 #   copying it from the error message when it doesn't match what is below.
-nextcloud_ver=24.0.9
-nextcloud_hash=e7e7e580f95772c4e390e3b656129282b3967a16
+nextcloud_ver=25.0.3
+nextcloud_hash=e31ad369098ef113aa687e05ec1556f06a7c6692
 
 # Nextcloud apps
 # --------------
@@ -33,10 +33,10 @@ nextcloud_hash=e7e7e580f95772c4e390e3b656129282b3967a16
 #   https://github.com/nextcloud/user_external/blob/master/appinfo/info.xml
 # * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
 #   copying it from the error message when it doesn't match what is below.
-contacts_ver=4.2.2
-contacts_hash=ca13d608ed8955aa374cb4f31b6026b57ef88887
-calendar_ver=3.5.5
-calendar_hash=8505abcf7b3ab2f32d7ca1593b545e577cbeedb4
+contacts_ver=5.1.0
+contacts_hash=0b1a34df31235529eedf62192aab3d759420d797
+calendar_ver=4.2.3
+calendar_hash=8918e0b6e385c59558e9bd440e91151efb9c3bcc
 user_external_ver=3.1.0
 user_external_hash=399fe1150b28a69aaf5bfcad3227e85706604a44
 
@@ -154,16 +154,18 @@ InstallNextcloud() {
 CONFIG_TEMP=$(/bin/mktemp)
 if [ -f "$STORAGE_ROOT/owncloud/config.php" ]; then
 	CURRENT_NEXTCLOUD_VER=$(php -r "include(\"$STORAGE_ROOT/owncloud/config.php\"); echo(\$CONFIG['version']);")
-	# Unlock configuration directory for upgrades
+
+	# Unlock configuration directory for upgrades	
 	php <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP $STORAGE_ROOT/owncloud/config.php;
-	<?php
-	include("$STORAGE_ROOT/owncloud/config.php");
-	\$CONFIG['config_is_read_only'] = false;
-	echo "<?php\n\\\$CONFIG = ";
-	var_export(\$CONFIG);
-	echo ";";
-	?>
-	EOF
+<?php
+include("$STORAGE_ROOT/owncloud/config.php");
+
+\$CONFIG['config_is_read_only'] = false;
+echo "<?php\n\\\$CONFIG = ";
+var_export(\$CONFIG);
+echo ";";
+?>
+EOF
 else
 	CURRENT_NEXTCLOUD_VER=""
 fi
