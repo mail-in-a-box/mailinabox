@@ -1,0 +1,7 @@
+#!/bin/bash
+#
+# update geoip database cron weekly
+
+if [[ ! -d /usr/share/GeoIP || ! -f /usr/share/GeoIP/GeoLite2-Country.mmdb || $(find "/usr/share/GeoIP/GeoLite2-Country.mmdb" -mtime +60 -print) ]]; then
+  goiplookup db-update
+fi

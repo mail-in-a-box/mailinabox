@@ -19,7 +19,7 @@ fi
 
 echo "Installing Nginx (web server)..."
 
-apt_install nginx php-cli php-fpm idn2 libnginx-mod-http-geoip
+apt_install nginx php-cli php-fpm idn2 libnginx-mod-http-geoip2
 
 rm -f /etc/nginx/sites-enabled/default
 
