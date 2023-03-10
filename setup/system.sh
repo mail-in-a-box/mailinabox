@@ -374,14 +374,21 @@ systemctl restart systemd-resolved
 rm -f /etc/fail2ban/jail.local # we used to use this file but don't anymore
 rm -f /etc/fail2ban/jail.d/defaults-debian.conf # removes default config so we can manage all of fail2ban rules in one config
 
+# Take into account ipv6 might not be used
+if [ ! -z "$PUBLIC_IPV6" ]; then
+    PUBLIC_IPV6_FB="${PUBLIC_IPV6}/64"
+else
+    PUBLIC_IPV6_FB=""
+fi
+
 if [ ! -z "$ADMIN_HOME_IPV6" ]; then
     ADMIN_HOME_IPV6_FB="${ADMIN_HOME_IPV6}/64"
 else
-	ADMIN_HOME_IPV6_FB=""
+    ADMIN_HOME_IPV6_FB=""
 fi
 
 cat conf/fail2ban/jails.conf \
-	| sed "s/PUBLIC_IPV6/$PUBLIC_IPV6/g" \
+	| sed "s/PUBLIC_IPV6/$PUBLIC_IPV6_FB/g" \
 	| sed "s/PUBLIC_IP/$PUBLIC_IP/g" \
 	| sed "s/ADMIN_HOME_IPV6/$ADMIN_HOME_IPV6_FB/g" \
 	| sed "s/ADMIN_HOME_IP/$ADMIN_HOME_IP/g" \
