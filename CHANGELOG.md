@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-Version 61.1 (January 28, 2022)
+Version 61.1 (January 28, 2023)
 -------------------------------
 
 * Fixed rsync backups not working with the default port.
