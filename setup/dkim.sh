@@ -54,17 +54,18 @@ if [ ! -f "$STORAGE_ROOT/mail/dkim/mail.key" ]; then
 	else
 		# All defaults are supposed to be ok, default key for rsa is 2048 bit
 		dknewkey --ktype rsa $STORAGE_ROOT/mail/dkim/mail
-		# Change format from pkcs#8 to pkcs#1, dkimpy seemingly is not able to handle the #8 format
-		# See bug https://bugs.launchpad.net/dkimpy/+bug/1978835
-		openssl pkey -in $STORAGE_ROOT/mail/dkim/mail.key -traditional -out $STORAGE_ROOT/mail/dkim/mail.key.1
-		mv -f $STORAGE_ROOT/mail/dkim/mail.key $STORAGE_ROOT/mail/dkim/mail.key.8
-		cp -f $STORAGE_ROOT/mail/dkim/mail.key.1 $STORAGE_ROOT/mail/dkim/mail.key
 		
 		# Force dns entry into the format dns_update.py expects
 		# We use selector mail for the rsa key, to be compatible with earlier installations of Mail-in-a-Box
 		sed -i 's/v=DKIM1;/mail._domainkey IN      TXT      ( "v=DKIM1; s=email;/' $STORAGE_ROOT/mail/dkim/mail.dns
 		echo '" )' >> $STORAGE_ROOT/mail/dkim/mail.dns
 	fi
+	
+	# Change format from pkcs#8 to pkcs#1, dkimpy seemingly is not able to handle the #8 format
+	# See bug https://bugs.launchpad.net/dkimpy/+bug/1978835
+	openssl pkey -in $STORAGE_ROOT/mail/dkim/mail.key -traditional -out $STORAGE_ROOT/mail/dkim/mail.key.1
+	mv -f $STORAGE_ROOT/mail/dkim/mail.key $STORAGE_ROOT/mail/dkim/mail.key.8
+	cp -f $STORAGE_ROOT/mail/dkim/mail.key.1 $STORAGE_ROOT/mail/dkim/mail.key
 fi
 
 if [ ! -f "$STORAGE_ROOT/mail/dkim/box-ed25519.key" ]; then
