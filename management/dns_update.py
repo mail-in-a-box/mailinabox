@@ -995,12 +995,12 @@ def set_custom_dns_record(qname, rtype, value, action, env):
 			break
 	else:
 		# No match.
-		if qname != "_secondary_nameserver":
+		if qname != "_secondary_nameserver" and action != "remove":
 			raise ValueError("%s is not a domain name or a subdomain of a domain name managed by this box." % qname)
 
 	# validate rtype
 	rtype = rtype.upper()
-	if value is not None and qname != "_secondary_nameserver":
+	if value is not None and qname != "_secondary_nameserver" and action != "remove":
 		if not re.search(DOMAIN_RE, qname):
 			raise ValueError("Invalid name.")
 
