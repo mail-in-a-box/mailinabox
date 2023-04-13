@@ -342,8 +342,9 @@ def provision_certificates(env, limit_domains):
 						"certbot",
 						"certonly",
 						#"-v", # just enough to see ACME errors
-						"--non-interactive", # will fail if user hasn't registered during Mail-in-a-Box setup
-
+						"--non-interactive",
+						"--agree-tos",                              # needed because Mail-in-a-Box does not create (and register)
+						"--email", "administrator@" + domain_list[0], # administrator user in setup anymore
 						"-d", ",".join(domain_list), # first will be main domain
 
 						"--csr", csr_file.name, # use our private key; unfortunately this doesn't work with auto-renew so we need to save cert manually
