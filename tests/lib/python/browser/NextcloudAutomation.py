@@ -35,8 +35,15 @@ class NextcloudAutomation(object):
     def logout(self):
         d = self.d
         d.say("Logout of Nextcloud")
-        d.find_el('#settings .avatardiv').click()
-        d.find_el('[data-id="logout"] a').click()
+        el = d.find_el('#user-menu > a', throws=False)
+        if not el:
+            # nc < 26
+            d.find_el('#settings .avatardiv').click()
+            d.find_el('[data-id="logout"] a').click()
+        else:
+            # nc >= 26
+            el.click()
+            d.find_el('#logout > a').click()
 
     def open_contacts(self):
         d = self.d
