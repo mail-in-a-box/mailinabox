@@ -15,6 +15,14 @@ jobs:
         run: sudo -E tests/system-setup/remote-nextcloud-docker.sh
       - name: test-runner
         run: sudo -E tests/runner.sh -dumpoutput -no-smtp-remote remote-nextcloud ehdd default remote-nextcloud
+      - uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: tests-output
+          path: tests/out/**/screenshot.png
+          if-no-files-found: ignore
+          retention-days: 5
+    
   # install upstream miab, then migrate to miabldap
   upgrade-from-upstream:
     runs-on: ubuntu-22.04
