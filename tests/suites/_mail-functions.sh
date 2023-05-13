@@ -288,7 +288,7 @@ detect_zpush_log_error() {
 		let ignored=0
 		while read line; do
 			awk '
-/\[FATAL\]/ && /Unable to read filename .\/var\/lib\/z-push\/users. after 3 retries/ { exit 2 }
+/\[FATAL\]/ && /Unable to read filename .\/var\/lib\/z-push\/users. after 3 attempts/ { exit 2 }
 /\[FATAL\]/ { exit 1 }
 /\[WARN\]/ { exit 2 }
 ' \
