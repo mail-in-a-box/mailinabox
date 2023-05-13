@@ -231,7 +231,7 @@ sed -i.miabold 's/^[^#]\+.\+PRAGMA journal_mode = WAL.\+$/#&/' \
 # Because Roundcube wants to set the PRAGMA we just deleted from the source, we apply it here
 # to the roundcube database (see https://github.com/roundcube/roundcubemail/issues/8035)
 # Database should exist, created by migration script
-sqlite3 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite 'PRAGMA journal_mode=WAL;'
+sqlite3 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite 'PRAGMA journal_mode=WAL;' > /dev/null
 
 # Enable PHP modules.
 phpenmod -v php imap
