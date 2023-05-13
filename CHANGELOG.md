@@ -1,6 +1,24 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+Package updates:
+
+* Nextcloud updated to 23.0.12 (and its apps also updated).
+* Roundcube updated to 1.6.1.
+
+Control panel:
+
+* Allow setting the backup location's S3 region name for non-AWS S3-compatible backup hosts.
+* Control panel pages can be opened in a new tab/window and bookmarked and browser history navigation now works.
+* Add a Copy button to put the rsync backup public key on clipboard.
+* Allow secondary DNS xfr: items added in the control panel to be hostnames too.
+* Fixed issue where sshkeygen fails when IPv6 is disabled.
+* Fixed issue opening munin reports.
+* Fixed report formatting in status emails sent to the administrator.
+
 Version 61.1 (January 28, 2023)
 -------------------------------
 

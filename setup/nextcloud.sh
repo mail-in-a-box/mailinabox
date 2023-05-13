@@ -38,8 +38,8 @@ echo "Installing Nextcloud (contacts/calendar)..."
 #   we automatically install intermediate versions as needed.
 # * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
 #   copying it from the error message when it doesn't match what is below.
-nextcloud_ver=23.0.10
-nextcloud_hash=8831c7862e39460fbb789bacac8729fab0ba02dd
+nextcloud_ver=23.0.12
+nextcloud_hash=d138641b8e7aabebe69bb3ec7c79a714d122f729
 
 # Nextcloud apps
 # --------------
@@ -50,12 +50,12 @@ nextcloud_hash=8831c7862e39460fbb789bacac8729fab0ba02dd
 #   https://github.com/nextcloud/user_external/blob/master/appinfo/info.xml
 # * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
 #   copying it from the error message when it doesn't match what is below.
-contacts_ver=4.2.2
-contacts_hash=ca13d608ed8955aa374cb4f31b6026b57ef88887
-calendar_ver=3.5.1
-calendar_hash=c8136a3deb872a3ef73ce1155b58f3ab27ec7110
-user_external_ver=3.0.0
-user_external_hash=0df781b261f55bbde73d8c92da3f99397000972f
+contacts_ver=4.2.5
+contacts_hash=8f898f003eb6b1a85c0c43b52f829d3aa759ed88
+calendar_ver=3.5.5
+calendar_hash=8505abcf7b3ab2f32d7ca1593b545e577cbeedb4
+user_external_ver=3.1.0
+user_external_hash=22cabc88b6fc9c26dad3b46be1a652979c9fcf15
 
 # Clear prior packages and install dependencies from apt.
 
