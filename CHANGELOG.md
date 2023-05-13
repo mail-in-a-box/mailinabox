@@ -1,6 +1,21 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+Package updates:
+
+* Nextcloud updated to v23.0.12 (and its apps also updated).
+
+Control panel:
+
+* Control panel pages can be opened in a new tab/window and bookmarked and browser history navigation now works.
+* Add a Copy button to put the rsync backup public key on clipboard.
+* Fixed issue where sshkeygen fails when IPv6 is disabled.
+* Fixed issue opening munin reports.
+* Fixed report formatting in status emails sent to the administrator.
+
 Version 61.1 (January 28, 2023)
 -------------------------------
 
