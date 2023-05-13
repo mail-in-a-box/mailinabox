@@ -54,23 +54,6 @@ if [ $needs_update == 1 ]; then
 	echo $VERSION > /usr/local/lib/z-push/version
 fi
 
-# HACK z-push for php 8.0
-# see: https://github.com/mail-in-a-box/mailinabox/issues/2177#issuecomment-1294430425
-if [ "$PHP_VER" = "8.0" ]; then
-    # change a z-push source code logging line so it doesn't print the mutexid or memid, which cause an exception ("Uncaught Error: Object of class SysvSemaphore could not be converted to string in /usr/local/lib/z-push/backend/ipcsharedmemory/ipcsharedmemoryprovider.php:45"
-    sed -i 's/\(Initialized mutexid\) %s\( and memid\) %s/\1\2/' /usr/local/lib/z-push/backend/ipcsharedmemory/ipcsharedmemoryprovider.php
-    # change the default value of maxattsize from '' to -1 in policies.ini
-    tools/editconf.py /usr/local/lib/z-push/policies.ini -ini-section default -c ';' maxattsize=-1
-    # change interval->format("%a") to interval->format("%d") in caldav.php
-    xt=$(mktemp)
-    awk 'BEGIN {prev=""} /format\("%a"\)/ && prev ~ /DateInterval/ { gsub(/%a/,"%d") } { prev=$0; print }' /usr/local/lib/z-push/backend/caldav/caldav.php >>$xt
-    if [ $(diff -y --suppress-common-lines "$xt" /usr/local/lib/z-push/backend/caldav/caldav.php | wc -l) -eq 1 ]; then
-        # verified: only 1 line was changed
-        cp "$xt" /usr/local/lib/z-push/backend/caldav/caldav.php
-    fi
-    rm "$xt"
-fi
-
 # Configure default config.
 sed -i "s^define('TIMEZONE', .*^define('TIMEZONE', '$(cat /etc/timezone)');^" /usr/local/lib/z-push/config.php
 sed -i "s/define('BACKEND_PROVIDER', .*/define('BACKEND_PROVIDER', 'BackendCombined');/" /usr/local/lib/z-push/config.php
