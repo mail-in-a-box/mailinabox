@@ -73,6 +73,9 @@
         passwordless authentication from your mail-in-a-box server and your backup server.
       </div>
     </div>
+    <div id="copy_pub_key_div" class="col-sm">
+      <button type="button" class="btn btn-small" onclick="copy_pub_key_to_clipboard()">Copy</button>
+    </div> 
   </div>
   <!-- S3 BACKUP -->
   <div class="form-group backup-target-s3">
@@ -374,4 +377,15 @@ const url_split = url => {
     }
 };
   
+// Hide Copy button if not in a modern clipboard-supporting environment.
+// Using document API because jQuery is not necessarily available in this script scope.
+if (!(navigator && navigator.clipboard && navigator.clipboard.writeText)) {
+    document.getElementById('copy_pub_key_div').hidden = true;
+}
+
+function copy_pub_key_to_clipboard() {
+    const ssh_pub_key = $("#ssh-pub-key").val();
+    navigator.clipboard.writeText(ssh_pub_key);
+}  
+
 </script>
