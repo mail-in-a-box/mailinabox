@@ -34,7 +34,8 @@ echo "Installing Roundcube (webmail)..."
 apt_install \
 	dbconfig-common \
 	php${PHP_VER}-cli php${PHP_VER}-sqlite3 php${PHP_VER}-intl php${PHP_VER}-common php${PHP_VER}-curl php${PHP_VER}-imap \
-	php${PHP_VER}-gd php${PHP_VER}-pspell php${PHP_VER}-mbstring libjs-jquery libjs-jquery-mousewheel libmagic1
+	php${PHP_VER}-gd php${PHP_VER}-pspell php${PHP_VER}-mbstring libjs-jquery libjs-jquery-mousewheel libmagic1 \
+	sqlite3
 
 apt_install php${PHP_VER}-ldap
 
@@ -48,8 +49,8 @@ apt_install php${PHP_VER}-ldap
 #   https://github.com/mstilkerich/rcmcarddav/releases
 # The easiest way to get the package hashes is to run this script and get the hash from
 # the error message.
-VERSION=1.6.0
-HASH=fd84b4fac74419bb73e7a3bcae1978d5589c52de
+VERSION=1.6.1
+HASH=0e1c771ab83ea03bde1fd0be6ab5d09e60b4f293
 PERSISTENT_LOGIN_VERSION=version-5.3.0
 HTML5_NOTIFIER_VERSION=68d9ca194212e15b3c7225eb6085dbcf02fd13d7 # version 0.6.4+
 CARDDAV_VERSION=4.4.3
