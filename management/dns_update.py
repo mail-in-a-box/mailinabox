@@ -217,6 +217,8 @@ def build_zone(domain, domain_properties, additional_records, env, is_zone=True)
 		for secondary_ns in secondary_ns_list:
 			records.append((None,  "NS", secondary_ns+'.', False))
 
+	tlsa_record = build_tlsa_record(env)
+	
 	# In PRIMARY_HOSTNAME...
 	if domain == env["PRIMARY_HOSTNAME"]:
 		# Set the A/AAAA records. Do this early for the PRIMARY_HOSTNAME so that the user cannot override them
@@ -225,10 +227,7 @@ def build_zone(domain, domain_properties, additional_records, env, is_zone=True)
 		if env.get("PUBLIC_IPV6"): records.append((None, "AAAA", env["PUBLIC_IPV6"], "Required. Sets the IPv6 address of the box."))
 
 		# Add a DANE TLSA record for SMTP.
-		records.append(("_25._tcp", "TLSA", build_tlsa_record(env), "Recommended when DNSSEC is enabled. Advertises to mail servers connecting to the box that mandatory encryption should be used."))
-
-		# Add a DANE TLSA record for HTTPS, which some browser extensions might make use of.
-		records.append(("_443._tcp", "TLSA", build_tlsa_record(env), "Optional. When DNSSEC is enabled, provides out-of-band HTTPS certificate validation for a few web clients that support it."))
+		records.append(("_25._tcp", "TLSA", tlsa_record, "Recommended when DNSSEC is enabled. Advertises to mail servers connecting to the box that mandatory encryption should be used."))
 
 		# Add a SSHFP records to help SSH key validation. One per available SSH key on this system.
 		for value in build_sshfp_records():
@@ -346,7 +345,12 @@ def build_zone(domain, domain_properties, additional_records, env, is_zone=True)
 				qname = "_" + dav + "davs._tcp"
 				if not has_rec(qname, "SRV"):
 					records.append((qname, "SRV", "0 0 443 " + env["PRIMARY_HOSTNAME"] + ".", "Recommended. Specifies the hostname of the server that handles CardDAV/CalDAV services for email addresses on this domain."))
+	
+	if domain_properties[domain]["web"]:
+		# Add a DANE TLSA record for HTTPS, which some browser extensions might make use of.
+		records.append(("_443._tcp", "TLSA", tlsa_record, "Optional. When DNSSEC is enabled, provides out-of-band HTTPS certificate validation for a few web clients that support it."))
 
+	
 	# If this is a domain name that there are email addresses configured for, i.e. "something@"
 	# this domain name, then the domain name is a MTA-STS (https://tools.ietf.org/html/rfc8461)
 	# Policy Domain.
