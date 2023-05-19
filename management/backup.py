@@ -492,10 +492,13 @@ def list_target_files(config):
 
 		# connect to the region & bucket
 		try:
-			s3 = boto3.client('s3', \
-				endpoint_url=f'https://{target.hostname}', \
-				aws_access_key_id=config['target_user'], \
-				aws_secret_access_key=config['target_pass'])
+			if config['target_user'] == "" and config['target_pass'] == "":
+				s3 = boto3.client('s3', endpoint_url=f'https://{target.hostname}')
+			else:
+				s3 = boto3.client('s3', \
+					endpoint_url=f'https://{target.hostname}', \
+					aws_access_key_id=config['target_user'], \
+					aws_secret_access_key=config['target_pass'])
 			bucket_objects = s3.list_objects_v2(Bucket=bucket, Prefix=path)['Contents']
 			backup_list = [(key['Key'][len(path):], key['Size']) for key in bucket_objects]
 		except ClientError as e:
