@@ -34,7 +34,7 @@ except:
 
 # If there's nothing coming in, just exit.
 if content == "":
-	sys.exit(0)
+    sys.exit(0)
 
 # create MIME message
 msg = MIMEMultipart('alternative')
@@ -46,7 +46,7 @@ msg['From'] = "\"%s\" <%s>" % (env['PRIMARY_HOSTNAME'], admin_addr)
 msg['To'] = admin_addr
 msg['Subject'] = "[%s] %s" % (env['PRIMARY_HOSTNAME'], subject)
 
-content_html = "<html><body><pre>{}</pre></body></html>".format(html.escape(content))
+content_html = '<html><body><pre style="overflow-x: scroll; white-space: pre;">{}</pre></body></html>'.format(html.escape(content))
 
 msg.attach(MIMEText(content, 'plain'))
 msg.attach(MIMEText(content_html, 'html'))

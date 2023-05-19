@@ -205,7 +205,9 @@ def get_duplicity_target_url(config):
 		# the target URL must be the bucket name. The hostname is passed
 		# via get_duplicity_additional_args. Move the first part of the
 		# path (the bucket name) into the hostname URL component, and leave
-		# the rest for the path.
+		# the rest for the path. (The S3 region name is also stored in the
+		# hostname part of the URL, in the username portion, which we also
+		# have to drop here).
 		target[1], target[2] = target[2].lstrip('/').split('/', 1)
 
 		target = urlunsplit(target)
@@ -234,10 +236,15 @@ def get_duplicity_additional_args(env):
 		]
 	elif get_target_type(config) == 's3':
 		# See note about hostname in get_duplicity_target_url.
+		# The region name, which is required by some non-AWS endpoints,
+		# is saved inside the username portion of the URL.
 		from urllib.parse import urlsplit, urlunsplit
 		target = urlsplit(config["target"])
-		endpoint_url = urlunsplit(("https", target.netloc, '', '', ''))
-		return ["--s3-endpoint-url",  endpoint_url]
+		endpoint_url = urlunsplit(("https", target.hostname, '', '', ''))
+		args = ["--s3-endpoint-url", endpoint_url]
+		if target.username: # region name is stuffed here
+			args += ["--s3-region-name", target.username]
+		return args
 
 	return []
 

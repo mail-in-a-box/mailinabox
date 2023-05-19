@@ -1092,32 +1092,33 @@ def get_secondary_dns(custom_dns, mode=None):
 				values.append(hostname)
 				continue
 
-			# This is a hostname. Before including in zone xfr lines,
-			# resolve to an IP address. Otherwise just return the hostname.
+			# If the entry starts with "xfr:" only include it in the zone transfer settings.
+			if hostname.startswith("xfr:"):
+				if mode != "xfr": continue
+				hostname = hostname[4:]
+
+			# If is a hostname, before including in zone xfr lines,
+			# resolve to an IP address.
 			# It may not resolve to IPv6, so don't throw an exception if it
-			# doesn't.
-			if not hostname.startswith("xfr:"):
-				if mode == "xfr":
+			# doesn't. Skip the entry if there is a DNS error.
+			if mode == "xfr":
+				try:
+					ipaddress.ip_interface(hostname) # test if it's an IP address or CIDR notation
+					values.append(hostname)
+				except ValueError:
 					try:
 						response = resolver.resolve(hostname+'.', "A", raise_on_no_answer=False)
 						values.extend(map(str, response))
 					except dns.exception.DNSException:
-						logging.debug("Secondary dns A lookup exception %s", hostname)
-						
+						pass
 					try:
 						response = resolver.resolve(hostname+'.', "AAAA", raise_on_no_answer=False)
 						values.extend(map(str, response))
 					except dns.exception.DNSException:
-						logging.debug("Secondary dns AAAA lookup exception %s", hostname)
-					continue
-				values.append(hostname)
+						pass
 
-			# This is a zone-xfer-only IP address. Do not return if
-			# we're querying for NS record hostnames. Only return if
-			# we're querying for zone xfer IP addresses - return the
-			# IP address.
-			elif mode == "xfr":
-				values.append(hostname[4:])
+			else:
+				values.append(hostname)
 
 	return values
 
