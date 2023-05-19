@@ -296,6 +296,24 @@ ufw_allow smtp
 ufw_allow smtps
 ufw_allow submission
 
+# Configure SMTP Relay
+
+if [[ -n "${SMTP_RELAY_ENDPOINT:-}" && -n "${SMTP_RELAY_PORT:-}" && \
+	  -n "${SMTP_RELAY_USER:-}" && -n "${SMTP_RELAY_PASSWORD:-}" ]]; then
+	postconf -e "relayhost = [$SMTP_RELAY_ENDPOINT]:$SMTP_RELAY_PORT" \
+		"smtp_sasl_auth_enable = yes" \
+		"smtp_sasl_security_options = noanonymous" \
+		"smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd" \
+		"smtp_use_tls = yes" \
+		"smtp_tls_security_level = encrypt" \
+		"smtp_tls_note_starttls_offer = yes"
+	echo "[$SMTP_RELAY_ENDPOINT]:$SMTP_RELAY_PORT $SMTP_RELAY_USER:$SMTP_RELAY_PASSWORD" >> /etc/postfix/sasl_passwd
+	postmap hash:/etc/postfix/sasl_passwd
+	chown root:root /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db
+	chmod 0600 /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db
+	postconf -e 'smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt'
+fi
+
 # Restart services
 
 restart_service postfix
