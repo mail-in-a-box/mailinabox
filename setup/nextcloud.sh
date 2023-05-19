@@ -313,6 +313,30 @@ echo ";";
 EOF
 chown www-data:www-data $STORAGE_ROOT/owncloud/config.php
 
+# Update config.php in case S3 object storage backend if configured
+if [[ -n "${NEXTCLOUD_S3_BUCKET:-}" &&  -n "${NEXTCLOUD_S3_REGION:-}" ]]; then
+	php$PHP_VER <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP $STORAGE_ROOT/owncloud/config.php;
+<?php
+include("$STORAGE_ROOT/owncloud/config.php");
+
+\$CONFIG['objectstore'] = array(
+	'class' => '\\OC\\Files\\ObjectStore\\S3',
+    'arguments' => array(
+        'bucket' => '$NEXTCLOUD_S3_BUCKET',
+        'autocreate' => false,
+		'use_ssl' => true,
+		'region' => '$NEXTCLOUD_S3_REGION'
+	),
+);
+
+echo "<?php\n\\\$CONFIG = ";
+var_export(\$CONFIG);
+echo ";";
+?>
+EOF
+	chown www-data.www-data $STORAGE_ROOT/owncloud/config.php
+	fi
+
 # Enable/disable apps. Note that this must be done after the Nextcloud setup.
 # The firstrunwizard gave Josh all sorts of problems, so disabling that.
 # user_external is what allows Nextcloud to use IMAP for login. The contacts
