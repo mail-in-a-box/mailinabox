@@ -86,4 +86,3 @@ This is a convenient way to run ldapsearch having all the correct command line a
 ## Migration
 
 Running any of the setup scripts to install MiaB-LDAP (`miab`, `setup/bootstrap.sh`, `setup/start.sh`, etc) will automatically migrate your current installation from sqlite to LDAP. Ensure you've backed up user-data before running.
-
