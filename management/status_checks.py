@@ -94,6 +94,12 @@ def run_services_checks(env, output, pool):
 		fatal = fatal or fatal2
 		output2.playback(output)
 
+	# Check fail2ban.
+	code, ret = shell('check_output', ["fail2ban-client", "status"], capture_stderr=True, trap=True)
+	if code != 0:
+		output.print_error("fail2ban is not running.")
+		all_running = False
+
 	if all_running:
 		output.print_ok("All system services are running.")
 
@@ -206,7 +212,8 @@ def check_ssh_password(env, output):
 	# the configuration file.
 	if not os.path.exists("/etc/ssh/sshd_config"):
 		return
-	sshd = open("/etc/ssh/sshd_config").read()
+	with open("/etc/ssh/sshd_config", "r") as f:
+		sshd = f.read()
 	if re.search("\nPasswordAuthentication\s+yes", sshd) \
 		or not re.search("\nPasswordAuthentication\s+no", sshd):
 		output.print_error("""The SSH server on this machine permits password-based login. A more secure
@@ -307,6 +314,8 @@ def run_network_checks(env, output):
 		output.print_ok("IP address is not blacklisted by zen.spamhaus.org.")
 	elif zen == "[timeout]":
 		output.print_warning("Connection to zen.spamhaus.org timed out. We could not determine whether your server's IP address is blacklisted. Please try again later.")
+	elif zen == "[Not Set]":
+		output.print_warning("Could not connect to zen.spamhaus.org. We could not determine whether your server's IP address is blacklisted. Please try again later.")
 	else:
 		output.print_error("""The IP address of this machine %s is listed in the Spamhaus Block List (code %s),
 			which may prevent recipients from receiving your email. See http://www.spamhaus.org/query/ip/%s."""
@@ -540,7 +549,7 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 		for ns in custom_secondary_ns:
 			# We must first resolve the nameserver to an IP address so we can query it.
 			ns_ips = query_dns(ns, "A")
-			if not ns_ips:
+			if not ns_ips or ns_ips in {'[Not Set]', '[timeout]'}:
 				output.print_error("Secondary nameserver %s is not valid (it doesn't resolve to an IP address)." % ns)
 				continue
 			# Choose the first IP if nameserver returns multiple
@@ -591,7 +600,8 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 			# record that we suggest using is for the KSK (and that's how the DS records were generated).
 			# We'll also give the nice name for the key algorithm.
 			dnssec_keys = load_env_vars_from_file(os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/%s.conf' % alg_name_map[ds_alg]))
-			dnsssec_pubkey = open(os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/' + dnssec_keys['KSK'] + '.key')).read().split("\t")[3].split(" ")[3]
+			with open(os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/' + dnssec_keys['KSK'] + '.key'), 'r') as f:
+				dnsssec_pubkey = f.read().split("\t")[3].split(" ")[3]
 
 			expected_ds_records[ (ds_keytag, ds_alg, ds_digalg, ds_digest) ] = {
 				"record": rr_ds,
@@ -743,6 +753,8 @@ def check_mail_domain(domain, env, output):
 		output.print_ok("Domain is not blacklisted by dbl.spamhaus.org.")
 	elif dbl == "[timeout]":
 		output.print_warning("Connection to dbl.spamhaus.org timed out. We could not determine whether the domain {} is blacklisted. Please try again later.".format(domain))
+	elif dbl == "[Not Set]":
+		output.print_warning("Could not connect to dbl.spamhaus.org. We could not determine whether the domain {} is blacklisted. Please try again later.".format(domain))
 	else:
 		output.print_error("""This domain is listed in the Spamhaus Domain Block List (code %s),
 			which may prevent recipients from receiving your mail.
@@ -787,12 +799,17 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None, as_list=False):
 	# running unbound server), or if the 'at' argument is specified, use that host
 	# as the nameserver.
 	resolver = dns.resolver.get_default_resolver()
-	if at:
+	
+	# Make sure at is not a string that cannot be used as a nameserver
+	if at and at not in {'[Not set]', '[timeout]'}:
 		resolver = dns.resolver.Resolver()
 		resolver.nameservers = [at]
 
 	# Set a timeout so that a non-responsive server doesn't hold us back.
 	resolver.timeout = 5
+	# The number of seconds to spend trying to get an answer to the question. If the
+	# lifetime expires a dns.exception.Timeout exception will be raised.
+	resolver.lifetime = 5
 
 	# Do the query.
 	try:
@@ -946,7 +963,8 @@ def run_and_output_changes(env, pool):
 	# Load previously saved status checks.
 	cache_fn = "/var/cache/mailinabox/status_checks.json"
 	if os.path.exists(cache_fn):
-		prev = json.load(open(cache_fn))
+		with open(cache_fn, 'r') as f:
+			prev = json.load(f)
 
 		# Group the serial output into categories by the headings.
 		def group_by_heading(lines):

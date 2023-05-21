@@ -1,6 +1,56 @@
 CHANGELOG
 =========
 
+Version 62 (May 20, 2023)
+-------------------------
+
+Package updates:
+
+* Nextcloud updated to 23.0.12 (and its apps also updated).
+* Roundcube updated to 1.6.1.
+* Z-Push to 2.7.0, which has compatibility for Ubuntu 22.04, so it works again.
+
+Mail:
+
+* Roundcube's password change page is now working again.
+
+Control panel:
+
+* Allow setting the backup location's S3 region name for non-AWS S3-compatible backup hosts.
+* Control panel pages can be opened in a new tab/window and bookmarked and browser history navigation now works.
+* Add a Copy button to put the rsync backup public key on clipboard.
+* Allow secondary DNS xfr: items added in the control panel to be hostnames too.
+* Fixed issue where sshkeygen fails when IPv6 is disabled.
+* Fixed issue opening munin reports.
+* Fixed report formatting in status emails sent to the administrator.
+
+Version 61.1 (January 28, 2023)
+-------------------------------
+
+* Fixed rsync backups not working with the default port.
+* Reverted "Improve error messages in the management tools when external command-line tools are run." because of the possibility of user secrets being included in error messages.
+* Fix for TLS certificate SHA fingerprint not being displayed during setup.
+
+Version 61 (January 21, 2023)
+-----------------------------
+
+System:
+
+* fail2ban didn't start after setup.
+
+Mail:
+
+* Disable Roundcube password plugin since it was corrupting the user database.
+
+Control panel:
+
+* Fix changing existing backup settings when the rsync type is used.
+* Allow setting a custom port for rsync backups.
+* Fixes to DNS lookups during status checks when there are timeouts, enforce timeouts better.
+* A new check is added to ensure fail2ban is running.
+* Fixed a color.
+* Improve error messages in the management tools when external command-line tools are run.
+
 Version 60.1 (October 30, 2022)
 -------------------------------
 

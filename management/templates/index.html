@@ -11,9 +11,9 @@
 
         <link rel="stylesheet" href="/admin/assets/bootstrap/css/bootstrap.min.css">
         <style>
-	    body {
-		overflow-y: scroll;
-                padding-bottom: 20px;
+            body {
+              overflow-y: scroll;
+              padding-bottom: 20px;
             }
 
             p {
@@ -36,20 +36,20 @@
               margin-bottom: 13px;
               margin-top: 30px;
             }
-              .panel-heading h3 {
-                border: none;
-                padding: 0;
-                margin: 0;
-              }
+            .panel-heading h3 {
+              border: none;
+              padding: 0;
+              margin: 0;
+            }
 
             h4 {
               font-size: 110%;
               margin-bottom: 13px;
               margin-top: 18px;
             }
-              h4:first-child {
-                margin-top: 6px;
-              }
+            h4:first-child {
+              margin-top: 6px;
+            }
 
             .admin_panel {
               display: none;
@@ -59,10 +59,10 @@
               margin: 1.5em 0;
             }
 
-	    ol li {
-	       margin-bottom: 1em;
-	    }
-          
+            ol li {
+              margin-bottom: 1em;
+            }
+
             .if-logged-in { display: none; }
             .if-logged-in-admin { display: none; }
 
@@ -73,21 +73,16 @@
           filter: invert(100%) hue-rotate(180deg);
         }
 
-        /* Set explicit background color (necessary for Firefox) */
-        html {
-          background-color: #111;
-        }
-          
         /* Override Boostrap theme here to give more contrast. The black turns to white by the filter. */
         .form-control {
           color: black !important;
-        }          
+        }
 
         /* Revert the invert for the navbar */
         button, div.navbar {
           filter: invert(100%) hue-rotate(180deg);
         }
-          
+
         /* Revert the revert for the dropdowns */
         ul.dropdown-menu {
           filter: invert(100%) hue-rotate(180deg);
@@ -117,30 +112,30 @@
             <li class="dropdown if-logged-in-admin">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown">System <b class="caret"></b></a>
               <ul class="dropdown-menu">
-                <li><a href="#system_status" onclick="return show_panel(this);">Status Checks</a></li>
-                <li><a href="#tls" onclick="return show_panel(this);">TLS (SSL) Certificates</a></li>
-                <li><a href="#system_backup" onclick="return show_panel(this);">Backup Status</a></li>
+                <li><a href="#system_status">Status Checks</a></li>
+                <li><a href="#tls">TLS (SSL) Certificates</a></li>
+                <li><a href="#system_backup">Backup Status</a></li>
                 <li class="divider"></li>
                 <li class="dropdown-header">Advanced Pages</li>
-                <li><a href="#custom_dns" onclick="return show_panel(this);">Custom DNS</a></li>
-                <li><a href="#external_dns" onclick="return show_panel(this);">External DNS</a></li>
-                <li><a href="#munin" onclick="return show_panel(this);">Munin Monitoring</a></li>
+                <li><a href="#custom_dns">Custom DNS</a></li>
+                <li><a href="#external_dns">External DNS</a></li>
+                <li><a href="#munin">Munin Monitoring</a></li>
               </ul>
             </li>
-            <li><a href="#mail-guide" onclick="return show_panel(this);" class="if-logged-in-not-admin">Mail</a></li>
+            <li><a href="#mail-guide" class="if-logged-in-not-admin">Mail</a></li>
             <li class="dropdown if-logged-in-admin">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown">Mail &amp; Users <b class="caret"></b></a>
               <ul class="dropdown-menu">
-                <li><a href="#mail-guide" onclick="return show_panel(this);">Instructions</a></li>
-                <li><a href="#users" onclick="return show_panel(this);">Users</a></li>
-                <li><a href="#aliases" onclick="return show_panel(this);">Aliases</a></li>
+                <li><a href="#mail-guide">Instructions</a></li>
+                <li><a href="#users">Users</a></li>
+                <li><a href="#aliases">Aliases</a></li>
                 <li class="divider"></li>
                 <li class="dropdown-header">Your Account</li>
-                <li><a href="#mfa" onclick="return show_panel(this);">Two-Factor Authentication</a></li>
+                <li><a href="#mfa">Two-Factor Authentication</a></li>
               </ul>
             </li>
-            <li><a href="#sync_guide" onclick="return show_panel(this);" class="if-logged-in">Contacts/Calendar</a></li>
-            <li><a href="#web" onclick="return show_panel(this);" class="if-logged-in-admin">Web</a></li>
+            <li><a href="#sync_guide" class="if-logged-in">Contacts/Calendar</a></li>
+            <li><a href="#web" class="if-logged-in-admin">Web</a></li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
             <li class="if-logged-in"><a href="#" onclick="do_logout(); return false;" style="color: white">Log out</a></li>
@@ -426,22 +421,24 @@ function do_logout() {
 }
 
 function show_panel(panelid) {
-  if (panelid.getAttribute)
+  if (panelid.getAttribute) {
     // we might be passed an HTMLElement <a>.
     panelid = panelid.getAttribute('href').substring(1);
+  }
 
   $('.admin_panel').hide();
   $('#panel_' + panelid).show();
-  if (typeof localStorage != 'undefined')
-    localStorage.setItem("miab-cp-lastpanel", panelid);
   if (window["show_" + panelid])
     window["show_" + panelid]();
 
   current_panel = panelid;
   switch_back_to_panel = null;
-
-  return false; // when called from onclick, cancel navigation
 }
+
+window.onhashchange = function() {
+  var panelid = window.location.hash.substring(1);
+  show_panel(panelid);
+};
 
 $(function() {
   // Recall saved user credentials.
@@ -457,8 +454,9 @@ $(function() {
   show_hide_menus();
 
   // Recall what the user was last looking at.
-  if (api_credentials != null && typeof localStorage != 'undefined' && localStorage.getItem("miab-cp-lastpanel")) {
-    show_panel(localStorage.getItem("miab-cp-lastpanel"));
+  if (api_credentials != null && window.location.hash) {
+    var panelid = window.location.hash.substring(1);
+    show_panel(panelid);
   } else if (api_credentials != null) {
     show_panel('welcome');
   } else {

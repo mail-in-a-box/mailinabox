@@ -465,7 +465,7 @@ def build_sshfp_records():
 					pass
 				break
 
-	keys = shell("check_output", ["ssh-keyscan", "-t", "rsa,dsa,ecdsa,ed25519", "-p", str(port), "localhost"])
+	keys = shell("check_output", ["ssh-keyscan", "-4", "-t", "rsa,dsa,ecdsa,ed25519", "-p", str(port), "localhost"])
 	keys = sorted(keys.split("\n"))
 
 	for key in keys:
@@ -815,7 +815,8 @@ def write_opendkim_tables(domains, env):
 
 def get_custom_dns_config(env, only_real_records=False):
 	try:
-		custom_dns = rtyaml.load(open(os.path.join(env['STORAGE_ROOT'], 'dns/custom.yaml')))
+		with open(os.path.join(env['STORAGE_ROOT'], 'dns/custom.yaml'), 'r') as f:
+			custom_dns = rtyaml.load(f)
 		if not isinstance(custom_dns, dict): raise ValueError() # caught below
 	except:
 		return [ ]
@@ -992,6 +993,7 @@ def set_custom_dns_record(qname, rtype, value, action, env):
 def get_secondary_dns(custom_dns, mode=None):
 	resolver = dns.resolver.get_default_resolver()
 	resolver.timeout = 10
+	resolver.lifetime = 10
 
 	values = []
 	for qname, rtype, value in custom_dns:
@@ -1003,25 +1005,33 @@ def get_secondary_dns(custom_dns, mode=None):
 				values.append(hostname)
 				continue
 
-			# This is a hostname. Before including in zone xfr lines,
-			# resolve to an IP address. Otherwise just return the hostname.
-			# It may not resolve to IPv6, so don't throw an exception if it
-			# doesn't.
-			if not hostname.startswith("xfr:"):
-				if mode == "xfr":
-					response = dns.resolver.resolve(hostname+'.', "A", raise_on_no_answer=False)
-					values.extend(map(str, response))
-					response = dns.resolver.resolve(hostname+'.', "AAAA", raise_on_no_answer=False)
-					values.extend(map(str, response))
-					continue
-				values.append(hostname)
+			# If the entry starts with "xfr:" only include it in the zone transfer settings.
+			if hostname.startswith("xfr:"):
+				if mode != "xfr": continue
+				hostname = hostname[4:]
 
-			# This is a zone-xfer-only IP address. Do not return if
-			# we're querying for NS record hostnames. Only return if
-			# we're querying for zone xfer IP addresses - return the
-			# IP address.
-			elif mode == "xfr":
-				values.append(hostname[4:])
+			# If is a hostname, before including in zone xfr lines,
+			# resolve to an IP address.
+			# It may not resolve to IPv6, so don't throw an exception if it
+			# doesn't. Skip the entry if there is a DNS error.
+			if mode == "xfr":
+				try:
+					ipaddress.ip_interface(hostname) # test if it's an IP address or CIDR notation
+					values.append(hostname)
+				except ValueError:
+					try:
+						response = dns.resolver.resolve(hostname+'.', "A", raise_on_no_answer=False)
+						values.extend(map(str, response))
+					except dns.exception.DNSException:
+						pass
+					try:
+						response = dns.resolver.resolve(hostname+'.', "AAAA", raise_on_no_answer=False)
+						values.extend(map(str, response))
+					except dns.exception.DNSException:
+						pass
+
+			else:
+				values.append(hostname)
 
 	return values
 
@@ -1030,15 +1040,17 @@ def set_secondary_dns(hostnames, env):
 		# Validate that all hostnames are valid and that all zone-xfer IP addresses are valid.
 		resolver = dns.resolver.get_default_resolver()
 		resolver.timeout = 5
+		resolver.lifetime = 5
+		
 		for item in hostnames:
 			if not item.startswith("xfr:"):
 				# Resolve hostname.
 				try:
 					response = resolver.resolve(item, "A")
-				except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+				except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.Timeout):
 					try:
 						response = resolver.resolve(item, "AAAA")
-					except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+					except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.Timeout):
 						raise ValueError("Could not resolve the IP address of %s." % item)
 			else:
 				# Validate IP address.
@@ -1071,7 +1083,7 @@ def get_custom_dns_records(custom_dns, qname, rtype):
 def build_recommended_dns(env):
 	ret = []
 	for (domain, zonefile, records) in build_zones(env):
-		# remove records that we don't dislay
+		# remove records that we don't display
 		records = [r for r in records if r[3] is not False]
 
 		# put Required at the top, then Recommended, then everythiing else
