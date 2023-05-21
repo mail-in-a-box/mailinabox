@@ -6,9 +6,8 @@ Version 62 (May 20, 2023)
 
 Package updates:
 
-* Nextcloud updated to 23.0.12 (and its apps also updated).
+* Nextcloud updated to 25.0.06 (and its apps also updated).
 * Roundcube updated to 1.6.1.
-* Z-Push to 2.7.0, which has compatibility for Ubuntu 22.04, so it works again.
 
 Mail:
 
