@@ -68,6 +68,8 @@ Begin the installation.
 
 The installation will install, uninstall, and configure packages to turn the machine into a working, good mail server.
 
+If the script fails and you are running the installation on a virtual machine or container, try `sudo DISABLE_FIREWALL=1 setup/start.sh` to install Mail-in-a-Box.
+
 For help, DO NOT contact Josh directly --- I don't do tech support by email or tweet (no exceptions).
 
 Post your question on the [discussion forum](https://discourse.mailinabox.email/) instead, where maintainers and Mail-in-a-Box users may be able to help you.
