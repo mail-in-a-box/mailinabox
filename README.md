@@ -64,6 +64,9 @@ Clone this repository and checkout the tag corresponding to the most recent rele
 
 Begin the installation.
 
+If you use a Docker/LXC-like machine, disable the firewall which is have some troubles on container version :
+    $ sudo setup/start.sh
+For everyone else :
 	$ sudo setup/start.sh
 
 The installation will install, uninstall, and configure packages to turn the machine into a working, good mail server.
