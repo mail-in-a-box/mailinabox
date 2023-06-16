@@ -95,16 +95,12 @@ def do_hook_web_update(hook_name, hook_data, mods_env):
     if start==-1:
         log.error("no Nextcloud configuration found in nginx conf")
         return False
-    
-    end = str.find('\n\t# ', start) # this should match comment "# ssl files sha1:...", which is dynamically added by web_update.py:make_domain_config()
+
+    end = str.find('\n\t# ssl files ', start)    
     if end==0:
         log.error("couldn't determine end of Nextcloud configuration")
         return False
-    
-    if str[end+4:end+4+9] != 'ssl files':
-        log.error("expected end replacement block comment to start with 'ssl files', but got '%s'", str[end+4:end+4+9])
-        return False
-
+        
     # ensure we're not eliminating lines that are not nextcloud
     # related in the event that the conf/nginx-* templates change
     #
@@ -135,6 +131,8 @@ def do_hook_web_update(hook_name, hook_data, mods_env):
 	
 	rewrite ^/.well-known/carddav {nc_url}/remote.php/dav/ redirect;
 	rewrite ^/.well-known/caldav {nc_url}/remote.php/dav/ redirect;
+	rewrite ^/.well-known/webfinger {nc_url}/index.php/.well-known/webfinger redirect;
+	rewrite ^/.well-known/nodeinfo {nc_url}/index.php/.well-known/nodeinfo redirect;
 """
 
     hook_data['nginx_conf'] = str[0:start] + template.format(nc_url=nc_url) + str[end:]
