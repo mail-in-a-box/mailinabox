@@ -1,2 +1,9 @@
 #!/bin/bash
 curl -s -d POSTDATA --user $(</var/lib/mailinabox/api.key): http://127.0.0.1:10222/web/update
+cd /etc/nginx/sites-available
+for f in *
+do
+ echo "Processing $f"
+ ln -s "/etc/nginx/sites-available/$f" "/etc/nginx/sites-enabled/$f"
+done
+rm -f /etc/nginx-sites-enabled/default
