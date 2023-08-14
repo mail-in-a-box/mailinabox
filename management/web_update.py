@@ -110,10 +110,16 @@ def do_web_update(env):
 			# Add default 'www.' redirect.
 			nginx_conf.append((domain, make_domain_config(domain, [template0, template3], ssl_certificates, env)))
 
+	# Load the currently enabled sites for nginx.
+	sites_enabled = shell('check_output', ["ls", "/etc/nginx/sites-enabled"])
+	warnings = []
+	
 	# Did the files change? If not, don't bother writing & restarting nginx.
 	kick = False
 	for domain, conf in nginx_conf:
-		nginx_conf_fn = "/etc/nginx/sites-available/%s" % domain
+		if "miab_%s" % domain not in sites_enabled:
+			warnings.append("Missing miab_%s in /etc/nginx/sites-enabled/\nCheck your configuration!" % domain)
+		nginx_conf_fn = "/etc/nginx/sites-available/miab_%s" % domain
 		if os.path.exists(nginx_conf_fn):
 			with open(nginx_conf_fn) as f:
 				if f.read() == conf:
@@ -131,9 +137,9 @@ def do_web_update(env):
 		# enough and doesn't break any open connections.
 		shell('check_call', ["/usr/sbin/service", "nginx", "reload"])
 
-		return "web updated\n"
+		return "web updated\n" + "\n".join(warnings)
 	
-	return ""
+	return "" + "\n".join(warnings)
 
 def make_domain_config(domain, templates, ssl_certificates, env):
 	# GET SOME VARIABLES
