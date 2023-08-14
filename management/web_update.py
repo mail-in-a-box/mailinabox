@@ -111,7 +111,7 @@ def do_web_update(env):
 			nginx_conf.append((domain, make_domain_config(domain, [template0, template3], ssl_certificates, env)))
 
 	# Load the currently enabled sites for nginx.
-	sites_enabled = shell('check_output', ["ls", "/etc/nginx/sites-enabled"])
+	_, sites_enabled = shell('check_output', ["ls", "/etc/nginx/sites-enabled"])
 	warnings = []
 	
 	# Did the files change? If not, don't bother writing & restarting nginx.
