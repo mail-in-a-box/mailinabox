@@ -82,7 +82,7 @@ def do_web_update(env):
 			return f.read()
 
 	# Build an nginx configuration file.
-	nginx_conf = read_conf("nginx-top.conf")
+	nginx_conf = [("nginx-top", read_conf("nginx-top.conf")), ]
 
 	# Load the templates.
 	template0 = read_conf("nginx.conf")
@@ -91,7 +91,7 @@ def do_web_update(env):
 	template3 = "\trewrite ^(.*) https://$REDIRECT_DOMAIN$1 permanent;\n"
 
 	# Add the PRIMARY_HOST configuration first so it becomes nginx's default server.
-	nginx_conf += make_domain_config(env['PRIMARY_HOSTNAME'], [template0, template1, template2], ssl_certificates, env)
+	nginx_conf.append((env['PRIMARY_HOSTNAME'], make_domain_config(env['PRIMARY_HOSTNAME'], [template0, template1, template2], ssl_certificates, env)))
 
 	# Add configuration all other web domains.
 	has_root_proxy_or_redirect = get_web_domains_with_root_overrides(env)
@@ -103,31 +103,37 @@ def do_web_update(env):
 		if domain in web_domains_not_redirect:
 			# This is a regular domain.
 			if domain not in has_root_proxy_or_redirect:
-				nginx_conf += make_domain_config(domain, [template0, template1], ssl_certificates, env)
+				nginx_conf.append((domain, make_domain_config(domain, [template0, template1], ssl_certificates, env)))
 			else:
-				nginx_conf += make_domain_config(domain, [template0], ssl_certificates, env)
+				nginx_conf.append((domain, make_domain_config(domain, [template0], ssl_certificates, env)))
 		else:
 			# Add default 'www.' redirect.
-			nginx_conf += make_domain_config(domain, [template0, template3], ssl_certificates, env)
+			nginx_conf.append((domain, make_domain_config(domain, [template0, template3], ssl_certificates, env)))
 
-	# Did the file change? If not, don't bother writing & restarting nginx.
-	nginx_conf_fn = "/etc/nginx/conf.d/local.conf"
-	if os.path.exists(nginx_conf_fn):
-		with open(nginx_conf_fn) as f:
-			if f.read() == nginx_conf:
-				return ""
+	# Did the files change? If not, don't bother writing & restarting nginx.
+	kick = False
+	for domain, conf in nginx_conf:
+		nginx_conf_fn = "/etc/nginx/sites-available/%s" % domain
+		if os.path.exists(nginx_conf_fn):
+			with open(nginx_conf_fn) as f:
+				if f.read() == conf:
+					continue
 
-	# Save the file.
-	with open(nginx_conf_fn, "w") as f:
-		f.write(nginx_conf)
+			# Save the file.
+			with open(nginx_conf_fn, "w") as f:
+				f.write(conf)
+			
+			kick = True
+	if kick:
+		# Kick nginx. Since this might be called from the web admin
+		# don't do a 'restart'. That would kill the connection before
+		# the API returns its response. A 'reload' should be good
+		# enough and doesn't break any open connections.
+		shell('check_call', ["/usr/sbin/service", "nginx", "reload"])
 
-	# Kick nginx. Since this might be called from the web admin
-	# don't do a 'restart'. That would kill the connection before
-	# the API returns its response. A 'reload' should be good
-	# enough and doesn't break any open connections.
-	shell('check_call', ["/usr/sbin/service", "nginx", "reload"])
-
-	return "web updated\n"
+		return "web updated\n"
+	
+	return ""
 
 def make_domain_config(domain, templates, ssl_certificates, env):
 	# GET SOME VARIABLES
