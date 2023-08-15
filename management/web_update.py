@@ -119,13 +119,15 @@ def do_web_update(env):
 	for domain, conf in nginx_conf:
 		if "miab_%s" % domain not in sites_enabled:
 			warnings.append("Missing miab_%s in /etc/nginx/sites-enabled/\nCheck your configuration!" % domain)
+
 		nginx_conf_fn = "/etc/nginx/sites-available/miab_%s" % domain
-		with open(nginx_conf_fn, "w+") as f:
-			if f.read() == conf:
-				continue
+		if os.path.exists(nginx_conf_fn):
+			with open(nginx_conf_fn) as f:
+				if f.read() == conf:
+					continue
 
 		# Save the file.
-		with open(nginx_conf_fn, "w") as f:
+		with open(nginx_conf_fn, "w+") as f:
 			f.write(conf)
 		
 		kick = True
@@ -138,7 +140,7 @@ def do_web_update(env):
 
 		return "web updated\n" + "\n".join(warnings)
 	
-	return "" + "\n".join(warnings)
+	return "No changes.\n%s" % "\n".join(warnings)
 
 def make_domain_config(domain, templates, ssl_certificates, env):
 	# GET SOME VARIABLES
