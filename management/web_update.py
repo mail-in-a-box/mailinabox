@@ -111,7 +111,7 @@ def do_web_update(env):
 			nginx_conf.append((domain, make_domain_config(domain, [template0, template3], ssl_certificates, env)))
 
 	# Load the currently enabled sites for nginx.
-	_, sites_enabled = shell('check_output', ["ls", "/etc/nginx/sites-enabled"])
+	sites_enabled = shell('check_output', ["ls", "/etc/nginx/sites-enabled"])
 	warnings = []
 	
 	# Did the files change? If not, don't bother writing & restarting nginx.
@@ -120,16 +120,15 @@ def do_web_update(env):
 		if "miab_%s" % domain not in sites_enabled:
 			warnings.append("Missing miab_%s in /etc/nginx/sites-enabled/\nCheck your configuration!" % domain)
 		nginx_conf_fn = "/etc/nginx/sites-available/miab_%s" % domain
-		if os.path.exists(nginx_conf_fn):
-			with open(nginx_conf_fn) as f:
-				if f.read() == conf:
-					continue
+		with open(nginx_conf_fn, "w+") as f:
+			if f.read() == conf:
+				continue
 
-			# Save the file.
-			with open(nginx_conf_fn, "w") as f:
-				f.write(conf)
-			
-			kick = True
+		# Save the file.
+		with open(nginx_conf_fn, "w") as f:
+			f.write(conf)
+		
+		kick = True
 	if kick:
 		# Kick nginx. Since this might be called from the web admin
 		# don't do a 'restart'. That would kill the connection before
