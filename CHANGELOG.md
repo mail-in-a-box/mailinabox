@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+Version 63 (July 27, 2023)
+--------------------------
+
+* Nextcloud updated to 25.0.7.
+
 Version 62 (May 20, 2023)
 -------------------------
 
