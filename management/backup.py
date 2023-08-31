@@ -59,8 +59,9 @@ def backup_status(env):
 		"--archive-dir", backup_cache_dir,
 		"--gpg-options", "'--cipher-algo=AES256'",
 		"--log-fd", "1",
-		get_duplicity_target_url(config),
-		] + get_duplicity_additional_args(env),
+		] + get_duplicity_additional_args(env) + [
+		get_duplicity_target_url(config)
+		],
 		get_duplicity_env_vars(env),
 		trap=True)
 	if code != 0:
@@ -227,8 +228,8 @@ def get_duplicity_additional_args(env):
 			port = 22
 						
 		return [
-			f"--ssh-options= -i /root/.ssh/id_rsa_miab -p {port}",
-			f"--rsync-options= -e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p {port} -i /root/.ssh/id_rsa_miab\"",
+			f"--ssh-options='-i /root/.ssh/id_rsa_miab -p {port}'",
+			f"--rsync-options='-e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p {port} -i /root/.ssh/id_rsa_miab\"'",
 		]
 	elif get_target_type(config) == 's3':
 		# See note about hostname in get_duplicity_target_url.
@@ -322,10 +323,11 @@ def perform_backup(full_backup):
 			"--exclude", backup_root,
 			"--volsize", "250",
 			"--gpg-options", "'--cipher-algo=AES256'",
+			"--allow-source-mismatch"
+			] + get_duplicity_additional_args(env) + [
 			env["STORAGE_ROOT"],
 			get_duplicity_target_url(config),
-			"--allow-source-mismatch"
-			] + get_duplicity_additional_args(env),
+			],
 			get_duplicity_env_vars(env))
 	finally:
 		# Start services again.
@@ -343,8 +345,9 @@ def perform_backup(full_backup):
 		"--verbosity", "error",
 		"--archive-dir", backup_cache_dir,
 		"--force",
+		] + get_duplicity_additional_args(env) + [
 		get_duplicity_target_url(config)
-		] + get_duplicity_additional_args(env),
+		],
 		get_duplicity_env_vars(env))
 
 	# From duplicity's manual:
@@ -358,8 +361,9 @@ def perform_backup(full_backup):
 		"--verbosity", "error",
 		"--archive-dir", backup_cache_dir,
 		"--force",
+		] + get_duplicity_additional_args(env) + [
 		get_duplicity_target_url(config)
-		] + get_duplicity_additional_args(env),
+		],
 		get_duplicity_env_vars(env))
 
 	# Change ownership of backups to the user-data user, so that the after-bcakup
@@ -396,9 +400,10 @@ def run_duplicity_verification():
 		"--compare-data",
 		"--archive-dir", backup_cache_dir,
 		"--exclude", backup_root,
+		] + get_duplicity_additional_args(env) + [
 		get_duplicity_target_url(config),
 		env["STORAGE_ROOT"],
-	] + get_duplicity_additional_args(env), get_duplicity_env_vars(env))
+	], get_duplicity_env_vars(env))
 
 def run_duplicity_restore(args):
 	env = load_environment()
@@ -408,9 +413,10 @@ def run_duplicity_restore(args):
 		"/usr/bin/duplicity",
 		"restore",
 		"--archive-dir", backup_cache_dir,
-		get_duplicity_target_url(config),
-		] + get_duplicity_additional_args(env) + args,
-	get_duplicity_env_vars(env))
+		] + get_duplicity_additional_args(env) + [
+		get_duplicity_target_url(config)
+		] + args,
+		get_duplicity_env_vars(env))
 
 def list_target_files(config):
 	import urllib.parse
