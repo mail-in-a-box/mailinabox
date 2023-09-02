@@ -63,7 +63,7 @@ chmod go-rwx $STORAGE_ROOT/mail/dkim
 tools/editconf.py /etc/opendmarc.conf -s \
 	"Syslog=true" \
 	"Socket=inet:8893@[127.0.0.1]" \
-	"FailureReports=true"
+	"FailureReports=false"
 
 # SPFIgnoreResults causes the filter to ignore any SPF results in the header
 # of the message. This is useful if you want the filter to perfrom SPF checks
@@ -82,11 +82,11 @@ tools/editconf.py /etc/opendmarc.conf -s \
 tools/editconf.py /etc/opendmarc.conf -s \
         "SPFSelfValidate=true"
 
-# Enables generation of failure reports for sending domains that publish a
+# Disables generation of failure reports for sending domains that publish a
 # "none" policy.
 
 tools/editconf.py /etc/opendmarc.conf -s \
-        "FailureReportsOnNone=true"
+        "FailureReportsOnNone=false"
 
 # AlwaysAddARHeader Adds an "Authentication-Results:" header field even to
 # unsigned messages from domains with no "signs all" policy. The reported DKIM
