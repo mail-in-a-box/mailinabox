@@ -418,6 +418,19 @@ def run_duplicity_restore(args):
 		] + args,
 		get_duplicity_env_vars(env))
 
+def print_duplicity_command():
+	import shlex
+	env = load_environment()
+	config = get_backup_config(env)
+	backup_cache_dir = os.path.join(env["STORAGE_ROOT"], 'backup', 'cache')
+	for k, v in get_duplicity_env_vars(env).items():
+		print(f"export {k}={shlex.quote(v)}")
+	print("duplicity", "{command}", shlex.join([
+		"--archive-dir", backup_cache_dir,
+		] + get_duplicity_additional_args(env) + [
+		get_duplicity_target_url(config)
+		]))
+
 def list_target_files(config):
 	import urllib.parse
 	try:
@@ -623,6 +636,9 @@ if __name__ == "__main__":
 		# Run duplicity restore. Rest of command line passed as arguments
 		# to duplicity. The restore path should be specified.
 		run_duplicity_restore(sys.argv[2:])
+
+	elif sys.argv[-1] == "--duplicity-command":
+		print_duplicity_command()
 
 	else:
 		# Perform a backup. Add --full to force a full backup rather than
