@@ -216,6 +216,6 @@ if [ "$PRIVATE_IPV6" != "$PUBLIC_IPV6" ]; then
 	echo "Private IPv6 Address: $PRIVATE_IPV6"
 fi
 if [ -f /usr/bin/git ] && [ -d .git ]; then
-	echo "Mail-in-a-Box Version: " $(git describe)
+	echo "Mail-in-a-Box Version: " $(git describe --always)
 fi
 echo

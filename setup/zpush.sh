@@ -50,7 +50,15 @@ if [ $needs_update == 1 ]; then
 	mv /tmp/z-push/*/src /usr/local/lib/z-push
 	rm -rf /tmp/z-push.zip /tmp/z-push
 
+	# Create admin and top scripts with PHP_VER  
 	rm -f /usr/sbin/z-push-{admin,top}
+    echo '#!/bin/bash' > /usr/sbin/z-push-admin
+    echo php$PHP_VER /usr/local/lib/z-push/z-push-admin.php '"$@"' >> /usr/sbin/z-push-admin
+    chmod 755 /usr/sbin/z-push-admin
+    echo '#!/bin/bash' > /usr/sbin/z-push-top
+    echo php$PHP_VER /usr/local/lib/z-push/z-push-top.php '"$@"' >> /usr/sbin/z-push-top
+    chmod 755 /usr/sbin/z-push-top
+	
 	echo $VERSION > /usr/local/lib/z-push/version
 fi
 

@@ -539,7 +539,7 @@ def list_target_files(config):
 		
 		# Extract information from target
 		b2_application_keyid = target.netloc[:target.netloc.index(':')]
-		b2_application_key = target.netloc[target.netloc.index(':')+1:target.netloc.index('@')]
+		b2_application_key = urllib.parse.unquote(target.netloc[target.netloc.index(':')+1:target.netloc.index('@')])
 		b2_bucket = target.netloc[target.netloc.index('@')+1:]
 
 		try:
