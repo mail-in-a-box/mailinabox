@@ -291,7 +291,7 @@ function show_custom_backup() {
           var b2_applicationkey = targetPath.split(':')[1].split('@')[0];
           var b2_bucket = targetPath.split('@')[1];
           $("#backup-target-b2-user").val(b2_application_keyid);
-          $("#backup-target-b2-pass").val(b2_applicationkey);
+          $("#backup-target-b2-pass").val(decodeURIComponent(b2_applicationkey));
           $("#backup-target-b2-bucket").val(b2_bucket);
         }
         toggle_form()
@@ -316,7 +316,7 @@ function set_custom_backup() {
                                                                 + "/" + $("#backup-target-rsync-path").val();
     target_user = '';
   } else if (target_type == "b2") {
-    target = 'b2://' + $('#backup-target-b2-user').val() + ':' + $('#backup-target-b2-pass').val()
+    target = 'b2://' + $('#backup-target-b2-user').val() + ':' + encodeURIComponent($('#backup-target-b2-pass').val())
         + '@' + $('#backup-target-b2-bucket').val()
     target_user = '';
     target_pass = '';
