@@ -30,6 +30,7 @@ default_suites=(
 	mail-aliases
 	mail-access
 	management-users
+	management
 	z-push
 	roundcube     # browser tests
 )
