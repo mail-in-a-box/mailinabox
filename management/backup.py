@@ -12,7 +12,7 @@ import dateutil.parser, dateutil.relativedelta, dateutil.tz
 import rtyaml
 from exclusiveprocess import Lock
 
-from utils import load_environment, shell, wait_for_service
+from utils import load_environment, shell, wait_for_service, get_php_version
 
 def backup_status(env):
 	# If backups are dissbled, return no status.
@@ -262,6 +262,7 @@ def get_target_type(config):
 
 def perform_backup(full_backup):
 	env = load_environment()
+	php_fpm = f"php{get_php_version()}-fpm"
 
 	# Create an global exclusive lock so that the backup script
 	# cannot be run more than one.
@@ -297,7 +298,7 @@ def perform_backup(full_backup):
 			if quit:
 				sys.exit(code)
 
-	service_command("php8.0-fpm", "stop", quit=True)
+	service_command(php_fpm, "stop", quit=True)
 	service_command("postfix", "stop", quit=True)
 	service_command("dovecot", "stop", quit=True)
 	service_command("postgrey", "stop", quit=True)
@@ -334,7 +335,7 @@ def perform_backup(full_backup):
 		service_command("postgrey", "start", quit=False)
 		service_command("dovecot", "start", quit=False)
 		service_command("postfix", "start", quit=False)
-		service_command("php8.0-fpm", "start", quit=False)
+		service_command(php_fpm, "start", quit=False)
 
 	# Remove old backups. This deletes all backup data no longer needed
 	# from more than 3 days ago.

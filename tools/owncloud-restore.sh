@@ -26,7 +26,10 @@ if [ ! -f $1/config.php ]; then
 fi
 
 echo "Restoring backup from $1"
-service php8.0-fpm stop
+
+PHP_VER=$(php_version)
+
+service php$PHP_VER-fpm stop
 
 # remove the current ownCloud/Nextcloud installation
 rm -rf /usr/local/lib/owncloud/
@@ -45,5 +48,5 @@ chown www-data:www-data $STORAGE_ROOT/owncloud/config.php
 
 sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/occ maintenance:mode --off
 
-service php8.0-fpm start
+service php$PHP_VER-fpm start
 echo "Done"

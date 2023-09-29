@@ -48,10 +48,12 @@ user_external_hash=a494073dcdecbbbc79a9c77f72524ac9994d2eec
 
 apt-get purge -qq -y owncloud* # we used to use the package manager
 
-apt_install curl php${PHP_VER} php${PHP_VER}-fpm \
-	php${PHP_VER}-cli php${PHP_VER}-sqlite3 php${PHP_VER}-gd php${PHP_VER}-imap php${PHP_VER}-curl \
-	php${PHP_VER}-dev php${PHP_VER}-gd php${PHP_VER}-xml php${PHP_VER}-mbstring php${PHP_VER}-zip php${PHP_VER}-apcu \
-	php${PHP_VER}-intl php${PHP_VER}-imagick php${PHP_VER}-gmp php${PHP_VER}-bcmath
+apt_install curl php8.1 php8.1-fpm \
+	php8.1-cli php8.1-sqlite3 php8.1-gd php8.1-imap php8.1-curl \
+	php8.1-dev php8.1-xml php8.1-mbstring php8.1-zip php8.1-apcu \
+	php8.1-intl php8.1-imagick php8.1-gmp php8.1-bcmath
+
+PHP_VER=$(php_version)
 
 # Enable APC before Nextcloud tools are run.
 tools/editconf.py /etc/php/$PHP_VER/mods-available/apcu.ini -c ';' \
@@ -195,6 +197,32 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 			return 0
 		fi
 
+		# Install php 8.0 for older versions of nextcloud that don't support 8.1
+		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^2[0123] ]]; then
+			# Version 20 is the latest version from the 18.04 version of miab. To upgrade to version 21, install php8.0. This is
+			# not supported by version 20, but that does not matter, as the InstallNextcloud function only runs the version 21 code.
+			# We need php 8.0 for nextcloud 21-23, as php 8.1 is supported starting nextcloud 24
+			
+			# Install the ppa
+			add-apt-repository --yes ppa:ondrej/php
+			
+			# Prevent installation of old packages
+			apt-mark hold php7.0-apcu php7.1-apcu php7.2-apcu php7.3-apcu php7.4-apcu
+			
+			# Install older php version
+			apt_install php8.0 php8.0-fpm php8.0-apcu php8.0-cli php8.0-sqlite3 php8.0-gd php8.0-imap \
+				php8.0-curl php8.0-dev php8.0-xml php8.0-mbstring php8.0-zip
+			
+			# set older php version as default
+			update-alternatives --set php /usr/bin/php8.0
+
+			PHP_VER=$(php_version)
+
+			# Make sure apc is enabled
+			tools/editconf.py /etc/php/$PHP_VER/mods-available/apcu.ini -c ';' \
+				apc.enabled=1	\
+				apc.enable_cli=1
+		fi
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^20 ]]; then
 			InstallNextcloud 21.0.7 f5c7079c5b56ce1e301c6a27c0d975d608bb01c9 4.0.7 45e7cf4bfe99cd8d03625cf9e5a1bb2e90549136 3.0.4 d0284b68135777ec9ca713c307216165b294d0fe
 			CURRENT_NEXTCLOUD_VER="21.0.7"
@@ -210,6 +238,22 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^23 ]]; then
 			InstallNextcloud 24.0.12 7aa5d61632c1ccf4ca3ff00fb6b295d318c05599 4.1.0 697f6b4a664e928d72414ea2731cb2c9d1dc3077 3.2.2 ce4030ab57f523f33d5396c6a81396d440756f5f 3.0.0 0df781b261f55bbde73d8c92da3f99397000972f
 			CURRENT_NEXTCLOUD_VER="24.0.12"
+		fi
+		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^2[45678] ]]; then
+			# From nextcloud 24 and higher, php8.1 is supported, so we can now remove the php8.0 ppa and packages
+			
+			# Reset the default php version used
+			update-alternatives --auto php
+			
+			PHP_VER=$(php_version)
+
+			# Remove older php version
+			apt-get purge -qq -y php8.0 php8.0-fpm php8.0-apcu php8.0-cli php8.0-sqlite3 php8.0-gd \
+				php8.0-imap php8.0-curl php8.0-dev php8.0-xml php8.0-mbstring php8.0-zip \
+				php8.0-common php8.0-opcache php8.0-readline
+			
+			# Remove the ppa
+			add-apt-repository --yes --remove ppa:ondrej/php
 		fi
 	fi
 

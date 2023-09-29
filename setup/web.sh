@@ -19,9 +19,11 @@ fi
 
 echo "Installing Nginx (web server)..."
 
-apt_install nginx php${PHP_VER}-cli php${PHP_VER}-fpm idn2
+apt_install nginx php8.1-cli php8.1-fpm idn2
 
 rm -f /etc/nginx/sites-enabled/default
+
+PHP_VER=$(php_version)
 
 # Copy in a nginx configuration file for common and best-practices
 # SSL settings from @konklone. Replace STORAGE_ROOT so it can find
