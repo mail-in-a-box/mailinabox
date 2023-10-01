@@ -4,6 +4,8 @@
 # -o pipefail: don't ignore errors in the non-last command in a pipeline
 set -euo pipefail
 
+# This global variable pinpoints the PHP version for the whole MiaB app
+# Upgrade it only with care and tests. Nextcloud versions depend on it.
 PHP_VER=8.0
 
 function hide_output {

@@ -124,7 +124,7 @@ chmod a+r /var/lib/mailinabox/mozilla-autoconfig.xml
 
 # Create a generic mta-sts.txt file which is exposed via the
 # nginx configuration at /.well-known/mta-sts.txt
-# more documentation is available on: 
+# more documentation is available on:
 # https://www.uriports.com/blog/mta-sts-explained/
 # default mode is "enforce". In /etc/mailinabox.conf change
 # "MTA_STS_MODE=testing" which means "Messages will be delivered
