@@ -102,8 +102,8 @@ ln -sf /etc/dovecot/dovecot-ldap.conf.ext /etc/dovecot/dovecot-userdb-ldap.conf.
 cat > /etc/dovecot/conf.d/99-local-auth.conf << EOF;
 service auth {
   unix_listener auth-postfix {
-    mode = 0666
-    user = postfix
+    mode = 0660
+    user = dovecot
     group = postfix
   }
 }
