@@ -29,6 +29,9 @@ source ${STORAGE_ROOT}/ldap/miab_ldap.conf # user-data specific vars
 dovecot_setting() {
     /usr/bin/doveconf $1 2>/dev/null | awk -F= '{gsub(/^ +/, "", $2); print $2}'
 }
+postfix_setting() {
+    /usr/sbin/postconf $1 2>/dev/null | awk -F= '{gsub(/^ +/, "", $2); print $2}'
+}
 
 # ### User Authentication
 
@@ -101,7 +104,7 @@ ln -sf /etc/dovecot/dovecot-ldap.conf.ext /etc/dovecot/dovecot-userdb-ldap.conf.
 # Have Dovecot provide an authorization service that Postfix can access & use.
 cat > /etc/dovecot/conf.d/99-local-auth.conf << EOF;
 service auth {
-  unix_listener auth-postfix {
+  unix_listener $(postfix_setting queue_directory)/private/auth {
     mode = 0660
     user = dovecot
     group = postfix
@@ -117,7 +120,7 @@ EOF
 # submission port.
 tools/editconf.py /etc/postfix/main.cf \
 	smtpd_sasl_type=dovecot \
-	smtpd_sasl_path=$(dovecot_setting base_dir)/auth-postfix \
+	smtpd_sasl_path=private/auth \
 	smtpd_sasl_auth_enable=no
 
 # ### Sender Validation
