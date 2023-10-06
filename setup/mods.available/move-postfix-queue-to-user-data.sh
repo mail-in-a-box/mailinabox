@@ -55,7 +55,14 @@ change_queue_directory() {
     mkdir -p "$(dirname "$where")"
     mv "$cur" "$where"
     /usr/sbin/postconf -e "queue_directory=$where"
-    systemctl start postfix
+    
+    # change rsyslog so chrooted postfix services can log at the
+    # new location
+    tools/editconf.py /etc/rsyslog.d/postfix.conf -s "\$AddUnixListenSocket=$where/dev/log"
+    systemctl restart rsyslog
+
+    # re-run setup/mail-users.sh so the new queue_directory is used
+    source setup/mail-users.sh
     echo "New postfix queue directory: $where (was: $cur)"
 }
 
