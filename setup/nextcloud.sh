@@ -21,31 +21,48 @@ echo "Installing Nextcloud (contacts/calendar)..."
 #   we automatically install intermediate versions as needed.
 # * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
 #   copying it from the error message when it doesn't match what is below.
-nextcloud_ver=25.0.7
-nextcloud_hash=a5a565c916355005c7b408dd41a1e53505e1a080
+nextcloud_ver=26.0.12
+nextcloud_hash=b55e9f51171c0a9b9ab3686cf5c8ad1a4292ca15
 
 # Nextcloud apps
 # --------------
-# * Find the most recent tag that is compatible with the Nextcloud version above by
-#   consulting the <dependencies>...<nextcloud> node at:
-#   https://github.com/nextcloud-releases/contacts/blob/main/appinfo/info.xml
-#   https://github.com/nextcloud-releases/calendar/blob/main/appinfo/info.xml
-#   https://github.com/nextcloud/user_external/blob/master/appinfo/info.xml
-# * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
-#   copying it from the error message when it doesn't match what is below.
-contacts_ver=5.3.0
-contacts_hash=4b0a6666374e3b55cfd2ae9b72e1d458b87d4c8c
+# * Find the most recent tag that is compatible with the Nextcloud version above by:
+#   https://github.com/nextcloud-releases/contacts/tags
+#   https://github.com/nextcloud-releases/calendar/tags
+#   https://github.com/nextcloud/user_external/tags
+#
+# * For these three packages, contact, calendar and user_external, the hash is the SHA1 hash of
+# the ZIP package, which you can find by just running this script and copying it from
+# the error message when it doesn't match what is below:
+
+# Always ensure the versions are supported, see https://apps.nextcloud.com/apps/contacts
+contacts_ver=5.5.3
+contacts_hash=799550f38e46764d90fa32ca1a6535dccd8316e5
 
 # Always ensure the versions are supported, see https://apps.nextcloud.com/apps/calendar
-calendar_ver=4.4.2
-calendar_hash=21a42e15806adc9b2618760ef94f1797ef399e2f
+calendar_ver=4.6.6
+calendar_hash=e34a71669a52d997e319d64a984dcd041389eb22
 
-# And https://apps.nextcloud.com/apps/user_external
+# Always ensure the versions are supported, see https://apps.nextcloud.com/apps/user_external
 user_external_ver=3.2.0
 user_external_hash=a494073dcdecbbbc79a9c77f72524ac9994d2eec
 
-# Clear prior packages and install dependencies from apt.
+# Developer advice (test plan)
+# ----------------------------
+# When upgrading above versions, how to test?
+#
+# 1. Enter your server instance (or on the Vagrant image)
+# 1. Git clone <your fork>
+# 2. Git checkout <your fork>
+# 3. Run `sudo ./setup/nextcloud.sh`
+# 4. Ensure the installation completes. If any hashes mismatch, correct them.
+# 5. Enter nextcloud web, run following tests:
+# 5.1 You still can create, edit and delete contacts
+# 5.2 You still can create, edit and delete calendar events
+# 5.3 You still can create, edit and delete users
+# 5.4 Go to Administration > Logs and ensure no new errors are shown
 
+# Clear prior packages and install dependencies from apt.
 apt-get purge -qq -y owncloud* # we used to use the package manager
 
 apt_install curl php${PHP_VER} php${PHP_VER}-fpm \
@@ -141,7 +158,7 @@ InstallNextcloud() {
 
 # Current Nextcloud Version, #1623
 # Checking /usr/local/lib/owncloud/version.php shows version of the Nextcloud application, not the DB
-# $STORAGE_ROOT/owncloud is kept together even during a backup.  It is better to rely on config.php than
+# $STORAGE_ROOT/owncloud is kept together even during a backup. It is better to rely on config.php than
 # version.php since the restore procedure can leave the system in a state where you have a newer Nextcloud
 # application version than the database.
 
@@ -195,6 +212,11 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 			return 0
 		fi
 
+		# Hint: whenever you bump, remember this:
+		# - Run a server with the previous version
+		# - On a new if-else block, copy the versions/hashes from the previous version
+		# - Run sudo ./setup/start.sh on the new machine. Upon completion, test its basic functionalities.
+
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^20 ]]; then
 			InstallNextcloud 21.0.7 f5c7079c5b56ce1e301c6a27c0d975d608bb01c9 4.0.7 45e7cf4bfe99cd8d03625cf9e5a1bb2e90549136 3.0.4 d0284b68135777ec9ca713c307216165b294d0fe
 			CURRENT_NEXTCLOUD_VER="21.0.7"
@@ -210,6 +232,10 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^23 ]]; then
 			InstallNextcloud 24.0.12 7aa5d61632c1ccf4ca3ff00fb6b295d318c05599 4.1.0 697f6b4a664e928d72414ea2731cb2c9d1dc3077 3.2.2 ce4030ab57f523f33d5396c6a81396d440756f5f 3.0.0 0df781b261f55bbde73d8c92da3f99397000972f
 			CURRENT_NEXTCLOUD_VER="24.0.12"
+		fi
+        if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^24 ]]; then
+			InstallNextcloud 25.0.7 a5a565c916355005c7b408dd41a1e53505e1a080 5.3.0 4b0a6666374e3b55cfd2ae9b72e1d458b87d4c8c 4.4.2 21a42e15806adc9b2618760ef94f1797ef399e2f 3.2.0 a494073dcdecbbbc79a9c77f72524ac9994d2eec
+			CURRENT_NEXTCLOUD_VER="25.0.7"
 		fi
 	fi
 
