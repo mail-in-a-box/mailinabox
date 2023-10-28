@@ -91,7 +91,15 @@ if [ $needs_update == 1 ]; then
 	# unzip and cleanup
 	tar -C ${RCM_PLUGIN_DIR} -zxf /tmp/carddav.tar.gz
 	rm -f /tmp/carddav.tar.gz
-
+	# nuke carddav contacts cache when upgrading from carddav v4 -> v5
+	
+	if [ -e $STORAGE_ROOT/mail/roundcube/roundcube.sqlite -a "$(sqlite3 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite 'select count(*) from carddav_migrations where filename="0017-accountentities"')" = "0" ]; then
+		# we're upgrading from carddav v4 to v5 - start with a fresh cache
+		say_verbose "Delete carddav contacts cache"
+		cp $STORAGE_ROOT/mail/roundcube/roundcube.sqlite /var/backups/roundcube.sqlite.v4
+		sqlite3 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite 'delete from carddav_addressbooks'
+	fi
+	
 	# record the version we've installed
 	echo $UPDATE_KEY > ${RCM_DIR}/version
 fi
@@ -154,8 +162,9 @@ cat > ${RCM_PLUGIN_DIR}/carddav/config.inc.php <<EOF;
 /* Do not edit. Written by Mail-in-a-Box. Regenerated on updates. */
 \$prefs['_GLOBAL']['hide_preferences'] = true;
 \$prefs['_GLOBAL']['pwstore_scheme'] = 'plain';
-\$prefs['ownCloud'] = array(
-	'name'         =>  'ownCloud',
+\$prefs['nextcloud'] = array(
+	'accountname'  =>  'nextcloud',
+	'name'         =>  'nextcloud (%N)',
 	'username'     =>  '%u', // login username
 	'password'     =>  '%p', // login password
 	'extra_addressbooks' =>  [
