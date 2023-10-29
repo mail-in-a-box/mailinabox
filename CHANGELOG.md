@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+Version 65 (October 27, 2023)
+-----------------------------
+
+* Roundcube updated to 1.6.4 fixing a security vulnerability.
+* zpush.sh updated to version 2.7.1.
+* Fixed a typo in the control panel.
+
 Version 64 (September 2, 2023)
 ------------------------------
 
