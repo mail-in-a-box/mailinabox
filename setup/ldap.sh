@@ -892,7 +892,7 @@ cat > /etc/logrotate.d/slapd <<EOF;
 /var/log/ldap/slapd.log {
 	weekly
 	missingok
-	rotate 52
+	rotate 12
 	compress
 	delaycompress
 	notifempty
