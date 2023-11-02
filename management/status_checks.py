@@ -207,22 +207,25 @@ def check_ufw(env, output):
 def is_port_allowed(ufw, port):
 	return any(re.match(str(port) +"[/ \t].*", item) for item in ufw)
 
+import subprocess
+
 def check_ssh_password(env, output):
-	# Check that SSH login with password is disabled. The openssh-server
-	# package may not be installed so check that before trying to access
-	# the configuration file.
-	if not os.path.exists("/etc/ssh/sshd_config"):
-		return
-	with open("/etc/ssh/sshd_config", "r") as f:
-		sshd = f.read()
-	if re.search("\nPasswordAuthentication\s+yes", sshd) \
-		or not re.search("\nPasswordAuthentication\s+no", sshd):
-		output.print_error("""The SSH server on this machine permits password-based login. A more secure
-			way to log in is using a public key. Add your SSH public key to $HOME/.ssh/authorized_keys, check
-			that you can log in without a password, set the option 'PasswordAuthentication no' in
-			/etc/ssh/sshd_config, and then restart the openssh via 'sudo service ssh restart'.""")
-	else:
-		output.print_ok("SSH disallows password-based login.")
+    # Check that SSH login with password is disabled using the sshd command.
+    try:
+        result = subprocess.run(['sshd', '-T'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if result.stderr:
+            output.print_error("Error checking SSH configuration: " + result.stderr)
+            return
+
+        if 'passwordauthentication yes' in result.stdout.lower():
+            output.print_error("""The SSH server on this machine permits password-based login. A more secure
+                way to log in is using a public key. Add your SSH public key to $HOME/.ssh/authorized_keys, check
+                that you can log in without a password, set the option 'PasswordAuthentication no' in
+                /etc/ssh/sshd_config, and then restart the openssh via 'sudo service ssh restart'.""")
+        else:
+            output.print_ok("SSH disallows password-based login.")
+    except FileNotFoundError:
+        output.print_error("sshd command not found. Please ensure OpenSSH server is installed and accessible.")
 
 def is_reboot_needed_due_to_package_installation():
 	return os.path.exists("/var/run/reboot-required")
