@@ -62,7 +62,11 @@ Clone this repository and checkout the tag corresponding to the most recent rele
 	$ cd mailinabox
 	$ git checkout v65
 
-Begin the installation.
+To install/update on LXC/Docker/Other:
+
+	$ curl -s https://mailinabox.email/setup.sh | sudo -E DISABLE_FIREWALL=1 bash
+
+For standard install:
 
 	$ sudo setup/start.sh
 
