@@ -9,7 +9,7 @@ import ipaddress
 import rtyaml
 import dns.resolver
 
-from utils import shell, load_env_vars_from_file, safe_domain_name, sort_domains
+from utils import shell, load_env_vars_from_file, safe_domain_name, sort_domains, get_ssh_port
 from ssl_certificates import get_ssl_certificates, check_certificate
 
 # From https://stackoverflow.com/questions/3026957/how-to-validate-a-domain-name-using-regex-php/16491074#16491074
@@ -454,16 +454,10 @@ def build_sshfp_records():
 	# if SSH has been configured to listen on a nonstandard port, we must
 	# specify that port to sshkeyscan.
 
-	port = 22
-	with open('/etc/ssh/sshd_config', 'r') as f:
-		for line in f:
-			s = line.rstrip().split()
-			if len(s) == 2 and s[0] == 'Port':
-				try:
-					port = int(s[1])
-				except ValueError:
-					pass
-				break
+	port = get_ssh_port()
+	# If nothing returned, assume default
+	if not port:
+		port = 22
 
 	keys = shell("check_output", ["ssh-keyscan", "-4", "-t", "rsa,dsa,ecdsa,ed25519", "-p", str(port), "localhost"])
 	keys = sorted(keys.split("\n"))

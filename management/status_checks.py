@@ -18,7 +18,7 @@ from web_update import get_web_domains, get_domains_with_a_records
 from ssl_certificates import get_ssl_certificates, get_domain_ssl_files, check_certificate
 from mailconfig import get_mail_domains, get_mail_aliases
 
-from utils import shell, sort_domains, load_env_vars_from_file, load_settings
+from utils import shell, sort_domains, load_env_vars_from_file, load_settings, get_ssh_port, get_ssh_config_value
 
 def get_services():
 	return [
@@ -65,24 +65,6 @@ def run_checks(rounded_values, env, output, pool, domains_to_check=None):
 
 	run_network_checks(env, output)
 	run_domain_checks(rounded_values, env, output, pool, domains_to_check=domains_to_check)
-
-def get_ssh_port():
-	# Returns ssh port
-	try:
-		output = shell('check_output', ['sshd', '-T'])
-	except FileNotFoundError:
-		# sshd is not installed. That's ok.
-		return None
-
-	returnNext = False
-	for e in output.split():
-		if returnNext:
-			return int(e)
-		if e == "port":
-			returnNext = True
-
-	# Did not find port!
-	return None
 
 def run_services_checks(env, output, pool):
 	# Check that system services are running.
@@ -208,21 +190,15 @@ def is_port_allowed(ufw, port):
 	return any(re.match(str(port) +"[/ \t].*", item) for item in ufw)
 
 def check_ssh_password(env, output):
-	# Check that SSH login with password is disabled. The openssh-server
-	# package may not be installed so check that before trying to access
-	# the configuration file.
-	if not os.path.exists("/etc/ssh/sshd_config"):
-		return
-	with open("/etc/ssh/sshd_config", "r") as f:
-		sshd = f.read()
-	if re.search("\nPasswordAuthentication\s+yes", sshd) \
-		or not re.search("\nPasswordAuthentication\s+no", sshd):
-		output.print_error("""The SSH server on this machine permits password-based login. A more secure
-			way to log in is using a public key. Add your SSH public key to $HOME/.ssh/authorized_keys, check
-			that you can log in without a password, set the option 'PasswordAuthentication no' in
-			/etc/ssh/sshd_config, and then restart the openssh via 'sudo service ssh restart'.""")
-	else:
-		output.print_ok("SSH disallows password-based login.")
+	config_value = get_ssh_config_value("passwordauthentication")
+	if config_value:
+		if config_value == "no":
+			output.print_ok("SSH disallows password-based login.")
+		else:
+			output.print_error("""The SSH server on this machine permits password-based login. A more secure
+        	                way to log in is using a public key. Add your SSH public key to $HOME/.ssh/authorized_keys, check
+                	        that you can log in without a password, set the option 'PasswordAuthentication no' in
+                	        /etc/ssh/sshd_config, and then restart the openssh via 'sudo service ssh restart'.""")
 
 def is_reboot_needed_due_to_package_installation():
 	return os.path.exists("/var/run/reboot-required")
