@@ -145,6 +145,9 @@ cat > $RCM_CONFIG <<EOF;
 \$config['session_path'] = '/mail/';
 /* prevent CSRF, requires php 7.3+ */
 \$config['session_samesite'] = 'Strict';
+/* Persist Customizations */
+\$file = __DIR__.'/config_override.inc.php';
+\if(file_exists($file)) { include $file; }
 ?>
 EOF
 
@@ -166,6 +169,9 @@ cat > ${RCM_PLUGIN_DIR}/carddav/config.inc.php <<EOF;
 	 'preemptive_auth' => '1',
 	 'hide'        =>  false,
 );
+/* Persist Customizations */
+\$file = __DIR__.'/config_override.inc.php';
+\if(file_exists($file)) { include $file; }
 ?>
 EOF
 
