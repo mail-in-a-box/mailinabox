@@ -36,6 +36,12 @@ inst_dir=/usr/local/lib/mailinabox
 mkdir -p $inst_dir
 venv=$inst_dir/env
 if [ ! -d $venv ]; then
+	# A bug specific to Ubuntu 22.04 and Python 3.10 requires
+	# forcing a virtualenv directory layout option (see #2335
+	# and https://github.com/pypa/virtualenv/pull/2415). In
+	# our issue, reportedly installing python3-distutils didn't
+	# fix the problem.)
+	export DEB_PYTHON_INSTALL_LAYOUT='deb'
 	hide_output virtualenv -ppython3 $venv
 fi
 

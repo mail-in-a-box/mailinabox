@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+* Some users reported an error installing Mail-in-a-Box related to the virtualenv command. This is hopefully fixed.
+
 Version 65 (October 27, 2023)
 -----------------------------
 
