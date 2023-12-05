@@ -12,6 +12,8 @@
 source /etc/mailinabox.conf # get global vars
 source setup/functions.sh # load our functions
 
+touch /etc/default/spamassassin
+
 # Install packages and basic configuration
 # ----------------------------------------
 

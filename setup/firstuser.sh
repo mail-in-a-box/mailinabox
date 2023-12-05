@@ -55,3 +55,6 @@ if [ -z "$(management/cli.py user)" ]; then
 	# Create an alias to which we'll direct all automatically-created administrative aliases.
 	management/cli.py alias add administrator@$PRIMARY_HOSTNAME $EMAIL_ADDR > /dev/null
 fi
+
+# Kick everything that may have been missed
+management/mailconfig.py update

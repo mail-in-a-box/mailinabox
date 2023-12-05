@@ -48,10 +48,10 @@ user_external_hash=a494073dcdecbbbc79a9c77f72524ac9994d2eec
 
 apt-get purge -qq -y owncloud* # we used to use the package manager
 
-apt_install curl php${PHP_VER} php${PHP_VER}-fpm \
-	php${PHP_VER}-cli php${PHP_VER}-sqlite3 php${PHP_VER}-gd php${PHP_VER}-imap php${PHP_VER}-curl \
-	php${PHP_VER}-dev php${PHP_VER}-gd php${PHP_VER}-xml php${PHP_VER}-mbstring php${PHP_VER}-zip php${PHP_VER}-apcu \
-	php${PHP_VER}-intl php${PHP_VER}-imagick php${PHP_VER}-gmp php${PHP_VER}-bcmath
+apt_install php php-fpm \
+	php-cli php-sqlite3 php-gd php-imap php-curl php-pear curl \
+	php-dev php-xml php-mbstring php-zip php-apcu php-json \
+	php-intl php-imagick php-gmp php-bcmath
 
 # Enable APC before Nextcloud tools are run.
 tools/editconf.py /etc/php/$PHP_VER/mods-available/apcu.ini -c ';' \
@@ -386,14 +386,14 @@ sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "UPDATE oc_users_external SET backend
 cat > /etc/cron.d/mailinabox-nextcloud << EOF;
 #!/bin/bash
 # Mail-in-a-Box
-*/5 * * * *	root	sudo -u www-data php$PHP_VER -f /usr/local/lib/owncloud/cron.php
-*/5 * * * *	root	sudo -u www-data php$PHP_VER -f /usr/local/lib/owncloud/occ dav:send-event-reminders
+*/5 * * * *	root	sudo -u www-data php$ -f /usr/local/lib/owncloud/cron.php
+*/5 * * * *	root	sudo -u www-data php -f /usr/local/lib/owncloud/occ dav:send-event-reminders
 EOF
 chmod +x /etc/cron.d/mailinabox-nextcloud
 
 # We also need to change the sending mode from background-job to occ.
 # Or else the reminders will just be sent as soon as possible when the background jobs run.
-hide_output sudo -u www-data php$PHP_VER -f /usr/local/lib/owncloud/occ config:app:set dav sendEventRemindersMode --value occ
+hide_output sudo -u www-data php-f /usr/local/lib/owncloud/occ config:app:set dav sendEventRemindersMode --value occ
 
 # Now set the config to read-only.
 # Do this only at the very bottom when no further occ commands are needed.

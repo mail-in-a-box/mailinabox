@@ -14,12 +14,15 @@ echo "Installing Mail-in-a-Box system management daemon..."
 #
 # certbot installs EFF's certbot which we use to
 # provision free TLS certificates.
-apt_install duplicity python3-pip virtualenv certbot rsync
+apt_install python3-pip python3-gpg virtualenv certbot rsync librsync2 python3-fasteners python3-future python3-lockfile \
+			gcc python3-dev librsync-dev gettext
+
+apt_get_quiet remove --autoremove --purge duplicity || /bin/true
 
 # b2sdk is used for backblaze backups.
 # boto3 is used for amazon aws backups.
 # Both are installed outside the pipenv, so they can be used by duplicity
-hide_output pip3 install --upgrade b2sdk boto3
+hide_output pip3 install --upgrade b2sdk boto3 duplicity
 
 # Create a virtualenv for the installation of Python 3 packages
 # used by the management daemon.
@@ -27,12 +30,15 @@ inst_dir=/usr/local/lib/mailinabox
 mkdir -p $inst_dir
 venv=$inst_dir/env
 if [ ! -d $venv ]; then
-	# A bug specific to Ubuntu 22.04 and Python 3.10 requires
-	# forcing a virtualenv directory layout option (see #2335
-	# and https://github.com/pypa/virtualenv/pull/2415). In
-	# our issue, reportedly installing python3-distutils didn't
-	# fix the problem.)
-	export DEB_PYTHON_INSTALL_LAYOUT='deb'
+	hide_output virtualenv -ppython3 $venv
+elif [ ! -f $venv/.oscode ]; then
+	echo "Re-creating Python environment..."
+	rm -rf $venv
+	hide_output virtualenv -ppython3 $venv
+elif [ "$(cat $venv/.oscode)" != $(get_os_code) ]; then
+	echo "Existing management environment is from an earlier version of the OS you're running."
+	echo "Re-creating Python environment..."
+	rm -rf $venv
 	hide_output virtualenv -ppython3 $venv
 fi
 

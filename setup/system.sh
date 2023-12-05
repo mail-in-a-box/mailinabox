@@ -82,28 +82,6 @@ fi
 # (See https://discourse.mailinabox.email/t/journalctl-reclaim-space-on-small-mailinabox/6728/11.)
 tools/editconf.py /etc/systemd/journald.conf MaxRetentionSec=10day
 
-# ### Add PPAs.
-
-# We install some non-standard Ubuntu packages maintained by other
-# third-party providers. First ensure add-apt-repository is installed.
-
-if [ ! -f /usr/bin/add-apt-repository ]; then
-	echo "Installing add-apt-repository..."
-	hide_output apt-get update
-	apt_install software-properties-common
-fi
-
-# Ensure the universe repository is enabled since some of our packages
-# come from there and minimal Ubuntu installs may have it turned off.
-hide_output add-apt-repository -y universe
-
-# Install the duplicity PPA.
-hide_output add-apt-repository -y ppa:duplicity-team/duplicity-release-git
-
-# Stock PHP is now 8.1, but we're transitioning through 8.0 because
-# of Nextcloud.
-hide_output add-apt-repository --y ppa:ondrej/php
-
 # ### Update Packages
 
 # Update system packages to make sure we have the latest upstream versions
@@ -141,13 +119,7 @@ apt_install python3 python3-dev python3-pip python3-setuptools \
 	pollinate openssh-client unzip \
 	unattended-upgrades cron ntp fail2ban rsyslog
 
-# ### Suppress Upgrade Prompts
-# When Ubuntu 20 comes out, we don't want users to be prompted to upgrade,
-# because we don't yet support it.
-if [ -f /etc/update-manager/release-upgrades ]; then
-	tools/editconf.py /etc/update-manager/release-upgrades Prompt=never
-	rm -f /var/lib/ubuntu-release-upgrader/release-upgrade-available
-fi
+
 
 # ### Set the system timezone
 #
@@ -329,8 +301,11 @@ fi #NODOC
 #  	If more queries than specified are sent, bind9 returns SERVFAIL. After flushing the cache during system checks,
 #	we ran into the limit thus we are increasing it from 75 (default value) to 100.
 apt_install bind9
+touch /etc/default/bind9
+touch /etc/default/named
 tools/editconf.py /etc/default/named \
 	"OPTIONS=\"-u bind -4\""
+	
 if ! grep -q "listen-on " /etc/bind/named.conf.options; then
 	# Add a listen-on directive if it doesn't exist inside the options block.
 	sed -i "s/^}/\n\tlisten-on { 127.0.0.1; };\n}/" /etc/bind/named.conf.options

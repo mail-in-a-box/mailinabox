@@ -17,6 +17,7 @@ mkdir -p /var/run/nsd
 mkdir -p /etc/nsd
 mkdir -p /etc/nsd/zones
 touch /etc/nsd/zones.conf
+touch /etc/nsd/nsd.conf
 
 cat > /etc/nsd/nsd.conf << EOF;
 # Do not edit. Overwritten by Mail-in-a-Box setup.

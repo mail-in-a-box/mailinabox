@@ -4,7 +4,7 @@
 # -o pipefail: don't ignore errors in the non-last command in a pipeline
 set -euo pipefail
 
-PHP_VER=8.0
+PHP_VER=8.2
 
 function hide_output {
 	# This function hides the output of a command unless the command fails

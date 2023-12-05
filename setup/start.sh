@@ -19,6 +19,9 @@ if ! locale -a | grep en_US.utf8 > /dev/null; then
     hide_output locale-gen en_US.UTF-8
 fi
 
+#reinstalling  language package
+dpkg-reconfigure locales
+
 export LANGUAGE=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
@@ -137,6 +140,7 @@ restart_service fail2ban
 
 # If there aren't any mail users yet, create one.
 source setup/firstuser.sh
+
 
 # Register with Let's Encrypt, including agreeing to the Terms of Service.
 # We'd let certbot ask the user interactively, but when this script is

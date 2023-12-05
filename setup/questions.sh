@@ -12,6 +12,7 @@ if [ -z "${NONINTERACTIVE:-}" ]; then
 		apt_get_quiet install dialog python3 python3-pip  || exit 1
 	fi
 
+
 	# Installing email_validator is repeated in setup/management.sh, but in setup/management.sh
 	# we install it inside a virtualenv. In this script, we don't have the virtualenv yet
 	# so we install the python package globally.

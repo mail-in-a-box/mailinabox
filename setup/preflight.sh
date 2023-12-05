@@ -9,12 +9,14 @@ fi
 
 # Check that we are running on Ubuntu 20.04 LTS (or 20.04.xx).
 if [ "$( lsb_release --id --short )" != "Ubuntu" ] || [ "$( lsb_release --release --short )" != "22.04" ]; then
-	echo "Mail-in-a-Box only supports being installed on Ubuntu 22.04, sorry. You are running:"
+	if [ "$( lsb_release --id --short )" != "Debian" ] || [ "$( lsb_release --release --short )" != "12" ]; then
+	echo "Mail-in-a-Box only supports being installed on Ubuntu 22.04 or Debian 12, sorry. You are running:"
 	echo
 	lsb_release --description --short
 	echo
 	echo "We can't write scripts that run on every possible setup, sorry."
 	exit 1
+	fi
 fi
 
 # Check that we have enough memory.
@@ -26,7 +28,7 @@ fi
 #
 # Skip the check if we appear to be running inside of Vagrant, because that's really just for testing.
 TOTAL_PHYSICAL_MEM=$(head -n 1 /proc/meminfo | awk '{print $2}')
-if [ $TOTAL_PHYSICAL_MEM -lt 490000 ]; then
+if [ $TOTAL_PHYSICAL_MEM -lt 400000 ]; then
 if [ ! -d /vagrant ]; then
 	TOTAL_PHYSICAL_MEM=$(expr \( \( $TOTAL_PHYSICAL_MEM \* 1024 \) / 1000 \) / 1000)
 	echo "Your Mail-in-a-Box needs more memory (RAM) to function properly."
