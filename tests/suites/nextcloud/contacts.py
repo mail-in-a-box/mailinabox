@@ -65,6 +65,9 @@ try:
         contacts.click_contact(contact)
         contacts.wait_contact_loaded()
         contacts.delete_current_contact()
+
+    elif op=='nop':
+        pass
         
     else:
         raise ValueError('Invalid operation: %s' % op)

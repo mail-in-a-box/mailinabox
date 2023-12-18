@@ -31,7 +31,9 @@ class NcContactsAutomation(object):
             fullname = el.find_el('.line-one,.option__lineone').content().strip()
             email = el.find_el('.line-two,.option__linetwo').content().strip()
             d.say_verbose('contact: "%s" <%s>', fullname, email)
-            if fullname.lower() == "%s %s" % (contact['givenname'].lower(), contact['surname'].lower()) and email.lower() == contact['email'].lower():
+            # NC 28: email not present in html
+            ignore_email = True if email == '' else False
+            if fullname.lower() == "%s %s" % (contact['givenname'].lower(), contact['surname'].lower()) and ( ignore_email or email.lower() == contact['email'].lower() ):
                 found = True
                 el.click()
                 break

@@ -9,6 +9,8 @@
 
 from selenium.common.exceptions import (
     NoSuchElementException,
+    ElementNotInteractableException,
+    ElementClickInterceptedException,
 )
 from .NcContactsAutomation import NcContactsAutomation
 
@@ -32,18 +34,35 @@ class NextcloudAutomation(object):
         if not submit: submit = d.find_el('#submit-wrapper') # nc<25
         submit.click()
 
-    def logout(self):
+    def click_avatar(self):
         d = self.d
-        d.say("Logout of Nextcloud")
+        d.say("click avatar")
         el = d.find_el('#user-menu > a', throws=False)
+        if not el:
+            el = d.find_el('#user-menu > button', throws=False)
+            
         if not el:
             # nc < 26
             d.find_el('#settings .avatardiv').click()
-            d.find_el('[data-id="logout"] a').click()
         else:
             # nc >= 26
             el.click()
-            d.find_el('#logout > a').click()
+        d.wait_tick(1)
+
+    def logout(self):
+        d = self.d
+        d.say("Logout of Nextcloud")
+        self.click_avatar()
+
+        el = d.find_el('[data-id="logout"] a', throws=False) # nc < 26
+        if not el:
+            # nc >= 26
+            el = d.find_el('#logout > a', throws=False)
+            
+        if el:
+            el.click()
+        else:
+            raise NoSuchElementException('could not find logout link')
 
     def open_contacts(self):
         d = self.d
@@ -81,5 +100,8 @@ class NextcloudAutomation(object):
         firstrunwiz = d.find_el('#firstrunwizard', throws=False, quiet=True)
         if firstrunwiz and firstrunwiz.is_displayed():
             d.say_verbose("closing first run wizard")
-            d.find_el('#firstrunwizard span.close-icon').click()
+            # ElementNotInteractableException
+            #   d.find_el('#firstrunwizard span.close-icon').click()
+            d.execute_script('document.querySelector("#firstrunwizard span.close-icon").click()')
+                
             d.wait_tick(1)

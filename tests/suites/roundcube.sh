@@ -71,7 +71,21 @@ test_create_contact() {
         # generate an email address - the contact's email must be
         # unique or it can't be created
         local contact_email="bob_bacon$(generate_uuid | awk -F- '{print $1 }')@example.com"
-        
+
+        # NC 28: make sure user is initialized in nextcloud by logging
+        # them in and opening the contacts app using ui
+        # automation. otherwise, any access to contacts will fail with
+        # 404 "Addressbook with name 'contacts' could not be
+        # found". logging in, by say, using a WebDAV PROPFIND does not
+        # work.
+        record "Initialize $alice in nextcloud"
+        assert_browser_test \
+            nextcloud/contacts.py \
+            "nop" \
+            "$alice" \
+            "$alice_pw" \
+            "" "" ""
+
         # create a contact using roundcube's ui
         record "[create contact in Roundcube]"
         if assert_browser_test \

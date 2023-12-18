@@ -86,7 +86,19 @@ test_nextcloud_contacts() {
 	# create local user alice
 	mgmt_assert_create_user "$alice" "$alice_pw"
 
-
+	# NC 28: make sure user is initialized in nextcloud by logging
+	# them in and opening the contacts app using ui
+	# automation. otherwise, any access to contacts will fail with 404
+	# "Addressbook with name 'contacts' could not be found". logging
+	# in, by say, using a WebDAV PROPFIND does not work.
+	record "Initialize $alice in nextcloud"
+	assert_browser_test \
+		nextcloud/contacts.py \
+		"nop" \
+		"$alice" \
+		"$alice_pw" \
+		"" "" ""
+	
     #
     # 1. create contact in Nextcloud - ensure it is available in Roundcube
     #    

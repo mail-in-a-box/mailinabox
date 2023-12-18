@@ -22,8 +22,9 @@ D=$(dirname "$BASH_SOURCE")
 . "$D/rest.sh"         || exit 4
 . "$D/system.sh"       || exit 5
 . "$D/carddav.sh"      || exit 6
+. "$D/webdav.sh"       || exit 7
 
-. "$D/populate.sh"     || exit 7
-. "$D/installed-state.sh" || exit 8
-. "$D/totp.sh"         || exit 9
+. "$D/populate.sh"     || exit 8
+. "$D/installed-state.sh" || exit 9
+. "$D/totp.sh"         || exit 10
 
