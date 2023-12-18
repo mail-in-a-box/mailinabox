@@ -40,13 +40,13 @@ tag_from_git() {
         # the argument is a negative number (or blank). return the nth
         # tag from bottom of the list given by `git tag`
         -* | "" )
-        TAG=$(git tag | tail ${1:--1} | head -1)
+        TAG=$(git tag | grep -v -- -kj | tail ${1:--1} | head -1)
         code=$?
         ;;
 
         # else, return the tag prior to the tag given
         * )
-        TAG=$(git tag | grep -B1 -F "$1" | head -1)
+        TAG=$(git tag | grep -v -- -kj | grep -B1 -F "$1" | head -1)
         code=$?
     esac
 
