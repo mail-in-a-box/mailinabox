@@ -1,3 +1,4 @@
+#!/bin/bash
 if [ -z "${NONINTERACTIVE:-}" ]; then
 	# Install 'dialog' so we can ask the user questions. The original motivation for
 	# this was being able to ask the user for input even if stdin has been redirected,

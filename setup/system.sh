@@ -1,3 +1,4 @@
+#!/bin/bash
 source /etc/mailinabox.conf
 source setup/functions.sh # load our functions
 
