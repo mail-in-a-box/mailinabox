@@ -8,7 +8,7 @@ source /etc/mailinabox.conf # load global vars
 # Some Ubuntu images start off with Apache. Remove it since we
 # will use nginx. Use autoremove to remove any Apache depenencies.
 if [ -f /usr/sbin/apache2 ]; then
-	echo Removing apache...
+	echo "Removing apache..."
 	hide_output apt-get -y purge apache2 apache2-*
 	hide_output apt-get -y --purge autoremove
 fi
@@ -124,7 +124,7 @@ chmod a+r /var/lib/mailinabox/mozilla-autoconfig.xml
 
 # Create a generic mta-sts.txt file which is exposed via the
 # nginx configuration at /.well-known/mta-sts.txt
-# more documentation is available on: 
+# more documentation is available on:
 # https://www.uriports.com/blog/mta-sts-explained/
 # default mode is "enforce". In /etc/mailinabox.conf change
 # "MTA_STS_MODE=testing" which means "Messages will be delivered

@@ -25,7 +25,7 @@ function hide_output {
 	if [ $E != 0 ]; then
 		# Something failed.
 		echo
-		echo FAILED: "$@"
+		echo "FAILED: $*"
 		echo -----------------------------------------
 		cat "$OUTPUT"
 		echo -----------------------------------------

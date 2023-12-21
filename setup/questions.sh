@@ -8,7 +8,7 @@ if [ -z "${NONINTERACTIVE:-}" ]; then
 	#
 	# Also install dependencies needed to validate the email address.
 	if [ ! -f /usr/bin/dialog ] || [ ! -f /usr/bin/python3 ] || [ ! -f /usr/bin/pip3 ]; then
-		echo Installing packages needed for setup...
+		echo "Installing packages needed for setup..."
 		apt-get -q -q update
 		apt_get_quiet install dialog python3 python3-pip  || exit 1
 	fi
