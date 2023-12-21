@@ -81,7 +81,7 @@ if [ "$TAG" != "$(git describe --always)" ]; then
 	echo "Updating Mail-in-a-Box to $TAG . . ."
 	git fetch --depth 1 --force --prune origin tag "$TAG"
 	if ! git checkout -q "$TAG"; then
-		echo "Update failed. Did you modify something in $(pwd)?"
+		echo "Update failed. Did you modify something in $PWD?"
 		exit 1
 	fi
 	echo

@@ -46,7 +46,7 @@ fi
 # in the first dialog prompt, so we should do this before that starts.
 cat > /usr/local/bin/mailinabox << EOF;
 #!/bin/bash
-cd $(pwd)
+cd $PWD
 source setup/start.sh
 EOF
 chmod +x /usr/local/bin/mailinabox
