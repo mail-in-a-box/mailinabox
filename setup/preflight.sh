@@ -29,7 +29,7 @@ fi
 TOTAL_PHYSICAL_MEM=$(head -n 1 /proc/meminfo | awk '{print $2}')
 if [ "$TOTAL_PHYSICAL_MEM" -lt 490000 ]; then
 if [ ! -d /vagrant ]; then
-	TOTAL_PHYSICAL_MEM=$(expr \( \( "$TOTAL_PHYSICAL_MEM" \* 1024 \) / 1000 \) / 1000)
+	TOTAL_PHYSICAL_MEM=$(( ( ( TOTAL_PHYSICAL_MEM * 1024 ) / 1000 ) / 1000 ))
 	echo "Your Mail-in-a-Box needs more memory (RAM) to function properly."
 	echo "Please provision a machine with at least 512 MB, 1 GB recommended."
 	echo "This machine has $TOTAL_PHYSICAL_MEM MB memory."
