@@ -22,8 +22,8 @@ source /etc/mailinabox.conf # load global vars
 echo "Installing Roundcube (webmail)..."
 apt_install \
 	dbconfig-common \
-	php${PHP_VER}-cli php${PHP_VER}-sqlite3 php${PHP_VER}-intl php${PHP_VER}-common php${PHP_VER}-curl php${PHP_VER}-imap \
-	php${PHP_VER}-gd php${PHP_VER}-pspell php${PHP_VER}-mbstring libjs-jquery libjs-jquery-mousewheel libmagic1 \
+	php"${PHP_VER}"-cli php"${PHP_VER}"-sqlite3 php"${PHP_VER}"-intl php"${PHP_VER}"-common php"${PHP_VER}"-curl php"${PHP_VER}"-imap \
+	php"${PHP_VER}"-gd php"${PHP_VER}"-pspell php"${PHP_VER}"-mbstring libjs-jquery libjs-jquery-mousewheel libmagic1 \
 	sqlite3
 
 # Install Roundcube from source if it is not already present or if it is out of date.
@@ -205,7 +205,7 @@ chown -f -R root:www-data ${RCM_PLUGIN_DIR}/carddav
 chmod -R 774 ${RCM_PLUGIN_DIR}/carddav
 
 # Run Roundcube database migration script (database is created if it does not exist)
-php$PHP_VER ${RCM_DIR}/bin/updatedb.sh --dir ${RCM_DIR}/SQL --package roundcube
+php"$PHP_VER" ${RCM_DIR}/bin/updatedb.sh --dir ${RCM_DIR}/SQL --package roundcube
 chown www-data:www-data "$STORAGE_ROOT/mail/roundcube/roundcube.sqlite"
 chmod 664 "$STORAGE_ROOT/mail/roundcube/roundcube.sqlite"
 
@@ -220,5 +220,5 @@ sed -i.miabold 's/^[^#]\+.\+PRAGMA journal_mode = WAL.\+$/#&/' \
 sqlite3 "$STORAGE_ROOT/mail/roundcube/roundcube.sqlite" 'PRAGMA journal_mode=WAL;'
 
 # Enable PHP modules.
-phpenmod -v $PHP_VER imap
-restart_service php$PHP_VER-fpm
+phpenmod -v "$PHP_VER" imap
+restart_service php"$PHP_VER"-fpm

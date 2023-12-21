@@ -63,10 +63,10 @@ if [ ! -d "$HOME/mailinabox" ]; then
 		SOURCE=https://github.com/mail-in-a-box/mailinabox
 	fi
 
-	echo Downloading Mail-in-a-Box $TAG. . .
+	echo "Downloading Mail-in-a-Box $TAG. . ."
 	git clone \
-		-b $TAG --depth 1 \
-		$SOURCE \
+		-b "$TAG" --depth 1 \
+		"$SOURCE" \
 		"$HOME/mailinabox" \
 		< /dev/null 2> /dev/null
 
@@ -78,9 +78,9 @@ cd "$HOME/mailinabox" || exit
 
 # Update it.
 if [ "$TAG" != $(git describe --always) ]; then
-	echo Updating Mail-in-a-Box to $TAG . . .
-	git fetch --depth 1 --force --prune origin tag $TAG
-	if ! git checkout -q $TAG; then
+	echo "Updating Mail-in-a-Box to $TAG . . ."
+	git fetch --depth 1 --force --prune origin tag "$TAG"
+	if ! git checkout -q "$TAG"; then
 		echo "Update failed. Did you modify something in $(pwd)?"
 		exit 1
 	fi

@@ -62,9 +62,9 @@ function get_default_hostname {
 	# Guess the machine's hostname. It should be a fully qualified
 	# domain name suitable for DNS. None of these calls may provide
 	# the right value, but it's the best guess we can make.
-	set -- $(hostname --fqdn      2>/dev/null ||
+	set -- "$(hostname --fqdn      2>/dev/null ||
                  hostname --all-fqdns 2>/dev/null ||
-                 hostname             2>/dev/null)
+                 hostname             2>/dev/null)"
 	printf '%s\n' "$1" # return this value
 }
 
