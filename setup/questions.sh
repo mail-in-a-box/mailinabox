@@ -145,7 +145,7 @@ if [ -z "${PUBLIC_IPV6:-}" ]; then
 			"${DEFAULT_PUBLIC_IPV6:-}" \
 			PUBLIC_IPV6
 
-		if [ ! "$PUBLIC_IPV6_EXITCODE" ]; then
+		if [ ! -n "$PUBLIC_IPV6_EXITCODE" ]; then
 			# user hit ESC/cancel
 			exit
 		fi
