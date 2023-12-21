@@ -1,3 +1,4 @@
+#!/bin/bash
 # If there aren't any mail users yet, create one.
 if [ -z "$(management/cli.py user)" ]; then
 	# The outut of "management/cli.py user" is a list of mail users. If there

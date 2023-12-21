@@ -1,3 +1,4 @@
+#!/bin/bash
 # Turn on "strict mode." See http://redsymbol.net/articles/unofficial-bash-strict-mode/.
 # -e: exit if any command unexpectedly fails.
 # -u: exit if we have a variable typo.
