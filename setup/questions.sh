@@ -55,7 +55,7 @@ you really want.
 		do
 			input_box "Your Email Address" \
 				"That's not a valid email address.\n\nWhat email address are you setting this box up to manage?" \
-				$EMAIL_ADDR \
+				"$EMAIL_ADDR" \
 				EMAIL_ADDR
 			if [ -z "$EMAIL_ADDR" ]; then
 				# user hit ESC/cancel
@@ -65,7 +65,7 @@ you really want.
 
 		# Take the part after the @-sign as the user's domain name, and add
 		# 'box.' to the beginning to create a default hostname for this machine.
-		DEFAULT_PRIMARY_HOSTNAME=box.$(echo $EMAIL_ADDR | sed 's/.*@//')
+		DEFAULT_PRIMARY_HOSTNAME=box.$(echo "$EMAIL_ADDR" | sed 's/.*@//')
 	fi
 
 	input_box "Hostname" \
@@ -74,7 +74,7 @@ you really want.
 address, so we're suggesting $DEFAULT_PRIMARY_HOSTNAME.
 \n\nYou can change it, but we recommend you don't.
 \n\nHostname:" \
-		$DEFAULT_PRIMARY_HOSTNAME \
+		"$DEFAULT_PRIMARY_HOSTNAME" \
 		PRIMARY_HOSTNAME
 
 	if [ -z "$PRIMARY_HOSTNAME" ]; then
@@ -109,7 +109,7 @@ if [ -z "${PUBLIC_IP:-}" ]; then
 		input_box "Public IP Address" \
 			"Enter the public IP address of this machine, as given to you by your ISP.
 			\n\nPublic IP address:" \
-			${DEFAULT_PUBLIC_IP:-} \
+			"${DEFAULT_PUBLIC_IP:-}" \
 			PUBLIC_IP
 
 		if [ -z "$PUBLIC_IP" ]; then
@@ -141,10 +141,10 @@ if [ -z "${PUBLIC_IPV6:-}" ]; then
 			"Enter the public IPv6 address of this machine, as given to you by your ISP.
 			\n\nLeave blank if the machine does not have an IPv6 address.
 			\n\nPublic IPv6 address:" \
-			${DEFAULT_PUBLIC_IPV6:-} \
+			"${DEFAULT_PUBLIC_IPV6:-}" \
 			PUBLIC_IPV6
 
-		if [ ! $PUBLIC_IPV6_EXITCODE ]; then
+		if [ ! "$PUBLIC_IPV6_EXITCODE" ]; then
 			# user hit ESC/cancel
 			exit
 		fi
@@ -207,6 +207,6 @@ if [ "$PRIVATE_IPV6" != "$PUBLIC_IPV6" ]; then
 	echo "Private IPv6 Address: $PRIVATE_IPV6"
 fi
 if [ -f /usr/bin/git ] && [ -d .git ]; then
-	echo "Mail-in-a-Box Version: " $(git describe --always)
+	echo "Mail-in-a-Box Version: $(git describe --always)"
 fi
 echo

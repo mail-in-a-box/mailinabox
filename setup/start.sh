@@ -75,17 +75,17 @@ fi
 # migration (schema) number for the files stored there, assume this is a fresh
 # installation to that directory and write the file to contain the current
 # migration number for this version of Mail-in-a-Box.
-if ! id -u $STORAGE_USER >/dev/null 2>&1; then
-	useradd -m $STORAGE_USER
+if ! id -u "$STORAGE_USER" >/dev/null 2>&1; then
+	useradd -m "$STORAGE_USER"
 fi
-if [ ! -d $STORAGE_ROOT ]; then
-	mkdir -p $STORAGE_ROOT
+if [ ! -d "$STORAGE_ROOT" ]; then
+	mkdir -p "$STORAGE_ROOT"
 fi
 f=$STORAGE_ROOT
 while [[ $f != / ]]; do chmod a+rx "$f"; f=$(dirname "$f"); done;
-if [ ! -f $STORAGE_ROOT/mailinabox.version ]; then
-	setup/migrate.py --current > $STORAGE_ROOT/mailinabox.version
-	chown $STORAGE_USER:$STORAGE_USER $STORAGE_ROOT/mailinabox.version
+if [ ! -f "$STORAGE_ROOT/mailinabox.version" ]; then
+	setup/migrate.py --current > "$STORAGE_ROOT/mailinabox.version"
+	chown "$STORAGE_USER:$STORAGE_USER" "$STORAGE_ROOT/mailinabox.version"
 fi
 
 # Save the global options in /etc/mailinabox.conf so that standalone
@@ -142,14 +142,14 @@ source setup/firstuser.sh
 # We'd let certbot ask the user interactively, but when this script is
 # run in the recommended curl-pipe-to-bash method there is no TTY and
 # certbot will fail if it tries to ask.
-if [ ! -d $STORAGE_ROOT/ssl/lets_encrypt/accounts/acme-v02.api.letsencrypt.org/ ]; then
+if [ ! -d "$STORAGE_ROOT/ssl/lets_encrypt/accounts/acme-v02.api.letsencrypt.org/" ]; then
 echo
 echo "-----------------------------------------------"
 echo "Mail-in-a-Box uses Let's Encrypt to provision free SSL/TLS certificates"
 echo "to enable HTTPS connections to your box. We're automatically"
 echo "agreeing you to their subscriber agreement. See https://letsencrypt.org."
 echo
-certbot register --register-unsafely-without-email --agree-tos --config-dir $STORAGE_ROOT/ssl/lets_encrypt
+certbot register --register-unsafely-without-email --agree-tos --config-dir "$STORAGE_ROOT/ssl/lets_encrypt"
 fi
 
 # Done.
@@ -162,19 +162,19 @@ echo Please log in to the control panel for further instructions at:
 echo
 if management/status_checks.py --check-primary-hostname; then
 	# Show the nice URL if it appears to be resolving and has a valid certificate.
-	echo https://$PRIMARY_HOSTNAME/admin
+	echo "https://$PRIMARY_HOSTNAME/admin"
 	echo
 	echo "If you have a DNS problem put the box's IP address in the URL"
 	echo "(https://$PUBLIC_IP/admin) but then check the TLS fingerprint:"
-	openssl x509 -in $STORAGE_ROOT/ssl/ssl_certificate.pem -noout -fingerprint -sha256\
+	openssl x509 -in "$STORAGE_ROOT/ssl/ssl_certificate.pem" -noout -fingerprint -sha256\
         	| sed "s/SHA256 Fingerprint=//i"
 else
-	echo https://$PUBLIC_IP/admin
+	echo "https://$PUBLIC_IP/admin"
 	echo
 	echo You will be alerted that the website has an invalid certificate. Check that
 	echo the certificate fingerprint matches:
 	echo
-	openssl x509 -in $STORAGE_ROOT/ssl/ssl_certificate.pem -noout -fingerprint -sha256\
+	openssl x509 -in "$STORAGE_ROOT/ssl/ssl_certificate.pem" -noout -fingerprint -sha256\
         	| sed "s/SHA256 Fingerprint=//i"
 	echo
 	echo Then you can confirm the security exception and continue.

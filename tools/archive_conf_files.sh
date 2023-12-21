@@ -2,8 +2,8 @@
 # of the configuration files we edit with editconf.py.
 for fn in $(grep -hr editconf.py setup | sed "s/tools\/editconf.py //" | sed "s/ .*//" | sort | uniq); do
 	echo ======================================================================
-	echo $fn
+	echo "$fn"
 	echo ======================================================================
-	cat $fn
+	cat "$fn"
 done
 
