@@ -139,10 +139,12 @@ InstallNextcloud() {
 		# ownCloud 8.1.1 broke upgrades. It may fail on the first attempt, but
 		# that can be OK.
 		sudo -u www-data php"$PHP_VER" /usr/local/lib/owncloud/occ upgrade
-		if [ \( $? -ne 0 \) -a \( $? -ne 3 \) ]; then
+		E=$?
+		if [ $E -ne 0 ] && [ $E -ne 3 ]; then
 			echo "Trying ownCloud upgrade again to work around ownCloud upgrade bug..."
 			sudo -u www-data php"$PHP_VER" /usr/local/lib/owncloud/occ upgrade
-			if [ \( $? -ne 0 \) -a \( $? -ne 3 \) ]; then exit 1; fi
+			E=$?
+			if [ $E -ne 0 ] && [ $E -ne 3 ]; then exit 1; fi
 			sudo -u www-data php"$PHP_VER" /usr/local/lib/owncloud/occ maintenance:mode --off
 			echo "...which seemed to work."
 		fi
@@ -372,7 +374,8 @@ hide_output sudo -u www-data php"$PHP_VER" /usr/local/lib/owncloud/console.php a
 # the first upgrade at the top won't work because apps may be disabled during upgrade?
 # Check for success (0=ok, 3=no upgrade needed).
 sudo -u www-data php"$PHP_VER" /usr/local/lib/owncloud/occ upgrade
-if [ \( $? -ne 0 \) -a \( $? -ne 3 \) ]; then exit 1; fi
+E=$?
+if [ $E -ne 0 ] && [ $E -ne 3 ]; then exit 1; fi
 
 # Disable default apps that we don't support
 sudo -u www-data \
