@@ -61,7 +61,7 @@ then
 
 	# Allocate and activate the swap file. Allocate in 1KB chuncks
 	# doing it in one go, could fail on low memory systems
-	dd if=/dev/zero of=/swapfile bs=1024 count=$[1024*1024] status=none
+	dd if=/dev/zero of=/swapfile bs=1024 count=$((1024*1024)) status=none
 	if [ -e /swapfile ]; then
 		chmod 600 /swapfile
 		hide_output mkswap /swapfile
