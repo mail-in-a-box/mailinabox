@@ -44,7 +44,7 @@ chmod g-w /etc /etc/default /usr
 # See https://www.digitalocean.com/community/tutorials/how-to-add-swap-on-ubuntu-14-04
 # for reference
 
-SWAP_MOUNTED=$(cat /proc/swaps | tail -n+2)
+SWAP_MOUNTED=$(tail -n+2 /proc/swaps)
 SWAP_IN_FSTAB=$(grep "swap" /etc/fstab || /bin/true)
 ROOT_IS_BTRFS=$(grep "\/ .*btrfs" /proc/mounts || /bin/true)
 TOTAL_PHYSICAL_MEM=$(head -n 1 /proc/meminfo | awk '{print $2}' || /bin/true)
@@ -361,8 +361,7 @@ systemctl restart systemd-resolved
 # Configure the Fail2Ban installation to prevent dumb bruce-force attacks against dovecot, postfix, ssh, etc.
 rm -f /etc/fail2ban/jail.local # we used to use this file but don't anymore
 rm -f /etc/fail2ban/jail.d/defaults-debian.conf # removes default config so we can manage all of fail2ban rules in one config
-cat conf/fail2ban/jails.conf \
-    | sed "s/PUBLIC_IPV6/$PUBLIC_IPV6/g" \
+sed "s/PUBLIC_IPV6/$PUBLIC_IPV6/g" conf/fail2ban/jails.conf \
 	| sed "s/PUBLIC_IP/$PUBLIC_IP/g" \
 	| sed "s#STORAGE_ROOT#$STORAGE_ROOT#" \
 	> /etc/fail2ban/jail.d/mailinabox.conf

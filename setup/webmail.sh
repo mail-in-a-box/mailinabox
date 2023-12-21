@@ -61,7 +61,7 @@ fi
 if [ $needs_update == 1 ]; then
   # if upgrading from 1.3.x, clear the temp_dir
   if [ -f /usr/local/lib/roundcubemail/version ]; then
-    if [ "$(cat /usr/local/lib/roundcubemail/version | cut -c1-3)" == '1.3' ]; then
+    if [ "$(cut -c1-3 /usr/local/lib/roundcubemail/version)" == '1.3' ]; then
       find /var/tmp/roundcubemail/ -type f ! -name 'RCMTEMP*' -delete
     fi
   fi
