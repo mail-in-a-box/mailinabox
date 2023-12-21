@@ -170,8 +170,8 @@ cat > ${RCM_PLUGIN_DIR}/carddav/config.inc.php <<EOF;
 EOF
 
 # Create writable directories.
-mkdir -p /var/log/roundcubemail /var/tmp/roundcubemail $STORAGE_ROOT/mail/roundcube
-chown -R www-data:www-data /var/log/roundcubemail /var/tmp/roundcubemail $STORAGE_ROOT/mail/roundcube
+mkdir -p /var/log/roundcubemail /var/tmp/roundcubemail "$STORAGE_ROOT/mail/roundcube"
+chown -R www-data:www-data /var/log/roundcubemail /var/tmp/roundcubemail "$STORAGE_ROOT/mail/roundcube"
 
 # Ensure the log file monitored by fail2ban exists, or else fail2ban can't start.
 sudo -u www-data touch /var/log/roundcubemail/errors.log
@@ -194,10 +194,10 @@ usermod -a -G dovecot www-data
 
 # set permissions so that PHP can use users.sqlite
 # could use dovecot instead of www-data, but not sure it matters
-chown root:www-data $STORAGE_ROOT/mail
-chmod 775 $STORAGE_ROOT/mail
-chown root:www-data $STORAGE_ROOT/mail/users.sqlite
-chmod 664 $STORAGE_ROOT/mail/users.sqlite
+chown root:www-data "$STORAGE_ROOT/mail"
+chmod 775 "$STORAGE_ROOT/mail"
+chown root:www-data "$STORAGE_ROOT/mail/users.sqlite"
+chmod 664 "$STORAGE_ROOT/mail/users.sqlite"
 
 # Fix Carddav permissions:
 chown -f -R root:www-data ${RCM_PLUGIN_DIR}/carddav
@@ -206,8 +206,8 @@ chmod -R 774 ${RCM_PLUGIN_DIR}/carddav
 
 # Run Roundcube database migration script (database is created if it does not exist)
 php$PHP_VER ${RCM_DIR}/bin/updatedb.sh --dir ${RCM_DIR}/SQL --package roundcube
-chown www-data:www-data $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
-chmod 664 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
+chown www-data:www-data "$STORAGE_ROOT/mail/roundcube/roundcube.sqlite"
+chmod 664 "$STORAGE_ROOT/mail/roundcube/roundcube.sqlite"
 
 # Patch the Roundcube code to eliminate an issue that causes postfix to reject our sqlite
 # user database (see https://github.com/mail-in-a-box/mailinabox/issues/2185)
@@ -217,7 +217,7 @@ sed -i.miabold 's/^[^#]\+.\+PRAGMA journal_mode = WAL.\+$/#&/' \
 # Because Roundcube wants to set the PRAGMA we just deleted from the source, we apply it here
 # to the roundcube database (see https://github.com/roundcube/roundcubemail/issues/8035)
 # Database should exist, created by migration script
-sqlite3 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite 'PRAGMA journal_mode=WAL;'
+sqlite3 "$STORAGE_ROOT/mail/roundcube/roundcube.sqlite" 'PRAGMA journal_mode=WAL;'
 
 # Enable PHP modules.
 phpenmod -v $PHP_VER imap

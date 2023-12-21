@@ -15,7 +15,7 @@ apt_install opendkim opendkim-tools opendmarc
 
 # Make sure configuration directories exist.
 mkdir -p /etc/opendkim;
-mkdir -p $STORAGE_ROOT/mail/dkim
+mkdir -p "$STORAGE_ROOT/mail/dkim"
 
 # Used in InternalHosts and ExternalIgnoreList configuration directives.
 # Not quite sure why.
@@ -53,12 +53,12 @@ fi
 # such as Google. But they and others use a 2048 bit key, so we'll
 # do the same. Keys beyond 2048 bits may exceed DNS record limits.
 if [ ! -f "$STORAGE_ROOT/mail/dkim/mail.private" ]; then
-	opendkim-genkey -b 2048 -r -s mail -D $STORAGE_ROOT/mail/dkim
+	opendkim-genkey -b 2048 -r -s mail -D "$STORAGE_ROOT/mail/dkim"
 fi
 
 # Ensure files are owned by the opendkim user and are private otherwise.
-chown -R opendkim:opendkim $STORAGE_ROOT/mail/dkim
-chmod go-rwx $STORAGE_ROOT/mail/dkim
+chown -R opendkim:opendkim "$STORAGE_ROOT/mail/dkim"
+chmod go-rwx "$STORAGE_ROOT/mail/dkim"
 
 tools/editconf.py /etc/opendmarc.conf -s \
 	"Syslog=true" \

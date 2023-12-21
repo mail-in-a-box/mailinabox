@@ -62,7 +62,7 @@ tools/editconf.py /etc/php/$PHP_VER/fpm/pool.d/www.conf -c ';' \
 # Some synchronisation issues can occur when many people access the site at once.
 # The pm=ondemand setting is used for memory constrained machines < 2GB, this is copied over from PR: 1216
 TOTAL_PHYSICAL_MEM=$(head -n 1 /proc/meminfo | awk '{print $2}' || /bin/true)
-if [ $TOTAL_PHYSICAL_MEM -lt 1000000 ]
+if [ "$TOTAL_PHYSICAL_MEM" -lt 1000000 ]
 then
         tools/editconf.py /etc/php/$PHP_VER/fpm/pool.d/www.conf -c ';' \
                 pm=ondemand \
@@ -70,7 +70,7 @@ then
                 pm.start_servers=2 \
                 pm.min_spare_servers=1 \
                 pm.max_spare_servers=3
-elif [ $TOTAL_PHYSICAL_MEM -lt 2000000 ]
+elif [ "$TOTAL_PHYSICAL_MEM" -lt 2000000 ]
 then
         tools/editconf.py /etc/php/$PHP_VER/fpm/pool.d/www.conf -c ';' \
                 pm=ondemand \
@@ -78,7 +78,7 @@ then
                 pm.start_servers=4 \
                 pm.min_spare_servers=1 \
                 pm.max_spare_servers=6
-elif [ $TOTAL_PHYSICAL_MEM -lt 3000000 ]
+elif [ "$TOTAL_PHYSICAL_MEM" -lt 3000000 ]
 then
         tools/editconf.py /etc/php/$PHP_VER/fpm/pool.d/www.conf -c ';' \
                 pm=dynamic \
@@ -138,12 +138,12 @@ cat conf/mta-sts.txt \
 chmod a+r /var/lib/mailinabox/mta-sts.txt
 
 # make a default homepage
-if [ -d $STORAGE_ROOT/www/static ]; then mv $STORAGE_ROOT/www/static $STORAGE_ROOT/www/default; fi # migration #NODOC
-mkdir -p $STORAGE_ROOT/www/default
-if [ ! -f $STORAGE_ROOT/www/default/index.html ]; then
-	cp conf/www_default.html $STORAGE_ROOT/www/default/index.html
+if [ -d "$STORAGE_ROOT/www/static" ]; then mv "$STORAGE_ROOT/www/static" "$STORAGE_ROOT/www/default"; fi # migration #NODOC
+mkdir -p "$STORAGE_ROOT/www/default"
+if [ ! -f "$STORAGE_ROOT/www/default/index.html" ]; then
+	cp conf/www_default.html "$STORAGE_ROOT/www/default/index.html"
 fi
-chown -R $STORAGE_USER $STORAGE_ROOT/www
+chown -R "$STORAGE_USER" "$STORAGE_ROOT/www"
 
 # Start services.
 restart_service nginx

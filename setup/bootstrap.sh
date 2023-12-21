@@ -51,7 +51,7 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 # Clone the Mail-in-a-Box repository if it doesn't exist.
-if [ ! -d $HOME/mailinabox ]; then
+if [ ! -d "$HOME/mailinabox" ]; then
 	if [ ! -f /usr/bin/git ]; then
 		echo Installing git . . .
 		apt-get -q -q update
@@ -67,14 +67,14 @@ if [ ! -d $HOME/mailinabox ]; then
 	git clone \
 		-b $TAG --depth 1 \
 		$SOURCE \
-		$HOME/mailinabox \
+		"$HOME/mailinabox" \
 		< /dev/null 2> /dev/null
 
 	echo
 fi
 
 # Change directory to it.
-cd $HOME/mailinabox
+cd "$HOME/mailinabox"
 
 # Update it.
 if [ "$TAG" != $(git describe --always) ]; then

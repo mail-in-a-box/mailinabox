@@ -11,8 +11,8 @@ source setup/functions.sh # load our functions
 #
 # First set the hostname in the configuration file, then activate the setting
 
-echo $PRIMARY_HOSTNAME > /etc/hostname
-hostname $PRIMARY_HOSTNAME
+echo "$PRIMARY_HOSTNAME" > /etc/hostname
+hostname "$PRIMARY_HOSTNAME"
 
 # ### Fix permissions
 
@@ -53,8 +53,8 @@ if
 	[ -z "$SWAP_IN_FSTAB" ] &&
 	[ ! -e /swapfile ] &&
 	[ -z "$ROOT_IS_BTRFS" ] &&
-	[ $TOTAL_PHYSICAL_MEM -lt 1900000 ] &&
-	[ $AVAILABLE_DISK_SPACE -gt 5242880 ]
+	[ "$TOTAL_PHYSICAL_MEM" -lt 1900000 ] &&
+	[ "$AVAILABLE_DISK_SPACE" -gt 5242880 ]
 then
 	echo "Adding a swap file to the system..."
 
@@ -164,7 +164,7 @@ fi
 # not likely the user will want to change this, so we only ask on first
 # setup.
 if [ -z "${NONINTERACTIVE:-}" ]; then
-	if [ ! -f /etc/timezone ] || [ ! -z ${FIRST_TIME_SETUP:-} ]; then
+	if [ ! -f /etc/timezone ] || [ ! -z "${FIRST_TIME_SETUP:-}" ]; then
 		# If the file is missing or this is the user's first time running
 		# Mail-in-a-Box setup, run the interactive timezone configuration
 		# tool.
@@ -273,8 +273,8 @@ if [ -z "${DISABLE_FIREWALL:-}" ]; then
 	if [ ! -z "$SSH_PORT" ]; then
 	if [ "$SSH_PORT" != "22" ]; then
 
-	echo Opening alternate SSH port $SSH_PORT. #NODOC
-	ufw_limit $SSH_PORT #NODOC
+	echo Opening alternate SSH port "$SSH_PORT". #NODOC
+	ufw_limit "$SSH_PORT" #NODOC
 
 	fi
 	fi
