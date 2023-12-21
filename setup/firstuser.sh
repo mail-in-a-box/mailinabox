@@ -11,7 +11,7 @@ if [ -z "$(management/cli.py user)" ]; then
 			input_box "Mail Account" \
 				"Let's create your first mail account.
 				\n\nWhat email address do you want?" \
-				me@$(get_default_hostname) \
+				"me@$(get_default_hostname)" \
 				EMAIL_ADDR
 
 			if [ -z "$EMAIL_ADDR" ]; then
