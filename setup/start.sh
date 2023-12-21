@@ -122,7 +122,7 @@ source setup/munin.sh
 # Wait for the management daemon to start...
 until nc -z -w 4 127.0.0.1 10222
 do
-	echo Waiting for the Mail-in-a-Box management daemon to start...
+	echo "Waiting for the Mail-in-a-Box management daemon to start..."
 	sleep 2
 done
 
@@ -156,9 +156,9 @@ fi
 echo
 echo "-----------------------------------------------"
 echo
-echo Your Mail-in-a-Box is running.
+echo "Your Mail-in-a-Box is running."
 echo
-echo Please log in to the control panel for further instructions at:
+echo "Please log in to the control panel for further instructions at:"
 echo
 if management/status_checks.py --check-primary-hostname; then
 	# Show the nice URL if it appears to be resolving and has a valid certificate.
@@ -171,12 +171,12 @@ if management/status_checks.py --check-primary-hostname; then
 else
 	echo "https://$PUBLIC_IP/admin"
 	echo
-	echo You will be alerted that the website has an invalid certificate. Check that
-	echo the certificate fingerprint matches:
+	echo "You will be alerted that the website has an invalid certificate. Check that"
+	echo "the certificate fingerprint matches:"
 	echo
 	openssl x509 -in "$STORAGE_ROOT/ssl/ssl_certificate.pem" -noout -fingerprint -sha256\
         	| sed "s/SHA256 Fingerprint=//i"
 	echo
-	echo Then you can confirm the security exception and continue.
+	echo "Then you can confirm the security exception and continue."
 	echo
 fi

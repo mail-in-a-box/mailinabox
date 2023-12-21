@@ -111,7 +111,7 @@ hide_output add-apt-repository --y ppa:ondrej/php
 # of things from Ubuntu, as well as the directory of packages provide by the
 # PPAs so we can install those packages later.
 
-echo Updating system packages...
+echo "Updating system packages..."
 hide_output apt-get update
 apt_get_quiet upgrade
 
@@ -136,7 +136,7 @@ apt_get_quiet autoremove
 # * bc: allows us to do math to compute sane defaults
 # * openssh-client: provides ssh-keygen
 
-echo Installing system packages...
+echo "Installing system packages..."
 apt_install python3 python3-dev python3-pip python3-setuptools \
 	netcat-openbsd wget curl git sudo coreutils bc file \
 	pollinate openssh-client unzip \
@@ -227,7 +227,7 @@ fi
 # hardware entropy to get going, by drawing from /dev/random. haveged makes this
 # less likely to stall for very long.
 
-echo Initializing system random number generator...
+echo "Initializing system random number generator..."
 dd if=/dev/random of=/dev/urandom bs=1 count=32 2> /dev/null
 
 # This is supposedly sufficient. But because we're not sure if hardware entropy
@@ -274,7 +274,7 @@ if [ -z "${DISABLE_FIREWALL:-}" ]; then
 	if [ -n "$SSH_PORT" ]; then
 	if [ "$SSH_PORT" != "22" ]; then
 
-	echo Opening alternate SSH port "$SSH_PORT". #NODOC
+	echo "Opening alternate SSH port $SSH_PORT." #NODOC
 	ufw_limit "$SSH_PORT" #NODOC
 
 	fi
