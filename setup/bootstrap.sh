@@ -74,7 +74,7 @@ if [ ! -d "$HOME/mailinabox" ]; then
 fi
 
 # Change directory to it.
-cd "$HOME/mailinabox"
+cd "$HOME/mailinabox" || exit
 
 # Update it.
 if [ "$TAG" != $(git describe --always) ]; then
