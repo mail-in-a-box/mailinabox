@@ -93,7 +93,7 @@ if [ -z "${PUBLIC_IP:-}" ]; then
 
 	# On the first run, if we got an answer from the Internet then don't
 	# ask the user.
-	if [[ -z "${DEFAULT_PUBLIC_IP:-}" && ! -z "$GUESSED_IP" ]]; then
+	if [[ -z "${DEFAULT_PUBLIC_IP:-}" && -n "$GUESSED_IP" ]]; then
 		PUBLIC_IP=$GUESSED_IP
 
 	# Otherwise on the first run at least provide a default.
@@ -126,7 +126,7 @@ if [ -z "${PUBLIC_IPV6:-}" ]; then
 	# Ask the Internet.
 	GUESSED_IP=$(get_publicip_from_web_service 6)
 	MATCHED=0
-	if [[ -z "${DEFAULT_PUBLIC_IPV6:-}" && ! -z "$GUESSED_IP" ]]; then
+	if [[ -z "${DEFAULT_PUBLIC_IPV6:-}" && -n "$GUESSED_IP" ]]; then
 		PUBLIC_IPV6=$GUESSED_IP
 	elif [[ "${DEFAULT_PUBLIC_IPV6:-}" == "$GUESSED_IP" ]]; then
 		# No IPv6 entered and machine seems to have none, or what
@@ -198,7 +198,7 @@ fi
 echo
 echo "Primary Hostname: $PRIMARY_HOSTNAME"
 echo "Public IP Address: $PUBLIC_IP"
-if [ ! -z "$PUBLIC_IPV6" ]; then
+if [ -n "$PUBLIC_IPV6" ]; then
 	echo "Public IPv6 Address: $PUBLIC_IPV6"
 fi
 if [ "$PRIVATE_IP" != "$PUBLIC_IP" ]; then

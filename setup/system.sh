@@ -165,7 +165,7 @@ fi
 # not likely the user will want to change this, so we only ask on first
 # setup.
 if [ -z "${NONINTERACTIVE:-}" ]; then
-	if [ ! -f /etc/timezone ] || [ ! -z "${FIRST_TIME_SETUP:-}" ]; then
+	if [ ! -f /etc/timezone ] || [ -n "${FIRST_TIME_SETUP:-}" ]; then
 		# If the file is missing or this is the user's first time running
 		# Mail-in-a-Box setup, run the interactive timezone configuration
 		# tool.
@@ -271,7 +271,7 @@ if [ -z "${DISABLE_FIREWALL:-}" ]; then
 	# settings, find the port it is supposedly running on, and open that port #NODOC
 	# too. #NODOC
 	SSH_PORT=$(sshd -T 2>/dev/null | grep "^port " | sed "s/port //") #NODOC
-	if [ ! -z "$SSH_PORT" ]; then
+	if [ -n "$SSH_PORT" ]; then
 	if [ "$SSH_PORT" != "22" ]; then
 
 	echo Opening alternate SSH port "$SSH_PORT". #NODOC

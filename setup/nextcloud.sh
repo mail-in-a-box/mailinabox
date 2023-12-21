@@ -194,7 +194,7 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 	fi
 
 	# If ownCloud or Nextcloud was previously installed....
-	if [ ! -z "${CURRENT_NEXTCLOUD_VER}" ]; then
+	if [ -n "${CURRENT_NEXTCLOUD_VER}" ]; then
 		# Database migrations from ownCloud are no longer possible because ownCloud cannot be run under
 		# PHP 7.
 
