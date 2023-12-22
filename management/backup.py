@@ -581,7 +581,7 @@ def get_backup_config(env, for_save=False, for_ui=False):
 	try:
 		with open(os.path.join(backup_root, 'custom.yaml')) as f:
 			custom_config = rtyaml.load(f)
-		if not isinstance(custom_config, dict): raise ValueError() # caught below
+		if not isinstance(custom_config, dict): raise ValueError # caught below
 		config.update(custom_config)
 	except:
 		pass

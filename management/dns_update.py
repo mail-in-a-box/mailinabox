@@ -817,7 +817,7 @@ def get_custom_dns_config(env, only_real_records=False):
 	try:
 		with open(os.path.join(env['STORAGE_ROOT'], 'dns/custom.yaml')) as f:
 			custom_dns = rtyaml.load(f)
-		if not isinstance(custom_dns, dict): raise ValueError() # caught below
+		if not isinstance(custom_dns, dict): raise ValueError # caught below
 	except:
 		return [ ]
 
@@ -835,7 +835,7 @@ def get_custom_dns_config(env, only_real_records=False):
 
 		# No other type of data is allowed.
 		else:
-			raise ValueError()
+			raise ValueError
 
 		for rtype, value2 in values:
 			if isinstance(value2, str):
@@ -845,7 +845,7 @@ def get_custom_dns_config(env, only_real_records=False):
 					yield (qname, rtype, value3)
 			# No other type of data is allowed.
 			else:
-				raise ValueError()
+				raise ValueError
 
 def filter_custom_records(domain, custom_dns_iter):
 	for qname, rtype, value in custom_dns_iter:

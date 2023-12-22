@@ -33,7 +33,7 @@ def smtp_test():
 		server = smtplib.SMTP(hostname, 587)
 	except ConnectionRefusedError:
 		# looks like fail2ban worked
-		raise IsBlocked()
+		raise IsBlocked
 	server.starttls()
 	server.ehlo_or_helo_if_needed()
 
@@ -58,7 +58,7 @@ def imap_test():
 		M = imaplib.IMAP4_SSL(hostname)
 	except ConnectionRefusedError:
 		# looks like fail2ban worked
-		raise IsBlocked()
+		raise IsBlocked
 
 	try:
 		M.login("fakeuser", "fakepassword")
@@ -77,7 +77,7 @@ def pop_test():
 		M = poplib.POP3_SSL(hostname)
 	except ConnectionRefusedError:
 		# looks like fail2ban worked
-		raise IsBlocked()
+		raise IsBlocked
 	try:
 		M.user('fakeuser')
 		try:
@@ -102,7 +102,7 @@ def managesieve_test():
 		M = imaplib.IMAP4(hostname, 4190)
 	except ConnectionRefusedError:
 		# looks like fail2ban worked
-		raise IsBlocked()
+		raise IsBlocked
 
 	try:
 		M.login("fakeuser", "fakepassword")
@@ -134,10 +134,10 @@ def http_test(url, expected_status, postdata=None, qsargs=None, auth=None):
 			timeout=8,
 			verify=False) # don't bother with HTTPS validation, it may not be configured yet
 	except requests.exceptions.ConnectTimeout:
-		raise IsBlocked()
+		raise IsBlocked
 	except requests.exceptions.ConnectionError as e:
 		if "Connection refused" in str(e):
-			raise IsBlocked()
+			raise IsBlocked
 		raise # some other unexpected condition
 
 	# return response status code

@@ -38,7 +38,7 @@ def load_settings(env):
     try:
         with open(fn) as f:
             config = rtyaml.load(f)
-        if not isinstance(config, dict): raise ValueError() # caught below
+        if not isinstance(config, dict): raise ValueError # caught below
         return config
     except:
         return { }
