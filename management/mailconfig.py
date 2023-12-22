@@ -221,7 +221,7 @@ def get_mail_aliases_ex(env):
 		domain = get_domain(address)
 
 		# add to list
-		if not domain in domains:
+		if domain not in domains:
 			domains[domain] = {
 				"domain": domain,
 				"aliases": [],
