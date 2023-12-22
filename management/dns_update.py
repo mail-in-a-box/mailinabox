@@ -231,10 +231,7 @@ def build_zone(domain, domain_properties, additional_records, env, is_zone=True)
 
 	has_rec_base = list(records) # clone current state
 	def has_rec(qname, rtype, prefix=None):
-		for rec in has_rec_base:
-			if rec[0] == qname and rec[1] == rtype and (prefix is None or rec[2].startswith(prefix)):
-				return True
-		return False
+		return any(rec[0] == qname and rec[1] == rtype and (prefix is None or rec[2].startswith(prefix)) for rec in has_rec_base)
 
 	# The user may set other records that don't conflict with our settings.
 	# Don't put any TXT records above this line, or it'll prevent any custom TXT records.
