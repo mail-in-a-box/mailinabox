@@ -222,7 +222,7 @@ def run_migrations():
 
 	if migration_id is None:
 		print()
-		print("{} file doesn't exists. Skipping migration...".format(migration_id_file))
+		print(f"{migration_id_file} file doesn't exists. Skipping migration...")
 		return
 
 	ourver = int(migration_id)

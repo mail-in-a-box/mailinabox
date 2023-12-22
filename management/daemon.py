@@ -754,7 +754,7 @@ def log_failed_login(request):
 
 	# We need to add a timestamp to the log message, otherwise /dev/log will eat the "duplicate"
 	# message.
-	app.logger.warning( "Mail-in-a-Box Management Daemon: Failed login attempt from ip {} - timestamp {}".format(ip, time.time()))
+	app.logger.warning( f"Mail-in-a-Box Management Daemon: Failed login attempt from ip {ip} - timestamp {time.time()}")
 
 
 # APP

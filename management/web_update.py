@@ -195,7 +195,7 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 				nginx_conf_extra += "\n\t\talias %s;" % alias
 				nginx_conf_extra += "\n\t}\n"
 			for path, url in yaml.get("redirects", {}).items():
-				nginx_conf_extra += "\trewrite {} {} permanent;\n".format(path, url)
+				nginx_conf_extra += f"\trewrite {path} {url} permanent;\n"
 
 			# override the HSTS directive type
 			hsts = yaml.get("hsts", hsts)

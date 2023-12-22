@@ -6,11 +6,11 @@ if len(sys.argv) < 3:
         sys.exit(1)
 
 host, toaddr, fromaddr = sys.argv[1:4]
-msg = """From: {}
-To: {}
+msg = f"""From: {fromaddr}
+To: {toaddr}
 Subject: SMTP server test
 
-This is a test message.""".format(fromaddr, toaddr)
+This is a test message."""
 
 server = smtplib.SMTP(host, 25)
 server.set_debuglevel(1)
