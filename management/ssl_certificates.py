@@ -262,7 +262,7 @@ def provision_certificates(env, limit_domains):
 	# primary domain listed in each certificate.
 	from dns_update import get_dns_zones
 	certs = { }
-	for zone, zonefile in get_dns_zones(env):
+	for zone, _zonefile in get_dns_zones(env):
 		certs[zone] = [[]]
 	for domain in sort_domains(domains, env):
 		# Does the domain end with any domain we've seen so far.

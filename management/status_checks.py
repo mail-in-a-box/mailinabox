@@ -88,7 +88,7 @@ def run_services_checks(env, output, pool):
 	all_running = True
 	fatal = False
 	ret = pool.starmap(check_service, ((i, service, env) for i, service in enumerate(get_services())), chunksize=1)
-	for i, running, fatal2, output2 in sorted(ret):
+	for _i, running, fatal2, output2 in sorted(ret):
 		if output2 is None: continue # skip check (e.g. no port was set, e.g. no sshd)
 		all_running = all_running and running
 		fatal = fatal or fatal2

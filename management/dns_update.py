@@ -513,7 +513,7 @@ $TTL 86400          ; default time to live
 	zone = zone.format(domain=domain, primary_domain=env["PRIMARY_HOSTNAME"])
 
 	# Add records.
-	for subdomain, querytype, value, explanation in records:
+	for subdomain, querytype, value, _explanation in records:
 		if subdomain:
 			zone += subdomain
 		zone += "\tIN\t" + querytype + "\t"
@@ -898,7 +898,7 @@ def write_custom_dns_config(config, env):
 
 def set_custom_dns_record(qname, rtype, value, action, env):
 	# validate qname
-	for zone, fn in get_dns_zones(env):
+	for zone, _fn in get_dns_zones(env):
 		# It must match a zone apex or be a subdomain of a zone
 		# that we are otherwise hosting.
 		if qname == zone or qname.endswith("."+zone):
@@ -992,7 +992,7 @@ def get_secondary_dns(custom_dns, mode=None):
 	resolver.lifetime = 10
 
 	values = []
-	for qname, rtype, value in custom_dns:
+	for qname, _rtype, value in custom_dns:
 		if qname != '_secondary_nameserver': continue
 		for hostname in value.split(" "):
 			hostname = hostname.strip()
@@ -1078,7 +1078,7 @@ def get_custom_dns_records(custom_dns, qname, rtype):
 
 def build_recommended_dns(env):
 	ret = []
-	for (domain, zonefile, records) in build_zones(env):
+	for (domain, _zonefile, records) in build_zones(env):
 		# remove records that we don't display
 		records = [r for r in records if r[3] is not False]
 
@@ -1106,7 +1106,7 @@ if __name__ == "__main__":
 	if sys.argv[-1] == "--lint":
 		write_custom_dns_config(get_custom_dns_config(env), env)
 	else:
-		for zone, records in build_recommended_dns(env):
+		for _zone, records in build_recommended_dns(env):
 			for record in records:
 				print("; " + record['explanation'])
 				print(record['qname'], record['rtype'], record['value'], sep="\t")

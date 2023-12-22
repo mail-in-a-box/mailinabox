@@ -148,7 +148,7 @@ def du(path):
     # soft and hard links.
     total_size = 0
     seen = set()
-    for dirpath, dirnames, filenames in os.walk(path):
+    for dirpath, _dirnames, filenames in os.walk(path):
         for f in filenames:
             fp = os.path.join(dirpath, f)
             try:
