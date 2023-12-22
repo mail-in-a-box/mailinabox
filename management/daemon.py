@@ -419,7 +419,7 @@ def ssl_get_status():
 		{
 			"domain": d["domain"],
 			"status": d["ssl_certificate"][0],
-			"text": d["ssl_certificate"][1] + ((" " + cant_provision[d["domain"]] if d["domain"] in cant_provision else ""))
+			"text": d["ssl_certificate"][1] + (" " + cant_provision[d["domain"]] if d["domain"] in cant_provision else "")
 		} for d in domains_status ]
 
 	# Warn the user about domain names not hosted here because of other settings.
