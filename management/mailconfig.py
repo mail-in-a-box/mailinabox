@@ -511,7 +511,7 @@ def remove_mail_alias(address, env, do_kick=True):
 
 def add_auto_aliases(aliases, env):
 	conn, c = open_database(env, with_connection=True)
-	c.execute("DELETE FROM auto_aliases");
+	c.execute("DELETE FROM auto_aliases")
 	for source, destination in aliases.items():
 		c.execute("INSERT INTO auto_aliases (source, destination) VALUES (?, ?)", (source, destination))
 	conn.commit()
