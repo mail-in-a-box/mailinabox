@@ -916,7 +916,7 @@ def get_latest_miab_version():
 
     try:
         return re.search(b'TAG=(.*)', urlopen("https://mailinabox.email/setup.sh?ping=1", timeout=5).read()).group(1).decode("utf8")
-    except (HTTPError, URLError, timeout):
+    except (TimeoutError, HTTPError, URLError):
         return None
 
 def check_miab_version(env, output):
