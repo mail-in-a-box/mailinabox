@@ -554,6 +554,8 @@ def backup_set_custom(env, target, target_user, target_pass, min_age):
 	config["target_pass"] = target_pass
 	config["min_age_in_days"] = min_age
 
+	write_backup_config(env, config)
+  
 	# Validate.
 	try:
 		if config["target"] not in ("off", "local"):
@@ -562,8 +564,6 @@ def backup_set_custom(env, target, target_user, target_pass, min_age):
 			list_target_files(config)
 	except ValueError as e:
 		return str(e)
-
-	write_backup_config(env, config)
 
 	return "OK"
 
