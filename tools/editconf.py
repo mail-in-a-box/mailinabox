@@ -24,7 +24,7 @@
 # lines while the lines start with whitespace, e.g.:
 #
 # NAME VAL
-#   UE 
+#   UE
 
 import sys, re
 

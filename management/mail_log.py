@@ -547,7 +547,7 @@ def scan_postfix_submission_line(date, log, collector):
     """
 
     # Match both the 'plain' and 'login' sasl methods, since both authentication methods are
-    # allowed by Dovecot. Exclude trailing comma after the username when additional fields 
+    # allowed by Dovecot. Exclude trailing comma after the username when additional fields
 	# follow after.
     m = re.match(r"([A-Z0-9]+): client=(\S+), sasl_method=(PLAIN|LOGIN), sasl_username=(\S+)(?<!,)", log)
 
