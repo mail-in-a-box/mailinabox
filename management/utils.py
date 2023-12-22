@@ -59,7 +59,7 @@ def sort_domains(domain_names, env):
     # from shortest to longest since zones are always shorter than their
     # subdomains.
     zones = { }
-    for domain in sorted(domain_names, key=lambda d : len(d)):
+    for domain in sorted(domain_names, key=len):
         for z in zones.values():
             if domain.endswith("." + z):
                 # We found a parent domain already in the list.

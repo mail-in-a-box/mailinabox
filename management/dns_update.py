@@ -38,7 +38,7 @@ def get_dns_zones(env):
 	# Exclude domains that are subdomains of other domains we know. Proceed
 	# by looking at shorter domains first.
 	zone_domains = set()
-	for domain in sorted(domains, key=lambda d : len(d)):
+	for domain in sorted(domains, key=len):
 		for d in zone_domains:
 			if domain.endswith("." + d):
 				# We found a parent domain already in the list.
