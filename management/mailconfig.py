@@ -87,7 +87,7 @@ def prettify_idn_email_address(email):
 def is_dcv_address(email):
 	email = email.lower()
 	for localpart in ("admin", "administrator", "postmaster", "hostmaster", "webmaster", "abuse"):
-		if email.startswith(localpart+"@") or email.startswith(localpart+"+"):
+		if email.startswith((localpart + "@", localpart + "+")):
 			return True
 	return False
 

@@ -69,7 +69,7 @@ def backup_status(env):
 		# destination for the backups or the last backup job terminated unexpectedly.
 		raise Exception("Something is wrong with the backup: " + collection_status)
 	for line in collection_status.split('\n'):
-		if line.startswith(" full") or line.startswith(" inc"):
+		if line.startswith((" full", " inc")):
 			backup = parse_line(line)
 			backups[backup["date"]] = backup
 

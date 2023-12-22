@@ -262,7 +262,7 @@ def build_zone(domain, domain_properties, additional_records, env, is_zone=True)
 	has_rec_base = list(records)
 	a_expl = "Required. May have a different value. Sets the IP address that %s resolves to for web hosting and other services besides mail. The A record must be present but its value does not affect mail delivery." % domain
 	if domain_properties[domain]["auto"]:
-		if domain.startswith("ns1.") or domain.startswith("ns2."): a_expl = False # omit from 'External DNS' page since this only applies if box is its own DNS server
+		if domain.startswith(("ns1.", "ns2.")): a_expl = False # omit from 'External DNS' page since this only applies if box is its own DNS server
 		if domain.startswith("www."): a_expl = "Optional. Sets the IP address that %s resolves to so that the box can provide a redirect to the parent domain." % domain
 		if domain.startswith("mta-sts."): a_expl = "Optional. MTA-STS Policy Host serving /.well-known/mta-sts.txt."
 		if domain.startswith("autoconfig."): a_expl = "Provides email configuration autodiscovery support for Thunderbird Autoconfig."
