@@ -751,10 +751,7 @@ def log_failed_login(request):
 	# During setup we call the management interface directly to determine the user
 	# status. So we can't always use X-Forwarded-For because during setup that header
 	# will not be present.
-	if request.headers.getlist("X-Forwarded-For"):
-		ip = request.headers.getlist("X-Forwarded-For")[0]
-	else:
-		ip = request.remote_addr
+	ip = request.headers.getlist("X-Forwarded-For")[0] if request.headers.getlist("X-Forwarded-For") else request.remote_addr
 
 	# We need to add a timestamp to the log message, otherwise /dev/log will eat the "duplicate"
 	# message.

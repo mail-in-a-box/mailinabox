@@ -861,10 +861,7 @@ def filter_custom_records(domain, custom_dns_iter):
 		# our short form (None => domain, or a relative QNAME) if
 		# domain is not None.
 		if domain is not None:
-			if qname == domain:
-				qname = None
-			else:
-				qname = qname[0:len(qname)-len("." + domain)]
+			qname = None if qname == domain else qname[0:len(qname) - len("." + domain)]
 
 		yield (qname, rtype, value)
 
@@ -1094,10 +1091,7 @@ def build_recommended_dns(env):
 
 		# expand qnames
 		for i in range(len(records)):
-			if records[i][0] == None:
-				qname = domain
-			else:
-				qname = records[i][0] + "." + domain
+			qname = domain if records[i][0] == None else records[i][0] + "." + domain
 
 			records[i] = {
 				"qname": qname,

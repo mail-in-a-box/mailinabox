@@ -93,10 +93,7 @@ elif sys.argv[1] == "user" and len(sys.argv) == 2:
 
 elif sys.argv[1] == "user" and sys.argv[2] in {"add", "password"}:
 	if len(sys.argv) < 5:
-		if len(sys.argv) < 4:
-			email = input("email: ")
-		else:
-			email = sys.argv[3]
+		email = input('email: ') if len(sys.argv) < 4 else sys.argv[3]
 		pw = read_password()
 	else:
 		email, pw = sys.argv[3:5]
@@ -110,10 +107,7 @@ elif sys.argv[1] == "user" and sys.argv[2] == "remove" and len(sys.argv) == 4:
 	print(mgmt("/mail/users/remove", { "email": sys.argv[3] }))
 
 elif sys.argv[1] == "user" and sys.argv[2] in {"make-admin", "remove-admin"} and len(sys.argv) == 4:
-	if sys.argv[2] == "make-admin":
-		action = "add"
-	else:
-		action = "remove"
+	action = 'add' if sys.argv[2] == 'make-admin' else 'remove'
 	print(mgmt("/mail/users/privileges/" + action, { "email": sys.argv[3], "privilege": "admin" }))
 
 elif sys.argv[1] == "user" and sys.argv[2] == "admins":

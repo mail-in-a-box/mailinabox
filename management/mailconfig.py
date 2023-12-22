@@ -476,10 +476,7 @@ def add_mail_alias(address, forwards_to, permitted_senders, env, update_if_exist
 
 	forwards_to = ",".join(validated_forwards_to)
 
-	if len(validated_permitted_senders) == 0:
-		permitted_senders = None
-	else:
-		permitted_senders = ",".join(validated_permitted_senders)
+	permitted_senders = None if len(validated_permitted_senders) == 0 else ",".join(validated_permitted_senders)
 
 	conn, c = open_database(env, with_connection=True)
 	try:
