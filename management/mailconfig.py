@@ -608,9 +608,11 @@ def kick(env, mail_result=None):
 def validate_password(pw):
 	# validate password
 	if pw.strip() == "":
-		raise ValueError("No password provided.")
+		msg = "No password provided."
+		raise ValueError(msg)
 	if len(pw) < 8:
-		raise ValueError("Passwords must be at least eight characters.")
+		msg = "Passwords must be at least eight characters."
+		raise ValueError(msg)
 
 if __name__ == "__main__":
 	import sys

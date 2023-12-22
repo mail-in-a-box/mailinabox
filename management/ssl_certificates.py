@@ -624,7 +624,8 @@ def load_cert_chain(pemfile):
 		pem = f.read() + b"\n" # ensure trailing newline
 		pemblocks = re.findall(re_pem, pem)
 		if len(pemblocks) == 0:
-			raise ValueError("File does not contain valid PEM data.")
+			msg = "File does not contain valid PEM data."
+			raise ValueError(msg)
 		return pemblocks
 
 def load_pem(pem):
@@ -635,7 +636,8 @@ def load_pem(pem):
 	from cryptography.hazmat.backends import default_backend
 	pem_type = re.match(b"-+BEGIN (.*?)-+[\r\n]", pem)
 	if pem_type is None:
-		raise ValueError("File is not a valid PEM-formatted file.")
+		msg = "File is not a valid PEM-formatted file."
+		raise ValueError(msg)
 	pem_type = pem_type.group(1)
 	if pem_type in {b"RSA PRIVATE KEY", b"PRIVATE KEY"}:
 		return serialization.load_pem_private_key(pem, password=None, backend=default_backend())

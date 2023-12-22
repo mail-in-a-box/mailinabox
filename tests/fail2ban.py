@@ -39,7 +39,8 @@ def smtp_test():
 
 	try:
 		server.login("fakeuser", "fakepassword")
-		raise Exception("authentication didn't fail")
+		msg = "authentication didn't fail"
+		raise Exception(msg)
 	except smtplib.SMTPAuthenticationError:
 		# athentication should fail
 		pass
@@ -61,7 +62,8 @@ def imap_test():
 
 	try:
 		M.login("fakeuser", "fakepassword")
-		raise Exception("authentication didn't fail")
+		msg = "authentication didn't fail"
+		raise Exception(msg)
 	except imaplib.IMAP4.error:
 		# authentication should fail
 		pass
@@ -85,7 +87,8 @@ def pop_test():
 			M = None # don't .quit()
 			return
 		M.list()
-		raise Exception("authentication didn't fail")
+		msg = "authentication didn't fail"
+		raise Exception(msg)
 	finally:
 		if M:
 			M.quit()
@@ -103,7 +106,8 @@ def managesieve_test():
 
 	try:
 		M.login("fakeuser", "fakepassword")
-		raise Exception("authentication didn't fail")
+		msg = "authentication didn't fail"
+		raise Exception(msg)
 	except imaplib.IMAP4.error:
 		# authentication should fail
 		pass

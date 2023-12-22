@@ -919,7 +919,8 @@ def set_custom_dns_record(qname, rtype, value, action, env):
 	rtype = rtype.upper()
 	if value is not None and qname != "_secondary_nameserver":
 		if not re.search(DOMAIN_RE, qname):
-			raise ValueError("Invalid name.")
+			msg = "Invalid name."
+			raise ValueError(msg)
 
 		if rtype in {"A", "AAAA"}:
 			if value != "local": # "local" is a special flag for us
@@ -928,14 +929,16 @@ def set_custom_dns_record(qname, rtype, value, action, env):
 				if rtype == "AAAA" and not isinstance(v, ipaddress.IPv6Address): raise ValueError("That's an IPv4 address.")
 		elif rtype in {"CNAME", "NS"}:
 			if rtype == "NS" and qname == zone:
-				raise ValueError("NS records can only be set for subdomains.")
+				msg = "NS records can only be set for subdomains."
+				raise ValueError(msg)
 
 			# ensure value has a trailing dot
 			if not value.endswith("."):
 				value = value + "."
 
 			if not re.search(DOMAIN_RE, value):
-				raise ValueError("Invalid value.")
+				msg = "Invalid value."
+				raise ValueError(msg)
 		elif rtype in {"CNAME", "TXT", "SRV", "MX", "SSHFP", "CAA"}:
 			# anything goes
 			pass

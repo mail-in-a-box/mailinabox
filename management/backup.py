@@ -507,7 +507,8 @@ def list_target_files(config):
 			path = ''
 
 		if bucket == "":
-			raise ValueError("Enter an S3 bucket name.")
+			msg = "Enter an S3 bucket name."
+			raise ValueError(msg)
 
 		# connect to the region & bucket
 		try:
@@ -535,7 +536,8 @@ def list_target_files(config):
 			b2_api.authorize_account("production", b2_application_keyid, b2_application_key)
 			bucket = b2_api.get_bucket_by_name(b2_bucket)
 		except NonExistentBucket as e:
-			raise ValueError("B2 Bucket does not exist. Please double check your information!")
+			msg = "B2 Bucket does not exist. Please double check your information!"
+			raise ValueError(msg)
 		return [(key.file_name, key.size) for key, _ in bucket.ls()]
 
 	else:
