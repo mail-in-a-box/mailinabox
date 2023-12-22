@@ -4,6 +4,8 @@
 import os, os.path, re, shutil, subprocess, tempfile
 
 from utils import shell, safe_domain_name, sort_domains
+import functools
+import operator
 
 # SELECTING SSL CERTIFICATES FOR USE IN WEB
 
@@ -283,7 +285,7 @@ def provision_certificates(env, limit_domains):
 
 	# Flatten to a list of lists of domains (from a mapping). Remove empty
 	# lists (zones with no domains that need certs).
-	certs = sum(certs.values(), [])
+	certs = functools.reduce(operator.iadd, certs.values(), [])
 	certs = [_ for _ in certs if len(_) > 0]
 
 	# Prepare to provision.
