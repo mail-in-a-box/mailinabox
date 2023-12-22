@@ -674,8 +674,7 @@ def hash_dnssec_keys(domain, env):
 	keydata = []
 	for keytype, keyfn in sorted(find_dnssec_signing_keys(domain, env)):
 		oldkeyfn = os.path.join(env['STORAGE_ROOT'], 'dns/dnssec', keyfn + ".private")
-		keydata.append(keytype)
-		keydata.append(keyfn)
+		keydata.extend((keytype, keyfn))
 		with open(oldkeyfn) as fr:
 			keydata.append( fr.read() )
 	keydata = "".join(keydata).encode("utf8")

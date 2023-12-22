@@ -302,8 +302,7 @@ def scan_mail_log(env):
                 for date, sender, message in user_data["blocked"]:
                     if len(sender) > 64:
                         sender = sender[:32] + "…" + sender[-32:]
-                    user_rejects.append("{} - {} ".format(date, sender))
-                    user_rejects.append("  %s" % message)
+                    user_rejects.extend(('{} - {} '.format(date, sender), '  %s' % message))
                 rejects.append(user_rejects)
 
         print_user_table(
@@ -710,10 +709,7 @@ def print_user_table(users, data=None, sub_data=None, activity=None, latest=None
                 if sub_data is not None:
                     for l, d in sub_data:
                         if d[row]:
-                            lines.append("┬")
-                            lines.append("│ %s" % l)
-                            lines.append("├─%s─" % (len(l) * "─"))
-                            lines.append("│")
+                            lines.extend(('┬', '│ %s' % l, '├─%s─' % (len(l) * '─'), '│'))
                             max_len = 0
                             for v in list(d[row]):
                                 lines.append("│ %s" % v)
