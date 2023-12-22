@@ -912,7 +912,6 @@ def get_latest_miab_version():
 	# This pings https://mailinabox.email/setup.sh and extracts the tag named in
 	# the script to determine the current product version.
     from urllib.request import urlopen, HTTPError, URLError
-    from socket import timeout
 
     try:
         return re.search(b'TAG=(.*)', urlopen("https://mailinabox.email/setup.sh?ping=1", timeout=5).read()).group(1).decode("utf8")
