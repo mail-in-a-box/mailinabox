@@ -302,7 +302,7 @@ def scan_mail_log(env):
                 for date, sender, message in user_data["blocked"]:
                     if len(sender) > 64:
                         sender = sender[:32] + "…" + sender[-32:]
-                    user_rejects.append("%s - %s " % (date, sender))
+                    user_rejects.append("{} - {} ".format(date, sender))
                     user_rejects.append("  %s" % message)
                 rejects.append(user_rejects)
 

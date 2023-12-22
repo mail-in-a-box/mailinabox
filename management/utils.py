@@ -22,7 +22,7 @@ def load_env_vars_from_file(fn):
 def save_environment(env):
     with open("/etc/mailinabox.conf", "w") as f:
         for k, v in env.items():
-            f.write("%s=%s\n" % (k, v))
+            f.write("{}={}\n".format(k, v))
 
 # THE SETTINGS FILE AT STORAGE_ROOT/settings.yaml.
 

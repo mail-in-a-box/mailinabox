@@ -580,8 +580,7 @@ def system_status():
 def show_updates():
 	from status_checks import list_apt_updates
 	return "".join(
-		"%s (%s)\n"
-		% (p["package"], p["version"])
+		"{} ({})\n".format(p["package"], p["version"])
 		for p in list_apt_updates())
 
 @app.route('/system/update-packages', methods=["POST"])
@@ -755,7 +754,7 @@ def log_failed_login(request):
 
 	# We need to add a timestamp to the log message, otherwise /dev/log will eat the "duplicate"
 	# message.
-	app.logger.warning( "Mail-in-a-Box Management Daemon: Failed login attempt from ip %s - timestamp %s" % (ip, time.time()))
+	app.logger.warning( "Mail-in-a-Box Management Daemon: Failed login attempt from ip {} - timestamp {}".format(ip, time.time()))
 
 
 # APP

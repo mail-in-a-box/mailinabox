@@ -620,9 +620,9 @@ def write_nsd_conf(zonefiles, additional_records, env):
 	for domain, zonefile in zonefiles:
 		nsdconf += """
 zone:
-	name: %s
-	zonefile: %s
-""" % (domain, zonefile)
+	name: {}
+	zonefile: {}
+""".format(domain, zonefile)
 
 		# If custom secondary nameservers have been set, allow zone transfers
 		# and, if not a subnet, notifies to them.

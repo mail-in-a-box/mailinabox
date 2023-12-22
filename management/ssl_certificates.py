@@ -211,7 +211,7 @@ def get_certificates_to_provision(env, limit_domains=None, show_valid_certs=True
 				if not value: continue # IPv6 is not configured
 				response = query_dns(domain, rtype)
 				if response != normalize_ip(value):
-					bad_dns.append("%s (%s)" % (response, rtype))
+					bad_dns.append("{} ({})".format(response, rtype))
 
 			if bad_dns:
 				domains_cant_provision[domain] = "The domain name does not resolve to this machine: " \
@@ -413,7 +413,7 @@ def create_csr(domain, ssl_key, country_code, env):
 				"openssl", "req", "-new",
 				"-key", ssl_key,
 				"-sha256",
-				"-subj", "/C=%s/CN=%s" % (country_code, domain)])
+				"-subj", "/C={}/CN={}".format(country_code, domain)])
 
 def install_cert(domain, ssl_cert, ssl_chain, env, raw=False):
 	# Write the combined cert+chain to a temporary path and validate that it is OK.
@@ -450,7 +450,7 @@ def install_cert_copy_file(fn, env):
 	from binascii import hexlify
 	cert = load_pem(load_cert_chain(fn)[0])
 	_all_domains, cn = get_certificate_domains(cert)
-	path = "%s-%s-%s.pem" % (
+	path = "{}-{}-{}.pem".format(
 		safe_domain_name(cn), # common name, which should be filename safe because it is IDNA-encoded, but in case of a malformed cert make sure it's ok to use as a filename
 		cert.not_valid_after.date().isoformat().replace("-", ""), # expiration date
 		hexlify(cert.fingerprint(hashes.SHA256())).decode("ascii")[0:8], # fingerprint prefix
@@ -537,7 +537,7 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 			with open(ssl_private_key, 'rb') as f:
 				priv_key = load_pem(f.read())
 		except ValueError as e:
-			return ("The private key file %s is not a private key file: %s" % (ssl_private_key, str(e)), None)
+			return ("The private key file {} is not a private key file: {}".format(ssl_private_key, str(e)), None)
 
 		if not isinstance(priv_key, RSAPrivateKey):
 			return ("The private key file %s is not a private key file." % ssl_private_key, None)
@@ -565,7 +565,7 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 	import datetime
 	now = datetime.datetime.utcnow()
 	if not(cert.not_valid_before <= now <= cert.not_valid_after):
-		return ("The certificate has expired or is not yet valid. It is valid from %s to %s." % (cert.not_valid_before, cert.not_valid_after), None)
+		return ("The certificate has expired or is not yet valid. It is valid from {} to {}.".format(cert.not_valid_before, cert.not_valid_after), None)
 
 	# Next validate that the certificate is valid. This checks whether the certificate
 	# is self-signed, that the chain of trust makes sense, that it is signed by a CA

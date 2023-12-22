@@ -589,7 +589,7 @@ def kick(env, mail_result=None):
 			and forwards_to == get_system_administrator(env) \
 			and not auto:
 			remove_mail_alias(address, env, do_kick=False)
-			results.append("removed alias %s (was to %s; domain no longer used for email)\n" % (address, forwards_to))
+			results.append("removed alias {} (was to {}; domain no longer used for email)\n".format(address, forwards_to))
 
 	# Update DNS and nginx in case any domains are added/removed.
 

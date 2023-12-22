@@ -149,7 +149,7 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 		with open(filepath, 'rb') as f:
 			sha1.update(f.read())
 		return sha1.hexdigest()
-	nginx_conf_extra += "\t# ssl files sha1: %s / %s\n" % (hashfile(tls_cert["private-key"]), hashfile(tls_cert["certificate"]))
+	nginx_conf_extra += "\t# ssl files sha1: {} / {}\n".format(hashfile(tls_cert["private-key"]), hashfile(tls_cert["certificate"]))
 
 	# Add in any user customizations in YAML format.
 	hsts = "yes"
@@ -195,7 +195,7 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 				nginx_conf_extra += "\n\t\talias %s;" % alias
 				nginx_conf_extra += "\n\t}\n"
 			for path, url in yaml.get("redirects", {}).items():
-				nginx_conf_extra += "\trewrite %s %s permanent;\n" % (path, url)
+				nginx_conf_extra += "\trewrite {} {} permanent;\n".format(path, url)
 
 			# override the HSTS directive type
 			hsts = yaml.get("hsts", hsts)

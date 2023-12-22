@@ -98,7 +98,7 @@ else:
 		# And if that's OK, also check reverse DNS (the PTR record).
 		if not test_ptr("8.8.8.8", "Google Public DNS (Reverse DNS)"):
 			print ()
-			print ("The reverse DNS for %s is not correct. Consult your ISP for how to set the reverse DNS (also called the PTR record) for %s to %s." % (hostname, hostname, ipaddr))
+			print ("The reverse DNS for {} is not correct. Consult your ISP for how to set the reverse DNS (also called the PTR record) for {} to {}.".format(hostname, hostname, ipaddr))
 			sys.exit(1)
 		else:
 			print ("And the reverse DNS for the domain is correct.")
