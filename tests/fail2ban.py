@@ -24,7 +24,6 @@ socket.setdefaulttimeout(10)
 class IsBlocked(Exception):
 	"""Tests raise this exception when it appears that a fail2ban
 	jail is in effect, i.e. on a connection refused error."""
-	pass
 
 def smtp_test():
 	import smtplib
