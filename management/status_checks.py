@@ -162,7 +162,7 @@ def check_service(i, service, env):
 			output.print_error("%s is not running (port %d)." % (service['name'], service['port']))
 
 	# Flag if local DNS is not running.
-	if not running and service["port"] == 53 and service["public"] == False:
+	if not running and service["port"] == 53 and service["public"] is False:
 		fatal = True
 
 	return (i, running, fatal, output)
