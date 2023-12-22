@@ -434,36 +434,35 @@ def scan_postfix_smtpd_line(date, log, collector):
             return
 
         # only log mail to known recipients
-        if user_match(user):
-            if collector["known_addresses"] is None or user in collector["known_addresses"]:
-                data = collector["rejected"].get(
-                    user,
-                    {
-                        "blocked": [],
-                        "earliest": None,
-                        "latest": None,
-                    }
-                )
-                # simplify this one
+        if user_match(user) and (collector["known_addresses"] is None or user in collector["known_addresses"]):
+            data = collector["rejected"].get(
+                user,
+                {
+                    "blocked": [],
+                    "earliest": None,
+                    "latest": None,
+                }
+            )
+            # simplify this one
+            m = re.search(
+                r"Client host \[(.*?)\] blocked using zen.spamhaus.org; (.*)", message
+            )
+            if m:
+                message = "ip blocked: " + m.group(2)
+            else:
+                # simplify this one too
                 m = re.search(
-                    r"Client host \[(.*?)\] blocked using zen.spamhaus.org; (.*)", message
+                    r"Sender address \[.*@(.*)\] blocked using dbl.spamhaus.org; (.*)", message
                 )
                 if m:
-                    message = "ip blocked: " + m.group(2)
-                else:
-                    # simplify this one too
-                    m = re.search(
-                        r"Sender address \[.*@(.*)\] blocked using dbl.spamhaus.org; (.*)", message
-                    )
-                    if m:
-                        message = "domain blocked: " + m.group(2)
+                    message = "domain blocked: " + m.group(2)
 
-                if data["earliest"] is None:
-                    data["earliest"] = date
-                data["latest"] = date
-                data["blocked"].append((date, sender, message))
+            if data["earliest"] is None:
+                data["earliest"] = date
+            data["latest"] = date
+            data["blocked"].append((date, sender, message))
 
-                collector["rejected"][user] = data
+            collector["rejected"][user] = data
 
 
 def scan_dovecot_login_line(date, log, collector, protocol_name):

@@ -420,10 +420,9 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 	# If a DS record is set on the zone containing this domain, check DNSSEC now.
 	has_dnssec = False
 	for zone in dns_domains:
-		if zone == domain or domain.endswith("." + zone):
-			if query_dns(zone, "DS", nxdomain=None) is not None:
-				has_dnssec = True
-				check_dnssec(zone, env, output, dns_zonefiles, is_checking_primary=True)
+		if (zone == domain or domain.endswith("." + zone)) and query_dns(zone, "DS", nxdomain=None) is not None:
+			has_dnssec = True
+			check_dnssec(zone, env, output, dns_zonefiles, is_checking_primary=True)
 
 	ip = query_dns(domain, "A")
 	ns_ips = query_dns("ns1." + domain, "A") + '/' + query_dns("ns2." + domain, "A")

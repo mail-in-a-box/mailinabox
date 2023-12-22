@@ -82,9 +82,8 @@ def get_ssl_certificates(env):
 		for domain in cert_domains:
 			# The primary hostname can only use a certificate mapped
 			# to the system private key.
-			if domain == env['PRIMARY_HOSTNAME']:
-				if cert["private_key"]["filename"] != os.path.join(env['STORAGE_ROOT'], 'ssl', 'ssl_private_key.pem'):
-					continue
+			if domain == env['PRIMARY_HOSTNAME'] and cert["private_key"]["filename"] != os.path.join(env['STORAGE_ROOT'], 'ssl', 'ssl_private_key.pem'):
+				continue
 
 			domains.setdefault(domain, []).append(cert)
 
@@ -149,11 +148,10 @@ def get_domain_ssl_files(domain, ssl_certificates, env, allow_missing_cert=False
 			"certificate_object": load_pem(load_cert_chain(ssl_certificate)[0]),
 		}
 
-	if use_main_cert:
-		if domain == env['PRIMARY_HOSTNAME']:
-			# The primary domain must use the server certificate because
-			# it is hard-coded in some service configuration files.
-			return system_certificate
+	if use_main_cert and domain == env['PRIMARY_HOSTNAME']:
+		# The primary domain must use the server certificate because
+		# it is hard-coded in some service configuration files.
+		return system_certificate
 
 	wildcard_domain = re.sub(r"^[^\.]+", "*", domain)
 	if domain in ssl_certificates:
