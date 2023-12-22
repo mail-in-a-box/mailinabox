@@ -14,7 +14,7 @@ def load_env_vars_from_file(fn):
     # Load settings from a KEY=VALUE file.
     import collections
     env = collections.OrderedDict()
-    with open(fn, 'r')  as f:
+    with open(fn)  as f:
         for line in f:
             env.setdefault(*line.strip().split("=", 1))
     return env
@@ -36,7 +36,7 @@ def load_settings(env):
     import rtyaml
     fn = os.path.join(env['STORAGE_ROOT'], 'settings.yaml')
     try:
-        with open(fn, "r") as f:
+        with open(fn) as f:
             config = rtyaml.load(f)
         if not isinstance(config, dict): raise ValueError() # caught below
         return config

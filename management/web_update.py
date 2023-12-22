@@ -63,7 +63,7 @@ def get_web_domains_with_root_overrides(env):
 	root_overrides = { }
 	nginx_conf_custom_fn = os.path.join(env["STORAGE_ROOT"], "www/custom.yaml")
 	if os.path.exists(nginx_conf_custom_fn):
-		with open(nginx_conf_custom_fn, 'r') as f:
+		with open(nginx_conf_custom_fn) as f:
 			custom_settings = rtyaml.load(f)
 		for domain, settings in custom_settings.items():
 			for type, value in [('redirect', settings.get('redirects', {}).get('/')),
@@ -78,7 +78,7 @@ def do_web_update(env):
 
 	# Helper for reading config files and templates
 	def read_conf(conf_fn):
-		with open(os.path.join(os.path.dirname(__file__), "../conf", conf_fn), "r") as f:
+		with open(os.path.join(os.path.dirname(__file__), "../conf", conf_fn)) as f:
 			return f.read()
 
 	# Build an nginx configuration file.
@@ -156,7 +156,7 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 	hsts = "yes"
 	nginx_conf_custom_fn = os.path.join(env["STORAGE_ROOT"], "www/custom.yaml")
 	if os.path.exists(nginx_conf_custom_fn):
-		with open(nginx_conf_custom_fn, 'r') as f:
+		with open(nginx_conf_custom_fn) as f:
 			yaml = rtyaml.load(f)
 		if domain in yaml:
 			yaml = yaml[domain]

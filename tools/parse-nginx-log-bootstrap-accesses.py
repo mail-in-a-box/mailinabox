@@ -38,7 +38,7 @@ for date, ip in accesses:
 # Since logs are rotated, store the statistics permanently in a JSON file.
 # Load in the stats from an existing file.
 if os.path.exists(outfn):
-	with open(outfn, "r") as f:
+	with open(outfn) as f:
 		existing_data = json.load(f)
 	for date, count in existing_data:
 		if date not in by_date:

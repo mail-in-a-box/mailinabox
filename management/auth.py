@@ -22,7 +22,7 @@ class AuthService:
 	def init_system_api_key(self):
 		"""Write an API key to a local file so local processes can use the API"""
 
-		with open(self.key_path, 'r') as file:
+		with open(self.key_path) as file:
 			self.key = file.read()
 
 	def authenticate(self, request, env, login_only=False, logout=False):

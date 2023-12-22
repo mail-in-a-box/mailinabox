@@ -455,7 +455,7 @@ def build_sshfp_records():
 	# specify that port to sshkeyscan.
 
 	port = 22
-	with open('/etc/ssh/sshd_config', 'r') as f:
+	with open('/etc/ssh/sshd_config') as f:
 		for line in f:
 			s = line.rstrip().split()
 			if len(s) == 2 and s[0] == 'Port':
@@ -606,7 +606,7 @@ def get_dns_zonefile(zone, env):
 		raise ValueError("%s is not a domain name that corresponds to a zone." % zone)
 
 	nsd_zonefile = "/etc/nsd/zones/" + fn
-	with open(nsd_zonefile, "r") as f:
+	with open(nsd_zonefile) as f:
 		return f.read()
 
 ########################################################################
@@ -676,7 +676,7 @@ def hash_dnssec_keys(domain, env):
 		oldkeyfn = os.path.join(env['STORAGE_ROOT'], 'dns/dnssec', keyfn + ".private")
 		keydata.append(keytype)
 		keydata.append(keyfn)
-		with open(oldkeyfn, "r") as fr:
+		with open(oldkeyfn) as fr:
 			keydata.append( fr.read() )
 	keydata = "".join(keydata).encode("utf8")
 	return hashlib.sha1(keydata).hexdigest()
@@ -704,7 +704,7 @@ def sign_zone(domain, zonefile, env):
 			# Use os.umask and open().write() to securely create a copy that only
 			# we (root) can read.
 			oldkeyfn = os.path.join(env['STORAGE_ROOT'], 'dns/dnssec', keyfn + ext)
-			with open(oldkeyfn, "r") as fr:
+			with open(oldkeyfn) as fr:
 				keydata = fr.read()
 			keydata = keydata.replace("_domain_", domain)
 			prev_umask = os.umask(0o77) # ensure written file is not world-readable
@@ -815,7 +815,7 @@ def write_opendkim_tables(domains, env):
 
 def get_custom_dns_config(env, only_real_records=False):
 	try:
-		with open(os.path.join(env['STORAGE_ROOT'], 'dns/custom.yaml'), 'r') as f:
+		with open(os.path.join(env['STORAGE_ROOT'], 'dns/custom.yaml')) as f:
 			custom_dns = rtyaml.load(f)
 		if not isinstance(custom_dns, dict): raise ValueError() # caught below
 	except:

@@ -212,7 +212,7 @@ def check_ssh_password(env, output):
 	# the configuration file.
 	if not os.path.exists("/etc/ssh/sshd_config"):
 		return
-	with open("/etc/ssh/sshd_config", "r") as f:
+	with open("/etc/ssh/sshd_config") as f:
 		sshd = f.read()
 	if re.search("\nPasswordAuthentication\s+yes", sshd) \
 		or not re.search("\nPasswordAuthentication\s+no", sshd):
@@ -600,7 +600,7 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 			# record that we suggest using is for the KSK (and that's how the DS records were generated).
 			# We'll also give the nice name for the key algorithm.
 			dnssec_keys = load_env_vars_from_file(os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/%s.conf' % alg_name_map[ds_alg]))
-			with open(os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/' + dnssec_keys['KSK'] + '.key'), 'r') as f:
+			with open(os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/' + dnssec_keys['KSK'] + '.key')) as f:
 				dnsssec_pubkey = f.read().split("\t")[3].split(" ")[3]
 
 			expected_ds_records[ (ds_keytag, ds_alg, ds_digalg, ds_digest) ] = {
@@ -963,7 +963,7 @@ def run_and_output_changes(env, pool):
 	# Load previously saved status checks.
 	cache_fn = "/var/cache/mailinabox/status_checks.json"
 	if os.path.exists(cache_fn):
-		with open(cache_fn, 'r') as f:
+		with open(cache_fn) as f:
 			try:
 				prev = json.load(f)
 			except json.JSONDecodeError:
