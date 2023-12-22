@@ -142,7 +142,7 @@ for cipher in csv.DictReader(io.StringIO(urllib.request.urlopen("https://raw.git
 client_compatibility = json.loads(urllib.request.urlopen("https://raw.githubusercontent.com/mail-in-a-box/user-agent-tls-capabilities/master/clients.json").read().decode("utf8"))
 cipher_clients = { }
 for client in client_compatibility:
-	if len(set(client['protocols']) & set(["TLS 1.0", "TLS 1.1", "TLS 1.2"])) == 0: continue # does not support TLS
+	if len(set(client['protocols']) & {"TLS 1.0", "TLS 1.1", "TLS 1.2"}) == 0: continue # does not support TLS
 	for cipher in client['ciphers']:
 		cipher_clients.setdefault(cipher_names.get(cipher), set()).add("/".join(x for x in [client['client']['name'], client['client']['version'], client['client']['platform']] if x))
 
