@@ -48,7 +48,7 @@ class AuthService:
 			return username, password
 
 		username, password = parse_http_authorization_basic(request.headers.get('Authorization', ''))
-		if username in (None, ""):
+		if username in {None, ""}:
 			raise ValueError("Authorization header invalid.")
 
 		if username.strip() == "" and password.strip() == "":

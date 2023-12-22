@@ -84,7 +84,7 @@ while len(input_lines) > 0:
 
 	# If this configuration file uses folded lines, append any folded lines
 	# into our input buffer.
-	if folded_lines and line[0] not in (comment_char, " ", ""):
+	if folded_lines and line[0] not in {comment_char, " ", ""}:
 		while len(input_lines) > 0 and input_lines[0][0] in " \t":
 			line += input_lines.pop(0)
 

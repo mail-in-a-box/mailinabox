@@ -91,7 +91,7 @@ elif sys.argv[1] == "user" and len(sys.argv) == 2:
 				print("*", end='')
 			print()
 
-elif sys.argv[1] == "user" and sys.argv[2] in ("add", "password"):
+elif sys.argv[1] == "user" and sys.argv[2] in {"add", "password"}:
 	if len(sys.argv) < 5:
 		if len(sys.argv) < 4:
 			email = input("email: ")
@@ -109,7 +109,7 @@ elif sys.argv[1] == "user" and sys.argv[2] in ("add", "password"):
 elif sys.argv[1] == "user" and sys.argv[2] == "remove" and len(sys.argv) == 4:
 	print(mgmt("/mail/users/remove", { "email": sys.argv[3] }))
 
-elif sys.argv[1] == "user" and sys.argv[2] in ("make-admin", "remove-admin") and len(sys.argv) == 4:
+elif sys.argv[1] == "user" and sys.argv[2] in {"make-admin", "remove-admin"} and len(sys.argv) == 4:
 	if sys.argv[2] == "make-admin":
 		action = "add"
 	else:
@@ -132,7 +132,7 @@ elif sys.argv[1] == "user" and len(sys.argv) == 5 and sys.argv[2:4] == ["mfa", "
 	for mfa in status["enabled_mfa"]:
 		W.writerow([mfa["id"], mfa["type"], mfa["label"]])
 
-elif sys.argv[1] == "user" and len(sys.argv) in (5, 6) and sys.argv[2:4] == ["mfa", "disable"]:
+elif sys.argv[1] == "user" and len(sys.argv) in {5, 6} and sys.argv[2:4] == ["mfa", "disable"]:
 	# Disable MFA (all or a particular device) for a user.
 	print(mgmt("/mfa/disable", { "user": sys.argv[4], "mfa-id": sys.argv[5] if len(sys.argv) == 6 else None }))
 

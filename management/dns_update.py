@@ -364,7 +364,7 @@ def build_zone(domain, domain_properties, additional_records, env, is_zone=True)
 	# non-mail domain and also may include qnames from custom DNS records.
 	# Do this once at the end of generating a zone.
 	if is_zone:
-		qnames_with_a = set(qname for (qname, rtype, value, explanation) in records if rtype in ("A", "AAAA"))
+		qnames_with_a = set(qname for (qname, rtype, value, explanation) in records if rtype in {"A", "AAAA"})
 		qnames_with_mx = set(qname for (qname, rtype, value, explanation) in records if rtype == "MX")
 		for qname in qnames_with_a - qnames_with_mx:
 			# Mark this domain as not sending mail with hard-fail SPF and DMARC records.
@@ -921,12 +921,12 @@ def set_custom_dns_record(qname, rtype, value, action, env):
 		if not re.search(DOMAIN_RE, qname):
 			raise ValueError("Invalid name.")
 
-		if rtype in ("A", "AAAA"):
+		if rtype in {"A", "AAAA"}:
 			if value != "local": # "local" is a special flag for us
 				v = ipaddress.ip_address(value) # raises a ValueError if there's a problem
 				if rtype == "A" and not isinstance(v, ipaddress.IPv4Address): raise ValueError("That's an IPv6 address.")
 				if rtype == "AAAA" and not isinstance(v, ipaddress.IPv6Address): raise ValueError("That's an IPv4 address.")
-		elif rtype in ("CNAME", "NS"):
+		elif rtype in {"CNAME", "NS"}:
 			if rtype == "NS" and qname == zone:
 				raise ValueError("NS records can only be set for subdomains.")
 
@@ -936,7 +936,7 @@ def set_custom_dns_record(qname, rtype, value, action, env):
 
 			if not re.search(DOMAIN_RE, value):
 				raise ValueError("Invalid value.")
-		elif rtype in ("CNAME", "TXT", "SRV", "MX", "SSHFP", "CAA"):
+		elif rtype in {"CNAME", "TXT", "SRV", "MX", "SSHFP", "CAA"}:
 			# anything goes
 			pass
 		else:
@@ -979,7 +979,7 @@ def set_custom_dns_record(qname, rtype, value, action, env):
 		# Preserve this record.
 		newconfig.append((_qname, _rtype, _value))
 
-	if action in ("add", "set") and needs_add and value is not None:
+	if action in {"add", "set"} and needs_add and value is not None:
 		newconfig.append((qname, rtype, value))
 		made_change = True
 

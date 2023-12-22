@@ -588,7 +588,7 @@ def kick(env, mail_result=None):
 	# They are now stored in the auto_aliases table.
 	for address, forwards_to, permitted_senders, auto in get_mail_aliases(env):
 		user, domain = address.split("@")
-		if user in ("postmaster", "admin", "abuse") \
+		if user in {"postmaster", "admin", "abuse"} \
 			and address not in required_aliases \
 			and forwards_to == get_system_administrator(env) \
 			and not auto:

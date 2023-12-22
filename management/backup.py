@@ -556,7 +556,7 @@ def backup_set_custom(env, target, target_user, target_pass, min_age):
 
 	# Validate.
 	try:
-		if config["target"] not in ("off", "local"):
+		if config["target"] not in {"off", "local"}:
 			# these aren't supported by the following function, which expects a full url in the target key,
 			# which is what is there except when loading the config prior to saving
 			list_target_files(config)

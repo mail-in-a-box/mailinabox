@@ -151,7 +151,7 @@ def check_service(i, service, env):
 			output.print_error("%s is not running (port %d)." % (service['name'], service['port']))
 
 		# Why is nginx not running?
-		if not running and service["port"] in (80, 443):
+		if not running and service["port"] in {80, 443}:
 			output.print_line(shell('check_output', ['nginx', '-t'], capture_stderr=True, trap=True)[1].strip())
 
 	else:
@@ -340,7 +340,7 @@ def run_domain_checks(rounded_time, env, output, pool, domains_to_check=None):
 	domains_to_check = [
 		d for d in domains_to_check
 		if not (
-		   d.split(".", 1)[0] in ("www", "autoconfig", "autodiscover", "mta-sts")
+		   d.split(".", 1)[0] in {"www", "autoconfig", "autodiscover", "mta-sts"}
 		   and len(d.split(".", 1)) == 2
 		   and d.split(".", 1)[1] in domains_to_check
 		)
@@ -467,7 +467,7 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 	# a DNS zone if it is a subdomain of another domain we have a zone for.
 	existing_rdns_v4 = query_dns(dns.reversename.from_address(env['PUBLIC_IP']), "PTR")
 	existing_rdns_v6 = query_dns(dns.reversename.from_address(env['PUBLIC_IPV6']), "PTR") if env.get("PUBLIC_IPV6") else None
-	if existing_rdns_v4 == domain and existing_rdns_v6 in (None, domain):
+	if existing_rdns_v4 == domain and existing_rdns_v6 in {None, domain}:
 		output.print_ok("Reverse DNS is set correctly at ISP. [%s ↦ %s]" % (my_ips, env['PRIMARY_HOSTNAME']))
 	elif existing_rdns_v4 == existing_rdns_v6 or existing_rdns_v6 is None:
 		output.print_error("""Your box's reverse DNS is currently %s, but it should be %s. Your ISP or cloud provider will have instructions
@@ -636,7 +636,7 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 			if set(r[1] for r in matched_ds) == { '13' } and set(r[2] for r in matched_ds) <= { '2', '4' }: # all are alg 13 and digest type 2 or 4
 				output.print_ok("DNSSEC 'DS' record is set correctly at registrar.")
 				return
-			elif len([r for r in matched_ds if r[1] == '13' and r[2] in ( '2', '4' )]) > 0: # some but not all are alg 13
+			elif len([r for r in matched_ds if r[1] == '13' and r[2] in { '2', '4' }]) > 0: # some but not all are alg 13
 				output.print_ok("DNSSEC 'DS' record is set correctly at registrar. (Records using algorithm other than ECDSAP256SHA256 and digest types other than SHA-256/384 should be removed.)")
 				return
 			else: # no record uses alg 13
@@ -825,7 +825,7 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None, as_list=False):
 	# be expressed in equivalent string forms. Canonicalize the form before
 	# returning them. The caller should normalize any IP addresses the result
 	# of this method is compared with.
-	if rtype in ("A", "AAAA"):
+	if rtype in {"A", "AAAA"}:
 		response = [normalize_ip(str(r)) for r in response]
 
 	if as_list:
@@ -841,7 +841,7 @@ def check_ssl_cert(domain, rounded_time, ssl_certificates, env, output):
 	# Check that TLS certificate is signed.
 
 	# Skip the check if the A record is not pointed here.
-	if query_dns(domain, "A", None) not in (env['PUBLIC_IP'], None): return
+	if query_dns(domain, "A", None) not in {env['PUBLIC_IP'], None}: return
 
 	# Where is the certificate file stored?
 	tls_cert = get_domain_ssl_files(domain, ssl_certificates, env, allow_missing_cert=True)
@@ -1002,14 +1002,14 @@ def run_and_output_changes(env, pool):
 						out.add_heading(category + " -- Previously:")
 					elif op == "delete":
 						out.add_heading(category + " -- Removed")
-					if op in ("replace", "delete"):
+					if op in {"replace", "delete"}:
 						BufferedOutput(with_lines=prev_lines[i1:i2]).playback(out)
 
 					if op == "replace":
 						out.add_heading(category + " -- Currently:")
 					elif op == "insert":
 						out.add_heading(category + " -- Added")
-					if op in ("replace", "insert"):
+					if op in {"replace", "insert"}:
 						BufferedOutput(with_lines=cur_lines[j1:j2]).playback(out)
 
 		for category, prev_lines in prev_status.items():
@@ -1095,7 +1095,7 @@ class BufferedOutput:
 	def __init__(self, with_lines=None):
 		self.buf = [] if not with_lines else with_lines
 	def __getattr__(self, attr):
-		if attr not in ("add_heading", "print_ok", "print_error", "print_warning", "print_block", "print_line"):
+		if attr not in {"add_heading", "print_ok", "print_error", "print_warning", "print_block", "print_line"}:
 			raise AttributeError
 		# Return a function that just records the call & arguments to our buffer.
 		def w(*args, **kwargs):

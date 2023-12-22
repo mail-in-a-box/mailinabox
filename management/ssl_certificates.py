@@ -637,7 +637,7 @@ def load_pem(pem):
 	if pem_type is None:
 		raise ValueError("File is not a valid PEM-formatted file.")
 	pem_type = pem_type.group(1)
-	if pem_type in (b"RSA PRIVATE KEY", b"PRIVATE KEY"):
+	if pem_type in {b"RSA PRIVATE KEY", b"PRIVATE KEY"}:
 		return serialization.load_pem_private_key(pem, password=None, backend=default_backend())
 	if pem_type == b"CERTIFICATE":
 		return load_pem_x509_certificate(pem, default_backend())

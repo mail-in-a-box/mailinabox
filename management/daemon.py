@@ -90,7 +90,7 @@ def authorized_personnel_only(viewfunc):
 			status = 403
 			headers = None
 
-		if request.headers.get('Accept') in (None, "", "*/*"):
+		if request.headers.get('Accept') in {None, "", "*/*"}:
 			# Return plain text output.
 			return Response(error+"\n", status=status, mimetype='text/plain', headers=headers)
 		else:
@@ -355,9 +355,9 @@ def dns_set_record(qname, rtype="A"):
 			# Get the existing records matching the qname and rtype.
 			return dns_get_records(qname, rtype)
 
-		elif request.method in ("POST", "PUT"):
+		elif request.method in {"POST", "PUT"}:
 			# There is a default value for A/AAAA records.
-			if rtype in ("A", "AAAA") and value == "":
+			if rtype in {"A", "AAAA"} and value == "":
 				value = request.environ.get("HTTP_X_FORWARDED_FOR") # normally REMOTE_ADDR but we're behind nginx as a reverse proxy
 
 			# Cannot add empty records.

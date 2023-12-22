@@ -376,9 +376,9 @@ def scan_mail_log_line(line, collector):
     elif service == "postfix/smtpd":
         if SCAN_BLOCKED:
             scan_postfix_smtpd_line(date, log, collector)
-    elif service in ("postfix/qmgr", "postfix/pickup", "postfix/cleanup", "postfix/scache",
+    elif service in {"postfix/qmgr", "postfix/pickup", "postfix/cleanup", "postfix/scache",
                      "spampd", "postfix/anvil", "postfix/master", "opendkim", "postfix/lmtp",
-                     "postfix/tlsmgr", "anvil"):
+                     "postfix/tlsmgr", "anvil"}:
         # nothing to look at
         return True
     else:
@@ -500,7 +500,7 @@ def add_login(user, date, protocol_name, host, collector):
             data["totals_by_protocol"][protocol_name] += 1
             data["totals_by_protocol_and_host"][(protocol_name, host)] += 1
 
-            if host not in ("127.0.0.1", "::1") or True:
+            if host not in {"127.0.0.1", "::1"} or True:
                 data["activity-by-hour"][protocol_name][date.hour] += 1
 
             collector["logins"][user] = data
@@ -684,7 +684,7 @@ def print_user_table(users, data=None, sub_data=None, activity=None, latest=None
                 data_accum[col] += d[row]
 
         try:
-            if None not in [latest, earliest]:
+            if None not in {latest, earliest}:
                 vert_pos = len(line)
                 e = earliest[row]
                 l = latest[row]
@@ -740,7 +740,7 @@ def print_user_table(users, data=None, sub_data=None, activity=None, latest=None
         else:
             header += l.rjust(max(5, len(l) + 1, col_widths[col]))
 
-    if None not in (latest, earliest):
+    if None not in {latest, earliest}:
         header += " │ timespan   "
 
     lines.insert(0, header.rstrip())
@@ -765,7 +765,7 @@ def print_user_table(users, data=None, sub_data=None, activity=None, latest=None
         footer += temp.format(data_accum[row])
 
     try:
-        if None not in [latest, earliest]:
+        if None not in {latest, earliest}:
             max_l = max(latest)
             min_e = min(earliest)
             timespan = relativedelta(max_l, min_e)
