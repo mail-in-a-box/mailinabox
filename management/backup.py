@@ -7,7 +7,7 @@
 # 4) The stopped services are restarted.
 # 5) STORAGE_ROOT/backup/after-backup is executed if it exists.
 
-import os, os.path, shutil, glob, re, datetime, sys
+import os, os.path, re, datetime, sys
 import dateutil.parser, dateutil.relativedelta, dateutil.tz
 import rtyaml
 from exclusiveprocess import Lock

@@ -4,7 +4,6 @@
 import os, os.path, re, shutil, subprocess, tempfile
 
 from utils import shell, safe_domain_name, sort_domains
-import idna
 
 # SELECTING SSL CERTIFICATES FOR USE IN WEB
 

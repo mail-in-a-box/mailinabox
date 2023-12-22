@@ -4,7 +4,7 @@
 # and mail aliases and restarts nsd.
 ########################################################################
 
-import sys, os, os.path, urllib.parse, datetime, re, hashlib, base64
+import sys, os, os.path, datetime, re, hashlib, base64
 import ipaddress
 import rtyaml
 import dns.resolver

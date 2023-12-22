@@ -9,7 +9,7 @@
 # Python 3 in setup/questions.sh to validate the email
 # address entered by the user.
 
-import subprocess, shutil, os, sqlite3, re
+import os, sqlite3, re
 import utils
 from email_validator import validate_email as validate_email_, EmailNotValidError
 import idna

@@ -1,4 +1,4 @@
-import base64, os, os.path, hmac, json, secrets
+import base64, hmac, json, secrets
 from datetime import timedelta
 
 from expiringdict import ExpiringDict

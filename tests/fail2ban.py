@@ -6,7 +6,7 @@
 # try to log in to.
 ######################################################################
 
-import sys, os, time, functools
+import sys, os, time
 
 # parse command line
 
@@ -163,7 +163,6 @@ def run_test(testfunc, args, count, within_seconds, parallel):
 	# run testfunc sequentially and still get to count requests within
 	# the required time. So we split the requests across threads.
 
-	import requests.exceptions
 	from multiprocessing import Pool
 
 	restart_fail2ban_service()

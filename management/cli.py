@@ -6,7 +6,7 @@
 # root API key. This file is readable only by root, so this
 # tool can only be used as root.
 
-import sys, getpass, urllib.request, urllib.error, json, re, csv
+import sys, getpass, urllib.request, urllib.error, json, csv
 
 def mgmt(cmd, data=None, is_json=False):
 	# The base URL for the management daemon. (Listens on IPv4 only.)

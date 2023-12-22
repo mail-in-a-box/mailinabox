@@ -4,11 +4,10 @@
 # TLS certificates have been signed, etc., and if not tells the user
 # what to do next.
 
-import sys, os, os.path, re, subprocess, datetime, multiprocessing.pool
+import sys, os, os.path, re, datetime, multiprocessing.pool
 import asyncio
 
 import dns.reversename, dns.resolver
-import dateutil.parser, dateutil.tz
 import idna
 import psutil
 import postfix_mta_sts_resolver.resolver

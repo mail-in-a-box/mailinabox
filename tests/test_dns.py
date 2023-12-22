@@ -7,7 +7,7 @@
 # where ipaddr is the IP address of your Mail-in-a-Box
 # and hostname is the domain name to check the DNS for.
 
-import sys, re, difflib
+import sys, re
 import dns.reversename, dns.resolver
 
 if len(sys.argv) < 3:

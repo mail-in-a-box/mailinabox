@@ -11,11 +11,11 @@
 # service mailinabox start # when done debugging, start it up again
 
 import os, os.path, re, json, time
-import multiprocessing.pool, subprocess
+import multiprocessing.pool
 
 from functools import wraps
 
-from flask import Flask, request, render_template, abort, Response, send_from_directory, make_response
+from flask import Flask, request, render_template, Response, send_from_directory, make_response
 
 import auth, utils
 from mailconfig import get_mail_users, get_mail_users_ex, get_admins, add_mail_user, set_mail_password, remove_mail_user
