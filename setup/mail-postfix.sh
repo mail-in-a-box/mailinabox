@@ -80,6 +80,11 @@ tools/editconf.py /etc/postfix/main.cf \
 	bounce_queue_lifetime=1d \
 	policy-spf_time_limit=3600
 
+# Guard against SMTP smuggling
+# This short-term workaround is recommended at https://www.postfix.org/smtp-smuggling.html
+tools/editconf.py /etc/postfix/main.cf \
+	smtpd_data_restrictions=reject_unauth_pipelining
+
 # ### Outgoing Mail
 
 # Enable the 'submission' ports 465 and 587 and tweak their settings.

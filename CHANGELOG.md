@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+Version 67 (December 22, 2023)
+------------------------------
+
+* Guard against a newly published vulnerability called SMTP Smuggling. See https://sec-consult.com/blog/detail/smtp-smuggling-spoofing-e-mails-worldwide/.
+
 Version 66 (December 17, 2023)
 ------------------------------
 
