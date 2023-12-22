@@ -491,7 +491,8 @@ def list_target_files(config):
 				reason = "Unknown error." \
 						"Please check running 'management/backup.py --verify'" \
 						"from mailinabox sources to debug the issue."
-			raise ValueError(f"Connection to rsync host failed: {reason}")
+			msg = f"Connection to rsync host failed: {reason}"
+			raise ValueError(msg)
 
 	elif target.scheme == "s3":
 		import boto3.s3
