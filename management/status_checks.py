@@ -624,7 +624,7 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 			#
 			# But it may not be preferred. Only algorithm 13 is preferred. Warn if any of the
 			# matched zones uses a different algorithm.
-			if set(r[1] for r in matched_ds) == { '13' } and set(r[2] for r in matched_ds) <= { '2', '4' }: # all are alg 13 and digest type 2 or 4
+			if {r[1] for r in matched_ds} == { '13' } and {r[2] for r in matched_ds} <= { '2', '4' }: # all are alg 13 and digest type 2 or 4
 				output.print_ok("DNSSEC 'DS' record is set correctly at registrar.")
 				return
 			elif len([r for r in matched_ds if r[1] == '13' and r[2] in { '2', '4' }]) > 0: # some but not all are alg 13

@@ -361,8 +361,8 @@ def build_zone(domain, domain_properties, additional_records, env, is_zone=True)
 	# non-mail domain and also may include qnames from custom DNS records.
 	# Do this once at the end of generating a zone.
 	if is_zone:
-		qnames_with_a = set(qname for (qname, rtype, value, explanation) in records if rtype in {"A", "AAAA"})
-		qnames_with_mx = set(qname for (qname, rtype, value, explanation) in records if rtype == "MX")
+		qnames_with_a = {qname for (qname, rtype, value, explanation) in records if rtype in {"A", "AAAA"}}
+		qnames_with_mx = {qname for (qname, rtype, value, explanation) in records if rtype == "MX"}
 		for qname in qnames_with_a - qnames_with_mx:
 			# Mark this domain as not sending mail with hard-fail SPF and DMARC records.
 			d = (qname+"." if qname else "") + domain

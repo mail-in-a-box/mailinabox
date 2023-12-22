@@ -99,10 +99,10 @@ def sort_domains(domain_names, env):
 
 def sort_email_addresses(email_addresses, env):
     email_addresses = set(email_addresses)
-    domains = set(email.split("@", 1)[1] for email in email_addresses if "@" in email)
+    domains = {email.split("@", 1)[1] for email in email_addresses if "@" in email}
     ret = []
     for domain in sort_domains(domains, env):
-        domain_emails = set(email for email in email_addresses if email.endswith("@" + domain))
+        domain_emails = {email for email in email_addresses if email.endswith("@" + domain)}
         ret.extend(sorted(domain_emails))
         email_addresses -= domain_emails
     ret.extend(sorted(email_addresses)) # whatever is left
