@@ -124,7 +124,7 @@ def check_service(i, service, env):
 		try:
 			s.connect((ip, service["port"]))
 			return True
-		except OSError as e:
+		except OSError:
 			# timed out or some other odd error
 			return False
 		finally:
@@ -294,7 +294,7 @@ def run_network_checks(env, output):
 	# Stop if we cannot make an outbound connection on port 25. Many residential
 	# networks block outbound port 25 to prevent their network from sending spam.
 	# See if we can reach one of Google's MTAs with a 5-second timeout.
-	code, ret = shell("check_call", ["/bin/nc", "-z", "-w5", "aspmx.l.google.com", "25"], trap=True)
+	_code, ret = shell("check_call", ["/bin/nc", "-z", "-w5", "aspmx.l.google.com", "25"], trap=True)
 	if ret == 0:
 		output.print_ok("Outbound mail (SMTP port 25) is not blocked.")
 	else:

@@ -174,7 +174,7 @@ def logout():
 	try:
 		email, _ = auth_service.authenticate(request, env, logout=True)
 		app.logger.info(f"{email} logged out")
-	except ValueError as e:
+	except ValueError:
 		pass
 	finally:
 		return json_response({ "status": "ok" })

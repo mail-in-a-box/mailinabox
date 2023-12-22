@@ -534,7 +534,7 @@ def list_target_files(config):
 		try:
 			b2_api.authorize_account("production", b2_application_keyid, b2_application_key)
 			bucket = b2_api.get_bucket_by_name(b2_bucket)
-		except NonExistentBucket as e:
+		except NonExistentBucket:
 			msg = "B2 Bucket does not exist. Please double check your information!"
 			raise ValueError(msg)
 		return [(key.file_name, key.size) for key, _ in bucket.ls()]

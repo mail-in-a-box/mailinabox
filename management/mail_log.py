@@ -332,7 +332,7 @@ def scan_mail_log_line(line, collector):
     if not m:
         return True
 
-    date, system, service, log = m.groups()
+    date, _system, service, log = m.groups()
     collector["scan_count"] += 1
 
     # print()
@@ -554,7 +554,7 @@ def scan_postfix_submission_line(date, log, collector):
     m = re.match("([A-Z0-9]+): client=(\S+), sasl_method=(PLAIN|LOGIN), sasl_username=(\S+)(?<!,)", log)
 
     if m:
-        _, client, method, user = m.groups()
+        _, client, _method, user = m.groups()
 
         if user_match(user):
             # Get the user data, or create it if the user is new

@@ -471,7 +471,7 @@ def build_sshfp_records():
 	for key in keys:
 		if key.strip() == "" or key[0] == "#": continue
 		try:
-			host, keytype, pubkey = key.split(" ")
+			_host, keytype, pubkey = key.split(" ")
 			yield "%d %d ( %s )" % (
 				algorithm_number[keytype],
 				2, # specifies we are using SHA-256 on next line
@@ -1049,19 +1049,19 @@ def set_secondary_dns(hostnames, env):
 			if not item.startswith("xfr:"):
 				# Resolve hostname.
 				try:
-					response = resolver.resolve(item, "A")
+					resolver.resolve(item, "A")
 				except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.Timeout):
 					try:
-						response = resolver.resolve(item, "AAAA")
+						resolver.resolve(item, "AAAA")
 					except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.Timeout):
 						raise ValueError("Could not resolve the IP address of %s." % item)
 			else:
 				# Validate IP address.
 				try:
 					if "/" in item[4:]:
-						v = ipaddress.ip_network(item[4:]) # raises a ValueError if there's a problem
+						ipaddress.ip_network(item[4:]) # raises a ValueError if there's a problem
 					else:
-						v = ipaddress.ip_address(item[4:]) # raises a ValueError if there's a problem
+						ipaddress.ip_address(item[4:]) # raises a ValueError if there's a problem
 				except ValueError:
 					raise ValueError("'%s' is not an IPv4 or IPv6 address or subnet." % item[4:])
 

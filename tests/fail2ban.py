@@ -82,7 +82,7 @@ def pop_test():
 		M.user('fakeuser')
 		try:
 			M.pass_('fakepassword')
-		except poplib.error_proto as e:
+		except poplib.error_proto:
 			# Authentication should fail.
 			M = None # don't .quit()
 			return
@@ -133,7 +133,7 @@ def http_test(url, expected_status, postdata=None, qsargs=None, auth=None):
 			headers={'User-Agent': 'Mail-in-a-Box fail2ban tester'},
 			timeout=8,
 			verify=False) # don't bother with HTTPS validation, it may not be configured yet
-	except requests.exceptions.ConnectTimeout as e:
+	except requests.exceptions.ConnectTimeout:
 		raise IsBlocked()
 	except requests.exceptions.ConnectionError as e:
 		if "Connection refused" in str(e):

@@ -449,7 +449,7 @@ def install_cert_copy_file(fn, env):
 	from cryptography.hazmat.primitives import hashes
 	from binascii import hexlify
 	cert = load_pem(load_cert_chain(fn)[0])
-	all_domains, cn = get_certificate_domains(cert)
+	_all_domains, cn = get_certificate_domains(cert)
 	path = "%s-%s-%s.pem" % (
 		safe_domain_name(cn), # common name, which should be filename safe because it is IDNA-encoded, but in case of a malformed cert make sure it's ok to use as a filename
 		cert.not_valid_after.date().isoformat().replace("-", ""), # expiration date
@@ -521,7 +521,7 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 	# First check that the domain name is one of the names allowed by
 	# the certificate.
 	if domain is not None:
-		certificate_names, cert_primary_name = get_certificate_domains(cert)
+		certificate_names, _cert_primary_name = get_certificate_domains(cert)
 
 		# Check that the domain appears among the acceptable names, or a wildcard
 		# form of the domain name (which is a stricter check than the specs but
