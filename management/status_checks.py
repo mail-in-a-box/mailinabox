@@ -268,8 +268,7 @@ def check_free_disk_space(rounded_values, env, output):
 	except:
 		backup_cache_count = 0
 	if backup_cache_count > 1:
-		output.print_warning("The backup cache directory {} has more than one backup target cache. Consider clearing this directory to save disk space."
-			.format(backup_cache_path))
+		output.print_warning(f"The backup cache directory {backup_cache_path} has more than one backup target cache. Consider clearing this directory to save disk space.")
 
 def check_free_memory(rounded_values, env, output):
 	# Check free memory.
@@ -731,9 +730,9 @@ def check_mail_domain(domain, env, output):
 			if policy[1].get("mx") == [env['PRIMARY_HOSTNAME']] and policy[1].get("mode") == "enforce": # policy[0] is the policyid
 				output.print_ok("MTA-STS policy is present.")
 			else:
-				output.print_error("MTA-STS policy is present but has unexpected settings. [{}]".format(policy[1]))
+				output.print_error(f"MTA-STS policy is present but has unexpected settings. [{policy[1]}]")
 		else:
-			output.print_error("MTA-STS policy is missing: {}".format(valid))
+			output.print_error(f"MTA-STS policy is missing: {valid}")
 
 	else:
 		output.print_error("""This domain's DNS MX record is incorrect. It is currently set to '%s' but should be '%s'. Mail will not
@@ -752,9 +751,9 @@ def check_mail_domain(domain, env, output):
 	if dbl is None:
 		output.print_ok("Domain is not blacklisted by dbl.spamhaus.org.")
 	elif dbl == "[timeout]":
-		output.print_warning("Connection to dbl.spamhaus.org timed out. We could not determine whether the domain {} is blacklisted. Please try again later.".format(domain))
+		output.print_warning(f"Connection to dbl.spamhaus.org timed out. We could not determine whether the domain {domain} is blacklisted. Please try again later.")
 	elif dbl == "[Not Set]":
-		output.print_warning("Could not connect to dbl.spamhaus.org. We could not determine whether the domain {} is blacklisted. Please try again later.".format(domain))
+		output.print_warning(f"Could not connect to dbl.spamhaus.org. We could not determine whether the domain {domain} is blacklisted. Please try again later.")
 	else:
 		output.print_error("""This domain is listed in the Spamhaus Domain Block List (code %s),
 			which may prevent recipients from receiving your mail.

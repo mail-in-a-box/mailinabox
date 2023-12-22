@@ -120,8 +120,7 @@ def scan_mail_log(env):
     except ImportError:
         pass
 
-    print("Scanning logs from {:%Y-%m-%d %H:%M:%S} to {:%Y-%m-%d %H:%M:%S}".format(
-        START_DATE, END_DATE)
+    print(f"Scanning logs from {START_DATE:%Y-%m-%d %H:%M:%S} to {END_DATE:%Y-%m-%d %H:%M:%S}"
     )
 
     # Scan the lines in the log files until the date goes out of range
@@ -227,7 +226,7 @@ def scan_mail_log(env):
             ],
             sub_data=[
                 ("Protocol and Source", [[
-                    "{} {}: {} times".format(protocol_name, host, count)
+                    f"{protocol_name} {host}: {count} times"
                     for (protocol_name, host), count
                     in sorted(u["totals_by_protocol_and_host"].items(), key=lambda kv:-kv[1])
                   ] for u in data.values()])
@@ -672,7 +671,7 @@ def print_user_table(users, data=None, sub_data=None, activity=None, latest=None
                 col_str = str_temp.format(d[row][:31] + "…" if len(d[row]) > 32 else d[row])
                 col_left[col] = True
             elif isinstance(d[row], datetime.datetime):
-                col_str = "{:<20}".format(str(d[row]))
+                col_str = f"{str(d[row]):<20}"
                 col_left[col] = True
             else:
                 temp = "{:>%s}" % max(5, len(l) + 1, len(str(d[row])) + 1)
@@ -844,7 +843,7 @@ if __name__ == "__main__":
         END_DATE = args.enddate
         if args.timespan == 'today':
             args.timespan = 'day'
-        print("Setting end date to {}".format(END_DATE))
+        print(f"Setting end date to {END_DATE}")
 
     START_DATE = END_DATE - TIME_DELTAS[args.timespan]
 

@@ -534,7 +534,7 @@ $TTL 86400          ; default time to live
 		zone += value + "\n"
 
 	# Append a stable hash of DNSSEC signing keys in a comment.
-	zone += "\n; DNSSEC signing keys hash: {}\n".format(hash_dnssec_keys(domain, env))
+	zone += f"\n; DNSSEC signing keys hash: {hash_dnssec_keys(domain, env)}\n"
 
 	# DNSSEC requires re-signing a zone periodically. That requires
 	# bumping the serial number even if no other records have changed.
@@ -780,7 +780,7 @@ def write_opendkim_tables(domains, env):
 		# So we must have a separate KeyTable entry for each domain.
 		"SigningTable":
 			"".join(
-				"*@{domain} {domain}\n".format(domain=domain)
+				f"*@{domain} {domain}\n"
 				for domain in domains
 			),
 
@@ -789,7 +789,7 @@ def write_opendkim_tables(domains, env):
 		# signing domain must match the sender's From: domain.
 		"KeyTable":
 			"".join(
-				"{domain} {domain}:mail:{key_file}\n".format(domain=domain, key_file=opendkim_key_file)
+				f"{domain} {domain}:mail:{opendkim_key_file}\n"
 				for domain in domains
 			),
 	}

@@ -80,7 +80,7 @@ def authorized_personnel_only(viewfunc):
 		# Not authorized. Return a 401 (send auth) and a prompt to authorize by default.
 		status = 401
 		headers = {
-			'WWW-Authenticate': 'Basic realm="{0}"'.format(auth_service.auth_realm),
+			'WWW-Authenticate': f'Basic realm="{auth_service.auth_realm}"',
 			'X-Reason': error,
 		}
 
@@ -164,7 +164,7 @@ def login():
 		"api_key": auth_service.create_session_key(email, env, type='login'),
 	}
 
-	app.logger.info("New login session created for {}".format(email))
+	app.logger.info(f"New login session created for {email}")
 
 	# Return.
 	return json_response(resp)
@@ -173,7 +173,7 @@ def login():
 def logout():
 	try:
 		email, _ = auth_service.authenticate(request, env, logout=True)
-		app.logger.info("{} logged out".format(email))
+		app.logger.info(f"{email} logged out")
 	except ValueError as e:
 		pass
 	finally:

@@ -482,16 +482,16 @@ def list_target_files(config):
 			if 'Permission denied (publickey).' in listing:
 				reason = "Invalid user or check you correctly copied the SSH key."
 			elif 'No such file or directory' in listing:
-				reason = "Provided path {} is invalid.".format(target_path)
+				reason = f"Provided path {target_path} is invalid."
 			elif 'Network is unreachable' in listing:
-				reason = "The IP address {} is unreachable.".format(target.hostname)
+				reason = f"The IP address {target.hostname} is unreachable."
 			elif 'Could not resolve hostname' in listing:
-				reason = "The hostname {} cannot be resolved.".format(target.hostname)
+				reason = f"The hostname {target.hostname} cannot be resolved."
 			else:
 				reason = "Unknown error." \
 						"Please check running 'management/backup.py --verify'" \
 						"from mailinabox sources to debug the issue."
-			raise ValueError("Connection to rsync host failed: {}".format(reason))
+			raise ValueError(f"Connection to rsync host failed: {reason}")
 
 	elif target.scheme == "s3":
 		import boto3.s3
@@ -625,7 +625,7 @@ if __name__ == "__main__":
 	elif sys.argv[-1] == "--list":
 		# List the saved backup files.
 		for fn, size in list_target_files(get_backup_config(load_environment())):
-			print("{}\t{}".format(fn, size))
+			print(f"{fn}\t{size}")
 
 	elif sys.argv[-1] == "--status":
 		# Show backup status.
