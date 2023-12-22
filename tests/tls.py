@@ -94,8 +94,8 @@ def sslyze(opts, port, ok_ciphers):
 		# Trim output to make better for storing in git.
 		if "SCAN RESULTS FOR" not in out:
 			# Failed. Just output the error.
-			out = re.sub("[\w\W]*CHECKING HOST\(S\) AVAILABILITY\n\s*-+\n", "", out) # chop off header that shows the host we queried
-		out = re.sub("[\w\W]*SCAN RESULTS FOR.*\n\s*-+\n", "", out) # chop off header that shows the host we queried
+			out = re.sub("[\\w\\W]*CHECKING HOST\\(S\\) AVAILABILITY\n\\s*-+\n", "", out) # chop off header that shows the host we queried
+		out = re.sub("[\\w\\W]*SCAN RESULTS FOR.*\n\\s*-+\n", "", out) # chop off header that shows the host we queried
 		out = re.sub("SCAN COMPLETED IN .*", "", out)
 		out = out.rstrip(" \n-") + "\n"
 
@@ -105,8 +105,8 @@ def sslyze(opts, port, ok_ciphers):
 		# Pull out the accepted ciphers list for each SSL/TLS protocol
 		# version outputted.
 		accepted_ciphers = set()
-		for ciphers in re.findall(" Accepted:([\w\W]*?)\n *\n", out):
-			accepted_ciphers |= set(re.findall("\n\s*(\S*)", ciphers))
+		for ciphers in re.findall(" Accepted:([\\w\\W]*?)\n *\n", out):
+			accepted_ciphers |= set(re.findall("\n\\s*(\\S*)", ciphers))
 
 		# Compare to what Mozilla recommends, for a given modernness-level.
 		print("  Should Not Offer: " + (", ".join(sorted(accepted_ciphers-set(ok_ciphers))) or "(none -- good)"))
