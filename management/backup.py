@@ -226,7 +226,7 @@ def get_duplicity_additional_args(env):
 			port = 22
 		if port is None:
 			port = 22
-						
+
 		return [
 			f"--ssh-options='-i /root/.ssh/id_rsa_miab -p {port}'",
 			f"--rsync-options='-e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p {port} -i /root/.ssh/id_rsa_miab\"'",
@@ -497,7 +497,7 @@ def list_target_files(config):
 	elif target.scheme == "s3":
 		import boto3.s3
 		from botocore.exceptions import ClientError
-		
+
 		# separate bucket from path in target
 		bucket = target.path[1:].split('/')[0]
 		path = '/'.join(target.path[1:].split('/')[1:]) + '/'
@@ -526,7 +526,7 @@ def list_target_files(config):
 		from b2sdk.v1.exception import NonExistentBucket
 		info = InMemoryAccountInfo()
 		b2_api = B2Api(info)
-		
+
 		# Extract information from target
 		b2_application_keyid = target.netloc[:target.netloc.index(':')]
 		b2_application_key = urllib.parse.unquote(target.netloc[target.netloc.index(':')+1:target.netloc.index('@')])

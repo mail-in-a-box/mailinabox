@@ -1044,7 +1044,7 @@ def set_secondary_dns(hostnames, env):
 		resolver = dns.resolver.get_default_resolver()
 		resolver.timeout = 5
 		resolver.lifetime = 5
-		
+
 		for item in hostnames:
 			if not item.startswith("xfr:"):
 				# Resolve hostname.

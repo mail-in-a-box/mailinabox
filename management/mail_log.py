@@ -344,7 +344,7 @@ def scan_mail_log_line(line, collector):
 
     # Replaced the dateutil parser for a less clever way of parser that is roughly 4 times faster.
     # date = dateutil.parser.parse(date)
-    
+
     # strptime fails on Feb 29 with ValueError: day is out of range for month if correct year is not provided.
     # See https://bugs.python.org/issue26460
     date = datetime.datetime.strptime(str(NOW.year) + ' ' + date, '%Y %b %d %H:%M:%S')
