@@ -489,7 +489,7 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 	check_alias_exists("Hostmaster contact address", "hostmaster@" + domain, env, output)
 
 def check_alias_exists(alias_name, alias, env, output):
-	mail_aliases = dict([(address, receivers) for address, receivers, *_ in get_mail_aliases(env)])
+	mail_aliases = {address: receivers for address, receivers, *_ in get_mail_aliases(env)}
 	if alias in mail_aliases:
 		if mail_aliases[alias]:
 			output.print_ok("{} exists as a mail alias. [{} ↦ {}]".format(alias_name, alias, mail_aliases[alias]))
