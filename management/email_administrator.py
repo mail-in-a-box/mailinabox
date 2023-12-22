@@ -37,7 +37,7 @@ msg = MIMEMultipart('alternative')
 # In Python 3.6:
 #msg = Message()
 
-msg['From'] = "\"{}\" <{}>".format(env['PRIMARY_HOSTNAME'], admin_addr)
+msg['From'] = '"{}" <{}>'.format(env['PRIMARY_HOSTNAME'], admin_addr)
 msg['To'] = admin_addr
 msg['Subject'] = "[{}] {}".format(env['PRIMARY_HOSTNAME'], subject)
 

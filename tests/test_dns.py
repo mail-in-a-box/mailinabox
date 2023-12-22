@@ -27,10 +27,10 @@ def test(server, description):
 		("ns2." + primary_hostname, "A", ipaddr),
 		("www." + hostname, "A", ipaddr),
 		(hostname, "MX", "10 " + primary_hostname + "."),
-		(hostname, "TXT", "\"v=spf1 mx -all\""),
-		("mail._domainkey." + hostname, "TXT", "\"v=DKIM1; k=rsa; s=email; \" \"p=__KEY__\""),
+		(hostname, "TXT", '"v=spf1 mx -all"'),
+		("mail._domainkey." + hostname, "TXT", '"v=DKIM1; k=rsa; s=email; " "p=__KEY__"'),
 		#("_adsp._domainkey." + hostname, "TXT", "\"dkim=all\""),
-		("_dmarc." + hostname, "TXT", "\"v=DMARC1; p=quarantine;\""),
+		("_dmarc." + hostname, "TXT", '"v=DMARC1; p=quarantine;"'),
 	]
 	return test2(tests, server, description)
 
@@ -59,7 +59,7 @@ def test2(tests, server, description):
 			response = ["[no value]"]
 		response = ";".join(str(r) for r in response)
 		response = re.sub(r"(\"p=).*(\")", r"\1__KEY__\2", response) # normalize DKIM key
-		response = response.replace("\"\" ", "") # normalize TXT records (DNSSEC signing inserts empty text string components)
+		response = response.replace('"" ', "") # normalize TXT records (DNSSEC signing inserts empty text string components)
 
 		# is it right?
 		if response == expected_answer:

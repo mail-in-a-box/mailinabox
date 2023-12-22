@@ -11,7 +11,7 @@ import sys, os, time
 # parse command line
 
 if len(sys.argv) != 4:
-	print("Usage: tests/fail2ban.py \"ssh user@hostname\" hostname owncloud_user")
+	print('Usage: tests/fail2ban.py "ssh user@hostname" hostname owncloud_user')
 	sys.exit(1)
 
 ssh_command, hostname, owncloud_user = sys.argv[1:4]
@@ -153,7 +153,7 @@ def restart_fail2ban_service(final=False):
 	if not final:
 		# Stop recidive jails during testing.
 		command += " && sudo fail2ban-client stop recidive"
-	os.system("{} \"{}\"".format(ssh_command, command))
+	os.system('{} "{}"'.format(ssh_command, command))
 
 def testfunc_runner(i, testfunc, *args):
 	print(i+1, end=" ", flush=True)
