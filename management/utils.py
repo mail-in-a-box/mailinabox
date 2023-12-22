@@ -108,11 +108,13 @@ def sort_email_addresses(email_addresses, env):
     ret.extend(sorted(email_addresses)) # whatever is left
     return ret
 
-def shell(method, cmd_args, env={}, capture_stderr=False, return_bytes=False, trap=False, input=None):
+def shell(method, cmd_args, env=None, capture_stderr=False, return_bytes=False, trap=False, input=None):
     # A safe way to execute processes.
     # Some processes like apt-get require being given a sane PATH.
     import subprocess
 
+    if env is None:
+        env = {}
     env.update({ "PATH": "/sbin:/bin:/usr/sbin:/usr/bin" })
     kwargs = {
         'env': env,
