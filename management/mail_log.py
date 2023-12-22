@@ -670,7 +670,7 @@ def print_user_table(users, data=None, sub_data=None, activity=None, latest=None
                 col_str = str_temp.format(d[row][:31] + "…" if len(d[row]) > 32 else d[row])
                 col_left[col] = True
             elif isinstance(d[row], datetime.datetime):
-                col_str = f"{str(d[row]):<20}"
+                col_str = f"{d[row]!s:<20}"
                 col_left[col] = True
             else:
                 temp = "{:>%s}" % max(5, len(l) + 1, len(str(d[row])) + 1)

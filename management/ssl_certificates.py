@@ -537,7 +537,7 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 			with open(ssl_private_key, 'rb') as f:
 				priv_key = load_pem(f.read())
 		except ValueError as e:
-			return (f"The private key file {ssl_private_key} is not a private key file: {str(e)}", None)
+			return (f"The private key file {ssl_private_key} is not a private key file: {e!s}", None)
 
 		if not isinstance(priv_key, RSAPrivateKey):
 			return ("The private key file %s is not a private key file." % ssl_private_key, None)
