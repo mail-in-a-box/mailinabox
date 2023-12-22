@@ -636,6 +636,7 @@ def print_time_table(labels, data, do_print=True):
 
     if do_print:
         print("\n".join(lines))
+        return None
     else:
         return lines
 

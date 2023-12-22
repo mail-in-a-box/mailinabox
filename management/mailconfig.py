@@ -491,6 +491,7 @@ def add_mail_alias(address, forwards_to, permitted_senders, env, update_if_exist
 	if do_kick:
 		# Update things in case any new domains are added.
 		return kick(env, return_status)
+	return None
 
 def remove_mail_alias(address, env, do_kick=True):
 	# convert Unicode domain to IDNA
@@ -506,6 +507,7 @@ def remove_mail_alias(address, env, do_kick=True):
 	if do_kick:
 		# Update things in case any domains are removed.
 		return kick(env, "alias removed")
+	return None
 
 def add_auto_aliases(aliases, env):
 	conn, c = open_database(env, with_connection=True)
