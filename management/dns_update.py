@@ -223,7 +223,7 @@ def build_zone(domain, domain_properties, additional_records, env, is_zone=True)
 			subdomain_qname = subdomain[0:-len("." + domain)]
 			subzone = build_zone(subdomain, domain_properties, additional_records, env, is_zone=False)
 			for child_qname, child_rtype, child_value, child_explanation in subzone:
-				if child_qname == None:
+				if child_qname is None:
 					child_qname = subdomain_qname
 				else:
 					child_qname += "." + subdomain_qname
@@ -968,7 +968,7 @@ def set_custom_dns_record(qname, rtype, value, action, env):
 				# Drop this record.
 				made_change = True
 				continue
-			if value == None and (_qname, _rtype) == (qname, rtype):
+			if value is None and (_qname, _rtype) == (qname, rtype):
 				# Drop all qname-rtype records.
 				made_change = True
 				continue
@@ -999,7 +999,7 @@ def get_secondary_dns(custom_dns, mode=None):
 		if qname != '_secondary_nameserver': continue
 		for hostname in value.split(" "):
 			hostname = hostname.strip()
-			if mode == None:
+			if mode is None:
 				# Just return the setting.
 				values.append(hostname)
 				continue
@@ -1090,7 +1090,7 @@ def build_recommended_dns(env):
 
 		# expand qnames
 		for i in range(len(records)):
-			qname = domain if records[i][0] == None else records[i][0] + "." + domain
+			qname = domain if records[i][0] is None else records[i][0] + "." + domain
 
 			records[i] = {
 				"qname": qname,

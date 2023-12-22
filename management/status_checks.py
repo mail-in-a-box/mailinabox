@@ -688,7 +688,7 @@ def check_mail_domain(domain, env, output):
 		# of priority-host pairs.
 		mxhost = mx.split('; ')[0].split(' ')[1]
 
-	if mxhost == None:
+	if mxhost is None:
 		# A missing MX record is okay on the primary hostname because
 		# the primary hostname's A record (the MX fallback) is... itself,
 		# which is what we want the MX to be.
@@ -701,7 +701,7 @@ def check_mail_domain(domain, env, output):
 		else:
 			domain_a = query_dns(domain, "A", nxdomain=None)
 			primary_a = query_dns(env['PRIMARY_HOSTNAME'], "A", nxdomain=None)
-			if domain_a != None and domain_a == primary_a:
+			if domain_a is not None and domain_a == primary_a:
 				output.print_ok("Domain's email is directed to this domain. [{} has no MX record but its A record is OK]".format(domain))
 			else:
 				output.print_error("""This domain's DNS MX record is not set. It should be '{}'. Mail will not
