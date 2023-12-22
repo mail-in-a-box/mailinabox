@@ -192,8 +192,7 @@ def get_mail_aliases(env):
 	aliases = { row[0]: row for row in c.fetchall() } # make dict
 
 	# put in a canonical order: sort by domain, then by email address lexicographically
-	aliases = [ aliases[address] for address in utils.sort_email_addresses(aliases.keys(), env) ]
-	return aliases
+	return [ aliases[address] for address in utils.sort_email_addresses(aliases.keys(), env) ]
 
 def get_mail_aliases_ex(env):
 	# Returns a complex data structure of all mail aliases, similar

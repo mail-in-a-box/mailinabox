@@ -257,8 +257,7 @@ def get_duplicity_env_vars(env):
 	return env
 
 def get_target_type(config):
-	protocol = config["target"].split(":")[0]
-	return protocol
+	return config["target"].split(":")[0]
 
 def perform_backup(full_backup):
 	env = load_environment()

@@ -81,7 +81,7 @@ def sort_domains(domain_names, env):
       ))
 
     # Now sort the domain names that fall within each zone.
-    domain_names = sorted(domain_names,
+    return sorted(domain_names,
       key = lambda d : (
         # First by zone.
         zone_domains.index(zones[d]),
@@ -96,7 +96,6 @@ def sort_domains(domain_names, env):
         list(reversed(d.split("."))),
       ))
 
-    return domain_names
 
 def sort_email_addresses(email_addresses, env):
     email_addresses = set(email_addresses)

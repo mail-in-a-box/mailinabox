@@ -45,9 +45,8 @@ def get_web_domains(env, include_www_redirects=True, include_auto=True, exclude_
 	domains.add(env['PRIMARY_HOSTNAME'])
 
 	# Sort the list so the nginx conf gets written in a stable order.
-	domains = sort_domains(domains, env)
+	return sort_domains(domains, env)
 
-	return domains
 
 def get_domains_with_a_records(env):
 	domains = set()
@@ -225,9 +224,8 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 	nginx_conf = nginx_conf.replace("$ROOT", root)
 	nginx_conf = nginx_conf.replace("$SSL_KEY", tls_cert["private-key"])
 	nginx_conf = nginx_conf.replace("$SSL_CERTIFICATE", tls_cert["certificate"])
-	nginx_conf = nginx_conf.replace("$REDIRECT_DOMAIN", re.sub(r"^www\.", "", domain)) # for default www redirects to parent domain
+	return nginx_conf.replace("$REDIRECT_DOMAIN", re.sub(r"^www\.", "", domain)) # for default www redirects to parent domain
 
-	return nginx_conf
 
 def get_web_root(domain, env, test_exists=True):
 	# Try STORAGE_ROOT/web/domain_name if it exists, but fall back to STORAGE_ROOT/web/default.
