@@ -9,6 +9,7 @@ import sys, os, os.path, glob, re, shutil
 
 sys.path.insert(0, 'management')
 from utils import load_environment, save_environment, shell
+import contextlib
 
 def migration_1(env):
 	# Re-arrange where we store SSL certificates. There was a typo also.
@@ -31,10 +32,8 @@ def migration_1(env):
 			move_file(sslfn, domain_name, file_type)
 
 	# Move the old domains directory if it is now empty.
-	try:
+	with contextlib.suppress(Exception):
 		os.rmdir(os.path.join( env["STORAGE_ROOT"], 'ssl/domains'))
-	except:
-		pass
 
 def migration_2(env):
 	# Delete the .dovecot_sieve script everywhere. This was formerly a copy of our spam -> Spam

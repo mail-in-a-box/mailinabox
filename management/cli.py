@@ -7,6 +7,7 @@
 # tool can only be used as root.
 
 import sys, getpass, urllib.request, urllib.error, json, csv
+import contextlib
 
 def mgmt(cmd, data=None, is_json=False):
 	# The base URL for the management daemon. (Listens on IPv4 only.)
@@ -19,10 +20,8 @@ def mgmt(cmd, data=None, is_json=False):
 		response = urllib.request.urlopen(req)
 	except urllib.error.HTTPError as e:
 		if e.code == 401:
-			try:
+			with contextlib.suppress(Exception):
 				print(e.read().decode("utf8"))
-			except:
-				pass
 			print("The management daemon refused access. The API key file may be out of sync. Try 'service mailinabox restart'.", file=sys.stderr)
 		elif hasattr(e, 'read'):
 			print(e.read().decode('utf8'), file=sys.stderr)
