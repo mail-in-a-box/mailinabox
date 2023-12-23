@@ -619,10 +619,7 @@ def print_time_table(labels, data, do_print=True):
     data.insert(0, [str(h) for h in range(24)])
 
     temp = "│ {:<%d} " % max(len(l) for l in labels)
-    lines = []
-
-    for label in labels:
-        lines.append(temp.format(label))
+    lines = [temp.format(label) for label in labels]
 
     for h in range(24):
         max_len = max(len(str(d[h])) for d in data)

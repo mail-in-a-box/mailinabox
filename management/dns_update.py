@@ -49,9 +49,7 @@ def get_dns_zones(env):
 			zone_domains.add(domain)
 
 	# Make a nice and safe filename for each domain.
-	zonefiles = []
-	for domain in zone_domains:
-		zonefiles.append([domain, safe_domain_name(domain) + ".txt"])
+	zonefiles = [[domain, safe_domain_name(domain) + ".txt"] for domain in zone_domains]
 
 	# Sort the list so that the order is nice and so that nsd.conf has a
 	# stable order so we don't rewrite the file & restart the service
@@ -195,8 +193,7 @@ def build_zone(domain, domain_properties, additional_records, env, is_zone=True)
 		# User may provide one or more additional nameservers
 		secondary_ns_list = get_secondary_dns(additional_records, mode="NS") \
 			or ["ns2." + env["PRIMARY_HOSTNAME"]]
-		for secondary_ns in secondary_ns_list:
-			records.append((None,  "NS", secondary_ns+'.', False))
+		records.extend((None,  "NS", secondary_ns+'.', False) for secondary_ns in secondary_ns_list)
 
 
 	# In PRIMARY_HOSTNAME...
@@ -213,8 +210,7 @@ def build_zone(domain, domain_properties, additional_records, env, is_zone=True)
 		records.append(("_443._tcp", "TLSA", build_tlsa_record(env), "Optional. When DNSSEC is enabled, provides out-of-band HTTPS certificate validation for a few web clients that support it."))
 
 		# Add a SSHFP records to help SSH key validation. One per available SSH key on this system.
-		for value in build_sshfp_records():
-			records.append((None, "SSHFP", value, "Optional. Provides an out-of-band method for verifying an SSH key before connecting. Use 'VerifyHostKeyDNS yes' (or 'VerifyHostKeyDNS ask') when connecting with ssh."))
+		records.extend((None, "SSHFP", value, "Optional. Provides an out-of-band method for verifying an SSH key before connecting. Use 'VerifyHostKeyDNS yes' (or 'VerifyHostKeyDNS ask') when connecting with ssh.") for value in build_sshfp_records())
 
 	# Add DNS records for any subdomains of this domain. We should not have a zone for
 	# both a domain and one of its subdomains.
