@@ -154,12 +154,11 @@ def check_service(i, service, env):
 		if not running and service["port"] in {80, 443}:
 			output.print_line(shell('check_output', ['nginx', '-t'], capture_stderr=True, trap=True)[1].strip())
 
+	# Service should be running locally.
+	elif try_connect("127.0.0.1"):
+		running = True
 	else:
-		# Service should be running locally.
-		if try_connect("127.0.0.1"):
-			running = True
-		else:
-			output.print_error("%s is not running (port %d)." % (service['name'], service['port']))
+		output.print_error("%s is not running (port %d)." % (service['name'], service['port']))
 
 	# Flag if local DNS is not running.
 	if not running and service["port"] == 53 and service["public"] is False:
