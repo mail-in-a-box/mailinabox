@@ -678,9 +678,7 @@ def check_mail_domain(domain, env, output):
 	recommended_mx = "10 " + env['PRIMARY_HOSTNAME']
 	mx = query_dns(domain, "MX", nxdomain=None)
 
-	if mx is None:
-		mxhost = None
-	elif mx == "[timeout]":
+	if mx is None or mx == "[timeout]":
 		mxhost = None
 	else:
 		# query_dns returns a semicolon-delimited list
