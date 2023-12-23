@@ -68,7 +68,7 @@ def disable_mfa(email, mfa_id, env):
 	return c.rowcount > 0
 
 def validate_totp_secret(secret):
-	if type(secret) != str or secret.strip() == "":
+	if not isinstance(secret, str) or secret.strip() == "":
 		msg = "No secret provided."
 		raise ValueError(msg)
 	if len(secret) != 32:

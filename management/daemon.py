@@ -490,7 +490,7 @@ def totp_post_enable():
 	secret = request.form.get('secret')
 	token = request.form.get('token')
 	label = request.form.get('label')
-	if type(token) != str:
+	if not isinstance(token, str):
 		return ("Bad Input", 400)
 	try:
 		validate_totp_secret(secret)
