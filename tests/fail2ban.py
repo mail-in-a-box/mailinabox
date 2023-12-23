@@ -181,7 +181,7 @@ def run_test(testfunc, args, count, within_seconds, parallel):
 		# Distribute the requests across the pool.
 		asyncresults = []
 		for i in range(count):
-			ar = p.apply_async(testfunc_runner, [i, testfunc] + list(args))
+			ar = p.apply_async(testfunc_runner, [i, testfunc, *list(args)])
 			asyncresults.append(ar)
 
 		# Wait for all runs to finish.

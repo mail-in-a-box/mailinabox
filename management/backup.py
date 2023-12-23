@@ -59,7 +59,7 @@ def backup_status(env):
 		"--archive-dir", backup_cache_dir,
 		"--gpg-options", "'--cipher-algo=AES256'",
 		"--log-fd", "1",
-		] + get_duplicity_additional_args(env) + [
+		*get_duplicity_additional_args(env),
 		get_duplicity_target_url(config)
 		],
 		get_duplicity_env_vars(env),
@@ -322,8 +322,8 @@ def perform_backup(full_backup):
 			"--exclude", backup_root,
 			"--volsize", "250",
 			"--gpg-options", "'--cipher-algo=AES256'",
-			"--allow-source-mismatch"
-			] + get_duplicity_additional_args(env) + [
+			"--allow-source-mismatch",
+			*get_duplicity_additional_args(env),
 			env["STORAGE_ROOT"],
 			get_duplicity_target_url(config),
 			],
@@ -344,7 +344,7 @@ def perform_backup(full_backup):
 		"--verbosity", "error",
 		"--archive-dir", backup_cache_dir,
 		"--force",
-		] + get_duplicity_additional_args(env) + [
+		*get_duplicity_additional_args(env),
 		get_duplicity_target_url(config)
 		],
 		get_duplicity_env_vars(env))
@@ -360,7 +360,7 @@ def perform_backup(full_backup):
 		"--verbosity", "error",
 		"--archive-dir", backup_cache_dir,
 		"--force",
-		] + get_duplicity_additional_args(env) + [
+		*get_duplicity_additional_args(env),
 		get_duplicity_target_url(config)
 		],
 		get_duplicity_env_vars(env))
@@ -399,7 +399,7 @@ def run_duplicity_verification():
 		"--compare-data",
 		"--archive-dir", backup_cache_dir,
 		"--exclude", backup_root,
-		] + get_duplicity_additional_args(env) + [
+		*get_duplicity_additional_args(env),
 		get_duplicity_target_url(config),
 		env["STORAGE_ROOT"],
 	], get_duplicity_env_vars(env))
@@ -412,9 +412,9 @@ def run_duplicity_restore(args):
 		"/usr/bin/duplicity",
 		"restore",
 		"--archive-dir", backup_cache_dir,
-		] + get_duplicity_additional_args(env) + [
-		get_duplicity_target_url(config)
-		] + args,
+		*get_duplicity_additional_args(env),
+		get_duplicity_target_url(config),
+		*args],
 		get_duplicity_env_vars(env))
 
 def print_duplicity_command():
@@ -426,7 +426,7 @@ def print_duplicity_command():
 		print(f"export {k}={shlex.quote(v)}")
 	print("duplicity", "{command}", shlex.join([
 		"--archive-dir", backup_cache_dir,
-		] + get_duplicity_additional_args(env) + [
+		*get_duplicity_additional_args(env),
 		get_duplicity_target_url(config)
 		]))
 

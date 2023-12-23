@@ -215,7 +215,7 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 	# Combine the pieces. Iteratively place each template into the "# ADDITIONAL DIRECTIVES HERE" placeholder
 	# of the previous template.
 	nginx_conf = "# ADDITIONAL DIRECTIVES HERE\n"
-	for t in templates + [nginx_conf_extra]:
+	for t in [*templates, nginx_conf_extra]:
 		nginx_conf = re.sub("[ \t]*# ADDITIONAL DIRECTIVES HERE *\n", t, nginx_conf)
 
 	# Replace substitution strings in the template & return.

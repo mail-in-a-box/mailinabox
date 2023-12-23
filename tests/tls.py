@@ -88,7 +88,7 @@ def sslyze(opts, port, ok_ciphers):
 
 	try:
 		# Execute SSLyze.
-		out = subprocess.check_output([SSLYZE] + common_opts + opts + [connection_string])
+		out = subprocess.check_output([SSLYZE, *common_opts, *opts, connection_string])
 		out = out.decode("utf8")
 
 		# Trim output to make better for storing in git.

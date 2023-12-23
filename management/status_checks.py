@@ -518,7 +518,7 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 	secondary_ns = custom_secondary_ns or ["ns2." + env['PRIMARY_HOSTNAME']]
 
 	existing_ns = query_dns(domain, "NS")
-	correct_ns = "; ".join(sorted(["ns1." + env['PRIMARY_HOSTNAME']] + secondary_ns))
+	correct_ns = "; ".join(sorted(["ns1." + env["PRIMARY_HOSTNAME"], *secondary_ns]))
 	ip = query_dns(domain, "A")
 
 	probably_external_dns = False
