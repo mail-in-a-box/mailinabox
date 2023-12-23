@@ -167,7 +167,7 @@ def migration_12(env):
                         dropcmd = "DROP TABLE %s" % table
                         c.execute(dropcmd)
                     except:
-                        print("Failed to drop table", table, e)
+                        print("Failed to drop table", table)
             # Save.
             conn.commit()
             conn.close()
