@@ -212,7 +212,7 @@ def run_migrations():
 	migration_id_file = os.path.join(env['STORAGE_ROOT'], 'mailinabox.version')
 	migration_id = None
 	if os.path.exists(migration_id_file):
-		with open(migration_id_file) as f:
+		with open(migration_id_file, encoding='utf-8') as f:
 			migration_id = f.read().strip()
 
 	if migration_id is None:
@@ -253,7 +253,7 @@ def run_migrations():
 
 		# Write out our current version now. Do this sooner rather than later
 		# in case of any problems.
-		with open(migration_id_file, "w") as f:
+		with open(migration_id_file, "w", encoding='utf-8') as f:
 			f.write(str(ourver) + "\n")
 
 		# Delete the legacy location of this field.

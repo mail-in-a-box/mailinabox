@@ -185,7 +185,7 @@ def get_passphrase(env):
 	# only needs to be 43 base64-characters to match AES256's key
 	# length of 32 bytes.
 	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
-	with open(os.path.join(backup_root, 'secret_key.txt')) as f:
+	with open(os.path.join(backup_root, 'secret_key.txt'), encoding="utf-8") as f:
 		passphrase = f.readline().strip()
 	if len(passphrase) < 43: raise Exception("secret_key.txt's first line is too short!")
 
@@ -580,7 +580,7 @@ def get_backup_config(env, for_save=False, for_ui=False):
 
 	# Merge in anything written to custom.yaml.
 	try:
-		with open(os.path.join(backup_root, 'custom.yaml')) as f:
+		with open(os.path.join(backup_root, 'custom.yaml'), encoding="utf-8") as f:
 			custom_config = rtyaml.load(f)
 		if not isinstance(custom_config, dict): raise ValueError # caught below
 		config.update(custom_config)
@@ -606,14 +606,14 @@ def get_backup_config(env, for_save=False, for_ui=False):
 		config["target"] = "file://" + config["file_target_directory"]
 	ssh_pub_key = os.path.join('/root', '.ssh', 'id_rsa_miab.pub')
 	if os.path.exists(ssh_pub_key):
-		with open(ssh_pub_key) as f:
+		with open(ssh_pub_key, encoding="utf-8") as f:
 			config["ssh_pub_key"] = f.read()
 
 	return config
 
 def write_backup_config(env, newconfig):
 	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
-	with open(os.path.join(backup_root, 'custom.yaml'), "w") as f:
+	with open(os.path.join(backup_root, 'custom.yaml'), "w", encoding="utf-8") as f:
 		f.write(rtyaml.dump(newconfig))
 
 if __name__ == "__main__":

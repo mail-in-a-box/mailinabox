@@ -14,13 +14,13 @@ def load_env_vars_from_file(fn):
     # Load settings from a KEY=VALUE file.
     import collections
     env = collections.OrderedDict()
-    with open(fn)  as f:
+    with open(fn, encoding="utf-8")  as f:
         for line in f:
             env.setdefault(*line.strip().split("=", 1))
     return env
 
 def save_environment(env):
-    with open("/etc/mailinabox.conf", "w") as f:
+    with open("/etc/mailinabox.conf", "w", encoding="utf-8") as f:
         for k, v in env.items():
             f.write(f"{k}={v}\n")
 
@@ -29,14 +29,14 @@ def save_environment(env):
 def write_settings(config, env):
     import rtyaml
     fn = os.path.join(env['STORAGE_ROOT'], 'settings.yaml')
-    with open(fn, "w") as f:
+    with open(fn, "w", encoding="utf-8") as f:
         f.write(rtyaml.dump(config))
 
 def load_settings(env):
     import rtyaml
     fn = os.path.join(env['STORAGE_ROOT'], 'settings.yaml')
     try:
-        with open(fn) as f:
+        with open(fn, encoding="utf-8") as f:
             config = rtyaml.load(f)
         if not isinstance(config, dict): raise ValueError # caught below
         return config

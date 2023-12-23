@@ -76,7 +76,7 @@ for setting in settings:
 
 found = set()
 buf = ""
-with open(filename) as f:
+with open(filename, encoding="utf-8") as f:
         input_lines = list(f)
 
 while len(input_lines) > 0:
@@ -144,7 +144,7 @@ for i in range(len(settings)):
 
 if not testing:
 	# Write out the new file.
-	with open(filename, "w") as f:
+	with open(filename, "w", encoding="utf-8") as f:
 		f.write(buf)
 else:
 	# Just print the new file to stdout.

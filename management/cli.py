@@ -47,7 +47,7 @@ def read_password():
     return first
 
 def setup_key_auth(mgmt_uri):
-	with open('/var/lib/mailinabox/api.key') as f:
+	with open('/var/lib/mailinabox/api.key', encoding='utf-8') as f:
 		key = f.read().strip()
 
 	auth_handler = urllib.request.HTTPBasicAuthHandler()

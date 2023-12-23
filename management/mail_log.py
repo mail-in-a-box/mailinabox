@@ -585,7 +585,7 @@ def scan_postfix_submission_line(date, log, collector):
 def readline(filename):
     """ A generator that returns the lines of a file
     """
-    with open(filename, errors='replace') as file:
+    with open(filename, errors='replace', encoding='utf-8') as file:
         while True:
           line = file.readline()
           if not line:
