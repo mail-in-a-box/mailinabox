@@ -617,7 +617,6 @@ def write_backup_config(env, newconfig):
 		f.write(rtyaml.dump(newconfig))
 
 if __name__ == "__main__":
-	import sys
 	if sys.argv[-1] == "--verify":
 		# Run duplicity's verification command to check a) the backup files
 		# are readable, and b) report if they are up to date.
