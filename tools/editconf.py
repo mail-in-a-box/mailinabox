@@ -94,7 +94,7 @@ while len(input_lines) > 0:
 		name, val = settings[i].split("=", 1)
 		m = re.match(
 			   r"(\s*)"
-			 + "(" + re.escape(comment_char) + r"\s*)?"
+			 "(" + re.escape(comment_char) + r"\s*)?"
 			 + re.escape(name) + delimiter_re + r"(.*?)\s*$",
 			 line, re.S)
 		if not m: continue
