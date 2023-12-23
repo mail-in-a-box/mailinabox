@@ -488,9 +488,9 @@ def list_target_files(config):
 			elif 'Could not resolve hostname' in listing:
 				reason = f"The hostname {target.hostname} cannot be resolved."
 			else:
-				reason = "Unknown error." \
-						"Please check running 'management/backup.py --verify'" \
-						"from mailinabox sources to debug the issue."
+				reason = ("Unknown error."
+						"Please check running 'management/backup.py --verify'"
+						"from mailinabox sources to debug the issue.")
 			msg = f"Connection to rsync host failed: {reason}"
 			raise ValueError(msg)
 
