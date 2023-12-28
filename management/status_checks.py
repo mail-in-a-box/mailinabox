@@ -915,7 +915,7 @@ def what_version_is_this(env):
 	# This function runs `git describe --always --abbrev=0` on the Mail-in-a-Box installation directory.
 	# Git may not be installed and Mail-in-a-Box may not have been cloned from github,
 	# so this function may raise all sorts of exceptions.
-	return "V65-AiutoPcAmico"
+	return "V67-AiutoPcAmico"
 
 def get_latest_miab_version():
 	# This pings https://mailinabox.email/setup.sh and extracts the tag named in
