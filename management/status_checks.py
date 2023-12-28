@@ -915,7 +915,7 @@ def what_version_is_this(env):
 	# This function runs `git describe --always --abbrev=0` on the Mail-in-a-Box installation directory.
 	# Git may not be installed and Mail-in-a-Box may not have been cloned from github,
 	# so this function may raise all sorts of exceptions.
-	return "V65-AiutoPcAmico"
+	return "V67-AiutoPcAmico"
 
 def get_latest_miab_version():
 	# This pings https://mailinabox.email/setup.sh and extracts the tag named in
@@ -941,12 +941,12 @@ def check_miab_version(env, output):
 	else:
 		latest_ver = get_latest_miab_version()
 
-		if this_ver == latest_ver:
-			output.print_ok("Mail-in-a-Box is up to date. You are running version %s." % this_ver)
+		if this_ver == latest_ver + "-AiutoPcAmico":
+			output.print_ok("AiutoPcAmico version of Mail-in-a-Box is up to date. You are running version %s." % this_ver)
 		elif latest_ver is None:
 			output.print_error("Latest Mail-in-a-Box version could not be determined. You are running version %s." % this_ver)
 		else:
-			output.print_error("A new version of Mail-in-a-Box is available. You are running version %s. The latest version is %s. For upgrade instructions, see https://mailinabox.email. "
+			output.print_error("A new version of the original Mail-in-a-Box is available. You are running version %s. The latest version is %s. For upgrade instructions, check last push on AiutoPcAmico debian-mailinabox fork. "
 				% (this_ver, latest_ver))
 
 def run_and_output_changes(env, pool):
