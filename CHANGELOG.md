@@ -9,9 +9,6 @@ Version 67 (December 22, 2023)
 Version 66 (December 17, 2023)
 ------------------------------
 
-Version 66 (December 17, 2023)
-------------------------------
-
 * Some users reported an error installing Mail-in-a-Box related to the virtualenv command. This is hopefully fixed.
 * Roundcube is updated to 1.6.5 fixing a security vulnerability.
 * For Mail-in-a-Box developers, a new setup variable is added to pull the source code from a different repository.
