@@ -301,8 +301,7 @@ fi #NODOC
 #  	If more queries than specified are sent, bind9 returns SERVFAIL. After flushing the cache during system checks,
 #	we ran into the limit thus we are increasing it from 75 (default value) to 100.
 apt_install bind9
-# touch /etc/default/bind9
-# touch /etc/default/named
+
 tools/editconf.py /etc/default/named \
 	"OPTIONS=\"-u bind -4\""
 
@@ -321,9 +320,13 @@ fi
 # which is where bind9 will be running. Obviously don't do this before
 # installing bind9 or else apt won't be able to resolve a server to
 # download bind9 from.
+
+# START AiutoPcAmico modification
+apt_install systemd-resolved
 rm -f /etc/resolv.conf
 tools/editconf.py /etc/systemd/resolved.conf DNSStubListener=no
 echo "nameserver 127.0.0.1" > /etc/resolv.conf
+# END AiutoPcAmico modification
 
 # Restart the DNS services.
 

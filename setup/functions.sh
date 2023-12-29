@@ -6,7 +6,6 @@ set -euo pipefail
 
 # START AiutoPcAmico modification
 PHP_VER=8.2
-greylistDisabled=false
 # END AiutoPcAmico modification
 
 function hide_output {

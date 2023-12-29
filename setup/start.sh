@@ -3,6 +3,7 @@
 #####################################################
 
 source setup/functions.sh # load our functions
+source setup/global-variables.sh # load AiutoPcAmico variables for settings 
 
 
 # START AiutoPcAmico modification
