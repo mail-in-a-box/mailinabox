@@ -1,16 +1,13 @@
 # Unofficial Debian Mail-in-a-Box
 
 =============
-WARNING: At the moment, for systemd problems, the installation fails!
-I'm working for a fix. Please, try again tomorrow!
-=============
 
 Simple porting of Mailinabox to Debian 12.
 Original project: [https://github.com/mailinabox/mailinabox](https://github.com/mail-in-a-box/mailinabox)
 
 ## Version
 
-Current version: v67.1.0-AiutoPcAmico
+Current version: v67.1.1-AiutoPcAmico
 Upstream current implemented version: v67
 
 ## Changes implemented

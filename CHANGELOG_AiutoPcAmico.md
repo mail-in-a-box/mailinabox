@@ -11,6 +11,12 @@ Where:
 
 =========
 
+Version 67.1.1 (December 29, 2023)
+------------------------------
+
+* Fixed greylist, because even though the user selected to disable it, it will be remained active
+* Fixed installation, that would fail for problem with systemd-resolved package
+
 Version 67.1.0 (December 29, 2023)
 ------------------------------
 

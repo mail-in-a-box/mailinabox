@@ -913,7 +913,7 @@ def list_apt_updates(apt_update=True):
 
 def what_version_is_this(env):
 	# START AiutoPcAmico modification
-	return "V67.1.0-AiutoPcAmico"
+	return "V67.1.1-AiutoPcAmico"
 	# END AiutoPcAmico modification
 
 
