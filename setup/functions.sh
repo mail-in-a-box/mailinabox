@@ -178,7 +178,7 @@ function input_yesno {
 	# input_yesno "title" "prompt" VARIABLE
 	# Asking to the user a question, when the response can be only true or false
 	# ATTENTION: I am using only result_code, because with --yesno I don't have a response!
-	declare -n result_code=$3_EXITCODE
+	declare -n result_code=$3
 	set +e
 	result_temp=$(dialog --stdout --title "$1" --yesno "$2" 0 0)
 	result_code=$?

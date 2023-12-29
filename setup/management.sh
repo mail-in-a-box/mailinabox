@@ -6,9 +6,6 @@ source /etc/mailinabox.conf # load global vars
 echo "Installing Mail-in-a-Box system management daemon..."
 
 # DEPENDENCIES
-
-# duplicity is used to make backups of user data.
-#
 # virtualenv is used to isolate the Python 3 packages we
 # install via pip from the system-installed packages.
 #

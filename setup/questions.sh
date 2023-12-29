@@ -11,22 +11,22 @@ if [ -z "${NONINTERACTIVE:-}" ]; then
 		apt-get -q -q update
 		apt_get_quiet install dialog python3 python3-pip || exit 1
 	fi
-
-	echo "install vintual env for python3"
-	hide_output apt install python3-venv
-	hide_output python3 -m venv mailinabox
-	hide_output source mailinabox/bin/activate
-
 	# Installing email_validator is repeated in setup/management.sh, but in setup/management.sh
 	# we install it inside a virtualenv. In this script, we don't have the virtualenv yet
 	# so we install the python package globally.
+
+	echo "install virtual env for python3"
+	hide_output apt install python3-venv
+	hide_output python3 -m venv mailinabox
+
+	hide_output source mailinabox/bin/activate
 	hide_output pip3 install "email_validator>=1.0.0" || exit 1
 
-	message_box "Mail-in-a-Box Installation" \
-		"Hello and thanks for deploying a Mail-in-a-Box!
+	message_box "Debian Mail-in-a-Box Installation" \
+		"Hello and thanks for deploying a Debian Mail-in-a-Box, from the fork of AiutoPcAmico!
 		\n\nI'm going to ask you a few questions.
 		\n\nTo change your answers later, just run 'sudo mailinabox' from the command line.
-		\n\nNOTE: You should only install this on a brand new Ubuntu installation 100% dedicated to Mail-in-a-Box. Mail-in-a-Box will, for example, remove apache2."
+		\n\nNOTE: You should only install this on a brand new Debian 12 installation 100% dedicated to Mail-in-a-Box. Mail-in-a-Box will, for example, remove apache2."
 fi
 
 # The box needs a name.
