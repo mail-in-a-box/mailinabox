@@ -12,8 +12,9 @@ Upstream current implemented version: *v67* (v67-AiutoPcAmico)
 - At the moment, OwnCloud is disabled, because it not supports php8.2
 - Updated php to version 8.2
 - Changed SMTP server sign
+- more restrictive Fail2Ban configuration
+- ask the user if he wants to disable the graylist
 
 ## Future implementation
 
-- ask the user if he wants to disable the graylist
 - Changing the default index page more easily

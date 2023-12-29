@@ -4,7 +4,10 @@
 # -o pipefail: don't ignore errors in the non-last command in a pipeline
 set -euo pipefail
 
+# START AiutoPcAmico modification
 PHP_VER=8.2
+greylistDisabled=false
+# END AiutoPcAmico modification
 
 function hide_output {
 	# This function hides the output of a command unless the command fails
@@ -16,7 +19,7 @@ function hide_output {
 	# Execute command, redirecting stderr/stdout to the temporary file. Since we
 	# check the return code ourselves, disable 'set -e' temporarily.
 	set +e
-	"$@" &> $OUTPUT
+	"$@" &>$OUTPUT
 	E=$?
 	set -e
 
@@ -62,9 +65,9 @@ function get_default_hostname {
 	# Guess the machine's hostname. It should be a fully qualified
 	# domain name suitable for DNS. None of these calls may provide
 	# the right value, but it's the best guess we can make.
-	set -- $(hostname --fqdn      2>/dev/null ||
-                 hostname --all-fqdns 2>/dev/null ||
-                 hostname             2>/dev/null)
+	set -- $(hostname --fqdn 2>/dev/null ||
+		hostname --all-fqdns 2>/dev/null ||
+		hostname 2>/dev/null)
 	printf '%s\n' "$1" # return this value
 }
 
@@ -137,14 +140,14 @@ function get_default_privateip {
 function ufw_allow {
 	if [ -z "${DISABLE_FIREWALL:-}" ]; then
 		# ufw has completely unhelpful output
-		ufw allow "$1" > /dev/null;
+		ufw allow "$1" >/dev/null
 	fi
 }
 
 function ufw_limit {
 	if [ -z "${DISABLE_FIREWALL:-}" ]; then
 		# ufw has completely unhelpful output
-		ufw limit "$1" > /dev/null;
+		ufw limit "$1" >/dev/null
 	fi
 }
 
@@ -170,6 +173,20 @@ function input_box {
 	set -e
 }
 
+# START AiutoPcAmico modification
+function input_yesno {
+	# input_yesno "title" "prompt" VARIABLE
+	# Asking to the user a question, when the response can be only true or false
+	# ATTENTION: I am using only result_code, because with --yesno I don't have a response!
+	declare -n result_code=$3_EXITCODE
+	set +e
+	result_temp=$(dialog --stdout --title "$1" --yesno "$2" 0 0)
+	result_code=$?
+	set -e
+}
+
+# END AiutoPcAmico modification
+
 function input_menu {
 	# input_menu "title" "prompt" "tag item tag item" VARIABLE
 	# The user's input will be stored in the variable VARIABLE.
@@ -192,7 +209,7 @@ function wget_verify {
 	CHECKSUM="$HASH  $DEST"
 	rm -f $DEST
 	hide_output wget -O $DEST $URL
-	if ! echo "$CHECKSUM" | sha1sum --check --strict > /dev/null; then
+	if ! echo "$CHECKSUM" | sha1sum --check --strict >/dev/null; then
 		echo "------------------------------------------------------------"
 		echo "Download of $URL did not match expected checksum."
 		echo "Found:"
@@ -218,7 +235,10 @@ function git_clone {
 	TMPPATH=/tmp/git-clone-$$
 	rm -rf $TMPPATH $TARGETPATH
 	git clone -q $REPO $TMPPATH || exit 1
-	(cd $TMPPATH; git checkout -q $TREEISH;) || exit 1
+	(
+		cd $TMPPATH
+		git checkout -q $TREEISH
+	) || exit 1
 	mv $TMPPATH/$SUBDIR $TARGETPATH
 	rm -rf $TMPPATH
 }

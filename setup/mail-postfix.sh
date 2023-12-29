@@ -301,6 +301,15 @@ ufw_allow smtp
 ufw_allow smtps
 ufw_allow submission
 
+# START AiutoPcAmico modification
+if [[ "$greylistDisabled" == "true" ]]; then
+        echo "I'm disabling the greylist"
+        echo "/.*/" > "/etc/postgrey/whitelist_clients.local"
+else
+        echo "I'm leaving the greylist enabled"
+fi
+# END AiutoPcAmico modification
+
 # Restart services
 
 restart_service postfix

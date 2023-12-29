@@ -9,13 +9,13 @@ if [ -z "${NONINTERACTIVE:-}" ]; then
 	if [ ! -f /usr/bin/dialog ] || [ ! -f /usr/bin/python3 ] || [ ! -f /usr/bin/pip3 ]; then
 		echo Installing packages needed for setup...
 		apt-get -q -q update
-		apt_get_quiet install dialog python3 python3-pip  || exit 1
+		apt_get_quiet install dialog python3 python3-pip || exit 1
 	fi
 
 	echo "install vintual env for python3"
 	hide_output apt install python3-venv
-   	hide_output python3 -m venv mailinabox
-    hide_output source mailinabox/bin/activate
+	hide_output python3 -m venv mailinabox
+	hide_output source mailinabox/bin/activate
 
 	# Installing email_validator is repeated in setup/management.sh, but in setup/management.sh
 	# we install it inside a virtualenv. In this script, we don't have the virtualenv yet
@@ -41,7 +41,7 @@ if [ -z "${PRIMARY_HOSTNAME:-}" ]; then
 		# This is the first run. Ask the user for his email address so we can
 		# provide the best default for the box's hostname.
 		input_box "Your Email Address" \
-"What email address are you setting this box up to manage?
+			"What email address are you setting this box up to manage?
 \n\nThe part after the @-sign must be a domain name or subdomain
 that you control. You can add other email addresses to this
 box later (including email addresses on other domain names
@@ -56,8 +56,7 @@ you really want.
 			# user hit ESC/cancel
 			exit
 		fi
-		while ! python3 management/mailconfig.py validate-email "$EMAIL_ADDR"
-		do
+		while ! python3 management/mailconfig.py validate-email "$EMAIL_ADDR"; do
 			input_box "Your Email Address" \
 				"That's not a valid email address.\n\nWhat email address are you setting this box up to manage?" \
 				$EMAIL_ADDR \
@@ -74,7 +73,7 @@ you really want.
 	fi
 
 	input_box "Hostname" \
-"This box needs a name, called a 'hostname'. The name will form a part of the box's web address.
+		"This box needs a name, called a 'hostname'. The name will form a part of the box's web address.
 \n\nWe recommend that the name be a subdomain of the domain in your email
 address, so we're suggesting $DEFAULT_PRIMARY_HOSTNAME.
 \n\nYou can change it, but we recommend you don't.
@@ -215,3 +214,25 @@ if [ -f /usr/bin/git ] && [ -d .git ]; then
 	echo "Mail-in-a-Box Version: " $(git describe --always)
 fi
 echo
+
+# START AiutoPcAmico modification
+#ask to the user if he wants to disable greylist
+input_yesno "Greylist" \
+	"This box implements the postgrey greylist, in order to protect you against spam.
+\nIs a very useful package, but sometimes you want to disable it (usually you get TOTP after some minutes...).
+\nMore info at https://postgrey.schweikert.ch
+\nDo you want to disable it?" RESPONSE
+
+if [ -z "$RESPONSE" ]; then
+	# user hit ESC/cancel
+	exit
+fi
+
+if [ "$RESPONSE" -eq "0" ]; then
+	echo "After installing postfix, I will disable the greylist function"
+	greylistDisabled=true
+else
+	echo "Ok, I won't disable the greylist function"
+	greylistDisabled=false
+fi
+# END AiutoPcAmico modification

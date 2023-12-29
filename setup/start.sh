@@ -117,6 +117,7 @@ source setup/dkim.sh
 source setup/spamassassin.sh
 source setup/web.sh
 source setup/webmail.sh
+# at the moment not installing nextcloud, because is not compatible with php8.2
 #source setup/nextcloud.sh
 source setup/zpush.sh
 source setup/management.sh
