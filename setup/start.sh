@@ -4,10 +4,20 @@
 
 source setup/functions.sh # load our functions
 
+
+# START AiutoPcAmico modification
+# installing required packages
+echo "Installing required packages: curl nano lsb-release locales"
+apt_install curl nano lsb-release locales
+# END AiutoPcAmico modification
+
 # Check system setup: Are we running as root on Ubuntu 18.04 on a
 # machine with enough memory? Is /tmp mounted with exec.
 # If not, this shows an error and exits.
 source setup/preflight.sh
+
+
+
 
 # Ensure Python reads/writes files in UTF-8. If the machine
 # triggers some other locale in Python, like ASCII encoding,
