@@ -23,6 +23,10 @@ Upstream current implemented version: v67
 
 - Changing the default index page more easily
 
+## Installation guide
+
+Please, open the file "INSTALL.md" for the complete guide to install Debian Mail-in-a-Box by AiutoPcAmico
+
 ## Changelogs
 
 In this folder you can find 2 different changelog files:
