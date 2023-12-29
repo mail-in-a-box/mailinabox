@@ -912,10 +912,10 @@ def list_apt_updates(apt_update=True):
 	return pkgs
 
 def what_version_is_this(env):
-	# This function runs `git describe --always --abbrev=0` on the Mail-in-a-Box installation directory.
-	# Git may not be installed and Mail-in-a-Box may not have been cloned from github,
-	# so this function may raise all sorts of exceptions.
-	return "V67-AiutoPcAmico"
+	# START AiutoPcAmico modification
+	return "V67.1.0-AiutoPcAmico"
+	# END AiutoPcAmico modification
+
 
 def get_latest_miab_version():
 	# This pings https://mailinabox.email/setup.sh and extracts the tag named in
@@ -929,6 +929,7 @@ def get_latest_miab_version():
         return None
 
 def check_miab_version(env, output):
+	# START AiutoPcAmico modification
 	config = load_settings(env)
 
 	try:
@@ -940,14 +941,18 @@ def check_miab_version(env, output):
 		output.print_warning("You are running version Mail-in-a-Box %s. Mail-in-a-Box version check disabled by privacy setting." % this_ver)
 	else:
 		latest_ver = get_latest_miab_version()
+		# getting only first 3 characters, so I can compare with my version
+		
 
-		if this_ver == latest_ver:
-			output.print_ok("Mail-in-a-Box is up to date. You are running version %s." % this_ver)
+		if this_ver[0:3] == latest_ver[0:3]:
+			output.print_ok("AiutoPcAmico Mail-in-a-Box fork is up to date to the original project. You are running version %s.\nThere may be a new version of AiutoPcAmico. Go to github.com/aiutopcamico/debian-mailinabox to check " % this_ver)
 		elif latest_ver is None:
 			output.print_error("Latest Mail-in-a-Box version could not be determined. You are running version %s." % this_ver)
 		else:
-			output.print_error("A new version of Mail-in-a-Box is available. You are running version %s. The latest version is %s. For upgrade instructions, see https://mailinabox.email. "
+			output.print_error("A new version of upstream project is available. You are running version %s. The latest version is %s. For upgrade, go to github.com/aiutopcamico/debian-mailinabox and verify if a new version is available. "
 				% (this_ver, latest_ver))
+	# END AiutoPcAmico modification
+	
 
 def run_and_output_changes(env, pool):
 	import json
