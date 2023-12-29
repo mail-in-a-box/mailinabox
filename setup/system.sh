@@ -300,10 +300,9 @@ fi #NODOC
 # * The max-recursion-queries directive increases the maximum number of iterative queries.
 #  	If more queries than specified are sent, bind9 returns SERVFAIL. After flushing the cache during system checks,
 #	we ran into the limit thus we are increasing it from 75 (default value) to 100.
-apt_install systemd-resolved
 apt_install bind9
-touch /etc/default/bind9
-touch /etc/default/named
+# touch /etc/default/bind9
+# touch /etc/default/named
 tools/editconf.py /etc/default/named \
 	"OPTIONS=\"-u bind -4\""
 
@@ -329,7 +328,7 @@ echo "nameserver 127.0.0.1" > /etc/resolv.conf
 # Restart the DNS services.
 
 restart_service bind9
-systemctl restart systemd-resolved
+# systemctl restart systemd-resolved
 
 # ### Fail2Ban Service
 
