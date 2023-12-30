@@ -73,7 +73,7 @@ tools/editconf.py /etc/postfix/main.cf \
 # This short-term workaround is recommended at https://www.postfix.org/smtp-smuggling.html
 tools/editconf.py /etc/postfix/main.cf \
 	smtpd_data_restrictions=reject_unauth_pipelining \
-	smtpd_discard_ehlo_keywords=chunking
+	smtpd_discard_ehlo_keywords="chunking, silent-discard"
 
 # ### Outgoing Mail
 
