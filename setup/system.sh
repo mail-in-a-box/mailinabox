@@ -321,17 +321,22 @@ fi
 # installing bind9 or else apt won't be able to resolve a server to
 # download bind9 from.
 
-# START AiutoPcAmico modification
-apt_install systemd-resolved
 rm -f /etc/resolv.conf
 tools/editconf.py /etc/systemd/resolved.conf DNSStubListener=no
 echo "nameserver 127.0.0.1" > /etc/resolv.conf
-# END AiutoPcAmico modification
 
 # Restart the DNS services.
 
 restart_service bind9
+# START AiutoPcAmico modification
+# because i haven't it in Debian 12, I don't restart it. 
+# Removed systemd-resolved package installation.
+# It seems that Debian don't uses systemd-resolved by default, so I don't need to install.
+# We need only to modify the resolv.conf file.
+
 # systemctl restart systemd-resolved
+
+# END AiutoPcAmico modification
 
 # ### Fail2Ban Service
 
