@@ -322,7 +322,9 @@ fi
 # download bind9 from.
 
 rm -f /etc/resolv.conf
-tools/editconf.py /etc/systemd/resolved.conf DNSStubListener=no
+# START AiutoPcAmico modification
+echo "DNSStubListener=no" > /etc/systemd/resolved.conf
+# END AiutoPcAmico modification
 echo "nameserver 127.0.0.1" > /etc/resolv.conf
 
 # Restart the DNS services.

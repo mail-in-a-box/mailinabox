@@ -11,6 +11,12 @@ Where:
 
 =========
 
+Version 67.1.2 (December 29, 2023)
+------------------------------
+
+* Definitively removed systemd-resolved, because Debian doesen't install it anymore by default
+* Fixed ```DNSStubListener=no```. Due to the lack of the previous package, this file did not exist and caused the installation to fail
+
 Version 67.1.1 (December 29, 2023)
 ------------------------------
 
