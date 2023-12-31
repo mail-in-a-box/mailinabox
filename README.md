@@ -7,7 +7,7 @@ Original project: [https://github.com/mailinabox/mailinabox](https://github.com/
 
 ## Version
 
-Current version: v67.1.1-AiutoPcAmico
+Current version: v67.1.2-AiutoPcAmico
 Upstream current implemented version: v67
 
 ## Changes implemented
@@ -22,6 +22,11 @@ Upstream current implemented version: v67
 ## Future implementation
 
 - Changing the default index page more easily
+
+## broken functionality
+
+- Duplicity (At the moment, I don't understand why the /etc/duplicity folder is not generated)
+- OwnCloud
 
 ## Installation guide
 
