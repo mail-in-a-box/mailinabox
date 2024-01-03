@@ -965,7 +965,11 @@ def run_and_output_changes(env, pool):
 	cache_fn = "/var/cache/mailinabox/status_checks.json"
 	if os.path.exists(cache_fn):
 		with open(cache_fn, 'r') as f:
-			prev = json.load(f)
+			try:
+				prev = json.load(f)
+			except json.JSONDecodeError:
+				logging.debug('Could not decode previous status checks JSON file')
+				prev = []
 
 		# Group the serial output into categories by the headings.
 		def group_by_heading(lines):
