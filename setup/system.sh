@@ -100,9 +100,23 @@ hide_output add-apt-repository -y universe
 # Install the duplicity PPA.
 hide_output add-apt-repository -y ppa:duplicity-team/duplicity-release-git
 
-# Stock PHP is now 8.1, but we're transitioning through 8.0 because
-# of Nextcloud.
-hide_output add-apt-repository --y ppa:ondrej/php
+# We needed php8.0 to migrate to Ubuntu/Jammy from Ubuntu/Bionic due
+# to Nextcloud requirements. PPA ondrej/php was used to do that, but
+# it's no longer needed, so revert back to the system's PHP.
+if add-apt-repository -L | grep -q ondrej/php; then
+	if systemctl is-active --quiet nginx; then
+		systemctl stop nginx
+	fi
+	for v in $(ls /usr/bin/php[0-9]*.[0-9]*); do
+		if ! $v --version | grep -qi ubuntu; then
+			v=$(basename $v)
+			echo "Removing ondrej/php $v"
+			pkgs=$(dpkg -l | awk "/^.i/ && index(\$2,\"$v\")>0 {print \$2}")
+			hide_output apt-get purge -y $pkgs
+		fi
+	done
+	hide_output add-apt-repository --remove ppa:ondrej/php
+fi
 
 # ### Update Packages
 
