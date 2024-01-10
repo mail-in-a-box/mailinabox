@@ -968,7 +968,6 @@ def run_and_output_changes(env, pool):
 			try:
 				prev = json.load(f)
 			except json.JSONDecodeError:
-				logging.debug('Could not decode previous status checks JSON file')
 				prev = []
 
 		# Group the serial output into categories by the headings.
