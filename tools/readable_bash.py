@@ -125,13 +125,13 @@ def generate_documentation():
 
 	parser = Source.parser()
 	with open("setup/start.sh", "r") as start_file:
-                for line in start_file:
-                        try:
-                                fn = parser.parse_string(line).filename()
-                        except:
-                                continue
-                        if fn in ("setup/start.sh", "setup/preflight.sh", "setup/questions.sh", "setup/firstuser.sh", "setup/management.sh"):
-                                continue
+		for line in start_file:
+			try:
+				fn = parser.parse_string(line).filename()
+			except:
+				continue
+			if fn in ("setup/start.sh", "setup/preflight.sh", "setup/questions.sh", "setup/firstuser.sh", "setup/management.sh"):
+				continue
 
 		import sys
 		print(fn, file=sys.stderr)
