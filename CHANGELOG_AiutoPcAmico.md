@@ -11,6 +11,11 @@ Where:
 
 =========
 
+Version 67.2.0 (January 28, 2024)
+------------------------------
+
+* Imported commit from upstream project regarding SMTP smuggling
+
 Version 67.1.2 (December 29, 2023)
 ------------------------------
 
