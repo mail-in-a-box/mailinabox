@@ -168,7 +168,7 @@ def get_domain_ssl_files(domain, ssl_certificates, env, allow_missing_cert=False
 			# it is hard-coded in some service configuration files.
 			return system_certificate
 
-	wildcard_domain = re.sub("^[^\.]+", "*", domain)
+	wildcard_domain = re.sub("^[^\\.]+", "*", domain)
 	if domain in ssl_certificates:
 		return ssl_certificates[domain]
 	elif wildcard_domain in ssl_certificates:
@@ -540,7 +540,7 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 		# Check that the domain appears among the acceptable names, or a wildcard
 		# form of the domain name (which is a stricter check than the specs but
 		# should work in normal cases).
-		wildcard_domain = re.sub("^[^\.]+", "*", domain)
+		wildcard_domain = re.sub("^[^\\.]+", "*", domain)
 		if domain not in certificate_names and wildcard_domain not in certificate_names:
 			return ("The certificate is for the wrong domain name. It is for %s."
 				% ", ".join(sorted(certificate_names)), None)
