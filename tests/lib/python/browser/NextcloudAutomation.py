@@ -18,7 +18,7 @@ class NextcloudAutomation(object):
     def __init__(self, d):
         ''' `d` is a browser.automation TestDriver object '''
         self.d = d
-        
+
     def wait_for_login_screen(self, secs=7):
         d = self.d
         d.say("Wait for login screen")
@@ -40,14 +40,14 @@ class NextcloudAutomation(object):
         el = d.find_el('#user-menu > a', throws=False)
         if not el:
             el = d.find_el('#user-menu > button', throws=False)
-            
+
         if not el:
             # nc < 26
             d.find_el('#settings .avatardiv').click()
         else:
             # nc >= 26
             el.click()
-        d.wait_tick(1)
+        d.wait_tick(100)
 
     def logout(self):
         d = self.d
@@ -58,7 +58,7 @@ class NextcloudAutomation(object):
         if not el:
             # nc >= 26
             el = d.find_el('#logout > a', throws=False)
-            
+
         if el:
             el.click()
         else:
@@ -84,15 +84,15 @@ class NextcloudAutomation(object):
         vue = d.find_el('#app-content-vue', throws=False)
         if not vue: vue = d.find_el('#app-dashboard', throws=False)
         jquery = d.find_el('#app-content', throws=False)
-        
+
         if vue:
             d.wait_tick(1000)
-            
+
         elif jquery:
             d.say_verbose('Waiting on a jquery app')
             d.wait_until_true('return window.$.active == 0', secs=secs)
-            
-        else:            
+
+        else:
             raise NoSuchElementException('#app-dashboard, #app-content or #app-content-vue')
 
     def close_first_run_wizard(self):
@@ -103,5 +103,5 @@ class NextcloudAutomation(object):
             # ElementNotInteractableException
             #   d.find_el('#firstrunwizard span.close-icon').click()
             d.execute_script('document.querySelector("#firstrunwizard span.close-icon").click()')
-                
+
             d.wait_tick(1)
