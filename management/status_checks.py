@@ -306,14 +306,23 @@ def run_network_checks(env, output):
 	# The user might have ended up on an IP address that was previously in use
 	# by a spammer, or the user may be deploying on a residential network. We
 	# will not be able to reliably send mail in these cases.
+	
+	# See https://www.spamhaus.org/news/article/807/using-our-public-mirrors-check-your-return-codes-now. for
+	# information on spamhaus return codes
 	rev_ip4 = ".".join(reversed(env['PUBLIC_IP'].split('.')))
 	zen = query_dns(rev_ip4+'.zen.spamhaus.org', 'A', nxdomain=None)
 	if zen is None:
 		output.print_ok("IP address is not blacklisted by zen.spamhaus.org.")
 	elif zen == "[timeout]":
-		output.print_warning("Connection to zen.spamhaus.org timed out. We could not determine whether your server's IP address is blacklisted. Please try again later.")
+		output.print_warning("Connection to zen.spamhaus.org timed out. Could not determine whether this box's IP address is blacklisted. Please try again later.")
 	elif zen == "[Not Set]":
-		output.print_warning("Could not connect to zen.spamhaus.org. We could not determine whether your server's IP address is blacklisted. Please try again later.")
+		output.print_warning("Could not connect to zen.spamhaus.org. Could not determine whether this box's IP address is blacklisted. Please try again later.")
+	elif zen == "127.255.255.252":
+		output.print_warning("Incorrect spamhaus query: %s. Could not determine whether this box's IP address is blacklisted." % (rev_ip4+'.zen.spamhaus.org'))
+	elif zen == "127.255.255.254":
+		output.print_warning("Mail-in-a-Box is configured to use a public DNS server. This is not supported by spamhaus. Could not determine whether this box's IP address is blacklisted.")
+	elif zen == "127.255.255.255":
+		output.print_warning("Too many queries have been performed on the spamhaus server. Could not determine whether this box's IP address is blacklisted.")
 	else:
 		output.print_error("""The IP address of this machine {} is listed in the Spamhaus Block List (code {}),
 			which may prevent recipients from receiving your email. See http://www.spamhaus.org/query/ip/{}.""".format(env['PUBLIC_IP'], zen, env['PUBLIC_IP']))
@@ -451,7 +460,7 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 	if ip == env['PUBLIC_IP'] and not (ipv6 and env['PUBLIC_IPV6'] and ipv6 != normalize_ip(env['PUBLIC_IPV6'])):
 		output.print_ok("Domain resolves to box's IP address. [{} ↦ {}]".format(env['PRIMARY_HOSTNAME'], my_ips))
 	else:
-		output.print_error("""This domain must resolve to your box's IP address ({}) in public DNS but it currently resolves
+		output.print_error("""This domain must resolve to this box's IP address ({}) in public DNS but it currently resolves
 			to {}. It may take several hours for public DNS to update after a change. This problem may result from other
 			issues listed above.""".format(my_ips, ip + ((" / " + ipv6) if ipv6 is not None else "")))
 
@@ -463,11 +472,11 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 	if existing_rdns_v4 == domain and existing_rdns_v6 in {None, domain}:
 		output.print_ok("Reverse DNS is set correctly at ISP. [{} ↦ {}]".format(my_ips, env['PRIMARY_HOSTNAME']))
 	elif existing_rdns_v4 == existing_rdns_v6 or existing_rdns_v6 is None:
-		output.print_error(f"""Your box's reverse DNS is currently {existing_rdns_v4}, but it should be {domain}. Your ISP or cloud provider will have instructions
-			on setting up reverse DNS for your box.""" )
+		output.print_error(f"""This box's reverse DNS is currently {existing_rdns_v4}, but it should be {domain}. Your ISP or cloud provider will have instructions
+			on setting up reverse DNS for this box.""" )
 	else:
-		output.print_error(f"""Your box's reverse DNS is currently {existing_rdns_v4} (IPv4) and {existing_rdns_v6} (IPv6), but it should be {domain}. Your ISP or cloud provider will have instructions
-			on setting up reverse DNS for your box.""" )
+		output.print_error(f"""This box's reverse DNS is currently {existing_rdns_v4} (IPv4) and {existing_rdns_v6} (IPv6), but it should be {domain}. Your ISP or cloud provider will have instructions
+			on setting up reverse DNS for this box.""" )
 
 	# Check the TLSA record.
 	tlsa_qname = "_25._tcp." + domain
@@ -736,13 +745,22 @@ def check_mail_domain(domain, env, output):
 	# Stop if the domain is listed in the Spamhaus Domain Block List.
 	# The user might have chosen a domain that was previously in use by a spammer
 	# and will not be able to reliably send mail.
+	
+	# See https://www.spamhaus.org/news/article/807/using-our-public-mirrors-check-your-return-codes-now. for
+	# information on spamhaus return codes
 	dbl = query_dns(domain+'.dbl.spamhaus.org', "A", nxdomain=None)
 	if dbl is None:
 		output.print_ok("Domain is not blacklisted by dbl.spamhaus.org.")
 	elif dbl == "[timeout]":
-		output.print_warning(f"Connection to dbl.spamhaus.org timed out. We could not determine whether the domain {domain} is blacklisted. Please try again later.")
+		output.print_warning(f"Connection to dbl.spamhaus.org timed out. Could not determine whether the domain {domain} is blacklisted. Please try again later.")
 	elif dbl == "[Not Set]":
-		output.print_warning(f"Could not connect to dbl.spamhaus.org. We could not determine whether the domain {domain} is blacklisted. Please try again later.")
+		output.print_warning(f"Could not connect to dbl.spamhaus.org. Could not determine whether the domain {domain} is blacklisted. Please try again later.")
+	elif dbl == "127.255.255.252":
+		output.print_warning("Incorrect spamhaus query: %s. Could not determine whether the domain %s is blacklisted." % (domain+'.dbl.spamhaus.org', domain))
+	elif dbl == "127.255.255.254":
+		output.print_warning("Mail-in-a-Box is configured to use a public DNS server. This is not supported by spamhaus. Could not determine whether the domain {} is blacklisted.".format(domain))
+	elif dbl == "127.255.255.255":
+		output.print_warning("Too many queries have been performed on the spamhaus server. Could not determine whether the domain {} is blacklisted.".format(domain))
 	else:
 		output.print_error(f"""This domain is listed in the Spamhaus Domain Block List (code {dbl}),
 			which may prevent recipients from receiving your mail.
@@ -760,7 +778,7 @@ def check_web_domain(domain, rounded_time, ssl_certificates, env, output):
 			if value == normalize_ip(expected):
 				ok_values.append(value)
 			else:
-				output.print_error(f"""This domain should resolve to your box's IP address ({rtype} {expected}) if you would like the box to serve
+				output.print_error(f"""This domain should resolve to this box's IP address ({rtype} {expected}) if you would like the box to serve
 					webmail or a website on this domain. The domain currently resolves to {value} in public DNS. It may take several hours for
 					public DNS to update after a change. This problem may result from other issues listed here.""")
 				return
