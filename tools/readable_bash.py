@@ -124,7 +124,7 @@ def generate_documentation():
  """)
 
 	parser = Source.parser()
-	with open("setup/start.sh", "r") as start_file: 
+	with open("setup/start.sh", "r") as start_file:
                 for line in start_file:
                         try:
                                 fn = parser.parse_string(line).filename()

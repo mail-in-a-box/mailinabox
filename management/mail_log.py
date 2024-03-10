@@ -116,12 +116,11 @@ def scan_mail_log(env):
     try:
         import mailconfig
         collector["known_addresses"] = (set(mailconfig.get_mail_users(env)) |
-                                        set(alias[0] for alias in mailconfig.get_mail_aliases(env)))
+                                        {alias[0] for alias in mailconfig.get_mail_aliases(env)})
     except ImportError:
         pass
 
-    print("Scanning logs from {:%Y-%m-%d %H:%M:%S} to {:%Y-%m-%d %H:%M:%S}".format(
-        START_DATE, END_DATE)
+    print(f"Scanning logs from {START_DATE:%Y-%m-%d %H:%M:%S} to {END_DATE:%Y-%m-%d %H:%M:%S}"
     )
 
     # Scan the lines in the log files until the date goes out of range
@@ -227,7 +226,7 @@ def scan_mail_log(env):
             ],
             sub_data=[
                 ("Protocol and Source", [[
-                    "{} {}: {} times".format(protocol_name, host, count)
+                    f"{protocol_name} {host}: {count} times"
                     for (protocol_name, host), count
                     in sorted(u["totals_by_protocol_and_host"].items(), key=lambda kv:-kv[1])
                   ] for u in data.values()])
@@ -303,8 +302,7 @@ def scan_mail_log(env):
                 for date, sender, message in user_data["blocked"]:
                     if len(sender) > 64:
                         sender = sender[:32] + "…" + sender[-32:]
-                    user_rejects.append("%s - %s " % (date, sender))
-                    user_rejects.append("  %s" % message)
+                    user_rejects.extend((f'{date} - {sender} ', '  %s' % message))
                 rejects.append(user_rejects)
 
         print_user_table(
@@ -322,7 +320,7 @@ def scan_mail_log(env):
     if collector["other-services"] and VERBOSE and False:
         print_header("Other services")
         print("The following unkown services were found in the log file.")
-        print(" ", *sorted(list(collector["other-services"])), sep='\n│ ')
+        print(" ", *sorted(collector["other-services"]), sep='\n│ ')
 
 
 def scan_mail_log_line(line, collector):
@@ -333,7 +331,7 @@ def scan_mail_log_line(line, collector):
     if not m:
         return True
 
-    date, system, service, log = m.groups()
+    date, _system, service, log = m.groups()
     collector["scan_count"] += 1
 
     # print()
@@ -344,7 +342,7 @@ def scan_mail_log_line(line, collector):
 
     # Replaced the dateutil parser for a less clever way of parser that is roughly 4 times faster.
     # date = dateutil.parser.parse(date)
-    
+
     # strptime fails on Feb 29 with ValueError: day is out of range for month if correct year is not provided.
     # See https://bugs.python.org/issue26460
     date = datetime.datetime.strptime(str(NOW.year) + ' ' + date, '%Y %b %d %H:%M:%S')
@@ -376,9 +374,9 @@ def scan_mail_log_line(line, collector):
     elif service == "postfix/smtpd":
         if SCAN_BLOCKED:
             scan_postfix_smtpd_line(date, log, collector)
-    elif service in ("postfix/qmgr", "postfix/pickup", "postfix/cleanup", "postfix/scache",
+    elif service in {"postfix/qmgr", "postfix/pickup", "postfix/cleanup", "postfix/scache",
                      "spampd", "postfix/anvil", "postfix/master", "opendkim", "postfix/lmtp",
-                     "postfix/tlsmgr", "anvil"):
+                     "postfix/tlsmgr", "anvil"}:
         # nothing to look at
         return True
     else:
@@ -392,7 +390,7 @@ def scan_mail_log_line(line, collector):
 def scan_postgrey_line(date, log, collector):
     """ Scan a postgrey log line and extract interesting data """
 
-    m = re.match("action=(greylist|pass), reason=(.*?), (?:delay=\d+, )?client_name=(.*), "
+    m = re.match(r"action=(greylist|pass), reason=(.*?), (?:delay=\d+, )?client_name=(.*), "
                  "client_address=(.*), sender=(.*), recipient=(.*)",
                  log)
 
@@ -435,36 +433,35 @@ def scan_postfix_smtpd_line(date, log, collector):
             return
 
         # only log mail to known recipients
-        if user_match(user):
-            if collector["known_addresses"] is None or user in collector["known_addresses"]:
-                data = collector["rejected"].get(
-                    user,
-                    {
-                        "blocked": [],
-                        "earliest": None,
-                        "latest": None,
-                    }
-                )
-                # simplify this one
+        if user_match(user) and (collector["known_addresses"] is None or user in collector["known_addresses"]):
+            data = collector["rejected"].get(
+                user,
+                {
+                    "blocked": [],
+                    "earliest": None,
+                    "latest": None,
+                }
+            )
+            # simplify this one
+            m = re.search(
+                r"Client host \[(.*?)\] blocked using zen.spamhaus.org; (.*)", message
+            )
+            if m:
+                message = "ip blocked: " + m.group(2)
+            else:
+                # simplify this one too
                 m = re.search(
-                    r"Client host \[(.*?)\] blocked using zen.spamhaus.org; (.*)", message
+                    r"Sender address \[.*@(.*)\] blocked using dbl.spamhaus.org; (.*)", message
                 )
                 if m:
-                    message = "ip blocked: " + m.group(2)
-                else:
-                    # simplify this one too
-                    m = re.search(
-                        r"Sender address \[.*@(.*)\] blocked using dbl.spamhaus.org; (.*)", message
-                    )
-                    if m:
-                        message = "domain blocked: " + m.group(2)
+                    message = "domain blocked: " + m.group(2)
 
-                if data["earliest"] is None:
-                    data["earliest"] = date
-                data["latest"] = date
-                data["blocked"].append((date, sender, message))
+            if data["earliest"] is None:
+                data["earliest"] = date
+            data["latest"] = date
+            data["blocked"].append((date, sender, message))
 
-                collector["rejected"][user] = data
+            collector["rejected"][user] = data
 
 
 def scan_dovecot_login_line(date, log, collector, protocol_name):
@@ -500,7 +497,7 @@ def add_login(user, date, protocol_name, host, collector):
             data["totals_by_protocol"][protocol_name] += 1
             data["totals_by_protocol_and_host"][(protocol_name, host)] += 1
 
-            if host not in ("127.0.0.1", "::1") or True:
+            if host not in {"127.0.0.1", "::1"} or True:
                 data["activity-by-hour"][protocol_name][date.hour] += 1
 
             collector["logins"][user] = data
@@ -514,7 +511,7 @@ def scan_postfix_lmtp_line(date, log, collector):
 
     """
 
-    m = re.match("([A-Z0-9]+): to=<(\S+)>, .* Saved", log)
+    m = re.match(r"([A-Z0-9]+): to=<(\S+)>, .* Saved", log)
 
     if m:
         _, user = m.groups()
@@ -550,12 +547,12 @@ def scan_postfix_submission_line(date, log, collector):
     """
 
     # Match both the 'plain' and 'login' sasl methods, since both authentication methods are
-    # allowed by Dovecot. Exclude trailing comma after the username when additional fields 
+    # allowed by Dovecot. Exclude trailing comma after the username when additional fields
 	# follow after.
-    m = re.match("([A-Z0-9]+): client=(\S+), sasl_method=(PLAIN|LOGIN), sasl_username=(\S+)(?<!,)", log)
+    m = re.match(r"([A-Z0-9]+): client=(\S+), sasl_method=(PLAIN|LOGIN), sasl_username=(\S+)(?<!,)", log)
 
     if m:
-        _, client, method, user = m.groups()
+        _, client, _method, user = m.groups()
 
         if user_match(user):
             # Get the user data, or create it if the user is new
@@ -588,7 +585,7 @@ def scan_postfix_submission_line(date, log, collector):
 def readline(filename):
     """ A generator that returns the lines of a file
     """
-    with open(filename, errors='replace') as file:
+    with open(filename, errors='replace', encoding='utf-8') as file:
         while True:
           line = file.readline()
           if not line:
@@ -622,10 +619,7 @@ def print_time_table(labels, data, do_print=True):
     data.insert(0, [str(h) for h in range(24)])
 
     temp = "│ {:<%d} " % max(len(l) for l in labels)
-    lines = []
-
-    for label in labels:
-        lines.append(temp.format(label))
+    lines = [temp.format(label) for label in labels]
 
     for h in range(24):
         max_len = max(len(str(d[h])) for d in data)
@@ -639,6 +633,7 @@ def print_time_table(labels, data, do_print=True):
 
     if do_print:
         print("\n".join(lines))
+        return None
     else:
         return lines
 
@@ -672,7 +667,7 @@ def print_user_table(users, data=None, sub_data=None, activity=None, latest=None
                 col_str = str_temp.format(d[row][:31] + "…" if len(d[row]) > 32 else d[row])
                 col_left[col] = True
             elif isinstance(d[row], datetime.datetime):
-                col_str = "{:<20}".format(str(d[row]))
+                col_str = f"{d[row]!s:<20}"
                 col_left[col] = True
             else:
                 temp = "{:>%s}" % max(5, len(l) + 1, len(str(d[row])) + 1)
@@ -684,7 +679,7 @@ def print_user_table(users, data=None, sub_data=None, activity=None, latest=None
                 data_accum[col] += d[row]
 
         try:
-            if None not in [latest, earliest]:
+            if None not in {latest, earliest}:
                 vert_pos = len(line)
                 e = earliest[row]
                 l = latest[row]
@@ -712,10 +707,7 @@ def print_user_table(users, data=None, sub_data=None, activity=None, latest=None
                 if sub_data is not None:
                     for l, d in sub_data:
                         if d[row]:
-                            lines.append("┬")
-                            lines.append("│ %s" % l)
-                            lines.append("├─%s─" % (len(l) * "─"))
-                            lines.append("│")
+                            lines.extend(('┬', '│ %s' % l, '├─%s─' % (len(l) * '─'), '│'))
                             max_len = 0
                             for v in list(d[row]):
                                 lines.append("│ %s" % v)
@@ -740,7 +732,7 @@ def print_user_table(users, data=None, sub_data=None, activity=None, latest=None
         else:
             header += l.rjust(max(5, len(l) + 1, col_widths[col]))
 
-    if None not in (latest, earliest):
+    if None not in {latest, earliest}:
         header += " │ timespan   "
 
     lines.insert(0, header.rstrip())
@@ -765,7 +757,7 @@ def print_user_table(users, data=None, sub_data=None, activity=None, latest=None
         footer += temp.format(data_accum[row])
 
     try:
-        if None not in [latest, earliest]:
+        if None not in {latest, earliest}:
             max_l = max(latest)
             min_e = min(earliest)
             timespan = relativedelta(max_l, min_e)
@@ -844,7 +836,7 @@ if __name__ == "__main__":
         END_DATE = args.enddate
         if args.timespan == 'today':
             args.timespan = 'day'
-        print("Setting end date to {}".format(END_DATE))
+        print(f"Setting end date to {END_DATE}")
 
     START_DATE = END_DATE - TIME_DELTAS[args.timespan]
 

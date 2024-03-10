@@ -7,7 +7,7 @@
 # where ipaddr is the IP address of your Mail-in-a-Box
 # and hostname is the domain name to check the DNS for.
 
-import sys, re, difflib
+import sys, re
 import dns.reversename, dns.resolver
 
 if len(sys.argv) < 3:
@@ -27,10 +27,10 @@ def test(server, description):
 		("ns2." + primary_hostname, "A", ipaddr),
 		("www." + hostname, "A", ipaddr),
 		(hostname, "MX", "10 " + primary_hostname + "."),
-		(hostname, "TXT", "\"v=spf1 mx -all\""),
-		("mail._domainkey." + hostname, "TXT", "\"v=DKIM1; k=rsa; s=email; \" \"p=__KEY__\""),
+		(hostname, "TXT", '"v=spf1 mx -all"'),
+		("mail._domainkey." + hostname, "TXT", '"v=DKIM1; k=rsa; s=email; " "p=__KEY__"'),
 		#("_adsp._domainkey." + hostname, "TXT", "\"dkim=all\""),
-		("_dmarc." + hostname, "TXT", "\"v=DMARC1; p=quarantine;\""),
+		("_dmarc." + hostname, "TXT", '"v=DMARC1; p=quarantine;"'),
 	]
 	return test2(tests, server, description)
 
@@ -59,7 +59,7 @@ def test2(tests, server, description):
 			response = ["[no value]"]
 		response = ";".join(str(r) for r in response)
 		response = re.sub(r"(\"p=).*(\")", r"\1__KEY__\2", response) # normalize DKIM key
-		response = response.replace("\"\" ", "") # normalize TXT records (DNSSEC signing inserts empty text string components)
+		response = response.replace('"" ', "") # normalize TXT records (DNSSEC signing inserts empty text string components)
 
 		# is it right?
 		if response == expected_answer:
@@ -98,7 +98,7 @@ else:
 		# And if that's OK, also check reverse DNS (the PTR record).
 		if not test_ptr("8.8.8.8", "Google Public DNS (Reverse DNS)"):
 			print ()
-			print ("The reverse DNS for %s is not correct. Consult your ISP for how to set the reverse DNS (also called the PTR record) for %s to %s." % (hostname, hostname, ipaddr))
+			print (f"The reverse DNS for {hostname} is not correct. Consult your ISP for how to set the reverse DNS (also called the PTR record) for {hostname} to {ipaddr}.")
 			sys.exit(1)
 		else:
 			print ("And the reverse DNS for the domain is correct.")

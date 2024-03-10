@@ -37,11 +37,11 @@ msg = MIMEMultipart('alternative')
 # In Python 3.6:
 #msg = Message()
 
-msg['From'] = "\"%s\" <%s>" % (env['PRIMARY_HOSTNAME'], admin_addr)
+msg['From'] = '"{}" <{}>'.format(env['PRIMARY_HOSTNAME'], admin_addr)
 msg['To'] = admin_addr
-msg['Subject'] = "[%s] %s" % (env['PRIMARY_HOSTNAME'], subject)
+msg['Subject'] = "[{}] {}".format(env['PRIMARY_HOSTNAME'], subject)
 
-content_html = '<html><body><pre style="overflow-x: scroll; white-space: pre;">{}</pre></body></html>'.format(html.escape(content))
+content_html = f'<html><body><pre style="overflow-x: scroll; white-space: pre;">{html.escape(content)}</pre></body></html>'
 
 msg.attach(MIMEText(content, 'plain'))
 msg.attach(MIMEText(content_html, 'html'))

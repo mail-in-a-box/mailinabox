@@ -24,7 +24,7 @@
 # lines while the lines start with whitespace, e.g.:
 #
 # NAME VAL
-#   UE 
+#   UE
 
 import sys, re
 
@@ -76,7 +76,7 @@ for setting in settings:
 
 found = set()
 buf = ""
-with open(filename, "r") as f:
+with open(filename, encoding="utf-8") as f:
         input_lines = list(f)
 
 while len(input_lines) > 0:
@@ -84,7 +84,7 @@ while len(input_lines) > 0:
 
 	# If this configuration file uses folded lines, append any folded lines
 	# into our input buffer.
-	if folded_lines and line[0] not in (comment_char, " ", ""):
+	if folded_lines and line[0] not in {comment_char, " ", ""}:
 		while len(input_lines) > 0 and input_lines[0][0] in " \t":
 			line += input_lines.pop(0)
 
@@ -93,9 +93,9 @@ while len(input_lines) > 0:
 		# Check if this line contain this setting from the command-line arguments.
 		name, val = settings[i].split("=", 1)
 		m = re.match(
-			   "(\s*)"
-			 + "(" + re.escape(comment_char) + "\s*)?"
-			 + re.escape(name) + delimiter_re + "(.*?)\s*$",
+			   r"(\s*)"
+			 "(" + re.escape(comment_char) + r"\s*)?"
+			 + re.escape(name) + delimiter_re + r"(.*?)\s*$",
 			 line, re.S)
 		if not m: continue
 		indent, is_comment, existing_val = m.groups()
@@ -110,30 +110,30 @@ while len(input_lines) > 0:
 			buf += line
 			found.add(i)
 			break
-		
+
 		# comment-out the existing line (also comment any folded lines)
 		if is_comment is None:
 			buf += comment_char + line.rstrip().replace("\n", "\n" + comment_char) + "\n"
 		else:
 			# the line is already commented, pass it through
 			buf += line
-		
+
 		# if this option already is set don't add the setting again,
 		# or if we're clearing the setting with -e, don't add it
 		if (i in found) or (not val and erase_setting):
 			break
-		
+
 		# add the new setting
 		buf += indent + name + delimiter + val + "\n"
-		
+
 		# note that we've applied this option
 		found.add(i)
-		
+
 		break
 	else:
 		# If did not match any setting names, pass this line through.
 		buf += line
-		
+
 # Put any settings we didn't see at the end of the file,
 # except settings being cleared.
 for i in range(len(settings)):
@@ -144,7 +144,7 @@ for i in range(len(settings)):
 
 if not testing:
 	# Write out the new file.
-	with open(filename, "w") as f:
+	with open(filename, "w", encoding="utf-8") as f:
 		f.write(buf)
 else:
 	# Just print the new file to stdout.

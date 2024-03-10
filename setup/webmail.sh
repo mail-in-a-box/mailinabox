@@ -36,8 +36,8 @@ apt_install \
 #   https://github.com/mstilkerich/rcmcarddav/releases
 # The easiest way to get the package hashes is to run this script and get the hash from
 # the error message.
-VERSION=1.6.4
-HASH=bfc693d6590542d63171e6a3997fc29f0a5f12ca
+VERSION=1.6.6
+HASH=7705d2736890c49e7ae3ac75e3ae00ba56187056
 PERSISTENT_LOGIN_VERSION=bde7b6840c7d91de627ea14e81cf4133cbb3c07a # version 5.3
 HTML5_NOTIFIER_VERSION=68d9ca194212e15b3c7225eb6085dbcf02fd13d7 # version 0.6.4+
 CARDDAV_VERSION=4.4.3
@@ -217,7 +217,7 @@ sed -i.miabold 's/^[^#]\+.\+PRAGMA journal_mode = WAL.\+$/#&/' \
 # Because Roundcube wants to set the PRAGMA we just deleted from the source, we apply it here
 # to the roundcube database (see https://github.com/roundcube/roundcubemail/issues/8035)
 # Database should exist, created by migration script
-sqlite3 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite 'PRAGMA journal_mode=WAL;'
+sqlite3 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite 'PRAGMA journal_mode=WAL;' | 2>&1
 
 # Enable PHP modules.
 phpenmod -v $PHP_VER imap

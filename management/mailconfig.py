@@ -9,7 +9,7 @@
 # Python 3 in setup/questions.sh to validate the email
 # address entered by the user.
 
-import subprocess, shutil, os, sqlite3, re
+import os, sqlite3, re
 import utils
 from email_validator import validate_email as validate_email_, EmailNotValidError
 import idna
@@ -86,10 +86,7 @@ def prettify_idn_email_address(email):
 
 def is_dcv_address(email):
 	email = email.lower()
-	for localpart in ("admin", "administrator", "postmaster", "hostmaster", "webmaster", "abuse"):
-		if email.startswith(localpart+"@") or email.startswith(localpart+"+"):
-			return True
-	return False
+	return any(email.startswith((localpart + "@", localpart + "+")) for localpart in ("admin", "administrator", "postmaster", "hostmaster", "webmaster", "abuse"))
 
 def open_database(env, with_connection=False):
 	conn = sqlite3.connect(env["STORAGE_ROOT"] + "/mail/users.sqlite")
@@ -192,8 +189,7 @@ def get_mail_aliases(env):
 	aliases = { row[0]: row for row in c.fetchall() } # make dict
 
 	# put in a canonical order: sort by domain, then by email address lexicographically
-	aliases = [ aliases[address] for address in utils.sort_email_addresses(aliases.keys(), env) ]
-	return aliases
+	return [ aliases[address] for address in utils.sort_email_addresses(aliases.keys(), env) ]
 
 def get_mail_aliases_ex(env):
 	# Returns a complex data structure of all mail aliases, similar
@@ -225,7 +221,7 @@ def get_mail_aliases_ex(env):
 		domain = get_domain(address)
 
 		# add to list
-		if not domain in domains:
+		if domain not in domains:
 			domains[domain] = {
 				"domain": domain,
 				"aliases": [],
@@ -477,10 +473,7 @@ def add_mail_alias(address, forwards_to, permitted_senders, env, update_if_exist
 
 	forwards_to = ",".join(validated_forwards_to)
 
-	if len(validated_permitted_senders) == 0:
-		permitted_senders = None
-	else:
-		permitted_senders = ",".join(validated_permitted_senders)
+	permitted_senders = None if len(validated_permitted_senders) == 0 else ",".join(validated_permitted_senders)
 
 	conn, c = open_database(env, with_connection=True)
 	try:
@@ -498,6 +491,7 @@ def add_mail_alias(address, forwards_to, permitted_senders, env, update_if_exist
 	if do_kick:
 		# Update things in case any new domains are added.
 		return kick(env, return_status)
+	return None
 
 def remove_mail_alias(address, env, do_kick=True):
 	# convert Unicode domain to IDNA
@@ -513,10 +507,11 @@ def remove_mail_alias(address, env, do_kick=True):
 	if do_kick:
 		# Update things in case any domains are removed.
 		return kick(env, "alias removed")
+	return None
 
 def add_auto_aliases(aliases, env):
 	conn, c = open_database(env, with_connection=True)
-	c.execute("DELETE FROM auto_aliases");
+	c.execute("DELETE FROM auto_aliases")
 	for source, destination in aliases.items():
 		c.execute("INSERT INTO auto_aliases (source, destination) VALUES (?, ?)", (source, destination))
 	conn.commit()
@@ -586,14 +581,14 @@ def kick(env, mail_result=None):
 
 	# Remove auto-generated postmaster/admin/abuse alises from the main aliases table.
 	# They are now stored in the auto_aliases table.
-	for address, forwards_to, permitted_senders, auto in get_mail_aliases(env):
+	for address, forwards_to, _permitted_senders, auto in get_mail_aliases(env):
 		user, domain = address.split("@")
-		if user in ("postmaster", "admin", "abuse") \
+		if user in {"postmaster", "admin", "abuse"} \
 			and address not in required_aliases \
 			and forwards_to == get_system_administrator(env) \
 			and not auto:
 			remove_mail_alias(address, env, do_kick=False)
-			results.append("removed alias %s (was to %s; domain no longer used for email)\n" % (address, forwards_to))
+			results.append(f"removed alias {address} (was to {forwards_to}; domain no longer used for email)\n")
 
 	# Update DNS and nginx in case any domains are added/removed.
 
@@ -608,9 +603,11 @@ def kick(env, mail_result=None):
 def validate_password(pw):
 	# validate password
 	if pw.strip() == "":
-		raise ValueError("No password provided.")
+		msg = "No password provided."
+		raise ValueError(msg)
 	if len(pw) < 8:
-		raise ValueError("Passwords must be at least eight characters.")
+		msg = "Passwords must be at least eight characters."
+		raise ValueError(msg)
 
 if __name__ == "__main__":
 	import sys
