@@ -333,6 +333,18 @@ def run_domain_checks(rounded_time, env, output, pool, domains_to_check=None):
 	# Get the list of domains we serve HTTPS for.
 	web_domains = set(get_web_domains(env))
 
+	output.add_heading("nginx configuration files")
+
+	# Check nginx configuration.
+	sites_enabled = shell("check_output", ["ls", "/etc/nginx/sites-enabled"])
+	output.print_ok("Checking domain configuration files: %s" % sites_enabled)
+	for domain in web_domains:
+		prefixed_domain = "miab_%s" % domain
+		if prefixed_domain in sites_enabled:
+			output.print_ok("Domain checked. (%s)" % domain)
+		else:
+			output.print_error("A domain configuration file is not enabled in nginx (%s)" % domain)
+
 	if domains_to_check is None:
 		domains_to_check = mail_domains | dns_domains | web_domains
 
