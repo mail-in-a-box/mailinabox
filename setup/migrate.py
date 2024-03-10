@@ -9,6 +9,7 @@ import sys, os, os.path, glob, re, shutil
 
 sys.path.insert(0, 'management')
 from utils import load_environment, save_environment, shell
+import contextlib
 
 def migration_1(env):
 	# Re-arrange where we store SSL certificates. There was a typo also.
@@ -31,10 +32,8 @@ def migration_1(env):
 			move_file(sslfn, domain_name, file_type)
 
 	# Move the old domains directory if it is now empty.
-	try:
+	with contextlib.suppress(Exception):
 		os.rmdir(os.path.join( env["STORAGE_ROOT"], 'ssl/domains'))
-	except:
-		pass
 
 def migration_2(env):
 	# Delete the .dovecot_sieve script everywhere. This was formerly a copy of our spam -> Spam
@@ -168,7 +167,7 @@ def migration_12(env):
                         dropcmd = "DROP TABLE %s" % table
                         c.execute(dropcmd)
                     except:
-                        print("Failed to drop table", table, e)
+                        print("Failed to drop table", table)
             # Save.
             conn.commit()
             conn.close()
@@ -212,8 +211,8 @@ def run_migrations():
 	migration_id_file = os.path.join(env['STORAGE_ROOT'], 'mailinabox.version')
 	migration_id = None
 	if os.path.exists(migration_id_file):
-		with open(migration_id_file) as f:
-			migration_id = f.read().strip();
+		with open(migration_id_file, encoding='utf-8') as f:
+			migration_id = f.read().strip()
 
 	if migration_id is None:
 		# Load the legacy location of the migration ID. We'll drop support
@@ -222,7 +221,7 @@ def run_migrations():
 
 	if migration_id is None:
 		print()
-		print("%s file doesn't exists. Skipping migration..." % (migration_id_file,))
+		print(f"{migration_id_file} file doesn't exists. Skipping migration...")
 		return
 
 	ourver = int(migration_id)
@@ -253,7 +252,7 @@ def run_migrations():
 
 		# Write out our current version now. Do this sooner rather than later
 		# in case of any problems.
-		with open(migration_id_file, "w") as f:
+		with open(migration_id_file, "w", encoding='utf-8') as f:
 			f.write(str(ourver) + "\n")
 
 		# Delete the legacy location of this field.

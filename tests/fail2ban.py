@@ -6,12 +6,12 @@
 # try to log in to.
 ######################################################################
 
-import sys, os, time, functools
+import sys, os, time
 
 # parse command line
 
 if len(sys.argv) != 4:
-	print("Usage: tests/fail2ban.py \"ssh user@hostname\" hostname owncloud_user")
+	print('Usage: tests/fail2ban.py "ssh user@hostname" hostname owncloud_user')
 	sys.exit(1)
 
 ssh_command, hostname, owncloud_user = sys.argv[1:4]
@@ -24,7 +24,6 @@ socket.setdefaulttimeout(10)
 class IsBlocked(Exception):
 	"""Tests raise this exception when it appears that a fail2ban
 	jail is in effect, i.e. on a connection refused error."""
-	pass
 
 def smtp_test():
 	import smtplib
@@ -33,13 +32,14 @@ def smtp_test():
 		server = smtplib.SMTP(hostname, 587)
 	except ConnectionRefusedError:
 		# looks like fail2ban worked
-		raise IsBlocked()
+		raise IsBlocked
 	server.starttls()
 	server.ehlo_or_helo_if_needed()
 
 	try:
 		server.login("fakeuser", "fakepassword")
-		raise Exception("authentication didn't fail")
+		msg = "authentication didn't fail"
+		raise Exception(msg)
 	except smtplib.SMTPAuthenticationError:
 		# athentication should fail
 		pass
@@ -57,11 +57,12 @@ def imap_test():
 		M = imaplib.IMAP4_SSL(hostname)
 	except ConnectionRefusedError:
 		# looks like fail2ban worked
-		raise IsBlocked()
+		raise IsBlocked
 
 	try:
 		M.login("fakeuser", "fakepassword")
-		raise Exception("authentication didn't fail")
+		msg = "authentication didn't fail"
+		raise Exception(msg)
 	except imaplib.IMAP4.error:
 		# authentication should fail
 		pass
@@ -75,17 +76,18 @@ def pop_test():
 		M = poplib.POP3_SSL(hostname)
 	except ConnectionRefusedError:
 		# looks like fail2ban worked
-		raise IsBlocked()
+		raise IsBlocked
 	try:
 		M.user('fakeuser')
 		try:
 			M.pass_('fakepassword')
-		except poplib.error_proto as e:
+		except poplib.error_proto:
 			# Authentication should fail.
 			M = None # don't .quit()
 			return
 		M.list()
-		raise Exception("authentication didn't fail")
+		msg = "authentication didn't fail"
+		raise Exception(msg)
 	finally:
 		if M:
 			M.quit()
@@ -99,11 +101,12 @@ def managesieve_test():
 		M = imaplib.IMAP4(hostname, 4190)
 	except ConnectionRefusedError:
 		# looks like fail2ban worked
-		raise IsBlocked()
+		raise IsBlocked
 
 	try:
 		M.login("fakeuser", "fakepassword")
-		raise Exception("authentication didn't fail")
+		msg = "authentication didn't fail"
+		raise Exception(msg)
 	except imaplib.IMAP4.error:
 		# authentication should fail
 		pass
@@ -129,17 +132,17 @@ def http_test(url, expected_status, postdata=None, qsargs=None, auth=None):
 			headers={'User-Agent': 'Mail-in-a-Box fail2ban tester'},
 			timeout=8,
 			verify=False) # don't bother with HTTPS validation, it may not be configured yet
-	except requests.exceptions.ConnectTimeout as e:
-		raise IsBlocked()
+	except requests.exceptions.ConnectTimeout:
+		raise IsBlocked
 	except requests.exceptions.ConnectionError as e:
 		if "Connection refused" in str(e):
-			raise IsBlocked()
+			raise IsBlocked
 		raise # some other unexpected condition
 
 	# return response status code
 	if r.status_code != expected_status:
 		r.raise_for_status() # anything but 200
-		raise IOError("Got unexpected status code %s." % r.status_code)
+		raise OSError("Got unexpected status code %s." % r.status_code)
 
 # define how to run a test
 
@@ -149,7 +152,7 @@ def restart_fail2ban_service(final=False):
 	if not final:
 		# Stop recidive jails during testing.
 		command += " && sudo fail2ban-client stop recidive"
-	os.system("%s \"%s\"" % (ssh_command, command))
+	os.system(f'{ssh_command} "{command}"')
 
 def testfunc_runner(i, testfunc, *args):
 	print(i+1, end=" ", flush=True)
@@ -163,7 +166,6 @@ def run_test(testfunc, args, count, within_seconds, parallel):
 	# run testfunc sequentially and still get to count requests within
 	# the required time. So we split the requests across threads.
 
-	import requests.exceptions
 	from multiprocessing import Pool
 
 	restart_fail2ban_service()
@@ -179,7 +181,7 @@ def run_test(testfunc, args, count, within_seconds, parallel):
 		# Distribute the requests across the pool.
 		asyncresults = []
 		for i in range(count):
-			ar = p.apply_async(testfunc_runner, [i, testfunc] + list(args))
+			ar = p.apply_async(testfunc_runner, [i, testfunc, *list(args)])
 			asyncresults.append(ar)
 
 		# Wait for all runs to finish.
