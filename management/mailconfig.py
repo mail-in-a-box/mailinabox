@@ -1326,7 +1326,7 @@ def remove_mail_alias(address_utf8, env, do_kick=True, auto=None, ignore_if_not_
 		# Update things in case any domains are removed.
 		return kick(env, return_status)
 	else:
-		None
+		return return_status
 
 
 def add_auto_aliases(aliases, env):
