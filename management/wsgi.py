@@ -8,7 +8,7 @@
 #####
 
 from daemon import app
-import auth, utils
+import utils
 
 app.logger.addHandler(utils.create_syslog_handler())
 

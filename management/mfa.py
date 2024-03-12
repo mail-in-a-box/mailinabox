@@ -22,8 +22,8 @@ def strip_order_prefix(rec, attributes):
 	sorted in the record making the prefix superfluous.
 
 	For example, the function will change:
-       totpSecret: {0}secret1 
-       totpSecret: {1}secret2 
+       totpSecret: {0}secret1
+       totpSecret: {1}secret2
     to:
 	   totpSecret: secret1
        totpSecret: secret2
@@ -32,16 +32,16 @@ def strip_order_prefix(rec, attributes):
 	'''
 	for attr in attributes:
 		# ignore attribute that doesn't exist
-		if not attr in rec: continue		
+		if not attr in rec: continue
 		# ..as well as None values and empty list
 		if not rec[attr]: continue
-		
+
 		newvals = []
 		for val in rec[attr]:
 			i = val.find('}')
 			newvals.append(val[i+1:])
 		rec[attr] = newvals
-		
+
 def get_mfa_user(email, env, conn=None):
 	'''get the ldap record for the user along with all MFA-related
 	attributes
@@ -49,7 +49,7 @@ def get_mfa_user(email, env, conn=None):
 	'''
 	user = find_mail_user(env, email, ['objectClass','totpSecret','totpMruToken','totpMruTokenTime','totpLabel'], conn)
 	if not user:
-		raise ValueError("User does not exist.")	
+		raise ValueError("User does not exist.")
 	strip_order_prefix(user, ['totpSecret','totpMruToken','totpMruTokenTime','totpLabel'])
 	return user
 
@@ -104,7 +104,8 @@ multiple mfa schemes enabled of the same type.
 	if type == "totp":
 		mfa_totp.enable(user, secret, token, label, env)
 	else:
-		raise ValueError("Invalid MFA type.")
+		msg = "Invalid MFA type."
+		raise ValueError(msg)
 
 def disable_mfa(email, mfa_id, env):
 	'''disable a specific MFA scheme. `mfa_id` identifies the specific
@@ -121,7 +122,7 @@ def disable_mfa(email, mfa_id, env):
 		return mfa_totp.disable(user, mfa_id, env)
 	else:
 		return False
-			
+
 def validate_auth_mfa(email, request, env):
 	# Validates that a login request satisfies any MFA modes
 	# that have been enabled for the user's account. Returns

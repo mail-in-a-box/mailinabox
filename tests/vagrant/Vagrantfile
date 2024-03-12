@@ -25,7 +25,7 @@ export FEATURE_MUNIN=false
 export EHDD_KEYFILE=$HOME/keyfile
 echo -n "boo" >$EHDD_KEYFILE
 tests/system-setup/remote-nextcloud-docker.sh || exit 1
-tests/runner.sh remote-nextcloud ehdd default || exit 2
+tests/runner.sh -no-smtp-remote remote-nextcloud ehdd default || exit 2
 SH
     end
   end
@@ -38,25 +38,26 @@ cd /mailinabox
 export PRIMARY_HOSTNAME=qa2.abc.com
 export FEATURE_MUNIN=false
 tests/system-setup/remote-nextcloud-docker.sh upgrade --populate=basic || exit 1
-tests/runner.sh remote-nextcloud upgrade-basic default || exit 2
+tests/runner.sh -no-smtp-remote remote-nextcloud upgrade-basic default || exit 2
 SH
   end
 
 
   # upgrade-from-upstream
-  
+
   config.vm.define "upgrade-from-upstream" do |m1|
     m1.vm.provision :shell, :inline => <<-SH
 cd /mailinabox
 export PRIMARY_HOSTNAME=qa3.abc.com
-export UPSTREAM_TAG=main
+# TODO: change UPSTREAM_TAG to 'main' once upstream is installable
+export UPSTREAM_TAG=v67
 tests/system-setup/upgrade-from-upstream.sh --populate=basic --populate=totpuser || exit 1
-tests/runner.sh upgrade-basic upgrade-totpuser default || exit 2
+tests/runner.sh -no-smtp-remote upgrade-basic upgrade-totpuser default || exit 2
 SH
   end
 
   # upgrade
-  
+
   # this test is only needed when testing migrations from miabldap
   # to a newer miabldap with a migration step
   #
@@ -65,9 +66,11 @@ SH
   config.vm.define "upgrade" do |m1|
     m1.vm.provision :shell, :inline => <<-SH
 cd /mailinabox
+# TODO: remove DEB_PYTHON_INSTALL_LAYOUT once MIABLDAP_RELEASE_TAG >= v66 (see https://github.com/downtownallday/mailinabox-ldap/commit/371f5bc1b236de40a1ed5d9118140ee13fddf5dc)
+export DEB_PYTHON_INSTALL_LAYOUT='deb'
 export PRIMARY_HOSTNAME=upgrade.abc.com
 tests/system-setup/upgrade.sh --populate=basic --populate=totpuser || exit 1
-tests/runner.sh upgrade-basic upgrade-totpuser default || exit 2
+tests/runner.sh -no-smtp-remote upgrade-basic upgrade-totpuser default || exit 2
 SH
   end
 
@@ -96,6 +99,6 @@ setup/start.sh
 SH
     end
   end
-  
+
 
 end

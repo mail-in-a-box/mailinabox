@@ -42,7 +42,7 @@ def time_ns():
 		return time.time_ns()
 	else:
 		return int(time.time() * 1000000000)
-	
+
 def get_state(user):
 	state_list = []
 
@@ -62,7 +62,8 @@ def enable(user, secret, token, label, env):
 	# Sanity check with the provide current token.
 	totp = pyotp.TOTP(secret)
 	if not totp.verify(token, valid_window=1):
-		raise ValueError("Invalid token.")
+		msg = "Invalid token."
+		raise ValueError(msg)
 
 	mods = {
 		"totpSecret": user['totpSecret'].copy() + [secret],
@@ -72,7 +73,7 @@ def enable(user, secret, token, label, env):
 	}
 	if 'totpUser' not in user['objectClass']:
 		 mods['objectClass'] = user['objectClass'].copy() + ['totpUser']
-	
+
 	conn = open_database(env)
 	conn.modify_record(user, mods)
 
@@ -107,13 +108,13 @@ def disable(user, id, env):
 			"totpSecret": None,
 			"totpLabel": None
 		}
-		mods["objectClass"].remove("totpUser")	
+		mods["objectClass"].remove("totpUser")
 		open_database(env).modify_record(user, mods)
 		return True
 
 	else:
 		# Disable totp at the index specified
-		idx = index_from_id(user, id)	
+		idx = index_from_id(user, id)
 		if idx<0 or idx>=len(user['totpSecret']):
 			return False
 		mods = {

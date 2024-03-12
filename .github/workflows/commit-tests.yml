@@ -22,13 +22,14 @@ jobs:
           path: tests/out/**/screenshot.png
           if-no-files-found: ignore
           retention-days: 5
-    
+
   # install upstream miab, then migrate to miabldap
   upgrade-from-upstream:
     runs-on: ubuntu-22.04
     env:
       PRIMARY_HOSTNAME: box2.abc.com
-      UPSTREAM_TAG: main
+      # TODO: change UPSTREAM_TAG to 'main' once upstream is installable
+      UPSTREAM_TAG: v67
     steps:
       - uses: actions/checkout@v2
       - name: setup
