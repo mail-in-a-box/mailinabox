@@ -110,7 +110,7 @@ except:
 
 found = set()
 buf = ""
-with open(filename, "r") as f:
+with open(filename, encoding="utf-8") as f:
 	input_lines = list(f)
 cur_section = None
 
@@ -119,7 +119,7 @@ while len(input_lines) > 0:
 
 	# If this configuration file uses folded lines, append any folded lines
 	# into our input buffer.
-	if folded_lines and line[0] not in (comment_char, " ", ""):
+	if folded_lines and line[0] not in {comment_char, " ", ""}:
 		while len(input_lines) > 0 and input_lines[0][0] in " \t":
 			line += input_lines.pop(0)
 
@@ -147,9 +147,9 @@ while len(input_lines) > 0:
 		name, val = (settings[i].name, settings[i].val)
 		flags = re.S | (re.I if case_insensitive_names else 0)
 		m = re.match(
-			   "(\\s*)"
-			 + "(" + re.escape(comment_char) + "\\s*)?"
-			 + re.escape(name) + delimiter_re + "(.*?)\\s*$",
+			   r"(\s*)"
+			 + "(" + re.escape(comment_char) + r"\s*)?"
+			 + re.escape(name) + delimiter_re + r"(.*?)\s*$",
 			 line, flags)
 		if not m: continue
 		indent, is_comment, existing_val = m.groups()
@@ -206,7 +206,7 @@ if not ini_section or cur_section == ini_section.lower():
 
 if not testing:
 	# Write out the new file.
-	with open(filename, "w") as f:
+	with open(filename, "w", encoding="utf-8") as f:
 		f.write(buf)
 else:
 	# Just print the new file to stdout.

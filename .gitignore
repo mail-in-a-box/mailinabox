@@ -6,3 +6,4 @@ externals/
 api/docs/api-docs.html
 downloads/
 MAINTAIN/
+*.code-workspace

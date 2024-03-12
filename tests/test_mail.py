@@ -83,7 +83,7 @@ while argi<len(sys.argv):
 		argi+=2
 	else:
 		usage()
-		
+
 if not smtpd:
 	if len(sys.argv) - argi != 3: usage()
 	host, login, pw = sys.argv[argi:argi+3]
@@ -222,13 +222,12 @@ if delete_msg:
 		if not found:
 			print("Test message not present in the inbox yet...")
 			time.sleep(wait_cycle_sleep)
-		
+
 	M.close()
 	M.logout()
-	
+
 	if not found:
 		raise TimeoutError("Timeout waiting for message")
 
 if send_msg and delete_msg:
 	print("Test message sent & received successfully.")
-
