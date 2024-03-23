@@ -9,7 +9,7 @@ import ipaddress
 import rtyaml
 import dns.resolver
 
-from utils import shell, load_env_vars_from_file, safe_domain_name, sort_domains
+from utils import shell, load_env_vars_from_file, safe_domain_name, sort_domains, get_ssh_port
 from ssl_certificates import get_ssl_certificates, check_certificate
 import contextlib
 
@@ -448,14 +448,11 @@ def build_sshfp_records():
 	# if SSH has been configured to listen on a nonstandard port, we must
 	# specify that port to sshkeyscan.
 
-	port = 22
-	with open('/etc/ssh/sshd_config', encoding="utf-8") as f:
-		for line in f:
-			s = line.rstrip().split()
-			if len(s) == 2 and s[0] == 'Port':
-				with contextlib.suppress(ValueError):
-					port = int(s[1])
-				break
+	port = get_ssh_port()
+
+	# If nothing returned, SSH is probably not installed.
+	if not port:
+		return
 
 	keys = shell("check_output", ["ssh-keyscan", "-4", "-t", "rsa,dsa,ecdsa,ed25519", "-p", str(port), "localhost"])
 	keys = sorted(keys.split("\n"))
