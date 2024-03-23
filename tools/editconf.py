@@ -30,7 +30,7 @@ import sys, re
 
 # sanity check
 if len(sys.argv) < 3:
-	print("usage: python3 editconf.py /etc/file.conf [-s] [-w] [-c <CHARACTER>] [-t] NAME=VAL [NAME=VAL ...]")
+	print("usage: python3 editconf.py /etc/file.conf [-e] [-s] [-w] [-c <CHARACTER>] [-t] NAME=VAL [NAME=VAL ...]")
 	sys.exit(1)
 
 # parse command line arguments
