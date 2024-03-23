@@ -1,6 +1,31 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+
+Package updates:
+
+* Roundcube updated to version 1.6.6.
+* Nextcloud is updated to version 26.0.12.
+
+Mail:
+
+* Updated postfix's configuration to guard against SMTP smuggling to the long-term fix (https://www.postfix.org/smtp-smuggling.html).
+
+Control Panel:
+
+* Improved reporting of Spamhaus response codes.
+* Improved detection of SSH port.
+* Fixed an error if last saved status check results were corrupted.
+* Other minor fixes.
+
+Other:
+
+* fail2ban is updated to see "HTTP/2.0" requests to munin also.
+* Internal improvements to the code to make it more reliable and readable.
+
+
 Version 67 (December 22, 2023)
 ------------------------------
 
