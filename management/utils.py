@@ -205,6 +205,34 @@ def wait_for_service(port, public, env, timeout):
 				return False
 		time.sleep(min(timeout/4, 1))
 
+def get_ssh_port():
+	port_value = get_ssh_config_value("port")
+
+	if port_value:
+		return int(port_value)
+
+	return None
+
+def get_ssh_config_value(parameter_name):
+	# Returns ssh configuration value for the provided parameter
+	try:
+		output = shell('check_output', ['sshd', '-T'])
+	except FileNotFoundError:
+		# sshd is not installed. That's ok.
+		return None
+	except subprocess.CalledProcessError:
+		# error while calling shell command
+		return None
+
+	for line in output.split("\n"):
+		if " " not in line: continue # there's a blank line at the end
+		key, values = line.split(" ", 1)
+		if key == parameter_name:
+			return values # space-delimited if there are multiple values
+
+	# Did not find the parameter!
+	return None
+
 if __name__ == "__main__":
 	from web_update import get_web_domains
 	env = load_environment()
