@@ -81,10 +81,16 @@ tools/editconf.py /etc/postfix/main.cf \
 	policy-spf_time_limit=3600
 
 # Guard against SMTP smuggling
-# This short-term workaround is recommended at https://www.postfix.org/smtp-smuggling.html
+# This "long-term" fix is recommended at https://www.postfix.org/smtp-smuggling.html.
+# This beecame supported in a backported fix in package version 3.6.4-1ubuntu1.3. It is
+# unnecessary in Postfix 3.9+ where this is the default. The "short-term" workarounds
+# that we previously had are reverted to postfix defaults (though smtpd_discard_ehlo_keywords
+# was never included in a released version of Mail-in-a-Box).
+tools/editconf.py /etc/postfix/main.cf -e \
+       smtpd_data_restrictions= \
+       smtpd_discard_ehlo_keywords=
 tools/editconf.py /etc/postfix/main.cf \
-	smtpd_data_restrictions=reject_unauth_pipelining \
-	smtpd_discard_ehlo_keywords="chunking, silent-discard"
+       smtpd_forbid_bare_newline=normalize
 
 # ### Outgoing Mail
 
