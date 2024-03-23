@@ -449,9 +449,10 @@ def build_sshfp_records():
 	# specify that port to sshkeyscan.
 
 	port = get_ssh_port()
-	# If nothing returned, assume default
+
+	# If nothing returned, SSH is probably not installed.
 	if not port:
-		port = 22
+		return
 
 	keys = shell("check_output", ["ssh-keyscan", "-4", "-t", "rsa,dsa,ecdsa,ed25519", "-p", str(port), "localhost"])
 	keys = sorted(keys.split("\n"))
