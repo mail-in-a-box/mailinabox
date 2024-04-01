@@ -1,13 +1,13 @@
 CHANGELOG
 =========
 
-In Development
---------------
+Version 68 (April 1, 2024)
+--------------------------
 
 Package updates:
 
 * Roundcube updated to version 1.6.6.
-* Nextcloud is updated to version 22.0.12.
+* Nextcloud is updated to version 26.0.12.
 
 Mail:
 

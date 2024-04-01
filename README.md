@@ -35,7 +35,7 @@ This enables remote Nextcloud support. See the instructions below for more detai
 #### A typical installation. No encryption-at-rest. No remote Nextcloud.
 
 `curl -s https://raw.githubusercontent.com/downtownallday/mailinabox-ldap/master/setup/bootstrap.sh | sudo bash`
- 
+
 #### Installation with encryption-at-rest.
 
 `curl -s https://raw.githubusercontent.com/downtownallday/mailinabox-ldap/master/setup/bootstrap.sh | sudo ENCRYPTION_AT_REST=true bash`
