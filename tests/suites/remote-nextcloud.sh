@@ -8,7 +8,7 @@
 ##### details.
 #####
 
-#	
+#
 # Test the setup modification script setup/mods.available/remote-nextcloud.sh
 # Prerequisites:
 #
@@ -28,7 +28,7 @@
 #
 
 is_configured() {
-    . /etc/mailinabox_mods.conf
+    . /etc/mailinabox_mods.conf 2>>$TEST_OF
     if [ $? -ne 0 -o -z "$NC_HOST" ]; then
         return 1
     fi
@@ -52,7 +52,7 @@ assert_roundcube_carddav_contact_exists() {
     record "[checking that roundcube contact with vcard UID=$c_uid exists]"
 	roundcube_carddav_contact_exists "$user" "$pass" "$c_uid" 2>>$TEST_OF
 	local rc=$?
-	
+
     if [ $rc -eq 0 ]; then
 		return
 	elif [ $rc -eq 1 ]; then
@@ -69,7 +69,7 @@ assert_roundcube_carddav_contact_exists() {
 
 test_mail_from_nextcloud() {
     test_start "mail_from_nextcloud"
-    test_end    
+    test_end
 }
 
 test_nextcloud_contacts() {
@@ -98,10 +98,10 @@ test_nextcloud_contacts() {
 		"$alice" \
 		"$alice_pw" \
 		"" "" ""
-	
+
     #
     # 1. create contact in Nextcloud - ensure it is available in Roundcube
-    #    
+    #
     # this will validate Nextcloud's ability to authenticate users via
     # LDAP and that Roundcube is able to reach Nextcloud for contacts
     #
@@ -125,7 +125,7 @@ test_nextcloud_contacts() {
 		test_end
 		return
 	fi
-    
+
     # force a refresh/sync of the contacts in Roundcube
     record "[forcing refresh of roundcube contact for $alice]"
     roundcube_force_carddav_refresh "$alice" "$alice_pw" >>$TEST_OF 2>&1 || \
@@ -133,16 +133,16 @@ test_nextcloud_contacts() {
 
     # query the roundcube sqlite database for the new contact
     assert_roundcube_carddav_contact_exists "$alice" "$alice_pw" "$c_uid"
-    
+
     # delete the contact
     record "[delete contact with vcard uid '$c_uid' from $alice]"
     carddav_delete_contact "$alice" "$alice_pw" "$c_uid" 2>>$TEST_OF || \
         test_failure "Unable to delete contact for $alice in Nextcloud"
-    
-    
+
+
     # clean up
     mgmt_assert_delete_user "$alice"
-    
+
     test_end
 }
 
@@ -155,7 +155,7 @@ test_web_config() {
 	fi
 
 	local code
-	
+
 	# nginx should be configured to redirect .well-known/caldav and
 	# .well-known/carddav to the remote nextcloud
 	if grep '\.well-known/carddav[\t ]*/cloud/' /etc/nginx/conf.d/local.conf >/dev/null; then
@@ -176,7 +176,7 @@ test_web_config() {
 			test_failure "carddav url doesn't work: $REST_ERROR"
 		fi
 	fi
-	
+
 	if grep '\.well-known/caldav[\t ]*/cloud/' /etc/nginx/conf.d/local.conf >/dev/null; then
 		test_failure "/.well-known/caldav redirects to the local nextcloud, but should redirect to $NC_HOST:$NC_PORT"
 	else
@@ -199,8 +199,8 @@ test_web_config() {
 	if grep -A 1 CardDAVPrincipalURL /var/lib/mailinabox/mobileconfig.xml | tail -1 | grep -F "<string>/cloud/remote.php" >/dev/null; then
 		test_failure "ios mobileconfig redirects to the local nextcloud, but should redirect to $NC_HOST:$NC_PORT"
 	fi
-	
-    test_end    
+
+    test_end
 }
 
 
@@ -211,7 +211,3 @@ test_web_config
 test_nextcloud_contacts
 
 suite_end mgmt_end
-
-
-
-
