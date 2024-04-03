@@ -14,13 +14,13 @@ if [ -z "$1" ]; then
 	echo
 	echo "Available backups:"
 	echo
-	find $STORAGE_ROOT/owncloud-backup/* -maxdepth 0 -type d
+	find "$STORAGE_ROOT/owncloud-backup/"* -maxdepth 0 -type d
 	echo
 	echo "Supply the directory that was created during the last installation as the only commandline argument"
 	exit
 fi
 
-if [ ! -f $1/config.php ]; then
+if [ ! -f "$1/config.php" ]; then
 	echo "This isn't a valid backup location"
 	exit 1
 fi
@@ -36,14 +36,14 @@ cp -r  "$1/owncloud-install" /usr/local/lib/owncloud
 # restore access rights
 chmod 750 /usr/local/lib/owncloud/{apps,config}
 
-cp "$1/owncloud.db" $STORAGE_ROOT/owncloud/
-cp "$1/config.php" $STORAGE_ROOT/owncloud/
+cp "$1/owncloud.db" "$STORAGE_ROOT/owncloud/"
+cp "$1/config.php" "$STORAGE_ROOT/owncloud/"
 
-ln -sf $STORAGE_ROOT/owncloud/config.php /usr/local/lib/owncloud/config/config.php
-chown -f -R www-data:www-data $STORAGE_ROOT/owncloud /usr/local/lib/owncloud
-chown www-data:www-data $STORAGE_ROOT/owncloud/config.php
+ln -sf "$STORAGE_ROOT/owncloud/config.php" /usr/local/lib/owncloud/config/config.php
+chown -f -R www-data:www-data "$STORAGE_ROOT/owncloud" /usr/local/lib/owncloud
+chown www-data:www-data "$STORAGE_ROOT/owncloud/config.php"
 
-sudo -u www-data php$PHP_VER /usr/local/lib/owncloud/occ maintenance:mode --off
+sudo -u www-data "php$PHP_VER" /usr/local/lib/owncloud/occ maintenance:mode --off
 
 service php8.0-fpm start
 echo "Done"

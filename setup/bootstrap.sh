@@ -51,9 +51,9 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 # Clone the Mail-in-a-Box repository if it doesn't exist.
-if [ ! -d $HOME/mailinabox ]; then
+if [ ! -d "$HOME/mailinabox" ]; then
 	if [ ! -f /usr/bin/git ]; then
-		echo Installing git . . .
+		echo "Installing git . . ."
 		apt-get -q -q update
 		DEBIAN_FRONTEND=noninteractive apt-get -q -q install -y git < /dev/null
 		echo
@@ -63,25 +63,25 @@ if [ ! -d $HOME/mailinabox ]; then
 		SOURCE=https://github.com/mail-in-a-box/mailinabox
 	fi
 
-	echo Downloading Mail-in-a-Box $TAG. . .
+	echo "Downloading Mail-in-a-Box $TAG. . ."
 	git clone \
-		-b $TAG --depth 1 \
-		$SOURCE \
-		$HOME/mailinabox \
+		-b "$TAG" --depth 1 \
+		"$SOURCE" \
+		"$HOME/mailinabox" \
 		< /dev/null 2> /dev/null
 
 	echo
 fi
 
 # Change directory to it.
-cd $HOME/mailinabox
+cd "$HOME/mailinabox" || exit
 
 # Update it.
-if [ "$TAG" != $(git describe --always) ]; then
-	echo Updating Mail-in-a-Box to $TAG . . .
-	git fetch --depth 1 --force --prune origin tag $TAG
-	if ! git checkout -q $TAG; then
-		echo "Update failed. Did you modify something in $(pwd)?"
+if [ "$TAG" != "$(git describe --always)" ]; then
+	echo "Updating Mail-in-a-Box to $TAG . . ."
+	git fetch --depth 1 --force --prune origin tag "$TAG"
+	if ! git checkout -q "$TAG"; then
+		echo "Update failed. Did you modify something in $PWD?"
 		exit 1
 	fi
 	echo
