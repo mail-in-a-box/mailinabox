@@ -142,7 +142,7 @@ if [ ! -f "$STORAGE_ROOT/dns/dnssec/$algo.conf" ]; then
 	# (This previously used -b 2048 but it's unclear if this setting makes sense
 	# for non-RSA keys, so it's removed. The RSA-based keys are not recommended
 	# anymore anyway.)
-	KSK=$(umask 077; cd $STORAGE_ROOT/dns/dnssec; ldns-keygen -r /dev/urandom -a $algo -k _domain_);
+	KSK=$(umask 077; cd "$STORAGE_ROOT/dns/dnssec"; ldns-keygen -r /dev/urandom -a $algo -k _domain_);
 
 	# Now create a Zone-Signing Key (ZSK) which is expected to be
 	# rotated more often than a KSK, although we have no plans to
@@ -150,7 +150,7 @@ if [ ! -f "$STORAGE_ROOT/dns/dnssec/$algo.conf" ]; then
 	# disturbing DNS availability.) Omit `-k`.
 	# (This previously used -b 1024 but it's unclear if this setting makes sense
 	# for non-RSA keys, so it's removed.)
-	ZSK=$(umask 077; cd $STORAGE_ROOT/dns/dnssec; ldns-keygen -r /dev/urandom -a $algo _domain_);
+	ZSK=$(umask 077; cd "$STORAGE_ROOT/dns/dnssec"; ldns-keygen -r /dev/urandom -a $algo _domain_);
 
 	# These generate two sets of files like:
 	#
@@ -162,7 +162,7 @@ if [ ! -f "$STORAGE_ROOT/dns/dnssec/$algo.conf" ]; then
 	# options. So we'll store the names of the files we just generated.
 	# We might have multiple keys down the road. This will identify
 	# what keys are the current keys.
-	cat > $STORAGE_ROOT/dns/dnssec/$algo.conf << EOF;
+	cat > "$STORAGE_ROOT/dns/dnssec/$algo.conf" << EOF;
 KSK=$KSK
 ZSK=$ZSK
 EOF
@@ -178,7 +178,7 @@ cat > /etc/cron.daily/mailinabox-dnssec << EOF;
 #!/bin/bash
 # Mail-in-a-Box
 # Re-sign any DNS zones with DNSSEC because the signatures expire periodically.
-$(pwd)/tools/dns_update
+$PWD/tools/dns_update
 EOF
 chmod +x /etc/cron.daily/mailinabox-dnssec
 

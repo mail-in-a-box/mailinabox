@@ -1,3 +1,4 @@
+#!/bin/bash
 #####
 ##### This file is part of Mail-in-a-Box-LDAP which is released under the
 ##### terms of the GNU Affero General Public License as published by the
@@ -16,7 +17,7 @@ if [ -z "${NONINTERACTIVE:-}" ]; then
 	#
 	# Also install dependencies needed to validate the email address.
 	if [ ! -f /usr/bin/dialog ] || [ ! -f /usr/bin/python3 ] || [ ! -f /usr/bin/pip3 ]; then
-		echo Installing packages needed for setup...
+		echo "Installing packages needed for setup..."
 		apt-get -q -q update
 		apt_get_quiet install dialog python3 python3-pip python3-ldap3 || exit 1
 	fi
@@ -40,7 +41,7 @@ if [ -z "${PRIMARY_HOSTNAME:-}" ]; then
 		# domain the user possibly wants to use is example.com then.
 		# We strip the string "box." from the hostname to get the mail
 		# domain. If the hostname differs, nothing happens here.
-		DEFAULT_DOMAIN_GUESS=$(echo $(get_default_hostname) | sed -e 's/^box\.//')
+		DEFAULT_DOMAIN_GUESS=$(get_default_hostname | sed -e 's/^box\.//')
 
 		# This is the first run. Ask the user for his email address so we can
 		# provide the best default for the box's hostname.
@@ -64,7 +65,7 @@ you really want.
 		do
 			input_box "Your Email Address" \
 				"That's not a valid email address.\n\nWhat email address are you setting this box up to manage?" \
-				$EMAIL_ADDR \
+				"$EMAIL_ADDR" \
 				EMAIL_ADDR
 			if [ -z "$EMAIL_ADDR" ]; then
 				# user hit ESC/cancel
@@ -74,7 +75,7 @@ you really want.
 
 		# Take the part after the @-sign as the user's domain name, and add
 		# 'box.' to the beginning to create a default hostname for this machine.
-		DEFAULT_PRIMARY_HOSTNAME=box.$(echo $EMAIL_ADDR | sed 's/.*@//')
+		DEFAULT_PRIMARY_HOSTNAME=box.$(echo "$EMAIL_ADDR" | sed 's/.*@//')
 	fi
 
 	input_box "Hostname" \
@@ -83,7 +84,7 @@ you really want.
 address, so we're suggesting $DEFAULT_PRIMARY_HOSTNAME.
 \n\nYou can change it, but we recommend you don't.
 \n\nHostname:" \
-		$DEFAULT_PRIMARY_HOSTNAME \
+		"$DEFAULT_PRIMARY_HOSTNAME" \
 		PRIMARY_HOSTNAME
 
 	if [ -z "$PRIMARY_HOSTNAME" ]; then
@@ -101,7 +102,7 @@ if [ -z "${PUBLIC_IP:-}" ]; then
 
 	# On the first run, if we got an answer from the Internet then don't
 	# ask the user.
-	if [[ -z "${DEFAULT_PUBLIC_IP:-}" && ! -z "$GUESSED_IP" ]]; then
+	if [[ -z "${DEFAULT_PUBLIC_IP:-}" && -n "$GUESSED_IP" ]]; then
 		PUBLIC_IP=$GUESSED_IP
 
 	# Otherwise on the first run at least provide a default.
@@ -118,7 +119,7 @@ if [ -z "${PUBLIC_IP:-}" ]; then
 		input_box "Public IP Address" \
 			"Enter the public IP address of this machine, as given to you by your ISP.
 			\n\nPublic IP address:" \
-			${DEFAULT_PUBLIC_IP:-} \
+			"${DEFAULT_PUBLIC_IP:-}" \
 			PUBLIC_IP
 
 		if [ -z "$PUBLIC_IP" ]; then
@@ -134,7 +135,7 @@ if [ -z "${PUBLIC_IPV6:-}" ]; then
 	# Ask the Internet.
 	GUESSED_IP=$(get_publicip_from_web_service 6)
 	MATCHED=0
-	if [[ -z "${DEFAULT_PUBLIC_IPV6:-}" && ! -z "$GUESSED_IP" ]]; then
+	if [[ -z "${DEFAULT_PUBLIC_IPV6:-}" && -n "$GUESSED_IP" ]]; then
 		PUBLIC_IPV6=$GUESSED_IP
 	elif [[ "${DEFAULT_PUBLIC_IPV6:-}" == "$GUESSED_IP" ]]; then
 		# No IPv6 entered and machine seems to have none, or what
@@ -150,10 +151,10 @@ if [ -z "${PUBLIC_IPV6:-}" ]; then
 			"Enter the public IPv6 address of this machine, as given to you by your ISP.
 			\n\nLeave blank if the machine does not have an IPv6 address.
 			\n\nPublic IPv6 address:" \
-			${DEFAULT_PUBLIC_IPV6:-} \
+			"${DEFAULT_PUBLIC_IPV6:-}" \
 			PUBLIC_IPV6
 
-		if [ ! $PUBLIC_IPV6_EXITCODE ]; then
+		if [ ! -n "$PUBLIC_IPV6_EXITCODE" ]; then
 			# user hit ESC/cancel
 			exit
 		fi
@@ -206,7 +207,7 @@ fi
 echo
 echo "Primary Hostname: $PRIMARY_HOSTNAME"
 echo "Public IP Address: $PUBLIC_IP"
-if [ ! -z "$PUBLIC_IPV6" ]; then
+if [ -n "$PUBLIC_IPV6" ]; then
 	echo "Public IPv6 Address: $PUBLIC_IPV6"
 fi
 if [ "$PRIVATE_IP" != "$PUBLIC_IP" ]; then
@@ -216,6 +217,6 @@ if [ "$PRIVATE_IPV6" != "$PUBLIC_IPV6" ]; then
 	echo "Private IPv6 Address: $PRIVATE_IPV6"
 fi
 if [ -f /usr/bin/git ] && [ -d .git ]; then
-	echo "Mail-in-a-Box Version: " $(git describe --always)
+	echo "Mail-in-a-Box Version: $(git describe --always)"
 fi
 echo

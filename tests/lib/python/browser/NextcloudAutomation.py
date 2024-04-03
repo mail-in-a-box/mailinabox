@@ -98,6 +98,9 @@ class NextcloudAutomation(object):
     def close_first_run_wizard(self):
         d = self.d
         firstrunwiz = d.find_el('#firstrunwizard', throws=False, quiet=True)
+        if firstrunwiz and not firstrunwiz.is_displayed():
+            d.say_verbose("wait for first run wizard to display")
+            d.sleep(1)
         if firstrunwiz and firstrunwiz.is_displayed():
             d.say_verbose("closing first run wizard")
             # ElementNotInteractableException

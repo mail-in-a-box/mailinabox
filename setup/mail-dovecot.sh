@@ -54,8 +54,8 @@ apt_install \
 # - https://www.dovecot.org/list/dovecot/2012-August/137569.html
 # - https://www.dovecot.org/list/dovecot/2011-December/132455.html
 tools/editconf.py /etc/dovecot/conf.d/10-master.conf \
-	default_process_limit=$(echo "$(nproc) * 250" | bc) \
-	default_vsz_limit=$(echo "$(free -tm  | tail -1 | awk '{print $2}') / 3" | bc)M \
+	default_process_limit="$(($(nproc) * 250))" \
+	default_vsz_limit="$(($(free -tm  | tail -1 | awk '{print $2}') / 3))M" \
 	log_path=/var/log/mail.log
 
 # The inotify `max_user_instances` default is 128, which constrains
@@ -70,7 +70,7 @@ tools/editconf.py /etc/sysctl.conf \
 # username part of the user's email address. We'll ensure that no bad domains or email addresses
 # are created within the management daemon.
 tools/editconf.py /etc/dovecot/conf.d/10-mail.conf \
-	mail_location=maildir:$STORAGE_ROOT/mail/mailboxes/%d/%n \
+	mail_location="maildir:$STORAGE_ROOT/mail/mailboxes/%d/%n" \
 	mail_privileged_group=mail \
 	first_valid_uid=0
 
@@ -161,7 +161,7 @@ EOF
 # Setting a `postmaster_address` is required or LMTP won't start. An alias
 # will be created automatically by our management daemon.
 tools/editconf.py /etc/dovecot/conf.d/15-lda.conf \
-	postmaster_address=postmaster@$PRIMARY_HOSTNAME
+	"postmaster_address=postmaster@$PRIMARY_HOSTNAME"
 
 # ### Sieve
 
@@ -210,14 +210,14 @@ chown -R mail:dovecot /etc/dovecot
 chmod -R o-rwx /etc/dovecot
 
 # Ensure mailbox files have a directory that exists and are owned by the mail user.
-mkdir -p $STORAGE_ROOT/mail/mailboxes
-chown -R mail:mail $STORAGE_ROOT/mail/mailboxes
+mkdir -p "$STORAGE_ROOT/mail/mailboxes"
+chown -R mail:mail "$STORAGE_ROOT/mail/mailboxes"
 
 # Same for the sieve scripts.
-mkdir -p $STORAGE_ROOT/mail/sieve
-mkdir -p $STORAGE_ROOT/mail/sieve/global_before
-mkdir -p $STORAGE_ROOT/mail/sieve/global_after
-chown -R mail:mail $STORAGE_ROOT/mail/sieve
+mkdir -p "$STORAGE_ROOT/mail/sieve"
+mkdir -p "$STORAGE_ROOT/mail/sieve/global_before"
+mkdir -p "$STORAGE_ROOT/mail/sieve/global_after"
+chown -R mail:mail "$STORAGE_ROOT/mail/sieve"
 
 # Allow the IMAP/POP ports in the firewall.
 ufw_allow imaps
