@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron:  '0 0 * * 0'
+
+jobs:
+  Mail-in-a-Box:
+    name: Mail-in-a-Box
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        # Add Ubuntu 26.04 here when supported.
+        os: [ubuntu-22.04]
+      fail-fast: false
+    env:
+      NONINTERACTIVE: 1
+      PUBLIC_IP: auto
+      PUBLIC_IPV6: auto
+      PRIMARY_HOSTNAME: auto
+      SKIP_NETWORK_CHECKS: 1
+      PYTHONDEVMODE: 1
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Before Script
+      run: |
+        set -x
+        cat /etc/hosts
+        # Adds a hostname to the hosts file.
+        sudo sed -i "/^127\.0\.0\.1/a 127.0.0.1\t$HOSTNAME.example.com\t$HOSTNAME" /etc/hosts
+    - name: Script
+      run: |
+        set -x
+        # Compiles all Python files to check syntax
+        shopt -s globstar; python3 -m compileall -o{0..2} -x tools/mail.py */**.py || true
+        # Runs the script.
+        sudo -E bash -e -o pipefail -- setup/start.sh
+        # Verifies all the services are running by getting the HTTP headers.
+        curl -sSIkLf "https://$HOSTNAME/"
+        curl -sSIkLf "https://$HOSTNAME/admin"
+        curl -sSIkLf "https://$HOSTNAME/mail/"
+        curl -sSIkLf "https://$HOSTNAME/cloud/" || true
+        # Runs the test suite. Uncomment these three lines once #1039 is merged.
+        # cd test
+        # python3 -m pip install -r requirements.txt
+        # pytest
+
+  ShellCheck:
+    name: ShellCheck
+
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: ShellCheck
+      run: shopt -s globstar; shellcheck -o avoid-nullary-conditions,check-extra-masked-returns,check-set-e-suppressed,deprecate-which,quote-safe-variables,require-double-brackets -s bash **/*.sh tools/{dns,web}_update
+      # Remove this line once all errors are fixed.
+      continue-on-error: true
+
+  Ruff:
+    name: Ruff
+
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install dependencies
+      run: |
+        python3 -m pip install --upgrade pip
+        python3 -m pip install ruff
+    - name: Script
+      run: ruff check --output-format=github --select F,E4,E7,E9,W,UP,YTT,S,BLE,B,A,C4,T10,DJ,EM,EXE,ISC,ICN,G,PIE,PYI,Q003,Q004,RSE,RET,SLF,SLOT,SIM,TID,TCH,ARG,PGH,PL,TRY,FLY,PERF,FURB,LOG,RUF --ignore W191,PLR09,PLR1702,PLR2004,RUF001,RUF002,RUF003,RUF023 --target-version py310 --preview . --exclude tools/mail.py
+      # Remove this line once all errors are fixed.
+      continue-on-error: true
