@@ -152,7 +152,7 @@ fi
 # so we can offer the user a control panel to install a better certificate.
 if [ ! -f "$STORAGE_ROOT/ssl/ssl_certificate.pem" ]; then
 	# Generate a certificate signing request.
-	CSR="$(mktemp XXXXXXXXXX.csr)"
+	CSR="$(mktemp --tmpdir XXXXXXXXXX.csr)"
 	hide_output \
 	openssl req -new -key "$STORAGE_ROOT/ssl/ssl_private_key.pem" -out "$CSR" \
 	  -sha256 -subj "/CN=$PRIMARY_HOSTNAME"
