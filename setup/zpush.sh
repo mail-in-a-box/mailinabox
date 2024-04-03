@@ -26,9 +26,9 @@ source /etc/mailinabox.conf # load global vars
 
 echo "Installing Z-Push (Exchange/ActiveSync server)..."
 apt_install \
-       php${PHP_VER}-soap php${PHP_VER}-imap libawl-php php$PHP_VER-xml
+       php"${PHP_VER}"-soap php"${PHP_VER}"-imap libawl-php php"$PHP_VER"-xml
 
-phpenmod -v $PHP_VER imap
+phpenmod -v "$PHP_VER" imap
 
 # Copy Z-Push into place.
 VERSION=2.7.1
@@ -53,10 +53,10 @@ if [ $needs_update == 1 ]; then
 	# Create admin and top scripts with PHP_VER  
 	rm -f /usr/sbin/z-push-{admin,top}
     echo '#!/bin/bash' > /usr/sbin/z-push-admin
-    echo php$PHP_VER /usr/local/lib/z-push/z-push-admin.php '"$@"' >> /usr/sbin/z-push-admin
+    echo php"$PHP_VER" /usr/local/lib/z-push/z-push-admin.php '"$@"' >> /usr/sbin/z-push-admin
     chmod 755 /usr/sbin/z-push-admin
     echo '#!/bin/bash' > /usr/sbin/z-push-top
-    echo php$PHP_VER /usr/local/lib/z-push/z-push-top.php '"$@"' >> /usr/sbin/z-push-top
+    echo php"$PHP_VER" /usr/local/lib/z-push/z-push-top.php '"$@"' >> /usr/sbin/z-push-top
     chmod 755 /usr/sbin/z-push-top
 	
 	echo $VERSION > /usr/local/lib/z-push/version
@@ -118,8 +118,8 @@ EOF
 
 # Restart service.
 
-restart_service php$PHP_VER-fpm
+restart_service php"$PHP_VER"-fpm
 
 # Fix states after upgrade
 
-hide_output php$PHP_VER /usr/local/lib/z-push/z-push-admin.php -a fixstates
+hide_output php"$PHP_VER" /usr/local/lib/z-push/z-push-admin.php -a fixstates

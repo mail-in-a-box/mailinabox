@@ -56,10 +56,10 @@ OS_MAJOR=$(. /etc/os-release; echo $VERSION_ID | awk -F. '{print $1}')
 remove_line_continuation() {
     local file="$1"
     awk '
-BEGIN            { C=0 } 
-C==1 && /[^\\]$/ { C=0; print $0; next } 
-C==1             { printf("%s",substr($0,0,length($0)-1)); next } 
-/\\$/            { C=1; printf("%s",substr($0,0,length($0)-1)); next } 
+BEGIN            { C=0 }
+C==1 && /[^\\]$/ { C=0; print $0; next }
+C==1             { printf("%s",substr($0,0,length($0)-1)); next }
+/\\$/            { C=1; printf("%s",substr($0,0,length($0)-1)); next }
                  { print $0 }' \
                      "$file"
 }
@@ -79,15 +79,15 @@ install_packages() {
                  pkgs="$(cut -c12- <<<"$line")"
                  ;;
         esac
-        
+
         # don't install slapd
         pkgs="$(sed 's/slapd//g' <<< "$pkgs")"
 
         # manually set PHP_VER if necessary
         if grep "PHP_VER" <<<"$pkgs" >/dev/null; then
-            pkgs="$(sed "s/\${*PHP_VER}*/$PHP_VER/g" <<< "$pkgs")"
+            pkgs="$(sed "s/\"\?\${*PHP_VER}*\"\?/$PHP_VER/g" <<< "$pkgs")"
         fi
-        
+
         if [ ! -z "$pkgs" ]; then
             H2 "install: $pkgs"
             if ! $dry_run; then
@@ -108,7 +108,7 @@ install_ppas() {
             if ! $dry_run; then
                 exec_no_output $line
             fi
-        done 
+        done
 }
 
 add_swap() {
@@ -181,7 +181,7 @@ for file in "${desired_order[@]}" "${setup_files[@]}"; do
 done
 
 failed=0
-    
+
 for file in ${ordered_files[@]}; do
     H1 "$file"
     remove_line_continuation "$file" | install_packages
@@ -228,4 +228,3 @@ else
     echo ""
     exit 0
 fi
-

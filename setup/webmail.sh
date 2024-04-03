@@ -14,7 +14,7 @@
 source setup/functions.sh # load our functions
 source setup/functions-downloads.sh
 source /etc/mailinabox.conf # load global vars
-source ${STORAGE_ROOT}/ldap/miab_ldap.conf
+source "${STORAGE_ROOT}/ldap/miab_ldap.conf"
 
 # ### Installing Roundcube
 
@@ -33,11 +33,11 @@ source ${STORAGE_ROOT}/ldap/miab_ldap.conf
 echo "Installing Roundcube (webmail)..."
 apt_install \
 	dbconfig-common \
-	php${PHP_VER}-cli php${PHP_VER}-sqlite3 php${PHP_VER}-intl php${PHP_VER}-common php${PHP_VER}-curl php${PHP_VER}-imap \
-	php${PHP_VER}-gd php${PHP_VER}-pspell php${PHP_VER}-mbstring libjs-jquery libjs-jquery-mousewheel libmagic1 \
+	php"${PHP_VER}"-cli php"${PHP_VER}"-sqlite3 php"${PHP_VER}"-intl php"${PHP_VER}"-common php"${PHP_VER}"-curl php"${PHP_VER}"-imap \
+	php"${PHP_VER}"-gd php"${PHP_VER}"-pspell php"${PHP_VER}"-mbstring libjs-jquery libjs-jquery-mousewheel libmagic1 \
 	sqlite3
 
-apt_install php${PHP_VER}-ldap
+apt_install php"${PHP_VER}"-ldap
 
 # Install Roundcube from source if it is not already present or if it is out of date.
 # Combine the Roundcube version number with the commit hash of plugins to track
@@ -248,8 +248,8 @@ cat > ${RCM_PLUGIN_DIR}/persistent_login/config.inc.php <<EOF
 EOF
 
 # Create writable directories.
-mkdir -p /var/log/roundcubemail /var/tmp/roundcubemail $STORAGE_ROOT/mail/roundcube
-chown -R www-data:www-data /var/log/roundcubemail /var/tmp/roundcubemail $STORAGE_ROOT/mail/roundcube
+mkdir -p /var/log/roundcubemail /var/tmp/roundcubemail "$STORAGE_ROOT/mail/roundcube"
+chown -R www-data:www-data /var/log/roundcubemail /var/tmp/roundcubemail "$STORAGE_ROOT/mail/roundcube"
 
 # Ensure the log file monitored by fail2ban exists, or else fail2ban can't start.
 sudo -u www-data touch /var/log/roundcubemail/errors.log
@@ -283,22 +283,22 @@ chown -f -R root:www-data ${RCM_PLUGIN_DIR}/carddav
 chmod -R 774 ${RCM_PLUGIN_DIR}/carddav
 
 # Run Roundcube database migration script (database is created if it does not exist)
-php$PHP_VER ${RCM_DIR}/bin/updatedb.sh --dir ${RCM_DIR}/SQL --package roundcube
-chown www-data:www-data $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
-chmod 664 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
+php"$PHP_VER" ${RCM_DIR}/bin/updatedb.sh --dir ${RCM_DIR}/SQL --package roundcube
+chown www-data:www-data "$STORAGE_ROOT/mail/roundcube/roundcube.sqlite"
+chmod 664 "$STORAGE_ROOT/mail/roundcube/roundcube.sqlite"
 
 # Create persistent login plugin's database tables
-sqlite3 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite < ${RCM_PLUGIN_DIR}/persistent_login/sql/sqlite.sql
+sqlite3 "$STORAGE_ROOT/mail/roundcube/roundcube.sqlite" < "${RCM_PLUGIN_DIR}/persistent_login/sql/sqlite.sql"
 
 # Enable PHP modules.
-phpenmod -v $PHP_VER imap ldap
-restart_service php$PHP_VER-fpm
+phpenmod -v "$PHP_VER" imap ldap
+restart_service php"$PHP_VER"-fpm
 
 # Periodically clean the roundcube database (see roundcubemail/INSTALL)
 cat > /etc/cron.daily/mailinabox-roundcubemail << EOF
 #!/bin/bash
 # Mail-in-a-Box
 # Clean up the roundcube database
-cd $RCM_DIR && bin/cleandb.sh >/dev/null
+cd "$RCM_DIR" && bin/cleandb.sh >/dev/null
 EOF
 chmod +x /etc/cron.daily/mailinabox-roundcubemail

@@ -27,10 +27,10 @@ source /etc/mailinabox.conf # load global vars
 source ${STORAGE_ROOT}/ldap/miab_ldap.conf # user-data specific vars
 
 dovecot_setting() {
-    /usr/bin/doveconf $1 2>/dev/null | awk -F= '{gsub(/^ +/, "", $2); print $2}'
+    /usr/bin/doveconf "$1" 2>/dev/null | awk -F= '{gsub(/^ +/, "", $2); print $2}'
 }
 postfix_setting() {
-    /usr/sbin/postconf $1 2>/dev/null | awk -F= '{gsub(/^ +/, "", $2); print $2}'
+    /usr/sbin/postconf "$1" 2>/dev/null | awk -F= '{gsub(/^ +/, "", $2); print $2}'
 }
 
 # ### User Authentication
@@ -249,7 +249,7 @@ chmod 0640 /etc/postfix/virtual-mailbox-maps.cf
 # This is the ldap version of aliases(5) but for virtual
 # addresses. Postfix queries this recursively to determine delivery
 # addresses. Aliases may be addresses, domains, and catch-alls.
-# 
+#
 cat > /etc/postfix/virtual-alias-maps.cf <<EOF
 server_host = ${LDAP_URL}
 bind = yes
@@ -269,4 +269,3 @@ chmod 0640 /etc/postfix/virtual-alias-maps.cf
 
 restart_service postfix
 restart_service dovecot
-
