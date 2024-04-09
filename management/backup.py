@@ -186,7 +186,7 @@ def get_passphrase(env):
 	# length of 32 bytes.
 	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
 	with open(os.path.join(backup_root, 'secret_key.txt'), encoding="utf-8") as f:
-		passphrase = f.readline().strip()
+		passphrase = f.readline(5_000_000).strip()
 	if len(passphrase) < 43: raise Exception("secret_key.txt's first line is too short!")
 
 	return passphrase

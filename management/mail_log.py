@@ -587,7 +587,7 @@ def readline(filename):
     """
     with open(filename, errors='replace', encoding='utf-8') as file:
         while True:
-          line = file.readline()
+          line = file.readline(5_000_000)
           if not line:
               break
           yield line
