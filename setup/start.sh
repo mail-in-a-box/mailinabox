@@ -38,6 +38,13 @@ if [ -f /etc/mailinabox.conf ]; then
 	cat /etc/mailinabox.conf | sed s/^/DEFAULT_/ >/tmp/mailinabox.prev.conf
 	source /tmp/mailinabox.prev.conf
 	rm -f /tmp/mailinabox.prev.conf
+
+	# Since this is a second run, attempt to read overridden settings from $STORAGE_ROOT/mailinabox.conf
+	if [ -f $DEFAULT_STORAGE_ROOT/mailinabox.conf ]; then
+		cat $DEFAULT_STORAGE_ROOT/mailinabox.conf | sed s/^/DEFAULT_/ >/tmp/mailinabox.prev.conf
+		source /tmp/mailinabox.prev.conf
+		rm -f /tmp/mailinabox.prev.conf
+	fi
 else
 	FIRST_TIME_SETUP=1
 fi
