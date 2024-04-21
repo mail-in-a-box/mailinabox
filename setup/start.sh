@@ -14,9 +14,9 @@ source setup/preflight.sh
 # Python may not be able to read/write files. This is also
 # in the management daemon startup script and the cron script.
 
-if ! locale -a | grep en_US.utf8 > /dev/null; then
-    # Generate locale if not exists
-    hide_output locale-gen en_US.UTF-8
+if ! locale -a | grep en_US.utf8 >/dev/null; then
+	# Generate locale if not exists
+	hide_output locale-gen en_US.UTF-8
 fi
 
 export LANGUAGE=en_US.UTF-8
@@ -35,7 +35,7 @@ if [ -f /etc/mailinabox.conf ]; then
 
 	# Load the old .conf file to get existing configuration options loaded
 	# into variables with a DEFAULT_ prefix.
-	cat /etc/mailinabox.conf | sed s/^/DEFAULT_/ > /tmp/mailinabox.prev.conf
+	cat /etc/mailinabox.conf | sed s/^/DEFAULT_/ >/tmp/mailinabox.prev.conf
 	source /tmp/mailinabox.prev.conf
 	rm -f /tmp/mailinabox.prev.conf
 else
@@ -44,7 +44,7 @@ fi
 
 # Put a start script in a global location. We tell the user to run 'mailinabox'
 # in the first dialog prompt, so we should do this before that starts.
-cat > /usr/local/bin/mailinabox << EOF;
+cat >/usr/local/bin/mailinabox <<EOF
 #!/bin/bash
 cd $PWD
 source setup/start.sh
@@ -61,9 +61,9 @@ source setup/questions.sh
 # Skip on existing installs since we don't want this to block the ability to
 # upgrade, and these checks are also in the control panel status checks.
 if [ -z "${DEFAULT_PRIMARY_HOSTNAME:-}" ]; then
-if [ -z "${SKIP_NETWORK_CHECKS:-}" ]; then
-	source setup/network-checks.sh
-fi
+	if [ -z "${SKIP_NETWORK_CHECKS:-}" ]; then
+		source setup/network-checks.sh
+	fi
 fi
 
 # Create the STORAGE_USER and STORAGE_ROOT directory if they don't already exist.
@@ -82,9 +82,12 @@ if [ ! -d "$STORAGE_ROOT" ]; then
 	mkdir -p "$STORAGE_ROOT"
 fi
 f=$STORAGE_ROOT
-while [[ $f != / ]]; do chmod a+rx "$f"; f=$(dirname "$f"); done;
+while [[ $f != / ]]; do
+	chmod a+rx "$f"
+	f=$(dirname "$f")
+done
 if [ ! -f "$STORAGE_ROOT/mailinabox.version" ]; then
-	setup/migrate.py --current > "$STORAGE_ROOT/mailinabox.version"
+	setup/migrate.py --current >"$STORAGE_ROOT/mailinabox.version"
 	chown "$STORAGE_USER:$STORAGE_USER" "$STORAGE_ROOT/mailinabox.version"
 fi
 
@@ -92,7 +95,7 @@ fi
 # tools know where to look for data. The default MTA_STS_MODE setting
 # is blank unless set by an environment variable, but see web.sh for
 # how that is interpreted.
-cat > /etc/mailinabox.conf << EOF;
+cat >/etc/mailinabox.conf <<EOF
 STORAGE_USER=$STORAGE_USER
 STORAGE_ROOT=$STORAGE_ROOT
 PRIMARY_HOSTNAME=$PRIMARY_HOSTNAME
@@ -120,8 +123,7 @@ source setup/management.sh
 source setup/munin.sh
 
 # Wait for the management daemon to start...
-until nc -z -w 4 127.0.0.1 10222
-do
+until nc -z -w 4 127.0.0.1 10222; do
 	echo "Waiting for the Mail-in-a-Box management daemon to start..."
 	sleep 2
 done
@@ -143,13 +145,13 @@ source setup/firstuser.sh
 # run in the recommended curl-pipe-to-bash method there is no TTY and
 # certbot will fail if it tries to ask.
 if [ ! -d "$STORAGE_ROOT/ssl/lets_encrypt/accounts/acme-v02.api.letsencrypt.org/" ]; then
-echo
-echo "-----------------------------------------------"
-echo "Mail-in-a-Box uses Let's Encrypt to provision free SSL/TLS certificates"
-echo "to enable HTTPS connections to your box. We're automatically"
-echo "agreeing you to their subscriber agreement. See https://letsencrypt.org."
-echo
-certbot register --register-unsafely-without-email --agree-tos --config-dir "$STORAGE_ROOT/ssl/lets_encrypt"
+	echo
+	echo "-----------------------------------------------"
+	echo "Mail-in-a-Box uses Let's Encrypt to provision free SSL/TLS certificates"
+	echo "to enable HTTPS connections to your box. We're automatically"
+	echo "agreeing you to their subscriber agreement. See https://letsencrypt.org."
+	echo
+	certbot register --register-unsafely-without-email --agree-tos --config-dir "$STORAGE_ROOT/ssl/lets_encrypt"
 fi
 
 # Done.
@@ -166,16 +168,14 @@ if management/status_checks.py --check-primary-hostname; then
 	echo
 	echo "If you have a DNS problem put the box's IP address in the URL"
 	echo "(https://$PUBLIC_IP/admin) but then check the TLS fingerprint:"
-	openssl x509 -in "$STORAGE_ROOT/ssl/ssl_certificate.pem" -noout -fingerprint -sha256\
-        	| sed "s/SHA256 Fingerprint=//i"
+	openssl x509 -in "$STORAGE_ROOT/ssl/ssl_certificate.pem" -noout -fingerprint -sha256 | sed "s/SHA256 Fingerprint=//i"
 else
 	echo "https://$PUBLIC_IP/admin"
 	echo
 	echo "You will be alerted that the website has an invalid certificate. Check that"
 	echo "the certificate fingerprint matches:"
 	echo
-	openssl x509 -in "$STORAGE_ROOT/ssl/ssl_certificate.pem" -noout -fingerprint -sha256\
-        	| sed "s/SHA256 Fingerprint=//i"
+	openssl x509 -in "$STORAGE_ROOT/ssl/ssl_certificate.pem" -noout -fingerprint -sha256 | sed "s/SHA256 Fingerprint=//i"
 	echo
 	echo "Then you can confirm the security exception and continue."
 	echo
