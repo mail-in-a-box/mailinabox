@@ -52,8 +52,8 @@ fi
 # A 1024-bit key is seen as a minimum standard by several providers
 # such as Google. But they and others use a 2048 bit key, so we'll
 # do the same. Keys beyond 2048 bits may exceed DNS record limits.
-if [ ! -f "$STORAGE_ROOT/mail/dkim/mail.private" ]; then
-	opendkim-genkey -b 2048 -r -s mail -D "$STORAGE_ROOT/mail/dkim"
+if [ ! -f "$STORAGE_ROOT/mail/dkim/$DKIM_SELECTOR.private" ]; then
+	opendkim-genkey -b 2048 -r -s $DKIM_SELECTOR -D $STORAGE_ROOT/mail/dkim
 fi
 
 # Ensure files are owned by the opendkim user and are private otherwise.
