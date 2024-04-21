@@ -38,6 +38,13 @@ if [ -f /etc/mailinabox.conf ]; then
 	cat /etc/mailinabox.conf | sed s/^/DEFAULT_/ >/tmp/mailinabox.prev.conf
 	source /tmp/mailinabox.prev.conf
 	rm -f /tmp/mailinabox.prev.conf
+
+	# Since this is a second run, attempt to read overridden settings from $STORAGE_ROOT/mailinabox.conf
+	if [ -f $STORAGE_ROOT/mailinabox.conf ]; then
+		cat $STORAGE_ROOT/mailinabox.conf | sed s/^/DEFAULT_/ >/tmp/mailinabox.prev.conf
+		source /tmp/mailinabox.prev.conf
+		rm -f /tmp/mailinabox.prev.conf
+	fi
 else
 	FIRST_TIME_SETUP=1
 fi
@@ -95,7 +102,7 @@ fi
 # tools know where to look for data. The default MTA_STS_MODE setting
 # is blank unless set by an environment variable, but see web.sh for
 # how that is interpreted.
-cat >/etc/mailinabox.conf <<EOF
+cat <<EOF >/etc/mailinabox.conf
 STORAGE_USER=$STORAGE_USER
 STORAGE_ROOT=$STORAGE_ROOT
 PRIMARY_HOSTNAME=$PRIMARY_HOSTNAME
