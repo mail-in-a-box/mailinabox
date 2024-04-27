@@ -55,9 +55,9 @@ apt_install postfix postfix-sqlite postfix-pcre postgrey ca-certificates
 # * Set the SMTP banner (which must have the hostname first, then anything).
 tools/editconf.py /etc/postfix/main.cf \
 	inet_interfaces=all \
-	smtp_bind_address=$PRIVATE_IP \
-	smtp_bind_address6=$PRIVATE_IPV6 \
-	myhostname=$PRIMARY_HOSTNAME\
+	smtp_bind_address="$PRIVATE_IP" \
+	smtp_bind_address6="$PRIVATE_IPV6" \
+	myhostname="$PRIMARY_HOSTNAME"\
 	smtpd_banner="\$myhostname ESMTP Hi, I'm a Mail-in-a-Box (Ubuntu/Postfix; see https://mailinabox.email/)" \
 	mydestination=localhost
 
@@ -138,9 +138,9 @@ sed -i "s/PUBLIC_IP/$PUBLIC_IP/" /etc/postfix/outgoing_mail_header_filters
 tools/editconf.py /etc/postfix/main.cf \
 	smtpd_tls_security_level=may\
 	smtpd_tls_auth_only=yes \
-	smtpd_tls_cert_file=$STORAGE_ROOT/ssl/ssl_certificate.pem \
-	smtpd_tls_key_file=$STORAGE_ROOT/ssl/ssl_private_key.pem \
-	smtpd_tls_dh1024_param_file=$STORAGE_ROOT/ssl/dh2048.pem \
+	smtpd_tls_cert_file="$STORAGE_ROOT/ssl/ssl_certificate.pem" \
+	smtpd_tls_key_file="$STORAGE_ROOT/ssl/ssl_private_key.pem" \
+	smtpd_tls_dh1024_param_file="$STORAGE_ROOT/ssl/dh2048.pem" \
 	smtpd_tls_protocols="!SSLv2,!SSLv3" \
 	smtpd_tls_ciphers=medium \
 	tls_medium_cipherlist=ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES256-SHA256:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:DES-CBC3-SHA \
@@ -238,7 +238,7 @@ tools/editconf.py /etc/postfix/main.cf  -e lmtp_destination_recipient_limit=
 # "450 4.7.1 Client host rejected: Service unavailable". This is a retry code, so the mail doesn't properly bounce. #NODOC
 tools/editconf.py /etc/postfix/main.cf \
 	smtpd_sender_restrictions="reject_non_fqdn_sender,reject_unknown_sender_domain,reject_authenticated_sender_login_mismatch,reject_rhsbl_sender dbl.spamhaus.org=127.0.1.[2..99]" \
-	smtpd_recipient_restrictions="permit_sasl_authenticated,permit_mynetworks,reject_rbl_client zen.spamhaus.org=127.0.0.[2..11],reject_unlisted_recipient,check_policy_service inet:127.0.0.1:10023"
+	smtpd_recipient_restrictions="permit_sasl_authenticated,permit_mynetworks,reject_rbl_client zen.spamhaus.org=127.0.0.[2..11],reject_unlisted_recipient,check_policy_service inet:127.0.0.1:10023,check_policy_service inet:127.0.0.1:12340"
 
 # Postfix connects to Postgrey on the 127.0.0.1 interface specifically. Ensure that
 # Postgrey listens on the same interface (and not IPv6, for instance).
@@ -260,17 +260,17 @@ tools/editconf.py /etc/default/postgrey \
 
 
 # If the $STORAGE_ROOT/mail/postgrey is empty, copy the postgrey database over from the old location
-if [ ! -d $STORAGE_ROOT/mail/postgrey/db ]; then
+if [ ! -d "$STORAGE_ROOT/mail/postgrey/db" ]; then
 	# Stop the service
 	service postgrey stop
 	# Ensure the new paths for postgrey db exists
-	mkdir -p $STORAGE_ROOT/mail/postgrey/db
+	mkdir -p "$STORAGE_ROOT/mail/postgrey/db"
 	# Move over database files
-	mv /var/lib/postgrey/* $STORAGE_ROOT/mail/postgrey/db/ || true
+	mv /var/lib/postgrey/* "$STORAGE_ROOT/mail/postgrey/db/" || true
 fi
 # Ensure permissions are set
-chown -R postgrey:postgrey $STORAGE_ROOT/mail/postgrey/
-chmod 700 $STORAGE_ROOT/mail/postgrey/{,db}
+chown -R postgrey:postgrey "$STORAGE_ROOT/mail/postgrey/"
+chmod 700 "$STORAGE_ROOT/mail/postgrey/"{,db}
 
 # We are going to setup a newer whitelist for postgrey, the version included in the distribution is old
 cat > /etc/cron.daily/mailinabox-postgrey-whitelist << EOF;

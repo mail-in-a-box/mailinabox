@@ -45,8 +45,8 @@ apt_install \
 # - https://www.dovecot.org/list/dovecot/2012-August/137569.html
 # - https://www.dovecot.org/list/dovecot/2011-December/132455.html
 tools/editconf.py /etc/dovecot/conf.d/10-master.conf \
-	default_process_limit=$(echo "$(nproc) * 250" | bc) \
-	default_vsz_limit=$(echo "$(free -tm  | tail -1 | awk '{print $2}') / 3" | bc)M \
+	default_process_limit="$(($(nproc) * 250))" \
+	default_vsz_limit="$(($(free -tm  | tail -1 | awk '{print $2}') / 3))M" \
 	log_path=/var/log/mail.log
 
 # The inotify `max_user_instances` default is 128, which constrains
@@ -61,12 +61,38 @@ tools/editconf.py /etc/sysctl.conf \
 # username part of the user's email address. We'll ensure that no bad domains or email addresses
 # are created within the management daemon.
 tools/editconf.py /etc/dovecot/conf.d/10-mail.conf \
-	mail_location=maildir:$STORAGE_ROOT/mail/mailboxes/%d/%n \
+	mail_location="maildir:$STORAGE_ROOT/mail/mailboxes/%d/%n" \
 	mail_privileged_group=mail \
 	first_valid_uid=0
 
 # Create, subscribe, and mark as special folders: INBOX, Drafts, Sent, Trash, Spam and Archive.
-cp conf/dovecot-mailboxes.conf /etc/dovecot/conf.d/15-mailboxes.conf
+cp conf/dovecot/conf.d/15-mailboxes.conf /etc/dovecot/conf.d/
+sed -i "s/#mail_plugins = .*/mail_plugins = \$mail_plugins quota/" /etc/dovecot/conf.d/10-mail.conf
+if ! grep -q "mail_plugins = \$mail_plugins imap_quota" /etc/dovecot/conf.d/20-imap.conf; then
+    sed -i "s/mail_plugins = .*/mail_plugins = \$mail_plugins imap_quota/" /etc/dovecot/conf.d/20-imap.conf
+fi
+
+# configure stuff for quota support
+if ! grep -q "quota_status_success = DUNNO" /etc/dovecot/conf.d/90-quota.conf; then
+    cat > /etc/dovecot/conf.d/90-quota.conf << EOF;
+plugin {
+  quota = maildir
+
+  quota_grace = 10%
+
+  quota_status_success = DUNNO
+  quota_status_nouser = DUNNO
+  quota_status_overquota = "522 5.2.2 Mailbox is full"
+}
+
+service quota-status {
+    executable = quota-status -p postfix
+    inet_listener {
+        port = 12340
+    }
+}
+EOF
+fi
 
 # ### IMAP/POP
 
@@ -152,7 +178,7 @@ EOF
 # Setting a `postmaster_address` is required or LMTP won't start. An alias
 # will be created automatically by our management daemon.
 tools/editconf.py /etc/dovecot/conf.d/15-lda.conf \
-	postmaster_address=postmaster@$PRIMARY_HOSTNAME
+	"postmaster_address=postmaster@$PRIMARY_HOSTNAME"
 
 # ### Sieve
 
@@ -201,14 +227,14 @@ chown -R mail:dovecot /etc/dovecot
 chmod -R o-rwx /etc/dovecot
 
 # Ensure mailbox files have a directory that exists and are owned by the mail user.
-mkdir -p $STORAGE_ROOT/mail/mailboxes
-chown -R mail:mail $STORAGE_ROOT/mail/mailboxes
+mkdir -p "$STORAGE_ROOT/mail/mailboxes"
+chown -R mail:mail "$STORAGE_ROOT/mail/mailboxes"
 
 # Same for the sieve scripts.
-mkdir -p $STORAGE_ROOT/mail/sieve
-mkdir -p $STORAGE_ROOT/mail/sieve/global_before
-mkdir -p $STORAGE_ROOT/mail/sieve/global_after
-chown -R mail:mail $STORAGE_ROOT/mail/sieve
+mkdir -p "$STORAGE_ROOT/mail/sieve"
+mkdir -p "$STORAGE_ROOT/mail/sieve/global_before"
+mkdir -p "$STORAGE_ROOT/mail/sieve/global_after"
+chown -R mail:mail "$STORAGE_ROOT/mail/sieve"
 
 # Allow the IMAP/POP ports in the firewall.
 ufw_allow imaps
