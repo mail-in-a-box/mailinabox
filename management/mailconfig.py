@@ -10,6 +10,8 @@
 # address entered by the user.
 
 import os, sqlite3, re
+import subprocess
+
 import utils
 from email_validator import validate_email as validate_email_, EmailNotValidError
 import idna
