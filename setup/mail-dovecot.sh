@@ -67,7 +67,7 @@ tools/editconf.py /etc/dovecot/conf.d/10-mail.conf \
 
 # Create, subscribe, and mark as special folders: INBOX, Drafts, Sent, Trash, Spam and Archive.
 cp conf/dovecot/conf.d/15-mailboxes.conf /etc/dovecot/conf.d/
-sed -i "s/#mail_plugins =(.*)/mail_plugins =\1 \$mail_plugins quota/" /etc/dovecot/conf.d/10-mail.conf
+sed -i "s/#mail_plugins =\(.*\)/mail_plugins =\1 \$mail_plugins quota/" /etc/dovecot/conf.d/10-mail.conf
 if ! grep -q "mail_plugins.* imap_quota" /etc/dovecot/conf.d/20-imap.conf; then
     sed -i "s/mail_plugins =\(.*\)/mail_plugins =\1 imap_quota/" /etc/dovecot/conf.d/20-imap.conf
 fi
