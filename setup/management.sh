@@ -52,9 +52,9 @@ hide_output $venv/bin/pip install --upgrade \
 # CONFIGURATION
 
 # Create a backup directory and a random key for encrypting backups.
-mkdir -p $STORAGE_ROOT/backup
-if [ ! -f $STORAGE_ROOT/backup/secret_key.txt ]; then
-	$(umask 077; openssl rand -base64 2048 > $STORAGE_ROOT/backup/secret_key.txt)
+mkdir -p "$STORAGE_ROOT/backup"
+if [ ! -f "$STORAGE_ROOT/backup/secret_key.txt" ]; then
+	umask 077; openssl rand -base64 2048 > "$STORAGE_ROOT/backup/secret_key.txt"
 fi
 
 
@@ -100,7 +100,7 @@ tr -cd '[:xdigit:]' < /dev/urandom | head -c 32 > /var/lib/mailinabox/api.key
 chmod 640 /var/lib/mailinabox/api.key
 
 source $venv/bin/activate
-export PYTHONPATH=$(pwd)/management
+export PYTHONPATH=$PWD/management
 exec gunicorn -b localhost:10222 -w 1 --timeout 630 wsgi:app
 EOF
 chmod +x $inst_dir/start
@@ -116,7 +116,7 @@ minute=$((RANDOM % 60))  # avoid overloading mailinabox.email
 cat > /etc/cron.d/mailinabox-nightly << EOF;
 # Mail-in-a-Box --- Do not edit / will be overwritten on update.
 # Run nightly tasks: backup, status checks.
-$minute 3 * * *	root	(cd $(pwd) && management/daily_tasks.sh)
+$minute 3 * * *	root	(cd $PWD && management/daily_tasks.sh)
 EOF
 
 # Start the management server.
