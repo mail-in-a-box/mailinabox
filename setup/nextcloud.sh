@@ -274,15 +274,6 @@ if [ ! -f "$STORAGE_ROOT/owncloud/owncloud.db" ]; then
     ),
   ),
   'memcache.local' => '\OC\Memcache\APCu',
-  'mail_smtpmode' => 'sendmail',
-  'mail_smtpsecure' => '',
-  'mail_smtpauthtype' => 'LOGIN',
-  'mail_smtpauth' => false,
-  'mail_smtphost' => '',
-  'mail_smtpport' => '',
-  'mail_smtpname' => '',
-  'mail_smtppassword' => '',
-  'mail_from_address' => 'owncloud',
 );
 ?>
 EOF
@@ -338,12 +329,9 @@ include("$STORAGE_ROOT/owncloud/config.php");
 
 \$CONFIG['memcache.local'] = '\OC\Memcache\APCu';
 \$CONFIG['overwrite.cli.url'] = 'https://${PRIMARY_HOSTNAME}/cloud';
-\$CONFIG['mail_from_address'] = 'administrator'; # just the local part, matches our master administrator address
 
 \$CONFIG['logtimezone'] = '$TIMEZONE';
 \$CONFIG['logdateformat'] = 'Y-m-d H:i:s';
-
-\$CONFIG['mail_domain'] = '$PRIMARY_HOSTNAME';
 
 \$CONFIG['user_backends'] = array(
   array(
@@ -353,6 +341,16 @@ include("$STORAGE_ROOT/owncloud/config.php");
     ),
   ),
 );
+
+\$CONFIG['mail_domain'] = '$PRIMARY_HOSTNAME';
+\$CONFIG['mail_from_address'] = 'administrator'; # just the local part, matches the required administrator alias on mail_domain/$PRIMARY_HOSTNAME
+\$CONFIG['mail_smtpmode'] = 'sendmail';
+\$CONFIG['mail_smtpauth'] = true; # if smtpmode is smtp
+\$CONFIG['mail_smtphost'] = '127.0.0.1'; # if smtpmode is smtp
+\$CONFIG['mail_smtpport'] = '587'; # if smtpmode is smtp
+\$CONFIG['mail_smtpsecure'] = ''; # if smtpmode is smtp, must be empty string
+\$CONFIG['mail_smtpname'] = ''; # if smtpmode is smtp, set this to a mail user
+\$CONFIG['mail_smtppassword'] = ''; # if smtpmode is smtp, set this to the user's password
 
 echo "<?php\n\\\$CONFIG = ";
 var_export(\$CONFIG);
