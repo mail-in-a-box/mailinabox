@@ -49,8 +49,9 @@ class NextcloudAutomation(object):
             try:
                 el.click()
             except ElementClickInterceptedException as e:
-                d.wait_tick(100)
+                self.close_first_run_wizard()
                 el.click()
+        d.wait_tick(100)
 
     def logout(self):
         d = self.d
