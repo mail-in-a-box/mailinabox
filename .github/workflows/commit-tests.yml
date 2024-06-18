@@ -15,7 +15,7 @@ jobs:
         run: sudo -E tests/system-setup/remote-nextcloud-docker.sh
       - name: test-runner
         run: sudo -E tests/runner.sh -dumpoutput -no-smtp-remote remote-nextcloud ehdd default
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: tests-output
