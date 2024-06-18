@@ -46,8 +46,11 @@ class NextcloudAutomation(object):
             d.find_el('#settings .avatardiv').click()
         else:
             # nc >= 26
-            el.click()
-        d.wait_tick(100)
+            try:
+                el.click()
+            except ElementClickInterceptedException as e:
+                d.wait_tick(100)
+                el.click()
 
     def logout(self):
         d = self.d
