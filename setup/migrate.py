@@ -193,8 +193,7 @@ def migration_14(env):
 def migration_15(env):
 	# Add a column to the users table to store their quota limit.  Default to '0' for unlimited.
 	db = os.path.join(env["STORAGE_ROOT"], 'mail/users.sqlite')
-	shell("check_call", ["sqlite3", db,
-						 "ALTER TABLE users ADD COLUMN quota TEXT NOT NULL DEFAULT '0';"])
+	shell("check_call", ["sqlite3", db, "ALTER TABLE users ADD COLUMN quota TEXT NOT NULL DEFAULT '0';"])
 
 
 ###########################################################

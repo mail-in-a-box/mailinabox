@@ -60,7 +60,6 @@ def setup_key_auth(mgmt_uri):
 
 if len(sys.argv) < 2:
 	print("""Usage:
-  {cli} system default-quota [new default]       (set default quota for system)
   {cli} user                                     (lists users)
   {cli} user add user@domain.com [password]
   {cli} user password user@domain.com [password]
@@ -151,12 +150,6 @@ elif sys.argv[1] == "alias" and sys.argv[2] == "add" and len(sys.argv) == 5:
 
 elif sys.argv[1] == "alias" and sys.argv[2] == "remove" and len(sys.argv) == 4:
 	print(mgmt("/mail/aliases/remove", { "address": sys.argv[3] }))
-
-elif sys.argv[1] == "system" and sys.argv[2] == "default-quota" and len(sys.argv) == 3:
-	print(mgmt("/system/default-quota?text=1"))
-
-elif sys.argv[1] == "system" and sys.argv[2] == "default-quota" and len(sys.argv) == 4:
-	print(mgmt("/system/default-quota", { "default_quota": sys.argv[3]}))
 
 else:
 	print("Invalid command-line arguments.")
