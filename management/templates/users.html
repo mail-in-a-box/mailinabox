@@ -63,7 +63,6 @@
   <tr id="user-template">
     <td class='address'>
     </td>
-    <td class="box-count row-center"></td>
     <td class="box-size row-center"></td>
     <td class="percent row-center"></td>
 	<td class="quota row-center">
@@ -193,10 +192,6 @@ function show_users() {
           n.attr('data-email', user.email);
           n.attr('data-quota', user.quota);
           n.find('.address').text(user.email);
-          n.find('.box-count').text((user.box_count).toLocaleString('en'));
-          if (user.box_count == '?') {
-            n.find('.box-count').attr('title', 'Message count is unkown')
-          }
           n.find('.box-size').text(user.box_size);
           if (user.box_size == '?') {
             n.find('.box-size').attr('title', 'Mailbox size is unkown')

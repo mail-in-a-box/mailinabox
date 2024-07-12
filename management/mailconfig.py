@@ -145,7 +145,6 @@ def get_mail_users_ex(env, with_archived=False):
 
 		(user, domain) = email.split('@')
 		box_size = 0
-		box_count = 0
 		box_quota = 0
 		percent = ''
 		try:
@@ -155,7 +154,6 @@ def get_mail_users_ex(env, with_archived=False):
 				for line in f.readlines():
 					(size, count) = line.split(' ')
 					box_size += int(size)
-					box_count += int(count)
 
 			try:
 				percent = (box_size / box_quota) * 100
@@ -164,7 +162,6 @@ def get_mail_users_ex(env, with_archived=False):
 
 		except:
 			box_size = '?'
-			box_count = '?'
 			box_quota = '?'
 			percent = '?'
 
@@ -178,7 +175,6 @@ def get_mail_users_ex(env, with_archived=False):
 			"box_quota": box_quota,
 			"box_size": sizeof_fmt(box_size) if box_size != '?' else box_size,
 			"percent": '%3.0f%%' % percent if type(percent) != str else percent,
-			"box_count": box_count,
 			"status": "active",
 		}
 		users.append(user)
@@ -197,7 +193,6 @@ def get_mail_users_ex(env, with_archived=False):
 						"privileges": [],
 						"status": "inactive",
 						"mailbox": mbox,
-                        "box_count": '?',
                         "box_size": '?',
                         "box_quota": '?',
                         "percent": '?',
