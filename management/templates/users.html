@@ -30,7 +30,7 @@
   </div>
   <div class="form-group">
       <label class="sr-only" for="adduserQuota">Quota</label>
-      <input type="text" class="form-control" id="adduserQuota" placeholder="Quota" style="width:5em;">
+      <input type="text" class="form-control" id="adduserQuota" placeholder="Quota" style="width:5em;" value="0">
   </div>
   <button type="submit" class="btn btn-primary">Add User</button>
 </form>
@@ -165,15 +165,6 @@ curl -X POST -d "email=new_user@mydomail.com" https://{{hostname}}/admin/mail/us
 
 <script>
 function show_users() {
-  api(
-    "/system/default-quota",
-    "GET",
-    {},
-    function(r) {
-      $('#adduserQuota').val(r['default-quota']);
-    }
-  );
-
   $('#user_table tbody').html("<tr><td colspan='2' class='text-muted'>Loading...</td></tr>")
   api(
     "/mail/users",
