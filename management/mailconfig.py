@@ -344,7 +344,7 @@ def add_mail_user(email, pw, privs, quota, env):
 			if validation: return validation
 
 	if quota is None:
-		quota = get_default_quota()
+		quota = '0'
 
 	try:
 		quota = validate_quota(quota)
@@ -428,10 +428,6 @@ def dovecot_quota_recalc(email):
 
 	# force dovecot to recalculate the quota info for the user.
 	subprocess.call(["doveadm", "quota", "recalc", "-u", email])
-
-def get_default_quota(env):
-	config = utils.load_settings(env)
-	return config.get("default-quota", '0')
 
 def validate_quota(quota):
 	# validate quota
