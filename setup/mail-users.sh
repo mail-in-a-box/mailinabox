@@ -5,7 +5,7 @@
 #
 # This script configures user authentication for Dovecot
 # and Postfix (which relies on Dovecot) and destination
-# validation by quering an Sqlite3 database of mail users.
+# validation by querying an Sqlite3 database of mail users.
 
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars

@@ -66,7 +66,7 @@ tools/editconf.py /etc/opendmarc.conf -s \
 	"FailureReports=false"
 
 # SPFIgnoreResults causes the filter to ignore any SPF results in the header
-# of the message. This is useful if you want the filter to perfrom SPF checks
+# of the message. This is useful if you want the filter to perform SPF checks
 # itself, or because you don't trust the arriving header. This added header is
 # used by spamassassin to evaluate the mail for spamminess.
 

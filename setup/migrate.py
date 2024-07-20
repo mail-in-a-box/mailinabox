@@ -23,11 +23,11 @@ def migration_1(env):
 	# Migrate the 'domains' directory.
 	for sslfn in glob.glob(os.path.join( env["STORAGE_ROOT"], 'ssl/domains/*' )):
 		fn = os.path.basename(sslfn)
-		m = re.match("(.*)_(certifiate.pem|cert_sign_req.csr|private_key.pem)$", fn)
+		m = re.match("(.*)_(certificate.pem|cert_sign_req.csr|private_key.pem)$", fn)
 		if m:
 			# get the new name for the file
 			domain_name, file_type = m.groups()
-			if file_type == "certifiate.pem": file_type = "ssl_certificate.pem" # typo
+			if file_type == "certificate.pem": file_type = "ssl_certificate.pem" # typo
 			if file_type == "cert_sign_req.csr": file_type = "certificate_signing_request.csr" # nicer
 			move_file(sslfn, domain_name, file_type)
 
@@ -172,7 +172,7 @@ def migration_12(env):
             conn.commit()
             conn.close()
 
-            # Delete all sessions, requring users to login again to recreate carddav_*
+            # Delete all sessions, requiring users to login again to recreate carddav_*
             # databases
             conn = sqlite3.connect(os.path.join(env["STORAGE_ROOT"], "mail/roundcube/roundcube.sqlite"))
             c = conn.cursor()

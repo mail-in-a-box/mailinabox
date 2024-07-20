@@ -101,7 +101,7 @@ if [ ! -f "$STORAGE_ROOT/dns/dnssec/$algo.conf" ]; then
 	# we're capturing into the `KSK` variable.
 	#
 	# ldns-keygen uses /dev/random for generating random numbers by default.
-	# This is slow and unecessary if we ensure /dev/urandom is seeded properly,
+	# This is slow and unnecessary if we ensure /dev/urandom is seeded properly,
 	# so we use /dev/urandom. See system.sh for an explanation. See #596, #115.
 	# (This previously used -b 2048 but it's unclear if this setting makes sense
 	# for non-RSA keys, so it's removed. The RSA-based keys are not recommended

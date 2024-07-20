@@ -319,7 +319,7 @@ def scan_mail_log(env):
 
     if collector["other-services"] and VERBOSE and False:
         print_header("Other services")
-        print("The following unkown services were found in the log file.")
+        print("The following unknown services were found in the log file.")
         print(" ", *sorted(collector["other-services"]), sep='\n│ ')
 
 
