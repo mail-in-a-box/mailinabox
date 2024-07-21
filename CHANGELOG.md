@@ -16,6 +16,8 @@ Other updates:
 * Added an undocumented option to proxy websockets.
 * Internal improvements to the code to make it more reliable and readable.
 
+Version 69a released on July 21, 2024 corrects a setup failure.
+
 Version 68 (April 1, 2024)
 --------------------------
 
