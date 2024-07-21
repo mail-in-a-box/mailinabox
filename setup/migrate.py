@@ -182,7 +182,7 @@ def migration_12(env):
             conn.commit()
             conn.close()
 
-            # Delete all sessions, requring users to login again to recreate carddav_*
+            # Delete all sessions, requiring users to login again to recreate carddav_*
             # databases
             conn = sqlite3.connect(os.path.join(env["STORAGE_ROOT"], "mail/roundcube/roundcube.sqlite"))
             c = conn.cursor()

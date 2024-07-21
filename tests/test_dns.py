@@ -75,7 +75,7 @@ def test2(tests, server, description):
 			#print(server, ":", qname, rtype, "?", response)
 			continue
 
-		# show prolem
+		# show problem
 		if first:
 			print("Incorrect DNS Response from", description)
 			print()

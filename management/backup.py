@@ -25,7 +25,7 @@ from exclusiveprocess import Lock
 from utils import load_environment, shell, wait_for_service
 
 def backup_status(env):
-	# If backups are dissbled, return no status.
+	# If backups are disabled, return no status.
 	config = get_backup_config(env)
 	if config["target"] == "off":
 		return { }

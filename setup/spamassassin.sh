@@ -62,7 +62,7 @@ tools/editconf.py /etc/default/spampd \
 
 # Spamassassin normally wraps spam as an attachment inside a fresh
 # email with a report about the message. This also protects the user
-# from accidentally openening a message with embedded malware.
+# from accidentally opening a message with embedded malware.
 #
 # It's nice to see what rules caused the message to be marked as spam,
 # but it's also annoying to get to the original message when it is an

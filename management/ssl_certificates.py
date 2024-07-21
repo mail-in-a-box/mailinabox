@@ -446,7 +446,7 @@ def install_cert(domain, ssl_cert, ssl_chain, env, raw=False):
 			cert_status += " " + cert_status_details
 		return cert_status
 
-	# Copy certifiate into ssl directory.
+	# Copy certificate into ssl directory.
 	install_cert_copy_file(fn, env)
 
 	# Run post-install steps.
