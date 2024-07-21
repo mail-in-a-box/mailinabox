@@ -37,7 +37,7 @@ source /etc/mailinabox.conf # load global vars
 # * `postfix`: The SMTP server.
 # * `postfix-pcre`: Enables header filtering.
 # * `postgrey`: A mail policy service that soft-rejects mail the first time
-#   it is received. Spammers don't usually try agian. Legitimate mail
+#   it is received. Spammers don't usually try again. Legitimate mail
 #   always will.
 # * `ca-certificates`: A trust store used to squelch postfix warnings about
 #   untrusted opportunistically-encrypted connections.
@@ -172,7 +172,7 @@ tools/editconf.py /etc/postfix/main.cf \
 
 # When connecting to remote SMTP servers, prefer TLS and use DANE if available.
 #
-# Prefering ("opportunistic") TLS means Postfix will use TLS if the remote end
+# Preferring ("opportunistic") TLS means Postfix will use TLS if the remote end
 # offers it, otherwise it will transmit the message in the clear. Postfix will
 # accept whatever SSL certificate the remote end provides. Opportunistic TLS
 # protects against passive easvesdropping (but not man-in-the-middle attacks).
@@ -188,7 +188,7 @@ tools/editconf.py /etc/postfix/main.cf \
 # itself but assumes the system's nameserver does and reports DNSSEC status. Thus this also
 # relies on our local DNS server (see system.sh) and `smtp_dns_support_level=dnssec`.
 #
-# The `smtp_tls_CAfile` is superflous, but it eliminates warnings in the logs about untrusted certs,
+# The `smtp_tls_CAfile` is superfluous, but it eliminates warnings in the logs about untrusted certs,
 # which we don't care about seeing because Postfix is doing opportunistic TLS anyway. Better to encrypt,
 # even if we don't know if it's to the right party, than to not encrypt at all. Instead we'll
 # now see notices about trusted certs. The CA file is provided by the package `ca-certificates`.
@@ -230,7 +230,7 @@ tools/editconf.py /etc/postfix/main.cf  -e lmtp_destination_recipient_limit=
 # * `reject_unlisted_recipient`: Although Postfix will reject mail to unknown recipients, it's nicer to reject such mail ahead of greylisting rather than after.
 # * `check_policy_service`: Apply greylisting using postgrey.
 #
-# Note the spamhaus rbl return codes are taken into account as adviced here: https://docs.spamhaus.com/datasets/docs/source/40-real-world-usage/PublicMirrors/MTAs/020-Postfix.html
+# Note the spamhaus rbl return codes are taken into account as advised here: https://docs.spamhaus.com/datasets/docs/source/40-real-world-usage/PublicMirrors/MTAs/020-Postfix.html
 # Notes: #NODOC
 # permit_dnswl_client can pass through mail from whitelisted IP addresses, which would be good to put before greylisting #NODOC
 # so these IPs get mail delivered quickly. But when an IP is not listed in the permit_dnswl_client list (i.e. it is not #NODOC
@@ -247,7 +247,7 @@ tools/editconf.py /etc/postfix/main.cf \
 # other MTA have their own intervals. To fix the problem of receiving
 # e-mails really latter, delay of greylisting has been set to
 # 180 seconds (default is 300 seconds). We will move the postgrey database
-# under $STORAGE_ROOT. This prevents a "warming up" that would have occured
+# under $STORAGE_ROOT. This prevents a "warming up" that would have occurred
 # previously with a migrated or reinstalled OS.  We will specify this new path
 # with the --dbdir=... option. Arguments within POSTGREY_OPTS can not have spaces,
 # including dbdir. This is due to the way the init script sources the

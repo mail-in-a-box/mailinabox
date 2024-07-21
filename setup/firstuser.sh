@@ -1,7 +1,7 @@
 #!/bin/bash
 # If there aren't any mail users yet, create one.
 if [ -z "$(management/cli.py user)" ]; then
-	# The outut of "management/cli.py user" is a list of mail users. If there
+	# The output of "management/cli.py user" is a list of mail users. If there
 	# aren't any yet, it'll be empty.
 
 	# If we didn't ask for an email address at the start, do so now.

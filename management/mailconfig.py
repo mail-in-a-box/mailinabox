@@ -561,7 +561,7 @@ def kick(env, mail_result=None):
 
 	auto_aliases = { }
 
-	# Mape required aliases to the administrator alias (which should be created manually).
+	# Map required aliases to the administrator alias (which should be created manually).
 	administrator = get_system_administrator(env)
 	required_aliases = get_required_aliases(env)
 	for alias in required_aliases:

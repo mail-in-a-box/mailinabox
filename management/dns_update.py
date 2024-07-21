@@ -15,7 +15,7 @@ import contextlib
 
 # From https://stackoverflow.com/questions/3026957/how-to-validate-a-domain-name-using-regex-php/16491074#16491074
 # This regular expression matches domain names according to RFCs, it also accepts fqdn with an leading dot,
-# underscores, as well as asteriks which are allowed in domain names but not hostnames (i.e. allowed in
+# underscores, as well as asterisks which are allowed in domain names but not hostnames (i.e. allowed in
 # DNS but not in URLs), which are common in certain record types like for DKIM.
 DOMAIN_RE = r"^(?!\-)(?:[*][.])?(?:[a-zA-Z\d\-_]{0,62}[a-zA-Z\d_]\.){1,126}(?!\d+)[a-zA-Z\d_]{1,63}(\.?)$"
 
@@ -443,7 +443,7 @@ def build_sshfp_records():
 
 	# Get our local fingerprints by running ssh-keyscan. The output looks
 	# like the known_hosts file: hostname, keytype, fingerprint. The order
-	# of the output is arbitrary, so sort it to prevent spurrious updates
+	# of the output is arbitrary, so sort it to prevent spurious updates
 	# to the zone file (that trigger bumping the serial number). However,
 	# if SSH has been configured to listen on a nonstandard port, we must
 	# specify that port to sshkeyscan.
