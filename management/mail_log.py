@@ -374,9 +374,9 @@ def scan_mail_log_line(line, collector):
     elif service == "postfix/smtpd":
         if SCAN_BLOCKED:
             scan_postfix_smtpd_line(date, log, collector)
-    elif service in ("postfix/qmgr", "postfix/pickup", "postfix/cleanup", "postfix/scache",
+    elif service in {"postfix/qmgr", "postfix/pickup", "postfix/cleanup", "postfix/scache",
                      "spampd", "postfix/anvil", "postfix/master", "dkimpy", "postfix/lmtp",
-                     "postfix/tlsmgr", "anvil"):
+                     "postfix/tlsmgr", "anvil"}:
         # nothing to look at
         return True
     else:
