@@ -1,6 +1,7 @@
+#!/bin/bash
 # If there aren't any mail users yet, create one.
 if [ -z "$(management/cli.py user)" ]; then
-	# The outut of "management/cli.py user" is a list of mail users. If there
+	# The output of "management/cli.py user" is a list of mail users. If there
 	# aren't any yet, it'll be empty.
 
 	# If we didn't ask for an email address at the start, do so now.
@@ -10,7 +11,7 @@ if [ -z "$(management/cli.py user)" ]; then
 			input_box "Mail Account" \
 				"Let's create your first mail account.
 				\n\nWhat email address do you want?" \
-				me@$(get_default_hostname) \
+				"me@$(get_default_hostname)" \
 				EMAIL_ADDR
 
 			if [ -z "$EMAIL_ADDR" ]; then
@@ -22,7 +23,7 @@ if [ -z "$(management/cli.py user)" ]; then
 				input_box "Mail Account" \
 					"That's not a valid email address.
 					\n\nWhat email address do you want?" \
-					$EMAIL_ADDR \
+					"$EMAIL_ADDR" \
 					EMAIL_ADDR
 				if [ -z "$EMAIL_ADDR" ]; then
 					# user hit ESC/cancel
@@ -47,11 +48,11 @@ if [ -z "$(management/cli.py user)" ]; then
 	fi
 
 	# Create the user's mail account. This will ask for a password if none was given above.
-	management/cli.py user add $EMAIL_ADDR ${EMAIL_PW:-}
+	management/cli.py user add "$EMAIL_ADDR" ${EMAIL_PW:+"$EMAIL_PW"}
 
 	# Make it an admin.
-	hide_output management/cli.py user make-admin $EMAIL_ADDR
+	hide_output management/cli.py user make-admin "$EMAIL_ADDR"
 
 	# Create an alias to which we'll direct all automatically-created administrative aliases.
-	management/cli.py alias add administrator@$PRIMARY_HOSTNAME $EMAIL_ADDR > /dev/null
+	management/cli.py alias add "administrator@$PRIMARY_HOSTNAME" "$EMAIL_ADDR" > /dev/null
 fi

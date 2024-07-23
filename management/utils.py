@@ -14,31 +14,31 @@ def load_env_vars_from_file(fn):
     # Load settings from a KEY=VALUE file.
     import collections
     env = collections.OrderedDict()
-    with open(fn, 'r')  as f:
+    with open(fn, encoding="utf-8")  as f:
         for line in f:
             env.setdefault(*line.strip().split("=", 1))
     return env
 
 def save_environment(env):
-    with open("/etc/mailinabox.conf", "w") as f:
+    with open("/etc/mailinabox.conf", "w", encoding="utf-8") as f:
         for k, v in env.items():
-            f.write("%s=%s\n" % (k, v))
+            f.write(f"{k}={v}\n")
 
 # THE SETTINGS FILE AT STORAGE_ROOT/settings.yaml.
 
 def write_settings(config, env):
     import rtyaml
     fn = os.path.join(env['STORAGE_ROOT'], 'settings.yaml')
-    with open(fn, "w") as f:
+    with open(fn, "w", encoding="utf-8") as f:
         f.write(rtyaml.dump(config))
 
 def load_settings(env):
     import rtyaml
     fn = os.path.join(env['STORAGE_ROOT'], 'settings.yaml')
     try:
-        with open(fn, "r") as f:
+        with open(fn, encoding="utf-8") as f:
             config = rtyaml.load(f)
-        if not isinstance(config, dict): raise ValueError() # caught below
+        if not isinstance(config, dict): raise ValueError # caught below
         return config
     except:
         return { }
@@ -59,7 +59,7 @@ def sort_domains(domain_names, env):
     # from shortest to longest since zones are always shorter than their
     # subdomains.
     zones = { }
-    for domain in sorted(domain_names, key=lambda d : len(d)):
+    for domain in sorted(domain_names, key=len):
         for z in zones.values():
             if domain.endswith("." + z):
                 # We found a parent domain already in the list.
@@ -81,7 +81,7 @@ def sort_domains(domain_names, env):
       ))
 
     # Now sort the domain names that fall within each zone.
-    domain_names = sorted(domain_names,
+    return sorted(domain_names,
       key = lambda d : (
         # First by zone.
         zone_domains.index(zones[d]),
@@ -95,25 +95,26 @@ def sort_domains(domain_names, env):
         # Then in right-to-left lexicographic order of the .-separated parts of the name.
         list(reversed(d.split("."))),
       ))
-    
-    return domain_names
+
 
 def sort_email_addresses(email_addresses, env):
     email_addresses = set(email_addresses)
-    domains = set(email.split("@", 1)[1] for email in email_addresses if "@" in email)
+    domains = {email.split("@", 1)[1] for email in email_addresses if "@" in email}
     ret = []
     for domain in sort_domains(domains, env):
-        domain_emails = set(email for email in email_addresses if email.endswith("@" + domain))
+        domain_emails = {email for email in email_addresses if email.endswith("@" + domain)}
         ret.extend(sorted(domain_emails))
         email_addresses -= domain_emails
     ret.extend(sorted(email_addresses)) # whatever is left
     return ret
 
-def shell(method, cmd_args, env={}, capture_stderr=False, return_bytes=False, trap=False, input=None):
+def shell(method, cmd_args, env=None, capture_stderr=False, return_bytes=False, trap=False, input=None):
     # A safe way to execute processes.
     # Some processes like apt-get require being given a sane PATH.
     import subprocess
 
+    if env is None:
+        env = {}
     env.update({ "PATH": "/sbin:/bin:/usr/sbin:/usr/bin" })
     kwargs = {
         'env': env,
@@ -149,7 +150,7 @@ def du(path):
     # soft and hard links.
     total_size = 0
     seen = set()
-    for dirpath, dirnames, filenames in os.walk(path):
+    for dirpath, _dirnames, filenames in os.walk(path):
         for f in filenames:
             fp = os.path.join(dirpath, f)
             try:
@@ -181,6 +182,34 @@ def wait_for_service(port, public, env, timeout):
 def get_php_version():
 	# Gets the version of PHP installed in the system.
 	return shell("check_output", ["/usr/bin/php", "-v"])[4:7]
+
+def get_ssh_port():
+	port_value = get_ssh_config_value("port")
+
+	if port_value:
+		return int(port_value)
+
+	return None
+
+def get_ssh_config_value(parameter_name):
+	# Returns ssh configuration value for the provided parameter
+	try:
+		output = shell('check_output', ['sshd', '-T'])
+	except FileNotFoundError:
+		# sshd is not installed. That's ok.
+		return None
+	except subprocess.CalledProcessError:
+		# error while calling shell command
+		return None
+
+	for line in output.split("\n"):
+		if " " not in line: continue # there's a blank line at the end
+		key, values = line.split(" ", 1)
+		if key == parameter_name:
+			return values # space-delimited if there are multiple values
+
+	# Did not find the parameter!
+	return None
 
 if __name__ == "__main__":
 	from web_update import get_web_domains

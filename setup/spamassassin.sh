@@ -53,7 +53,7 @@ tools/editconf.py /etc/default/spampd \
 
 # Spamassassin normally wraps spam as an attachment inside a fresh
 # email with a report about the message. This also protects the user
-# from accidentally openening a message with embedded malware.
+# from accidentally opening a message with embedded malware.
 #
 # It's nice to see what rules caused the message to be marked as spam,
 # but it's also annoying to get to the original message when it is an
@@ -135,11 +135,11 @@ EOF
 # the filemode in the config file.
 
 tools/editconf.py /etc/spamassassin/local.cf -s \
-	bayes_path=$STORAGE_ROOT/mail/spamassassin/bayes \
+	bayes_path="$STORAGE_ROOT/mail/spamassassin/bayes" \
 	bayes_file_mode=0666
 
-mkdir -p $STORAGE_ROOT/mail/spamassassin
-chown -R spampd:spampd $STORAGE_ROOT/mail/spamassassin
+mkdir -p "$STORAGE_ROOT/mail/spamassassin"
+chown -R spampd:spampd "$STORAGE_ROOT/mail/spamassassin"
 
 # To mark mail as spam or ham, just drag it in or out of the Spam folder. We'll
 # use the Dovecot antispam plugin to detect the message move operation and execute
@@ -184,8 +184,8 @@ chmod a+x /usr/local/bin/sa-learn-pipe.sh
 # Create empty bayes training data (if it doesn't exist). Once the files exist,
 # ensure they are group-writable so that the Dovecot process has access.
 sudo -u spampd /usr/bin/sa-learn --sync 2>/dev/null
-chmod -R 660 $STORAGE_ROOT/mail/spamassassin
-chmod 770 $STORAGE_ROOT/mail/spamassassin
+chmod -R 660 "$STORAGE_ROOT/mail/spamassassin"
+chmod 770 "$STORAGE_ROOT/mail/spamassassin"
 
 # Initial training?
 # sa-learn --ham storage/mail/mailboxes/*/*/cur/

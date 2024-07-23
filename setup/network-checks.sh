@@ -1,3 +1,4 @@
+#!/bin/bash
 # Install the 'host', 'sed', and and 'nc' tools. This script is run before
 # the rest of the system setup so we may not yet have things installed.
 apt_get_quiet install bind9-host sed netcat-openbsd
@@ -6,7 +7,7 @@ apt_get_quiet install bind9-host sed netcat-openbsd
 # The user might have chosen a name that was previously in use by a spammer
 # and will not be able to reliably send mail. Do this after any automatic
 # choices made above.
-if host $PRIMARY_HOSTNAME.dbl.spamhaus.org > /dev/null; then
+if host "$PRIMARY_HOSTNAME.dbl.spamhaus.org" > /dev/null; then
 	echo
 	echo "The hostname you chose '$PRIMARY_HOSTNAME' is listed in the"
 	echo "Spamhaus Domain Block List. See http://www.spamhaus.org/dbl/"
@@ -22,8 +23,8 @@ fi
 # The user might have ended up on an IP address that was previously in use
 # by a spammer, or the user may be deploying on a residential network. We
 # will not be able to reliably send mail in these cases.
-REVERSED_IPV4=$(echo $PUBLIC_IP | sed "s/\([0-9]*\).\([0-9]*\).\([0-9]*\).\([0-9]*\)/\4.\3.\2.\1/")
-if host $REVERSED_IPV4.zen.spamhaus.org > /dev/null; then
+REVERSED_IPV4=$(echo "$PUBLIC_IP" | sed "s/\([0-9]*\).\([0-9]*\).\([0-9]*\).\([0-9]*\)/\4.\3.\2.\1/")
+if host "$REVERSED_IPV4.zen.spamhaus.org" > /dev/null; then
 	echo
 	echo "The IP address $PUBLIC_IP is listed in the Spamhaus Block List."
 	echo "See http://www.spamhaus.org/query/ip/$PUBLIC_IP."
