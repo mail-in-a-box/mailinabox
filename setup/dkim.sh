@@ -88,10 +88,10 @@ chmod go-rwx $STORAGE_ROOT/mail/dkim
 tools/editconf.py /etc/opendmarc.conf -s \
 	"Syslog=true" \
 	"Socket=inet:8893@[127.0.0.1]" \
-	"FailureReports=true"
+	"FailureReports=false"
 
 # SPFIgnoreResults causes the filter to ignore any SPF results in the header
-# of the message. This is useful if you want the filter to perfrom SPF checks
+# of the message. This is useful if you want the filter to perform SPF checks
 # itself, or because you don't trust the arriving header. This added header is
 # used by spamassassin to evaluate the mail for spamminess.
 
@@ -107,11 +107,11 @@ tools/editconf.py /etc/opendmarc.conf -s \
 tools/editconf.py /etc/opendmarc.conf -s \
         "SPFSelfValidate=true"
 
-# Enables generation of failure reports for sending domains that publish a
+# Disables generation of failure reports for sending domains that publish a
 # "none" policy.
 
 tools/editconf.py /etc/opendmarc.conf -s \
-        "FailureReportsOnNone=true"
+        "FailureReportsOnNone=false"
 
 # Add DKIMpy and OpenDMARC as milters to postfix, which is how DKIMpy
 # intercepts outgoing mail to perform the signing (by adding a mail header)

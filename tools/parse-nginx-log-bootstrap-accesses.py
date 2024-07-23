@@ -17,13 +17,8 @@ accesses = set()
 # Scan the current and rotated access logs.
 for fn in glob.glob("/var/log/nginx/access.log*"):
 	# Gunzip if necessary.
-	if fn.endswith(".gz"):
-		f = gzip.open(fn)
-	else:
-		f = open(fn, "rb")
-
 	# Loop through the lines in the access log.
-	with f:
+	with (gzip.open if fn.endswith(".gz") else open)(fn, "rb") as f:
 		for line in f:
 			# Find lines that are GETs on the bootstrap script by either curl or wget.
 			# (Note that we purposely skip ...?ping=1 requests which is the admin panel querying us for updates.)
@@ -43,7 +38,8 @@ for date, ip in accesses:
 # Since logs are rotated, store the statistics permanently in a JSON file.
 # Load in the stats from an existing file.
 if os.path.exists(outfn):
-	existing_data = json.load(open(outfn))
+	with open(outfn, encoding="utf-8") as f:
+		existing_data = json.load(f)
 	for date, count in existing_data:
 		if date not in by_date:
 			by_date[date] = count
@@ -55,5 +51,5 @@ by_date = sorted(by_date.items())
 by_date.pop(-1)
 
 # Write out.
-with open(outfn, "w") as f:
+with open(outfn, "w", encoding="utf-8") as f:
 	json.dump(by_date, f, sort_keys=True, indent=True)

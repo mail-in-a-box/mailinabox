@@ -56,11 +56,11 @@ See the [setup guide](https://mailinabox.email/guide.html) for detailed, user-fr
 
 For experts, start with a completely fresh (really, I mean it) Ubuntu 22.04 LTS 64-bit machine. On the machine...
 
-Clone this repository and checkout the tag corresponding to the most recent release:
+Clone this repository and checkout the tag corresponding to the most recent release (which you can find in the tags or releases lists on GitHub):
 
 	$ git clone https://github.com/mail-in-a-box/mailinabox
 	$ cd mailinabox
-	$ git checkout v60.1
+	$ git checkout TAGNAME
 
 Begin the installation.
 

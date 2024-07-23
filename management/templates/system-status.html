@@ -10,13 +10,13 @@
   border-top: none;
   padding-top: 0;
 }
-#system-checks .status-error td {
+#system-checks .status-error td, .summary-error {
   color: #733;
 }
-#system-checks .status-warning td {
+#system-checks .status-warning td, .summary-warning {
   color: #770;
 }
-#system-checks .status-ok td {
+#system-checks .status-ok td, .summary-ok {
   color: #040;
 }
 #system-checks div.extra {
@@ -52,6 +52,9 @@
 	</div> <!-- /col -->
 	<div class="col-md-pull-3 col-md-8">
 
+          <div id="system-checks-summary">
+          </div>
+
 <table id="system-checks" class="table" style="max-width: 60em">
   <thead>
   </thead>
@@ -64,6 +67,9 @@
 
 <script>
 function show_system_status() {
+  const summary = $('#system-checks-summary');
+  summary.html("");
+
   $('#system-checks tbody').html("<tr><td colspan='2' class='text-muted'>Loading...</td></tr>")
 
   api(
@@ -93,6 +99,12 @@ function show_system_status() {
     { },
     function(r) {
       $('#system-checks tbody').html("");
+      const ok_symbol = "✓";
+      const error_symbol = "✖";
+      const warning_symbol = "?";
+
+      let count_by_status = { ok: 0, error: 0, warning: 0 };
+
       for (var i = 0; i < r.length; i++) {
         var n = $("<tr><td class='status'/><td class='message'><p style='margin: 0'/><div class='extra'/><a class='showhide' href='#'/></tr>");
         if (i == 0) n.addClass('first')
@@ -100,9 +112,12 @@ function show_system_status() {
                 n.addClass(r[i].type)
         else
                 n.addClass("status-" + r[i].type)
-        if (r[i].type == "ok") n.find('td.status').text("✓")
-        if (r[i].type == "error") n.find('td.status').text("✖")
-        if (r[i].type == "warning") n.find('td.status').text("?")
+
+        if (r[i].type == "ok") n.find('td.status').text(ok_symbol);
+        if (r[i].type == "error") n.find('td.status').text(error_symbol);
+        if (r[i].type == "warning") n.find('td.status').text(warning_symbol);
+        count_by_status[r[i].type]++;
+
         n.find('td.message p').text(r[i].text)
         $('#system-checks tbody').append(n);
 
@@ -122,8 +137,17 @@ function show_system_status() {
           n.find('> td.message > div').append(m);
         }
       }
-    })
 
+      // Summary counts
+      summary.html("Summary: ");
+      if (count_by_status['error'] + count_by_status['warning'] == 0) {
+        summary.append($('<span class="summary-ok"/>').text(`All ${count_by_status['ok']} ${ok_symbol} OK`));
+      } else {
+        summary.append($('<span class="summary-ok"/>').text(`${count_by_status['ok']} ${ok_symbol} OK, `));
+        summary.append($('<span class="summary-error"/>').text(`${count_by_status['error']} ${error_symbol} Error, `));
+        summary.append($('<span class="summary-warning"/>').text(`${count_by_status['warning']} ${warning_symbol} Warning`));
+      }
+    })
 }
 
 var current_privacy_setting = null;

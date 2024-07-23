@@ -27,6 +27,12 @@ inst_dir=/usr/local/lib/mailinabox
 mkdir -p $inst_dir
 venv=$inst_dir/env
 if [ ! -d $venv ]; then
+	# A bug specific to Ubuntu 22.04 and Python 3.10 requires
+	# forcing a virtualenv directory layout option (see #2335
+	# and https://github.com/pypa/virtualenv/pull/2415). In
+	# our issue, reportedly installing python3-distutils didn't
+	# fix the problem.)
+	export DEB_PYTHON_INSTALL_LAYOUT='deb'
 	hide_output virtualenv -ppython3 $venv
 fi
 
@@ -46,9 +52,9 @@ hide_output $venv/bin/pip install --upgrade \
 # CONFIGURATION
 
 # Create a backup directory and a random key for encrypting backups.
-mkdir -p $STORAGE_ROOT/backup
-if [ ! -f $STORAGE_ROOT/backup/secret_key.txt ]; then
-	$(umask 077; openssl rand -base64 2048 > $STORAGE_ROOT/backup/secret_key.txt)
+mkdir -p "$STORAGE_ROOT/backup"
+if [ ! -f "$STORAGE_ROOT/backup/secret_key.txt" ]; then
+	(umask 077; openssl rand -base64 2048 > "$STORAGE_ROOT/backup/secret_key.txt")
 fi
 
 
@@ -60,18 +66,18 @@ rm -rf $assets_dir
 mkdir -p $assets_dir
 
 # jQuery CDN URL
-jquery_version=2.1.4
+jquery_version=2.2.4
 jquery_url=https://code.jquery.com
 
 # Get jQuery
-wget_verify $jquery_url/jquery-$jquery_version.min.js 43dc554608df885a59ddeece1598c6ace434d747 $assets_dir/jquery.min.js
+wget_verify $jquery_url/jquery-$jquery_version.min.js 69bb69e25ca7d5ef0935317584e6153f3fd9a88c $assets_dir/jquery.min.js
 
 # Bootstrap CDN URL
-bootstrap_version=3.3.7
+bootstrap_version=3.4.1
 bootstrap_url=https://github.com/twbs/bootstrap/releases/download/v$bootstrap_version/bootstrap-$bootstrap_version-dist.zip
 
 # Get Bootstrap
-wget_verify $bootstrap_url e6b1000b94e835ffd37f4c6dcbdad43f4b48a02a /tmp/bootstrap.zip
+wget_verify $bootstrap_url 0bb64c67c2552014d48ab4db81c2e8c01781f580 /tmp/bootstrap.zip
 unzip -q /tmp/bootstrap.zip -d $assets_dir
 mv $assets_dir/bootstrap-$bootstrap_version-dist $assets_dir/bootstrap
 rm -f /tmp/bootstrap.zip
@@ -94,7 +100,7 @@ tr -cd '[:xdigit:]' < /dev/urandom | head -c 32 > /var/lib/mailinabox/api.key
 chmod 640 /var/lib/mailinabox/api.key
 
 source $venv/bin/activate
-export PYTHONPATH=$(pwd)/management
+export PYTHONPATH=$PWD/management
 exec gunicorn -b localhost:10222 -w 1 --timeout 630 wsgi:app
 EOF
 chmod +x $inst_dir/start
@@ -110,7 +116,7 @@ minute=$((RANDOM % 60))  # avoid overloading mailinabox.email
 cat > /etc/cron.d/mailinabox-nightly << EOF;
 # Mail-in-a-Box --- Do not edit / will be overwritten on update.
 # Run nightly tasks: backup, status checks.
-$minute 3 * * *	root	(cd $(pwd) && management/daily_tasks.sh)
+$minute 3 * * *	root	(cd $PWD && management/daily_tasks.sh)
 EOF
 
 # Start the management server.
