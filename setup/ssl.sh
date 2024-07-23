@@ -96,3 +96,12 @@ fi
 if [ ! -f "$STORAGE_ROOT/ssl/dh2048.pem" ]; then
 	openssl dhparam -out "$STORAGE_ROOT/ssl/dh2048.pem" 2048
 fi
+
+# Cleanup expired SSL certificates from $STORAGE_ROOT/ssl daily
+cat > /etc/cron.daily/mailinabox-ssl-cleanup << EOF;
+#!/bin/bash
+# Mail-in-a-Box
+# Cleanup expired SSL certificates
+$(pwd)/tools/ssl_cleanup
+EOF
+chmod +x /etc/cron.daily/mailinabox-ssl-cleanup
