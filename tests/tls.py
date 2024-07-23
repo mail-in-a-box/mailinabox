@@ -88,14 +88,14 @@ def sslyze(opts, port, ok_ciphers):
 
 	try:
 		# Execute SSLyze.
-		out = subprocess.check_output([SSLYZE] + common_opts + opts + [connection_string])
+		out = subprocess.check_output([SSLYZE, *common_opts, *opts, connection_string])
 		out = out.decode("utf8")
 
 		# Trim output to make better for storing in git.
 		if "SCAN RESULTS FOR" not in out:
 			# Failed. Just output the error.
-			out = re.sub("[\w\W]*CHECKING HOST\(S\) AVAILABILITY\n\s*-+\n", "", out) # chop off header that shows the host we queried
-		out = re.sub("[\w\W]*SCAN RESULTS FOR.*\n\s*-+\n", "", out) # chop off header that shows the host we queried
+			out = re.sub("[\\w\\W]*CHECKING HOST\\(S\\) AVAILABILITY\n\\s*-+\n", "", out) # chop off header that shows the host we queried
+		out = re.sub("[\\w\\W]*SCAN RESULTS FOR.*\n\\s*-+\n", "", out) # chop off header that shows the host we queried
 		out = re.sub("SCAN COMPLETED IN .*", "", out)
 		out = out.rstrip(" \n-") + "\n"
 
@@ -105,8 +105,8 @@ def sslyze(opts, port, ok_ciphers):
 		# Pull out the accepted ciphers list for each SSL/TLS protocol
 		# version outputted.
 		accepted_ciphers = set()
-		for ciphers in re.findall(" Accepted:([\w\W]*?)\n *\n", out):
-			accepted_ciphers |= set(re.findall("\n\s*(\S*)", ciphers))
+		for ciphers in re.findall(" Accepted:([\\w\\W]*?)\n *\n", out):
+			accepted_ciphers |= set(re.findall("\n\\s*(\\S*)", ciphers))
 
 		# Compare to what Mozilla recommends, for a given modernness-level.
 		print("  Should Not Offer: " + (", ".join(sorted(accepted_ciphers-set(ok_ciphers))) or "(none -- good)"))
@@ -142,7 +142,7 @@ for cipher in csv.DictReader(io.StringIO(urllib.request.urlopen("https://raw.git
 client_compatibility = json.loads(urllib.request.urlopen("https://raw.githubusercontent.com/mail-in-a-box/user-agent-tls-capabilities/master/clients.json").read().decode("utf8"))
 cipher_clients = { }
 for client in client_compatibility:
-	if len(set(client['protocols']) & set(["TLS 1.0", "TLS 1.1", "TLS 1.2"])) == 0: continue # does not support TLS
+	if len(set(client['protocols']) & {"TLS 1.0", "TLS 1.1", "TLS 1.2"}) == 0: continue # does not support TLS
 	for cipher in client['ciphers']:
 		cipher_clients.setdefault(cipher_names.get(cipher), set()).add("/".join(x for x in [client['client']['name'], client['client']['version'], client['client']['platform']] if x))
 

@@ -4,11 +4,10 @@
 # TLS certificates have been signed, etc., and if not tells the user
 # what to do next.
 
-import sys, os, os.path, re, subprocess, datetime, multiprocessing.pool
+import sys, os, os.path, re, datetime, multiprocessing.pool
 import asyncio
 
 import dns.reversename, dns.resolver
-import dateutil.parser, dateutil.tz
 import idna
 import psutil
 import postfix_mta_sts_resolver.resolver
@@ -18,7 +17,7 @@ from web_update import get_web_domains, get_domains_with_a_records
 from ssl_certificates import get_ssl_certificates, get_domain_ssl_files, check_certificate
 from mailconfig import get_mail_domains, get_mail_aliases
 
-from utils import shell, sort_domains, load_env_vars_from_file, load_settings
+from utils import shell, sort_domains, load_env_vars_from_file, load_settings, get_ssh_port, get_ssh_config_value
 
 def get_services():
 	return [
@@ -65,30 +64,12 @@ def run_checks(rounded_values, env, output, pool, domains_to_check=None):
 	run_network_checks(env, output)
 	run_domain_checks(rounded_values, env, output, pool, domains_to_check=domains_to_check)
 
-def get_ssh_port():
-	# Returns ssh port
-	try:
-		output = shell('check_output', ['sshd', '-T'])
-	except FileNotFoundError:
-		# sshd is not installed. That's ok.
-		return None
-
-	returnNext = False
-	for e in output.split():
-		if returnNext:
-			return int(e)
-		if e == "port":
-			returnNext = True
-
-	# Did not find port!
-	return None
-
 def run_services_checks(env, output, pool):
 	# Check that system services are running.
 	all_running = True
 	fatal = False
 	ret = pool.starmap(check_service, ((i, service, env) for i, service in enumerate(get_services())), chunksize=1)
-	for i, running, fatal2, output2 in sorted(ret):
+	for _i, running, fatal2, output2 in sorted(ret):
 		if output2 is None: continue # skip check (e.g. no port was set, e.g. no sshd)
 		all_running = all_running and running
 		fatal = fatal or fatal2
@@ -124,7 +105,7 @@ def check_service(i, service, env):
 		try:
 			s.connect((ip, service["port"]))
 			return True
-		except OSError as e:
+		except OSError:
 			# timed out or some other odd error
 			return False
 		finally:
@@ -151,18 +132,17 @@ def check_service(i, service, env):
 			output.print_error("%s is not running (port %d)." % (service['name'], service['port']))
 
 		# Why is nginx not running?
-		if not running and service["port"] in (80, 443):
+		if not running and service["port"] in {80, 443}:
 			output.print_line(shell('check_output', ['nginx', '-t'], capture_stderr=True, trap=True)[1].strip())
 
+	# Service should be running locally.
+	elif try_connect("127.0.0.1"):
+		running = True
 	else:
-		# Service should be running locally.
-		if try_connect("127.0.0.1"):
-			running = True
-		else:
-			output.print_error("%s is not running (port %d)." % (service['name'], service['port']))
+		output.print_error("%s is not running (port %d)." % (service['name'], service['port']))
 
 	# Flag if local DNS is not running.
-	if not running and service["port"] == 53 and service["public"] == False:
+	if not running and service["port"] == 53 and service["public"] is False:
 		fatal = True
 
 	return (i, running, fatal, output)
@@ -194,7 +174,7 @@ def check_ufw(env, output):
 		for service in get_services():
 			if service["public"] and not is_port_allowed(ufw, service["port"]):
 				not_allowed_ports += 1
-				output.print_error("Port %s (%s) should be allowed in the firewall, please re-run the setup." % (service["port"], service["name"]))
+				output.print_error("Port {} ({}) should be allowed in the firewall, please re-run the setup.".format(service["port"], service["name"]))
 
 		if not_allowed_ports == 0:
 			output.print_ok("Firewall is active.")
@@ -207,21 +187,15 @@ def is_port_allowed(ufw, port):
 	return any(re.match(str(port) +"[/ \t].*", item) for item in ufw)
 
 def check_ssh_password(env, output):
-	# Check that SSH login with password is disabled. The openssh-server
-	# package may not be installed so check that before trying to access
-	# the configuration file.
-	if not os.path.exists("/etc/ssh/sshd_config"):
-		return
-	with open("/etc/ssh/sshd_config", "r") as f:
-		sshd = f.read()
-	if re.search("\nPasswordAuthentication\s+yes", sshd) \
-		or not re.search("\nPasswordAuthentication\s+no", sshd):
-		output.print_error("""The SSH server on this machine permits password-based login. A more secure
-			way to log in is using a public key. Add your SSH public key to $HOME/.ssh/authorized_keys, check
-			that you can log in without a password, set the option 'PasswordAuthentication no' in
-			/etc/ssh/sshd_config, and then restart the openssh via 'sudo service ssh restart'.""")
-	else:
-		output.print_ok("SSH disallows password-based login.")
+	config_value = get_ssh_config_value("passwordauthentication")
+	if config_value:
+		if config_value == "no":
+			output.print_ok("SSH disallows password-based login.")
+		else:
+			output.print_error("""The SSH server on this machine permits password-based login. A more secure
+				way to log in is using a public key. Add your SSH public key to $HOME/.ssh/authorized_keys, check
+				that you can log in without a password, set the option 'PasswordAuthentication no' in
+				/etc/ssh/sshd_config, and then restart the openssh via 'sudo service ssh restart'.""")
 
 def is_reboot_needed_due_to_package_installation():
 	return os.path.exists("/var/run/reboot-required")
@@ -236,7 +210,7 @@ def check_software_updates(env, output):
 	else:
 		output.print_error("There are %d software packages that can be updated." % len(pkgs))
 		for p in pkgs:
-			output.print_line("%s (%s)" % (p["package"], p["version"]))
+			output.print_line("{} ({})".format(p["package"], p["version"]))
 
 def check_system_aliases(env, output):
 	# Check that the administrator alias exists since that's where all
@@ -268,8 +242,7 @@ def check_free_disk_space(rounded_values, env, output):
 	except:
 		backup_cache_count = 0
 	if backup_cache_count > 1:
-		output.print_warning("The backup cache directory {} has more than one backup target cache. Consider clearing this directory to save disk space."
-			.format(backup_cache_path))
+		output.print_warning(f"The backup cache directory {backup_cache_path} has more than one backup target cache. Consider clearing this directory to save disk space.")
 
 def check_free_memory(rounded_values, env, output):
 	# Check free memory.
@@ -295,7 +268,7 @@ def run_network_checks(env, output):
 	# Stop if we cannot make an outbound connection on port 25. Many residential
 	# networks block outbound port 25 to prevent their network from sending spam.
 	# See if we can reach one of Google's MTAs with a 5-second timeout.
-	code, ret = shell("check_call", ["/bin/nc", "-z", "-w5", "aspmx.l.google.com", "25"], trap=True)
+	_code, ret = shell("check_call", ["/bin/nc", "-z", "-w5", "aspmx.l.google.com", "25"], trap=True)
 	if ret == 0:
 		output.print_ok("Outbound mail (SMTP port 25) is not blocked.")
 	else:
@@ -308,18 +281,26 @@ def run_network_checks(env, output):
 	# The user might have ended up on an IP address that was previously in use
 	# by a spammer, or the user may be deploying on a residential network. We
 	# will not be able to reliably send mail in these cases.
+	
+	# See https://www.spamhaus.org/news/article/807/using-our-public-mirrors-check-your-return-codes-now. for
+	# information on spamhaus return codes
 	rev_ip4 = ".".join(reversed(env['PUBLIC_IP'].split('.')))
 	zen = query_dns(rev_ip4+'.zen.spamhaus.org', 'A', nxdomain=None)
 	if zen is None:
 		output.print_ok("IP address is not blacklisted by zen.spamhaus.org.")
 	elif zen == "[timeout]":
-		output.print_warning("Connection to zen.spamhaus.org timed out. We could not determine whether your server's IP address is blacklisted. Please try again later.")
+		output.print_warning("Connection to zen.spamhaus.org timed out. Could not determine whether this box's IP address is blacklisted. Please try again later.")
 	elif zen == "[Not Set]":
-		output.print_warning("Could not connect to zen.spamhaus.org. We could not determine whether your server's IP address is blacklisted. Please try again later.")
+		output.print_warning("Could not connect to zen.spamhaus.org. Could not determine whether this box's IP address is blacklisted. Please try again later.")
+	elif zen == "127.255.255.252":
+		output.print_warning("Incorrect spamhaus query: %s. Could not determine whether this box's IP address is blacklisted." % (rev_ip4+'.zen.spamhaus.org'))
+	elif zen == "127.255.255.254":
+		output.print_warning("Mail-in-a-Box is configured to use a public DNS server. This is not supported by spamhaus. Could not determine whether this box's IP address is blacklisted.")
+	elif zen == "127.255.255.255":
+		output.print_warning("Too many queries have been performed on the spamhaus server. Could not determine whether this box's IP address is blacklisted.")
 	else:
-		output.print_error("""The IP address of this machine %s is listed in the Spamhaus Block List (code %s),
-			which may prevent recipients from receiving your email. See http://www.spamhaus.org/query/ip/%s."""
-			% (env['PUBLIC_IP'], zen, env['PUBLIC_IP']))
+		output.print_error("""The IP address of this machine {} is listed in the Spamhaus Block List (code {}),
+			which may prevent recipients from receiving your email. See http://www.spamhaus.org/query/ip/{}.""".format(env['PUBLIC_IP'], zen, env['PUBLIC_IP']))
 
 def run_domain_checks(rounded_time, env, output, pool, domains_to_check=None):
 	# Get the list of domains we handle mail for.
@@ -340,7 +321,7 @@ def run_domain_checks(rounded_time, env, output, pool, domains_to_check=None):
 	domains_to_check = [
 		d for d in domains_to_check
 		if not (
-		   d.split(".", 1)[0] in ("www", "autoconfig", "autodiscover", "mta-sts")
+		   d.split(".", 1)[0] in {"www", "autoconfig", "autodiscover", "mta-sts"}
 		   and len(d.split(".", 1)) == 2
 		   and d.split(".", 1)[1] in domains_to_check
 		)
@@ -422,10 +403,9 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 	# If a DS record is set on the zone containing this domain, check DNSSEC now.
 	has_dnssec = False
 	for zone in dns_domains:
-		if zone == domain or domain.endswith("." + zone):
-			if query_dns(zone, "DS", nxdomain=None) is not None:
-				has_dnssec = True
-				check_dnssec(zone, env, output, dns_zonefiles, is_checking_primary=True)
+		if (zone == domain or domain.endswith("." + zone)) and query_dns(zone, "DS", nxdomain=None) is not None:
+			has_dnssec = True
+			check_dnssec(zone, env, output, dns_zonefiles, is_checking_primary=True)
 
 	ip = query_dns(domain, "A")
 	ns_ips = query_dns("ns1." + domain, "A") + '/' + query_dns("ns2." + domain, "A")
@@ -437,44 +417,41 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 	# the nameserver, are reporting the right info --- but if the glue is incorrect this
 	# will probably fail.
 	if ns_ips == env['PUBLIC_IP'] + '/' + env['PUBLIC_IP']:
-		output.print_ok("Nameserver glue records are correct at registrar. [ns1/ns2.%s ↦ %s]" % (env['PRIMARY_HOSTNAME'], env['PUBLIC_IP']))
+		output.print_ok("Nameserver glue records are correct at registrar. [ns1/ns2.{} ↦ {}]".format(env['PRIMARY_HOSTNAME'], env['PUBLIC_IP']))
 
 	elif ip == env['PUBLIC_IP']:
 		# The NS records are not what we expect, but the domain resolves correctly, so
 		# the user may have set up external DNS. List this discrepancy as a warning.
-		output.print_warning("""Nameserver glue records (ns1.%s and ns2.%s) should be configured at your domain name
-			registrar as having the IP address of this box (%s). They currently report addresses of %s. If you have set up External DNS, this may be OK."""
-			% (env['PRIMARY_HOSTNAME'], env['PRIMARY_HOSTNAME'], env['PUBLIC_IP'], ns_ips))
+		output.print_warning("""Nameserver glue records (ns1.{} and ns2.{}) should be configured at your domain name
+			registrar as having the IP address of this box ({}). They currently report addresses of {}. If you have set up External DNS, this may be OK.""".format(env['PRIMARY_HOSTNAME'], env['PRIMARY_HOSTNAME'], env['PUBLIC_IP'], ns_ips))
 
 	else:
-		output.print_error("""Nameserver glue records are incorrect. The ns1.%s and ns2.%s nameservers must be configured at your domain name
-			registrar as having the IP address %s. They currently report addresses of %s. It may take several hours for
-			public DNS to update after a change."""
-			% (env['PRIMARY_HOSTNAME'], env['PRIMARY_HOSTNAME'], env['PUBLIC_IP'], ns_ips))
+		output.print_error("""Nameserver glue records are incorrect. The ns1.{} and ns2.{} nameservers must be configured at your domain name
+			registrar as having the IP address {}. They currently report addresses of {}. It may take several hours for
+			public DNS to update after a change.""".format(env['PRIMARY_HOSTNAME'], env['PRIMARY_HOSTNAME'], env['PUBLIC_IP'], ns_ips))
 
 	# Check that PRIMARY_HOSTNAME resolves to PUBLIC_IP[V6] in public DNS.
 	ipv6 = query_dns(domain, "AAAA") if env.get("PUBLIC_IPV6") else None
 	if ip == env['PUBLIC_IP'] and not (ipv6 and env['PUBLIC_IPV6'] and ipv6 != normalize_ip(env['PUBLIC_IPV6'])):
-		output.print_ok("Domain resolves to box's IP address. [%s ↦ %s]" % (env['PRIMARY_HOSTNAME'], my_ips))
+		output.print_ok("Domain resolves to box's IP address. [{} ↦ {}]".format(env['PRIMARY_HOSTNAME'], my_ips))
 	else:
-		output.print_error("""This domain must resolve to your box's IP address (%s) in public DNS but it currently resolves
-			to %s. It may take several hours for public DNS to update after a change. This problem may result from other
-			issues listed above."""
-			% (my_ips, ip + ((" / " + ipv6) if ipv6 is not None else "")))
+		output.print_error("""This domain must resolve to this box's IP address ({}) in public DNS but it currently resolves
+			to {}. It may take several hours for public DNS to update after a change. This problem may result from other
+			issues listed above.""".format(my_ips, ip + ((" / " + ipv6) if ipv6 is not None else "")))
 
 
 	# Check reverse DNS matches the PRIMARY_HOSTNAME. Note that it might not be
 	# a DNS zone if it is a subdomain of another domain we have a zone for.
 	existing_rdns_v4 = query_dns(dns.reversename.from_address(env['PUBLIC_IP']), "PTR")
 	existing_rdns_v6 = query_dns(dns.reversename.from_address(env['PUBLIC_IPV6']), "PTR") if env.get("PUBLIC_IPV6") else None
-	if existing_rdns_v4 == domain and existing_rdns_v6 in (None, domain):
-		output.print_ok("Reverse DNS is set correctly at ISP. [%s ↦ %s]" % (my_ips, env['PRIMARY_HOSTNAME']))
+	if existing_rdns_v4 == domain and existing_rdns_v6 in {None, domain}:
+		output.print_ok("Reverse DNS is set correctly at ISP. [{} ↦ {}]".format(my_ips, env['PRIMARY_HOSTNAME']))
 	elif existing_rdns_v4 == existing_rdns_v6 or existing_rdns_v6 is None:
-		output.print_error("""Your box's reverse DNS is currently %s, but it should be %s. Your ISP or cloud provider will have instructions
-			on setting up reverse DNS for your box.""" % (existing_rdns_v4, domain) )
+		output.print_error(f"""This box's reverse DNS is currently {existing_rdns_v4}, but it should be {domain}. Your ISP or cloud provider will have instructions
+			on setting up reverse DNS for this box.""" )
 	else:
-		output.print_error("""Your box's reverse DNS is currently %s (IPv4) and %s (IPv6), but it should be %s. Your ISP or cloud provider will have instructions
-			on setting up reverse DNS for your box.""" % (existing_rdns_v4, existing_rdns_v6, domain) )
+		output.print_error(f"""This box's reverse DNS is currently {existing_rdns_v4} (IPv4) and {existing_rdns_v6} (IPv6), but it should be {domain}. Your ISP or cloud provider will have instructions
+			on setting up reverse DNS for this box.""" )
 
 	# Check the TLSA record.
 	tlsa_qname = "_25._tcp." + domain
@@ -488,18 +465,17 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 			# since TLSA shouldn't be used without DNSSEC.
 			output.print_warning("""The DANE TLSA record for incoming mail is not set. This is optional.""")
 	else:
-		output.print_error("""The DANE TLSA record for incoming mail (%s) is not correct. It is '%s' but it should be '%s'.
-			It may take several hours for public DNS to update after a change."""
-                        % (tlsa_qname, tlsa25, tlsa25_expected))
+		output.print_error(f"""The DANE TLSA record for incoming mail ({tlsa_qname}) is not correct. It is '{tlsa25}' but it should be '{tlsa25_expected}'.
+			It may take several hours for public DNS to update after a change.""")
 
 	# Check that the hostmaster@ email address exists.
 	check_alias_exists("Hostmaster contact address", "hostmaster@" + domain, env, output)
 
 def check_alias_exists(alias_name, alias, env, output):
-	mail_aliases = dict([(address, receivers) for address, receivers, *_ in get_mail_aliases(env)])
+	mail_aliases = {address: receivers for address, receivers, *_ in get_mail_aliases(env)}
 	if alias in mail_aliases:
 		if mail_aliases[alias]:
-			output.print_ok("%s exists as a mail alias. [%s ↦ %s]" % (alias_name, alias, mail_aliases[alias]))
+			output.print_ok(f"{alias_name} exists as a mail alias. [{alias} ↦ {mail_aliases[alias]}]")
 		else:
 			output.print_error("""You must set the destination of the mail alias for %s to direct email to you or another administrator.""" % alias)
 	else:
@@ -525,7 +501,7 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 	secondary_ns = custom_secondary_ns or ["ns2." + env['PRIMARY_HOSTNAME']]
 
 	existing_ns = query_dns(domain, "NS")
-	correct_ns = "; ".join(sorted(["ns1." + env['PRIMARY_HOSTNAME']] + secondary_ns))
+	correct_ns = "; ".join(sorted(["ns1." + env["PRIMARY_HOSTNAME"], *secondary_ns]))
 	ip = query_dns(domain, "A")
 
 	probably_external_dns = False
@@ -534,14 +510,12 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 		output.print_ok("Nameservers are set correctly at registrar. [%s]" % correct_ns)
 	elif ip == correct_ip:
 		# The domain resolves correctly, so maybe the user is using External DNS.
-		output.print_warning("""The nameservers set on this domain at your domain name registrar should be %s. They are currently %s.
-			If you are using External DNS, this may be OK."""
-				% (correct_ns, existing_ns) )
+		output.print_warning(f"""The nameservers set on this domain at your domain name registrar should be {correct_ns}. They are currently {existing_ns}.
+			If you are using External DNS, this may be OK.""" )
 		probably_external_dns = True
 	else:
-		output.print_error("""The nameservers set on this domain are incorrect. They are currently %s. Use your domain name registrar's
-			control panel to set the nameservers to %s."""
-				% (existing_ns, correct_ns) )
+		output.print_error(f"""The nameservers set on this domain are incorrect. They are currently {existing_ns}. Use your domain name registrar's
+			control panel to set the nameservers to {correct_ns}.""" )
 
 	# Check that each custom secondary nameserver resolves the IP address.
 
@@ -562,7 +536,7 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 			elif ip is None:
 				output.print_error("Secondary nameserver %s is not configured to resolve this domain." % ns)
 			else:
-				output.print_error("Secondary nameserver %s is not configured correctly. (It resolved this domain as %s. It should be %s.)" % (ns, ip, correct_ip))
+				output.print_error(f"Secondary nameserver {ns} is not configured correctly. (It resolved this domain as {ip}. It should be {correct_ip}.)")
 
 def check_dns_zone_suggestions(domain, env, output, dns_zonefiles, domains_with_a_records):
 	# Warn if a custom DNS record is preventing this or the automatic www redirect from
@@ -591,7 +565,7 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 	expected_ds_records = { }
 	ds_file = '/etc/nsd/zones/' + dns_zonefiles[domain] + '.ds'
 	if not os.path.exists(ds_file): return # Domain is in our database but DNS has not yet been updated.
-	with open(ds_file) as f:
+	with open(ds_file, encoding="utf-8") as f:
 		for rr_ds in f:
 			rr_ds = rr_ds.rstrip()
 			ds_keytag, ds_alg, ds_digalg, ds_digest = rr_ds.split("\t")[4].split(" ")
@@ -600,7 +574,7 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 			# record that we suggest using is for the KSK (and that's how the DS records were generated).
 			# We'll also give the nice name for the key algorithm.
 			dnssec_keys = load_env_vars_from_file(os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/%s.conf' % alg_name_map[ds_alg]))
-			with open(os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/' + dnssec_keys['KSK'] + '.key'), 'r') as f:
+			with open(os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/' + dnssec_keys['KSK'] + '.key'), encoding="utf-8") as f:
 				dnsssec_pubkey = f.read().split("\t")[3].split(" ")[3]
 
 			expected_ds_records[ (ds_keytag, ds_alg, ds_digalg, ds_digest) ] = {
@@ -633,10 +607,10 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 			#
 			# But it may not be preferred. Only algorithm 13 is preferred. Warn if any of the
 			# matched zones uses a different algorithm.
-			if set(r[1] for r in matched_ds) == { '13' } and set(r[2] for r in matched_ds) <= { '2', '4' }: # all are alg 13 and digest type 2 or 4
+			if {r[1] for r in matched_ds} == { '13' } and {r[2] for r in matched_ds} <= { '2', '4' }: # all are alg 13 and digest type 2 or 4
 				output.print_ok("DNSSEC 'DS' record is set correctly at registrar.")
 				return
-			elif len([r for r in matched_ds if r[1] == '13' and r[2] in ( '2', '4' )]) > 0: # some but not all are alg 13
+			elif len([r for r in matched_ds if r[1] == '13' and r[2] in { '2', '4' }]) > 0: # some but not all are alg 13
 				output.print_ok("DNSSEC 'DS' record is set correctly at registrar. (Records using algorithm other than ECDSAP256SHA256 and digest types other than SHA-256/384 should be removed.)")
 				return
 			else: # no record uses alg 13
@@ -668,8 +642,8 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 		output.print_line("----------")
 		output.print_line("Key Tag: " + ds_suggestion['keytag'])
 		output.print_line("Key Flags: KSK / 257")
-		output.print_line("Algorithm: %s / %s" % (ds_suggestion['alg'], ds_suggestion['alg_name']))
-		output.print_line("Digest Type: %s / %s" % (ds_suggestion['digalg'], ds_suggestion['digalg_name']))
+		output.print_line("Algorithm: {} / {}".format(ds_suggestion['alg'], ds_suggestion['alg_name']))
+		output.print_line("Digest Type: {} / {}".format(ds_suggestion['digalg'], ds_suggestion['digalg_name']))
 		output.print_line("Digest: " + ds_suggestion['digest'])
 		output.print_line("Public Key: ")
 		output.print_line(ds_suggestion['pubkey'], monospace=True)
@@ -680,7 +654,7 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 		output.print_line("")
 		output.print_line("The DS record is currently set to:")
 		for rr in sorted(ds):
-			output.print_line("Key Tag: {0}, Algorithm: {1}, Digest Type: {2}, Digest: {3}".format(*rr))
+			output.print_line("Key Tag: {}, Algorithm: {}, Digest Type: {}, Digest: {}".format(*rr))
 
 def check_mail_domain(domain, env, output):
 	# Check the MX record.
@@ -688,21 +662,19 @@ def check_mail_domain(domain, env, output):
 	recommended_mx = "10 " + env['PRIMARY_HOSTNAME']
 	mx = query_dns(domain, "MX", nxdomain=None)
 
-	if mx is None:
-		mxhost = None
-	elif mx == "[timeout]":
+	if mx is None or mx == "[timeout]":
 		mxhost = None
 	else:
 		# query_dns returns a semicolon-delimited list
 		# of priority-host pairs.
 		mxhost = mx.split('; ')[0].split(' ')[1]
 
-	if mxhost == None:
+	if mxhost is None:
 		# A missing MX record is okay on the primary hostname because
 		# the primary hostname's A record (the MX fallback) is... itself,
 		# which is what we want the MX to be.
 		if domain == env['PRIMARY_HOSTNAME']:
-			output.print_ok("Domain's email is directed to this domain. [%s has no MX record, which is ok]" % (domain,))
+			output.print_ok(f"Domain's email is directed to this domain. [{domain} has no MX record, which is ok]")
 
 		# And a missing MX record is okay on other domains if the A record
 		# matches the A record of the PRIMARY_HOSTNAME. Actually this will
@@ -710,17 +682,17 @@ def check_mail_domain(domain, env, output):
 		else:
 			domain_a = query_dns(domain, "A", nxdomain=None)
 			primary_a = query_dns(env['PRIMARY_HOSTNAME'], "A", nxdomain=None)
-			if domain_a != None and domain_a == primary_a:
-				output.print_ok("Domain's email is directed to this domain. [%s has no MX record but its A record is OK]" % (domain,))
+			if domain_a is not None and domain_a == primary_a:
+				output.print_ok(f"Domain's email is directed to this domain. [{domain} has no MX record but its A record is OK]")
 			else:
-				output.print_error("""This domain's DNS MX record is not set. It should be '%s'. Mail will not
+				output.print_error(f"""This domain's DNS MX record is not set. It should be '{recommended_mx}'. Mail will not
 					be delivered to this box. It may take several hours for public DNS to update after a
-					change. This problem may result from other issues listed here.""" % (recommended_mx,))
+					change. This problem may result from other issues listed here.""")
 
 	elif mxhost == env['PRIMARY_HOSTNAME']:
-		good_news = "Domain's email is directed to this domain. [%s ↦ %s]" % (domain, mx)
+		good_news = f"Domain's email is directed to this domain. [{domain} ↦ {mx}]"
 		if mx != recommended_mx:
-			good_news += "  This configuration is non-standard.  The recommended configuration is '%s'." % (recommended_mx,)
+			good_news += f"  This configuration is non-standard.  The recommended configuration is '{recommended_mx}'."
 		output.print_ok(good_news)
 
 		# Check MTA-STS policy.
@@ -731,14 +703,14 @@ def check_mail_domain(domain, env, output):
 			if policy[1].get("mx") == [env['PRIMARY_HOSTNAME']] and policy[1].get("mode") == "enforce": # policy[0] is the policyid
 				output.print_ok("MTA-STS policy is present.")
 			else:
-				output.print_error("MTA-STS policy is present but has unexpected settings. [{}]".format(policy[1]))
+				output.print_error(f"MTA-STS policy is present but has unexpected settings. [{policy[1]}]")
 		else:
-			output.print_error("MTA-STS policy is missing: {}".format(valid))
+			output.print_error(f"MTA-STS policy is missing: {valid}")
 
 	else:
-		output.print_error("""This domain's DNS MX record is incorrect. It is currently set to '%s' but should be '%s'. Mail will not
+		output.print_error(f"""This domain's DNS MX record is incorrect. It is currently set to '{mx}' but should be '{recommended_mx}'. Mail will not
 			be delivered to this box. It may take several hours for public DNS to update after a change. This problem may result from
-			other issues listed here.""" % (mx, recommended_mx))
+			other issues listed here.""")
 
 	# Check that the postmaster@ email address exists. Not required if the domain has a
 	# catch-all address or domain alias.
@@ -748,17 +720,26 @@ def check_mail_domain(domain, env, output):
 	# Stop if the domain is listed in the Spamhaus Domain Block List.
 	# The user might have chosen a domain that was previously in use by a spammer
 	# and will not be able to reliably send mail.
+	
+	# See https://www.spamhaus.org/news/article/807/using-our-public-mirrors-check-your-return-codes-now. for
+	# information on spamhaus return codes
 	dbl = query_dns(domain+'.dbl.spamhaus.org', "A", nxdomain=None)
 	if dbl is None:
 		output.print_ok("Domain is not blacklisted by dbl.spamhaus.org.")
 	elif dbl == "[timeout]":
-		output.print_warning("Connection to dbl.spamhaus.org timed out. We could not determine whether the domain {} is blacklisted. Please try again later.".format(domain))
+		output.print_warning(f"Connection to dbl.spamhaus.org timed out. Could not determine whether the domain {domain} is blacklisted. Please try again later.")
 	elif dbl == "[Not Set]":
-		output.print_warning("Could not connect to dbl.spamhaus.org. We could not determine whether the domain {} is blacklisted. Please try again later.".format(domain))
+		output.print_warning(f"Could not connect to dbl.spamhaus.org. Could not determine whether the domain {domain} is blacklisted. Please try again later.")
+	elif dbl == "127.255.255.252":
+		output.print_warning("Incorrect spamhaus query: %s. Could not determine whether the domain %s is blacklisted." % (domain+'.dbl.spamhaus.org', domain))
+	elif dbl == "127.255.255.254":
+		output.print_warning("Mail-in-a-Box is configured to use a public DNS server. This is not supported by spamhaus. Could not determine whether the domain {} is blacklisted.".format(domain))
+	elif dbl == "127.255.255.255":
+		output.print_warning("Too many queries have been performed on the spamhaus server. Could not determine whether the domain {} is blacklisted.".format(domain))
 	else:
-		output.print_error("""This domain is listed in the Spamhaus Domain Block List (code %s),
+		output.print_error(f"""This domain is listed in the Spamhaus Domain Block List (code {dbl}),
 			which may prevent recipients from receiving your mail.
-			See http://www.spamhaus.org/dbl/ and http://www.spamhaus.org/query/domain/%s.""" % (dbl, domain))
+			See http://www.spamhaus.org/dbl/ and http://www.spamhaus.org/query/domain/{domain}.""")
 
 def check_web_domain(domain, rounded_time, ssl_certificates, env, output):
 	# See if the domain's A record resolves to our PUBLIC_IP. This is already checked
@@ -772,13 +753,13 @@ def check_web_domain(domain, rounded_time, ssl_certificates, env, output):
 			if value == normalize_ip(expected):
 				ok_values.append(value)
 			else:
-				output.print_error("""This domain should resolve to your box's IP address (%s %s) if you would like the box to serve
-					webmail or a website on this domain. The domain currently resolves to %s in public DNS. It may take several hours for
-					public DNS to update after a change. This problem may result from other issues listed here.""" % (rtype, expected, value))
+				output.print_error(f"""This domain should resolve to this box's IP address ({rtype} {expected}) if you would like the box to serve
+					webmail or a website on this domain. The domain currently resolves to {value} in public DNS. It may take several hours for
+					public DNS to update after a change. This problem may result from other issues listed here.""")
 				return
 
 		# If both A and AAAA are correct...
-		output.print_ok("Domain resolves to this box's IP address. [%s ↦ %s]" % (domain, '; '.join(ok_values)))
+		output.print_ok("Domain resolves to this box's IP address. [{} ↦ {}]".format(domain, '; '.join(ok_values)))
 
 
 	# We need a TLS certificate for PRIMARY_HOSTNAME because that's where the
@@ -799,7 +780,7 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None, as_list=False):
 	# running unbound server), or if the 'at' argument is specified, use that host
 	# as the nameserver.
 	resolver = dns.resolver.get_default_resolver()
-	
+
 	# Make sure at is not a string that cannot be used as a nameserver
 	if at and at not in {'[Not set]', '[timeout]'}:
 		resolver = dns.resolver.Resolver()
@@ -825,7 +806,7 @@ def query_dns(qname, rtype, nxdomain='[Not Set]', at=None, as_list=False):
 	# be expressed in equivalent string forms. Canonicalize the form before
 	# returning them. The caller should normalize any IP addresses the result
 	# of this method is compared with.
-	if rtype in ("A", "AAAA"):
+	if rtype in {"A", "AAAA"}:
 		response = [normalize_ip(str(r)) for r in response]
 
 	if as_list:
@@ -841,7 +822,7 @@ def check_ssl_cert(domain, rounded_time, ssl_certificates, env, output):
 	# Check that TLS certificate is signed.
 
 	# Skip the check if the A record is not pointed here.
-	if query_dns(domain, "A", None) not in (env['PUBLIC_IP'], None): return
+	if query_dns(domain, "A", None) not in {env['PUBLIC_IP'], None}: return
 
 	# Where is the certificate file stored?
 	tls_cert = get_domain_ssl_files(domain, ssl_certificates, env, allow_missing_cert=True)
@@ -911,22 +892,20 @@ def list_apt_updates(apt_update=True):
 	return pkgs
 
 def what_version_is_this(env):
-	# This function runs `git describe --abbrev=0` on the Mail-in-a-Box installation directory.
+	# This function runs `git describe --always --abbrev=0` on the Mail-in-a-Box installation directory.
 	# Git may not be installed and Mail-in-a-Box may not have been cloned from github,
 	# so this function may raise all sorts of exceptions.
 	miab_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-	tag = shell("check_output", ["/usr/bin/git", "describe", "--abbrev=0"], env={"GIT_DIR": os.path.join(miab_dir, '.git')}).strip()
-	return tag
+	return shell("check_output", ["/usr/bin/git", "describe", "--always", "--abbrev=0"], env={"GIT_DIR": os.path.join(miab_dir, '.git')}).strip()
 
 def get_latest_miab_version():
 	# This pings https://mailinabox.email/setup.sh and extracts the tag named in
 	# the script to determine the current product version.
     from urllib.request import urlopen, HTTPError, URLError
-    from socket import timeout
 
     try:
         return re.search(b'TAG=(.*)', urlopen("https://mailinabox.email/setup.sh?ping=1", timeout=5).read()).group(1).decode("utf8")
-    except (HTTPError, URLError, timeout):
+    except (TimeoutError, HTTPError, URLError):
         return None
 
 def check_miab_version(env, output):
@@ -947,8 +926,7 @@ def check_miab_version(env, output):
 		elif latest_ver is None:
 			output.print_error("Latest Mail-in-a-Box version could not be determined. You are running version %s." % this_ver)
 		else:
-			output.print_error("A new version of Mail-in-a-Box is available. You are running version %s. The latest version is %s. For upgrade instructions, see https://mailinabox.email. "
-				% (this_ver, latest_ver))
+			output.print_error(f"A new version of Mail-in-a-Box is available. You are running version {this_ver}. The latest version is {latest_ver}. For upgrade instructions, see https://mailinabox.email. ")
 
 def run_and_output_changes(env, pool):
 	import json
@@ -963,8 +941,11 @@ def run_and_output_changes(env, pool):
 	# Load previously saved status checks.
 	cache_fn = "/var/cache/mailinabox/status_checks.json"
 	if os.path.exists(cache_fn):
-		with open(cache_fn, 'r') as f:
-			prev = json.load(f)
+		with open(cache_fn, encoding="utf-8") as f:
+			try:
+				prev = json.load(f)
+			except json.JSONDecodeError:
+				prev = []
 
 		# Group the serial output into categories by the headings.
 		def group_by_heading(lines):
@@ -999,14 +980,14 @@ def run_and_output_changes(env, pool):
 						out.add_heading(category + " -- Previously:")
 					elif op == "delete":
 						out.add_heading(category + " -- Removed")
-					if op in ("replace", "delete"):
+					if op in {"replace", "delete"}:
 						BufferedOutput(with_lines=prev_lines[i1:i2]).playback(out)
 
 					if op == "replace":
 						out.add_heading(category + " -- Currently:")
 					elif op == "insert":
 						out.add_heading(category + " -- Added")
-					if op in ("replace", "insert"):
+					if op in {"replace", "insert"}:
 						BufferedOutput(with_lines=cur_lines[j1:j2]).playback(out)
 
 		for category, prev_lines in prev_status.items():
@@ -1016,7 +997,7 @@ def run_and_output_changes(env, pool):
 
 	# Store the current status checks output for next time.
 	os.makedirs(os.path.dirname(cache_fn), exist_ok=True)
-	with open(cache_fn, "w") as f:
+	with open(cache_fn, "w", encoding="utf-8") as f:
 		json.dump(cur.buf, f, indent=True)
 
 def normalize_ip(ip):
@@ -1050,8 +1031,8 @@ class FileOutput:
 
 	def print_block(self, message, first_line="   "):
 		print(first_line, end='', file=self.buf)
-		message = re.sub("\n\s*", " ", message)
-		words = re.split("(\s+)", message)
+		message = re.sub("\n\\s*", " ", message)
+		words = re.split(r"(\s+)", message)
 		linelen = 0
 		for w in words:
 			if self.width and (linelen + len(w) > self.width-1-len(first_line)):
@@ -1090,9 +1071,9 @@ class ConsoleOutput(FileOutput):
 class BufferedOutput:
 	# Record all of the instance method calls so we can play them back later.
 	def __init__(self, with_lines=None):
-		self.buf = [] if not with_lines else with_lines
+		self.buf = with_lines if with_lines else []
 	def __getattr__(self, attr):
-		if attr not in ("add_heading", "print_ok", "print_error", "print_warning", "print_block", "print_line"):
+		if attr not in {"add_heading", "print_ok", "print_error", "print_warning", "print_block", "print_line"}:
 			raise AttributeError
 		# Return a function that just records the call & arguments to our buffer.
 		def w(*args, **kwargs):

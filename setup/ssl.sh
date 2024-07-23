@@ -26,9 +26,9 @@ source /etc/mailinabox.conf # load global vars
 
 # Show a status line if we are going to take any action in this file.
 if  [ ! -f /usr/bin/openssl ] \
- || [ ! -f $STORAGE_ROOT/ssl/ssl_private_key.pem ] \
- || [ ! -f $STORAGE_ROOT/ssl/ssl_certificate.pem ] \
- || [ ! -f $STORAGE_ROOT/ssl/dh2048.pem ]; then
+ || [ ! -f "$STORAGE_ROOT/ssl/ssl_private_key.pem" ] \
+ || [ ! -f "$STORAGE_ROOT/ssl/ssl_certificate.pem" ] \
+ || [ ! -f "$STORAGE_ROOT/ssl/dh2048.pem" ]; then
 	echo "Creating initial SSL certificate and perfect forward secrecy Diffie-Hellman parameters..."
 fi
 
@@ -38,7 +38,7 @@ apt_install openssl
 
 # Create a directory to store TLS-related things like "SSL" certificates.
 
-mkdir -p $STORAGE_ROOT/ssl
+mkdir -p "$STORAGE_ROOT/ssl"
 
 # Generate a new private key.
 #
@@ -60,39 +60,39 @@ mkdir -p $STORAGE_ROOT/ssl
 #
 # Since we properly seed /dev/urandom in system.sh we should be fine, but I leave
 # in the rest of the notes in case that ever changes.
-if [ ! -f $STORAGE_ROOT/ssl/ssl_private_key.pem ]; then
+if [ ! -f "$STORAGE_ROOT/ssl/ssl_private_key.pem" ]; then
 	# Set the umask so the key file is never world-readable.
 	(umask 077; hide_output \
-		openssl genrsa -out $STORAGE_ROOT/ssl/ssl_private_key.pem 2048)
+		openssl genrsa -out "$STORAGE_ROOT/ssl/ssl_private_key.pem" 2048)
 fi
 
 # Generate a self-signed SSL certificate because things like nginx, dovecot,
 # etc. won't even start without some certificate in place, and we need nginx
 # so we can offer the user a control panel to install a better certificate.
-if [ ! -f $STORAGE_ROOT/ssl/ssl_certificate.pem ]; then
+if [ ! -f "$STORAGE_ROOT/ssl/ssl_certificate.pem" ]; then
 	# Generate a certificate signing request.
 	CSR=/tmp/ssl_cert_sign_req-$$.csr
 	hide_output \
-	openssl req -new -key $STORAGE_ROOT/ssl/ssl_private_key.pem -out $CSR \
+	openssl req -new -key "$STORAGE_ROOT/ssl/ssl_private_key.pem" -out $CSR \
 	  -sha256 -subj "/CN=$PRIMARY_HOSTNAME"
 
 	# Generate the self-signed certificate.
 	CERT=$STORAGE_ROOT/ssl/$PRIMARY_HOSTNAME-selfsigned-$(date --rfc-3339=date | sed s/-//g).pem
 	hide_output \
 	openssl x509 -req -days 365 \
-	  -in $CSR -signkey $STORAGE_ROOT/ssl/ssl_private_key.pem -out $CERT
+	  -in $CSR -signkey "$STORAGE_ROOT/ssl/ssl_private_key.pem" -out "$CERT"
 
 	# Delete the certificate signing request because it has no other purpose.
 	rm -f $CSR
 
 	# Symlink the certificate into the system certificate path, so system services
 	# can find it.
-	ln -s $CERT $STORAGE_ROOT/ssl/ssl_certificate.pem
+	ln -s "$CERT" "$STORAGE_ROOT/ssl/ssl_certificate.pem"
 fi
 
 # Generate some Diffie-Hellman cipher bits.
 # openssl's default bit length for this is 1024 bits, but we'll create
 # 2048 bits of bits per the latest recommendations.
-if [ ! -f $STORAGE_ROOT/ssl/dh2048.pem ]; then
-	openssl dhparam -out $STORAGE_ROOT/ssl/dh2048.pem 2048
+if [ ! -f "$STORAGE_ROOT/ssl/dh2048.pem" ]; then
+	openssl dhparam -out "$STORAGE_ROOT/ssl/dh2048.pem" 2048
 fi

@@ -22,8 +22,8 @@ source /etc/mailinabox.conf # load global vars
 echo "Installing Roundcube (webmail)..."
 apt_install \
 	dbconfig-common \
-	php${PHP_VER}-cli php${PHP_VER}-sqlite3 php${PHP_VER}-intl php${PHP_VER}-common php${PHP_VER}-curl php${PHP_VER}-imap \
-	php${PHP_VER}-gd php${PHP_VER}-pspell php${PHP_VER}-mbstring libjs-jquery libjs-jquery-mousewheel libmagic1 \
+	php"${PHP_VER}"-cli php"${PHP_VER}"-sqlite3 php"${PHP_VER}"-intl php"${PHP_VER}"-common php"${PHP_VER}"-curl php"${PHP_VER}"-imap \
+	php"${PHP_VER}"-gd php"${PHP_VER}"-pspell php"${PHP_VER}"-mbstring libjs-jquery libjs-jquery-mousewheel libmagic1 \
 	sqlite3
 
 # Install Roundcube from source if it is not already present or if it is out of date.
@@ -36,9 +36,9 @@ apt_install \
 #   https://github.com/mstilkerich/rcmcarddav/releases
 # The easiest way to get the package hashes is to run this script and get the hash from
 # the error message.
-VERSION=1.6.1
-HASH=0e1c771ab83ea03bde1fd0be6ab5d09e60b4f293
-PERSISTENT_LOGIN_VERSION=bde7b6840c7d91de627ea14e81cf4133cbb3c07a # version 5.2
+VERSION=1.6.6
+HASH=7705d2736890c49e7ae3ac75e3ae00ba56187056
+PERSISTENT_LOGIN_VERSION=bde7b6840c7d91de627ea14e81cf4133cbb3c07a # version 5.3
 HTML5_NOTIFIER_VERSION=68d9ca194212e15b3c7225eb6085dbcf02fd13d7 # version 0.6.4+
 CARDDAV_VERSION=4.4.3
 CARDDAV_HASH=74f8ba7aee33e78beb9de07f7f44b81f6071b644
@@ -170,8 +170,8 @@ cat > ${RCM_PLUGIN_DIR}/carddav/config.inc.php <<EOF;
 EOF
 
 # Create writable directories.
-mkdir -p /var/log/roundcubemail /var/tmp/roundcubemail $STORAGE_ROOT/mail/roundcube
-chown -R www-data:www-data /var/log/roundcubemail /var/tmp/roundcubemail $STORAGE_ROOT/mail/roundcube
+mkdir -p /var/log/roundcubemail /var/tmp/roundcubemail "$STORAGE_ROOT/mail/roundcube"
+chown -R www-data:www-data /var/log/roundcubemail /var/tmp/roundcubemail "$STORAGE_ROOT/mail/roundcube"
 
 # Ensure the log file monitored by fail2ban exists, or else fail2ban can't start.
 sudo -u www-data touch /var/log/roundcubemail/errors.log
@@ -194,10 +194,10 @@ usermod -a -G dovecot www-data
 
 # set permissions so that PHP can use users.sqlite
 # could use dovecot instead of www-data, but not sure it matters
-chown root:www-data $STORAGE_ROOT/mail
-chmod 775 $STORAGE_ROOT/mail
-chown root:www-data $STORAGE_ROOT/mail/users.sqlite
-chmod 664 $STORAGE_ROOT/mail/users.sqlite
+chown root:www-data "$STORAGE_ROOT/mail"
+chmod 775 "$STORAGE_ROOT/mail"
+chown root:www-data "$STORAGE_ROOT/mail/users.sqlite"
+chmod 664 "$STORAGE_ROOT/mail/users.sqlite"
 
 # Fix Carddav permissions:
 chown -f -R root:www-data ${RCM_PLUGIN_DIR}/carddav
@@ -205,9 +205,9 @@ chown -f -R root:www-data ${RCM_PLUGIN_DIR}/carddav
 chmod -R 774 ${RCM_PLUGIN_DIR}/carddav
 
 # Run Roundcube database migration script (database is created if it does not exist)
-php$PHP_VER ${RCM_DIR}/bin/updatedb.sh --dir ${RCM_DIR}/SQL --package roundcube
-chown www-data:www-data $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
-chmod 664 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite
+php"$PHP_VER" ${RCM_DIR}/bin/updatedb.sh --dir ${RCM_DIR}/SQL --package roundcube
+chown www-data:www-data "$STORAGE_ROOT/mail/roundcube/roundcube.sqlite"
+chmod 664 "$STORAGE_ROOT/mail/roundcube/roundcube.sqlite"
 
 # Patch the Roundcube code to eliminate an issue that causes postfix to reject our sqlite
 # user database (see https://github.com/mail-in-a-box/mailinabox/issues/2185)
@@ -217,8 +217,8 @@ sed -i.miabold 's/^[^#]\+.\+PRAGMA journal_mode = WAL.\+$/#&/' \
 # Because Roundcube wants to set the PRAGMA we just deleted from the source, we apply it here
 # to the roundcube database (see https://github.com/roundcube/roundcubemail/issues/8035)
 # Database should exist, created by migration script
-sqlite3 $STORAGE_ROOT/mail/roundcube/roundcube.sqlite 'PRAGMA journal_mode=WAL;'
+hide_output sqlite3 "$STORAGE_ROOT/mail/roundcube/roundcube.sqlite" 'PRAGMA journal_mode=WAL;'
 
 # Enable PHP modules.
-phpenmod -v $PHP_VER imap
-restart_service php$PHP_VER-fpm
+phpenmod -v "$PHP_VER" imap
+restart_service php"$PHP_VER"-fpm

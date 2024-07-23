@@ -6,7 +6,8 @@
 # root API key. This file is readable only by root, so this
 # tool can only be used as root.
 
-import sys, getpass, urllib.request, urllib.error, json, re, csv
+import sys, getpass, urllib.request, urllib.error, json, csv
+import contextlib
 
 def mgmt(cmd, data=None, is_json=False):
 	# The base URL for the management daemon. (Listens on IPv4 only.)
@@ -19,10 +20,8 @@ def mgmt(cmd, data=None, is_json=False):
 		response = urllib.request.urlopen(req)
 	except urllib.error.HTTPError as e:
 		if e.code == 401:
-			try:
+			with contextlib.suppress(Exception):
 				print(e.read().decode("utf8"))
-			except:
-				pass
 			print("The management daemon refused access. The API key file may be out of sync. Try 'service mailinabox restart'.", file=sys.stderr)
 		elif hasattr(e, 'read'):
 			print(e.read().decode('utf8'), file=sys.stderr)
@@ -47,7 +46,7 @@ def read_password():
     return first
 
 def setup_key_auth(mgmt_uri):
-	with open('/var/lib/mailinabox/api.key', 'r') as f:
+	with open('/var/lib/mailinabox/api.key', encoding='utf-8') as f:
 		key = f.read().strip()
 
 	auth_handler = urllib.request.HTTPBasicAuthHandler()
@@ -91,12 +90,9 @@ elif sys.argv[1] == "user" and len(sys.argv) == 2:
 				print("*", end='')
 			print()
 
-elif sys.argv[1] == "user" and sys.argv[2] in ("add", "password"):
+elif sys.argv[1] == "user" and sys.argv[2] in {"add", "password"}:
 	if len(sys.argv) < 5:
-		if len(sys.argv) < 4:
-			email = input("email: ")
-		else:
-			email = sys.argv[3]
+		email = input('email: ') if len(sys.argv) < 4 else sys.argv[3]
 		pw = read_password()
 	else:
 		email, pw = sys.argv[3:5]
@@ -109,11 +105,8 @@ elif sys.argv[1] == "user" and sys.argv[2] in ("add", "password"):
 elif sys.argv[1] == "user" and sys.argv[2] == "remove" and len(sys.argv) == 4:
 	print(mgmt("/mail/users/remove", { "email": sys.argv[3] }))
 
-elif sys.argv[1] == "user" and sys.argv[2] in ("make-admin", "remove-admin") and len(sys.argv) == 4:
-	if sys.argv[2] == "make-admin":
-		action = "add"
-	else:
-		action = "remove"
+elif sys.argv[1] == "user" and sys.argv[2] in {"make-admin", "remove-admin"} and len(sys.argv) == 4:
+	action = 'add' if sys.argv[2] == 'make-admin' else 'remove'
 	print(mgmt("/mail/users/privileges/" + action, { "email": sys.argv[3], "privilege": "admin" }))
 
 elif sys.argv[1] == "user" and sys.argv[2] == "admins":
@@ -132,7 +125,7 @@ elif sys.argv[1] == "user" and len(sys.argv) == 5 and sys.argv[2:4] == ["mfa", "
 	for mfa in status["enabled_mfa"]:
 		W.writerow([mfa["id"], mfa["type"], mfa["label"]])
 
-elif sys.argv[1] == "user" and len(sys.argv) in (5, 6) and sys.argv[2:4] == ["mfa", "disable"]:
+elif sys.argv[1] == "user" and len(sys.argv) in {5, 6} and sys.argv[2:4] == ["mfa", "disable"]:
 	# Disable MFA (all or a particular device) for a user.
 	print(mgmt("/mfa/disable", { "user": sys.argv[4], "mfa-id": sys.argv[5] if len(sys.argv) == 6 else None }))
 
