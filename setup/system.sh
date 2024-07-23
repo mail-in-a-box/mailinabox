@@ -322,7 +322,7 @@ fi #NODOC
 apt-get purge -qq -y bind9 bind9-utils
 
 # Install unbound and dns utils (e.g. dig)
-apt_install unbound python3-unbound bind9-dnsutils
+apt_install unbound bind9-dnsutils
 
 # Configure unbound
 cp -f conf/unbound.conf /etc/unbound/unbound.conf.d/miabunbound.conf
