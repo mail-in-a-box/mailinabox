@@ -1099,6 +1099,8 @@ if __name__ == "__main__":
 	env = load_environment()
 	if sys.argv[-1] == "--lint":
 		write_custom_dns_config(get_custom_dns_config(env), env)
+	elif sys.argv[-1] == "--update":
+		do_dns_update(env, force=True)
 	else:
 		for _zone, records in build_recommended_dns(env):
 			for record in records:
