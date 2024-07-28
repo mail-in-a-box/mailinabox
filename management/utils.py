@@ -122,15 +122,18 @@ def shell(method, cmd_args, env=None, capture_stderr=False, return_bytes=False, 
     if method == "check_output" and input is not None:
         kwargs['input'] = input
 
-    if not trap:
+    try:
         ret = getattr(subprocess, method)(cmd_args, **kwargs)
-    else:
-        try:
-            ret = getattr(subprocess, method)(cmd_args, **kwargs)
-            code = 0
-        except subprocess.CalledProcessError as e:
-            ret = e.output
-            code = e.returncode
+        code = 0
+    except subprocess.CalledProcessError as e:
+        if not trap:
+            if False:
+                import sys, shlex
+                print(shlex.join(cmd_args), file=sys.stderr)
+                raise
+            raise
+        ret = e.output
+        code = e.returncode
     if not return_bytes and isinstance(ret, bytes): ret = ret.decode("utf8")
     if not trap:
         return ret
