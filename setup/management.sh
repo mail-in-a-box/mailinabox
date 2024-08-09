@@ -116,7 +116,7 @@ minute=$((RANDOM % 60))  # avoid overloading mailinabox.email
 cat > /etc/cron.d/mailinabox-nightly << EOF;
 # Mail-in-a-Box --- Do not edit / will be overwritten on update.
 # Run nightly tasks: backup, status checks.
-$minute 3 * * *	root	(cd $PWD && management/daily_tasks.sh)
+$minute 1 * * *	root	(cd $PWD && management/daily_tasks.sh)
 EOF
 
 # Start the management server.
