@@ -9,6 +9,7 @@
 
 import os, os.path, re, datetime, sys
 import dateutil.parser, dateutil.relativedelta, dateutil.tz
+from datetime import date
 import rtyaml
 from exclusiveprocess import Lock
 
@@ -262,6 +263,9 @@ def get_target_type(config):
 def perform_backup(full_backup):
 	env = load_environment()
 
+	# Check if day of week is a weekend day
+	weekend = date.today().weekday()>=5
+
 	# Create an global exclusive lock so that the backup script
 	# cannot be run more than one.
 	Lock(die=True).forever()
@@ -276,11 +280,11 @@ def perform_backup(full_backup):
 		return
 
 	# On the first run, always do a full backup. Incremental
-	# will fail. Otherwise do a full backup when the size of
-	# the increments since the most recent full backup are
-	# large.
+	# will fail. Otherwise do a full backup on weekends when
+	# the size of the increments since the most recent full
+	# backup are large.
 	try:
-		full_backup = full_backup or should_force_full(config, env)
+		full_backup = (full_backup and weekend) or should_force_full(config, env)
 	except Exception as e:
 		# This was the first call to duplicity, and there might
 		# be an error already.
