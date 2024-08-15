@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+Version 70 (August 15, 2024)
+----------------------------
+
+* Roundcube is updated to version 1.6.8 fixing security vulnerabilities.
+
 Version 69 (July 20, 2024)
 --------------------------
 
