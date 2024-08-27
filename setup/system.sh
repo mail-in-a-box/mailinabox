@@ -270,14 +270,14 @@ if [ -z "${DISABLE_FIREWALL:-}" ]; then
 	# ssh might be running on an alternate port. Use sshd -T to dump sshd's #NODOC
 	# settings, find the port it is supposedly running on, and open that port #NODOC
 	# too. #NODOC
-	SSH_PORT=$(sshd -T 2>/dev/null | grep "^port " | sed "s/port //") #NODOC
+	SSH_PORT=$(sshd -T 2>/dev/null | grep "^port " | sed "s/port //" | tr '\n' ' ') #NODOC
 	if [ -n "$SSH_PORT" ]; then
-	if [ "$SSH_PORT" != "22" ]; then
-
-	echo "Opening alternate SSH port $SSH_PORT." #NODOC
-	ufw_limit "$SSH_PORT" #NODOC
-
-	fi
+	    for $port in $SSH_PORT; do
+	        if [ "$port" != "22" ]; then
+	            echo "Opening alternate SSH port $port." #NODOC
+                ufw_limit "$port" #NODOC
+            fi
+        done
 	fi
 
 	ufw --force enable;
