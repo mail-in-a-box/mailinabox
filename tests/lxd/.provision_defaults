@@ -1,0 +1,10 @@
+# defaults for lxd image creation using
+# tests/bin/provision_functions.sh::provision_start()
+
+DEFAULT_LXD_IMAGE="preloaded-ubuntu-jammy"
+DEFAULT_LXD_INST_OPTS=(
+    "-p" "default"
+    "-p" "bridgenet"
+    "-c" "limits.cpu=1"
+    "-c" "limits.memory=2GiB"
+)

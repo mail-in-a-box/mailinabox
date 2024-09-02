@@ -86,7 +86,7 @@ init_test_system() {
     # update system time
     H2 "Set system time"
     update_system_time || echo "Ignoring error..."
-    
+
     # update package lists before installing anything
     H2 "apt-get update"
     wait_for_apt
@@ -115,7 +115,7 @@ init_test_system() {
             | awk '/^(Upgrade|Install): / { print $0 }'
         rm -f /tmp/history.log
     fi
-    
+
     # install avahi if the system dns domain is .local - note that
     # /bin/dnsdomainname returns empty string at this point
     case "$PRIMARY_HOSTNAME" in
@@ -149,7 +149,7 @@ init_miab_testing() {
     else
         echo "Not configured for encryption-at-rest"
     fi
-    
+
     H2 "QA prerequisites"
     local rc=0
 
@@ -186,7 +186,7 @@ init_miab_testing() {
         echo "Copy failed ($?)"
         rc=1
     fi
-        
+
     # create miab_ldap.conf to specify what the Nextcloud LDAP service
     # account password will be to avoid a random one created by start.sh
     if [ ! -z "$LDAP_NEXTCLOUD_PASSWORD" ]; then
@@ -228,13 +228,13 @@ init_miab_testing() {
                 # ignore unknown option - may be interpreted elsewhere
                 shift
                 ;;
-        esac            
+        esac
     done
 
     # now that we've copied our files, unmount STORAGE_ROOT if
     # encryption-at-rest was enabled
     ehdd/umount.sh
-    
+
     return $rc
 }
 
@@ -303,7 +303,7 @@ clone_repo_and_pushd() {
                 ;;
         esac
     done
-    
+
     if [ -z "$repo" -o -z "$treeish" -o -z "$targetdir" ]; then
         return 1
     fi
@@ -329,7 +329,7 @@ upstream_install() {
     if clone_repo_and_pushd "$@"; then
         need_pop="yes"
     fi
-    
+
     H1 "MIAB UPSTEAM INSTALL [$(git describe 2>/dev/null)]"
 
     # ensure we're in a MiaB working directory
@@ -351,24 +351,24 @@ upstream_install() {
         exec_no_output apt-get remove -y nsd
         #systemctl reset-failed nsd
     fi
-    
+
     if ! setup/start.sh; then
         echo "$F_WARN"
         dump_file /var/log/syslog 100
         echo "$F_RESET"
         die "Upstream setup failed!"
     fi
-    
+
     H2 "Post-setup actions"
     workaround_dovecot_sieve_bug
 
     # set actual STORAGE_ROOT, STORAGE_USER, PRIVATE_IP, etc
     . /etc/mailinabox.conf || die "Could not source /etc/mailinabox.conf"
-    
+
     H2 "miab install success"
 
     if [ "$need_pop" = "yes" ]; then
-        if [ ! -e tests/vagrant ]; then
+        if [ ! -e tests/lxd ]; then
             # if this is an upstream install, then populate using
             # miabldap's populate scripts (upstream doesn't have any)
             local d
@@ -397,7 +397,7 @@ miab_ldap_install() {
     if clone_repo_and_pushd "$@"; then
         need_pop="yes"
     fi
-    
+
     H1 "MIAB-LDAP INSTALL [$(pwd)] [$(git describe 2>/dev/null)]"
     # ensure we're in a MiaB-LDAP working directory
     if [ ! -e setup/ldap.sh ]; then
@@ -423,7 +423,7 @@ miab_ldap_install() {
     else
         setup/start.sh
     fi
-    
+
     if [ $? -ne 0 ]; then
         H1 "OUTPUT OF SELECT FILES"
         dump_file "/var/log/syslog" 100
@@ -444,11 +444,11 @@ miab_ldap_install() {
     fi
 
     H2 "miab-ldap install success"
-       
+
     # populate if specified on command line
     populate_by_cli_argument "$@"
     capture_state_by_cli_argument "$@"
-    
+
     if [ "$need_pop" = "yes" ]; then
         popd >/dev/null
     fi
@@ -457,7 +457,7 @@ miab_ldap_install() {
 capture_state_by_cli_argument() {
     # this must be run with the working directory set to the source
     # tree corresponding to the the installed state
-    
+
     # ...ignore unknown options they may be interpreted elsewhere
     local state_dir=""
     for arg; do
