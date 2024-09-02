@@ -17,10 +17,18 @@ if [ -z "${STORAGE_ROOT:-}" ]; then
     fi
 fi
 
+
 EHDD_IMG="$STORAGE_ROOT.HDD"
 EHDD_MOUNTPOINT="$STORAGE_ROOT"
 EHDD_LUKS_NAME="c1"
 
+assert_kernel_modules() {
+    local check="$(lsmod | awk '$1=="dm_crypt" {print "yes"}')"
+    if [ "$check" != "yes" ]; then
+        echo "Required kernel modules for encryption-at-rest are not loaded. Cannot continue"
+        exit 1
+    fi
+}
 
 find_unused_loop() {
     losetup -f
