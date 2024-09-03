@@ -272,7 +272,7 @@ if [ -z "${DISABLE_FIREWALL:-}" ]; then
 	# too. #NODOC
 	SSH_PORT=$(sshd -T 2>/dev/null | grep "^port " | sed "s/port //" | tr '\n' ' ') #NODOC
 	if [ -n "$SSH_PORT" ]; then
-	    for $port in $SSH_PORT; do
+	    for port in $SSH_PORT; do
 	        if [ "$port" != "22" ]; then
 	            echo "Opening alternate SSH port $port." #NODOC
                 ufw_limit "$port" #NODOC
