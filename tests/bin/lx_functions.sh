@@ -96,8 +96,7 @@ lx_init_vm() {
     local mount_guest="$5" # mountpoint in guest
     shift; shift; shift; shift; shift;
 
-    # 1. this assumes that a bridge profile has been created called "bridgenet"
-    # 2. this assumes that storage named the same as project exists,
+    # a storage named the same as project must exist
     #    e.g. "lxc storage create $project dir" was executed prior.
 
     case "${@}" in
