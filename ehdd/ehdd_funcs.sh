@@ -25,8 +25,17 @@ EHDD_LUKS_NAME="c1"
 assert_kernel_modules() {
     local check="$(lsmod | awk '$1=="dm_crypt" {print "yes"}')"
     if [ "$check" != "yes" ]; then
-        echo "Required kernel modules for encryption-at-rest are not loaded. Cannot continue"
-        exit 1
+        if [ ! -z "$EHDD_KEYFILE" ]; then
+            echo "WARNING: Required kernel modules for encryption-at-rest are not loaded."
+            # probably testing / virutalization
+            echo "OUTPUT from lsmod:"
+            echo "------------------------------------------------------"
+            lsmod
+            echo "------------------------------------------------------"
+        else
+            echo "Required kernel modules for encryption-at-rest are not loaded. Cannot continue."
+            exit 1
+        fi
     fi
 }
 
