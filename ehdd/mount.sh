@@ -21,7 +21,6 @@ if is_mounted; then
     exit 0
 fi
 
-assert_kernel_modules
 loop=$(find_unused_loop)
 losetup $loop "$EHDD_IMG" || exit 1
 # map device to /dev/mapper/NAME
