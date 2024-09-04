@@ -21,10 +21,14 @@
 
 D="$(dirname "$BASH_SOURCE")"
 . "$D/../../bin/lx_functions.sh" || exit 1
+. "$D/../../bin/provision_functions.sh" || exit 1
+
 
 project="$(lx_guess_project_name)"
 inst_mountpoint=/mailinabox
 [ "$project" = "ciab" ] && inst_mountpoint=/cloudinabox
+load_provision_defaults || exit 1
+echo "Provision defaults loaded from: $(realpath --relative-to="$(pwd)" "$PROVISION_DEFAULTS_FILE")"
 
 if [ -z "$1" ]; then
     imagelist=( $(<./imagelist) )
@@ -59,7 +63,7 @@ users:
     ssh_authorized_keys:
       - $(< $(lx_get_ssh_identity).pub)
 "
-    lx_launch_vm "$project" "$inst_name" "$base_image" "$(lx_project_root_dir)" "$inst_mountpoint" -c cloud-init.user-data="$cloud_config_users" -c limits.cpu=2 -c limits.memory=2GiB -d root,size=30GiB || exit 1
+    lx_launch_vm "$project" "$inst_name" "$base_image" "$(lx_project_root_dir)" "$inst_mountpoint" "${DEFAULT_LXD_INST_OPTS[@]}" -c cloud-init.user-data="$cloud_config_users" -c limits.cpu=2 -c limits.memory=2GiB -d root,size=30GiB || exit 1
 
     lx_wait_for_boot "$project" "$inst_name"
 
