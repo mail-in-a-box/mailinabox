@@ -71,14 +71,14 @@ vlx_exec() {
         vlx_exec_usage
         return 1
     fi
-    
+
     local args=( "$@" )
     local idx=0
     while [ $idx -le 3 -a $idx -lt ${#args[*]} ]; do
         [ "${args[$idx]}" = "--" ] && break
         let idx+=1
     done
-    
+
     local wd=""
     if [ "${args[$idx]}" = "--" ]; then
         if [ $idx -eq 3 ]; then
@@ -187,7 +187,7 @@ vlx_up() {
         return 1
     fi
 }
-    
+
 
 vlx_start() {
     vlx_guess "$@" || return 1
@@ -222,6 +222,12 @@ vlx_status() {
     fi
 }
 
+vlx_restart() {
+    vlx_guess "$@" || return 1
+    echo lxc --project "$LX_PROJECT" restart "$LX_INST"
+    lxc --project "$LX_PROJECT" restart "$LX_INST"
+}
+
 
 usage() {
     echo "Usage:"
@@ -238,6 +244,7 @@ usage() {
     echo "     start"
     echo "     stop"
     echo "     delete|destroy"
+    echo "     restart"
     echo "     status"
 }
 
@@ -255,4 +262,3 @@ if [ ! "$(type -t $handler)" = "function" ]; then
 fi
 
 $handler "$@"
-
