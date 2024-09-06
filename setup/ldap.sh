@@ -99,7 +99,7 @@ create_miab_conf() {
 		_add_if_missing "${prefix}_DN" "cn=$cn,$LDAP_SERVICES_BASE"
 		_add_if_missing "${prefix}_PASSWORD" "$(generate_password 64)"
 	done
-	
+
 	chmod 0640 "$MIAB_INTERNAL_CONF_FILE"
 	. "$MIAB_INTERNAL_CONF_FILE"
 }
@@ -126,7 +126,7 @@ create_service_accounts() {
 	# create service accounts. service accounts have special access
 	# rights, generally read-only to users, aliases, and configuration
 	# subtrees (see apply_access_control)
-	
+
 	local prefix dn pass
 	for prefix in ${SERVICE_ACCOUNTS[*]}
 	do
@@ -147,7 +147,7 @@ userPassword: $(slappasswd_hash "$pass")
 EOF
 		fi
 	done
-	
+
 }
 
 
@@ -155,7 +155,7 @@ install_system_packages() {
 	# install required deb packages, generate admin credentials
 	# and apply them to the installation
 	create_miab_conf
-	
+
 	# Set installation defaults to avoid interactive dialogs. See
 	# /var/lib/dpkg/info/slapd.templates for a list of what can be set
 	debconf-set-selections <<EOF
@@ -164,10 +164,10 @@ slapd slapd/domain string ${LDAP_DOMAIN}
 slapd slapd/password1 password ${LDAP_ADMIN_PASSWORD}
 slapd slapd/password2 password ${LDAP_ADMIN_PASSWORD}
 EOF
-	
+
 	# Install packages
 	say "Installing OpenLDAP server..."
-	
+
 	# we must install slapd without DEBIAN_FRONTEND=noninteractive or
 	# debconf selections are ignored
 	hide_output apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" install slapd
@@ -227,7 +227,7 @@ EOF
 		say "  is set to: $ATTR_VALUE"
 		say "  expected : $LDAP_ADMIN_DN"
 		die
-	fi		
+	fi
 }
 
 relocate_slapd_data() {
@@ -277,11 +277,11 @@ relocate_slapd_data() {
 	say_verbose "		DB='${DB_DIR}'"
 	say_verbose "	to:"
 	say_verbose "	   CONF=${MIAB_SLAPD_CONF}"
-	say_verbose "		 DB=${MIAB_SLAPD_DB_DIR}"	
+	say_verbose "		 DB=${MIAB_SLAPD_DB_DIR}"
 	say_verbose ""
 	say_verbose "Stopping slapd"
 	systemctl stop slapd || die "Could not stop slapd"
-	
+
 	# Modify the path to dc=mailinabox's database directory
 	say_verbose "Dump config database"
 	local TMP="/tmp/miab_relocate_ldap.ldif"
@@ -320,7 +320,7 @@ schema_to_ldif() {
 			cat="curl -s"
 		fi
 	fi
-	
+
 	cat >"$ldif" <<EOF
 dn: cn=$cn,cn=schema,cn=config
 objectClass: olcSchemaConfig
@@ -358,7 +358,7 @@ EOF
 
 
 add_schemas() {
-	# Add necessary schema's for MiaB operaion		 
+	# Add necessary schema's for MiaB operaion
 	#
 	# Note: the postfix schema originally came from the ldapadmin
 	# project (GPL)(*), but has been modified to support the needs of
@@ -385,7 +385,7 @@ add_schemas() {
 			ldapadd -Q -Y EXTERNAL -H ldapi:/// -f "$ldif" >/dev/null
 			rm -f "$ldif"
 		fi
-	done	
+	done
 }
 
 
@@ -481,7 +481,7 @@ EOF
 add_overlays() {
 	# Apply slapd overlays - apply the commonly used member-of overlay
 	# now because adding it later is harder.
-	
+
 	# Get the config dn for the database
 	get_attribute "cn=config" "olcSuffix=${LDAP_BASE}" "dn"
 	[ -z "$ATTR_DN" ] &&
@@ -498,7 +498,7 @@ add: olcModuleLoad
 olcModuleLoad: memberof.la
 EOF
 	fi
-	
+
 	get_attribute "$cdn" "(olcOverlay=memberof)" "olcOverlay"
 	if [ -z "$ATTR_DN" ]; then
 		say_verbose "Adding memberof overlay to $LDAP_BASE"
@@ -516,7 +516,7 @@ EOF
 
 add_indexes() {
 	# Index mail-related attributes
-	
+
 	# Get the config dn for the database
 	get_attribute "cn=config" "olcSuffix=${LDAP_BASE}" "dn"
 	[ -z "$ATTR_DN" ] &&
@@ -678,7 +678,7 @@ EOF
 #
 process_cmdline() {
 	[ -e "$MIAB_INTERNAL_CONF_FILE" ] && . "$MIAB_INTERNAL_CONF_FILE"
-	
+
 	if [ "$1" == "-d" ]; then
 		# Start slapd in interactive/debug mode
 		echo "!! SERVER DEBUG MODE !!"
@@ -688,7 +688,7 @@ process_cmdline() {
 		echo "Listening on $SLAPD_SERVICES..."
 		/usr/sbin/slapd -h "$SLAPD_SERVICES" -g openldap -u openldap -F $MIAB_SLAPD_CONF -d ${2:-1}
 		exit 0
-		
+
 	elif [ "$1" == "-config" ]; then
 		# Apply a certain configuration
 		if [ "$2" == "server" ]; then
@@ -734,7 +734,7 @@ process_cmdline() {
 		local hide_attrs="(structuralObjectClass|entryUUID|creatorsName|createTimestamp|entryCSN|modifiersName|modifyTimestamp)"
 		local slapcat_args=(-F "$MIAB_SLAPD_CONF" -o ldif-wrap=no)
 		[ ${verbose:-0} -gt 0 ] && hide_attrs="(_____NEVERMATCHES)"
-		
+
 		if [ "$s" == "all" ]; then
 			echo ""
 			echo '--------------------------------'
@@ -777,7 +777,7 @@ process_cmdline() {
 		if [ "$s" == "permitted-senders" -o "$s" == "ps" ]; then
 			echo ""
 			echo '--------------------------------'
-			local attrs=(mail member mailRoutingAddress rfc822MailMember)
+			local attrs=(mail member mailRoutingAddress mailMember)
 			[ ${verbose:-0} -gt 0 ] && attrs=()
 			debug_search "(objectClass=mailGroup)" "$LDAP_PERMITTED_SENDERS_BASE" ${attrs[@]}
 		fi
@@ -814,7 +814,7 @@ process_cmdline() {
 		rm -f "/etc/default/slapd"
 		echo "Done"
 		exit 0
-		
+
 	elif [ ! -z "$1" ]; then
 		echo "Invalid command line argument '$1'"
 		exit 1

@@ -30,6 +30,7 @@ import auth, utils
 from mailconfig import get_mail_users, get_mail_users_ex, get_admins, add_mail_user, set_mail_password, set_mail_display_name, remove_mail_user
 from mailconfig import get_mail_user_privileges, add_remove_mail_user_privilege
 from mailconfig import get_mail_aliases, get_mail_aliases_ex, get_mail_domains, add_mail_alias, remove_mail_alias
+from mailconfig import get_mail_quota, set_mail_quota
 from mfa import get_public_mfa_state, enable_mfa, disable_mfa
 import mfa_totp
 import contextlib
@@ -201,8 +202,31 @@ def mail_users():
 @app.route('/mail/users/add', methods=['POST'])
 @authorized_personnel_only
 def mail_users_add():
+	quota = request.form.get('quota', '0')
 	try:
-		return add_mail_user(request.form.get('email', ''), request.form.get('password', ''), request.form.get('privileges', ''), request.form.get('display_name', ''), env)
+		return add_mail_user(request.form.get('email', ''), request.form.get('password', ''), request.form.get('privileges', ''), quota, request.form.get('display_name', ''), env)
+	except ValueError as e:
+		return (str(e), 400)
+
+@app.route('/mail/users/quota', methods=['GET'])
+@authorized_personnel_only
+def get_mail_users_quota():
+	email = request.values.get('email', '')
+	quota = get_mail_quota(email, env)
+
+	if request.values.get('text'):
+		return quota
+
+	return json_response({
+		"email": email,
+		"quota": quota
+	})
+
+@app.route('/mail/users/quota', methods=['POST'])
+@authorized_personnel_only
+def mail_users_quota():
+	try:
+		return set_mail_quota(request.form.get('email', ''), request.form.get('quota'), env)
 	except ValueError as e:
 		return (str(e), 400)
 

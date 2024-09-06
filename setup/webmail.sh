@@ -214,6 +214,7 @@ cat > $RCM_CONFIG <<EOF;
 
 /* prevent CSRF, requires php 7.3+ */
 \$config['session_samesite'] = 'Strict';
+\$config['quota_zero_as_unlimited'] = true;
 ?>
 EOF
 

@@ -17,7 +17,7 @@
 import uuid, os, sqlite3, ldap3, hashlib
 
 
-def add_user(env, ldapconn, search_base, users_base, domains_base, email, password, privs, totp, cn=None):
+def add_user(env, ldapconn, search_base, users_base, domains_base, email, password, privs, quota, totp, cn=None):
 	# Add a sqlite user to ldap
 	#   env are the environment variables
 	#   ldapconn is the bound ldap connection
@@ -27,6 +27,7 @@ def add_user(env, ldapconn, search_base, users_base, domains_base, email, passwo
 	#   email is the user's email
 	#   password is the user's current sqlite password hash
 	#   privs is an array of privilege names for the user
+	#   quota is the users mailbox quota (string; defaults to '0')
 	#   totp contains the list of secrets, mru tokens, and labels
 	#   cn is the user's common name [optional]
 	#
@@ -45,13 +46,14 @@ def add_user(env, ldapconn, search_base, users_base, domains_base, email, passwo
 	m = hashlib.sha1()
 	m.update(bytearray(email.lower(),'utf-8'))
 	uid = m.hexdigest()
-	
+
 	# Attributes to apply to the new ldap entry
 	objectClasses = [ 'inetOrgPerson','mailUser','shadowAccount' ]
 	attrs = {
 		"mail" : email,
 		"maildrop" : email,
 		"uid" : uid,
+		"mailboxQuota": quota,
 		# Openldap uses prefix {CRYPT} for all crypt(3) formats
 		"userPassword" : password.replace('{SHA512-CRYPT}','{CRYPT}')
 	}
@@ -91,10 +93,10 @@ def add_user(env, ldapconn, search_base, users_base, domains_base, email, passwo
 		attrs['totpMruToken'] = totp["mru_token"]
 		attrs['totpMruTokenTime'] = totp["mru_token_time"]
 		attrs['totpLabel'] = totp["label"]
-	
+
 	# Add user
 	dn = "uid=%s,%s" % (uid, users_base)
-	
+
 	print("adding user %s" % email)
 	ldapconn.add(dn, objectClasses, attrs)
 
@@ -116,14 +118,15 @@ def create_users(env, conn, ldapconn, ldap_base, ldap_users_base, ldap_domains_b
 
 	# select users
 	c = conn.cursor()
-	c.execute("SELECT id, email, password, privileges from users")
+	c.execute("SELECT id, email, password, privileges, quota from users")
 
 	users = {}
 	for row in c:
 		user_id=row[0]
 		email=row[1]
 		password=row[2]
-		privs=row[3]	
+		privs=row[3]
+		quota=row[4]
 		totp = None
 
 		c2 = conn.cursor()
@@ -143,7 +146,7 @@ def create_users(env, conn, ldapconn, ldap_base, ldap_users_base, ldap_domains_b
 			totp["label"].append("{%s}%s" % (rowidx, row2[2] or ''))
 			rowidx += 1
 
-		dn = add_user(env, ldapconn, ldap_base, ldap_users_base, ldap_domains_base, email, password, privs.split("\n"), totp)
+		dn = add_user(env, ldapconn, ldap_base, ldap_users_base, ldap_domains_base, email, password, privs.split("\n"), quota, totp)
 		users[email] = dn
 	return users
 
@@ -164,7 +167,7 @@ def create_aliases(env, conn, ldapconn, aliases_base):
 			cn="%s" % uuid.uuid4()
 			dn="cn=%s,%s" % (cn, aliases_base)
 			description="Mail group %s" % alias
-			
+
 			if alias.startswith("postmaster@") or \
 			   alias.startswith("hostmaster@") or \
 			   alias.startswith("abuse@") or \
@@ -172,7 +175,7 @@ def create_aliases(env, conn, ldapconn, aliases_base):
 			   alias == "administrator@" + env['PRIMARY_HOSTNAME']:
 				description = "Required alias"
 
-			print("adding alias %s" % alias)			
+			print("adding alias %s" % alias)
 			ldapconn.add(dn, ['mailGroup'], {
 				"mail": alias,
 				"description": description
@@ -196,7 +199,7 @@ def populate_aliases(conn, ldapconn, users_map, aliases_map):
 		alias_dn=aliases_map[alias]
 		members = []
 		mailMembers = []
-		
+
 		for email in row[1].split(','):
 			email=email.strip()
 			if email=="":
@@ -207,13 +210,13 @@ def populate_aliases(conn, ldapconn, users_map, aliases_map):
 				members.append(aliases_map[email])
 			else:
 				mailMembers.append(email)
-		
+
 		print("populate alias group %s" % alias)
 		changes = {}
 		if len(members)>0:
 			changes["member"]=[(ldap3.MODIFY_REPLACE, members)]
 		if len(mailMembers)>0:
-			changes["rfc822MailMember"]=[(ldap3.MODIFY_REPLACE, mailMembers)]			
+			changes["rfc822MailMember"]=[(ldap3.MODIFY_REPLACE, mailMembers)]
 		ldapconn.modify(alias_dn, changes)
 
 

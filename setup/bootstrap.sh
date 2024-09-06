@@ -133,7 +133,7 @@ fi
 if [ -z "${ENCRYPTION_AT_REST:-}" ]; then
     source ehdd/ehdd_funcs.sh || exit 1
     hdd_exists && ENCRYPTION_AT_REST=true
-elif [ "${ENCRYPTION_AT_REST:-}" = "false" ]; then 
+elif [ "${ENCRYPTION_AT_REST:-}" = "false" ]; then
     source ehdd/ehdd_funcs.sh || exit 1
     if hdd_exists; then
         echo "Encryption-at-rest must be disabled manually"
@@ -147,4 +147,3 @@ if [ "${ENCRYPTION_AT_REST:-false}" = "true" ]; then
 else
     setup/start.sh </dev/tty
 fi
-

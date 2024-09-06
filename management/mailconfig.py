@@ -19,8 +19,11 @@
 # Python 3 in setup/questions.sh to validate the email
 # address entered by the user.
 
-import subprocess, shutil, os, sqlite3, re, ldap3, uuid, hashlib
-import utils, backend
+import os, sqlite3, re
+import subprocess
+import ldap3, uuid, hashlib, backend
+
+import utils
 from email_validator import validate_email as validate_email_, EmailNotValidError
 import idna
 import socket
@@ -283,6 +286,18 @@ def get_mail_users(env, as_map=False, map_by="maildrop"):
 		return utils.sort_email_addresses(users, env)
 
 
+def sizeof_fmt(num):
+	for unit in ['','K','M','G','T']:
+		if abs(num) < 1024.0:
+			if abs(num) > 99:
+				return "%3.0f%s" % (num, unit)
+			else:
+				return "%2.1f%s" % (num, unit)
+
+		num /= 1024.0
+
+	return str(num)
+
 def get_mail_users_ex(env, with_archived=False):
 	# Returns a complex data structure of all user accounts, optionally
 	# including archived (status="inactive") accounts.
@@ -307,20 +322,52 @@ def get_mail_users_ex(env, with_archived=False):
 	users = []
 	active_accounts = set()
 	c = open_database(env)
-	response = c.wait( c.search(env.LDAP_USERS_BASE, "(objectClass=mailUser)", attributes=['mail','maildrop','mailaccess','cn']) )
+	response = c.wait( c.search(env.LDAP_USERS_BASE, "(objectClass=mailUser)", attributes=['mail','maildrop','mailaccess','mailboxQuota','cn']) )
 
 	for rec in response:
 		#email = rec['maildrop'][0]
 		email = rec['mail'][0]
 		privileges = rec['mailaccess']
+		quota = rec['mailboxQuota'][0] if len(rec['mailboxQuota']>0) else '0'
 		display_name = rec['cn'][0]
 		active_accounts.add(email)
+
+		(user, domain) = email.split('@')
+		box_size = 0
+		box_quota = 0
+		percent = ''
+		try:
+			dirsize_file = os.path.join(env['STORAGE_ROOT'], 'mail/mailboxes/%s/%s/maildirsize' % (domain, user))
+			with open(dirsize_file, 'r') as f:
+				box_quota = int(f.readline().split('S')[0])
+				for line in f.readlines():
+					(size, count) = line.split(' ')
+					box_size += int(size)
+
+			try:
+				percent = (box_size / box_quota) * 100
+			except:
+				percent = 'Error'
+
+		except:
+			box_size = '?'
+			box_quota = '?'
+			percent = '?'
+
+		if quota == '0':
+			percent = ''
+
 		user = {
 			"email": email,
 			"privileges": privileges,
+			"quota": quota,
 			"status": "active",
-			"display_name": display_name
+			"display_name": display_name,
+			"box_quota": box_quota,
+			"box_size": sizeof_fmt(box_size) if box_size != '?' else box_size,
+			"percent": '%3.0f%%' % percent if type(percent) != str else percent,
 		}
+
 		users.append(user)
 
 	# Add in archived accounts.
@@ -338,6 +385,9 @@ def get_mail_users_ex(env, with_archived=False):
 						"status": "inactive",
 						"mailbox": mbox,
 						"display_name": ""
+                        "box_size": '?',
+                        "box_quota": '?',
+                        "percent": '?',
 					}
 					users.append(user)
 
@@ -697,12 +747,13 @@ def remove_mail_domain(env, domain_idna, validate=True):
 	return True
 
 
-def add_mail_user(email, pw, privs, display_name, env):
+def add_mail_user(email, pw, privs, quota, display_name, env):
 	# Add a new mail user.
 	#
 	# email: the new user's email address (idna)
 	# pw: the new user's password
 	# privs: either an array of privilege strings, or a newline
+	# quota: a string (number | number 'M' | number 'G') or None
 	# separated string of privilege names
 	# display_name: a string with users givenname and surname (eg "Al Woods")
 	#
@@ -734,6 +785,14 @@ def add_mail_user(email, pw, privs, display_name, env):
 	for p in privs:
 		validation = validate_privilege(p)
 		if validation: return validation
+
+	if quota is None:
+		quota = '0'
+
+	try:
+		quota = validate_quota(quota)
+	except ValueError as e:
+		return (str(e), 400)
 
 	# get the database
 	conn = open_database(env)
@@ -773,6 +832,7 @@ def add_mail_user(email, pw, privs, display_name, env):
 		"maildrop" : email.lower(),
 		"uid" : uid,
 		"mailaccess": privs,
+		"mailboxQuota": quota,
 		"cn": cn,
 		"sn": sn,
 		"shadowLastChange": backend.get_shadowLastChanged()
@@ -804,6 +864,8 @@ def add_mail_user(email, pw, privs, display_name, env):
 
 	# convert alias's mailMember to member
 	convert_mailMember(env, conn, dn, email)
+
+	dovecot_quota_recalc(email)
 
 	# Update things in case any new domains are added.
 	if domain_added:
@@ -866,6 +928,53 @@ def validate_login(email, pw, env):
 	except ldap3.core.exceptions.LDAPInvalidCredentialsResult:
 		return False
 
+
+
+def get_mail_quota(email, env):
+	user = find_mail_user(env, email, ['mailboxQuota'])
+	if user is None:
+		return ("That's not a user (%s)." % email, 400)
+	if len(user['mailboxQuota'])==0:
+		return '0'
+	else:
+		return user['mailboxQuota'][0]
+
+def set_mail_quota(email, quota, env):
+	# validate that password is acceptable
+	quota = validate_quota(quota)
+
+	# update the database
+	conn = open_database(env)
+	user = find_mail_user(env, email, ['mailboxQuota'], conn)
+	if user is None:
+		return ("That's not a user (%s)." % email, 400)
+
+	conn.modify_record(user, { 'mailboxQuota': quota })
+	dovecot_quota_recalc(email)
+	return "OK"
+
+def dovecot_quota_recalc(email):
+	# dovecot processes running for the user will not recognize the new quota setting
+	# a reload is necessary to reread the quota setting, but it will also shut down
+	# running dovecot processes.  Email clients generally log back in when they lose
+	# a connection.
+	# subprocess.call(['doveadm', 'reload'])
+
+	# force dovecot to recalculate the quota info for the user.
+	subprocess.call(["doveadm", "quota", "recalc", "-u", email])
+
+def validate_quota(quota):
+	# validate quota
+	quota = quota.strip().upper()
+
+	if quota == "":
+		raise ValueError("No quota provided.")
+	if re.search(r"[\s,.]", quota):
+		raise ValueError("Quotas cannot contain spaces, commas, or decimal points.")
+	if not re.match(r'^[\d]+[GMK]?$', quota):
+		raise ValueError("Invalid quota.")
+
+	return quota
 
 def get_mail_password(email, env):
 	# Gets the hashed passwords for a user. In ldap, userPassword is

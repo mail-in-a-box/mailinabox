@@ -18,12 +18,12 @@ objectIdentifier MiabLDAPmail MiabLDAProot:2
 objectIdentifier MiabLDAPmailAttributeType MiabLDAPmail:1
 objectIdentifier MiabLDAPmailObjectClass MiabLDAPmail:2
 
-attributetype ( 1.3.6.1.4.1.15347.2.102 
-	NAME 'transport' 
+attributetype ( 1.3.6.1.4.1.15347.2.102
+	NAME 'transport'
 	SUP name)
 
-attributetype ( 1.3.6.1.4.1.15347.2.101 
-	NAME 'mailRoutingAddress' 
+attributetype ( 1.3.6.1.4.1.15347.2.101
+	NAME 'mailRoutingAddress'
 	SUP mail )
 
 attributetype ( 1.3.6.1.4.1.15347.2.110 NAME 'maildest'
@@ -56,13 +56,31 @@ attributetype ( MiabLDAPmailAttributeType:1 NAME 'mailMember' DESC 'RFC6532 utf8
 # create a utf8 version of core 'domainComponent'
 attributetype ( MiabLDAPmailAttributeType:2 NAME 'dcIntl' DESC 'UTF8 domain component' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )
 
+# create a mda/lda user mailbox quota (for dovecot)
+# format: number | number 'K' | number 'M' | number 'G'
+attributetype ( MiabLDAPmailAttributeType:3
+	DESC 'MDA/LDA user mailbox quota'
+	NAME 'mailboxQuota'
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE
+	EQUALITY caseExactMatch )
+
+# dovecot supports more than one quota rule (but no way to use a
+# multi-valued attribute). add a second attribute for a second quota
+# rule even though we're not using more than one anticipating that we
+# might in the future and avoid a schema update
+attributetype ( MiabLDAPmailAttributeType:4
+	DESC 'MDA/LDA user mailbox quota 2'
+	NAME 'mailboxQuota2'
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE
+	EQUALITY caseExactMatch )
+
 objectclass ( 1.3.6.1.4.1.15347.2.1
 	NAME 'mailUser'
 	DESC 'E-Mail User'
 	SUP top
 	AUXILIARY
 	MUST ( uid $ mail $ maildrop )
-	MAY ( cn $ mailbox $ maildest $ mailaccess )
+	MAY ( cn $ mailbox $ maildest $ mailaccess $ mailboxQuota )
 	)
 
 objectclass ( 1.3.6.1.4.1.15347.2.2

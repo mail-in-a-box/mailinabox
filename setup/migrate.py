@@ -200,6 +200,12 @@ def migration_14(env):
 	db = os.path.join(env["STORAGE_ROOT"], 'mail/users.sqlite')
 	shell("check_call", ["sqlite3", db, "CREATE TABLE auto_aliases (id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT NOT NULL UNIQUE, destination TEXT NOT NULL, permitted_senders TEXT);"])
 
+def migration_15(env):
+	# Add a column to the users table to store their quota limit.  Default to '0' for unlimited.
+	db = os.path.join(env["STORAGE_ROOT"], 'mail/users.sqlite')
+	shell("check_call", ["sqlite3", db, "ALTER TABLE users ADD COLUMN quota TEXT NOT NULL DEFAULT '0';"])
+
+
 ###########################################################
 
 
@@ -306,7 +312,7 @@ def migration_miabldap_2(env):
 			return ldif.replace("rfc822MailMember: ", "mailMember: ")
 		# apply schema changes miabldap/1 -> miabldap/2
 		ldap.unbind()
-		print("Apply schema changes")
+		print("Apply schema changes to support utf8 email addresses")
 		m14.apply_schema_changes(env, ldapvars, ldif_change_fn)
 		# reconnect
 		ldap = connect(ldapvars)
@@ -328,6 +334,52 @@ def migration_miabldap_2(env):
 	m14.ensure_required_aliases(env, ldapvars, ldap)
 
 	ldap.unbind()
+
+def migration_miabldap_3(env):
+	# This migration step changes the ldap schema to support quotas
+	#
+	# possible states at this point:
+	#   miabldap was installed and is being upgraded
+	#      -> schema update needed
+	#   a miab install was present and step 1 upgaded it to miabldap
+	#      -> new schema already present
+	#
+	sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "../management")))
+	import ldap3
+	from backend import connect
+	import migration_14 as m14
+
+	# 1. get ldap site details
+	ldapvars = load_env_vars_from_file(os.path.join(env["STORAGE_ROOT"], "ldap/miab_ldap.conf"), strip_quotes=True)
+
+	# connect before schema changes to ensure admin password works
+	ldap = connect(ldapvars)
+
+	# 2. if this is a miab -> maibldap install, the new schema is
+	# already in place and no schema changes are needed. however,
+	# if this is a miabldap/1 to miabldap/2 migration, we must
+	# upgrade the schema.
+	ret = shell("check_output", [
+		"ldapsearch",
+		"-Q",
+		"-Y", "EXTERNAL",
+		"-H", "ldapi:///",
+		"(&(objectClass=olcSchemaConfig)(cn={*}postfix))",
+		"-b", "cn=schema,cn=config",
+		"-o", "ldif_wrap=no",
+		"-LLL",
+		"olcObjectClasses"
+	])
+
+	ldap.unbind()
+
+	if "mailboxQuota" not in ret:
+		def ldif_change_fn(ldif):
+			# the schema change we're making does not require any data changes
+			return ldif
+		# apply schema changes miabldap/2 -> miabldap/3
+		print("Apply schema changes to support mailbox quotas")
+		m14.apply_schema_changes(env, ldapvars, ldif_change_fn)
 
 
 def get_current_migration():

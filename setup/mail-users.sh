@@ -89,7 +89,7 @@ pass_attrs = maildrop=user
 #   lmtp delivery, pass_filter is not used, and postfix has already
 #   rewritten the envelope using the maildrop address.
 user_filter = (&(objectClass=mailUser)(|(mail=%u)(maildrop=%u)))
-user_attrs = maildrop=user
+user_attrs = maildrop=user mailboxQuota=quota_rule=*:bytes=%\$
 
 # Account iteration for various dovecot tools (doveadm)
 iterate_filter = (objectClass=mailUser)
@@ -269,3 +269,6 @@ chmod 0640 /etc/postfix/virtual-alias-maps.cf
 
 restart_service postfix
 restart_service dovecot
+
+# force a recalculation of all user quotas
+doveadm quota recalc -A
