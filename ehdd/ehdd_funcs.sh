@@ -17,6 +17,7 @@ if [ -z "${STORAGE_ROOT:-}" ]; then
     fi
 fi
 
+
 EHDD_IMG="$STORAGE_ROOT.HDD"
 EHDD_MOUNTPOINT="$STORAGE_ROOT"
 EHDD_LUKS_NAME="c1"

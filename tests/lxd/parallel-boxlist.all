@@ -1,0 +1,8 @@
+# jammy does not include the dm_crypt kernel module, which is needed
+# for luks/encryption-at-rest
+# remote-nextcloud-docker-ehdd
+
+remote-nextcloud-docker
+upgrade-from-upstream
+upgrade
+unsetvars
