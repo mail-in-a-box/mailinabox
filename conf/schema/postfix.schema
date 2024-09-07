@@ -56,23 +56,66 @@ attributetype ( MiabLDAPmailAttributeType:1 NAME 'mailMember' DESC 'RFC6532 utf8
 # create a utf8 version of core 'domainComponent'
 attributetype ( MiabLDAPmailAttributeType:2 NAME 'dcIntl' DESC 'UTF8 domain component' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )
 
-# create a mda/lda user mailbox quota (for dovecot)
-# format: number | number 'K' | number 'M' | number 'G'
+# Create mda/lda user mailbox quota settings (for dovecot)
+# format: number | number 'B' | number 'K' | number 'M' | number 'G'
+#
+# Dovecot supports more than one quota rule (but no way to use a
+# multi-valued attribute). Also add additional attributes for
+# more quota rules even though we're not necessarily
+# using them because we might in the future which could help avoid a
+# schema update. Dovecot supports "as many quota rules as you want"
+
 attributetype ( MiabLDAPmailAttributeType:3
 	DESC 'MDA/LDA user mailbox quota'
 	NAME 'mailboxQuota'
 	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE
 	EQUALITY caseExactMatch )
 
-# dovecot supports more than one quota rule (but no way to use a
-# multi-valued attribute). add a second attribute for a second quota
-# rule even though we're not using more than one anticipating that we
-# might in the future and avoid a schema update
 attributetype ( MiabLDAPmailAttributeType:4
 	DESC 'MDA/LDA user mailbox quota 2'
 	NAME 'mailboxQuota2'
 	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE
 	EQUALITY caseExactMatch )
+
+attributetype ( MiabLDAPmailAttributeType:5
+	DESC 'MDA/LDA user mailbox quota 3'
+	NAME 'mailboxQuota3'
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE
+	EQUALITY caseExactMatch )
+
+attributetype ( MiabLDAPmailAttributeType:6
+	DESC 'MDA/LDA user mailbox quota 4'
+	NAME 'mailboxQuota4'
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE
+	EQUALITY caseExactMatch )
+
+attributetype ( MiabLDAPmailAttributeType:7
+	DESC 'MDA/LDA user mailbox quota 5'
+	NAME 'mailboxQuota5'
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE
+	EQUALITY caseExactMatch )
+
+attributetype ( MiabLDAPmailAttributeType:8
+	DESC 'MDA/LDA user mailbox quota 6'
+	NAME 'mailboxQuota6'
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE
+	EQUALITY caseExactMatch )
+
+# Dovecot can maintain a flag indicating whether a user is over or
+# under quota. It's use is not required, but enables postfix to reject
+# messages without queuing them when a mailbox is full. The value
+# should be dovecot boolean value 'yes', or 'no'.
+
+attributetype ( MiabLDAPmailAttributeType:9
+	DESC 'MDA/LDA over quota flag'
+	NAME 'mailboxOverQuotaFlag'
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE
+	EQUALITY caseIgnoreMatch )
+
+
+#
+# object classes
+#
 
 objectclass ( 1.3.6.1.4.1.15347.2.1
 	NAME 'mailUser'
@@ -80,7 +123,7 @@ objectclass ( 1.3.6.1.4.1.15347.2.1
 	SUP top
 	AUXILIARY
 	MUST ( uid $ mail $ maildrop )
-	MAY ( cn $ mailbox $ maildest $ mailaccess $ mailboxQuota )
+	MAY ( cn $ mailbox $ maildest $ mailaccess $ mailboxQuota $ mailboxQuota2 $ mailboxQuota3 $ mailboxQuota4 $ mailboxQuota5 $ mailboxQuota6 $ mailboxOverQuotaFlag )
 	)
 
 objectclass ( 1.3.6.1.4.1.15347.2.2
