@@ -24,7 +24,7 @@ def mgmt(cmd, data=None, is_json=False, method='GET'):
 
 	setup_key_auth(mgmt_uri)
 
-	req = urllib.request.Request(mgmt_uri + cmd, urllib.parse.urlencode(data).encode("utf8") if data else None, method=method)
+	req = urllib.request.Request(mgmt_uri + cmd, urllib.parse.urlencode(data).encode("utf8") if data else None) #, method=method)
 	try:
 		response = urllib.request.urlopen(req)
 	except urllib.error.HTTPError as e:
