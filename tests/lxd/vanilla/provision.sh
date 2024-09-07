@@ -28,7 +28,7 @@ export NC_PORT=443
 export NC_PREFIX=/
 export SKIP_SYSTEM_UPDATE=0
 tests/system-setup/vanilla.sh --qa-ca --enable-mod=remote-nextcloud
-rc=$?
+rc=\$?
 if ! ufw status | grep remote_nextcloud >/dev/null; then
    # firewall rules aren't added when ciab is down
    echo 'For testing, allow ldaps from anywhere'
@@ -40,7 +40,7 @@ echo 'Add smart host alias - so \$NC_HOST can send mail to/via this host'
  rest_urlencoded POST /admin/mail/aliases/add qa@abc.com Test_1234 \"address=@\$NC_HOST\" 'description=smart-host' 'permitted_senders=qa@abc.com' 2>/dev/null
  echo \"\$REST_HTTP_CODE: \$REST_OUTPUT\"
 )
-exit $rc
+exit \$rc
 "
     provision_done $?
 
@@ -53,12 +53,12 @@ export PRIMARY_HOSTNAME='${inst}.local'
 #export FEATURE_NEXTCLOUD=false
 export SKIP_SYSTEM_UPDATE=0
 tests/system-setup/vanilla.sh
-rc=$?
+rc=\$?
 #   --enable-mod=move-postfix-queue-to-user-data
 #   --enable-mod=roundcube-master
 #   --enable-mod=roundcube-debug
 #   --enable-mod=rcmcarddav-composer
-exit $rc
+exit \$rc
 "
     provision_done $?
 
