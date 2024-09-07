@@ -88,8 +88,9 @@ pass_attrs = maildrop=user
 #   Post-login information specific to the user (eg. quotas).  For
 #   lmtp delivery, pass_filter is not used, and postfix has already
 #   rewritten the envelope using the maildrop address.
+#   %$ is expanded to mailboxQuota's value.
 user_filter = (&(objectClass=mailUser)(|(mail=%u)(maildrop=%u)))
-user_attrs = maildrop=user mailboxQuota=quota_rule=*:bytes=%\$
+user_attrs = maildrop=user,mailboxQuota=quota_rule=*:bytes=%\$
 
 # Account iteration for various dovecot tools (doveadm)
 iterate_filter = (objectClass=mailUser)

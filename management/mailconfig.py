@@ -328,7 +328,7 @@ def get_mail_users_ex(env, with_archived=False):
 		#email = rec['maildrop'][0]
 		email = rec['mail'][0]
 		privileges = rec['mailaccess']
-		quota = rec['mailboxQuota'][0] if len(rec['mailboxQuota']>0) else '0'
+		quota = rec['mailboxQuota'][0] if len(rec['mailboxQuota'])>0 else '0'
 		display_name = rec['cn'][0]
 		active_accounts.add(email)
 
@@ -384,7 +384,7 @@ def get_mail_users_ex(env, with_archived=False):
 						"privileges": [],
 						"status": "inactive",
 						"mailbox": mbox,
-						"display_name": ""
+						"display_name": "",
                         "box_size": '?',
                         "box_quota": '?',
                         "percent": '?',

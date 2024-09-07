@@ -32,10 +32,12 @@
     </select>
   </div>
   <div class="form-group">
-    <label class="sr-only" for="adduserQuota">Quota</label>
-    <input type="text" class="form-control" id="adduserQuota" placeholder="Quota" style="width:5em;" value="0">
     <div>Display Name</div>
     <input id="adduserDisplayName" class="form-control" type="text" placeholder="eg: John Smith">
+  </div>
+  <div class="form-group">
+    <div>Quota</div>
+    <input type="text" class="form-control" id="adduserQuota" placeholder="Quota" style="width:5em;" value="0">
   </div>
   <div class="text-center">
     <div>&nbsp;</div>
@@ -249,7 +251,7 @@ function do_add_user() {
       email: email,
       password: pw,
       privileges: privs,
-      quota: quota
+      quota: quota,
       display_name: display_name
     },
     function(r) {

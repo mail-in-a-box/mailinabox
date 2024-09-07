@@ -85,9 +85,9 @@ fi
 if ! grep -q "quota_status_success = DUNNO" /etc/dovecot/conf.d/90-quota.conf; then
     cat > /etc/dovecot/conf.d/90-quota.conf << EOF;
 plugin {
-  quota = maildir
+  quota = maildir:User quota
 
-  quota_grace = 10%
+  quota_grace = 10%%
 
   quota_status_success = DUNNO
   quota_status_nouser = DUNNO
