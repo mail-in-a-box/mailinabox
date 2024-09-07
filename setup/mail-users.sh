@@ -90,7 +90,10 @@ pass_attrs = maildrop=user
 #   rewritten the envelope using the maildrop address.
 #   %$ is expanded to mailboxQuota's value.
 user_filter = (&(objectClass=mailUser)(|(mail=%u)(maildrop=%u)))
-user_attrs = maildrop=user,mailboxQuota=quota_rule=*:bytes=%\$
+user_attrs = maildrop=user, \
+             mailboxQuota=quota_rule=*:bytes=%\$, \
+             =quota_rule2=Drafts:ignore, \
+             =quota_rule3=Sent:ignore
 
 # Account iteration for various dovecot tools (doveadm)
 iterate_filter = (objectClass=mailUser)
