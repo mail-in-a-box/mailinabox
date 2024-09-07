@@ -183,7 +183,7 @@ installed_state_compare() {
     if [ $MIGRATION_ML_VERSION_A -le 2 -a $MIGRATION_ML_VERSION_B -ge 3 ]; then
         # miabldap migration level <=2 does not have quota fields, so
         # remove them from the comparison
-        grep -vE '"(quota|box_quota|box_size|percent)":' "$s2/users.json" > "$s2/users-cmp2.json" || changed="true"
+        grep -vE '"(quota|box_quota|box_size|percent)":' "$s2/users-cmp.json" > "$s2/users-cmp2.json" || changed="true"
         cp "$s2/users-cmp2.json" "$s2/users-cmp.json" && rm -f "$s2/users-cmp2.json"
     fi
 
