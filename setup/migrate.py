@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python3 -u
 # -*- indent-tabs-mode: t; tab-width: 8; python-indent-offset: 8; -*-
 #####
 ##### This file is part of Mail-in-a-Box-LDAP which is released under the
@@ -471,7 +471,7 @@ def run_miabldap_migrations():
 			migration_id = 0
 		else:
 			print()
-			print("%s file doesn't exists. Skipping migration..." % (migration_id_file,))
+			print("%s file doesn't exist. Skipping migration..." % (migration_id_file,))
 			return
 
 	ourver = int(migration_id)
