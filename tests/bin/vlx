@@ -37,6 +37,12 @@
 D=$(dirname "$BASH_SOURCE")
 . "$D/lx_functions.sh" || exit 1
 
+show_cl="yes"
+if [ "$1" = "-q" ]; then
+    show_cl="no"
+    shift
+fi
+
 vlx_guess() {
     if [ $# -eq 2 ]; then
         LX_PROJECT="$1"
@@ -83,7 +89,6 @@ vlx_exec() {
     if [ "${args[$idx]}" = "--" ]; then
         if [ $idx -eq 3 ]; then
             # format 1 with cwd
-            echo "f1"
             wd="$3"
             vlx_guess "$1" "$2" || return 1
             shift; shift; shift; shift;
@@ -92,12 +97,10 @@ vlx_exec() {
             if [ "${2#/}" != "$2" ]; then
                 # wd starts with /, so it's a path
                 # format 2
-                echo "f2"
                 wd="$2"
                 vlx_guess "" "$1" || return 1
             else
                 # format 1 w/o cwd
-                echo "f1 w/o cwd"
                 vlx_guess "$1" "$2" || return 1
             fi
             shift; shift; shift;
@@ -106,12 +109,10 @@ vlx_exec() {
             if [ "${1#/}" != "$1" ]; then
                 # wd starts with /, so it's a path
                 # format 3
-                echo "f3"
                 wd="$1"
                 vlx_guess || return 1
             else
                 # format 2 w/o cwd
-                echo "f2 w/o cwd"
                 vlx_guess "$1" || return 1
             fi
             shift; shift;
@@ -121,7 +122,6 @@ vlx_exec() {
         fi
     else
         # format 4
-        echo "f4"
         vlx_guess || return 1
     fi
 
@@ -129,28 +129,43 @@ vlx_exec() {
     if [ ! -z "$wd" ]; then
         xargs="--cwd $wd"
     fi
-    echo lxc --project "$LX_PROJECT" exec "$LX_INST" $xargs -- "$@"
+    [ "$show_cl" = "yes" ] &&
+        echo lxc --project "$LX_PROJECT" exec "$LX_INST" $xargs -- "$@"
     lxc --project "$LX_PROJECT" exec "$LX_INST" $xargs -- "$@"
 }
 
 vlx_shell() {
     vlx_guess "$@" || return 1
-    echo lxc --project "$LX_PROJECT" exec "$LX_INST" -- bash
+    [ "$show_cl" = "yes" ] &&
+        echo lxc --project "$LX_PROJECT" exec "$LX_INST" -- bash
     lxc --project "$LX_PROJECT" exec "$LX_INST" -- bash
 }
 
 vlx_hostname() {
     vlx_guess "$@" || return 1
-    local host
     lxc --project "$LX_PROJECT" exec "$LX_INST" -- /usr/bin/hostname --fqdn || return 1
 }
 
+vlx_ipaddr() {
+    vlx_guess "$@" || return 1
+    local hostip
+    hostip="$(lxc --project "$LX_PROJECT" exec "$LX_INST" -- /usr/bin/hostname -I)"
+    [ $? -ne 0 -o -z "$hostip" ] && return 1
+    awk '{print $1}' <<<"$hostip"
+}
+
+
 vlx_ssh() {
     local host="$1"
+    if [ "$host" = "--" ]; then
+        host=""
+    else
+        shift
+    fi
     if [ -z "$host" ]; then
-        host="$(vlx_hostname)"
+        host="$(vlx_ipaddr)"
         if [ $? -ne 0 ]; then
-            echo "Could not determine hostname, please specify"
+            echo "Could not determine ip address, please specify"
             host=""
         fi
         if [ -z "$host" ]; then
@@ -161,20 +176,22 @@ vlx_ssh() {
     local id="$(lx_get_ssh_identity)"
     local known_hosts="$(lx_get_ssh_known_hosts)"
     local vmuser="vmuser"
-    #echo ssh -i "$id" -o UserKnownHostsFile="$known_hosts" -o StrictHostKeyChecking=no "$vmuser@$host"
+    #echo ssh -i "$id" -o UserKnownHostsFile="$known_hosts" -o StrictHostKeyChecking=no "$vmuser@$host" "$@"
     echo "Connecting to $vmuser@$host ..."
-    ssh -i "$id" -o UserKnownHostsFile="$known_hosts" -o StrictHostKeyChecking=no "$vmuser@$host"
+    ssh -i "$id" -o UserKnownHostsFile="$known_hosts" -o StrictHostKeyChecking=no "$vmuser@$host" "$@"
 }
 
 vlx_list() {
     vlx_guess "$1" || return 1
-    echo lxc --project "$LX_PROJECT" list
+    [ "$show_cl" = "yes" ] &&
+        echo lxc --project "$LX_PROJECT" list
     lxc --project "$LX_PROJECT" list
 }
 
 vlx_images() {
     vlx_guess "$1" || return 1
-    echo lxc --project "$LX_PROJECT" image list
+    [ "$show_cl" = "yes" ] &&
+        echo lxc --project "$LX_PROJECT" image list
     lxc --project "$LX_PROJECT" image list
 }
 
@@ -191,19 +208,22 @@ vlx_up() {
 
 vlx_start() {
     vlx_guess "$@" || return 1
-    echo lxc --project "$LX_PROJECT" start "$LX_INST"
+    [ "$show_cl" = "yes" ] &&
+        echo lxc --project "$LX_PROJECT" start "$LX_INST"
     lxc --project "$LX_PROJECT" start "$LX_INST"
 }
 
 vlx_stop() {
     vlx_guess "$@" || return 1
-    echo lxc --project "$LX_PROJECT" stop "$LX_INST"
+    [ "$show_cl" = "yes" ] &&
+        echo lxc --project "$LX_PROJECT" stop "$LX_INST"
     lxc --project "$LX_PROJECT" stop "$LX_INST"
 }
 
 vlx_delete() {
     vlx_guess "$@" || return 1
-    echo lxc --project "$LX_PROJECT" delete --force --interactive "$LX_INST"
+    [ "$show_cl" = "yes" ] &&
+        echo lxc --project "$LX_PROJECT" delete --force --interactive "$LX_INST"
     lxc --project "$LX_PROJECT" delete --force --interactive "$LX_INST"
 }
 
@@ -224,7 +244,8 @@ vlx_status() {
 
 vlx_restart() {
     vlx_guess "$@" || return 1
-    echo lxc --project "$LX_PROJECT" restart "$LX_INST"
+    [ "$show_cl" = "yes" ] &&
+        echo lxc --project "$LX_PROJECT" restart "$LX_INST"
     lxc --project "$LX_PROJECT" restart "$LX_INST"
 }
 
