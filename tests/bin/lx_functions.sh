@@ -201,7 +201,25 @@ lx_wait_for_boot() {
     echo ""
     echo -n "Wait for cloud-init "
     lxc --project "$project" exec "$inst" -- cloud-init status --wait
+    local rc=$?
+    
+    if [ $rc -eq 0 ]; then
+        echo "Wait for ip address "
+        local ip=""
+        local count=0
+        while [ $count -lt 10 ]; do
+            let count+=1
+            ip="$(lxc --project "$project" exec "$inst" -- hostname -I | awk '{print $1}')"
+            rc=$?
+            echo "  [${count}] got: $ip"
+            if [ $rc -ne 0 -o "$ip" != "" ];then
+                break
+            fi
+            sleep 5
+        done
+    fi
     echo ""
+    return $rc
 }
 
 lx_get_ssh_identity() {
