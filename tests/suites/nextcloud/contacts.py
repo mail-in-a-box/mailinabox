@@ -7,6 +7,7 @@
 ##### details.
 #####
 
+
 from browser.automation import (
     TestDriver,
     TimeoutException,
@@ -50,16 +51,20 @@ try:
     # open Contacts
     #
     d.start("Open contacts app")
-    contacts = nc.open_contacts()
+    try:
+        contacts = nc.open_contacts()
+    except NoSuchElementException:
+        nc.close_first_run_wizard()
+        contacts = nc.open_contacts()
     nc.wait_for_app_load()
 
     #
-    # handle selected operation 
+    # handle selected operation
     #
     if op=='exists':
         d.start("Check that contact %s exists", contact['email'])
         contacts.click_contact(contact) # raises NoSuchElementException if not found
-        
+
     elif op=='delete':
         d.start("Delete contact %s", contact['email'])
         contacts.click_contact(contact)
@@ -68,7 +73,7 @@ try:
 
     elif op=='nop':
         pass
-        
+
     else:
         raise ValueError('Invalid operation: %s' % op)
 
