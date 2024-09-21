@@ -189,6 +189,7 @@ def get_ssh_port():
 
 def get_ssh_config_value(parameter_name):
 	# Returns ssh configuration value for the provided parameter
+	import subprocess
 	try:
 		output = shell('check_output', ['sshd', '-T'])
 	except FileNotFoundError:
