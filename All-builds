@@ -1,0 +1,118 @@
+'use client'
+
+import { useState } from 'react'
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Loader2, RefreshCw } from "lucide-react"
+
+type EnrollmentToken = {
+  id: string
+  token: string
+  model: string
+  timestamp: string
+}
+
+export default function EnrollmentTokenGenerator() {
+  const [tokens, setTokens] = useState<EnrollmentToken[]>([])
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [quantity, setQuantity] = useState(1)
+  const [model, setModel] = useState('iPhone 13')
+
+  const generateToken = () => {
+    return Math.random().toString(36).substr(2, 10).toUpperCase()
+  }
+
+  const handleGenerate = () => {
+    setIsGenerating(true)
+    const newTokens: EnrollmentToken[] = []
+
+    for (let i = 0; i < quantity; i++) {
+      setTimeout(() => {
+        const newToken: EnrollmentToken = {
+          id: `TKN-${Date.now()}-${i}`,
+          token: generateToken(),
+          model: model,
+          timestamp: new Date().toISOString()
+        }
+        newTokens.push(newToken)
+        setTokens(prevTokens => [...prevTokens, newToken])
+
+        if (i === quantity - 1) {
+          setIsGenerating(false)
+        }
+      }, i * 500) // Simulate delay in token generation
+    }
+  }
+
+  return (
+    <div className="container mx-auto p-4 space-y-6">
+      <h1 className="text-2xl font-bold text-center">iPhone Enrollment Token Generator</h1>
+      
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex-1 space-y-2">
+          <Label htmlFor="quantity">Quantity</Label>
+          <Input 
+            id="quantity" 
+            type="number" 
+            min="1" 
+            max="100" 
+            value={quantity} 
+            onChange={(e) => setQuantity(parseInt(e.target.value))}
+          />
+        </div>
+        <div className="flex-1 space-y-2">
+          <Label htmlFor="model">iPhone Model</Label>
+          <Input 
+            id="model" 
+            type="text" 
+            value={model} 
+            onChange={(e) => setModel(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <Button 
+        onClick={handleGenerate} 
+        disabled={isGenerating}
+        className="w-full"
+      >
+        {isGenerating ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Generating Tokens...
+          </>
+        ) : (
+          <>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Generate Enrollment Tokens
+          </>
+        )}
+      </Button>
+
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Token ID</TableHead>
+              <TableHead>Enrollment Token</TableHead>
+              <TableHead>iPhone Model</TableHead>
+              <TableHead>Timestamp</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {tokens.map((token) => (
+              <TableRow key={token.id}>
+                <TableCell>{token.id}</TableCell>
+                <TableCell className="font-mono">{token.token}</TableCell>
+                <TableCell>{token.model}</TableCell>
+                <TableCell>{new Date(token.timestamp).toLocaleString()}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  )
+}
