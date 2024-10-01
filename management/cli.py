@@ -9,13 +9,13 @@
 import sys, getpass, urllib.request, urllib.error, json, csv
 import contextlib
 
-def mgmt(cmd, data=None, is_json=False, method='GET'):
+def mgmt(cmd, data=None, is_json=False):
 	# The base URL for the management daemon. (Listens on IPv4 only.)
 	mgmt_uri = 'http://127.0.0.1:10222'
 
 	setup_key_auth(mgmt_uri)
 
-	req = urllib.request.Request(mgmt_uri + cmd, urllib.parse.urlencode(data).encode("utf8") if data else None, method=method)
+	req = urllib.request.Request(mgmt_uri + cmd, urllib.parse.urlencode(data).encode("utf8") if data else None)
 	try:
 		response = urllib.request.urlopen(req)
 	except urllib.error.HTTPError as e:
@@ -65,7 +65,7 @@ if len(sys.argv) < 2:
   {cli} user password user@domain.com [password]
   {cli} user remove user@domain.com
   {cli} user make-admin user@domain.com
-  {cli} user quota user@domain [new-quota]       (get or set user quota)
+  {cli} user quota user@domain [new-quota]
   {cli} user remove-admin user@domain.com
   {cli} user admins                              (lists admins)
   {cli} user mfa show user@domain.com            (shows MFA devices for user, if any)
@@ -123,12 +123,12 @@ elif sys.argv[1] == "user" and sys.argv[2] == "admins":
 				print(user['email'])
 
 elif sys.argv[1] == "user" and sys.argv[2] == "quota" and len(sys.argv) == 4:
-	# Get a user's quota
+	# Set a user's quota
 	print(mgmt("/mail/users/quota?text=1&email=%s" % sys.argv[3]))
 
 elif sys.argv[1] == "user" and sys.argv[2] == "quota" and len(sys.argv) == 5:
 	# Set a user's quota
-	users = mgmt("/mail/users/quota", { "email": sys.argv[3], "quota": sys.argv[4] }, method='POST')
+	users = mgmt("/mail/users/quota", { "email": sys.argv[3], "quota": sys.argv[4] })
 
 elif sys.argv[1] == "user" and len(sys.argv) == 5 and sys.argv[2:4] == ["mfa", "show"]:
 	# Show MFA status for a user.
@@ -154,3 +154,4 @@ elif sys.argv[1] == "alias" and sys.argv[2] == "remove" and len(sys.argv) == 4:
 else:
 	print("Invalid command-line arguments.")
 	sys.exit(1)
+
