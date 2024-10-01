@@ -65,7 +65,7 @@ if len(sys.argv) < 2:
   {cli} user password user@domain.com [password]
   {cli} user remove user@domain.com
   {cli} user make-admin user@domain.com
-  {cli} user quota user@domain [new-quota]
+  {cli} user quota user@domain [new-quota]       (get or set user quota)
   {cli} user remove-admin user@domain.com
   {cli} user admins                              (lists admins)
   {cli} user mfa show user@domain.com            (shows MFA devices for user, if any)
@@ -123,7 +123,7 @@ elif sys.argv[1] == "user" and sys.argv[2] == "admins":
 				print(user['email'])
 
 elif sys.argv[1] == "user" and sys.argv[2] == "quota" and len(sys.argv) == 4:
-	# Set a user's quota
+	# Get a user's quota
 	print(mgmt("/mail/users/quota?text=1&email=%s" % sys.argv[3]))
 
 elif sys.argv[1] == "user" and sys.argv[2] == "quota" and len(sys.argv) == 5:
@@ -154,4 +154,3 @@ elif sys.argv[1] == "alias" and sys.argv[2] == "remove" and len(sys.argv) == 4:
 else:
 	print("Invalid command-line arguments.")
 	sys.exit(1)
-
