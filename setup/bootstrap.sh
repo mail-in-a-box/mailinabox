@@ -89,4 +89,3 @@ fi
 
 # Start setup script.
 setup/start.sh
-
