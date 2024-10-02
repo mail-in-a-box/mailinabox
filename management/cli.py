@@ -89,9 +89,7 @@ elif sys.argv[1] == "user" and len(sys.argv) == 2:
 			print(user['email'], end='')
 			if "admin" in user['privileges']:
 				print("*", end='')
-			if user['quota'] == '0':
-				print(" unlimited", end='')
-			else:
+			if 'quota' in user:
 				print(" " + user['quota'], end='')
 			print()
 
