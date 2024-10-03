@@ -1438,12 +1438,12 @@ def remove_mail_alias(address_utf8, env, do_kick=True, auto=None, ignore_if_not_
 		return return_status
 
 
-def add_auto_aliases(aliases, env):
-	conn, c = open_database(env, with_connection=True)
-	c.execute("DELETE FROM auto_aliases")
-	for source, destination in aliases.items():
-		c.execute("INSERT INTO auto_aliases (source, destination) VALUES (?, ?)", (source, destination))
-	conn.commit()
+# def add_auto_aliases(aliases, env):
+# 	conn, c = open_database(env, with_connection=True)
+# 	c.execute("DELETE FROM auto_aliases")
+# 	for source, destination in aliases.items():
+# 		c.execute("INSERT INTO auto_aliases (source, destination) VALUES (?, ?)", (source, destination))
+# 	conn.commit()
 
 def get_system_administrator(env):
 	return "administrator@" + env['PRIMARY_HOSTNAME']
