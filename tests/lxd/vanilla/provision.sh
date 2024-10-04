@@ -44,7 +44,7 @@ exit \$rc
 "
     provision_done $?
 
-else
+elif [ -z "$1" ]; then
     # vanilla (default - no miab integration)
     provision_shell <<<"
 cd /mailinabox
@@ -62,4 +62,7 @@ exit \$rc
 "
     provision_done $?
 
+else
+    echo "Invalid argument: $1"
+    exit 1
 fi
