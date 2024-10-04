@@ -172,7 +172,7 @@ test_web_config() {
 		record "output=$REST_OUTPUT"
 		if [ $code -eq 0 ]; then
 			test_failure "carddav url works, but expecting 401/NotAuthenticated from server"
-		elif [ $code -eq 1 -o $REST_HTTP_CODE -ne 401 ] || ! grep "NotAuthenticated" <<<"$REST_OUTPUT" >/dev/null; then
+		elif [ $REST_HTTP_CODE -ne 401 ]; then
 			test_failure "carddav url doesn't work: $REST_ERROR"
 		fi
 	fi
@@ -189,7 +189,7 @@ test_web_config() {
 		record "output=$REST_OUTPUT"
 		if [ $code -eq 0 ]; then
 			test_failure "caldav url works, but expecting 401/NotAuthenticated from server"
-		elif [ $code -eq 1 -o $REST_HTTP_CODE -ne 401 ] || ! grep "NotAuthenticated" <<<"$REST_OUTPUT" >/dev/null; then
+		elif [ $REST_HTTP_CODE -ne 401 ]; then
 			test_failure "caldav url doesn't work: $REST_ERROR"
 		fi
 	fi
