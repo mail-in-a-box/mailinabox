@@ -22,11 +22,11 @@ export STORAGE_ROOT="${STORAGE_ROOT:-/home/$STORAGE_USER}"
 export EMAIL_ADDR="${EMAIL_ADDR:-qa@abc.com}"
 export EMAIL_PW="${EMAIL_PW:-Test_1234}"
 export PUBLIC_IP="${PUBLIC_IP:-$(source ${MIAB_DIR:-.}/setup/functions.sh; get_default_privateip 4)}"
-if lsmod | grep "^vboxguest[\t ]" >/dev/null; then
+if lsmod | grep -q "^vboxguest[\t ]" || df | grep -q "^lxd_"; then
     # The local mods directory defaults to 'local' (relative to the
     # source tree, which is a mounted filesystem of the host). This
     # will keep mods directory out of the source tree when running
-    # under virtualbox / vagrant.
+    # under virtualbox / vagrant / lxd.
     export LOCAL_MODS_DIR="${LOCAL_MODS_DIR:-/local}"
 else
     export LOCAL_MODS_DIR="${LOCAL_MODS_DIR:-$(pwd)/local}"
