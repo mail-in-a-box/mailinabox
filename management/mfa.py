@@ -41,9 +41,11 @@ def enable_mfa(email, type, secret, token, label, env):
 		# Sanity check with the provide current token.
 		totp = pyotp.TOTP(secret)
 		if not totp.verify(token, valid_window=1):
-			raise ValueError("Invalid token.")
+			msg = "Invalid token."
+			raise ValueError(msg)
 	else:
-		raise ValueError("Invalid MFA type.")
+		msg = "Invalid MFA type."
+		raise ValueError(msg)
 
 	conn, c = open_database(env, with_connection=True)
 	c.execute('INSERT INTO mfa (user_id, type, secret, label) VALUES (?, ?, ?, ?)', (get_user_id(email, c), type, secret, label))
@@ -66,10 +68,12 @@ def disable_mfa(email, mfa_id, env):
 	return c.rowcount > 0
 
 def validate_totp_secret(secret):
-	if type(secret) != str or secret.strip() == "":
-		raise ValueError("No secret provided.")
+	if not isinstance(secret, str) or secret.strip() == "":
+		msg = "No secret provided."
+		raise ValueError(msg)
 	if len(secret) != 32:
-		raise ValueError("Secret should be a 32 characters base32 string")
+		msg = "Secret should be a 32 characters base32 string"
+		raise ValueError(msg)
 
 def provision_totp(email, env):
 	# Make a new secret.

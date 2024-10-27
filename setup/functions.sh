@@ -1,3 +1,4 @@
+#!/bin/bash
 # Turn on "strict mode." See http://redsymbol.net/articles/unofficial-bash-strict-mode/.
 # -e: exit if any command unexpectedly fails.
 # -u: exit if we have a variable typo.
@@ -18,7 +19,7 @@ function hide_output {
 	# Execute command, redirecting stderr/stdout to the temporary file. Since we
 	# check the return code ourselves, disable 'set -e' temporarily.
 	set +e
-	"$@" &>$OUTPUT
+	"$@" &>"$OUTPUT"
 	E=$?
 	set -e
 
@@ -26,15 +27,15 @@ function hide_output {
 	if [ $E != 0 ]; then
 		# Something failed.
 		echo
-		echo FAILED: "$@"
+		echo "FAILED: $*"
 		echo -----------------------------------------
-		cat $OUTPUT
+		cat "$OUTPUT"
 		echo -----------------------------------------
 		exit $E
 	fi
 
 	# Remove temporary file.
-	rm -f $OUTPUT
+	rm -f "$OUTPUT"
 }
 
 function apt_get_quiet {
@@ -78,7 +79,7 @@ function get_publicip_from_web_service {
 	#
 	# Pass '4' or '6' as an argument to this function to specify
 	# what type of address to get (IPv4, IPv6).
-	curl -$1 --fail --silent --max-time 15 icanhazip.com 2>/dev/null || /bin/true
+	curl -"$1" --fail --silent --max-time 15 icanhazip.com 2>/dev/null || /bin/true
 }
 
 function get_default_privateip {
@@ -121,19 +122,19 @@ function get_default_privateip {
 	if [ "$1" == "6" ]; then target=2001:4860:4860::8888; fi
 
 	# Get the route information.
-	route=$(ip -$1 -o route get $target 2>/dev/null | grep -v unreachable)
+	route=$(ip -"$1" -o route get $target 2>/dev/null | grep -v unreachable)
 
 	# Parse the address out of the route information.
-	address=$(echo $route | sed "s/.* src \([^ ]*\).*/\1/")
+	address=$(echo "$route" | sed "s/.* src \([^ ]*\).*/\1/")
 
 	if [[ "$1" == "6" && $address == fe80:* ]]; then
 		# For IPv6 link-local addresses, parse the interface out
 		# of the route information and append it with a '%'.
-		interface=$(echo $route | sed "s/.* dev \([^ ]*\).*/\1/")
+		interface=$(echo "$route" | sed "s/.* dev \([^ ]*\).*/\1/")
 		address=$address%$interface
 	fi
 
-	echo $address
+	echo "$address"
 }
 
 function ufw_allow {
@@ -151,7 +152,7 @@ function ufw_limit {
 }
 
 function restart_service {
-	hide_output service $1 restart
+	hide_output service "$1" restart
 }
 
 ## Dialog Functions ##
@@ -194,7 +195,7 @@ function input_menu {
 	declare -n result_code=$4_EXITCODE
 	local IFS=^$'\n'
 	set +e
-	result=$(dialog --stdout --title "$1" --menu "$2" 0 0 0 $3)
+	result=$(dialog --stdout --title "$1" --menu "$2" 0 0 0 "$3")
 	result_code=$?
 	set -e
 }
@@ -212,11 +213,11 @@ function wget_verify {
 		echo "------------------------------------------------------------"
 		echo "Download of $URL did not match expected checksum."
 		echo "Found:"
-		sha1sum $DEST
+		sha1sum "$DEST"
 		echo
 		echo "Expected:"
 		echo "$CHECKSUM"
-		rm -f $DEST
+		rm -f "$DEST"
 		exit 1
 	fi
 }

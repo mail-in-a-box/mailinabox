@@ -17,13 +17,13 @@ source /etc/mailinabox.conf # load global vars
 
 echo "Installing Z-Push (Exchange/ActiveSync server)..."
 apt_install \
-       php-soap php-imap libawl-php php-xml
+       php"${PHP_VER}"-soap php"${PHP_VER}"-imap libawl-php php"$PHP_VER"-xml php"${PHP_VER}"-intl
 
-phpenmod -v php imap
+phpenmod -v "$PHP_VER" imap
 
 # Copy Z-Push into place.
-VERSION=2.7.1
-TARGETHASH=f15c566b1ad50de24f3f08f505f0c3d8155c2d0d
+VERSION=2.7.4
+TARGETHASH=78744d56b8799d9828ec8f99a12c1af4e9f9239b
 needs_update=0 #NODOC
 if [ ! -f /usr/local/lib/z-push/version ]; then
 	needs_update=1 #NODOC
@@ -44,10 +44,10 @@ if [ $needs_update == 1 ]; then
 	# Create admin and top scripts with PHP_VER  
 	rm -f /usr/sbin/z-push-{admin,top}
     echo '#!/bin/bash' > /usr/sbin/z-push-admin
-    echo php$PHP_VER /usr/local/lib/z-push/z-push-admin.php '"$@"' >> /usr/sbin/z-push-admin
+    echo php"$PHP_VER" /usr/local/lib/z-push/z-push-admin.php '"$@"' >> /usr/sbin/z-push-admin
     chmod 755 /usr/sbin/z-push-admin
     echo '#!/bin/bash' > /usr/sbin/z-push-top
-    echo php$PHP_VER /usr/local/lib/z-push/z-push-top.php '"$@"' >> /usr/sbin/z-push-top
+    echo php"$PHP_VER" /usr/local/lib/z-push/z-push-top.php '"$@"' >> /usr/sbin/z-push-top
     chmod 755 /usr/sbin/z-push-top
 	
 	echo $VERSION > /usr/local/lib/z-push/version
@@ -57,8 +57,6 @@ fi
 sed -i "s^define('TIMEZONE', .*^define('TIMEZONE', '$(cat /etc/timezone)');^" /usr/local/lib/z-push/config.php
 sed -i "s/define('BACKEND_PROVIDER', .*/define('BACKEND_PROVIDER', 'BackendCombined');/" /usr/local/lib/z-push/config.php
 sed -i "s/define('USE_FULLEMAIL_FOR_LOGIN', .*/define('USE_FULLEMAIL_FOR_LOGIN', true);/" /usr/local/lib/z-push/config.php
-sed -i "s/define('LOG_MEMORY_PROFILER', .*/define('LOG_MEMORY_PROFILER', false);/" /usr/local/lib/z-push/config.php
-sed -i "s/define('BUG68532FIXED', .*/define('BUG68532FIXED', false);/" /usr/local/lib/z-push/config.php
 sed -i "s/define('LOGLEVEL', .*/define('LOGLEVEL', LOGLEVEL_ERROR);/" /usr/local/lib/z-push/config.php
 
 # Configure BACKEND
@@ -108,8 +106,8 @@ EOF
 
 # Restart service.
 
-restart_service php$PHP_VER-fpm
+restart_service php"$PHP_VER"-fpm
 
 # Fix states after upgrade
 
-hide_output php$PHP_VER /usr/local/lib/z-push/z-push-admin.php -a fixstates
+hide_output php"$PHP_VER" /usr/local/lib/z-push/z-push-admin.php -a fixstates

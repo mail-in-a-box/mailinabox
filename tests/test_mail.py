@@ -30,15 +30,11 @@ print("IMAP login is OK.")
 # Attempt to send a mail to ourself.
 mailsubject = "Mail-in-a-Box Automated Test Message " + uuid.uuid4().hex
 emailto = emailaddress
-msg = """From: {emailaddress}
+msg = f"""From: {emailaddress}
 To: {emailto}
-Subject: {subject}
+Subject: {mailsubject}
 
-This is a test message. It should be automatically deleted by the test script.""".format(
-	emailaddress=emailaddress,
-	emailto=emailto,
-	subject=mailsubject,
-	)
+This is a test message. It should be automatically deleted by the test script."""
 
 # Connect to the server on the SMTP submission TLS port.
 server = smtplib.SMTP_SSL(host)
