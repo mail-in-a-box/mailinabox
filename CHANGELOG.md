@@ -73,7 +73,7 @@ Version 64 (September 2, 2023)
 * Fixed backups to work with the latest duplicity package which was not backwards compatible.
 * Fixed setting B2 as a backup target with a slash in the application key.
 * Turned off OpenDMARC diagnostic reports sent in response to incoming mail.
-* Fixed some crashes when using an unrelased version of Mail-in-a-Box.
+* Fixed some crashes when using an unreleased version of Mail-in-a-Box.
 * Added z-push administration scripts.
 
 Version 63 (July 27, 2023)
@@ -1129,7 +1129,7 @@ Control panel:
 
 System:
 * The munin system monitoring tool is now installed and accessible at /admin/munin.
-* ownCloud updated to version 8.0.4. The ownCloud installation step now is reslient to download problems. The ownCloud configuration file is now stored in STORAGE_ROOT to fix loss of data when moving STORAGE_ROOT to a new machine.
+* ownCloud updated to version 8.0.4. The ownCloud installation step now is resilient to download problems. The ownCloud configuration file is now stored in STORAGE_ROOT to fix loss of data when moving STORAGE_ROOT to a new machine.
 * The setup scripts now run `apt-get update` prior to installing anything to ensure the apt database is in sync with the packages actually available.
 
 
@@ -1167,7 +1167,7 @@ DNS:
 * Internationalized Domain Names (IDNs) should now work in email. If you had custom DNS or custom web settings for internationalized domains, check that they are still working.
 * It is now possible to set multiple TXT and other types of records on the same domain in the control panel.
 * The custom DNS API was completely rewritten to support setting multiple records of the same type on a domain. Any existing client code using the DNS API will have to be rewritten. (Existing code will just get 404s back.)
-* On some systems the `nsd` service failed to start if network inferfaces were not ready.
+* On some systems the `nsd` service failed to start if network interfaces were not ready.
 
 System / Control Panel:
 
