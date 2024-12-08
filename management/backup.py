@@ -514,7 +514,7 @@ def list_target_files(config):
 			if (config['target_user'] == '') and (config['target_pass'] == ''):
 				## User did not specify an S3 Access Key, nor a S3 Secret Access Key. Perhaps using EC2 instance role?
 				s3 = boto3.client('s3', \
-				endpoint_url=f'https://{target.hostname}')
+					endpoint_url=f'https://{target.hostname}')
 			else:
 				s3 = boto3.client('s3', \
 					endpoint_url=f'https://{target.hostname}', \
