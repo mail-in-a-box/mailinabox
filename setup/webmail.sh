@@ -5,6 +5,8 @@
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
+PHP_VER=$(php_version)
+
 # ### Installing Roundcube
 
 # We install Roundcube from sources, rather than from Ubuntu, because:

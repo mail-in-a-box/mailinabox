@@ -13,6 +13,8 @@
 source setup/functions.sh # load our functions
 source /etc/mailinabox.conf # load global vars
 
+PHP_VER=$(php_version)
+
 # Prereqs.
 
 echo "Installing Z-Push (Exchange/ActiveSync server)..."
