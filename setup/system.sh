@@ -92,6 +92,13 @@ fi
 # (See https://discourse.mailinabox.email/t/journalctl-reclaim-space-on-small-mailinabox/6728/11.)
 tools/editconf.py /etc/systemd/journald.conf MaxRetentionSec=10day
 
+# ### Improve server privacy
+
+# Disable MOTD adverts to prevent revealing server information in MOTD request headers
+# See https://ma.ttias.be/what-exactly-being-sent-ubuntu-motd/
+tools/editconf.py /etc/default/motd-news ENABLED=0
+rm -f /var/cache/motd-news
+
 # ### Add PPAs.
 
 # We install some non-standard Ubuntu packages maintained by other

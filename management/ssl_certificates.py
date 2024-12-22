@@ -23,7 +23,7 @@ def get_ssl_certificates(env):
 	# that the certificates are good for to the best certificate for
 	# the domain.
 
-	from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
+	from cryptography.hazmat.primitives.asymmetric import dsa, rsa, ec
 	from cryptography.x509 import Certificate
 
 	# The certificates are all stored here:
@@ -43,6 +43,12 @@ def get_ssl_certificates(env):
 				# to itself --- we want to find
 				# the cert that it should be a
 				# symlink to.
+				continue
+			if fn in ['ca','ca_certificate.pem','ca_private_key.pem']:
+				# Ignore as these are for generating a temporary
+				# "self-signed" certificate in a virgin setup (before
+				# Let's Encrypt gives us a certificate).
+				#
 				continue
 			fn = os.path.join(ssl_root, fn)
 			if os.path.isfile(fn):
@@ -68,13 +74,15 @@ def get_ssl_certificates(env):
 			# Not a valid PEM format for a PEM type we care about.
 			continue
 
-		# Is it a private key?
-		if isinstance(pem, RSAPrivateKey):
-			private_keys[pem.public_key().public_numbers()] = { "filename": fn, "key": pem }
-
 		# Is it a certificate?
 		if isinstance(pem, Certificate):
 			certificates.append({ "filename": fn, "cert": pem })
+		# It is a private key
+		elif (isinstance(pem, rsa.RSAPrivateKey)
+			or isinstance(pem, dsa.DSAPrivateKey)
+			or isinstance(pem, ec.EllipticCurvePrivateKey)):
+			private_keys[pem.public_key().public_numbers()] = { "filename": fn, "key": pem }
+
 
 	# Process the certificates.
 	domains = { }
@@ -518,7 +526,7 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 	# Check that the ssl_certificate & ssl_private_key files are good
 	# for the provided domain.
 
-	from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
+	from cryptography.hazmat.primitives.asymmetric import rsa, dsa, ec
 	from cryptography.x509 import Certificate
 
 	# The ssl_certificate file may contain a chain of certificates. We'll
@@ -552,7 +560,9 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 		except ValueError as e:
 			return (f"The private key file {ssl_private_key} is not a private key file: {e!s}", None)
 
-		if not isinstance(priv_key, RSAPrivateKey):
+		if (not isinstance(priv_key, rsa.RSAPrivateKey)
+			and not isinstance(priv_key, dsa.DSAPrivateKey)
+			and not isinstance(priv_key, ec.EllipticCurvePrivateKey)):
 			return ("The private key file %s is not a private key file." % ssl_private_key, None)
 
 		if priv_key.public_key().public_numbers() != cert.public_key().public_numbers():
@@ -655,7 +665,7 @@ def load_pem(pem):
 		msg = "File is not a valid PEM-formatted file."
 		raise ValueError(msg)
 	pem_type = pem_type.group(1)
-	if pem_type in {b"RSA PRIVATE KEY", b"PRIVATE KEY"}:
+	if pem_type.endswith(b"PRIVATE KEY"):
 		return serialization.load_pem_private_key(pem, password=None, backend=default_backend())
 	if pem_type == b"CERTIFICATE":
 		return load_pem_x509_certificate(pem, default_backend())
