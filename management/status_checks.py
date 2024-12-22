@@ -293,26 +293,45 @@ def run_network_checks(env, output):
 	# The user might have ended up on an IP address that was previously in use
 	# by a spammer, or the user may be deploying on a residential network. We
 	# will not be able to reliably send mail in these cases.
+	rev_ip4 = ".".join(reversed(env['PUBLIC_IP'].split('.')))
+	zen = query_dns(rev_ip4+'.zen.spamhaus.org', 'A', nxdomain=None, retry = False)
+	evaluate_spamhaus_lookup(env['PUBLIC_IP'], 'IPv4', rev_ip4, output, zen)
 
+	if not env['PUBLIC_IPV6']:
+		return
+
+	from ipaddress import IPv6Address
+
+	rev_ip6 = ".".join(reversed(IPv6Address(env['PUBLIC_IPV6']).exploded.split(':')))
+	zen = query_dns(rev_ip6+'.zen.spamhaus.org', 'A', nxdomain=None, retry = False)
+	evaluate_spamhaus_lookup(env['PUBLIC_IPV6'], 'IPv6', rev_ip6, output, zen)
+
+
+def evaluate_spamhaus_lookup(lookupaddress, lookuptype, lookupdomain, output, zen):
 	# See https://www.spamhaus.org/news/article/807/using-our-public-mirrors-check-your-return-codes-now. for
 	# information on spamhaus return codes
-	rev_ip4 = ".".join(reversed(env['PUBLIC_IP'].split('.')))
-	zen = query_dns(rev_ip4+'.zen.spamhaus.org', 'A', nxdomain=None)
 	if zen is None:
-		output.print_ok("IP address is not blacklisted by zen.spamhaus.org.")
+		output.print_ok(f"{lookuptype} address is not blacklisted by zen.spamhaus.org.")
 	elif zen == "[timeout]":
-		output.print_warning("Connection to zen.spamhaus.org timed out. Could not determine whether this box's IP address is blacklisted. Please try again later.")
+		output.print_warning(f"""Connection to zen.spamhaus.org timed out. Could not determine whether this box's
+		 	{lookuptype} address is blacklisted. Please try again later.""")
 	elif zen == "[Not Set]":
-		output.print_warning("Could not connect to zen.spamhaus.org. Could not determine whether this box's IP address is blacklisted. Please try again later.")
+		output.print_warning(f"""Could not connect to zen.spamhaus.org. Could not determine whether this box's
+			{lookuptype} address is blacklisted. Please try again later.""")
 	elif zen == "127.255.255.252":
-		output.print_warning("Incorrect spamhaus query: %s. Could not determine whether this box's IP address is blacklisted." % (rev_ip4+'.zen.spamhaus.org'))
+		output.print_warning(f"""Incorrect spamhaus query: {lookupdomain + '.zen.spamhaus.org'}. Could not determine whether
+		 	this box's {lookuptype} address is blacklisted.""")
 	elif zen == "127.255.255.254":
-		output.print_warning("Mail-in-a-Box is configured to use a public DNS server. This is not supported by spamhaus. Could not determine whether this box's IP address is blacklisted.")
+		output.print_warning(f"""Mail-in-a-Box is configured to use a public DNS server. This is not supported by
+			spamhaus. Could not determine whether this box's {lookuptype} address is blacklisted.""")
 	elif zen == "127.255.255.255":
-		output.print_warning("Too many queries have been performed on the spamhaus server. Could not determine whether this box's IP address is blacklisted.")
+		output.print_warning(f"""Too many queries have been performed on the spamhaus server. Could not determine
+		 	whether this box's {lookuptype} address is blacklisted.""")
 	else:
-		output.print_error("""The IP address of this machine {} is listed in the Spamhaus Block List (code {}),
-			which may prevent recipients from receiving your email. See http://www.spamhaus.org/query/ip/{}.""".format(env['PUBLIC_IP'], zen, env['PUBLIC_IP']))
+		output.print_error(f"""The {lookuptype} address of this machine {lookupaddress} is listed in the Spamhaus Block
+		 	List (code {zen}), which may prevent recipients from receiving your email. See
+		 	http://www.spamhaus.org/query/ip/{lookupaddress}.""")
+
 
 def run_domain_checks(rounded_time, env, output, pool, domains_to_check=None):
 	# Get the list of domains we handle mail for.
@@ -532,6 +551,8 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 	# Check that each custom secondary nameserver resolves the IP address.
 
 	if custom_secondary_ns and not probably_external_dns:
+		SOARecord = query_dns(domain, "SOA", at=env['PUBLIC_IP'])# Explicitly ask the local dns server.
+
 		for ns in custom_secondary_ns:
 			# We must first resolve the nameserver to an IP address so we can query it.
 			ns_ips = query_dns(ns, "A")
@@ -541,14 +562,35 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 			# Choose the first IP if nameserver returns multiple
 			ns_ip = ns_ips.split('; ')[0]
 
+			checkSOA = True
+
 			# Now query it to see what it says about this domain.
 			ip = query_dns(domain, "A", at=ns_ip, nxdomain=None)
 			if ip == correct_ip:
-				output.print_ok("Secondary nameserver %s resolved the domain correctly." % ns)
+				output.print_ok(f"Secondary nameserver {ns} resolved the domain correctly.")
 			elif ip is None:
-				output.print_error("Secondary nameserver %s is not configured to resolve this domain." % ns)
+				output.print_error(f"Secondary nameserver {ns} is not configured to resolve this domain.")
+				# No need to check SOA record if not configured as nameserver
+				checkSOA = False
+			elif ip == '[timeout]':
+				output.print_error(f"Secondary nameserver {ns} did not resolve this domain, result: {ip}")
+				checkSOA = False
 			else:
 				output.print_error(f"Secondary nameserver {ns} is not configured correctly. (It resolved this domain as {ip}. It should be {correct_ip}.)")
+
+			if checkSOA:
+				# Check that secondary DNS server is synchronized with our primary DNS server. Simplified by checking the SOA record which has a version number
+				SOASecondary = query_dns(domain, "SOA", at=ns_ip)
+
+				if SOARecord == SOASecondary:
+					output.print_ok(f"Secondary nameserver {ns} has consistent SOA record.")
+				elif SOARecord == '[Not Set]':
+					output.print_error(f"Secondary nameserver {ns} has no SOA record configured.")
+				elif SOARecord == '[timeout]':
+					output.print_error(f"Secondary nameserver {ns} timed out on checking SOA record.")
+				else:
+					output.print_error(f"""Secondary nameserver {ns} has inconsistent SOA record (primary: {SOARecord} versus secondary: {SOASecondary}).
+					Check that synchronization between secondary and primary DNS servers is properly set-up.""")
 
 def check_dns_zone_suggestions(domain, env, output, dns_zonefiles, domains_with_a_records):
 	# Warn if a custom DNS record is preventing this or the automatic www redirect from

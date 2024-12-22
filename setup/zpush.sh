@@ -120,4 +120,6 @@ restart_service php"$PHP_VER"-fpm
 
 # Fix states after upgrade
 
-hide_output php"$PHP_VER" /usr/local/lib/z-push/z-push-admin.php -a fixstates
+if [ $needs_update == 1 ]; then
+	hide_output php"$PHP_VER" /usr/local/lib/z-push/z-push-admin.php -a fixstates
+fi
