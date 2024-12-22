@@ -282,26 +282,45 @@ def run_network_checks(env, output):
 	# The user might have ended up on an IP address that was previously in use
 	# by a spammer, or the user may be deploying on a residential network. We
 	# will not be able to reliably send mail in these cases.
-	
+	rev_ip4 = ".".join(reversed(env['PUBLIC_IP'].split('.')))
+	zen = query_dns(rev_ip4+'.zen.spamhaus.org', 'A', nxdomain=None, retry = False)
+	evaluate_spamhaus_lookup(env['PUBLIC_IP'], 'IPv4', rev_ip4, output, zen)
+
+	if not env['PUBLIC_IPV6']:
+		return
+
+	from ipaddress import IPv6Address
+
+	rev_ip6 = ".".join(reversed(IPv6Address(env['PUBLIC_IPV6']).exploded.split(':')))
+	zen = query_dns(rev_ip6+'.zen.spamhaus.org', 'A', nxdomain=None, retry = False)
+	evaluate_spamhaus_lookup(env['PUBLIC_IPV6'], 'IPv6', rev_ip6, output, zen)
+
+
+def evaluate_spamhaus_lookup(lookupaddress, lookuptype, lookupdomain, output, zen):
 	# See https://www.spamhaus.org/news/article/807/using-our-public-mirrors-check-your-return-codes-now. for
 	# information on spamhaus return codes
-	rev_ip4 = ".".join(reversed(env['PUBLIC_IP'].split('.')))
-	zen = query_dns(rev_ip4+'.zen.spamhaus.org', 'A', nxdomain=None)
 	if zen is None:
-		output.print_ok("IP address is not blacklisted by zen.spamhaus.org.")
+		output.print_ok(f"{lookuptype} address is not blacklisted by zen.spamhaus.org.")
 	elif zen == "[timeout]":
-		output.print_warning("Connection to zen.spamhaus.org timed out. Could not determine whether this box's IP address is blacklisted. Please try again later.")
+		output.print_warning(f"""Connection to zen.spamhaus.org timed out. Could not determine whether this box's
+		 	{lookuptype} address is blacklisted. Please try again later.""")
 	elif zen == "[Not Set]":
-		output.print_warning("Could not connect to zen.spamhaus.org. Could not determine whether this box's IP address is blacklisted. Please try again later.")
+		output.print_warning(f"""Could not connect to zen.spamhaus.org. Could not determine whether this box's
+			{lookuptype} address is blacklisted. Please try again later.""")
 	elif zen == "127.255.255.252":
-		output.print_warning("Incorrect spamhaus query: %s. Could not determine whether this box's IP address is blacklisted." % (rev_ip4+'.zen.spamhaus.org'))
+		output.print_warning(f"""Incorrect spamhaus query: {lookupdomain + '.zen.spamhaus.org'}. Could not determine whether
+		 	this box's {lookuptype} address is blacklisted.""")
 	elif zen == "127.255.255.254":
-		output.print_warning("Mail-in-a-Box is configured to use a public DNS server. This is not supported by spamhaus. Could not determine whether this box's IP address is blacklisted.")
+		output.print_warning(f"""Mail-in-a-Box is configured to use a public DNS server. This is not supported by
+			spamhaus. Could not determine whether this box's {lookuptype} address is blacklisted.""")
 	elif zen == "127.255.255.255":
-		output.print_warning("Too many queries have been performed on the spamhaus server. Could not determine whether this box's IP address is blacklisted.")
+		output.print_warning(f"""Too many queries have been performed on the spamhaus server. Could not determine
+		 	whether this box's {lookuptype} address is blacklisted.""")
 	else:
-		output.print_error("""The IP address of this machine {} is listed in the Spamhaus Block List (code {}),
-			which may prevent recipients from receiving your email. See http://www.spamhaus.org/query/ip/{}.""".format(env['PUBLIC_IP'], zen, env['PUBLIC_IP']))
+		output.print_error(f"""The {lookuptype} address of this machine {lookupaddress} is listed in the Spamhaus Block
+		 	List (code {zen}), which may prevent recipients from receiving your email. See
+		 	http://www.spamhaus.org/query/ip/{lookupaddress}.""")
+
 
 def run_domain_checks(rounded_time, env, output, pool, domains_to_check=None):
 	# Get the list of domains we handle mail for.
