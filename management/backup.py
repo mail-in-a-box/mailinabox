@@ -512,13 +512,13 @@ def list_target_files(config):
 		# connect to the region & bucket
 		try:
 			if (config['target_user'] == '') and (config['target_pass'] == ''):
-				## User did not specify an S3 Access Key, nor a S3 Secret Access Key. Perhaps using EC2 instance role?
-				s3 = boto3.client('s3', \
+				# User did not specify an S3 Access Key, nor a S3 Secret Access Key. Perhaps using EC2 instance role?
+				s3 = boto3.client('s3',
 					endpoint_url=f'https://{target.hostname}')
 			else:
-				s3 = boto3.client('s3', \
-					endpoint_url=f'https://{target.hostname}', \
-					aws_access_key_id=config['target_user'], \
+				s3 = boto3.client('s3',
+					endpoint_url=f'https://{target.hostname}',
+					aws_access_key_id=config['target_user'],
 					aws_secret_access_key=config['target_pass'])
 			bucket_objects = s3.list_objects_v2(Bucket=bucket, Prefix=path)['Contents']
 			backup_list = [(key['Key'][len(path):], key['Size']) for key in bucket_objects]
