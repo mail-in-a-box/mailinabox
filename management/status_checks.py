@@ -283,7 +283,7 @@ def run_network_checks(env, output):
 	# by a spammer, or the user may be deploying on a residential network. We
 	# will not be able to reliably send mail in these cases.
 	rev_ip4 = ".".join(reversed(env['PUBLIC_IP'].split('.')))
-	zen = query_dns(rev_ip4+'.zen.spamhaus.org', 'A', nxdomain=None, retry = False)
+	zen = query_dns(rev_ip4+'.zen.spamhaus.org', 'A', nxdomain=None)
 	evaluate_spamhaus_lookup(env['PUBLIC_IP'], 'IPv4', rev_ip4, output, zen)
 
 	if not env['PUBLIC_IPV6']:
@@ -292,7 +292,7 @@ def run_network_checks(env, output):
 	from ipaddress import IPv6Address
 
 	rev_ip6 = ".".join(reversed(IPv6Address(env['PUBLIC_IPV6']).exploded.split(':')))
-	zen = query_dns(rev_ip6+'.zen.spamhaus.org', 'A', nxdomain=None, retry = False)
+	zen = query_dns(rev_ip6+'.zen.spamhaus.org', 'A', nxdomain=None)
 	evaluate_spamhaus_lookup(env['PUBLIC_IPV6'], 'IPv6', rev_ip6, output, zen)
 
 
