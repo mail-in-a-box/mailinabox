@@ -41,7 +41,7 @@ if [ $needs_update == 1 ]; then
 	mv /tmp/z-push/*/src /usr/local/lib/z-push
 	rm -rf /tmp/z-push.zip /tmp/z-push
 
-	# Create admin and top scripts with PHP_VER  
+	# Create admin and top scripts with PHP_VER
 	rm -f /usr/sbin/z-push-{admin,top}
     echo '#!/bin/bash' > /usr/sbin/z-push-admin
     echo php"$PHP_VER" /usr/local/lib/z-push/z-push-admin.php '"$@"' >> /usr/sbin/z-push-admin
@@ -49,7 +49,7 @@ if [ $needs_update == 1 ]; then
     echo '#!/bin/bash' > /usr/sbin/z-push-top
     echo php"$PHP_VER" /usr/local/lib/z-push/z-push-top.php '"$@"' >> /usr/sbin/z-push-top
     chmod 755 /usr/sbin/z-push-top
-	
+
 	echo $VERSION > /usr/local/lib/z-push/version
 fi
 
@@ -79,7 +79,7 @@ cp conf/zpush/backend_caldav.php /usr/local/lib/z-push/backend/caldav/config.php
 # Configure Autodiscover
 rm -f /usr/local/lib/z-push/autodiscover/config.php
 cp conf/zpush/autodiscover_config.php /usr/local/lib/z-push/autodiscover/config.php
-sed -i "s/PRIMARY_HOSTNAME/$PRIMARY_HOSTNAME/" /usr/local/lib/z-push/autodiscover/config.php
+sed -i "s/BOX_HOSTNAME/$BOX_HOSTNAME/" /usr/local/lib/z-push/autodiscover/config.php
 sed -i "s^define('TIMEZONE', .*^define('TIMEZONE', '$(cat /etc/timezone)');^" /usr/local/lib/z-push/autodiscover/config.php
 
 # Some directories it will use.

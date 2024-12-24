@@ -152,7 +152,7 @@ EOF
 # Setting a `postmaster_address` is required or LMTP won't start. An alias
 # will be created automatically by our management daemon.
 tools/editconf.py /etc/dovecot/conf.d/15-lda.conf \
-	"postmaster_address=postmaster@$PRIMARY_HOSTNAME"
+	"postmaster_address=postmaster@$BOX_HOSTNAME"
 
 # ### Sieve
 

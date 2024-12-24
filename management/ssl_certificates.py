@@ -28,7 +28,7 @@ def get_ssl_certificates(env):
 			if fn == 'ssl_certificate.pem':
 				# This is always a symbolic link
 				# to the certificate to use for
-				# PRIMARY_HOSTNAME. Don't let it
+				# BOX_HOSTNAME. Don't let it
 				# be eligible for use because we
 				# could end up creating a symlink
 				# to itself --- we want to find
@@ -73,8 +73,8 @@ def get_ssl_certificates(env):
 	domains = { }
 	for cert in certificates:
 		# What domains is this certificate good for?
-		cert_domains, primary_domain = get_certificate_domains(cert["cert"])
-		cert["primary_domain"] = primary_domain
+		cert_domains, common_name = get_certificate_domains(cert["cert"])
+		cert["common_name"] = common_name
 
 		# Is there a private key file for this certificate?
 		private_key = private_keys.get(cert["cert"].public_key().public_numbers())
@@ -84,9 +84,9 @@ def get_ssl_certificates(env):
 
 		# Add this cert to the list of certs usable for the domains.
 		for domain in cert_domains:
-			# The primary hostname can only use a certificate mapped
+			# The box hostname can only use a certificate mapped
 			# to the system private key.
-			if domain == env['PRIMARY_HOSTNAME'] and cert["private_key"]["filename"] != os.path.join(env['STORAGE_ROOT'], 'ssl', 'ssl_private_key.pem'):
+			if domain == env['BOX_HOSTNAME'] and cert["private_key"]["filename"] != os.path.join(env['STORAGE_ROOT'], 'ssl', 'ssl_private_key.pem'):
 				continue
 
 			domains.setdefault(domain, []).append(cert)
@@ -134,7 +134,7 @@ def get_ssl_certificates(env):
 		ret[domain] = {
 			"private-key": cert["private_key"]["filename"],
 			"certificate": cert["filename"],
-			"primary-domain": cert["primary_domain"],
+			"common-name": cert["common_name"],
 			"certificate_object": cert["cert"],
 			}
 
@@ -148,12 +148,12 @@ def get_domain_ssl_files(domain, ssl_certificates, env, allow_missing_cert=False
 		system_certificate = {
 			"private-key": ssl_private_key,
 			"certificate": ssl_certificate,
-			"primary-domain": env['PRIMARY_HOSTNAME'],
+			"common-name": env['BOX_HOSTNAME'],
 			"certificate_object": load_pem(load_cert_chain(ssl_certificate)[0]),
 		}
 
-	if use_main_cert and domain == env['PRIMARY_HOSTNAME']:
-		# The primary domain must use the server certificate because
+	if use_main_cert and domain == env['BOX_HOSTNAME']:
+		# The box domain must use the server certificate because
 		# it is hard-coded in some service configuration files.
 		return system_certificate
 
@@ -263,7 +263,7 @@ def provision_certificates(env, limit_domains):
 	# we'll create a list of lists of domains where the inner lists have
 	# at most 100 items. By sorting we also get the DNS zone domain as the first
 	# entry in each list (unless we overflow beyond 100) which ends up as the
-	# primary domain listed in each certificate.
+	# first domain listed in each certificate.
 	from dns_update import get_dns_zones
 	certs = { }
 	for zone, _zonefile in get_dns_zones(env):
@@ -467,21 +467,21 @@ def install_cert_copy_file(fn, env):
 def post_install_func(env):
 	ret = []
 
-	# Get the certificate to use for PRIMARY_HOSTNAME.
+	# Get the certificate to use for BOX_HOSTNAME.
 	ssl_certificates = get_ssl_certificates(env)
-	cert = get_domain_ssl_files(env['PRIMARY_HOSTNAME'], ssl_certificates, env, use_main_cert=False)
+	cert = get_domain_ssl_files(env['BOX_HOSTNAME'], ssl_certificates, env, use_main_cert=False)
 	if not cert:
 		# Ruh-row, we don't have any certificate usable
-		# for the primary hostname.
-		ret.append("there is no valid certificate for " + env['PRIMARY_HOSTNAME'])
+		# for the box hostname.
+		ret.append("there is no valid certificate for " + env['BOX_HOSTNAME'])
 
-	# Symlink the best cert for PRIMARY_HOSTNAME to the system
+	# Symlink the best cert for BOX_HOSTNAME to the system
 	# certificate path, which is hard-coded for various purposes, and then
 	# restart postfix and dovecot.
 	system_ssl_certificate = os.path.join(os.path.join(env["STORAGE_ROOT"], 'ssl', 'ssl_certificate.pem'))
 	if cert and os.readlink(system_ssl_certificate) != cert['certificate']:
 		# Update symlink.
-		ret.append("updating primary certificate")
+		ret.append("updating box certificate")
 		ssl_certificate = cert['certificate']
 		os.unlink(system_ssl_certificate)
 		os.symlink(ssl_certificate, system_ssl_certificate)
@@ -523,7 +523,7 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 	# First check that the domain name is one of the names allowed by
 	# the certificate.
 	if domain is not None:
-		certificate_names, _cert_primary_name = get_certificate_domains(cert)
+		certificate_names, _cn = get_certificate_domains(cert)
 
 		# Check that the domain appears among the acceptable names, or a wildcard
 		# form of the domain name (which is a stricter check than the specs but
@@ -558,9 +558,9 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 	if cert.issuer == cert.subject:
 		return ("SELF-SIGNED", None)
 
-	# When selecting which certificate to use for non-primary domains, we check if the primary
-	# certificate or a www-parent-domain certificate is good for the domain. There's no need
-	# to run extra checks beyond this point.
+	# When selecting which certificate to use for non-registrable domains, we check if the
+	# registrable domain certificate or a www-parent-domain certificate is good for the domain.
+	# There's no need to run extra checks beyond this point.
 	if just_check_domain:
 		return ("OK", None)
 

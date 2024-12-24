@@ -51,7 +51,7 @@ source setup/start.sh
 EOF
 chmod +x /usr/local/bin/mailinabox
 
-# Ask the user for the PRIMARY_HOSTNAME, PUBLIC_IP, and PUBLIC_IPV6,
+# Ask the user for the BOX_HOSTNAME, PUBLIC_IP, and PUBLIC_IPV6,
 # if values have not already been set in environment variables. When running
 # non-interactively, be sure to set values for all! Also sets STORAGE_USER and
 # STORAGE_ROOT.
@@ -60,7 +60,7 @@ source setup/questions.sh
 # Run some network checks to make sure setup on this machine makes sense.
 # Skip on existing installs since we don't want this to block the ability to
 # upgrade, and these checks are also in the control panel status checks.
-if [ -z "${DEFAULT_PRIMARY_HOSTNAME:-}" ]; then
+if [ -z "${DEFAULT_BOX_HOSTNAME:-}" ]; then
 if [ -z "${SKIP_NETWORK_CHECKS:-}" ]; then
 	source setup/network-checks.sh
 fi
@@ -95,7 +95,7 @@ fi
 cat > /etc/mailinabox.conf << EOF;
 STORAGE_USER=$STORAGE_USER
 STORAGE_ROOT=$STORAGE_ROOT
-PRIMARY_HOSTNAME=$PRIMARY_HOSTNAME
+BOX_HOSTNAME=$BOX_HOSTNAME
 PUBLIC_IP=$PUBLIC_IP
 PUBLIC_IPV6=$PUBLIC_IPV6
 PRIVATE_IP=$PRIVATE_IP
@@ -160,9 +160,9 @@ echo "Your Mail-in-a-Box is running."
 echo
 echo "Please log in to the control panel for further instructions at:"
 echo
-if management/status_checks.py --check-primary-hostname; then
+if management/status_checks.py --check-box-hostname; then
 	# Show the nice URL if it appears to be resolving and has a valid certificate.
-	echo "https://$PRIMARY_HOSTNAME/admin"
+	echo "https://$BOX_HOSTNAME/admin"
 	echo
 	echo "If you have a DNS problem put the box's IP address in the URL"
 	echo "(https://$PUBLIC_IP/admin) but then check the TLS fingerprint:"
