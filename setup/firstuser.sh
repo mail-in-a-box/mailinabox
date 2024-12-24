@@ -34,8 +34,8 @@ if [ -z "$(management/cli.py user)" ]; then
 		# But in a non-interactive shell, just make something up.
 		# This is normally for testing.
 		else
-			# Use me@PRIMARY_HOSTNAME
-			EMAIL_ADDR=me@$PRIMARY_HOSTNAME
+			# Use me@BOX_HOSTNAME
+			EMAIL_ADDR=me@$BOX_HOSTNAME
 			EMAIL_PW=12345678
 			echo
 			echo "Creating a new administrative mail account for $EMAIL_ADDR with password $EMAIL_PW."
@@ -54,5 +54,5 @@ if [ -z "$(management/cli.py user)" ]; then
 	hide_output management/cli.py user make-admin "$EMAIL_ADDR"
 
 	# Create an alias to which we'll direct all automatically-created administrative aliases.
-	management/cli.py alias add "administrator@$PRIMARY_HOSTNAME" "$EMAIL_ADDR" > /dev/null
+	management/cli.py alias add "administrator@$BOX_HOSTNAME" "$EMAIL_ADDR" > /dev/null
 fi

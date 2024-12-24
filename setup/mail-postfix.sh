@@ -57,7 +57,7 @@ tools/editconf.py /etc/postfix/main.cf \
 	inet_interfaces=all \
 	smtp_bind_address="$PRIVATE_IP" \
 	smtp_bind_address6="$PRIVATE_IPV6" \
-	myhostname="$PRIMARY_HOSTNAME"\
+	myhostname="$BOX_HOSTNAME"\
 	smtpd_banner="\$myhostname ESMTP Hi, I'm a Mail-in-a-Box (Ubuntu/Postfix; see https://mailinabox.email/)" \
 	mydestination=localhost
 
@@ -121,7 +121,7 @@ cp conf/postfix_outgoing_mail_header_filters /etc/postfix/outgoing_mail_header_f
 # Modify the `outgoing_mail_header_filters` file to use the local machine name and ip
 # on the first received header line.  This may help reduce the spam score of email by
 # removing the 127.0.0.1 reference.
-sed -i "s/PRIMARY_HOSTNAME/$PRIMARY_HOSTNAME/" /etc/postfix/outgoing_mail_header_filters
+sed -i "s/BOX_HOSTNAME/$BOX_HOSTNAME/" /etc/postfix/outgoing_mail_header_filters
 sed -i "s/PUBLIC_IP/$PUBLIC_IP/" /etc/postfix/outgoing_mail_header_filters
 
 # Enable TLS on incoming connections. It is not required on port 25, allowing for opportunistic

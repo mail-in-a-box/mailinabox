@@ -149,36 +149,36 @@ def migration_11(env):
 
 def migration_12(env):
 	# Upgrading to Carddav Roundcube plugin to version 3+, it requires the carddav_*
-        # tables to be dropped.
-        # Checking that the roundcube database already exists.
-        if os.path.exists(os.path.join(env["STORAGE_ROOT"], "mail/roundcube/roundcube.sqlite")):
-            import sqlite3
-            conn = sqlite3.connect(os.path.join(env["STORAGE_ROOT"], "mail/roundcube/roundcube.sqlite"))
-            c = conn.cursor()
-            # Get a list of all the tables that begin with 'carddav_'
-            c.execute("SELECT name FROM sqlite_master WHERE type = ? AND name LIKE ?", ('table', 'carddav_%'))
-            carddav_tables = c.fetchall()
-            # If there were tables that begin with 'carddav_', drop them
-            if carddav_tables:
-                for table in carddav_tables:
-                    try:
-                        table = table[0]
-                        c = conn.cursor()
-                        dropcmd = "DROP TABLE %s" % table
-                        c.execute(dropcmd)
-                    except:
-                        print("Failed to drop table", table)
-            # Save.
-            conn.commit()
-            conn.close()
+	# tables to be dropped.
+	# Checking that the roundcube database already exists.
+	if os.path.exists(os.path.join(env["STORAGE_ROOT"], "mail/roundcube/roundcube.sqlite")):
+		import sqlite3
+		conn = sqlite3.connect(os.path.join(env["STORAGE_ROOT"], "mail/roundcube/roundcube.sqlite"))
+		c = conn.cursor()
+		# Get a list of all the tables that begin with 'carddav_'
+		c.execute("SELECT name FROM sqlite_master WHERE type = ? AND name LIKE ?", ('table', 'carddav_%'))
+		carddav_tables = c.fetchall()
+		# If there were tables that begin with 'carddav_', drop them
+		if carddav_tables:
+			for table in carddav_tables:
+				try:
+					table = table[0]
+					c = conn.cursor()
+					dropcmd = "DROP TABLE %s" % table
+					c.execute(dropcmd)
+				except:
+					print("Failed to drop table", table)
+		# Save.
+		conn.commit()
+		conn.close()
 
-            # Delete all sessions, requiring users to login again to recreate carddav_*
-            # databases
-            conn = sqlite3.connect(os.path.join(env["STORAGE_ROOT"], "mail/roundcube/roundcube.sqlite"))
-            c = conn.cursor()
-            c.execute("delete from session;")
-            conn.commit()
-            conn.close()
+		# Delete all sessions, requiring users to login again to recreate carddav_*
+		# databases
+		conn = sqlite3.connect(os.path.join(env["STORAGE_ROOT"], "mail/roundcube/roundcube.sqlite"))
+		c = conn.cursor()
+		c.execute("delete from session;")
+		conn.commit()
+		conn.close()
 
 def migration_13(env):
 	# Add the "mfa" table for configuring MFA for login to the control panel.
@@ -189,6 +189,13 @@ def migration_14(env):
 	# Add the "auto_aliases" table.
 	db = os.path.join(env["STORAGE_ROOT"], 'mail/users.sqlite')
 	shell("check_call", ["sqlite3", db, "CREATE TABLE auto_aliases (id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT NOT NULL UNIQUE, destination TEXT NOT NULL, permitted_senders TEXT);"])
+
+def migration_15(env):
+	# Replace PRIMARY_HOSTNAME with BOX_HOSTNAME in mailinabox.conf
+	shell("check_call", ["sed", "-i", "s/PRIMARY_HOSTNAME/BOX_HOSTNAME/g", "/etc/mailinabox.conf"])
+	env["BOX_HOSTNAME"] = env.get("PRIMARY_HOSTNAME", env.get("BOX_HOSTNAME"))
+	env["PRIMARY_HOSTNAME"] = None
+	del env["PRIMARY_HOSTNAME"]
 
 ###########################################################
 

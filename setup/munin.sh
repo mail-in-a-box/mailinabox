@@ -24,12 +24,12 @@ includedir /etc/munin/munin-conf.d
 cgiurl_graph /admin/munin/cgi-graph
 
 # a simple host tree
-[$PRIMARY_HOSTNAME]
+[$BOX_HOSTNAME]
 address 127.0.0.1
 
 # send alerts to the following address
 contacts admin
-contact.admin.command mail -s "Munin notification \${var:host}" administrator@$PRIMARY_HOSTNAME
+contact.admin.command mail -s "Munin notification \${var:host}" administrator@$BOX_HOSTNAME
 contact.admin.always_send warning critical
 EOF
 
@@ -40,7 +40,7 @@ chown munin /var/log/munin/munin-cgi-graph.log
 # ensure munin-node knows the name of this machine
 # and reduce logging level to warning
 tools/editconf.py /etc/munin/munin-node.conf -s \
-	host_name="$PRIMARY_HOSTNAME" \
+	host_name="$BOX_HOSTNAME" \
 	log_level=1
 
 # Update the activated plugins through munin's autoconfiguration.

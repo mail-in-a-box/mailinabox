@@ -3,15 +3,15 @@
 # the rest of the system setup so we may not yet have things installed.
 apt_get_quiet install bind9-host sed netcat-openbsd
 
-# Stop if the PRIMARY_HOSTNAME is listed in the Spamhaus Domain Block List.
+# Stop if the BOX_HOSTNAME is listed in the Spamhaus Domain Block List.
 # The user might have chosen a name that was previously in use by a spammer
 # and will not be able to reliably send mail. Do this after any automatic
 # choices made above.
-if host "$PRIMARY_HOSTNAME.dbl.spamhaus.org" > /dev/null; then
+if host "$BOX_HOSTNAME.dbl.spamhaus.org" > /dev/null; then
 	echo
-	echo "The hostname you chose '$PRIMARY_HOSTNAME' is listed in the"
+	echo "The hostname you chose '$BOX_HOSTNAME' is listed in the"
 	echo "Spamhaus Domain Block List. See http://www.spamhaus.org/dbl/"
-	echo "and http://www.spamhaus.org/query/domain/$PRIMARY_HOSTNAME."
+	echo "and http://www.spamhaus.org/query/domain/$BOX_HOSTNAME."
 	echo
 	echo "You will not be able to send mail using this domain name, so"
 	echo "setup cannot continue."

@@ -462,7 +462,7 @@ class BashScript(Grammar):
 		v = v.replace("</pre>\n<pre class='shell'>", "")
 		v = re.sub("<pre>([\w\W]*?)</pre>", lambda m : "<pre>" + strip_indent(m.group(1)) + "</pre>", v)
 
-		v = re.sub(r"(\$?)PRIMARY_HOSTNAME", r"<b>box.yourdomain.com</b>", v)
+		v = re.sub(r"(\$?)BOX_HOSTNAME", r"<b>box.yourdomain.com</b>", v)
 		v = re.sub(r"\$STORAGE_ROOT", r"<b>$STORE</b>", v)
 		v = v.replace("`pwd`",  "<code><b>/path/to/mailinabox</b></code>")
 

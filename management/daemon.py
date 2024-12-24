@@ -125,7 +125,7 @@ def index():
 
 
 	return render_template('index.html',
-		hostname=env['PRIMARY_HOSTNAME'],
+		hostname=env['BOX_HOSTNAME'],
 		storage_root=env['STORAGE_ROOT'],
 
 		no_users_exist=no_users_exist,

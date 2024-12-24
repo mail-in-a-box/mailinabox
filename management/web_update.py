@@ -39,10 +39,10 @@ def get_web_domains(env, include_www_redirects=True, include_auto=True, exclude_
 		# IP address than this box. Remove those domains from our list.
 		domains -= get_domains_with_a_records(env)
 
-	# Ensure the PRIMARY_HOSTNAME is in the list so we can serve webmail
+	# Ensure the BOX_HOSTNAME is in the list so we can serve webmail
 	# as well as Z-Push for Exchange ActiveSync. This can't be removed
 	# by a custom A/AAAA record and is never a 'www.' redirect.
-	domains.add(env['PRIMARY_HOSTNAME'])
+	domains.add(env['BOX_HOSTNAME'])
 
 	# Sort the list so the nginx conf gets written in a stable order.
 	return sort_domains(domains, env)
@@ -86,18 +86,18 @@ def do_web_update(env):
 	# Load the templates.
 	template0 = read_conf("nginx.conf")
 	template1 = read_conf("nginx-alldomains.conf")
-	template2 = read_conf("nginx-primaryonly.conf")
+	template2 = read_conf("nginx-boxonly.conf")
 	template3 = "\trewrite ^(.*) https://$REDIRECT_DOMAIN$1 permanent;\n"
 
-	# Add the PRIMARY_HOST configuration first so it becomes nginx's default server.
-	nginx_conf += make_domain_config(env['PRIMARY_HOSTNAME'], [template0, template1, template2], ssl_certificates, env)
+	# Add the BOX_HOSTNAME configuration first so it becomes nginx's default server.
+	nginx_conf += make_domain_config(env['BOX_HOSTNAME'], [template0, template1, template2], ssl_certificates, env)
 
 	# Add configuration all other web domains.
 	has_root_proxy_or_redirect = get_web_domains_with_root_overrides(env)
 	web_domains_not_redirect = get_web_domains(env, include_www_redirects=False)
 	for domain in get_web_domains(env):
-		if domain == env['PRIMARY_HOSTNAME']:
-			# PRIMARY_HOSTNAME is handled above.
+		if domain == env['BOX_HOSTNAME']:
+			# BOX_HOSTNAME is handled above.
 			continue
 		if domain in web_domains_not_redirect:
 			# This is a regular domain.
@@ -250,7 +250,7 @@ def get_web_domains_info(env):
 	def check_cert(domain):
 		try:
 			tls_cert = get_domain_ssl_files(domain, ssl_certificates, env, allow_missing_cert=True)
-		except OSError: # PRIMARY_HOSTNAME cert is missing
+		except OSError: # BOX_HOSTNAME cert is missing
 			tls_cert = None
 		if tls_cert is None: return ("danger", "No certificate installed.")
 		cert_status, cert_status_details = check_certificate(domain, tls_cert["certificate"], tls_cert["private-key"])

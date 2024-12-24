@@ -517,7 +517,7 @@ def add_auto_aliases(aliases, env):
 	conn.commit()
 
 def get_system_administrator(env):
-	return "administrator@" + env['PRIMARY_HOSTNAME']
+	return "administrator@" + env['BOX_HOSTNAME']
 
 def get_required_aliases(env):
 	# These are the aliases that must exist.
@@ -527,7 +527,7 @@ def get_required_aliases(env):
 	aliases.add(get_system_administrator(env))
 
 	# The hostmaster alias is exposed in the DNS SOA for each zone.
-	aliases.add("hostmaster@" + env['PRIMARY_HOSTNAME'])
+	aliases.add("hostmaster@" + env['BOX_HOSTNAME'])
 
 	# Get a list of domains we serve mail for, except ones for which the only
 	# email on that domain are the required aliases or a catch-all/domain-forwarder.

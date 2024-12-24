@@ -253,7 +253,7 @@ if [ ! -f "$STORAGE_ROOT/owncloud/owncloud.db" ]; then
 	mkdir -p "$STORAGE_ROOT/owncloud"
 
 	# Create an initial configuration file.
-	instanceid=oc$(echo "$PRIMARY_HOSTNAME" | sha1sum | fold -w 10 | head -n 1)
+	instanceid=oc$(echo "$BOX_HOSTNAME" | sha1sum | fold -w 10 | head -n 1)
 	cat > "$STORAGE_ROOT/owncloud/config.php" <<EOF;
 <?php
 \$CONFIG = array (
@@ -308,7 +308,7 @@ fi
 
 # Update config.php.
 # * trusted_domains is reset to localhost by autoconfig starting with ownCloud 8.1.1,
-#   so set it here. It also can change if the box's PRIMARY_HOSTNAME changes, so
+#   so set it here. It also can change if the box's BOX_HOSTNAME changes, so
 #   this will make sure it has the right value.
 # * Some settings weren't included in previous versions of Mail-in-a-Box.
 # * We need to set the timezone to the system timezone to allow fail2ban to ban
@@ -325,10 +325,10 @@ include("$STORAGE_ROOT/owncloud/config.php");
 
 \$CONFIG['config_is_read_only'] = false;
 
-\$CONFIG['trusted_domains'] = array('$PRIMARY_HOSTNAME');
+\$CONFIG['trusted_domains'] = array('$BOX_HOSTNAME');
 
 \$CONFIG['memcache.local'] = '\OC\Memcache\APCu';
-\$CONFIG['overwrite.cli.url'] = 'https://${PRIMARY_HOSTNAME}/cloud';
+\$CONFIG['overwrite.cli.url'] = 'https://${BOX_HOSTNAME}/cloud';
 
 \$CONFIG['logtimezone'] = '$TIMEZONE';
 \$CONFIG['logdateformat'] = 'Y-m-d H:i:s';
@@ -342,8 +342,8 @@ include("$STORAGE_ROOT/owncloud/config.php");
   ),
 );
 
-\$CONFIG['mail_domain'] = '$PRIMARY_HOSTNAME';
-\$CONFIG['mail_from_address'] = 'administrator'; # just the local part, matches the required administrator alias on mail_domain/$PRIMARY_HOSTNAME
+\$CONFIG['mail_domain'] = '$BOX_HOSTNAME';
+\$CONFIG['mail_from_address'] = 'administrator'; # just the local part, matches the required administrator alias on mail_domain/$BOX_HOSTNAME
 \$CONFIG['mail_smtpmode'] = 'sendmail';
 \$CONFIG['mail_smtpauth'] = true; # if smtpmode is smtp
 \$CONFIG['mail_smtphost'] = '127.0.0.1'; # if smtpmode is smtp

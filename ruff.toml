@@ -1,0 +1,4 @@
+exclude = ["tools/mail.py", "tools/readable_bash.py"]
+
+[lint]
+ignore = ["E701", "E401", "E722", "E741", "E402"]

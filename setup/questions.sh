@@ -26,8 +26,8 @@ if [ -z "${NONINTERACTIVE:-}" ]; then
 fi
 
 # The box needs a name.
-if [ -z "${PRIMARY_HOSTNAME:-}" ]; then
-	if [ -z "${DEFAULT_PRIMARY_HOSTNAME:-}" ]; then
+if [ -z "${BOX_HOSTNAME:-}" ]; then
+	if [ -z "${DEFAULT_BOX_HOSTNAME:-}" ]; then
 		# We recommend to use box.example.com as this hosts name. The
 		# domain the user possibly wants to use is example.com then.
 		# We strip the string "box." from the hostname to get the mail
@@ -66,19 +66,19 @@ you really want.
 
 		# Take the part after the @-sign as the user's domain name, and add
 		# 'box.' to the beginning to create a default hostname for this machine.
-		DEFAULT_PRIMARY_HOSTNAME=box.$(echo "$EMAIL_ADDR" | sed 's/.*@//')
+		DEFAULT_BOX_HOSTNAME=box.$(echo "$EMAIL_ADDR" | sed 's/.*@//')
 	fi
 
 	input_box "Hostname" \
 "This box needs a name, called a 'hostname'. The name will form a part of the box's web address.
 \n\nWe recommend that the name be a subdomain of the domain in your email
-address, so we're suggesting $DEFAULT_PRIMARY_HOSTNAME.
+address, so we're suggesting $DEFAULT_BOX_HOSTNAME.
 \n\nYou can change it, but we recommend you don't.
 \n\nHostname:" \
-		"$DEFAULT_PRIMARY_HOSTNAME" \
-		PRIMARY_HOSTNAME
+		"$DEFAULT_BOX_HOSTNAME" \
+		BOX_HOSTNAME
 
-	if [ -z "$PRIMARY_HOSTNAME" ]; then
+	if [ -z "$BOX_HOSTNAME" ]; then
 		# user hit ESC/cancel
 		exit
 	fi
@@ -181,8 +181,8 @@ if [ "$PUBLIC_IPV6" = "auto" ]; then
 	# Use a public API to get our public IPv6 address, or fall back to local network configuration.
 	PUBLIC_IPV6=$(get_publicip_from_web_service 6 || get_default_privateip 6)
 fi
-if [ "$PRIMARY_HOSTNAME" = "auto" ]; then
-	PRIMARY_HOSTNAME=$(get_default_hostname)
+if [ "$BOX_HOSTNAME" = "auto" ]; then
+	BOX_HOSTNAME=$(get_default_hostname)
 fi
 
 # Set STORAGE_USER and STORAGE_ROOT to default values (user-data and /home/user-data), unless
@@ -196,7 +196,7 @@ fi
 
 # Show the configuration, since the user may have not entered it manually.
 echo
-echo "Primary Hostname: $PRIMARY_HOSTNAME"
+echo "Box Hostname: $BOX_HOSTNAME"
 echo "Public IP Address: $PUBLIC_IP"
 if [ -n "$PUBLIC_IPV6" ]; then
 	echo "Public IPv6 Address: $PUBLIC_IPV6"

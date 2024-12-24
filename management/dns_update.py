@@ -22,13 +22,13 @@ DOMAIN_RE = r"^(?!\-)(?:[*][.])?(?:[a-zA-Z\d\-_]{0,62}[a-zA-Z\d_]\.){1,126}(?!\d
 def get_dns_domains(env):
 	# Add all domain names in use by email users and mail aliases, any
 	# domains we serve web for (except www redirects because that would
-	# lead to infinite recursion here) and ensure PRIMARY_HOSTNAME is in the list.
+	# lead to infinite recursion here) and ensure BOX_HOSTNAME is in the list.
 	from mailconfig import get_mail_domains
 	from web_update import get_web_domains
 	domains = set()
 	domains |= set(get_mail_domains(env))
 	domains |= set(get_web_domains(env, include_www_redirects=False))
-	domains.add(env['PRIMARY_HOSTNAME'])
+	domains.add(env['BOX_HOSTNAME'])
 	return domains
 
 def get_dns_zones(env):
@@ -144,10 +144,10 @@ def build_zones(env):
 	auto_domains = web_domains - set(get_web_domains(env, include_auto=False))
 	domains |= auto_domains # www redirects not included in the initial list, see above
 
-	# Add ns1/ns2+PRIMARY_HOSTNAME which must also have A/AAAA records
+	# Add ns1/ns2+BOX_HOSTNAME which must also have A/AAAA records
 	# when the box is acting as authoritative DNS server for its domains.
 	for ns in ("ns1", "ns2"):
-		d = ns + "." + env["PRIMARY_HOSTNAME"]
+		d = ns + "." + env["BOX_HOSTNAME"]
 		domains.add(d)
 		auto_domains.add(d)
 
@@ -161,9 +161,9 @@ def build_zones(env):
 		for domain in domains
 	}
 
-	# For MTA-STS, we'll need to check if the PRIMARY_HOSTNAME certificate is
+	# For MTA-STS, we'll need to check if the BOX_HOSTNAME certificate is
 	# singned and valid. Check that now rather than repeatedly for each domain.
-	domains[env["PRIMARY_HOSTNAME"]]["certificate-is-valid"] = is_domain_cert_signed_and_valid(env["PRIMARY_HOSTNAME"], env)
+	domains[env["BOX_HOSTNAME"]]["certificate-is-valid"] = is_domain_cert_signed_and_valid(env["BOX_HOSTNAME"], env)
 
 	# Load custom records to add to zones.
 	additional_records = list(get_custom_dns_config(env))
@@ -186,19 +186,19 @@ def build_zone(domain, domain_properties, additional_records, env, is_zone=True)
 	# 'False' in the tuple indicates these records would not be used if the zone
 	# is managed outside of the box.
 	if is_zone:
-		# Obligatory NS record to ns1.PRIMARY_HOSTNAME.
-		records.append((None,  "NS",  "ns1.%s." % env["PRIMARY_HOSTNAME"], False))
+		# Obligatory NS record to ns1.BOX_HOSTNAME.
+		records.append((None,  "NS",  "ns1.%s." % env["BOX_HOSTNAME"], False))
 
-		# NS record to ns2.PRIMARY_HOSTNAME or whatever the user overrides.
+		# NS record to ns2.BOX_HOSTNAME or whatever the user overrides.
 		# User may provide one or more additional nameservers
 		secondary_ns_list = get_secondary_dns(additional_records, mode="NS") \
-			or ["ns2." + env["PRIMARY_HOSTNAME"]]
+			or ["ns2." + env["BOX_HOSTNAME"]]
 		records.extend((None,  "NS", secondary_ns+'.', False) for secondary_ns in secondary_ns_list)
 
 
-	# In PRIMARY_HOSTNAME...
-	if domain == env["PRIMARY_HOSTNAME"]:
-		# Set the A/AAAA records. Do this early for the PRIMARY_HOSTNAME so that the user cannot override them
+	# In BOX_HOSTNAME...
+	if domain == env["BOX_HOSTNAME"]:
+		# Set the A/AAAA records. Do this early for the BOX_HOSTNAME so that the user cannot override them
 		# and we can provide different explanatory text.
 		records.append((None, "A", env["PUBLIC_IP"], "Required. Sets the IP address of the box."))
 		if env.get("PUBLIC_IPV6"): records.append((None, "AAAA", env["PUBLIC_IPV6"], "Required. Sets the IPv6 address of the box."))
@@ -281,7 +281,7 @@ def build_zone(domain, domain_properties, additional_records, env, is_zone=True)
 	if domain_properties[domain]["mail"]:
 		# The MX record says where email for the domain should be delivered: Here!
 		if not has_rec(None, "MX", prefix="10 "):
-			records.append((None,  "MX",  "10 %s." % env["PRIMARY_HOSTNAME"], "Required. Specifies the hostname (and priority) of the machine that handles @%s mail." % domain))
+			records.append((None,  "MX",  "10 %s." % env["BOX_HOSTNAME"], "Required. Specifies the hostname (and priority) of the machine that handles @%s mail." % domain))
 
 		# SPF record: Permit the box ('mx', see above) to send mail on behalf of
 		# the domain, and no one else.
@@ -304,14 +304,14 @@ def build_zone(domain, domain_properties, additional_records, env, is_zone=True)
 			records.append(("_dmarc", "TXT", 'v=DMARC1; p=quarantine;', "Recommended. Specifies that mail that does not originate from the box but claims to be from @%s or which does not have a valid DKIM signature is suspect and should be quarantined by the recipient's mail system." % domain))
 
 	if domain_properties[domain]["user"]:
-		# Add CardDAV/CalDAV SRV records on the non-primary hostname that points to the primary hostname
+		# Add CardDAV/CalDAV SRV records on the non-box hostname that points to the box hostname
 		# for autoconfiguration of mail clients (so only domains hosting user accounts need it).
 		# The SRV record format is priority (0, whatever), weight (0, whatever), port, service provider hostname (w/ trailing dot).
-		if domain != env["PRIMARY_HOSTNAME"]:
+		if domain != env["BOX_HOSTNAME"]:
 			for dav in ("card", "cal"):
 				qname = "_" + dav + "davs._tcp"
 				if not has_rec(qname, "SRV"):
-					records.append((qname, "SRV", "0 0 443 " + env["PRIMARY_HOSTNAME"] + ".", "Recommended. Specifies the hostname of the server that handles CardDAV/CalDAV services for email addresses on this domain."))
+					records.append((qname, "SRV", "0 0 443 " + env["BOX_HOSTNAME"] + ".", "Recommended. Specifies the hostname of the server that handles CardDAV/CalDAV services for email addresses on this domain."))
 
 	# If this is a domain name that there are email addresses configured for, i.e. "something@"
 	# this domain name, then the domain name is a MTA-STS (https://tools.ietf.org/html/rfc8461)
@@ -324,7 +324,7 @@ def build_zone(domain, domain_properties, additional_records, env, is_zone=True)
 	#
 	# The policy itself is served at the "mta-sts" (no underscore) subdomain over HTTPS. Therefore
 	# the TLS certificate used by Postfix for STARTTLS must be a valid certificate for the MX
-	# domain name (PRIMARY_HOSTNAME) *and* the TLS certificate used by nginx for HTTPS on the mta-sts
+	# domain name (BOX_HOSTNAME) *and* the TLS certificate used by nginx for HTTPS on the mta-sts
 	# subdomain must be valid certificate for that domain. Do not set an MTA-STS policy if either
 	# certificate in use is not valid (e.g. because it is self-signed and a valid certificate has not
 	# yet been provisioned). Since we cannot provision a certificate without A/AAAA records, we
@@ -332,7 +332,7 @@ def build_zone(domain, domain_properties, additional_records, env, is_zone=True)
 	# being valid certificates.
 	mta_sts_records = [ ]
 	if domain_properties[domain]["mail"] \
-	  and domain_properties[env["PRIMARY_HOSTNAME"]]["certificate-is-valid"] \
+	  and domain_properties[env["BOX_HOSTNAME"]]["certificate-is-valid"] \
 	  and is_domain_cert_signed_and_valid("mta-sts." + domain, env):
 		# Compute an up-to-32-character hash of the policy file. We'll take a SHA-1 hash of the policy
 		# file (20 bytes) and encode it as base-64 (28 bytes, using alphanumeric alternate characters
@@ -479,7 +479,7 @@ def write_nsd_zone(domain, zonefile, records, env, force):
 	# ldns-signzone, however. It used to say '; default zone domain'.
 	#
 	# The SOA contact address for all of the domains on this system is hostmaster
-	# @ the PRIMARY_HOSTNAME. Hopefully that's legit.
+	# @ the BOX_HOSTNAME. Hopefully that's legit.
 	#
 	# For the refresh through TTL fields, a good reference is:
 	# https://www.ripe.net/publications/docs/ripe-203
@@ -492,7 +492,7 @@ def write_nsd_zone(domain, zonefile, records, env, force):
 $ORIGIN {domain}.
 $TTL 86400          ; default time to live
 
-@ IN SOA ns1.{primary_domain}. hostmaster.{primary_domain}. (
+@ IN SOA ns1.{box_domain}. hostmaster.{box_domain}. (
            __SERIAL__     ; serial number
            7200     ; Refresh (secondary nameserver update interval)
            3600     ; Retry (when refresh fails, how often to try again, should be lower than the refresh)
@@ -502,7 +502,7 @@ $TTL 86400          ; default time to live
 """
 
 	# Replace replacement strings.
-	zone = zone.format(domain=domain, primary_domain=env["PRIMARY_HOSTNAME"])
+	zone = zone.format(domain=domain, box_domain=env["BOX_HOSTNAME"])
 
 	# Add records.
 	for subdomain, querytype, value, _explanation in records:
