@@ -1,3 +1,5 @@
+[![CI](https://github.com/mail-in-a-box/mailinabox/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/mail-in-a-box/mailinabox/actions/workflows/ci.yml)
+
 Mail-in-a-Box
 =============
 
