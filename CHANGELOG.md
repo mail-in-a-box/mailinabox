@@ -1,6 +1,35 @@
 CHANGELOG
 =========
 
+Version 71 (January 4, 2025)
+----------------------------
+
+Upgrades
+
+* Roundcube upgraded to version 1.6.9.
+* Z-Push upgraded to version 2.7.5.
+
+Automated Maintenance
+
+* Daily automated tasks are now run at 1am in the box's timezone and full backups are now restricted to running only on Saturdays and Sundays at that time.
+* Backups now exclude the owncloud-backup folder so that we're not backing up backups.
+* Old TLS certificates are now automatically deleted to improve control panel performance.
+
+Setup
+
+* Fixed broken setup if SSH was configured to listen on multiple ports.
+* Ubuntu MOTD advertisements are now disabled.
+* Fixed missing Roundcube dependency package if NextCloud isn't installed.
+
+Control Panel
+
+* Improved status checks for secondary nameservers.
+* Spamhaus is now queried for the box's IPv6 address also.
+* DSA and EC private keys are now accepted for TLS certificates.
+* Timeouts for loading slow control panel pages are reduced.
+
+And other minor fixes.
+
 Version 70 (August 15, 2024)
 ----------------------------
 
