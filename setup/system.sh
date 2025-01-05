@@ -87,8 +87,10 @@ tools/editconf.py /etc/systemd/journald.conf MaxRetentionSec=10day
 
 # Disable MOTD adverts to prevent revealing server information in MOTD request headers
 # See https://ma.ttias.be/what-exactly-being-sent-ubuntu-motd/
+if [ -f /etc/default/motd-news ]; then
 tools/editconf.py /etc/default/motd-news ENABLED=0
 rm -f /var/cache/motd-news
+fi
 
 # ### Add PPAs.
 
