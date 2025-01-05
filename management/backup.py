@@ -9,6 +9,7 @@
 
 import os, os.path, re, datetime, sys
 import dateutil.parser, dateutil.relativedelta, dateutil.tz
+from datetime import date
 import rtyaml
 from exclusiveprocess import Lock
 
@@ -157,6 +158,8 @@ def should_force_full(config, env):
 	# since the last full backup is greater than half the size
 	# of that full backup.
 	inc_size = 0
+	# Check if day of week is a weekend day
+	weekend = date.today().weekday()>=5
 	for bak in backup_status(env)["backups"]:
 		if not bak["full"]:
 			# Scan through the incremental backups cumulating
@@ -165,12 +168,14 @@ def should_force_full(config, env):
 		else:
 			# ...until we reach the most recent full backup.
 			# Return if we should to a full backup, which is based
-			# on the size of the increments relative to the full
-			# backup, as well as the age of the full backup.
-			if inc_size > .5*bak["size"]:
-				return True
-			if dateutil.parser.parse(bak["date"]) + datetime.timedelta(days=config["min_age_in_days"]*10+1) < datetime.datetime.now(dateutil.tz.tzlocal()):
-				return True
+			# on whether it is a weekend day, the size of the
+			# increments relative to the full backup, as well as
+			# the age of the full backup.
+			if weekend:
+				if inc_size > .5*bak["size"]:
+					return True
+				if dateutil.parser.parse(bak["date"]) + datetime.timedelta(days=config["min_age_in_days"]*10+1) < datetime.datetime.now(dateutil.tz.tzlocal()):
+					return True
 			return False
 	else:
 		# If we got here there are no (full) backups, so make one.
@@ -320,6 +325,7 @@ def perform_backup(full_backup):
 			"--verbosity", "warning", "--no-print-statistics",
 			"--archive-dir", backup_cache_dir,
 			"--exclude", backup_root,
+			"--exclude", os.path.join(env["STORAGE_ROOT"], "owncloud-backup"),
 			"--volsize", "250",
 			"--gpg-options", "'--cipher-algo=AES256'",
 			"--allow-source-mismatch",
@@ -399,6 +405,7 @@ def run_duplicity_verification():
 		"--compare-data",
 		"--archive-dir", backup_cache_dir,
 		"--exclude", backup_root,
+		"--exclude", os.path.join(env["STORAGE_ROOT"], "owncloud-backup"),
 		*get_duplicity_additional_args(env),
 		get_duplicity_target_url(config),
 		env["STORAGE_ROOT"],
