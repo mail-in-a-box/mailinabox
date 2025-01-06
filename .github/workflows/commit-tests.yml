@@ -3,6 +3,7 @@ on:
     workflow_dispatch: { }
     push:
         tags-ignore: [ 'v**' ]
+        paths-ignore: [ '**.md', 'api/mailinabox.yml' ]
 jobs:
   # MiaB-LDAP using encryption-at-rest and connected to a remote Nextcloud
   remote-nextcloud-docker-ehdd:
