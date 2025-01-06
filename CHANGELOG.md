@@ -4,6 +4,8 @@ CHANGELOG
 Version 71 (January 4, 2025)
 ----------------------------
 
+(Version 71a was posted on January 6, 2025 and fixes a setup regression.)
+
 Upgrades
 
 * Roundcube upgraded to version 1.6.9.
