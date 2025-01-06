@@ -1,5 +1,8 @@
 name: commit-tests
-on: [push, workflow_dispatch]
+on:
+    workflow_dispatch: { }
+    push:
+        tags-ignore: [ 'v**' ]
 jobs:
   # MiaB-LDAP using encryption-at-rest and connected to a remote Nextcloud
   remote-nextcloud-docker-ehdd:
