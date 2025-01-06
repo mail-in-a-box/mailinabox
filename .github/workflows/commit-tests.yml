@@ -2,6 +2,7 @@ name: commit-tests
 on:
     workflow_dispatch: { }
     push:
+        branches: [ '**' ]
         tags-ignore: [ 'v**' ]
         paths-ignore: [ '**.md', 'api/mailinabox.yml' ]
 jobs:
