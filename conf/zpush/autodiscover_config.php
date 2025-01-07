@@ -10,7 +10,7 @@ define('TIMEZONE', '');
 // Defines the base path on the server
 define('BASE_PATH', dirname($_SERVER['SCRIPT_FILENAME']). '/');
 
-define('ZPUSH_HOST', 'PRIMARY_HOSTNAME');
+define('ZPUSH_HOST', 'BOX_HOSTNAME');
 
 define('USE_FULLEMAIL_FOR_LOGIN', true);
 

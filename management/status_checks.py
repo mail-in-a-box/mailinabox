@@ -216,7 +216,7 @@ def check_software_updates(env, output):
 def check_system_aliases(env, output):
 	# Check that the administrator alias exists since that's where all
 	# admin email is automatically directed.
-	check_alias_exists("System administrator address", "administrator@" + env['PRIMARY_HOSTNAME'], env, output)
+	check_alias_exists("System administrator address", "administrator@" + env['BOX_HOSTNAME'], env, output)
 
 def check_free_disk_space(rounded_values, env, output):
 	# Check free disk space.
@@ -382,8 +382,8 @@ def run_domain_checks_on_domain(domain, rounded_time, env, dns_domains, dns_zone
 		output.add_heading(domain)
 		output.print_error("Domain name is invalid: " + str(e))
 
-	if domain == env["PRIMARY_HOSTNAME"]:
-		check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles)
+	if domain == env["BOX_HOSTNAME"]:
+		check_box_hostname_dns(domain, env, output, dns_domains, dns_zonefiles)
 
 	if domain in dns_domains:
 		check_dns_zone(domain, env, output, dns_zonefiles)
@@ -419,13 +419,13 @@ def run_domain_checks_on_domain(domain, rounded_time, env, dns_domains, dns_zone
 
 	return (domain, output)
 
-def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
+def check_box_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 	# If a DS record is set on the zone containing this domain, check DNSSEC now.
 	has_dnssec = False
 	for zone in dns_domains:
 		if (zone == domain or domain.endswith("." + zone)) and query_dns(zone, "DS", nxdomain=None) is not None:
 			has_dnssec = True
-			check_dnssec(zone, env, output, dns_zonefiles, is_checking_primary=True)
+			check_dnssec(zone, env, output, dns_zonefiles, is_checking_box_domain=True)
 
 	ip = query_dns(domain, "A")
 	ns_ips = query_dns("ns1." + domain, "A") + '/' + query_dns("ns2." + domain, "A")
@@ -437,35 +437,35 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 	# the nameserver, are reporting the right info --- but if the glue is incorrect this
 	# will probably fail.
 	if ns_ips == env['PUBLIC_IP'] + '/' + env['PUBLIC_IP']:
-		output.print_ok("Nameserver glue records are correct at registrar. [ns1/ns2.{} ↦ {}]".format(env['PRIMARY_HOSTNAME'], env['PUBLIC_IP']))
+		output.print_ok("Nameserver glue records are correct at registrar. [ns1/ns2.{} ↦ {}]".format(env['BOX_HOSTNAME'], env['PUBLIC_IP']))
 
 	elif ip == env['PUBLIC_IP']:
 		# The NS records are not what we expect, but the domain resolves correctly, so
 		# the user may have set up external DNS. List this discrepancy as a warning.
 		output.print_warning("""Nameserver glue records (ns1.{} and ns2.{}) should be configured at your domain name
-			registrar as having the IP address of this box ({}). They currently report addresses of {}. If you have set up External DNS, this may be OK.""".format(env['PRIMARY_HOSTNAME'], env['PRIMARY_HOSTNAME'], env['PUBLIC_IP'], ns_ips))
+			registrar as having the IP address of this box ({}). They currently report addresses of {}. If you have set up External DNS, this may be OK.""".format(env['BOX_HOSTNAME'], env['BOX_HOSTNAME'], env['PUBLIC_IP'], ns_ips))
 
 	else:
 		output.print_error("""Nameserver glue records are incorrect. The ns1.{} and ns2.{} nameservers must be configured at your domain name
 			registrar as having the IP address {}. They currently report addresses of {}. It may take several hours for
-			public DNS to update after a change.""".format(env['PRIMARY_HOSTNAME'], env['PRIMARY_HOSTNAME'], env['PUBLIC_IP'], ns_ips))
+			public DNS to update after a change.""".format(env['BOX_HOSTNAME'], env['BOX_HOSTNAME'], env['PUBLIC_IP'], ns_ips))
 
-	# Check that PRIMARY_HOSTNAME resolves to PUBLIC_IP[V6] in public DNS.
+	# Check that BOX_HOSTNAME resolves to PUBLIC_IP[V6] in public DNS.
 	ipv6 = query_dns(domain, "AAAA") if env.get("PUBLIC_IPV6") else None
 	if ip == env['PUBLIC_IP'] and not (ipv6 and env['PUBLIC_IPV6'] and ipv6 != normalize_ip(env['PUBLIC_IPV6'])):
-		output.print_ok("Domain resolves to box's IP address. [{} ↦ {}]".format(env['PRIMARY_HOSTNAME'], my_ips))
+		output.print_ok("Domain resolves to box's IP address. [{} ↦ {}]".format(env['BOX_HOSTNAME'], my_ips))
 	else:
 		output.print_error("""This domain must resolve to this box's IP address ({}) in public DNS but it currently resolves
 			to {}. It may take several hours for public DNS to update after a change. This problem may result from other
 			issues listed above.""".format(my_ips, ip + ((" / " + ipv6) if ipv6 is not None else "")))
 
 
-	# Check reverse DNS matches the PRIMARY_HOSTNAME. Note that it might not be
+	# Check reverse DNS matches the BOX_HOSTNAME. Note that it might not be
 	# a DNS zone if it is a subdomain of another domain we have a zone for.
 	existing_rdns_v4 = query_dns(dns.reversename.from_address(env['PUBLIC_IP']), "PTR")
 	existing_rdns_v6 = query_dns(dns.reversename.from_address(env['PUBLIC_IPV6']), "PTR") if env.get("PUBLIC_IPV6") else None
 	if existing_rdns_v4 == domain and existing_rdns_v6 in {None, domain}:
-		output.print_ok("Reverse DNS is set correctly at ISP. [{} ↦ {}]".format(my_ips, env['PRIMARY_HOSTNAME']))
+		output.print_ok("Reverse DNS is set correctly at ISP. [{} ↦ {}]".format(my_ips, env['BOX_HOSTNAME']))
 	elif existing_rdns_v4 == existing_rdns_v6 or existing_rdns_v6 is None:
 		output.print_error(f"""This box's reverse DNS is currently {existing_rdns_v4}, but it should be {domain}. Your ISP or cloud provider will have instructions
 			on setting up reverse DNS for this box.""" )
@@ -518,10 +518,10 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 	custom_dns_records = list(get_custom_dns_config(env)) # generator => list so we can reuse it
 	correct_ip = "; ".join(sorted(get_custom_dns_records(custom_dns_records, domain, "A"))) or env['PUBLIC_IP']
 	custom_secondary_ns = get_secondary_dns(custom_dns_records, mode="NS")
-	secondary_ns = custom_secondary_ns or ["ns2." + env['PRIMARY_HOSTNAME']]
+	secondary_ns = custom_secondary_ns or ["ns2." + env['BOX_HOSTNAME']]
 
 	existing_ns = query_dns(domain, "NS")
-	correct_ns = "; ".join(sorted(["ns1." + env["PRIMARY_HOSTNAME"], *secondary_ns]))
+	correct_ns = "; ".join(sorted(["ns1." + env["BOX_HOSTNAME"], *secondary_ns]))
 	ip = query_dns(domain, "A")
 
 	probably_external_dns = False
@@ -595,7 +595,7 @@ def check_dns_zone_suggestions(domain, env, output, dns_zonefiles, domains_with_
 		check_dnssec(domain, env, output, dns_zonefiles)
 
 
-def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
+def check_dnssec(domain, env, output, dns_zonefiles, is_checking_box_domain=False):
 	# See if the domain has a DS record set at the registrar. The DS record must
 	# match one of the keys that we've used to sign the zone. It may use one of
 	# several hashing algorithms. We've pre-generated all possible valid DS
@@ -661,7 +661,7 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 				IMPORTANT: Do not delete existing DNSSEC 'DS' records for this domain until confirmation that the new DNSSEC 'DS' record
 				for this domain is valid.""")
 		else:
-			if is_checking_primary:
+			if is_checking_box_domain:
 				output.print_error("""The DNSSEC 'DS' record for %s is incorrect. See further details below.""" % domain)
 				return
 			output.print_error("""This domain's DNSSEC DS record is incorrect. The chain of trust is broken between the public DNS system
@@ -702,7 +702,7 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 def check_mail_domain(domain, env, output):
 	# Check the MX record.
 
-	recommended_mx = "10 " + env['PRIMARY_HOSTNAME']
+	recommended_mx = "10 " + env['BOX_HOSTNAME']
 	mx = query_dns(domain, "MX", nxdomain=None)
 
 	if mx is None or mx == "[timeout]":
@@ -713,26 +713,26 @@ def check_mail_domain(domain, env, output):
 		mxhost = mx.split('; ')[0].split(' ')[1]
 
 	if mxhost is None:
-		# A missing MX record is okay on the primary hostname because
-		# the primary hostname's A record (the MX fallback) is... itself,
+		# A missing MX record is okay on the box hostname because
+		# the box hostname's A record (the MX fallback) is... itself,
 		# which is what we want the MX to be.
-		if domain == env['PRIMARY_HOSTNAME']:
+		if domain == env['BOX_HOSTNAME']:
 			output.print_ok(f"Domain's email is directed to this domain. [{domain} has no MX record, which is ok]")
 
 		# And a missing MX record is okay on other domains if the A record
-		# matches the A record of the PRIMARY_HOSTNAME. Actually this will
+		# matches the A record of the BOX_HOSTNAME. Actually this will
 		# probably confuse DANE TLSA, but we'll let that slide for now.
 		else:
 			domain_a = query_dns(domain, "A", nxdomain=None)
-			primary_a = query_dns(env['PRIMARY_HOSTNAME'], "A", nxdomain=None)
-			if domain_a is not None and domain_a == primary_a:
+			box_a = query_dns(env['BOX_HOSTNAME'], "A", nxdomain=None)
+			if domain_a is not None and domain_a == box_a:
 				output.print_ok(f"Domain's email is directed to this domain. [{domain} has no MX record but its A record is OK]")
 			else:
 				output.print_error(f"""This domain's DNS MX record is not set. It should be '{recommended_mx}'. Mail will not
 					be delivered to this box. It may take several hours for public DNS to update after a
 					change. This problem may result from other issues listed here.""")
 
-	elif mxhost == env['PRIMARY_HOSTNAME']:
+	elif mxhost == env['BOX_HOSTNAME']:
 		good_news = f"Domain's email is directed to this domain. [{domain} ↦ {mx}]"
 		if mx != recommended_mx:
 			good_news += f"  This configuration is non-standard.  The recommended configuration is '{recommended_mx}'."
@@ -743,7 +743,7 @@ def check_mail_domain(domain, env, output):
 		sts_resolver = postfix_mta_sts_resolver.resolver.STSResolver(loop=loop)
 		valid, policy = loop.run_until_complete(sts_resolver.resolve(domain))
 		if valid == postfix_mta_sts_resolver.resolver.STSFetchResult.VALID:
-			if policy[1].get("mx") == [env['PRIMARY_HOSTNAME']] and policy[1].get("mode") == "enforce": # policy[0] is the policyid
+			if policy[1].get("mx") == [env['BOX_HOSTNAME']] and policy[1].get("mode") == "enforce": # policy[0] is the policyid
 				output.print_ok("MTA-STS policy is present.")
 			else:
 				output.print_error(f"MTA-STS policy is present but has unexpected settings. [{policy[1]}]")
@@ -763,7 +763,7 @@ def check_mail_domain(domain, env, output):
 	# Stop if the domain is listed in the Spamhaus Domain Block List.
 	# The user might have chosen a domain that was previously in use by a spammer
 	# and will not be able to reliably send mail.
-	
+
 	# See https://www.spamhaus.org/news/article/807/using-our-public-mirrors-check-your-return-codes-now. for
 	# information on spamhaus return codes
 	dbl = query_dns(domain+'.dbl.spamhaus.org', "A", nxdomain=None)
@@ -786,9 +786,9 @@ def check_mail_domain(domain, env, output):
 
 def check_web_domain(domain, rounded_time, ssl_certificates, env, output):
 	# See if the domain's A record resolves to our PUBLIC_IP. This is already checked
-	# for PRIMARY_HOSTNAME, for which it is required for mail specifically. For it and
+	# for BOX_HOSTNAME, for which it is required for mail specifically. For it and
 	# other domains, it is required to access its website.
-	if domain != env['PRIMARY_HOSTNAME']:
+	if domain != env['BOX_HOSTNAME']:
 		ok_values = []
 		for (rtype, expected) in (("A", env['PUBLIC_IP']), ("AAAA", env.get('PUBLIC_IPV6'))):
 			if not expected: continue # IPv6 is not configured
@@ -805,7 +805,7 @@ def check_web_domain(domain, rounded_time, ssl_certificates, env, output):
 		output.print_ok("Domain resolves to this box's IP address. [{} ↦ {}]".format(domain, '; '.join(ok_values)))
 
 
-	# We need a TLS certificate for PRIMARY_HOSTNAME because that's where the
+	# We need a TLS certificate for BOX_HOSTNAME because that's where the
 	# user will log in with IMAP or webmail. Any other domain we serve a
 	# website for also needs a signed certificate.
 	check_ssl_cert(domain, rounded_time, ssl_certificates, env, output)
@@ -886,7 +886,7 @@ def check_ssl_cert(domain, rounded_time, ssl_certificates, env, output):
 
 	elif cert_status == "SELF-SIGNED":
 		# Offer instructions for purchasing a signed certificate.
-		if domain == env['PRIMARY_HOSTNAME']:
+		if domain == env['BOX_HOSTNAME']:
 			output.print_error("""The TLS (SSL) certificate for this domain is currently self-signed. You will get a security
 			warning when you check or send email and when visiting this domain in a web browser (for webmail or
 			static site hosting).""")
@@ -1140,9 +1140,9 @@ if __name__ == "__main__":
 		with multiprocessing.pool.Pool(processes=10) as pool:
 			run_and_output_changes(env, pool)
 
-	elif sys.argv[1] == "--check-primary-hostname":
-		# See if the primary hostname appears resolvable and has a signed certificate.
-		domain = env['PRIMARY_HOSTNAME']
+	elif sys.argv[1] == "--check-box-hostname":
+		# See if the box hostname appears resolvable and has a signed certificate.
+		domain = env['BOX_HOSTNAME']
 		if query_dns(domain, "A") != env['PUBLIC_IP']:
 			sys.exit(1)
 		ssl_certificates = get_ssl_certificates(env)

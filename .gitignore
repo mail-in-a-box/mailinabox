@@ -7,3 +7,5 @@ externals/
 .vagrant
 api/docs/api-docs.html
 *.code-workspace
+.vscode
+.venv

@@ -104,7 +104,7 @@ fi
 mkdir -p /var/lib/mailinabox
 chmod a+rx /var/lib/mailinabox
 cat conf/ios-profile.xml \
-	| sed "s/PRIMARY_HOSTNAME/$PRIMARY_HOSTNAME/" \
+	| sed "s/BOX_HOSTNAME/$BOX_HOSTNAME/" \
 	| sed "s/UUID1/$(cat /proc/sys/kernel/random/uuid)/" \
 	| sed "s/UUID2/$(cat /proc/sys/kernel/random/uuid)/" \
 	| sed "s/UUID3/$(cat /proc/sys/kernel/random/uuid)/" \
@@ -118,7 +118,7 @@ chmod a+r /var/lib/mailinabox/mobileconfig.xml
 # https://wiki.mozilla.org/Thunderbird:Autoconfiguration:ConfigFileFormat
 # and https://developer.mozilla.org/en-US/docs/Mozilla/Thunderbird/Autoconfiguration/FileFormat/HowTo.
 cat conf/mozilla-autoconfig.xml \
-	| sed "s/PRIMARY_HOSTNAME/$PRIMARY_HOSTNAME/" \
+	| sed "s/BOX_HOSTNAME/$BOX_HOSTNAME/" \
 	 > /var/lib/mailinabox/mozilla-autoconfig.xml
 chmod a+r /var/lib/mailinabox/mozilla-autoconfig.xml
 
@@ -130,10 +130,10 @@ chmod a+r /var/lib/mailinabox/mozilla-autoconfig.xml
 # "MTA_STS_MODE=testing" which means "Messages will be delivered
 # as though there was no failure but a report will be sent if
 # TLS-RPT is configured" if you are not sure you want this yet. Or "none".
-PUNY_PRIMARY_HOSTNAME=$(echo "$PRIMARY_HOSTNAME" | idn2)
+PUNY_BOX_HOSTNAME=$(echo "$BOX_HOSTNAME" | idn2)
 cat conf/mta-sts.txt \
         | sed "s/MODE/${MTA_STS_MODE}/" \
-        | sed "s/PRIMARY_HOSTNAME/$PUNY_PRIMARY_HOSTNAME/" \
+        | sed "s/BOX_HOSTNAME/$PUNY_BOX_HOSTNAME/" \
          > /var/lib/mailinabox/mta-sts.txt
 chmod a+r /var/lib/mailinabox/mta-sts.txt
 

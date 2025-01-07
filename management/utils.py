@@ -73,8 +73,8 @@ def sort_domains(domain_names, env):
     # Sort the zones.
     zone_domains = sorted(zones.values(),
       key = lambda d : (
-        # PRIMARY_HOSTNAME or the zone that contains it is always first.
-        not (d == env['PRIMARY_HOSTNAME'] or env['PRIMARY_HOSTNAME'].endswith("." + d)),
+        # BOX_HOSTNAME or the zone that contains it is always first.
+        not (d == env['BOX_HOSTNAME'] or env['BOX_HOSTNAME'].endswith("." + d)),
 
         # Then just dumb lexicographically.
         d,
@@ -86,11 +86,11 @@ def sort_domains(domain_names, env):
         # First by zone.
         zone_domains.index(zones[d]),
 
-        # PRIMARY_HOSTNAME is always first within the zone that contains it.
-        d != env['PRIMARY_HOSTNAME'],
+        # BOX_HOSTNAME is always first within the zone that contains it.
+        d != env['BOX_HOSTNAME'],
 
         # Followed by any of its subdomains.
-        not d.endswith("." + env['PRIMARY_HOSTNAME']),
+        not d.endswith("." + env['BOX_HOSTNAME']),
 
         # Then in right-to-left lexicographic order of the .-separated parts of the name.
         list(reversed(d.split("."))),

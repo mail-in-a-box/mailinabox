@@ -13,7 +13,7 @@
 #  * SMTP (opportunistic TLS for port 25 and submission on ports 465/587)
 #  * HTTPS
 #
-# The certificate is created with its CN set to the PRIMARY_HOSTNAME. It is
+# The certificate is created with its CN set to the BOX_HOSTNAME. It is
 # also used for other domains served over HTTPS until the user installs a
 # better certificate for those domains.
 #
@@ -74,10 +74,10 @@ if [ ! -f "$STORAGE_ROOT/ssl/ssl_certificate.pem" ]; then
 	CSR=/tmp/ssl_cert_sign_req-$$.csr
 	hide_output \
 	openssl req -new -key "$STORAGE_ROOT/ssl/ssl_private_key.pem" -out $CSR \
-	  -sha256 -subj "/CN=$PRIMARY_HOSTNAME"
+	  -sha256 -subj "/CN=$BOX_HOSTNAME"
 
 	# Generate the self-signed certificate.
-	CERT=$STORAGE_ROOT/ssl/$PRIMARY_HOSTNAME-selfsigned-$(date --rfc-3339=date | sed s/-//g).pem
+	CERT=$STORAGE_ROOT/ssl/$BOX_HOSTNAME-selfsigned-$(date --rfc-3339=date | sed s/-//g).pem
 	hide_output \
 	openssl x509 -req -days 365 \
 	  -in $CSR -signkey "$STORAGE_ROOT/ssl/ssl_private_key.pem" -out "$CERT"

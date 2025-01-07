@@ -83,7 +83,7 @@ def provision_totp(email, env):
 	# Make a URI that we encode within a QR code.
 	uri = pyotp.TOTP(secret).provisioning_uri(
 		name=email,
-		issuer_name=env["PRIMARY_HOSTNAME"] + " Mail-in-a-Box Control Panel"
+		issuer_name=env["BOX_HOSTNAME"] + " Mail-in-a-Box Control Panel"
 	)
 
 	# Generate a QR code as a base64-encode PNG image.

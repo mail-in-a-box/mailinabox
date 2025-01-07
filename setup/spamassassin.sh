@@ -77,42 +77,42 @@ tools/editconf.py /etc/spamassassin/local.cf -s \
 # Our custom rules are added to their own file so that an update to the deb package config
 # does not remove our changes.
 #
-# We need to escape period's in $PRIMARY_HOSTNAME since spamassassin config uses regex.
+# We need to escape period's in $BOX_HOSTNAME since spamassassin config uses regex.
 
-escapedprimaryhostname="${PRIMARY_HOSTNAME//./\\.}"
+escapedboxhostname="${BOX_HOSTNAME//./\\.}"
 
 cat > /etc/spamassassin/miab_spf_dmarc.cf << EOF
 # Evaluate DMARC Authentication-Results
-header DMARC_PASS Authentication-Results =~ /$escapedprimaryhostname; dmarc=pass/
+header DMARC_PASS Authentication-Results =~ /$escapedboxhostname; dmarc=pass/
 describe DMARC_PASS DMARC check passed
 score DMARC_PASS -0.1
 
-header DMARC_NONE Authentication-Results =~ /$escapedprimaryhostname; dmarc=none/
+header DMARC_NONE Authentication-Results =~ /$escapedboxhostname; dmarc=none/
 describe DMARC_NONE DMARC record not found
 score DMARC_NONE 0.1
 
-header DMARC_FAIL_NONE Authentication-Results =~ /$escapedprimaryhostname; dmarc=fail \(p=none/
+header DMARC_FAIL_NONE Authentication-Results =~ /$escapedboxhostname; dmarc=fail \(p=none/
 describe DMARC_FAIL_NONE DMARC check failed (p=none)
 score DMARC_FAIL_NONE 2.0
 
-header DMARC_FAIL_QUARANTINE Authentication-Results =~ /$escapedprimaryhostname; dmarc=fail \(p=quarantine/
+header DMARC_FAIL_QUARANTINE Authentication-Results =~ /$escapedboxhostname; dmarc=fail \(p=quarantine/
 describe DMARC_FAIL_QUARANTINE DMARC check failed (p=quarantine)
 score DMARC_FAIL_QUARANTINE 5.0
 
-header DMARC_FAIL_REJECT Authentication-Results =~ /$escapedprimaryhostname; dmarc=fail \(p=reject/
+header DMARC_FAIL_REJECT Authentication-Results =~ /$escapedboxhostname; dmarc=fail \(p=reject/
 describe DMARC_FAIL_REJECT DMARC check failed (p=reject)
 score DMARC_FAIL_REJECT 10.0
 
 # Evaluate SPF Authentication-Results
-header SPF_PASS Authentication-Results =~ /$escapedprimaryhostname; spf=pass/
+header SPF_PASS Authentication-Results =~ /$escapedboxhostname; spf=pass/
 describe SPF_PASS SPF check passed
 score SPF_PASS -0.1
 
-header SPF_NONE Authentication-Results =~ /$escapedprimaryhostname; spf=none/
+header SPF_NONE Authentication-Results =~ /$escapedboxhostname; spf=none/
 describe SPF_NONE SPF record not found
 score SPF_NONE 2.0
 
-header SPF_FAIL Authentication-Results =~ /$escapedprimaryhostname; spf=fail/
+header SPF_FAIL Authentication-Results =~ /$escapedboxhostname; spf=fail/
 describe SPF_FAIL SPF check failed
 score SPF_FAIL 5.0
 EOF
