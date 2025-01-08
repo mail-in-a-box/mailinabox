@@ -671,8 +671,7 @@ def get_certificate_domains(cert):
 
 	try:
 		sans = cert.extensions.get_extension_for_oid(OID_SUBJECT_ALTERNATIVE_NAME).value.get_values_for_type(DNSName)
-		for san in sans:
-			names.add(idna_decode_dns_name(san))
+		names.update(idna_decode_dns_name(san) for san in sans)
 	except ExtensionNotFound:
 		pass
 
