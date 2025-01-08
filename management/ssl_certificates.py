@@ -160,14 +160,13 @@ def get_domain_ssl_files(domain, ssl_certificates, env, allow_missing_cert=False
 	wildcard_domain = re.sub(r"^[^\.]+", "*", domain)
 	if domain in ssl_certificates:
 		return ssl_certificates[domain]
-	elif wildcard_domain in ssl_certificates:
+	if wildcard_domain in ssl_certificates:
 		return ssl_certificates[wildcard_domain]
-	elif not allow_missing_cert:
+	if not allow_missing_cert:
 		# No valid certificate is available for this domain! Return default files.
 		return system_certificate
-	else:
-		# No valid certificate is available for this domain.
-		return None
+	# No valid certificate is available for this domain.
+	return None
 
 
 # PROVISIONING CERTIFICATES FROM LETSENCRYPT
@@ -590,34 +589,33 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 		# Certificate is self-signed. Probably we detected this above.
 		return ("SELF-SIGNED", None)
 
-	elif retcode != 0:
+	if retcode != 0:
 		if "unable to get local issuer certificate" in verifyoutput:
 			return ("The certificate is missing an intermediate chain or the intermediate chain is incorrect or incomplete. ({})".format(verifyoutput), None)
 
 		# There is some unknown problem. Return the `openssl verify` raw output.
 		return ("There is a problem with the certificate.", verifyoutput.strip())
 
+	# `openssl verify` returned a zero exit status so the cert is currently
+	# good.
+
+	# But is it expiring soon?
+	cert_expiration_date = cert.not_valid_after
+	ndays = (cert_expiration_date-now).days
+	if not rounded_time or ndays <= 10:
+		# Yikes better renew soon!
+		expiry_info = "The certificate expires in %d days on %s." % (ndays, cert_expiration_date.date().isoformat())
 	else:
-		# `openssl verify` returned a zero exit status so the cert is currently
-		# good.
+		# We'll renew it with Lets Encrypt.
+		expiry_info = "The certificate expires on {}.".format(cert_expiration_date.date().isoformat())
 
-		# But is it expiring soon?
-		cert_expiration_date = cert.not_valid_after
-		ndays = (cert_expiration_date-now).days
-		if not rounded_time or ndays <= 10:
-			# Yikes better renew soon!
-			expiry_info = "The certificate expires in %d days on %s." % (ndays, cert_expiration_date.date().isoformat())
-		else:
-			# We'll renew it with Lets Encrypt.
-			expiry_info = "The certificate expires on {}.".format(cert_expiration_date.date().isoformat())
+	if warn_if_expiring_soon and ndays <= warn_if_expiring_soon:
+		# Warn on day 10 to give 4 days for us to automatically renew the
+		# certificate, which occurs on day 14.
+		return ("The certificate is expiring soon: " + expiry_info, None)
 
-		if warn_if_expiring_soon and ndays <= warn_if_expiring_soon:
-			# Warn on day 10 to give 4 days for us to automatically renew the
-			# certificate, which occurs on day 14.
-			return ("The certificate is expiring soon: " + expiry_info, None)
-
-		# Return the special OK code.
-		return ("OK", expiry_info)
+	# Return the special OK code.
+	return ("OK", expiry_info)
 
 def load_cert_chain(pemfile):
 	# A certificate .pem file may contain a chain of certificates.
@@ -671,8 +669,7 @@ def get_certificate_domains(cert):
 	def idna_decode_dns_name(dns_name):
 		if dns_name.startswith("*."):
 			return "*." + idna.encode(dns_name[2:]).decode('ascii')
-		else:
-			return idna.encode(dns_name).decode('ascii')
+		return idna.encode(dns_name).decode('ascii')
 
 	try:
 		sans = cert.extensions.get_extension_for_oid(OID_SUBJECT_ALTERNATIVE_NAME).value.get_values_for_type(DNSName)

@@ -256,10 +256,9 @@ def get_web_domains_info(env):
 		cert_status, cert_status_details = check_certificate(domain, tls_cert["certificate"], tls_cert["private-key"])
 		if cert_status == "OK":
 			return ("success", "Signed & valid. " + cert_status_details)
-		elif cert_status == "SELF-SIGNED":
+		if cert_status == "SELF-SIGNED":
 			return ("warning", "Self-signed. Get a signed certificate to stop warnings.")
-		else:
-			return ("danger", "Certificate has a problem: " + cert_status)
+		return ("danger", "Certificate has a problem: " + cert_status)
 
 	return [
 		{

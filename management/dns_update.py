@@ -124,8 +124,7 @@ def do_dns_update(env, force=False):
 	if len(updated_domains) == 0:
 		# if nothing was updated (except maybe OpenDKIM's files), don't show any output
 		return ""
-	else:
-		return "updated DNS: " + ",".join(updated_domains) + "\n"
+	return "updated DNS: " + ",".join(updated_domains) + "\n"
 
 ########################################################################
 
