@@ -247,7 +247,7 @@ class SedReplace(Grammar):
 class EchoPipe(Grammar):
 	grammar = OPTIONAL(SPACE), L("echo "), REST_OF_LINE, L(' | '), REST_OF_LINE, EOL
 	def value(self):
-		text = " ".join(f"\"{s}\"" for s in self[2].string.split(" "))
+		text = " ".join(f'"{s}"' for s in self[2].string.split(" "))
 		return "<pre class='shell'><div>echo " + recode_bash(text) + r" \<br> | " + recode_bash(self[4].string) + "</div></pre>\n"
 
 def shell_line(bash):
@@ -377,7 +377,7 @@ def recode_bash(s):
 			tok = tok.replace(c, "\\" + c)
 		tok = fixup_tokens(tok)
 		if " " in tok or '"' in tok:
-			tok = tok.replace("\"", "\\\"")
+			tok = tok.replace('"', '\\"')
 			tok = '"' + tok +'"'
 		else:
 			tok = tok.replace("'", "\\'")
