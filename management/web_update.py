@@ -167,7 +167,7 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 				proxy_redirect_off = False
 				frame_options_header_sameorigin = False
 				web_sockets = False
-				m = re.search("#(.*)$", url)
+				m = re.search(r"#(.*)$", url)
 				if m:
 					for flag in m.group(1).split(","):
 						if flag == "pass-http-host":
@@ -178,7 +178,7 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 							frame_options_header_sameorigin = True
 						elif flag == "web-sockets":
 							web_sockets = True
-					url = re.sub("#(.*)$", "", url)
+					url = re.sub(r"#(.*)$", "", url)
 
 				nginx_conf_extra += "\tlocation {} {{".format(path)
 				nginx_conf_extra += "\n\t\tproxy_pass {};".format(url)

@@ -23,7 +23,7 @@ def migration_1(env):
 	# Migrate the 'domains' directory.
 	for sslfn in glob.glob(os.path.join( env["STORAGE_ROOT"], 'ssl/domains/*' )):
 		fn = os.path.basename(sslfn)
-		m = re.match("(.*)_(certifiate.pem|cert_sign_req.csr|private_key.pem)$", fn)
+		m = re.match(r"(.*)_(certifiate.pem|cert_sign_req.csr|private_key.pem)$", fn)
 		if m:
 			# get the new name for the file
 			domain_name, file_type = m.groups()
