@@ -248,7 +248,7 @@ def check_free_disk_space(rounded_values, env, output):
 def check_free_memory(rounded_values, env, output):
 	# Check free memory.
 	percent_free = 100 - psutil.virtual_memory().percent
-	memory_msg = f"System memory is {str(round(percent_free))}% free."
+	memory_msg = f"System memory is {round(percent_free)!s}% free."
 	if percent_free >= 20:
 		if rounded_values: memory_msg = "System free memory is at least 20%."
 		output.print_ok(memory_msg)
