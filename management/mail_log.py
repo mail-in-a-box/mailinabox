@@ -608,7 +608,8 @@ def valid_date(string):
     try:
         date = dateutil.parser.parse(string)
     except ValueError:
-        raise argparse.ArgumentTypeError(f"Unrecognized date and/or time '{string}'")
+        msg = f"Unrecognized date and/or time '{string}'"
+        raise argparse.ArgumentTypeError(msg)
     return date
 
 
