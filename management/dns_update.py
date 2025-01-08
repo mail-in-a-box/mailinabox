@@ -918,7 +918,7 @@ def set_custom_dns_record(qname, rtype, value, action, env):
 
 			# ensure value has a trailing dot
 			if not value.endswith("."):
-				value = value + "."
+				value += "."
 
 			if not re.search(DOMAIN_RE, value):
 				msg = "Invalid value."
