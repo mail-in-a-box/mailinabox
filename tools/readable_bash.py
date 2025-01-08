@@ -229,7 +229,7 @@ class EditConf(Grammar):
 		for opt in re.split("\s+", self[4].string):
 			k, v = opt.split("=", 1)
 			v = re.sub(r"\n+", "", fixup_tokens(v)) # not sure why newlines are getting doubled
-			options.append("{}{}{}".format(k, eq, v))
+			options.append(f"{k}{eq}{v}")
 		return "<div class='write-to'><div class='filename'>" + self[1].string + " <span>(change settings)</span></div><pre>" + "\n".join(cgi.escape(s) for s in options) + "</pre></div>\n"
 
 class CaptureOutput(Grammar):
@@ -247,7 +247,7 @@ class SedReplace(Grammar):
 class EchoPipe(Grammar):
 	grammar = OPTIONAL(SPACE), L("echo "), REST_OF_LINE, L(' | '), REST_OF_LINE, EOL
 	def value(self):
-		text = " ".join("\"{}\"".format(s) for s in self[2].string.split(" "))
+		text = " ".join(f"\"{s}\"" for s in self[2].string.split(" "))
 		return "<pre class='shell'><div>echo " + recode_bash(text) + " \<br> | " + recode_bash(self[4].string) + "</div></pre>\n"
 
 def shell_line(bash):
@@ -427,7 +427,7 @@ class BashScript(Grammar):
 					mode = 0
 					clz = "contd"
 				if mode == 0:
-					v += "<div class='row {}'>\n".format(clz)
+					v += f"<div class='row {clz}'>\n"
 					v += "<div class='col-md-6 prose'>\n"
 				v += item
 				mode = 1

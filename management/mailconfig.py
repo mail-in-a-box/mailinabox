@@ -322,7 +322,7 @@ def set_mail_password(email, pw, env):
 	conn, c = open_database(env, with_connection=True)
 	c.execute("UPDATE users SET password=? WHERE email=?", (pw, email))
 	if c.rowcount != 1:
-		return ("That's not a user ({}).".format(email), 400)
+		return (f"That's not a user ({email}).", 400)
 	conn.commit()
 	return "OK"
 
@@ -341,7 +341,7 @@ def get_mail_password(email, env):
 	c.execute('SELECT password FROM users WHERE email=?', (email,))
 	rows = c.fetchall()
 	if len(rows) != 1:
-		raise ValueError("That's not a user ({}).".format(email))
+		raise ValueError(f"That's not a user ({email}).")
 	return rows[0][0]
 
 def remove_mail_user(email, env):
@@ -349,7 +349,7 @@ def remove_mail_user(email, env):
 	conn, c = open_database(env, with_connection=True)
 	c.execute("DELETE FROM users WHERE email=?", (email,))
 	if c.rowcount != 1:
-		return ("That's not a user ({}).".format(email), 400)
+		return (f"That's not a user ({email}).", 400)
 	conn.commit()
 
 	# Update things in case any domains are removed.
@@ -365,12 +365,12 @@ def get_mail_user_privileges(email, env, empty_on_error=False):
 	rows = c.fetchall()
 	if len(rows) != 1:
 		if empty_on_error: return []
-		return ("That's not a user ({}).".format(email), 400)
+		return (f"That's not a user ({email}).", 400)
 	return parse_privs(rows[0][0])
 
 def validate_privilege(priv):
 	if "\n" in priv or priv.strip() == "":
-		return ("That's not a valid privilege ({}).".format(priv), 400)
+		return (f"That's not a valid privilege ({priv}).", 400)
 	return None
 
 def add_remove_mail_user_privilege(email, priv, action, env):
@@ -413,7 +413,7 @@ def add_mail_alias(address, forwards_to, permitted_senders, env, update_if_exist
 	if address == "":
 		return ("No email address provided.", 400)
 	if not validate_email(address, mode='alias'):
-		return ("Invalid email address ({}).".format(address), 400)
+		return (f"Invalid email address ({address}).", 400)
 
 	# validate forwards_to
 	validated_forwards_to = []
@@ -442,7 +442,7 @@ def add_mail_alias(address, forwards_to, permitted_senders, env, update_if_exist
 				# Strip any +tag from email alias and check privileges
 				privileged_email = re.sub(r"(?=\+)[^@]*(?=@)",'',email)
 				if not validate_email(email):
-					return ("Invalid receiver email address ({}).".format(email), 400)
+					return (f"Invalid receiver email address ({email}).", 400)
 				if is_dcv_source and not is_dcv_address(email) and "admin" not in get_mail_user_privileges(privileged_email, env, empty_on_error=True):
 					# Make domain control validation hijacking a little harder to mess up by
 					# requiring aliases for email addresses typically used in DCV to forward
@@ -462,7 +462,7 @@ def add_mail_alias(address, forwards_to, permitted_senders, env, update_if_exist
 			login = login.strip()
 			if login == "": continue
 			if login not in valid_logins:
-				return ("Invalid permitted sender: {} is not a user on this system.".format(login), 400)
+				return (f"Invalid permitted sender: {login} is not a user on this system.", 400)
 			validated_permitted_senders.append(login)
 
 	# Make sure the alias has either a forwards_to or a permitted_sender.
@@ -481,7 +481,7 @@ def add_mail_alias(address, forwards_to, permitted_senders, env, update_if_exist
 		return_status = "alias added"
 	except sqlite3.IntegrityError:
 		if not update_if_exists:
-			return ("Alias already exists ({}).".format(address), 400)
+			return (f"Alias already exists ({address}).", 400)
 		c.execute("UPDATE aliases SET destination = ?, permitted_senders = ? WHERE source = ?", (forwards_to, permitted_senders, address))
 		return_status = "alias updated"
 
@@ -500,7 +500,7 @@ def remove_mail_alias(address, env, do_kick=True):
 	conn, c = open_database(env, with_connection=True)
 	c.execute("DELETE FROM aliases WHERE source=?", (address,))
 	if c.rowcount != 1:
-		return ("That's not an alias ({}).".format(address), 400)
+		return (f"That's not an alias ({address}).", 400)
 	conn.commit()
 
 	if do_kick:

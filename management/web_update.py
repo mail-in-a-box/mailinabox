@@ -180,8 +180,8 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 							web_sockets = True
 					url = re.sub(r"#(.*)$", "", url)
 
-				nginx_conf_extra += "\tlocation {} {{".format(path)
-				nginx_conf_extra += "\n\t\tproxy_pass {};".format(url)
+				nginx_conf_extra += f"\tlocation {path} {{"
+				nginx_conf_extra += f"\n\t\tproxy_pass {url};"
 				if proxy_redirect_off:
 					nginx_conf_extra += "\n\t\tproxy_redirect off;"
 				if pass_http_host_header:
@@ -198,8 +198,8 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 				nginx_conf_extra += "\n\t\tproxy_set_header X-Real-IP $remote_addr;"
 				nginx_conf_extra += "\n\t}\n"
 			for path, alias in yaml.get("aliases", {}).items():
-				nginx_conf_extra += "\tlocation {} {{".format(path)
-				nginx_conf_extra += "\n\t\talias {};".format(alias)
+				nginx_conf_extra += f"\tlocation {path} {{"
+				nginx_conf_extra += f"\n\t\talias {alias};"
 				nginx_conf_extra += "\n\t}\n"
 			for path, url in yaml.get("redirects", {}).items():
 				nginx_conf_extra += f"\trewrite {path} {url} permanent;\n"
@@ -216,7 +216,7 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 	# Add in any user customizations in the includes/ folder.
 	nginx_conf_custom_include = os.path.join(env["STORAGE_ROOT"], "www", safe_domain_name(domain) + ".conf")
 	if os.path.exists(nginx_conf_custom_include):
-		nginx_conf_extra += "\tinclude {};\n".format(nginx_conf_custom_include)
+		nginx_conf_extra += f"\tinclude {nginx_conf_custom_include};\n"
 	# PUT IT ALL TOGETHER
 
 	# Combine the pieces. Iteratively place each template into the "# ADDITIONAL DIRECTIVES HERE" placeholder

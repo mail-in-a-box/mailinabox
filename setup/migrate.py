@@ -164,7 +164,7 @@ def migration_12(env):
                     try:
                         table = table[0]
                         c = conn.cursor()
-                        dropcmd = "DROP TABLE {}".format(table)
+                        dropcmd = f"DROP TABLE {table}"
                         c.execute(dropcmd)
                     except:
                         print("Failed to drop table", table)
