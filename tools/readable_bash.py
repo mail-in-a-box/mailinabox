@@ -462,9 +462,8 @@ class BashScript(Grammar):
 
 		v = re.sub(r"(\$?)PRIMARY_HOSTNAME", r"<b>box.yourdomain.com</b>", v)
 		v = re.sub(r"\$STORAGE_ROOT", r"<b>$STORE</b>", v)
-		v = v.replace("`pwd`",  "<code><b>/path/to/mailinabox</b></code>")
+		return v.replace("`pwd`",  "<code><b>/path/to/mailinabox</b></code>")
 
-		return v
 
 def wrap_lines(text, cols=60):
 	ret = ""
