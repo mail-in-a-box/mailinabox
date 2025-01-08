@@ -13,6 +13,7 @@ import os, sqlite3, re
 import utils
 from email_validator import validate_email as validate_email_, EmailNotValidError
 import idna
+import operator
 
 def validate_email(email, mode=None):
 	# Checks that an email address is syntactically valid. Returns True/False.
@@ -239,7 +240,7 @@ def get_mail_aliases_ex(env):
 
 	# Sort aliases within each domain first by required-ness then lexicographically by address.
 	for domain in domains:
-		domain["aliases"].sort(key = lambda alias : (alias["auto"], alias["address"]))
+		domain["aliases"].sort(key = operator.itemgetter("auto", "address"))
 	return domains
 
 def get_domain(emailaddr, as_unicode=True):

@@ -14,6 +14,7 @@ import rtyaml
 from exclusiveprocess import Lock
 
 from utils import load_environment, shell, wait_for_service
+import operator
 
 def backup_status(env):
 	# If backups are disabled, return no status.
@@ -91,7 +92,7 @@ def backup_status(env):
 
 	# Ensure the rows are sorted reverse chronologically.
 	# This is relied on by should_force_full() and the next step.
-	backups = sorted(backups.values(), key = lambda b : b["date"], reverse=True)
+	backups = sorted(backups.values(), key = operator.itemgetter("date"), reverse=True)
 
 	# Get the average size of incremental backups, the size of the
 	# most recent full backup, and the date of the most recent
