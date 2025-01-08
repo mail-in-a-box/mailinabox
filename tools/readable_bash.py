@@ -192,8 +192,7 @@ class CatEOF(Grammar):
 	def value(self):
 		content = self[9].string
 		content = re.sub(r"\\([$])", r"\1", content) # un-escape bash-escaped characters
-		return "<div class='write-to'><div class='filename'>%s <span>(%s)</span></div><pre>%s</pre></div>\n" \
-			% (self[4].string,
+		return "<div class='write-to'><div class='filename'>{} <span>({})</span></div><pre>{}</pre></div>\n".format(self[4].string,
 			   "overwrite" if ">>" not in self[2].string else "append to",
 			   cgi.escape(content))
 
@@ -230,7 +229,7 @@ class EditConf(Grammar):
 		for opt in re.split("\s+", self[4].string):
 			k, v = opt.split("=", 1)
 			v = re.sub(r"\n+", "", fixup_tokens(v)) # not sure why newlines are getting doubled
-			options.append("%s%s%s" % (k, eq, v))
+			options.append("{}{}{}".format(k, eq, v))
 		return "<div class='write-to'><div class='filename'>" + self[1].string + " <span>(change settings)</span></div><pre>" + "\n".join(cgi.escape(s) for s in options) + "</pre></div>\n"
 
 class CaptureOutput(Grammar):
@@ -248,7 +247,7 @@ class SedReplace(Grammar):
 class EchoPipe(Grammar):
 	grammar = OPTIONAL(SPACE), L("echo "), REST_OF_LINE, L(' | '), REST_OF_LINE, EOL
 	def value(self):
-		text = " ".join("\"%s\"" % s for s in self[2].string.split(" "))
+		text = " ".join("\"{}\"".format(s) for s in self[2].string.split(" "))
 		return "<pre class='shell'><div>echo " + recode_bash(text) + " \<br> | " + recode_bash(self[4].string) + "</div></pre>\n"
 
 def shell_line(bash):
@@ -414,8 +413,7 @@ class BashScript(Grammar):
 		parser = BashScript.parser()
 		result = parser.parse_string(string)
 
-		v = "<div class='row'><div class='col-xs-12 sourcefile'>view the bash source for the following section at <a href=\"%s\">%s</a></div></div>\n" \
-			 % ("https://github.com/mail-in-a-box/mailinabox/tree/master/" + fn, fn)
+		v = "<div class='row'><div class='col-xs-12 sourcefile'>view the bash source for the following section at <a href=\"{}\">{}</a></div></div>\n".format("https://github.com/mail-in-a-box/mailinabox/tree/master/" + fn, fn)
 
 		mode = 0
 		for item in result.value():
@@ -429,7 +427,7 @@ class BashScript(Grammar):
 					mode = 0
 					clz = "contd"
 				if mode == 0:
-					v += "<div class='row %s'>\n" % clz
+					v += "<div class='row {}'>\n".format(clz)
 					v += "<div class='col-md-6 prose'>\n"
 				v += item
 				mode = 1

@@ -302,7 +302,7 @@ def scan_mail_log(env):
                 for date, sender, message in user_data["blocked"]:
                     if len(sender) > 64:
                         sender = sender[:32] + "…" + sender[-32:]
-                    user_rejects.extend((f'{date} - {sender} ', '  %s' % message))
+                    user_rejects.extend((f'{date} - {sender} ', '  {}'.format(message)))
                 rejects.append(user_rejects)
 
         print_user_table(
@@ -608,7 +608,7 @@ def valid_date(string):
     try:
         date = dateutil.parser.parse(string)
     except ValueError:
-        raise argparse.ArgumentTypeError("Unrecognized date and/or time '%s'" % string)
+        raise argparse.ArgumentTypeError("Unrecognized date and/or time '{}'".format(string))
     return date
 
 
@@ -670,7 +670,7 @@ def print_user_table(users, data=None, sub_data=None, activity=None, latest=None
                 col_str = f"{d[row]!s:<20}"
                 col_left[col] = True
             else:
-                temp = "{:>%s}" % max(5, len(l) + 1, len(str(d[row])) + 1)
+                temp = "{{:>{}}}".format(max(5, len(l) + 1, len(str(d[row])) + 1))
                 col_str = temp.format(str(d[row]))
             col_widths[col] = max(col_widths[col], len(col_str))
             line += col_str
@@ -707,10 +707,10 @@ def print_user_table(users, data=None, sub_data=None, activity=None, latest=None
                 if sub_data is not None:
                     for l, d in sub_data:
                         if d[row]:
-                            lines.extend(('┬', '│ %s' % l, '├─%s─' % (len(l) * '─'), '│'))
+                            lines.extend(('┬', '│ {}'.format(l), '├─%s─' % (len(l) * '─'), '│'))
                             max_len = 0
                             for v in list(d[row]):
-                                lines.append("│ %s" % v)
+                                lines.append("│ {}".format(v))
                                 max_len = max(max_len, len(v))
                             lines.append("└" + (max_len + 1) * "─")
 
