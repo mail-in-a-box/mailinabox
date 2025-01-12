@@ -1033,7 +1033,7 @@ def run_and_output_changes(env, pool):
 					if op in {"replace", "insert"}:
 						BufferedOutput(with_lines=cur_lines[j1:j2]).playback(out)
 
-		for category, _prev_lines in prev_status.items():
+		for category in prev_status.keys():
 			if category not in cur_status:
 				out.add_heading(category)
 				out.print_warning("This section was removed.")
