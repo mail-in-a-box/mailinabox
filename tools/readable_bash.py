@@ -363,9 +363,9 @@ def quasitokenize(bashscript):
 			newscript += c
 
 		# "<< EOF" escaping.
-		if quote_mode is None and re.search("<<\\s*EOF\n$", newscript):
+		if quote_mode is None and re.search(r"<<\s*EOF\n$", newscript):
 			quote_mode = "EOF"
-		elif quote_mode == "EOF" and re.search("\nEOF\n$", newscript):
+		elif quote_mode == "EOF" and re.search(r"\nEOF\n$", newscript):
 			quote_mode = None
 
 	return newscript
@@ -405,8 +405,8 @@ class BashScript(Grammar):
 			string = f.read()
 
 		# tokenize
-		string = re.sub(".* #NODOC\n", "", string)
-		string = re.sub("\n\\s*if .*then.*|\n\\s*fi|\n\\s*else|\n\\s*elif .*", "", string)
+		string = re.sub(r".* #NODOC\n", "", string)
+		string = re.sub(r"\n\s*if .*then.*|\n\s*fi|\n\s*else|\n\s*elif .*", "", string)
 		string = quasitokenize(string)
 		string = string.replace("hide_output ", "")
 

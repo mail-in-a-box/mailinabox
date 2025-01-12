@@ -223,7 +223,7 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 	# of the previous template.
 	nginx_conf = "# ADDITIONAL DIRECTIVES HERE\n"
 	for t in [*templates, nginx_conf_extra]:
-		nginx_conf = re.sub("[ \t]*# ADDITIONAL DIRECTIVES HERE *\n", t, nginx_conf)
+		nginx_conf = re.sub(r"[ \t]*# ADDITIONAL DIRECTIVES HERE *\n", t, nginx_conf)
 
 	# Replace substitution strings in the template & return.
 	nginx_conf = nginx_conf.replace("$STORAGE_ROOT", env['STORAGE_ROOT'])

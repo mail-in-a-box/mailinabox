@@ -947,7 +947,7 @@ def get_latest_miab_version():
     from urllib.request import urlopen, HTTPError, URLError
 
     try:
-        return re.search(b'TAG=(.*)', urlopen("https://mailinabox.email/setup.sh?ping=1", timeout=5).read()).group(1).decode("utf8")
+        return re.search(br'TAG=(.*)', urlopen("https://mailinabox.email/setup.sh?ping=1", timeout=5).read()).group(1).decode("utf8")
     except (TimeoutError, HTTPError, URLError):
         return None
 
@@ -1074,7 +1074,7 @@ class FileOutput:
 
 	def print_block(self, message, first_line="   "):
 		print(first_line, end='', file=self.buf)
-		message = re.sub("\n\\s*", " ", message)
+		message = re.sub(r"\n\s*", " ", message)
 		words = re.split(r"(\s+)", message)
 		linelen = 0
 		for w in words:

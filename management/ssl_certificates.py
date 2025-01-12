@@ -635,7 +635,7 @@ def load_pem(pem):
 	from cryptography.x509 import load_pem_x509_certificate
 	from cryptography.hazmat.primitives import serialization
 	from cryptography.hazmat.backends import default_backend
-	pem_type = re.match(b"-+BEGIN (.*?)-+[\r\n]", pem)
+	pem_type = re.match(br"-+BEGIN (.*?)-+[\r\n]", pem)
 	if pem_type is None:
 		msg = "File is not a valid PEM-formatted file."
 		raise ValueError(msg)
