@@ -199,7 +199,7 @@ def run_test(testfunc, args, count, within_seconds, parallel):
 
 	# Did we make enough requests within the limit?
 	if (time.time()-start_time) > within_seconds:
-		raise Exception("Test failed to make {} requests in {:d} seconds.".format(count, within_seconds))
+		raise Exception(f"Test failed to make {count} requests in {within_seconds:d} seconds.")
 
 	# Wait a moment for the block to be put into place.
 	time.sleep(4)

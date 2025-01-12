@@ -33,14 +33,14 @@ def backup_status(env):
 	def reldate(date, ref, clip):
 		if ref < date: return clip
 		rd = dateutil.relativedelta.relativedelta(ref, date)
-		if rd.years > 1: return "{:d} years, {:d} months".format(rd.years, rd.months)
-		if rd.years == 1: return "{:d} year, {:d} months".format(rd.years, rd.months)
-		if rd.months > 1: return "{:d} months, {:d} days".format(rd.months, rd.days)
-		if rd.months == 1: return "{:d} month, {:d} days".format(rd.months, rd.days)
-		if rd.days >= 7: return "{:d} days".format(rd.days)
-		if rd.days > 1: return "{:d} days, {:d} hours".format(rd.days, rd.hours)
-		if rd.days == 1: return "{:d} day, {:d} hours".format(rd.days, rd.hours)
-		return "{:d} hours, {:d} minutes".format(rd.hours, rd.minutes)
+		if rd.years > 1: return f"{rd.years:d} years, {rd.months:d} months"
+		if rd.years == 1: return f"{rd.years:d} year, {rd.months:d} months"
+		if rd.months > 1: return f"{rd.months:d} months, {rd.days:d} days"
+		if rd.months == 1: return f"{rd.months:d} month, {rd.days:d} days"
+		if rd.days >= 7: return f"{rd.days:d} days"
+		if rd.days > 1: return f"{rd.days:d} days, {rd.hours:d} hours"
+		if rd.days == 1: return f"{rd.days:d} day, {rd.hours:d} hours"
+		return f"{rd.hours:d} hours, {rd.minutes:d} minutes"
 
 	# Get duplicity collection status and parse for a list of backups.
 	def parse_line(line):
@@ -130,7 +130,7 @@ def backup_status(env):
 		# It still can't be deleted until it's old enough.
 		est_deleted_on = max(est_time_of_next_full, first_date + datetime.timedelta(days=config["min_age_in_days"]))
 
-		deleted_in = "approx. {:d} days".format(round((est_deleted_on-now).total_seconds()/60/60/24 + .5))
+		deleted_in = f"approx. {round((est_deleted_on-now).total_seconds()/60/60/24 + .5):d} days"
 
 	# When will a backup be deleted? Set the deleted_in field of each backup.
 	saw_full = False

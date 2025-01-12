@@ -69,7 +69,7 @@ MOZILLA_CIPHERS_OLD = "ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305
 
 def sslyze(opts, port, ok_ciphers):
 	# Print header.
-	header = ("PORT {:d}".format(port))
+	header = (f"PORT {port:d}")
 	print(header)
 	print("-" * (len(header)))
 
@@ -83,7 +83,7 @@ def sslyze(opts, port, ok_ciphers):
 	proxy_proc = None
 	if proxy:
 		connection_string = "localhost:10023"
-		proxy_proc = subprocess.Popen(["ssh", "-N", "-L10023:{}:{:d}".format(host, port), proxy])
+		proxy_proc = subprocess.Popen(["ssh", "-N", f"-L10023:{host}:{port:d}", proxy])
 		time.sleep(3)
 
 	try:

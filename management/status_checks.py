@@ -209,7 +209,7 @@ def check_software_updates(env, output):
 	elif len(pkgs) == 0:
 		output.print_ok("System software is up to date.")
 	else:
-		output.print_error("There are {:d} software packages that can be updated.".format(len(pkgs)))
+		output.print_error(f"There are {len(pkgs):d} software packages that can be updated.")
 		for p in pkgs:
 			output.print_line("{} ({})".format(p["package"], p["version"]))
 
@@ -223,7 +223,7 @@ def check_free_disk_space(rounded_values, env, output):
 	st = os.statvfs(env['STORAGE_ROOT'])
 	bytes_total = st.f_blocks * st.f_frsize
 	bytes_free = st.f_bavail * st.f_frsize
-	disk_msg = "The disk has {:.2f} GB space remaining.".format(bytes_free/1024.0/1024.0/1024.0)
+	disk_msg = f"The disk has {bytes_free/1024.0/1024.0/1024.0:.2f} GB space remaining."
 	if bytes_free > .3 * bytes_total:
 		if rounded_values: disk_msg = "The disk has more than 30% free space."
 		output.print_ok(disk_msg)
