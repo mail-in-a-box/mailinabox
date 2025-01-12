@@ -255,7 +255,7 @@ def get_domain(emailaddr, as_unicode=True):
 			pass
 	return ret
 
-def get_mail_domains(env, filter_aliases=lambda alias : True, users_only=False):
+def get_mail_domains(env, filter_aliases=lambda _alias : True, users_only=False):
 	# Returns the domain names (IDNA-encoded) of all of the email addresses
 	# configured on the system. If users_only is True, only return domains
 	# with email addresses that correspond to user accounts. Exclude Unicode
