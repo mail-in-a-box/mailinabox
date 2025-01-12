@@ -161,7 +161,7 @@ def login():
 		"api_key": auth_service.create_session_key(email, env, type='login'),
 	}
 
-	app.logger.info(f"New login session created for {email}")
+	app.logger.info("New login session created for %s", email)
 
 	# Return.
 	return json_response(resp)
@@ -170,7 +170,7 @@ def login():
 def logout():
 	try:
 		email, _ = auth_service.authenticate(request, env, logout=True)
-		app.logger.info(f"{email} logged out")
+		app.logger.info("%s logged out", email)
 	except ValueError:
 		pass
 	finally:
@@ -746,7 +746,7 @@ def log_failed_login(request):
 
 	# We need to add a timestamp to the log message, otherwise /dev/log will eat the "duplicate"
 	# message.
-	app.logger.warning( f"Mail-in-a-Box Management Daemon: Failed login attempt from ip {ip} - timestamp {time.time()}")
+	app.logger.warning("Mail-in-a-Box Management Daemon: Failed login attempt from ip %s - timestamp %s", ip, time.time())
 
 
 # APP
