@@ -72,9 +72,8 @@ def scan_files(collector):
         if not os.path.exists(fn):
             continue
         if fn[-3:] == '.gz':
-            with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
-                with gzip.open(fn, 'rb') as f:
-                    shutil.copyfileobj(f, tmp_file)
+            with tempfile.NamedTemporaryFile(delete=False) as tmp_file, gzip.open(fn, 'rb') as f:
+                shutil.copyfileobj(f, tmp_file)
 
         if VERBOSE:
             print("Processing file", fn, "...")
