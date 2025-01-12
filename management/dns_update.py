@@ -716,9 +716,9 @@ def sign_zone(domain, zonefile, env):
 
 		# zonefile to sign
 		"/etc/nsd/zones/" + zonefile,
-	]
 		# keys to sign with (order doesn't matter -- it'll figure it out)
-		+ all_keys
+		*all_keys
+	]
 	)
 
 	# Create a DS record based on the patched-up key files. The DS record is specific to the
