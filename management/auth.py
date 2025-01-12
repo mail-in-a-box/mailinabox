@@ -52,7 +52,7 @@ class AuthService:
 			msg = "Authorization header invalid."
 			raise ValueError(msg)
 
-		if username.strip() == "" and password.strip() == "":
+		if not username.strip() and not password.strip():
 			msg = "No email address, password, session key, or API key provided."
 			raise ValueError(msg)
 
@@ -73,7 +73,7 @@ class AuthService:
 				self.sessions[sessionid] = session
 
 		# If no password was given, but a username was given, we're missing some information.
-		elif password.strip() == "":
+		elif not password.strip():
 			msg = "Enter a password."
 			raise ValueError(msg)
 

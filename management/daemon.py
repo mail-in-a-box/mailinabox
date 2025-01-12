@@ -37,7 +37,7 @@ with contextlib.suppress(OSError):
 csr_country_codes = []
 with open(os.path.join(os.path.dirname(me), "csr_country_codes.tsv"), encoding="utf-8") as f:
 	for line in f:
-		if line.strip() == "" or line.startswith("#"): continue
+		if not line.strip() or line.startswith("#"): continue
 		code, name = line.strip().split("\t")[0:2]
 		csr_country_codes.append((code, name))
 
@@ -281,7 +281,7 @@ def dns_get_secondary_nameserver():
 def dns_set_secondary_nameserver():
 	from dns_update import set_secondary_dns
 	try:
-		return set_secondary_dns([ns.strip() for ns in re.split(r"[, ]+", request.form.get('hostnames') or "") if ns.strip() != ""], env)
+		return set_secondary_dns([ns.strip() for ns in re.split(r"[, ]+", request.form.get('hostnames') or "") if ns.strip()], env)
 	except ValueError as e:
 		return (str(e), 400)
 
@@ -352,11 +352,11 @@ def dns_set_record(qname, rtype="A"):
 
 		if request.method in {"POST", "PUT"}:
 			# There is a default value for A/AAAA records.
-			if rtype in {"A", "AAAA"} and value == "":
+			if rtype in {"A", "AAAA"} and not value:
 				value = request.environ.get("HTTP_X_FORWARDED_FOR") # normally REMOTE_ADDR but we're behind nginx as a reverse proxy
 
 			# Cannot add empty records.
-			if value == '':
+			if not value:
 				return ("No value for the record provided.", 400)
 
 			if request.method == "POST":
@@ -370,7 +370,7 @@ def dns_set_record(qname, rtype="A"):
 				action = "set"
 
 		elif request.method == "DELETE":
-			if value == '':
+			if not value:
 				# Delete all records for this qname-type pair.
 				value = None
 			else:
@@ -678,7 +678,7 @@ def authorized_personnel_only_via_cookie(f):
 @authorized_personnel_only_via_cookie
 def munin_static_file(filename=""):
 	# Proxy the request to static files.
-	if filename == "": filename = "index.html"
+	if not filename: filename = "index.html"
 	return send_from_directory("/var/cache/munin/www", filename)
 
 @app.route('/munin/cgi-graph/<path:filename>')
@@ -707,7 +707,7 @@ def munin_cgi(filename):
 	# -c "/usr/lib/munin/cgi/munin-cgi-graph" passes the command to run as munin
 	# "%s" is a placeholder for where the request's querystring will be added
 
-	if filename == "":
+	if not filename:
 		return ("a path must be specified", 404)
 
 	query_str = request.query_string.decode("utf-8", 'ignore')

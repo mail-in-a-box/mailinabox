@@ -171,7 +171,7 @@ def strip_indent(s):
 class Comment(Grammar):
 	grammar = ONE_OR_MORE(ZERO_OR_MORE(SPACE), L('#'), REST_OF_LINE, EOL)
 	def value(self):
-		if self.string.replace("#", "").strip() == "":
+		if not self.string.replace("#", "").strip():
 			return "\n"
 		lines = [x[2].string for x in self[0]]
 		content = "\n".join(lines)
@@ -273,7 +273,7 @@ class RestartService(Grammar):
 class OtherLine(Grammar):
 	grammar = (REST_OF_LINE, EOL)
 	def value(self):
-		if self.string.strip() == "": return ""
+		if not self.string.strip(): return ""
 		if "source setup/functions.sh" in self.string: return ""
 		if "source /etc/mailinabox.conf" in self.string: return ""
 		return "<pre class='shell'><div>" + recode_bash(self.string.strip()) + "</div></pre>\n"
@@ -417,7 +417,7 @@ class BashScript(Grammar):
 
 		mode = 0
 		for item in result.value():
-			if item.strip() == "":
+			if not item.strip():
 				pass
 			elif item.startswith("<p") and not item.startswith("<pre"):
 				clz = ""
@@ -474,7 +474,7 @@ def wrap_lines(text, cols=60):
 			ret += " \\\n"
 			ret += "   "
 			linelen = 0
-		if linelen == 0 and w.strip() == "": continue
+		if linelen == 0 and not w.strip(): continue
 		ret += w
 		linelen += len(w)
 	return ret

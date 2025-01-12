@@ -511,7 +511,7 @@ def list_target_files(config):
 		if path == '/':
 			path = ''
 
-		if bucket == "":
+		if not bucket:
 			msg = "Enter an S3 bucket name."
 			raise ValueError(msg)
 

@@ -268,7 +268,7 @@ def get_mail_domains(env, filter_aliases=lambda alias : True, users_only=False):
 
 def add_mail_user(email, pw, privs, env):
 	# validate email
-	if email.strip() == "":
+	if not email.strip():
 		return ("No email address provided.", 400)
 	if not validate_email(email):
 		return ("Invalid email address.", 400)
@@ -284,7 +284,7 @@ def add_mail_user(email, pw, privs, env):
 	validate_password(pw)
 
 	# validate privileges
-	if privs is None or privs.strip() == "":
+	if privs is None or not privs.strip():
 		privs = []
 	else:
 		privs = privs.split("\n")
@@ -357,7 +357,7 @@ def remove_mail_user(email, env):
 	return kick(env, "mail user removed")
 
 def parse_privs(value):
-	return [p for p in value.split("\n") if p.strip() != ""]
+	return [p for p in value.split("\n") if p.strip()]
 
 def get_mail_user_privileges(email, env, empty_on_error=False):
 	# get privs
@@ -370,7 +370,7 @@ def get_mail_user_privileges(email, env, empty_on_error=False):
 	return parse_privs(rows[0][0])
 
 def validate_privilege(priv):
-	if "\n" in priv or priv.strip() == "":
+	if "\n" in priv or not priv.strip():
 		return (f"That's not a valid privilege ({priv}).", 400)
 	return None
 
@@ -411,7 +411,7 @@ def add_mail_alias(address, forwards_to, permitted_senders, env, update_if_exist
 
 	# validate address
 	address = address.strip()
-	if address == "":
+	if not address:
 		return ("No email address provided.", 400)
 	if not validate_email(address, mode='alias'):
 		return (f"Invalid email address ({address}).", 400)
@@ -438,7 +438,7 @@ def add_mail_alias(address, forwards_to, permitted_senders, env, update_if_exist
 		for line in forwards_to.split("\n"):
 			for email in line.split(","):
 				email = email.strip()
-				if email == "": continue
+				if not email: continue
 				email = sanitize_idn_email_address(email) # Unicode => IDNA
 				# Strip any +tag from email alias and check privileges
 				privileged_email = re.sub(r"(?=\+)[^@]*(?=@)",'',email)
@@ -461,7 +461,7 @@ def add_mail_alias(address, forwards_to, permitted_senders, env, update_if_exist
 	for line in permitted_senders.split("\n"):
 		for login in line.split(","):
 			login = login.strip()
-			if login == "": continue
+			if not login: continue
 			if login not in valid_logins:
 				return (f"Invalid permitted sender: {login} is not a user on this system.", 400)
 			validated_permitted_senders.append(login)
@@ -598,11 +598,11 @@ def kick(env, mail_result=None):
 	from web_update import do_web_update
 	results.append( do_web_update(env) )
 
-	return "".join(s for s in results if s != "")
+	return "".join(s for s in results if s)
 
 def validate_password(pw):
 	# validate password
-	if pw.strip() == "":
+	if not pw.strip():
 		msg = "No password provided."
 		raise ValueError(msg)
 	if len(pw) < 8:

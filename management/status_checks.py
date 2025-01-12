@@ -763,7 +763,7 @@ def check_mail_domain(domain, env, output):
 	# Stop if the domain is listed in the Spamhaus Domain Block List.
 	# The user might have chosen a domain that was previously in use by a spammer
 	# and will not be able to reliably send mail.
-	
+
 	# See https://www.spamhaus.org/news/article/807/using-our-public-mirrors-check-your-return-codes-now. for
 	# information on spamhaus return codes
 	dbl = query_dns(domain+'.dbl.spamhaus.org', "A", nxdomain=None)
@@ -918,7 +918,7 @@ def list_apt_updates(apt_update=True):
 	simulated_install = shell("check_output", ["/usr/bin/apt-get", "-qq", "-s", "upgrade"])
 	pkgs = []
 	for line in simulated_install.split('\n'):
-		if line.strip() == "":
+		if not line.strip():
 			continue
 		if re.match(r'^Conf .*', line):
 			 # remove these lines, not informative
@@ -1082,7 +1082,7 @@ class FileOutput:
 				print(file=self.buf)
 				print("   ", end="", file=self.buf)
 				linelen = 0
-			if linelen == 0 and w.strip() == "": continue
+			if linelen == 0 and not w.strip(): continue
 			print(w, end="", file=self.buf)
 			linelen += len(w)
 		print(file=self.buf)

@@ -264,7 +264,7 @@ def build_zone(domain, domain_properties, additional_records, env, is_zone=True)
 		(None,  "AAAA", env.get('PUBLIC_IPV6'), f"Optional. Sets the IPv6 address that {domain} resolves to, e.g. for web hosting. (It is not necessary for receiving mail on this domain.)"),
 	]
 	for qname, rtype, value, explanation in defaults:
-		if value is None or value.strip() == "": continue # skip IPV6 if not set
+		if value is None or not value.strip(): continue # skip IPV6 if not set
 		if not is_zone and qname == "www": continue # don't create any default 'www' subdomains on what are themselves subdomains
 		# Set the default record, but not if:
 		# (1) there is not a user-set record of the same type already
@@ -456,7 +456,7 @@ def build_sshfp_records():
 	keys = sorted(keys.split("\n"))
 
 	for key in keys:
-		if key.strip() == "" or key[0] == "#": continue
+		if not key.strip() or key[0] == "#": continue
 		try:
 			_host, keytype, pubkey = key.split(" ")
 			yield "%d %d ( %s )" % (
