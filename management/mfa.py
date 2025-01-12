@@ -10,7 +10,9 @@ from mailconfig import open_database
 def get_user_id(email, c):
 	c.execute('SELECT id FROM users WHERE email=?', (email,))
 	r = c.fetchone()
-	if not r: raise ValueError("User does not exist.")
+	if not r:
+		msg = "User does not exist."
+		raise ValueError(msg)
 	return r[0]
 
 def get_mfa_state(email, env):

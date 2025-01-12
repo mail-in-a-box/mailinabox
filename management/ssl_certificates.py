@@ -513,7 +513,9 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 	try:
 		ssl_cert_chain = load_cert_chain(ssl_certificate)
 		cert = load_pem(ssl_cert_chain[0])
-		if not isinstance(cert, Certificate): raise ValueError("This is not a certificate file.")
+		if not isinstance(cert, Certificate):
+			msg = "This is not a certificate file."
+			raise ValueError(msg)
 	except ValueError as e:
 		return (f"There is a problem with the certificate file: {e!s}", None)
 

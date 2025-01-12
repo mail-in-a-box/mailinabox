@@ -910,8 +910,12 @@ def set_custom_dns_record(qname, rtype, value, action, env):
 		if rtype in {"A", "AAAA"}:
 			if value != "local": # "local" is a special flag for us
 				v = ipaddress.ip_address(value) # raises a ValueError if there's a problem
-				if rtype == "A" and not isinstance(v, ipaddress.IPv4Address): raise ValueError("That's an IPv6 address.")
-				if rtype == "AAAA" and not isinstance(v, ipaddress.IPv6Address): raise ValueError("That's an IPv4 address.")
+				if rtype == "A" and not isinstance(v, ipaddress.IPv4Address):
+					msg = "That's an IPv6 address."
+					raise ValueError(msg)
+				if rtype == "AAAA" and not isinstance(v, ipaddress.IPv6Address):
+					msg = "That's an IPv4 address."
+					raise ValueError(msg)
 		elif rtype in {"CNAME", "NS"}:
 			if rtype == "NS" and qname == zone:
 				msg = "NS records can only be set for subdomains."

@@ -86,7 +86,9 @@ def migration_7(env):
 			if newemail != email:
 				c = conn.cursor()
 				c.execute("UPDATE aliases SET source=? WHERE source=?", (newemail, email))
-				if c.rowcount != 1: raise ValueError("Alias not found.")
+				if c.rowcount != 1:
+					msg = "Alias not found."
+					raise ValueError(msg)
 				print("Updated alias", email, "to", newemail)
 		except Exception as e:
 			print("Error updating IDNA alias", email, e)
