@@ -196,7 +196,7 @@ def get_current_migration():
 	ver = 0
 	while True:
 		next_ver = (ver + 1)
-		migration_func = globals().get("migration_%d" % next_ver)
+		migration_func = globals().get("migration_{:d}".format(next_ver))
 		if not migration_func:
 			return ver
 		ver = next_ver
@@ -228,14 +228,14 @@ def run_migrations():
 
 	while True:
 		next_ver = (ourver + 1)
-		migration_func = globals().get("migration_%d" % next_ver)
+		migration_func = globals().get("migration_{:d}".format(next_ver))
 
 		if not migration_func:
 			# No more migrations to run.
 			break
 
 		print()
-		print("Running migration to Mail-in-a-Box #%d..." % next_ver)
+		print("Running migration to Mail-in-a-Box #{:d}...".format(next_ver))
 
 		try:
 			migration_func(env)

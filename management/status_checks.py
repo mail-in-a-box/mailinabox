@@ -122,15 +122,15 @@ def check_service(i, service, env):
 
 			# IPv4 ok but IPv6 failed. Try the PRIVATE_IPV6 address to see if the service is bound to the interface.
 			elif service["port"] != 53 and try_connect(env["PRIVATE_IPV6"]):
-				output.print_error("%s is running (and available over IPv4 and the local IPv6 address), but it is not publicly accessible at %s:%d." % (service['name'], env['PUBLIC_IPV6'], service['port']))
+				output.print_error("{} is running (and available over IPv4 and the local IPv6 address), but it is not publicly accessible at {}:{:d}.".format(service['name'], env['PUBLIC_IPV6'], service['port']))
 			else:
-				output.print_error("%s is running and available over IPv4 but is not accessible over IPv6 at %s port %d." % (service['name'], env['PUBLIC_IPV6'], service['port']))
+				output.print_error("{} is running and available over IPv4 but is not accessible over IPv6 at {} port {:d}.".format(service['name'], env['PUBLIC_IPV6'], service['port']))
 
 		# IPv4 failed. Try the private IP to see if the service is running but not accessible (except DNS because a different service runs on the private IP).
 		elif service["port"] != 53 and try_connect("127.0.0.1"):
-			output.print_error("%s is running but is not publicly accessible at %s:%d." % (service['name'], env['PUBLIC_IP'], service['port']))
+			output.print_error("{} is running but is not publicly accessible at {}:{:d}.".format(service['name'], env['PUBLIC_IP'], service['port']))
 		else:
-			output.print_error("%s is not running (port %d)." % (service['name'], service['port']))
+			output.print_error("{} is not running (port {:d}).".format(service['name'], service['port']))
 
 		# Why is nginx not running?
 		if not running and service["port"] in {80, 443}:
@@ -140,7 +140,7 @@ def check_service(i, service, env):
 	elif try_connect("127.0.0.1"):
 		running = True
 	else:
-		output.print_error("%s is not running (port %d)." % (service['name'], service['port']))
+		output.print_error("{} is not running (port {:d}).".format(service['name'], service['port']))
 
 	# Flag if local DNS is not running.
 	if not running and service["port"] == 53 and service["public"] is False:
@@ -209,7 +209,7 @@ def check_software_updates(env, output):
 	elif len(pkgs) == 0:
 		output.print_ok("System software is up to date.")
 	else:
-		output.print_error("There are %d software packages that can be updated." % len(pkgs))
+		output.print_error("There are {:d} software packages that can be updated.".format(len(pkgs)))
 		for p in pkgs:
 			output.print_line("{} ({})".format(p["package"], p["version"]))
 
@@ -223,7 +223,7 @@ def check_free_disk_space(rounded_values, env, output):
 	st = os.statvfs(env['STORAGE_ROOT'])
 	bytes_total = st.f_blocks * st.f_frsize
 	bytes_free = st.f_bavail * st.f_frsize
-	disk_msg = "The disk has %.2f GB space remaining." % (bytes_free/1024.0/1024.0/1024.0)
+	disk_msg = "The disk has {:.2f} GB space remaining.".format(bytes_free/1024.0/1024.0/1024.0)
 	if bytes_free > .3 * bytes_total:
 		if rounded_values: disk_msg = "The disk has more than 30% free space."
 		output.print_ok(disk_msg)

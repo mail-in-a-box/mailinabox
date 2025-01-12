@@ -459,7 +459,7 @@ def build_sshfp_records():
 		if not key.strip() or key[0] == "#": continue
 		try:
 			_host, keytype, pubkey = key.split(" ")
-			yield "%d %d ( %s )" % (
+			yield "{:d} {:d} ( {} )".format(
 				algorithm_number[keytype],
 				2, # specifies we are using SHA-256 on next line
 				hashlib.sha256(base64.b64decode(pubkey)).hexdigest().upper(),

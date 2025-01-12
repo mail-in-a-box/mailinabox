@@ -619,12 +619,12 @@ def print_time_table(labels, data, do_print=True):
     labels.insert(0, "hour")
     data.insert(0, [str(h) for h in range(24)])
 
-    temp = "│ {:<%d} " % max(len(l) for l in labels)
+    temp = "│ {{:<{:d}}} ".format(max(len(l) for l in labels))
     lines = [temp.format(label) for label in labels]
 
     for h in range(24):
         max_len = max(len(str(d[h])) for d in data)
-        base = "{:>%d} " % max(2, max_len)
+        base = "{{:>{:d}}} ".format(max(2, max_len))
 
         for i, d in enumerate(data):
             lines[i] += base.format(d[h])
@@ -707,7 +707,7 @@ def print_user_table(users, data=None, sub_data=None, activity=None, latest=None
                 if sub_data is not None:
                     for l, d in sub_data:
                         if d[row]:
-                            lines.extend(('┬', f'│ {l}', '├─%s─' % (len(l) * '─'), '│'))
+                            lines.extend(('┬', f'│ {l}', '├─{}─'.format(len(l) * '─'), '│'))
                             max_len = 0
                             for v in list(d[row]):
                                 lines.append(f"│ {v}")
@@ -753,7 +753,7 @@ def print_user_table(users, data=None, sub_data=None, activity=None, latest=None
     data_accum = [numstr(a) for a in data_accum]
     footer = str_temp.format("Totals:" if do_accum else " ")
     for row, (l, _) in enumerate(data):
-        temp = "{:>%d}" % max(5, len(l) + 1)
+        temp = "{{:>{:d}}}".format(max(5, len(l) + 1))
         footer += temp.format(data_accum[row])
 
     try:
