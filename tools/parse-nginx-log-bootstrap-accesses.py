@@ -32,7 +32,7 @@ for fn in glob.glob("/var/log/nginx/access.log*"):
 
 # Aggregate by date.
 by_date = { }
-for date, ip in accesses:
+for date, _ip in accesses:
 	by_date[date] = by_date.get(date, 0) + 1
 
 # Since logs are rotated, store the statistics permanently in a JSON file.
