@@ -105,12 +105,12 @@ def check_service(i, service, env):
 		s.settimeout(1)
 		try:
 			s.connect((ip, service["port"]))
-			return True
 		except OSError:
 			# timed out or some other odd error
 			return False
 		finally:
 			s.close()
+		return True
 
 	if service["public"]:
 		# Service should be publicly accessible.

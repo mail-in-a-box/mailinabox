@@ -380,10 +380,11 @@ def dns_set_record(qname, rtype="A"):
 
 		if set_custom_dns_record(qname, rtype, value, action, env):
 			return do_dns_update(env) or "Something isn't right."
-		return "OK"
 
 	except ValueError as e:
 		return (str(e), 400)
+
+	return "OK"
 
 @app.route('/dns/dump')
 @authorized_personnel_only
