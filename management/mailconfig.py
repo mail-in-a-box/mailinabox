@@ -88,8 +88,8 @@ def is_dcv_address(email):
 	email = email.lower()
 	return any(email.startswith((localpart + "@", localpart + "+")) for localpart in ("admin", "administrator", "postmaster", "hostmaster", "webmaster", "abuse"))
 
-def open_database(env, with_connection=False):
-	conn = sqlite3.connect(env["STORAGE_ROOT"] + "/mail/users.sqlite")
+def open_database(env, with_connection=False, db_path="/mail/users.sqlite"):
+	conn = sqlite3.connect(env["STORAGE_ROOT"] + db_path)
 	if not with_connection:
 		return conn.cursor()
 	else:
@@ -292,8 +292,9 @@ def add_mail_user(email, pw, privs, env):
 			validation = validate_privilege(p)
 			if validation: return validation
 
-	# get the database
+	# get the system database and OwnCloud database
 	conn, c = open_database(env, with_connection=True)
+	conn_oc, c_oc = open_database(env, with_connection=True, db_path="/owncloud/owncloud.db")
 
 	# hash the password
 	pw = hash_password(pw)
@@ -307,6 +308,15 @@ def add_mail_user(email, pw, privs, env):
 
 	# write databasebefore next step
 	conn.commit()
+
+	#fix sync cardDav error on Exchange connections, adding the user into OwnCloud DB
+	try:
+		c_oc.execute("INSERT INTO oc_users_external (backend, uid) VALUES (?, ?)",
+			("{127.0.0.1:993/imap/ssl/novalidate-cert}", email))
+	except sqlite3.IntegrityError:
+		return ("User already exists on calendar/contact server.", 400)
+
+	conn_oc.commit()
 
 	# Update things in case any new domains are added.
 	return kick(env, "mail user added")
@@ -351,6 +361,13 @@ def remove_mail_user(email, env):
 	if c.rowcount != 1:
 		return ("That's not a user (%s)." % email, 400)
 	conn.commit()
+
+	#delete user from OwnCloud DB too
+	conn_oc, c_oc = open_database(env, with_connection=True, db_path="/owncloud/owncloud.db")
+	c_oc.execute("DELETE FROM oc_users_external WHERE email=?", (email,))
+	if c.rowcount != 1:
+		return ("This email (%s) wasn't in contacts/calendar server.", % email, 400)
+	conn_oc.commit()
 
 	# Update things in case any domains are removed.
 	return kick(env, "mail user removed")
