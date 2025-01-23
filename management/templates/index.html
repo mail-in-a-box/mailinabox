@@ -392,7 +392,9 @@ function api(url, method, data, callback, callback_error, headers) {
       403: function(xhr) {
         // Credentials are no longer valid. Try to login again.
         var p = current_panel;
+        clear_credentials();
         show_panel('login');
+        show_hide_menus();
         switch_back_to_panel = p;
       }
     }
@@ -402,16 +404,21 @@ function api(url, method, data, callback, callback_error, headers) {
 var current_panel = null;
 var switch_back_to_panel = null;
 
-function do_logout() {
-  // Clear the session from the backend.
-  api("/logout", "POST");
-
+function clear_credentials() {
   // Forget the token.
   api_credentials = null;
   if (typeof localStorage != 'undefined')
     localStorage.removeItem("miab-cp-credentials");
   if (typeof sessionStorage != 'undefined')
     sessionStorage.removeItem("miab-cp-credentials");
+}
+
+function do_logout() {
+  // Clear the session from the backend.
+  api("/logout", "POST");
+
+  // Remove locally stored credentials
+  clear_credentials();
 
   // Return to the start.
   show_panel('login');
