@@ -4,14 +4,16 @@
 source /etc/mailinabox.conf
 shopt -s extglob
 
-retain_after="$(date --date="7 days ago" +%Y%m%d)"
+if ls "$STORAGE_ROOT/ssl/"*-+([0-9])-+([0-9a-f]).pem &>/dev/null; then
+  retain_after="$(date --date="7 days ago" +%Y%m%d)"
 
-mkdir -p $STORAGE_ROOT/ssl.expired
-for file in $STORAGE_ROOT/ssl/*-+([0-9])-+([0-9a-f]).pem; do
-  pem="$(basename "$file")"
-  not_valid_after="$(cut -d- -f1 <<< "${pem: -21}")"
+  mkdir -p $STORAGE_ROOT/ssl.expired
+  for file in $STORAGE_ROOT/ssl/*-+([0-9])-+([0-9a-f]).pem; do
+    pem="$(basename "$file")"
+    not_valid_after="$(cut -d- -f1 <<< "${pem: -21}")"
 
-  if [ "$not_valid_after" -lt "$retain_after" ]; then
-    mv "$file" "$STORAGE_ROOT/ssl.expired/${pem}"
-  fi
-done
+    if [ "$not_valid_after" -lt "$retain_after" ]; then
+      mv "$file" "$STORAGE_ROOT/ssl.expired/${pem}"
+    fi
+  done
+fi
