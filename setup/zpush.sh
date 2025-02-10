@@ -24,8 +24,8 @@ apt_install \
 phpenmod -v "$PHP_VER" imap
 
 # Copy Z-Push into place.
-VERSION=2.7.3
-TARGETHASH=9d4bec41935e9a4e07880c5ff915bcddbda4443b
+VERSION=2.7.5
+TARGETHASH=f0b0b06e255f3496173ab9d28a4f2d985184720e
 needs_update=0 #NODOC
 if [ ! -f /usr/local/lib/z-push/version ]; then
 	needs_update=1 #NODOC
@@ -59,8 +59,6 @@ fi
 sed -i "s^define('TIMEZONE', .*^define('TIMEZONE', '$(cat /etc/timezone)');^" /usr/local/lib/z-push/config.php
 sed -i "s/define('BACKEND_PROVIDER', .*/define('BACKEND_PROVIDER', 'BackendCombined');/" /usr/local/lib/z-push/config.php
 sed -i "s/define('USE_FULLEMAIL_FOR_LOGIN', .*/define('USE_FULLEMAIL_FOR_LOGIN', true);/" /usr/local/lib/z-push/config.php
-sed -i "s/define('LOG_MEMORY_PROFILER', .*/define('LOG_MEMORY_PROFILER', false);/" /usr/local/lib/z-push/config.php
-sed -i "s/define('BUG68532FIXED', .*/define('BUG68532FIXED', false);/" /usr/local/lib/z-push/config.php
 sed -i "s/define('LOGLEVEL', .*/define('LOGLEVEL', LOGLEVEL_ERROR);/" /usr/local/lib/z-push/config.php
 
 # Configure BACKEND
@@ -114,4 +112,6 @@ restart_service php"$PHP_VER"-fpm
 
 # Fix states after upgrade
 
-hide_output php"$PHP_VER" /usr/local/lib/z-push/z-push-admin.php -a fixstates
+if [ $needs_update == 1 ]; then
+	hide_output php"$PHP_VER" /usr/local/lib/z-push/z-push-admin.php -a fixstates
+fi

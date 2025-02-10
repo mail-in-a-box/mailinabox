@@ -1,6 +1,42 @@
 CHANGELOG
 =========
 
+Version 71 (January 4, 2025)
+----------------------------
+
+(Version 71a was posted on January 6, 2025 and fixes a setup regression.)
+
+Upgrades
+
+* Roundcube upgraded to version 1.6.9.
+* Z-Push upgraded to version 2.7.5.
+
+Automated Maintenance
+
+* Daily automated tasks are now run at 1am in the box's timezone and full backups are now restricted to running only on Saturdays and Sundays at that time.
+* Backups now exclude the owncloud-backup folder so that we're not backing up backups.
+* Old TLS certificates are now automatically deleted to improve control panel performance.
+
+Setup
+
+* Fixed broken setup if SSH was configured to listen on multiple ports.
+* Ubuntu MOTD advertisements are now disabled.
+* Fixed missing Roundcube dependency package if NextCloud isn't installed.
+
+Control Panel
+
+* Improved status checks for secondary nameservers.
+* Spamhaus is now queried for the box's IPv6 address also.
+* DSA and EC private keys are now accepted for TLS certificates.
+* Timeouts for loading slow control panel pages are reduced.
+
+And other minor fixes.
+
+Version 70 (August 15, 2024)
+----------------------------
+
+* Roundcube is updated to version 1.6.8 fixing security vulnerabilities.
+
 Version 69 (July 20, 2024)
 --------------------------
 
@@ -68,7 +104,7 @@ Version 64 (September 2, 2023)
 * Fixed backups to work with the latest duplicity package which was not backwards compatible.
 * Fixed setting B2 as a backup target with a slash in the application key.
 * Turned off OpenDMARC diagnostic reports sent in response to incoming mail.
-* Fixed some crashes when using an unrelased version of Mail-in-a-Box.
+* Fixed some crashes when using an unreleased version of Mail-in-a-Box.
 * Added z-push administration scripts.
 
 Version 63 (July 27, 2023)
@@ -1124,7 +1160,7 @@ Control panel:
 
 System:
 * The munin system monitoring tool is now installed and accessible at /admin/munin.
-* ownCloud updated to version 8.0.4. The ownCloud installation step now is reslient to download problems. The ownCloud configuration file is now stored in STORAGE_ROOT to fix loss of data when moving STORAGE_ROOT to a new machine.
+* ownCloud updated to version 8.0.4. The ownCloud installation step now is resilient to download problems. The ownCloud configuration file is now stored in STORAGE_ROOT to fix loss of data when moving STORAGE_ROOT to a new machine.
 * The setup scripts now run `apt-get update` prior to installing anything to ensure the apt database is in sync with the packages actually available.
 
 
@@ -1162,7 +1198,7 @@ DNS:
 * Internationalized Domain Names (IDNs) should now work in email. If you had custom DNS or custom web settings for internationalized domains, check that they are still working.
 * It is now possible to set multiple TXT and other types of records on the same domain in the control panel.
 * The custom DNS API was completely rewritten to support setting multiple records of the same type on a domain. Any existing client code using the DNS API will have to be rewritten. (Existing code will just get 404s back.)
-* On some systems the `nsd` service failed to start if network inferfaces were not ready.
+* On some systems the `nsd` service failed to start if network interfaces were not ready.
 
 System / Control Panel:
 
