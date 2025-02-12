@@ -180,8 +180,7 @@ def wait_for_service(port, public, env, timeout):
 		time.sleep(min(timeout/4, 1))
 
 def get_php_version():
-	# Gets the version of PHP installed in the system.
-	return shell("check_output", ["/usr/bin/php", "-v"])[4:7]
+	return "8.1"
 
 def get_ssh_port():
 	port_value = get_ssh_config_value("port")

@@ -2,6 +2,7 @@
 #
 # This script will restore the backup made during an installation
 source /etc/mailinabox.conf # load global vars
+source ./setup/functions.sh
 
 if [ -z "$1" ]; then
 	echo "Usage: owncloud-restore.sh <backup directory>"
@@ -26,9 +27,6 @@ if [ ! -f "$1/config.php" ]; then
 fi
 
 echo "Restoring backup from $1"
-
-PHP_VER=$(php_version)
-
 service php$PHP_VER-fpm stop
 
 # remove the current ownCloud/Nextcloud installation
