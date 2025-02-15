@@ -62,6 +62,9 @@ user_external_hash=280d24eb2a6cb56b4590af8847f925c28d8d853e
 # 5.3 You still can create, edit and delete users
 # 5.4 Go to Administration > Logs and ensure no new errors are shown
 
+# Set a local variable for the PHP version
+NC_PHP_VER=PHP_VER
+
 # Clear prior packages and install dependencies from apt.
 apt-get purge -qq -y owncloud* # we used to use the package manager
 
@@ -138,23 +141,23 @@ InstallNextcloud() {
 	if [ -e "$STORAGE_ROOT/owncloud/owncloud.db" ]; then
 		# ownCloud 8.1.1 broke upgrades. It may fail on the first attempt, but
 		# that can be OK.
-		sudo -u www-data php"$PHP_VER" /usr/local/lib/owncloud/occ upgrade
+		sudo -u www-data php"$NC_PHP_VER" /usr/local/lib/owncloud/occ upgrade
 		E=$?
 		if [ $E -ne 0 ] && [ $E -ne 3 ]; then
 			echo "Trying ownCloud upgrade again to work around ownCloud upgrade bug..."
-			sudo -u www-data php"$PHP_VER" /usr/local/lib/owncloud/occ upgrade
+			sudo -u www-data php"$NC_PHP_VER" /usr/local/lib/owncloud/occ upgrade
 			E=$?
 			if [ $E -ne 0 ] && [ $E -ne 3 ]; then exit 1; fi
-			sudo -u www-data php"$PHP_VER" /usr/local/lib/owncloud/occ maintenance:mode --off
+			sudo -u www-data php"$NC_PHP_VER" /usr/local/lib/owncloud/occ maintenance:mode --off
 			echo "...which seemed to work."
 		fi
 
 		# Add missing indices. NextCloud didn't include this in the normal upgrade because it might take some time.
-		sudo -u www-data php"$PHP_VER" /usr/local/lib/owncloud/occ db:add-missing-indices
-		sudo -u www-data php"$PHP_VER" /usr/local/lib/owncloud/occ db:add-missing-primary-keys
+		sudo -u www-data php"$NC_PHP_VER" /usr/local/lib/owncloud/occ db:add-missing-indices
+		sudo -u www-data php"$NC_PHP_VER" /usr/local/lib/owncloud/occ db:add-missing-primary-keys
 
 		# Run conversion to BigInt identifiers, this process may take some time on large tables.
-		sudo -u www-data php"$PHP_VER" /usr/local/lib/owncloud/occ db:convert-filecache-bigint --no-interaction
+		sudo -u www-data php"$NC_PHP_VER" /usr/local/lib/owncloud/occ db:convert-filecache-bigint --no-interaction
 	fi
 }
 
@@ -219,19 +222,19 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 			# Version 20 is the latest version from the 18.04 version of miab. To upgrade to version 21, install php8.0. This is
 			# not supported by version 20, but that does not matter, as the InstallNextcloud function only runs the version 21 code.
 			# We need php 8.0 for nextcloud 21-23, as php 8.1 is supported starting nextcloud 24
-			
+
 			# Prevent installation of old packages
 			apt-mark hold php7.0-apcu php7.1-apcu php7.2-apcu php7.3-apcu php7.4-apcu
-			
+
 			# Install php version 8.0
 			apt_install php8.0 php8.0-fpm php8.0-apcu php8.0-cli php8.0-sqlite3 php8.0-gd php8.0-imap \
 				php8.0-curl php8.0-dev php8.0-xml php8.0-mbstring php8.0-zip
-			
+
 			# set php version 8.0 as default
-			PHP_VER=8.0
+			NC_PHP_VER=8.0
 
 			# Make sure apc is enabled
-			tools/editconf.py /etc/php/$PHP_VER/mods-available/apcu.ini -c ';' \
+			tools/editconf.py /etc/php/$NC_PHP_VER/mods-available/apcu.ini -c ';' \
 				apc.enabled=1	\
 				apc.enable_cli=1
 		fi
@@ -255,9 +258,9 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^2[45] ]]; then
 			# From nextcloud 24 and higher, php8.1 is supported, so we can now remove the php8.0 ppa and packages
-			
+
 			# Reset the default php version used
-			PHP_VER=8.1
+			NC_PHP_VER=8.1
 
 			# Remove older php version
 			apt-get purge -qq -y php8.0 php8.0-fpm php8.0-apcu php8.0-cli php8.0-sqlite3 php8.0-gd \
