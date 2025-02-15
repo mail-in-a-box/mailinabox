@@ -179,7 +179,6 @@ def should_force_full(config, env):
 					return True
 			return False
 	# If we got here there are no (full) backups, so make one.
-	# (I love for/else blocks. Here it's just to show off.)
 	return True
 
 def get_passphrase(env):

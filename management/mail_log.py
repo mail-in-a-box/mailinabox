@@ -87,6 +87,8 @@ def scan_files(collector):
             else:
                 stop_scan = False
 
+        if tmp_file is not None:
+            os.remove(tmp_file.name)
 
 
 def scan_mail_log(env):
