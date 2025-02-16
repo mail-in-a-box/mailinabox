@@ -10,7 +10,6 @@
 # address entered by the user.
 
 import os, sqlite3, re
-import subprocess
 
 import utils
 from email_validator import validate_email as validate_email_, EmailNotValidError
@@ -421,7 +420,7 @@ def dovecot_quota_recalc(email):
 	# subprocess.call(['doveadm', 'reload'])
 
 	# force dovecot to recalculate the quota info for the user.
-	subprocess.call(["doveadm", "quota", "recalc", "-u", email])
+	utils.shell("check_call", ["doveadm", "quota", "recalc", "-u", email])
 
 def validate_quota(quota):
 	# validate quota
