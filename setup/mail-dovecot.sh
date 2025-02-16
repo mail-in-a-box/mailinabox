@@ -67,6 +67,32 @@ tools/editconf.py /etc/dovecot/conf.d/10-mail.conf \
 
 # Create, subscribe, and mark as special folders: INBOX, Drafts, Sent, Trash, Spam and Archive.
 cp conf/dovecot-mailboxes.conf /etc/dovecot/conf.d/15-mailboxes.conf
+sed -i "s/#mail_plugins =\(.*\)/mail_plugins =\1 \$mail_plugins quota/" /etc/dovecot/conf.d/10-mail.conf
+if ! grep -q "mail_plugins.* imap_quota" /etc/dovecot/conf.d/20-imap.conf; then
+  sed -i "s/\(mail_plugins =.*\)/\1\n  mail_plugins = \$mail_plugins imap_quota/" /etc/dovecot/conf.d/20-imap.conf
+fi
+
+# configure stuff for quota support
+if ! grep -q "quota_status_success = DUNNO" /etc/dovecot/conf.d/90-quota.conf; then
+    cat > /etc/dovecot/conf.d/90-quota.conf << EOF;
+plugin {
+  quota = maildir
+
+  quota_grace = 10%%
+
+  quota_status_success = DUNNO
+  quota_status_nouser = DUNNO
+  quota_status_overquota = "522 5.2.2 Mailbox is full"
+}
+
+service quota-status {
+    executable = quota-status -p postfix
+    inet_listener {
+        port = 12340
+    }
+}
+EOF
+fi
 
 # ### IMAP/POP
 

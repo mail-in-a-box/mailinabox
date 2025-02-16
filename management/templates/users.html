@@ -6,6 +6,7 @@
 #user_table .account_inactive .if_active { display: none; }
 #user_table .account_active .if_inactive { display: none; }
 #user_table .account_active.if_inactive { display: none; }
+.row-center { text-align: center; }
 </style>
 
 <h3>Add a mail user</h3>
@@ -27,6 +28,10 @@
       <option value="admin">Administrator</option>
     </select>
   </div>
+  <div class="form-group">
+      <label class="sr-only" for="adduserQuota">Quota</label>
+      <input type="text" class="form-control" id="adduserQuota" placeholder="Quota" style="width:5em;" value="0">
+  </div>
   <button type="submit" class="btn btn-primary">Add User</button>
 </form>
 <ul style="margin-top: 1em; padding-left: 1.5em; font-size: 90%;">
@@ -34,13 +39,17 @@
   <li>Use <a href="#aliases">aliases</a> to create email addresses that forward to existing accounts.</li>
   <li>Administrators get access to this control panel.</li>
   <li>User accounts cannot contain any international (non-ASCII) characters, but <a href="#aliases">aliases</a> can.</li>
+  <li>Quotas may not contain any spaces, commas or decimal points. Suffixes of G (gigabytes) and M (megabytes) are allowed.  For unlimited storage enter 0 (zero)</li>
 </ul>
 
 <h3>Existing mail users</h3>
 <table id="user_table" class="table" style="width: auto">
   <thead>
     <tr>
-      <th width="50%">Email Address</th>
+      <th width="35%">Email Address</th>
+      <th class="row-center">Size</th>
+      <th class="row-center">Used</th>
+      <th class="row-center">Quota</th>
       <th>Actions</th>
     </tr>
   </thead>
@@ -53,8 +62,19 @@
   <tr id="user-template">
     <td class='address'>
     </td>
+    <td class="box-size row-center"></td>
+    <td class="percent row-center"></td>
+	<td class="quota row-center">
+	</td>
     <td class='actions'>
         <span class='privs'>
+        </span>
+
+        <span class="if_active">
+          <a href="#" onclick="users_set_quota(this); return false;" class='setquota' title="Set Quota">
+              set quota
+          </a>
+          |
         </span>
 
         <span class="if_active">
@@ -97,10 +117,28 @@
 <table class="table" style="margin-top: .5em">
 <thead><th>Verb</th> <th>Action</th><th></th></thead>
 <tr><td>GET</td><td><i>(none)</i></td> <td>Returns a list of existing mail users. Adding <code>?format=json</code> to the URL will give JSON-encoded results.</td></tr>
-<tr><td>POST</td><td>/add</td> <td>Adds a new mail user. Required POST-body parameters are <code>email</code> and <code>password</code>.</td></tr>
-<tr><td>POST</td><td>/remove</td> <td>Removes a mail user. Required POST-body parameter is <code>email</code>.</td></tr>
+<tr>
+    <td>POST</td>
+    <td>/add</td>
+    <td>Adds a new mail user. Required POST-body parameters are <code>email</code> and <code>password</code>. Optional parameters: <code>privilege=admin</code> and <code>quota</code></td>
+</tr>
+<tr>
+    <td>POST</td>
+    <td>/remove</td>
+    <td>Removes a mail user. Required POST-by parameter is <code>email</code>.</td>
+</tr>
 <tr><td>POST</td><td>/privileges/add</td> <td>Used to make a mail user an admin. Required POST-body parameters are <code>email</code> and <code>privilege=admin</code>.</td></tr>
 <tr><td>POST</td><td>/privileges/remove</td> <td>Used to remove the admin privilege from a mail user. Required POST-body parameter is <code>email</code>.</td></tr>
+<tr>
+    <td>GET</td>
+    <td>/quota</td>
+    <td>Get the quota for a mail user. Required POST-body parameters are <code>email</code> and will return JSON result</td>
+</tr>
+<tr>
+    <td>POST</td>
+    <td>/quota</td>
+    <td>Set the quota for a mail user. Required POST-body parameters are <code>email</code> and <code>quota</code>.</td>
+</tr>
 </table>
 
 <h4>Examples:</h4>
@@ -133,7 +171,7 @@ function show_users() {
     function(r) {
       $('#user_table tbody').html("");
       for (var i = 0; i < r.length; i++) {
-        var hdr = $("<tr><th colspan='2' style='background-color: #EEE'></th></tr>");
+        var hdr = $("<tr><th colspan='6' style='background-color: #EEE'></th></tr>");
         hdr.find('th').text(r[i].domain);
         $('#user_table tbody').append(hdr);
 
@@ -151,7 +189,14 @@ function show_users() {
           n2.addClass("account_" + user.status);
 
           n.attr('data-email', user.email);
-          n.find('.address').text(user.email)
+          n.attr('data-quota', user.quota);
+          n.find('.address').text(user.email);
+          n.find('.box-size').text(user.box_size);
+          if (user.box_size == '?') {
+            n.find('.box-size').attr('title', 'Mailbox size is unkown')
+          }
+          n.find('.percent').text(user.percent);
+          n.find('.quota').text((user.quota == '0') ? 'unlimited' : user.quota);
           n2.find('.restore_info tt').text(user.mailbox);
 
           if (user.status == 'inactive') continue;
@@ -180,13 +225,15 @@ function do_add_user() {
   var email = $("#adduserEmail").val();
   var pw = $("#adduserPassword").val();
   var privs = $("#adduserPrivs").val();
+  var quota = $("#adduserQuota").val();
   api(
     "/mail/users/add",
     "POST",
     {
       email: email,
       password: pw,
-      privileges: privs
+      privileges: privs,
+      quota: quota
     },
     function(r) {
       // Responses are multiple lines of pre-formatted text.
@@ -226,6 +273,36 @@ function users_set_password(elem) {
           show_modal_error("Set Password", r);
         });
     });
+}
+
+function users_set_quota(elem) {
+    var email = $(elem).parents('tr').attr('data-email');
+    var quota = $(elem).parents('tr').attr('data-quota');
+
+    show_modal_confirm(
+        "Set Quota",
+        $("<p>Set quota for <b>" + email + "</b>?</p>" +
+            "<p>" +
+            "<label for='users_set_quota' style='display: block; font-weight: normal'>Quota:</label>" +
+            "<input type='text' id='users_set_quota' value='" + quota + "'></p>" +
+            "<p><small>Quotas may not contain any spaces or commas.  Suffixes of G (gigabytes) and M (megabytes) are allowed.</small></p>" +
+            "<p><small>For unlimited storage enter 0 (zero)</small></p>"),
+        "Set Quota",
+        function() {
+            api(
+                "/mail/users/quota",
+                "POST",
+                {
+                    email: email,
+                    quota: $('#users_set_quota').val()
+                },
+                function(r) {
+                    show_users();
+                },
+                function(r) {
+                    show_modal_error("Set Quota", r);
+                });
+        });
 }
 
 function users_remove(elem) {
@@ -293,7 +370,7 @@ function generate_random_password() {
   var charset = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789"; // confusable characters skipped
   for (var i = 0; i < 12; i++)
     pw += charset.charAt(Math.floor(Math.random() * charset.length));
-  show_modal_error("Random Password", "<p>Here, try this:</p> <p><code style='font-size: 110%'>" + pw + "</code></pr");
+  show_modal_error("Random Password", "<p>Here, try this:</p> <p><code style='font-size: 110%'>" + pw + "</code></p>");
   return false; // cancel click
 }
 </script>
