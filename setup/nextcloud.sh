@@ -63,7 +63,7 @@ user_external_hash=280d24eb2a6cb56b4590af8847f925c28d8d853e
 # 5.4 Go to Administration > Logs and ensure no new errors are shown
 
 # Set a local variable for the PHP version
-NC_PHP_VER=PHP_VER
+NC_PHP_VER=$PHP_VER
 
 # Clear prior packages and install dependencies from apt.
 apt-get purge -qq -y owncloud* # we used to use the package manager
