@@ -67,7 +67,7 @@ provision_shell() {
 
     else
         local tmp=$(mktemp)
-        echo "#!/bin/sh" >"$tmp"
+        echo "#!/bin/bash" >"$tmp"
         cat >>"$tmp"
         lxc --project "$project" file push "$tmp" "${inst}${remote_path}" $lxc_flags || return 1
         rm -f "$tmp"

@@ -17,7 +17,7 @@ D=$(dirname "$BASH_SOURCE")
 provision_start "" "/mailinabox" || exit 1
 
 # Setup system
-if [ "$1" = "ciab" ]; then
+if [ "$TESTS" = "ciab" -o "$1" = "ciab" ]; then
     # use a remote cloudinabox (does not have to be running)
     provision_shell <<<"
 cd /mailinabox
@@ -44,7 +44,7 @@ exit \$rc
 "
     provision_done $?
 
-else
+elif [ -z "$1" ]; then
     # vanilla (default - no miab integration)
     provision_shell <<<"
 cd /mailinabox
@@ -62,4 +62,7 @@ exit \$rc
 "
     provision_done $?
 
+else
+    echo "Invalid argument: $1"
+    exit 1
 fi

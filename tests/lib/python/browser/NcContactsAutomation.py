@@ -26,10 +26,11 @@ class NcContactsAutomation(object):
         els = d.find_els('div.contacts-list div.list-item-content,div.option__details')
         d.say_verbose('found %s contacts' % len(els))
         for el in els:
-            # .line-one (nc 25+)
+			# .list-item-content__name (nc 29+)
+            # .line-one (nc 25-28)
             # .option__lineone (nc <25)
-            fullname = el.find_el('.line-one,.option__lineone').content().strip()
-            email = el.find_el('.line-two,.option__linetwo').content().strip()
+            fullname = el.find_el('.line-one,.option__lineone,.list-item-content__name').content().strip()
+            email = el.find_el('.line-two,.option__linetwo,.list-item-content__subname').content().strip()
             d.say_verbose('contact: "%s" <%s>', fullname, email)
             # NC 28: email not present in html
             ignore_email = True if email == '' else False
@@ -43,7 +44,7 @@ class NcContactsAutomation(object):
         d = self.d
         d.say("Wait for contact to load")
         d.wait_for_el('section.contact-details', secs=secs)
-        
+
     def delete_current_contact(self):
         d = self.d
         d.say("Delete current contact")

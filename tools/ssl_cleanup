@@ -1,0 +1,27 @@
+#!/bin/bash
+#####
+##### This file is part of Mail-in-a-Box-LDAP which is released under the
+##### terms of the GNU Affero General Public License as published by the
+##### Free Software Foundation, either version 3 of the License, or (at
+##### your option) any later version. See file LICENSE or go to
+##### https://github.com/downtownallday/mailinabox-ldap for full license
+##### details.
+#####
+
+# Cleanup SSL certificates which expired more than 7 days ago from $STORAGE_ROOT/ssl and move them to $STORAGE_ROOT/ssl.expired
+
+source /etc/mailinabox.conf
+shopt -s extglob nullglob
+
+retain_after="$(date --date="7 days ago" +%Y%m%d)"
+
+mkdir -p $STORAGE_ROOT/ssl.expired
+ls $STORAGE_ROOT/ssl/*-+([0-9])-+([0-9a-f]).pem 2>/dev/null | while read file
+do
+  pem="$(basename "$file")"
+  not_valid_after="$(cut -d- -f1 <<< "${pem: -21}")"
+
+  if [ "$not_valid_after" -lt "$retain_after" ]; then
+    mv "$file" "$STORAGE_ROOT/ssl.expired/${pem}"
+  fi
+done

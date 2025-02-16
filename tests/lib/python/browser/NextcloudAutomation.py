@@ -58,7 +58,10 @@ class NextcloudAutomation(object):
         d.say("Logout of Nextcloud")
         self.click_avatar()
 
-        el = d.find_el('[data-id="logout"] a', throws=False) # nc < 26
+        el = d.find_el('a#logout', throws=False)
+        if not el:
+            # nc >= 29
+            el = d.find_el('[data-id="logout"] a', throws=False) # nc < 26
         if not el:
             # nc >= 26
             el = d.find_el('#logout > a', throws=False)
@@ -72,7 +75,10 @@ class NextcloudAutomation(object):
         d = self.d
         d.say("Open contacts")
         # nc 25+
-        el = d.find_el('header [data-app-id="contacts"]', throws=False)
+        el = d.find_el('header [title="Contacts"]', throws=False)
+        if not el:
+            # nc < 29
+            el = d.find_el('header [data-app-id="contacts"]', throws=False)
         if not el:
             # nc < 25
             el = d.find_el('header [data-id="contacts"]')
