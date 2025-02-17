@@ -298,6 +298,18 @@ def sizeof_fmt(num):
 
 	return str(num)
 
+def sizeof_fmt(num):
+	for unit in ['','K','M','G','T']:
+		if abs(num) < 1024.0:
+			if abs(num) > 99:
+				return "%3.0f%s" % (num, unit)
+			else:
+				return "%2.1f%s" % (num, unit)
+
+		num /= 1024.0
+
+	return str(num)
+
 def get_mail_users_ex(env, with_archived=False):
 	# Returns a complex data structure of all user accounts, optionally
 	# including archived (status="inactive") accounts.
@@ -794,6 +806,14 @@ def add_mail_user(email, pw, privs, quota, display_name, env):
 	except ValueError as e:
 		return (str(e), 400)
 
+	if quota is None:
+		quota = '0'
+
+	try:
+		quota = validate_quota(quota)
+	except ValueError as e:
+		return (str(e), 400)
+
 	# get the database
 	conn = open_database(env)
 
@@ -864,6 +884,8 @@ def add_mail_user(email, pw, privs, quota, display_name, env):
 
 	# convert alias's mailMember to member
 	convert_mailMember(env, conn, dn, email)
+
+	dovecot_quota_recalc(email)
 
 	dovecot_quota_recalc(email)
 
@@ -975,6 +997,40 @@ def validate_quota(quota):
 		raise ValueError("Invalid quota.")
 
 	return quota
+
+
+def get_mail_quota(email, env):
+	user = find_mail_user(env, email, ['mailboxQuota'])
+	if user is None:
+		return ("That's not a user (%s)." % email, 400)
+	if len(user['mailboxQuota'])==0:
+		return '0'
+	else:
+		return user['mailboxQuota'][0]
+
+def set_mail_quota(email, quota, env):
+	# validate that password is acceptable
+	quota = validate_quota(quota)
+
+	# update the database
+	conn = open_database(env)
+	user = find_mail_user(env, email, ['mailboxQuota'], conn)
+	if user is None:
+		return ("That's not a user (%s)." % email, 400)
+
+	conn.modify_record(user, { 'mailboxQuota': quota })
+	dovecot_quota_recalc(email)
+	return "OK"
+
+def dovecot_quota_recalc(email):
+	# dovecot processes running for the user will not recognize the new quota setting
+	# a reload is necessary to reread the quota setting, but it will also shut down
+	# running dovecot processes.  Email clients generally log back in when they lose
+	# a connection.
+	# subprocess.call(['doveadm', 'reload'])
+
+	# force dovecot to recalculate the quota info for the user.
+	subprocess.call(["doveadm", "quota", "recalc", "-u", email])
 
 def get_mail_password(email, env):
 	# Gets the hashed passwords for a user. In ldap, userPassword is

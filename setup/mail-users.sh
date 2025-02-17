@@ -93,8 +93,8 @@ user_filter = (&(objectClass=mailUser)(|(mail=%u)(maildrop=%u)))
 user_attrs = maildrop=user, \
              mailboxQuota=quota_rule=*:bytes=%\$, \
              =quota_rule2=Trash:storage=+100M, \
-             =quota_rule3=Drafts:ignore, \
-             =quota_rule4=Sent:ignore
+             =quota_rule3=Drafts:storage=+25M, \
+             =quota_rule4=Sent:storage=+50M
 
 # Account iteration for various dovecot tools (doveadm)
 iterate_filter = (objectClass=mailUser)

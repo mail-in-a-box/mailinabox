@@ -178,15 +178,14 @@ installed_state_compare() {
 
         # s2: re-sort aliases
         jq -c ".[] | .aliases | sort_by(.address) | .[] | {address:.address, forwards_to:.forwards_to, permitted_senders:.permitted_senders, auto:.auto, description:.description}"  "$s2/aliases.json" > "$s2/aliases-cmp.json"
-    fi
 
-    if [ $MIGRATION_ML_VERSION_A -le 2 -a $MIGRATION_ML_VERSION_B -ge 3 ]; then
-        # miabldap migration level <=2 does not have quota fields, so
-        # remove them from the comparison
-        grep -vE '"(quota|box_quota|box_size|percent)":' "$s2/users-cmp.json" > "$s2/users-cmp2.json" || changed="true"
-        cp "$s2/users-cmp2.json" "$s2/users-cmp.json" && rm -f "$s2/users-cmp2.json"
+        if [ $MIGRATION_ML_VERSION_A -le 2 -a $MIGRATION_ML_VERSION_B -ge 3 ]; then
+            # miabldap migration level <=2 does not have quota fields, so
+            # remove them from the comparison
+            grep -vE '"(quota|box_quota|box_size|percent)":' "$s2/users-cmp.json" > "$s2/users-cmp2.json" || changed="true"
+            cp "$s2/users-cmp2.json" "$s2/users-cmp.json" && rm -f "$s2/users-cmp2.json"
+        fi
     fi
-
 
 
     #
