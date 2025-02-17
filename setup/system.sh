@@ -356,6 +356,10 @@ fi
 # which is where bind9 will be running. Obviously don't do this before
 # installing bind9 or else apt won't be able to resolve a server to
 # download bind9 from.
+# Deleting resolv.conf fails if the file has the immutable attribute
+# or the append only attribute. So we ensure those attributes are not set
+# before attempting to delete the file.
+chattr -a -i /etc/resolv.conf
 rm -f /etc/resolv.conf
 tools/editconf.py /etc/systemd/resolved.conf DNSStubListener=no
 echo "nameserver 127.0.0.1" > /etc/resolv.conf
