@@ -74,6 +74,7 @@ if len(sys.argv) < 2:
   {cli} user password user@domain.com [password]
   {cli} user remove user@domain.com
   {cli} user make-admin user@domain.com
+  {cli} user quota user@domain [new-quota]       (get or set user quota)
   {cli} user remove-admin user@domain.com
   {cli} user admins                              (lists admins)
   {cli} user mfa show user@domain.com            (shows MFA devices for user, if any)
@@ -97,6 +98,10 @@ elif sys.argv[1] == "user" and len(sys.argv) == 2:
 			print(user['email'], end='')
 			if "admin" in user['privileges']:
 				print("*", end='')
+			if user['quota'] == '0':
+				print(" unlimited", end='')
+			else:
+				print(" " + user['quota'], end='')
 			print()
 
 elif sys.argv[1] == "user" and sys.argv[2] in {"add", "password"}:
@@ -126,6 +131,14 @@ elif sys.argv[1] == "user" and sys.argv[2] == "admins":
 			if "admin" in user['privileges']:
 				print(user['email'])
 
+elif sys.argv[1] == "user" and sys.argv[2] == "quota" and len(sys.argv) == 4:
+	# Get a user's quota
+	print(mgmt("/mail/users/quota?text=1&email=%s" % sys.argv[3]))
+
+elif sys.argv[1] == "user" and sys.argv[2] == "quota" and len(sys.argv) == 5:
+	# Set a user's quota
+	users = mgmt("/mail/users/quota", { "email": sys.argv[3], "quota": sys.argv[4] })
+
 elif sys.argv[1] == "user" and len(sys.argv) == 5 and sys.argv[2:4] == ["mfa", "show"]:
 	# Show MFA status for a user.
 	status = mgmt("/mfa/status", { "user": sys.argv[4] }, is_json=True)
@@ -150,4 +163,3 @@ elif sys.argv[1] == "alias" and sys.argv[2] == "remove" and len(sys.argv) == 4:
 else:
 	print("Invalid command-line arguments.")
 	sys.exit(1)
-

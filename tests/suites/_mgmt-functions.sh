@@ -34,11 +34,11 @@ mgmt_start() {
 	MGMT_ADMIN_PW="$(generate_password)"
 
 	delete_user "$MGMT_ADMIN_EMAIL"
-	
+
 	record "[Creating a new account with admin rights for management tests]"
 	create_user "$MGMT_ADMIN_EMAIL" "$MGMT_ADMIN_PW" "admin"
 	MGMT_ADMIN_DN="$ATTR_DN"
-	record "Created: $MGMT_ADMIN_EMAIL at $MGMT_ADMIN_DN"	
+	record "Created: $MGMT_ADMIN_EMAIL at $MGMT_ADMIN_DN"
 }
 
 mgmt_end() {
@@ -191,7 +191,7 @@ mgmt_assert_privileges_add() {
 mgmt_get_totp_token() {
 	local secret="$1"
 	local mru_token="$2"
-	
+
 	TOTP_TOKEN="" # this is set to the acquired token on success
 
 	# the user would normally give the secret to an authenticator app
@@ -202,7 +202,7 @@ mgmt_get_totp_token() {
 	record "[Get the current token for the secret '$secret']"
 
 	local count=0
-	
+
 	while [ -z "$TOTP_TOKEN" -a $count -lt 10 ]; do
 		TOTP_TOKEN="$(totp_current_token "$secret" 2>>"$TEST_OF")"
 		if [ $? -ne 0 ]; then
@@ -218,13 +218,13 @@ mgmt_get_totp_token() {
 			record "Success: token is '$TOTP_TOKEN'"
 			return 0
 		fi
-		
+
 		let count+=1
 	done
 
 	record "Failed: timeout !"
 	TOTP_TOKEN=""
-	return 1	
+	return 1
 }
 
 mgmt_mfa_status() {
@@ -246,7 +246,7 @@ mgmt_totp_enable() {
 	#   returns 1 if a REST error occured. $REST_ERROR has the message
 	#   returns 2 if some other error occured
 	#
-	
+
 	local user="$1"
 	local pw="$2"
 	local label="$3"  # optional
@@ -258,7 +258,7 @@ mgmt_totp_enable() {
 	if ! mgmt_mfa_status "$user" "$pw"; then
 		return 1
 	fi
-	
+
 	TOTP_SECRET="$(/usr/bin/jq -r ".new_mfa.totp.secret" <<<"$REST_OUTPUT")"
 	if [ $? -ne 0 ]; then
 		record "Unable to obtain setup totp secret - is 'jq' installed?"
@@ -271,11 +271,11 @@ mgmt_totp_enable() {
 	else
 		record "Found TOTP secret '$TOTP_SECRET'"
 	fi
-	
+
 	if ! mgmt_get_totp_token "$TOTP_SECRET"; then
 		return 2
 	fi
-	
+
 	# 2. enable TOTP
 	record "Enabling TOTP using the secret and token"
 	if ! mgmt_rest_as_user "POST" "/admin/mfa/totp/enable" "$user" "$pw" "secret=$TOTP_SECRET" "token=$TOTP_TOKEN" "label=$label"; then
@@ -284,7 +284,7 @@ mgmt_totp_enable() {
 	else
 		record "Success: POST /mfa/totp/enable: '$REST_OUTPUT'"
 	fi
-		
+
 	return 0
 }
 
@@ -318,7 +318,7 @@ mgmt_mfa_disable() {
 	local user="$1"
 	local pw="$2"
 	local mfa_id="$3"
-	
+
 	record "[Disable MFA for $user]"
 	if [ "$mfa_id" == "all" ]; then
 		mfa_id=""
@@ -327,7 +327,7 @@ mgmt_mfa_disable() {
 		if ! mgmt_mfa_status "$user" "$pw"; then
 			return 1
 		fi
-		
+
 		mfa_id="$(/usr/bin/jq -r ".enabled_mfa[0].id" <<<"$REST_OUTPUT")"
 		if [ $? -ne 0 ]; then
 			record "Unable to use /usr/bin/jq - is it installed?"
@@ -338,9 +338,9 @@ mgmt_mfa_disable() {
 			return 3
 		fi
 	fi
-	
 
-	
+
+
 	if ! mgmt_rest_as_user "POST" "/admin/mfa/disable" "$user" "$pw" "mfa-id=$mfa_id"
 	then
 		REST_ERROR="Failed: POST /admin/mfa/disable: $REST_ERROR"
@@ -387,7 +387,7 @@ mgmt_assert_admin_login() {
 		if [ $code -ne 0 ]; then
 			test_failure "Unable to run jq ($code) on /admin/login json"
 			return 1
-				
+
 		elif [ "$status" == "null" ]; then
 			test_failure "No 'status' in /admin/login json"
 			return 1
@@ -395,8 +395,39 @@ mgmt_assert_admin_login() {
 		elif [ "$status" != "$expected_status" ]; then
 			test_failure "Expected a login status of '$expected_status', but got '$status'"
 			return 1
-			
+
 		fi
 	fi
 	return 0
+}
+
+
+mgmt_get_user_quota() {
+    local user="$1"
+    record "[get user $user quota]"
+	mgmt_rest GET "/admin/mail/users/quota?email=$user"
+	local rc=$?
+    # REST_OUTPUT contains json, eg:
+    #   { "email": "alice@somedomain.com", "quota": "5000" }
+    if [ $rc -eq 0 ]; then
+        # output to stdout the quota value
+        QUOTA="$(/usr/bin/jq -r ".quota" <<<"$REST_OUTPUT" 2>>$TEST_OF)"
+        if [ $? -ne 0 ]; then
+            record "could not obtain quota member from json using jq"
+            rc=1
+        fi
+    else
+        QUOTA="error"
+    fi
+	return $rc
+
+}
+
+mgmt_set_user_quota() {
+    local user="$1"
+    local quota="$2"
+    record "[set user $user quota to $quota]"
+	mgmt_rest POST "/admin/mail/users/quota" "email=$user" "quota=$quota"
+	local rc=$?
+	return $rc
 }

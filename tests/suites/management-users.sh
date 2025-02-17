@@ -8,7 +8,7 @@
 ##### details.
 #####
 
-#	
+#
 # User management tests
 
 _test_mixed_case() {
@@ -29,16 +29,16 @@ _test_mixed_case() {
 			test_failure "Creation of a user with the same email address, but different case, succeeded."
 			test_failure "${REST_ERROR}"
 		fi
-		
+
 		# create an alias group with alice in it
 		mgmt_assert_create_alias_group "${aliases[0]}" "${alices[1]}"
 	fi
 
 	# create local user bob
 	mgmt_assert_create_user "${bobs[0]}" "$bob_pw"
-	
+
 	assert_check_logs
-	
+
 
 	# send mail from bob to alice
 	#
@@ -60,7 +60,7 @@ _test_mixed_case() {
 		output="$($PYMAIL -subj "$subject" -no-send $PRIVATE_IP ${alices[3]} "$alice_pw" 2>&1)"
 		assert_python_success $? "$output"
 		assert_check_logs
-		
+
 		# send mail from alice as the alias to bob, ensure bob got it
 		#
 		record "[Mailing to bob as alias from alice]"
@@ -87,7 +87,7 @@ test_mixed_case_users() {
 	# send mail from that user as the alias to the other user
 
 	test_start "mixed-case-users"
-	
+
 	local alices=(alice@mgmt.somedomain.com
 				  aLICE@mgmt.somedomain.com
 				  aLiCe@mgmt.somedomain.com
@@ -102,7 +102,7 @@ test_mixed_case_users() {
 				   ALICE@mgmt.anotherdomain.com)
 
 	_test_mixed_case "${alices[*]}" "${bobs[*]}" "${aliases[*]}"
-	
+
 	test_end
 }
 
@@ -115,7 +115,7 @@ test_mixed_case_domains() {
 	# send mail from that user as the alias to the other user
 
 	test_start "mixed-case-domains"
-	
+
 	local alices=(alice@mgmt.somedomain.com
 				  alice@MGMT.somedomain.com
 				  alice@mgmt.SOMEDOMAIN.com
@@ -128,9 +128,9 @@ test_mixed_case_domains() {
 	local aliases=(alice@MGMT.anotherdomain.com
 				   alice@mgmt.ANOTHERDOMAIN.com
 				   alice@Mgmt.AnotherDomain.Com)
-	
+
 	_test_mixed_case "${alices[*]}" "${bobs[*]}" "${aliases[*]}"
-	
+
 	test_end
 }
 
@@ -178,7 +178,7 @@ test_intl_domains() {
 			[ ! -z "$ATTR_DN" ] && record_search "$ATTR_DN"
 		else
 			record_search "$ATTR_DN"
-			
+
 			# required aliases are automatically created and should
 			# have both mail addresses (idna and utf8)
 			get_attribute "$LDAP_ALIASES_BASE" "(mail=abuse@$intl_person_idna_domain)" "mail"
@@ -191,7 +191,7 @@ test_intl_domains() {
 				test_failure "Require alias abuse@$intl_person_idna_domain expected to contain both idna and utf8 mail addresses"
 				record_search "$ATTR_DN"
 			fi
-			
+
 			# ensure user is removed as is expected by the remaining tests
 			mgmt_delete_user "$intl_person_idna"
 		fi
@@ -204,7 +204,7 @@ test_intl_domains() {
 		test_failure "No required alias should not exist for the $intl_person_domain domain"
 		record_search "$ATTR_DN"
 	fi
-	
+
 	# create local users bob and mary
 	mgmt_assert_create_user "$bob" "$bob_pw"
 	mgmt_assert_create_user "$mary" "$mary_pw"
@@ -212,7 +212,7 @@ test_intl_domains() {
 	# create intl alias with local user bob and intl_person in it
 	if mgmt_assert_create_alias_group "$alias" "$bob" "$intl_person"; then
 		# examine LDAP server to verify IDNA-encodings
-		
+
 		# 1. the mail attribute for the alias should have both the
 		# idna and utf8 addresses
 		get_attribute "$LDAP_ALIASES_BASE" "(mail=$alias)" "mail"
@@ -238,7 +238,7 @@ test_intl_domains() {
 
 	# re-create intl alias with local user bob only
 	mgmt_assert_create_alias_group "$alias" "$bob"
-	
+
 	assert_check_logs
 
 	if ! have_test_failures; then
@@ -300,18 +300,18 @@ test_totp() {
 		record "Expect a login failure..."
 		mgmt_assert_admin_login "$alice" "$alice_pw" "missing-totp-token"
 	fi
-	
+
 
 	# logging into /admin/me with a password and a token should
 	# succeed, and an api_key generated
 	local api_key
-	if ! have_test_failures; then		
+	if ! have_test_failures; then
 		record "Try using a password and a token to get the user api key, we may have to wait 30 seconds to get a new token..."
 
 		local old_totp_token="$TOTP_TOKEN"
 		if ! mgmt_get_totp_token "$TOTP_SECRET" "$TOTP_TOKEN"; then
 			test_failure "Could not obtain a new TOTP token"
-			
+
 		else
 			# we have a new token, try logging in ...
 			# the token must be placed in the header "x-auth-token"
@@ -331,7 +331,7 @@ test_totp() {
 	fi
 
 	# we should be able to login using the user's api key
-	if ! have_test_failures; then		
+	if ! have_test_failures; then
 		record "[Use the session key to enum users]"
 		if ! mgmt_rest_as_user "GET" "/admin/mail/users?format=json" "$alice" "$api_key"; then
 			test_failure "Unable to use the session key to issue a rest call: $REST_ERROR"
@@ -342,7 +342,7 @@ test_totp() {
 
 	# disable totp on the account - login should work with just the password
 	# and the ldap entry should not have the 'totpUser' objectClass
-	if ! have_test_failures; then		
+	if ! have_test_failures; then
 		if mgmt_assert_mfa_disable "$alice" "$api_key"; then
 			mgmt_assert_admin_login "$alice" "$alice_pw" "ok"
 		fi
@@ -354,10 +354,121 @@ test_totp() {
 	else
 		check_logs
 	fi
-	
+
 	mgmt_assert_delete_user "$alice"
 	test_end
 }
+
+
+
+test_mailbox_quotas() {
+    test_start "mailbox-quotas"
+
+    # create standard user alice
+    local alice="alice@somedomain.com"
+    create_user "$alice" "alice"
+
+    # quota should be unlimited for newly added users
+    if ! mgmt_get_user_quota "$alice"; then
+        test_failure "Unable to get $alice's quota: $REST_ERROR"
+    elif [ "$QUOTA" != "0" -a "$QUOTA" != "unlimited" ]; then
+        test_failure "A newly created user should have unlimited quota"
+    fi
+
+    # get alice's current total number of messages. should be 0 unless
+    # the account was "archived"
+    local count_messages="$(doveadm -f json quota get -u "$alice" | jq -r '.[] | select(.type=="MESSAGE") | .value')"
+    record "$alice currently has $count_messages messages"
+
+    # set alice's quota to a small number
+    local quota_value="5K"
+    if ! mgmt_set_user_quota "$alice" "$quota_value"
+    then
+        test_failure "Unable to set $alice's quota: $REST_ERROR"
+    else
+        # read back the quota - make sure it's what we set
+        if ! mgmt_get_user_quota "$alice" || [ "$QUOTA" != "$quota_value" ]
+        then
+            test_failure "Setting quota failed - expected quota does not match current quota: $REST_OUTPUT $REST_ERROR QUOTA=$QUOTA"
+
+        else
+            record_search "(mail=$alice)"
+        fi
+    fi
+
+    if ! have_test_failures; then
+        # send messages large enough to exceed the quota
+        local output
+        local subjects=()
+        local msgidx=0
+        local body="$(python3 -c 'for i in range(0,int(512/4)): print("abc\n", end="")')"
+        local quota_exceeded="no"
+
+        while ! have_test_failures && [ $msgidx -lt 10 ]; do
+            record ""
+            record "[send msg $msgidx]"
+            local subj="msg$msgidx - $(generate_password)"
+            output="$($PYMAIL -smtp-debug -body-from-stdin -no-delete -subj "$subj" $PRIVATE_IP $alice alice <<<"$body" 2>&1)"
+		    if ! assert_python_success $? "$output"; then
+                break
+            fi
+
+            # You'd expect that the send would fail when the quota is
+            # exceeded, but it doesn't. Postfix accepts it into it's
+            # queue, then bounces the message back to sender with
+            # delivery status notification (DSN) of 5.2.2 when it
+            # processes the queue.
+            #
+            # The debugging messages (turned on by the -smtp-debug
+            # argument) hold the internal postfix message id, so
+            # extract that, then grep the logs to see if the message
+            # was bounced due to 5.2.2.
+
+            local postid="$(awk '/^data: .* queued as/  { match($0," as "); print substr($0,RSTART+4,10); exit }' <<<"$output" 2>>$TEST_OF)"
+            record "Extracted POSTID=$postid"
+            if [ ! -z "$postid" ]; then
+                /usr/sbin/postqueue -f >>"$TEST_OF" 2>&1
+                flush_logs
+                record "[dovecot and postfix logs for msg $msgidx]"
+                record "logs: $(grep "$postid" /var/log/mail.log)"
+
+                if grep "$postid" /var/log/mail.log | grep "status=bounced" | grep -Fq "5.2.2"; then
+                    # success - message was rejected
+                    quota_exceeded="yes"
+                    break
+                fi
+            fi
+
+            subjects+=( "$subj" )
+            let msgidx+=1
+            # doveadm quota get -u "$alice" >>"$TEST_OF" 2>&1
+        done
+
+        if ! have_test_failures && [ "$quota_exceeded" = "no" ]; then
+            test_failure "Quota restriction was not enforced by dovecot after sending $msgidx messages"
+        fi
+
+        # cleanup: delete the messages
+        msgidx=0
+        for subj in "${subjects[@]}"; do
+            record "[delete msg $msgidx]"
+            record "subj=$subj"
+            $PYMAIL -no-send -timeout 2 -subj "$subj" $PRIVATE_IP $alice alice >>$TEST_OF 2>&1
+            let msgidx+=1
+        done
+
+        # verify cleanup worked
+        local cur_count_messages="$(doveadm -f json quota get -u "$alice" | jq -r '.[] | select(.type=="MESSAGE") | .value')"
+        if [ $count_messages -ne $cur_count_messages ]; then
+            test_failure "Cleanup failed: test account $alice started with $count_messages but ended up with $cur_count_messages"
+        fi
+    fi
+
+    # cleanup: delete the test user
+    delete_user "$alice"
+    test_end
+}
+
 
 
 
@@ -367,6 +478,6 @@ test_totp
 test_mixed_case_domains
 test_mixed_case_users
 test_intl_domains
+test_mailbox_quotas
 
 suite_end mgmt_end
-

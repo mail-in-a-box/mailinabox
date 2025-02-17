@@ -28,6 +28,8 @@ def usage():
 	print("    -no-send: don't send, just delete")
 	print("    -no-delete: don't delete, just send")
 	print("    -timeout <seconds>: how long to wait for message")
+	print("    -body-from-stdin: read the message body from stdin")
+	print("    -smtp-debug: output debugging messages")
 	print("");
 	sys.exit(1)
 
@@ -48,6 +50,8 @@ delete_msg=True  # login to imap and delete message
 wait_timeout=30  # abandon timeout wiating for message delivery
 wait_cycle_sleep=5  # delay between delivery checks
 subject="Mail-in-a-Box Automated Test Message " + uuid.uuid4().hex  # message subject
+body_from_stdin=False
+smtp_debug=False
 
 # process command line
 argi=1
@@ -81,6 +85,12 @@ while argi<len(sys.argv):
 	elif arg=="-timeout" and arg_remaining>1:
 		wait_timeout=int(sys.argv[argi+1])
 		argi+=2
+	elif arg=="-body-from-stdin":
+		body_from_stdin = True
+		argi+=1
+	elif arg=="-smtp-debug":
+		smtp_debug = True
+		argi+=1
 	else:
 		usage()
 
@@ -100,14 +110,20 @@ headerfrom = if_unset(headerfrom, emailfrom)
 emailto = if_unset(emailto, login)
 emailto_pw = if_unset(emailto_pw, pw)
 
+if body_from_stdin:
+	body=sys.stdin.readlines()
+else:
+	body=['This is a test message. It should be automatically deleted by the test script.']
+
 msg = """From: {headerfrom}
 To: {emailto}
 Subject: {subject}
 
-This is a test message. It should be automatically deleted by the test script.""".format(
+{body}""".format(
 	headerfrom=headerfrom,
 	emailto=emailto,
 	subject=subject,
+	body=''.join(body)
 	)
 
 def imap_login(host, login, pw):
@@ -162,7 +178,8 @@ def smtp_login(host, login, pw, port):
 		server.starttls()
 	else:
 		server = smtplib.SMTP_SSL(host)
-	#server.set_debuglevel(1)
+	if smtp_debug:
+		server.set_debuglevel(1)
 
 	# Verify that the EHLO name matches the server's reverse DNS.
 	ipaddr = socket.gethostbyname(host) # IPv4 only!
@@ -191,7 +208,10 @@ def smtp_login(host, login, pw, port):
 if send_msg:
 	# Attempt to send a mail.
 	server = smtp_login(host, login, pw, port)
-	server.sendmail(emailfrom, [emailto], msg)
+	# sendmail: "If this method does not raise an exception, it returns a dictionary, with one entry for each recipient that was refused. Each entry contains a tuple of the SMTP error code and the accompanying error message sent by the server."
+	errors = server.sendmail(emailfrom, [emailto], msg)
+	#print(errors)
+	#if errors: raise ValueError(errors)
 	server.quit()
 	print("SMTP submission is OK.")
 
