@@ -10,7 +10,9 @@ from mailconfig import open_database
 def get_user_id(email, c):
 	c.execute('SELECT id FROM users WHERE email=?', (email,))
 	r = c.fetchone()
-	if not r: raise ValueError("User does not exist.")
+	if not r:
+		msg = "User does not exist."
+		raise ValueError(msg)
 	return r[0]
 
 def get_mfa_state(email, env):
@@ -68,7 +70,7 @@ def disable_mfa(email, mfa_id, env):
 	return c.rowcount > 0
 
 def validate_totp_secret(secret):
-	if not isinstance(secret, str) or secret.strip() == "":
+	if not isinstance(secret, str) or not secret.strip():
 		msg = "No secret provided."
 		raise ValueError(msg)
 	if len(secret) != 32:

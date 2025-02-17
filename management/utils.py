@@ -39,9 +39,9 @@ def load_settings(env):
         with open(fn, encoding="utf-8") as f:
             config = rtyaml.load(f)
         if not isinstance(config, dict): raise ValueError # caught below
-        return config
     except:
         return { }
+    return config
 
 # UTILITIES
 
@@ -135,8 +135,7 @@ def shell(method, cmd_args, env=None, capture_stderr=False, return_bytes=False, 
     if not return_bytes and isinstance(ret, bytes): ret = ret.decode("utf8")
     if not trap:
         return ret
-    else:
-        return code, ret
+    return code, ret
 
 def create_syslog_handler():
     import logging.handlers
@@ -173,10 +172,11 @@ def wait_for_service(port, public, env, timeout):
 		s.settimeout(timeout/3)
 		try:
 			s.connect(("127.0.0.1" if not public else env['PUBLIC_IP'], port))
-			return True
 		except OSError:
 			if time.perf_counter() > start+timeout:
 				return False
+		else:
+			return True
 		time.sleep(min(timeout/4, 1))
 
 def get_ssh_port():

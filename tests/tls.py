@@ -69,7 +69,7 @@ MOZILLA_CIPHERS_OLD = "ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305
 
 def sslyze(opts, port, ok_ciphers):
 	# Print header.
-	header = ("PORT %d" % port)
+	header = (f"PORT {port:d}")
 	print(header)
 	print("-" * (len(header)))
 
@@ -83,7 +83,7 @@ def sslyze(opts, port, ok_ciphers):
 	proxy_proc = None
 	if proxy:
 		connection_string = "localhost:10023"
-		proxy_proc = subprocess.Popen(["ssh", "-N", "-L10023:%s:%d" % (host, port), proxy])
+		proxy_proc = subprocess.Popen(["ssh", "-N", f"-L10023:{host}:{port:d}", proxy])
 		time.sleep(3)
 
 	try:
@@ -94,9 +94,9 @@ def sslyze(opts, port, ok_ciphers):
 		# Trim output to make better for storing in git.
 		if "SCAN RESULTS FOR" not in out:
 			# Failed. Just output the error.
-			out = re.sub("[\\w\\W]*CHECKING HOST\\(S\\) AVAILABILITY\n\\s*-+\n", "", out) # chop off header that shows the host we queried
-		out = re.sub("[\\w\\W]*SCAN RESULTS FOR.*\n\\s*-+\n", "", out) # chop off header that shows the host we queried
-		out = re.sub("SCAN COMPLETED IN .*", "", out)
+			out = re.sub(r"[\w\W]*CHECKING HOST\(S\) AVAILABILITY\n\s*-+\n", "", out) # chop off header that shows the host we queried
+		out = re.sub(r"[\w\W]*SCAN RESULTS FOR.*\n\s*-+\n", "", out) # chop off header that shows the host we queried
+		out = re.sub(r"SCAN COMPLETED IN .*", "", out)
 		out = out.rstrip(" \n-") + "\n"
 
 		# Print.
@@ -105,8 +105,8 @@ def sslyze(opts, port, ok_ciphers):
 		# Pull out the accepted ciphers list for each SSL/TLS protocol
 		# version outputted.
 		accepted_ciphers = set()
-		for ciphers in re.findall(" Accepted:([\\w\\W]*?)\n *\n", out):
-			accepted_ciphers |= set(re.findall("\n\\s*(\\S*)", ciphers))
+		for ciphers in re.findall(r" Accepted:([\w\W]*?)\n *\n", out):
+			accepted_ciphers |= set(re.findall(r"\n\s*(\S*)", ciphers))
 
 		# Compare to what Mozilla recommends, for a given modernness-level.
 		print("  Should Not Offer: " + (", ".join(sorted(accepted_ciphers-set(ok_ciphers))) or "(none -- good)"))

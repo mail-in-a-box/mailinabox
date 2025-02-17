@@ -23,7 +23,7 @@ def migration_1(env):
 	# Migrate the 'domains' directory.
 	for sslfn in glob.glob(os.path.join( env["STORAGE_ROOT"], 'ssl/domains/*' )):
 		fn = os.path.basename(sslfn)
-		m = re.match("(.*)_(certifiate.pem|cert_sign_req.csr|private_key.pem)$", fn)
+		m = re.match(r"(.*)_(certifiate.pem|cert_sign_req.csr|private_key.pem)$", fn)
 		if m:
 			# get the new name for the file
 			domain_name, file_type = m.groups()
@@ -86,7 +86,9 @@ def migration_7(env):
 			if newemail != email:
 				c = conn.cursor()
 				c.execute("UPDATE aliases SET source=? WHERE source=?", (newemail, email))
-				if c.rowcount != 1: raise ValueError("Alias not found.")
+				if c.rowcount != 1:
+					msg = "Alias not found."
+					raise ValueError(msg)
 				print("Updated alias", email, "to", newemail)
 		except Exception as e:
 			print("Error updating IDNA alias", email, e)
@@ -164,7 +166,7 @@ def migration_12(env):
                     try:
                         table = table[0]
                         c = conn.cursor()
-                        dropcmd = "DROP TABLE %s" % table
+                        dropcmd = f"DROP TABLE {table}"
                         c.execute(dropcmd)
                     except:
                         print("Failed to drop table", table)
@@ -202,7 +204,7 @@ def get_current_migration():
 	ver = 0
 	while True:
 		next_ver = (ver + 1)
-		migration_func = globals().get("migration_%d" % next_ver)
+		migration_func = globals().get(f"migration_{next_ver:d}")
 		if not migration_func:
 			return ver
 		ver = next_ver
@@ -234,14 +236,14 @@ def run_migrations():
 
 	while True:
 		next_ver = (ourver + 1)
-		migration_func = globals().get("migration_%d" % next_ver)
+		migration_func = globals().get(f"migration_{next_ver:d}")
 
 		if not migration_func:
 			# No more migrations to run.
 			break
 
 		print()
-		print("Running migration to Mail-in-a-Box #%d..." % next_ver)
+		print(f"Running migration to Mail-in-a-Box #{next_ver:d}...")
 
 		try:
 			migration_func(env)

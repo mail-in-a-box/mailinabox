@@ -14,6 +14,7 @@ import rtyaml
 from exclusiveprocess import Lock
 
 from utils import load_environment, shell, wait_for_service
+import operator
 
 def backup_status(env):
 	# If backups are disabled, return no status.
@@ -32,14 +33,14 @@ def backup_status(env):
 	def reldate(date, ref, clip):
 		if ref < date: return clip
 		rd = dateutil.relativedelta.relativedelta(ref, date)
-		if rd.years > 1: return "%d years, %d months" % (rd.years, rd.months)
-		if rd.years == 1: return "%d year, %d months" % (rd.years, rd.months)
-		if rd.months > 1: return "%d months, %d days" % (rd.months, rd.days)
-		if rd.months == 1: return "%d month, %d days" % (rd.months, rd.days)
-		if rd.days >= 7: return "%d days" % rd.days
-		if rd.days > 1: return "%d days, %d hours" % (rd.days, rd.hours)
-		if rd.days == 1: return "%d day, %d hours" % (rd.days, rd.hours)
-		return "%d hours, %d minutes" % (rd.hours, rd.minutes)
+		if rd.years > 1: return f"{rd.years:d} years, {rd.months:d} months"
+		if rd.years == 1: return f"{rd.years:d} year, {rd.months:d} months"
+		if rd.months > 1: return f"{rd.months:d} months, {rd.days:d} days"
+		if rd.months == 1: return f"{rd.months:d} month, {rd.days:d} days"
+		if rd.days >= 7: return f"{rd.days:d} days"
+		if rd.days > 1: return f"{rd.days:d} days, {rd.hours:d} hours"
+		if rd.days == 1: return f"{rd.days:d} day, {rd.hours:d} hours"
+		return f"{rd.hours:d} hours, {rd.minutes:d} minutes"
 
 	# Get duplicity collection status and parse for a list of backups.
 	def parse_line(line):
@@ -91,7 +92,7 @@ def backup_status(env):
 
 	# Ensure the rows are sorted reverse chronologically.
 	# This is relied on by should_force_full() and the next step.
-	backups = sorted(backups.values(), key = lambda b : b["date"], reverse=True)
+	backups = sorted(backups.values(), key = operator.itemgetter("date"), reverse=True)
 
 	# Get the average size of incremental backups, the size of the
 	# most recent full backup, and the date of the most recent
@@ -129,7 +130,7 @@ def backup_status(env):
 		# It still can't be deleted until it's old enough.
 		est_deleted_on = max(est_time_of_next_full, first_date + datetime.timedelta(days=config["min_age_in_days"]))
 
-		deleted_in = "approx. %d days" % round((est_deleted_on-now).total_seconds()/60/60/24 + .5)
+		deleted_in = f"approx. {round((est_deleted_on-now).total_seconds()/60/60/24 + .5):d} days"
 
 	# When will a backup be deleted? Set the deleted_in field of each backup.
 	saw_full = False
@@ -177,10 +178,8 @@ def should_force_full(config, env):
 				if dateutil.parser.parse(bak["date"]) + datetime.timedelta(days=config["min_age_in_days"]*10+1) < datetime.datetime.now(dateutil.tz.tzlocal()):
 					return True
 			return False
-	else:
-		# If we got here there are no (full) backups, so make one.
-		# (I love for/else blocks. Here it's just to show off.)
-		return True
+	# If we got here there are no (full) backups, so make one.
+	return True
 
 def get_passphrase(env):
 	# Get the encryption passphrase. secret_key.txt is 2048 random
@@ -192,7 +191,9 @@ def get_passphrase(env):
 	backup_root = os.path.join(env["STORAGE_ROOT"], 'backup')
 	with open(os.path.join(backup_root, 'secret_key.txt'), encoding="utf-8") as f:
 		passphrase = f.readline().strip()
-	if len(passphrase) < 43: raise Exception("secret_key.txt's first line is too short!")
+	if len(passphrase) < 43:
+		msg = "secret_key.txt's first line is too short!"
+		raise Exception(msg)
 
 	return passphrase
 
@@ -236,7 +237,7 @@ def get_duplicity_additional_args(env):
 			f"--ssh-options='-i /root/.ssh/id_rsa_miab -p {port}'",
 			f"--rsync-options='-e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p {port} -i /root/.ssh/id_rsa_miab\"'",
 		]
-	elif get_target_type(config) == 's3':
+	if get_target_type(config) == 's3':
 		# See note about hostname in get_duplicity_target_url.
 		# The region name, which is required by some non-AWS endpoints,
 		# is saved inside the username portion of the URL.
@@ -346,7 +347,7 @@ def perform_backup(full_backup):
 	shell('check_call', [
 		"/usr/bin/duplicity",
 		"remove-older-than",
-		"%dD" % config["min_age_in_days"],
+		"{:d}D".format(config["min_age_in_days"]),
 		"--verbosity", "error",
 		"--archive-dir", backup_cache_dir,
 		"--force",
@@ -447,7 +448,7 @@ def list_target_files(config):
 	if target.scheme == "file":
 		return [(fn, os.path.getsize(os.path.join(target.path, fn))) for fn in os.listdir(target.path)]
 
-	elif target.scheme == "rsync":
+	if target.scheme == "rsync":
 		rsync_fn_size_re = re.compile(r'.*    ([^ ]*) [^ ]* [^ ]* (.*)')
 		rsync_target = '{host}:{path}'
 
@@ -463,9 +464,8 @@ def list_target_files(config):
 
 		target_path = target.path
 		if not target_path.endswith('/'):
-			target_path = target_path + '/'
-		if target_path.startswith('/'):
-			target_path = target_path[1:]
+			target_path += "/"
+		target_path = target_path.removeprefix('/')
 
 		rsync_command = [ 'rsync',
 					'-e',
@@ -485,23 +485,22 @@ def list_target_files(config):
 				if match:
 					ret.append( (match.groups()[1], int(match.groups()[0].replace(',',''))) )
 			return ret
+		if 'Permission denied (publickey).' in listing:
+			reason = "Invalid user or check you correctly copied the SSH key."
+		elif 'No such file or directory' in listing:
+			reason = f"Provided path {target_path} is invalid."
+		elif 'Network is unreachable' in listing:
+			reason = f"The IP address {target.hostname} is unreachable."
+		elif 'Could not resolve hostname' in listing:
+			reason = f"The hostname {target.hostname} cannot be resolved."
 		else:
-			if 'Permission denied (publickey).' in listing:
-				reason = "Invalid user or check you correctly copied the SSH key."
-			elif 'No such file or directory' in listing:
-				reason = f"Provided path {target_path} is invalid."
-			elif 'Network is unreachable' in listing:
-				reason = f"The IP address {target.hostname} is unreachable."
-			elif 'Could not resolve hostname' in listing:
-				reason = f"The hostname {target.hostname} cannot be resolved."
-			else:
-				reason = ("Unknown error."
-						"Please check running 'management/backup.py --verify'"
-						"from mailinabox sources to debug the issue.")
-			msg = f"Connection to rsync host failed: {reason}"
-			raise ValueError(msg)
+			reason = ("Unknown error."
+					"Please check running 'management/backup.py --verify'"
+					"from mailinabox sources to debug the issue.")
+		msg = f"Connection to rsync host failed: {reason}"
+		raise ValueError(msg)
 
-	elif target.scheme == "s3":
+	if target.scheme == "s3":
 		import boto3.s3
 		from botocore.exceptions import ClientError
 
@@ -513,7 +512,7 @@ def list_target_files(config):
 		if path == '/':
 			path = ''
 
-		if bucket == "":
+		if not bucket:
 			msg = "Enter an S3 bucket name."
 			raise ValueError(msg)
 
@@ -531,7 +530,7 @@ def list_target_files(config):
 		except ClientError as e:
 			raise ValueError(e)
 		return backup_list
-	elif target.scheme == 'b2':
+	if target.scheme == 'b2':
 		from b2sdk.v1 import InMemoryAccountInfo, B2Api
 		from b2sdk.v1.exception import NonExistentBucket
 		info = InMemoryAccountInfo()
@@ -550,8 +549,7 @@ def list_target_files(config):
 			raise ValueError(msg)
 		return [(key.file_name, key.size) for key, _ in bucket.ls()]
 
-	else:
-		raise ValueError(config["target"])
+	raise ValueError(config["target"])
 
 
 def backup_set_custom(env, target, target_user, target_pass, min_age):
@@ -605,8 +603,7 @@ def get_backup_config(env, for_save=False, for_ui=False):
 	# authentication details. The user will have to re-enter it.
 	if for_ui:
 		for field in ("target_user", "target_pass"):
-			if field in config:
-				del config[field]
+			config.pop(field, None)
 
 	# helper fields for the admin
 	config["file_target_directory"] = os.path.join(backup_root, 'encrypted')
