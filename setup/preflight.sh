@@ -18,10 +18,13 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 # Check that we are running on Ubuntu 22.04 LTS (or 22.04.xx).
-if [ "$( lsb_release --id --short )" != "Ubuntu" ] || [ "$( lsb_release --release --short )" != "22.04" ]; then
+# Pull in the variables defined in /etc/os-release but in a
+# namespace to avoid polluting our variables.
+source <(cat /etc/os-release | sed s/^/OS_RELEASE_/)
+if [ "${OS_RELEASE_ID:-}" != "ubuntu" ] || [ "${OS_RELEASE_VERSION_ID:-}" != "22.04" ]; then
 	echo "Mail-in-a-Box only supports being installed on Ubuntu 22.04, sorry. You are running:"
 	echo
-	lsb_release --description --short
+	echo "${OS_RELEASE_ID:-"Unknown linux distribution"} ${OS_RELEASE_VERSION_ID:-}"
 	echo
 	echo "We can't write scripts that run on every possible setup, sorry."
 	exit 1
