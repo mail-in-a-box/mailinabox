@@ -256,7 +256,7 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 			CURRENT_NEXTCLOUD_VER="24.0.12"
 		fi
 
-		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^2[45] ]]; then
+		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^2[456] ]]; then
 			# From nextcloud 24 and higher, php8.1 is supported, so we can now remove the php8.0 ppa and packages
 
 			# Reset the default php version used
