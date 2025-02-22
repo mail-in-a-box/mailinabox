@@ -266,6 +266,9 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 			apt-get purge -qq -y php8.0 php8.0-fpm php8.0-apcu php8.0-cli php8.0-sqlite3 php8.0-gd \
 				php8.0-imap php8.0-curl php8.0-dev php8.0-xml php8.0-mbstring php8.0-zip \
 				php8.0-common php8.0-opcache php8.0-readline
+				
+			# Unhold packages
+			apt-mark unhold php7.0-apcu php7.1-apcu php7.2-apcu php7.3-apcu php7.4-apcu
 		fi
 
 		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^24 ]]; then
