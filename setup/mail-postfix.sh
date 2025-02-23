@@ -71,6 +71,19 @@ tools/editconf.py /etc/postfix/main.cf \
 	smtpd_banner="\$myhostname ESMTP Hi, I'm a Mail-in-a-Box (Ubuntu/Postfix; see https://mailinabox.email/)" \
 	mydestination=localhost
 
+# Spamhaus blacklists IPv6 addresses at the /64 granularity, so if an
+# ISP is assigning addresses to customers at a lower granularity and
+# Spamhaus finds just 1 other machine behaving badly in that range,
+# the entire range is (unfairly) blacklisted.
+#
+# Configure Postfix to use IPv4 before IPv6 for outbound mail delivery
+# when MX records containing both addresses have equal
+# preference. This can help deliver mail in the above scenario because
+# Spamhaus has no such range restriction for IPv4.
+
+tools/editconf.py /etc/postfix/main.cf \
+	smtp_address_preference=ipv4
+
 # Tweak some queue settings:
 # * Inform users when their e-mail delivery is delayed more than 3 hours (default is not to warn).
 # * Stop trying to send an undeliverable e-mail after 2 days (instead of 5), and for bounce messages just try for 1 day.
