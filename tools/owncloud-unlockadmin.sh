@@ -7,8 +7,9 @@
 # purpopses only. After this point you are on your own.
 
 source /etc/mailinabox.conf # load global vars
+source ./setup/functions.sh
 
-ADMIN=$(./mail.py user admins | head -n 1)
+ADMIN=$(./management/cli.py user admins | head -n 1)
 test -z "$1" || ADMIN=$1
 
 echo "I am going to unlock admin features for $ADMIN."

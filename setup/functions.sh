@@ -5,7 +5,8 @@
 # -o pipefail: don't ignore errors in the non-last command in a pipeline
 set -euo pipefail
 
-PHP_VER=8.0
+# To modify PHP version, also update method get_php_version() in utils.py
+PHP_VER=8.1
 
 function hide_output {
 	# This function hides the output of a command unless the command fails
