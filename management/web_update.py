@@ -82,6 +82,7 @@ def do_web_update(env):
 
 	# Build an nginx configuration file.
 	nginx_conf = read_conf("nginx-top.conf")
+	# Hardcode php version in the nginx configuration file
 	nginx_conf = re.sub("{{phpver}}", get_php_version(), nginx_conf)
 
 	# Load the templates.
