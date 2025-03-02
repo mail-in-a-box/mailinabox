@@ -46,5 +46,5 @@ chown www-data:www-data "$STORAGE_ROOT/owncloud/config.php"
 
 sudo -u www-data "php$PHP_VER" /usr/local/lib/owncloud/occ maintenance:mode --off
 
-service php$PHP_VER-fpm start
+service "php$PHP_VER-fpm" start
 echo "Done"
