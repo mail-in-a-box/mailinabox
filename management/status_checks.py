@@ -968,6 +968,8 @@ def check_miab_version(env, output):
 			output.print_ok("Mail-in-a-Box is up to date. You are running version %s." % this_ver)
 		elif latest_ver is None:
 			output.print_error("Latest Mail-in-a-Box version could not be determined. You are running version %s." % this_ver)
+		elif re.match(r'[A-F,0-9]{40}', this_ver, re.I):
+			output.print_ok("This version appears to be a git checkout (%s). Good luck!" % this_ver[0:7])
 		else:
 			output.print_error(f"A new version of Mail-in-a-Box is available. You are running version {this_ver}. The latest version is {latest_ver}. For upgrade instructions, see https://mailinabox.email. ")
 
