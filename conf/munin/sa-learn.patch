@@ -1,0 +1,11 @@
+--- sa-learn
++++ sa-learn
+@@ -43,7 +43,7 @@ case $1 in
+ graph_title SA-Learn Magic
+ graph_vlabel Count
+ graph_args --base 1000 -l 0
+-graph_category Mail
++graph_category spamfilter
+ spam.label Num Spam
+ spam.type GAUGE
+ ham.label Num Ham
