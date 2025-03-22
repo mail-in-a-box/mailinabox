@@ -41,7 +41,8 @@ sed "s|%BIN%|$(pwd)|g" conf/miabldap-capture.service > /etc/systemd/system/miabl
 
 hide_output systemctl daemon-reload
 
-if [ -e "$db" ]; then
+# vacuum database if it exists and is non-empty
+if [ -s "$db" ]; then
     echo "Vacuum capture database"
     hide_output systemctl stop miabldap-capture
     hide_output /usr/bin/sqlite3 "$db" "VACUUM;"
