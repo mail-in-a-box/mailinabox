@@ -15,6 +15,9 @@ source /etc/mailinabox.conf # load global vars
 echo "Installing miabldap-capture daemon..."
 
 conf="$STORAGE_ROOT/reporting/config.json"
+db="$STORAGE_ROOT/reporting/capture.sqlite"
+
+apt_install sqlite3
 
 if [ ! -e "$conf" ]; then
     mkdir -p $(dirname "$conf")
@@ -37,5 +40,11 @@ fi
 sed "s|%BIN%|$(pwd)|g" conf/miabldap-capture.service > /etc/systemd/system/miabldap-capture.service
 
 hide_output systemctl daemon-reload
+
+if [ -e "$db" ]; then
+    echo "Vacuum capture database"
+    hide_output systemctl stop miabldap-capture
+    hide_output /usr/bin/sqlite3 "$db" "VACUUM;"
+fi
 hide_output systemctl enable miabldap-capture
 restart_service miabldap-capture
