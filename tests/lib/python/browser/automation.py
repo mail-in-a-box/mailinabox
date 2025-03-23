@@ -1,3 +1,4 @@
+# -*- indent-tabs-mode: nil; -*-
 #####
 ##### This file is part of Mail-in-a-Box-LDAP which is released under the
 ##### terms of the GNU Affero General Public License as published by the
@@ -22,7 +23,7 @@ from selenium.common.exceptions import (
     ElementNotInteractableException
 )
 
-import os
+import os, sys
 import subprocess
 import time
 
@@ -59,11 +60,14 @@ class ChromeTestDriver(Chrome):
         '''
         if not options:
             options = ChromeOptions()
-            options.headless = True
-            
+            options.headless = True  # old method going away...
+            options.add_argument("--headless=new")
+
+            # options.binary_location = '/snap/bin/chromium'
+
             # set a window size
             options.add_argument("--window-size=1200x600")
-            
+
             # deal with ssl certificates since chrome has its own
             # trusted ca list and does not use the system's
             options.add_argument('--allow-insecure-localhost')
@@ -71,10 +75,26 @@ class ChromeTestDriver(Chrome):
 
             # required to run chromium as root
             options.add_argument('--no-sandbox')
-            
-        super(ChromeTestDriver, self).__init__(
+
+            # optional: set what profile directory to use
+            #    ... parent directory must exist
+            # options.add_argument(
+            #     f'--user-data-dir={os.environ["HOME"]}/.config/chromium'
+            # )
+
+        from selenium.webdriver.chrome.service import Service as ChromeService
+        service = ChromeService(
             executable_path='/snap/bin/chromium.chromedriver',
-            options=options
+            # these logging options don't seem to do anything
+            # service_args=[
+            #     '--log-level=ALL', # ALL, DEBUG, INFO, WARNING, SEVERE, OFF
+            #     '--enable-chrome-logs',
+            # ]
+        )
+
+        super(ChromeTestDriver, self).__init__(
+            service=service,
+            options=options,
         )
 
         self.delete_all_cookies()
@@ -86,9 +106,14 @@ class FirefoxTestDriver(Firefox):
         if not options:
             options = FirefoxOptions()
             options.headless = True
-            
+
+        from selenium.webdriver.firefox.service import Service as FirefoxService
+        service = FirefoxService(
+            executable_path='/usr/local/bin/geckodriver'
+	)
+
         super(FirefoxTestDriver, self).__init__(
-            executable_path='/usr/local/bin/geckodriver',
+            service=service,
             options=options
         )
 
@@ -101,7 +126,7 @@ class TestDriver(object):
         self.start_time = None
         self.start_msg = []
         self.next_tick_id = 0
-        
+
         if driver is None:
             if 'BROWSER_TESTS_BROWSER' in os.environ:
                 driver = os.environ['BROWSER_TESTS_BROWSER']
@@ -110,14 +135,14 @@ class TestDriver(object):
         if isinstance(driver, str):
             driver = TestDriver.createByName(driver)
         self.driver = driver
-        
+
         if verbose is None:
             if 'BROWSER_TESTS_VERBOSITY' in os.environ:
                 verbose = int(os.environ['BROWSER_TESTS_VERBOSITY'])
             else:
                 verbose = 1
         self.verbose = verbose
-        
+
         if base_url is None:
             if 'BROWSER_TESTS_BASE_URL' in os.environ:
                 base_url = os.environ['BROWSER_TESTS_BASE_URL']
@@ -133,7 +158,7 @@ class TestDriver(object):
                 output_path= "./"
         self.output_path = output_path
 
-        
+
 
     @staticmethod
     def createByName(name):
@@ -154,11 +179,11 @@ class TestDriver(object):
             msg = args[0] % (args[1:])
             self.start_msg.append(msg)
             print('  '*indent + msg + ' ')
-            
-            
+
+
     def is_verbose(self):
         return self.verbose >= 2
-        
+
     def say_verbose(self, *args):
         self._say(2, 2, *args)
 
@@ -174,14 +199,14 @@ class TestDriver(object):
             self.first_start_time = now
         self.start_time = now
         self._say(1, 0, *args)
-    
+
     def last_start(self):
         msg = []
         for item in self.start_msg:
             if item is not None: msg.append(item)
         return " / ".join(msg)
 
-    
+
     def get(self, url):
         ''' load a web page in the current browser session '''
         if not url.startswith('http'):
@@ -203,7 +228,7 @@ class TestDriver(object):
     def get_current_window_handle(self):
         ''' returns the string id of the current window/tab '''
         return self.driver.current_window_handle
-    
+
     def get_window_handles(self):
         ''' returns an array of strings, one for each window or tab open '''
         return self.driver.window_handles
@@ -222,7 +247,7 @@ class TestDriver(object):
         self.driver.switch_to.parent_frame(iframe_el.el)
 
     def save_screenshot(self, where, ignore_errors=False, quiet=True):
-        ''' where - path and file name of screen shotfile 
+        ''' where - path and file name of screen shotfile
             eg: "out/screenshot.png". '''
         if not where.startswith('/'):
             where = os.path.join(self.output_path, where)
@@ -236,7 +261,7 @@ class TestDriver(object):
 
     def delete_cookie(self, name):
         self.driver.delete_cookie(name)
-            
+
     def wait_for_id(self, id, secs=5, throws=True):
         return self.wait_for_el('#' + id, secs=secs, throws=throws)
 
@@ -262,7 +287,7 @@ class TestDriver(object):
                 if must_be_displayed and not found_el.is_displayed():
                     raise NoSuchElementException()
                 if not must_be_displayed and found_el.is_displayed():
-                    raise NoSuchElementException()                
+                    raise NoSuchElementException()
             return found_el
         wait = WebDriverWait(self.driver, secs, ignored_exceptions= (
             NoSuchElementException
@@ -398,7 +423,7 @@ class TestDriver(object):
         # allow time for vue to render (delay_ms>=1)
         cancel_id = self.execute_script('window.qa_ticked=false; return window.setTimeout(() => { window.qa_ticked=true; }, %s)' % delay_ms);
         self.wait_until_true('return window.qa_ticked === true', secs=secs)
-    
+
     def close(self):
         ''' close the window/tab '''
         self.say_verbose("closing %s", self.driver.current_url)
@@ -421,7 +446,7 @@ class TestDriver(object):
         else:
             exception.msg = "Error during '%s'" % last_start
 
-    
+
 
 
 class ElWrapper(object):
@@ -453,7 +478,7 @@ class ElWrapper(object):
         except (IndexError, NoSuchElementException) as e:
             if throws: raise e
             else: return None
-    
+
     def is_enabled(self):
         return self.el.is_enabled()
 
@@ -464,24 +489,26 @@ class ElWrapper(object):
     def is_displayed(self):
         """Whether the self.element is visible to a user."""
         return self.el.is_displayed()
-    
+
     def get_attribute(self, name):
         return self.el.get_attribute(name)
 
     def get_property(self, expr):
-        self.driver.say_verbose('get property %s', expr)
         prefix = '.'
         if expr.startswith('.') or expr.startswith('['): prefix=''
+        self.driver.say_verbose(f'get property {self.el.tag_name}{prefix}{expr}')
+        args=[self.el]
         p = self.driver.execute_script(
-            "return arguments[0]%s%s;" % ( prefix, expr ),
-            self.el
+            f'return arguments[0]{prefix}{expr};',
+            True,
+            *args
         )
         if isinstance(p, WebElement):
             p = ElWrapper(self.driver, p)
-        if isinstance(p, bool):
-            self.driver.say_verbose('property result: %s', p)
+        if isinstance(p, bool) or isinstance(p, int) or ( isinstance(p, str) and len(p) < 100 ):
+            self.driver.say_verbose('property value: %s', p)
         else:
-            self.driver.say_verbose('property result: %s', p.__class__)
+            self.driver.say_verbose('property type: %s', p.__class__)
         return p
 
     def content(self, max_length=None, ellipses=True):
@@ -504,17 +531,19 @@ class ElWrapper(object):
 
     def parent(self):
         # get the parent element
+        args=[self.el]
         p = self.driver.execute_script(
             "return arguments[0].parentNode;",
-            self.el
+            True,
+            *args
         )
         return ElWrapper(self.driver, p)
-    
+
     def send_text(self, *value):
         self.driver.say_verbose("send text '%s'", "/".join(value))
         self.send_keys(*value)
         return self
-        
+
     def send_keys(self, *value):
         self.el.send_keys(*value)
         return self
@@ -533,17 +562,16 @@ class ElWrapper(object):
             if content != '':
                 self.driver.say_verbose("click %s '%s'", tag, content)
             else:
-                self.driver.say_verbose("click %s", tag)            
+                self.driver.say_verbose("click %s", tag)
         self.el.click()
         return self
 
-        
+
 
 
 #dir(el)
 #['__abstractmethods__', '__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', '__weakref__', '_abc_impl', '_execute', '_id', '_parent', '_upload', 'accessible_name', 'aria_role', 'clear', 'click', 'find_element', 'find_elements', 'get_attribute', 'get_dom_attribute', 'get_property', 'id', 'is_displayed', 'is_enabled', 'is_selected', 'location', 'location_once_scrolled_into_view', 'parent', 'rect', 'screenshot', 'screenshot_as_base64', 'screenshot_as_png', 'send_keys', 'shadow_root', 'size', 'submit', 'tag_name', 'text', 'value_of_css_property']
 
-        
+
 #dir(driver)
 #['__abstractmethods__', '__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__enter__', '__eq__', '__exit__', '__format__', '__ge__', '__getattribute__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', '__weakref__', '_abc_impl', '_authenticator_id', '_file_detector', '_get_cdp_details', '_is_remote', '_mobile', '_shadowroot_cls', '_switch_to', '_unwrap_value', '_web_element_cls', '_wrap_value', 'add_cookie', 'add_credential', 'add_virtual_authenticator', 'application_cache', 'back', 'bidi_connection', 'capabilities', 'caps', 'close', 'command_executor', 'create_options', 'create_web_element', 'current_url', 'current_window_handle', 'delete_all_cookies', 'delete_cookie', 'delete_network_conditions', 'desired_capabilities', 'error_handler', 'execute', 'execute_async_script', 'execute_cdp_cmd', 'execute_script', 'file_detector', 'file_detector_context', 'find_element', 'find_elements', 'forward', 'fullscreen_window', 'get', 'get_cookie', 'get_cookies', 'get_credentials', 'get_issue_message', 'get_log', 'get_network_conditions', 'get_pinned_scripts', 'get_screenshot_as_base64', 'get_screenshot_as_file', 'get_screenshot_as_png', 'get_sinks', 'get_window_position', 'get_window_rect', 'get_window_size', 'implicitly_wait', 'launch_app', 'log_types', 'maximize_window', 'minimize_window', 'mobile', 'name', 'orientation', 'page_source', 'pin_script', 'pinned_scripts', 'port', 'print_page', 'quit', 'refresh', 'remove_all_credentials', 'remove_credential', 'remove_virtual_authenticator', 'save_screenshot', 'service', 'session_id', 'set_network_conditions', 'set_page_load_timeout', 'set_permissions', 'set_script_timeout', 'set_sink_to_use', 'set_user_verified', 'set_window_position', 'set_window_rect', 'set_window_size', 'start_client', 'start_desktop_mirroring', 'start_session', 'start_tab_mirroring', 'stop_casting', 'stop_client', 'switch_to', 'timeouts', 'title', 'unpin', 'vendor_prefix', 'virtual_authenticator_id', 'window_handles']
-
