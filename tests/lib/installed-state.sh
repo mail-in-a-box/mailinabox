@@ -138,6 +138,7 @@ installed_state_compare() {
     RELEASE_A="${RELEASE:-0}"
     PROD_A="miab"
     grep "mailinabox-ldap" <<<"$GIT_ORIGIN" >/dev/null && PROD_A="miabldap"
+    MIGRATION_VERSION_A="${MIGRATION_VERSION:-0}"
     MIGRATION_ML_VERSION_A="${MIGRATION_ML_VERSION:-0}"
 
     source "$s2/info.txt"
@@ -146,6 +147,7 @@ installed_state_compare() {
     RELEASE_B="${RELEASE:-0}"
     PROD_B="miab"
     grep "mailinabox-ldap" <<<"$GIT_ORIGIN" >/dev/null && PROD_B="miabldap"
+    MIGRATION_VERSION_B="${MIGRATION_VERSION:-0}"
     MIGRATION_ML_VERSION_B="${MIGRATION_ML_VERSION:-0}"
 
     cmptype="${PROD_A}2${PROD_B}"
@@ -178,13 +180,16 @@ installed_state_compare() {
 
         # s2: re-sort aliases
         jq -c ".[] | .aliases | sort_by(.address) | .[] | {address:.address, forwards_to:.forwards_to, permitted_senders:.permitted_senders, auto:.auto, description:.description}"  "$s2/aliases.json" > "$s2/aliases-cmp.json"
+    fi
 
-        if [ $MIGRATION_ML_VERSION_A -le 2 -a $MIGRATION_ML_VERSION_B -ge 3 ]; then
-            # miabldap migration level <=2 does not have quota fields, so
-            # remove them from the comparison
-            grep -vE '"(quota|box_quota|box_size|percent)":' "$s2/users-cmp.json" > "$s2/users-cmp2.json" || changed="true"
-            cp "$s2/users-cmp2.json" "$s2/users-cmp.json" && rm -f "$s2/users-cmp2.json"
-        fi
+    # before quota support to one with it
+    if [ "$cmptype" = "miabldap2miabldap" -a $MIGRATION_ML_VERSION_A -le 2 -a $MIGRATION_ML_VERSION_B -ge 3
+       -o "$cmdtype" = "miab2miabldap" -a $MIGRATION_VERSION_A -lt 15 -a $MIGRATION_ML_VERSION_B -ge 3 ]; then
+        # miabldap migration level <=2 does not have quota fields
+        # miab migration level <15 does not have quota fields
+        #  ... remove them from the comparison
+        grep -vE '"(quota|box_quota|box_size|percent)":' "$s2/users-cmp.json" > "$s2/users-cmp2.json" || changed="true"
+        cp "$s2/users-cmp2.json" "$s2/users-cmp.json" && rm -f "$s2/users-cmp2.json"
     fi
 
 
