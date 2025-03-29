@@ -132,8 +132,7 @@ sed -i "s/PUBLIC_IP/$PUBLIC_IP/" /etc/postfix/outgoing_mail_header_filters
 # For port 25 only:
 # * Disable extremely old versions of TLS and extremely unsafe ciphers, but some mail servers out in
 #   the world are very far behind and if we disable too much, they may not be able to use TLS and
-#   won't fall back to cleartext. So we don't disable too much. smtpd_tls_exclude_ciphers applies to
-#   both port 25 and port 587, but because we override the cipher list for both, it probably isn't used.
+#   won't fall back to cleartext. So we don't disable too much.
 #   Use Mozilla's "Old" recommendations at https://ssl-config.mozilla.org/#server=postfix&version=3.6.4&config=old&openssl=3.0.2&guideline=5.7
 tools/editconf.py /etc/postfix/main.cf \
 	smtpd_tls_security_level=may\
