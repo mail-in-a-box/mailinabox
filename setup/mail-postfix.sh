@@ -143,9 +143,10 @@ tools/editconf.py /etc/postfix/main.cf \
 	smtpd_tls_protocols=">=TLSv1" \
 	smtpd_tls_ciphers=medium \
 	tls_medium_cipherlist="@SECLEVEL=0:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES256-SHA256:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:DES-CBC3-SHA" \
-	smtpd_tls_exclude_ciphers="MD5, DES, ADH, RC4, PSD, SRP, 3DES, eNULL, aNULL, CAMELLIA, kRSA" \
+	smtpd_tls_exclude_ciphers="MD5, DES, ADH, RC4, PSD, SRP, 3DES, eNULL, aNULL" \
 	tls_preempt_cipherlist=yes \
-	smtpd_tls_received_header=yes
+	smtpd_tls_received_header=yes \
+	smtpd_tls_loglevel=1
 
 # For ports 465/587 (via the 'mandatory' settings):
 # * Use Mozilla's "Intermediate" TLS recommendations from https://ssl-config.mozilla.org/#server=postfix&version=3.6.4&config=intermediate&openssl=3.0.2&guideline=5.7
@@ -154,6 +155,7 @@ tools/editconf.py /etc/postfix/main.cf \
 	smtpd_tls_mandatory_protocols=">=TLSv1.2" \
 	smtpd_tls_mandatory_ciphers=high \
 	tls_high_cipherlist=ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384 \
+	smtpd_tls_mandatory_exclude_ciphers="kRSA"
 
 # Prevent non-authenticated users from sending mail that requires being
 # relayed elsewhere. We don't want to be an "open relay". On outbound
@@ -193,13 +195,15 @@ tools/editconf.py /etc/postfix/main.cf \
 tools/editconf.py /etc/postfix/main.cf \
 	smtp_tls_protocols=">=TLSv1" \
 	smtp_tls_ciphers=medium \
-	smtp_tls_exclude_ciphers=aNULL,RC4 \
+	smtp_tls_exclude_ciphers="MD5, DES, ADH, RC4, PSD, SRP, 3DES, eNULL, aNULL" \
 	smtp_tls_security_level=dane \
 	smtp_dns_support_level=dnssec \
 	smtp_tls_mandatory_protocols=">=TLSv1.2" \
 	smtp_tls_mandatory_ciphers=high \
+	smtp_tls_mandatory_exclude_ciphers="kRSA" \
 	smtp_tls_CAfile=/etc/ssl/certs/ca-certificates.crt \
-	smtp_tls_loglevel=2
+	smtp_tls_loglevel=1 \
+	smtp_tls_note_starttls_offer=yes
 
 # ### Incoming Mail
 
