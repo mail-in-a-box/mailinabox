@@ -64,7 +64,7 @@ def get_domains_with_a_records(env):
 	domains = set()
 	dns = get_custom_dns_config(env)
 	for domain, rtype, value in dns:
-		if rtype == "CNAME" or (rtype in {"A", "AAAA"} and value not in {"local", env['PUBLIC_IP']}):
+		if rtype == "CNAME" or (rtype in {"A", "AAAA"} and value not in {"local", env['PUBLIC_IP'], env['PUBLIC_IPV6']}):
 			domains.add(domain)
 	return domains
 
