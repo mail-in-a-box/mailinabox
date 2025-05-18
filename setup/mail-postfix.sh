@@ -290,9 +290,9 @@ END
 
 	# Setup dnsbl reply mapping, to avoid leaking your DQS key in reject messages
 	cat > /etc/postfix/dnsbl-reply-map <<- EOF;
-	$ZEN_QUERY=127.0.0.[2.255]      \$rbl_code Service unavailable; \$rbl_class [\$rbl_what] blocked using zen.spamhaus.org\${rbl_reason?; \$rbl_reason}
+	$ZEN_QUERY=127.0.0.[2..255]     \$rbl_code Service unavailable; \$rbl_class [\$rbl_what] blocked using zen.spamhaus.org\${rbl_reason?; \$rbl_reason}
 	$DBL_QUERY=127.0.1.[2..99]      \$rbl_code Service unavailable; \$rbl_class [\$rbl_what] blocked using dbl.spamhaus.org\${rbl_reason?; \$rbl_reason}
-	$ZRD_QUERY=127.0.2.[2..24]      \$rbl_code Service unavailable; \$rbl_class [\$rbl_what] blocked using zrd.spamhaus.org\${rbl_reason?; \$rbl_reason}
+	$ZRD_QUERY=127.0.2.2            \$rbl_code Service unavailable; \$rbl_class [\$rbl_what] blocked using zrd.spamhaus.org\${rbl_reason?; \$rbl_reason}
 EOF
 
 	postmap hash:/etc/postfix/dnsbl-reply-map
