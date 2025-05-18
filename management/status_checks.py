@@ -550,8 +550,12 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 				continue
 			# Choose the first IP if nameserver returns multiple
 			ns_ip = ns_ips.split('; ')[0]
-
-			checkSOA = True
+			
+			# No need to check if we could not obtain the SOA record
+			if SOARecord == '[timeout]':
+				checkSOA = False
+			else:			
+				checkSOA = True
 
 			# Now query it to see what it says about this domain.
 			ip = query_dns(domain, "A", at=ns_ip, nxdomain=None)
@@ -573,10 +577,10 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 
 				if SOARecord == SOASecondary:
 					output.print_ok(f"Secondary nameserver {ns} has consistent SOA record.")
-				elif SOARecord == '[Not Set]':
+				elif SOASecondary == '[Not Set]':
 					output.print_error(f"Secondary nameserver {ns} has no SOA record configured.")
-				elif SOARecord == '[timeout]':
-					output.print_error(f"Secondary nameserver {ns} timed out on checking SOA record.")
+				elif SOASecondary == '[timeout]':
+					output.print_warning(f"Secondary nameserver {ns} timed out on checking SOA record.")
 				else:
 					output.print_error(f"""Secondary nameserver {ns} has inconsistent SOA record (primary: {SOARecord} versus secondary: {SOASecondary}).
 					Check that synchronization between secondary and primary DNS servers is properly set-up.""")
