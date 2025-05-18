@@ -6,6 +6,7 @@
 
 import sys, os, os.path, re, datetime, multiprocessing.pool
 import asyncio
+import dateutil.parser, dateutil.relativedelta, dateutil.tz
 
 import dns.reversename, dns.resolver
 import idna
@@ -18,6 +19,7 @@ from ssl_certificates import get_ssl_certificates, get_domain_ssl_files, check_c
 from mailconfig import get_mail_domains, get_mail_aliases
 
 from utils import shell, sort_domains, load_env_vars_from_file, load_settings, get_ssh_port, get_ssh_config_value
+from backup import get_backup_config, backup_status
 
 def get_services():
 	return [
@@ -155,6 +157,7 @@ def run_system_checks(rounded_values, env, output):
 	check_system_aliases(env, output)
 	check_free_disk_space(rounded_values, env, output)
 	check_free_memory(rounded_values, env, output)
+	check_backup(rounded_values, env, output)
 
 def check_ufw(env, output):
 	if not os.path.isfile('/usr/sbin/ufw'):
@@ -258,6 +261,37 @@ def check_free_memory(rounded_values, env, output):
 	else:
 		if rounded_values: memory_msg = "System free memory is below 10%."
 		output.print_error(memory_msg)
+
+
+def check_backup(rounded_values, env, output):
+	# Check backups
+	backup_config = get_backup_config(env, for_ui=True)
+	
+	# Is the backup enabled?
+	if backup_config.get("target", "off") == "off":
+		output.print_warning("Backups are disabled. It is recommended to enable a backup for your box.")
+		return
+	else:
+		output.print_ok("Backups are enabled")
+	
+	# Get the age of the most recent backup
+	backup_stat = backup_status(env)
+	
+	backups = backup_stat.get("backups", {})
+	if backups and len(backups) > 0:
+		most_recent = backups[0]["date"]
+		
+		# Calculate time between most recent backup and current time
+		now = datetime.datetime.now(dateutil.tz.tzlocal())
+		bk_date = dateutil.parser.parse(most_recent).astimezone(dateutil.tz.tzlocal())
+		bk_age = dateutil.relativedelta.relativedelta(now, bk_date)
+		
+		if bk_age.days > 7:
+			output.print_error("Backup is more than a week old")
+	else:
+		output.print_error("Could not obtain backup status or no backup has been made (yet). "
+			"This could happen if you have just enabled backups. In that case, check back tomorrow.")
+
 
 def run_network_checks(env, output):
 	# Also see setup/network-checks.sh.
