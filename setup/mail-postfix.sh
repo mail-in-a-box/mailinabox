@@ -267,7 +267,7 @@ END
 )
 
 	# Cleanup dnsbl reply mapping, potentially set when DQS was enabled previously
-	management/editconf.py /etc/postfix/main.cf -e rbl_reply_maps=
+	tools/editconf.py /etc/postfix/main.cf -e rbl_reply_maps=
 	
 	rm -rf /etc/postfix/dnsbl-reply-map
 else
@@ -297,7 +297,7 @@ EOF
 
 	postmap hash:/etc/postfix/dnsbl-reply-map
 
-	management/editconf.py /etc/postfix/main.cf \
+	tools/editconf.py /etc/postfix/main.cf \
 		rbl_reply_maps=hash:/etc/postfix/dnsbl-reply-map
 fi
 
@@ -320,7 +320,7 @@ END
 )
 
 # Apply configuration
-management/editconf.py /etc/postfix/main.cf -w \
+tools/editconf.py /etc/postfix/main.cf -w \
         smtpd_sender_restrictions="$CONF_SMTPD_SENDER_RESTRICTIONS" \
         smtpd_recipient_restrictions="$CONF_SMTPD_RECIPIENT_RESTRICTIONS"
 
