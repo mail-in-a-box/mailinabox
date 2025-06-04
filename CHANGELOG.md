@@ -1,6 +1,17 @@
 CHANGELOG
 =========
 
+Version 72 (June 3, 2025)
+-------------------------
+
+Upgrades
+
+* Roundcube upgraded to version 1.6.11, fixing a security vulnerability.
+
+Control Panel
+
+* A warning during daily tasks related to no TLS certificates being expired is fixed.
+
 Version 71 (January 4, 2025)
 ----------------------------
 
