@@ -120,7 +120,7 @@ elif sys.argv[1] == "user" and sys.argv[2] == "admins":
 
 elif sys.argv[1] == "user" and sys.argv[2] == "quota" and len(sys.argv) == 4:
 	# Get a user's quota
-	print(mgmt("/mail/users/quota?text=1&email={}".format(sys.argv[3])))
+	print(mgmt(f"/mail/users/quota?text=1&email={sys.argv[3]}"))
 
 elif sys.argv[1] == "user" and sys.argv[2] == "quota" and len(sys.argv) == 5:
 	# Set a user's quota

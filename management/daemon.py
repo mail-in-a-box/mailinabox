@@ -736,7 +736,7 @@ def munin_cgi(filename):
 
 	query_str = request.query_string.decode("utf-8", 'ignore')
 
-	env = {'PATH_INFO': '/{}/'.format(filename), 'REQUEST_METHOD': 'GET', 'QUERY_STRING': query_str}
+	env = {'PATH_INFO': f'/{filename}/', 'REQUEST_METHOD': 'GET', 'QUERY_STRING': query_str}
 	code, binout = utils.shell('check_output',
 							   COMMAND.split(" ", 5),
 							   # Using a maxsplit of 5 keeps the last arguments together
