@@ -528,7 +528,7 @@ def list_target_files(config):
 		except ClientError as e:
 			raise ValueError(e)
 		return backup_list
-	elif target.scheme == 'b2':
+	if target.scheme == 'b2':
 		from b2sdk.v1 import InMemoryAccountInfo, B2Api
 		from b2sdk.v1.exception import NonExistentBucket
 		info = InMemoryAccountInfo()
@@ -547,8 +547,7 @@ def list_target_files(config):
 			raise ValueError(msg)
 		return [(key.file_name, key.size) for key, _ in bucket.ls()]
 
-	else:
-		raise ValueError(config["target"])
+	raise ValueError(config["target"])
 
 
 def backup_set_custom(env, target, target_user, target_pass, min_age):
