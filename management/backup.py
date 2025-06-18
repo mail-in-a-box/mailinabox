@@ -602,8 +602,7 @@ def get_backup_config(env, for_save=False, for_ui=False):
 	# authentication details. The user will have to re-enter it.
 	if for_ui:
 		for field in ("target_user", "target_pass"):
-			if field in config:
-				del config[field]
+			config.pop(field, None)
 
 	# helper fields for the admin
 	config["file_target_directory"] = os.path.join(backup_root, 'encrypted')
