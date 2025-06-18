@@ -430,11 +430,14 @@ def validate_quota(quota):
 	quota = quota.strip().upper()
 
 	if quota == "":
-		raise ValueError("No quota provided.")
+		msg = "No quota provided."
+		raise ValueError(msg)
 	if re.search(r"[\s,.]", quota):
-		raise ValueError("Quotas cannot contain spaces, commas, or decimal points.")
+		msg = "Quotas cannot contain spaces, commas, or decimal points."
+		raise ValueError(msg)
 	if not re.match(r'^[\d]+[GM]?$', quota):
-		raise ValueError("Invalid quota.")
+		msg = "Invalid quota."
+		raise ValueError(msg)
 
 	return quota
 
