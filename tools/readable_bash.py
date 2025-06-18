@@ -226,7 +226,7 @@ class EditConf(Grammar):
 		options = []
 		eq = "="
 		if self[3] and "-s" in self[3].string: eq = " "
-		for opt in re.split("\s+", self[4].string):
+		for opt in re.split(r"\s+", self[4].string):
 			k, v = opt.split("=", 1)
 			v = re.sub(r"\n+", "", fixup_tokens(v)) # not sure why newlines are getting doubled
 			options.append(f"{k}{eq}{v}")
@@ -248,7 +248,7 @@ class EchoPipe(Grammar):
 	grammar = OPTIONAL(SPACE), L("echo "), REST_OF_LINE, L(' | '), REST_OF_LINE, EOL
 	def value(self):
 		text = " ".join(f"\"{s}\"" for s in self[2].string.split(" "))
-		return "<pre class='shell'><div>echo " + recode_bash(text) + " \<br> | " + recode_bash(self[4].string) + "</div></pre>\n"
+		return "<pre class='shell'><div>echo " + recode_bash(text) + r" \<br> | " + recode_bash(self[4].string) + "</div></pre>\n"
 
 def shell_line(bash):
 	return "<pre class='shell'><div>" + recode_bash(bash.strip()) + "</div></pre>\n"
@@ -363,7 +363,7 @@ def quasitokenize(bashscript):
 			newscript += c
 
 		# "<< EOF" escaping.
-		if quote_mode is None and re.search("<<\s*EOF\n$", newscript):
+		if quote_mode is None and re.search("<<\\s*EOF\n$", newscript):
 			quote_mode = "EOF"
 		elif quote_mode == "EOF" and re.search("\nEOF\n$", newscript):
 			quote_mode = None
@@ -406,7 +406,7 @@ class BashScript(Grammar):
 
 		# tokenize
 		string = re.sub(".* #NODOC\n", "", string)
-		string = re.sub("\n\s*if .*then.*|\n\s*fi|\n\s*else|\n\s*elif .*", "", string)
+		string = re.sub("\n\\s*if .*then.*|\n\\s*fi|\n\\s*else|\n\\s*elif .*", "", string)
 		string = quasitokenize(string)
 		string = re.sub(r"hide_output ", "", string)
 
@@ -458,7 +458,7 @@ class BashScript(Grammar):
 		v = fixup_tokens(v)
 
 		v = v.replace("</pre>\n<pre class='shell'>", "")
-		v = re.sub("<pre>([\w\W]*?)</pre>", lambda m : "<pre>" + strip_indent(m.group(1)) + "</pre>", v)
+		v = re.sub(r"<pre>([\w\W]*?)</pre>", lambda m : "<pre>" + strip_indent(m.group(1)) + "</pre>", v)
 
 		v = re.sub(r"(\$?)PRIMARY_HOSTNAME", r"<b>box.yourdomain.com</b>", v)
 		v = re.sub(r"\$STORAGE_ROOT", r"<b>$STORE</b>", v)
@@ -468,7 +468,7 @@ class BashScript(Grammar):
 
 def wrap_lines(text, cols=60):
 	ret = ""
-	words = re.split("(\s+)", text)
+	words = re.split(r"(\s+)", text)
 	linelen = 0
 	for w in words:
 		if linelen + len(w) > cols-1:
