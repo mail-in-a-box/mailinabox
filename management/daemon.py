@@ -688,8 +688,7 @@ def check_request_cookie_for_admin_access():
 	if not session: return False
 	privs = get_mail_user_privileges(session["email"], env)
 	if not isinstance(privs, list): return False
-	if "admin" not in privs: return False
-	return True
+	return "admin" in privs
 
 def authorized_personnel_only_via_cookie(f):
 	@wraps(f)
