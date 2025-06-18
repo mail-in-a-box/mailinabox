@@ -462,7 +462,7 @@ def list_target_files(config):
 
 		target_path = target.path
 		if not target_path.endswith('/'):
-			target_path = target_path + '/'
+			target_path += '/'
 		if target_path.startswith('/'):
 			target_path = target_path[1:]
 
