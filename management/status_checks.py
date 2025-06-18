@@ -620,7 +620,7 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 			with open(os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/' + dnssec_keys['KSK'] + '.key'), encoding="utf-8") as f:
 				dnsssec_pubkey = f.read().split("\t")[3].split(" ")[3]
 
-			expected_ds_records[ (ds_keytag, ds_alg, ds_digalg, ds_digest) ] = {
+			expected_ds_records[ ds_keytag, ds_alg, ds_digalg, ds_digest ] = {
 				"record": rr_ds,
 				"keytag": ds_keytag,
 				"alg": ds_alg,

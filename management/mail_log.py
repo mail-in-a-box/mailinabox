@@ -495,7 +495,7 @@ def add_login(user, date, protocol_name, host, collector):
             data["latest"] = date
 
             data["totals_by_protocol"][protocol_name] += 1
-            data["totals_by_protocol_and_host"][(protocol_name, host)] += 1
+            data["totals_by_protocol_and_host"][protocol_name, host] += 1
 
             if host not in {"127.0.0.1", "::1"} or True:
                 data["activity-by-hour"][protocol_name][date.hour] += 1
