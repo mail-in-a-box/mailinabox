@@ -130,7 +130,7 @@ def generate_documentation():
 				fn = parser.parse_string(line).filename()
 			except:
 				continue
-			if fn in ("setup/start.sh", "setup/preflight.sh", "setup/questions.sh", "setup/firstuser.sh", "setup/management.sh"):
+			if fn in {"setup/start.sh", "setup/preflight.sh", "setup/questions.sh", "setup/firstuser.sh", "setup/management.sh"}:
 				continue
 
 		import sys
@@ -323,7 +323,7 @@ def quasitokenize(bashscript):
 		elif c == "\\":
 			# Escaping next character.
 			escape_next = True
-		elif quote_mode is None and c in ('"', "'"):
+		elif quote_mode is None and c in {'"', "'"}:
 			# Starting a quoted word.
 			quote_mode = c
 		elif c == quote_mode:
@@ -400,7 +400,7 @@ class BashScript(Grammar):
 
 	@staticmethod
 	def parse(fn):
-		if fn in ("setup/functions.sh", "/etc/mailinabox.conf"): return ""
+		if fn in {"setup/functions.sh", "/etc/mailinabox.conf"}: return ""
 		with open(fn, encoding="utf-8") as f:
 			string = f.read()
 
