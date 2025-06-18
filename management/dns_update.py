@@ -11,7 +11,6 @@ import dns.resolver
 
 from utils import shell, load_env_vars_from_file, safe_domain_name, sort_domains, get_ssh_port
 from ssl_certificates import get_ssl_certificates, check_certificate
-import contextlib
 
 # From https://stackoverflow.com/questions/3026957/how-to-validate-a-domain-name-using-regex-php/16491074#16491074
 # This regular expression matches domain names according to RFCs, it also accepts fqdn with an leading dot,
