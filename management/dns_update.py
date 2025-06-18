@@ -590,7 +590,8 @@ def get_dns_zonefile(zone, env):
 		if zone == domain:
 			break
 	else:
-		raise ValueError(f"{zone} is not a domain name that corresponds to a zone.")
+		msg = f"{zone} is not a domain name that corresponds to a zone."
+		raise ValueError(msg)
 
 	nsd_zonefile = "/etc/nsd/zones/" + fn
 	with open(nsd_zonefile, encoding="utf-8") as f:
@@ -896,7 +897,8 @@ def set_custom_dns_record(qname, rtype, value, action, env):
 	else:
 		# No match.
 		if qname != "_secondary_nameserver":
-			raise ValueError(f"{qname} is not a domain name or a subdomain of a domain name managed by this box.")
+			msg = f"{qname} is not a domain name or a subdomain of a domain name managed by this box."
+			raise ValueError(msg)
 
 	# validate rtype
 	rtype = rtype.upper()
@@ -926,7 +928,8 @@ def set_custom_dns_record(qname, rtype, value, action, env):
 			# anything goes
 			pass
 		else:
-			raise ValueError(f"Unknown record type '{rtype}'.")
+			msg = f"Unknown record type '{rtype}'."
+			raise ValueError(msg)
 
 	# load existing config
 	config = list(get_custom_dns_config(env))
@@ -1037,7 +1040,8 @@ def set_secondary_dns(hostnames, env):
 					try:
 						resolver.resolve(item, "AAAA")
 					except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.Timeout):
-						raise ValueError(f"Could not resolve the IP address of {item}.")
+						msg = f"Could not resolve the IP address of {item}."
+						raise ValueError(msg)
 			else:
 				# Validate IP address.
 				try:
@@ -1046,7 +1050,8 @@ def set_secondary_dns(hostnames, env):
 					else:
 						ipaddress.ip_address(item[4:]) # raises a ValueError if there's a problem
 				except ValueError:
-					raise ValueError(f"'{item[4:]}' is not an IPv4 or IPv6 address or subnet.")
+					msg = f"'{item[4:]}' is not an IPv4 or IPv6 address or subnet."
+					raise ValueError(msg)
 
 		# Set.
 		set_custom_dns_record("_secondary_nameserver", "A", " ".join(hostnames), "set", env)

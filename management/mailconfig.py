@@ -448,7 +448,8 @@ def get_mail_password(email, env):
 	c.execute('SELECT password FROM users WHERE email=?', (email,))
 	rows = c.fetchall()
 	if len(rows) != 1:
-		raise ValueError(f"That's not a user ({email}).")
+		msg = f"That's not a user ({email})."
+		raise ValueError(msg)
 	return rows[0][0]
 
 def remove_mail_user(email, env):
