@@ -259,6 +259,7 @@ def check_free_memory(rounded_values, env, output):
 		if rounded_values: memory_msg = "System free memory is below 10%."
 		output.print_error(memory_msg)
 
+import subprocess
 def run_network_checks(env, output):
 	# Also see setup/network-checks.sh.
 
@@ -269,8 +270,8 @@ def run_network_checks(env, output):
 	# Stop if we cannot make an outbound connection on port 25. Many residential
 	# networks block outbound port 25 to prevent their network from sending spam.
 	# See if we can reach one of Google's MTAs with a 5-second timeout.
-	_code, ret = shell("check_call", ["/bin/nc", "-z", "-w5", "aspmx.l.google.com", "25"], trap=True)
-	if ret == 0:
+	ret = subprocess.run("/usr/bin/nc -z -w5 aspmx.l.google.com 25", shell=True, capture_output=True)
+	if ret.returncode == 0:
 		output.print_ok("Outbound mail (SMTP port 25) is not blocked.")
 	else:
 		output.print_error("""Outbound mail (SMTP port 25) seems to be blocked by your network. You
@@ -968,6 +969,8 @@ def check_miab_version(env, output):
 			output.print_ok("Mail-in-a-Box is up to date. You are running version %s." % this_ver)
 		elif latest_ver is None:
 			output.print_error("Latest Mail-in-a-Box version could not be determined. You are running version %s." % this_ver)
+		elif re.match(r'[A-F,0-9]{40}', this_ver, re.I):
+			output.print_ok("This version appears to be a git checkout (%s). Good luck!" % this_ver[0:7])
 		else:
 			output.print_error(f"A new version of Mail-in-a-Box is available. You are running version {this_ver}. The latest version is {latest_ver}. For upgrade instructions, see https://mailinabox.email. ")
 

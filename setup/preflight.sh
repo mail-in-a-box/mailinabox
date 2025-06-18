@@ -12,8 +12,8 @@ fi
 # Pull in the variables defined in /etc/os-release but in a
 # namespace to avoid polluting our variables.
 source <(cat /etc/os-release | sed s/^/OS_RELEASE_/)
-if [ "${OS_RELEASE_ID:-}" != "ubuntu" ] || [ "${OS_RELEASE_VERSION_ID:-}" != "22.04" ]; then
-	echo "Mail-in-a-Box only supports being installed on Ubuntu 22.04, sorry. You are running:"
+if [ "${OS_RELEASE_ID:-}" != "ubuntu" ] || [ "${OS_RELEASE_VERSION_ID:-}" != "24.04" ]; then
+	echo "Mail-in-a-Box only supports being installed on Ubuntu 24.04, sorry. You are running:"
 	echo
 	echo "${OS_RELEASE_ID:-"Unknown linux distribution"} ${OS_RELEASE_VERSION_ID:-}"
 	echo
