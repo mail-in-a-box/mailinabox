@@ -518,7 +518,7 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 		cert = load_pem(ssl_cert_chain[0])
 		if not isinstance(cert, Certificate): raise ValueError("This is not a certificate file.")
 	except ValueError as e:
-		return ("There is a problem with the certificate file: %s" % str(e), None)
+		return ("There is a problem with the certificate file: {}".format(str(e)), None)
 
 	# First check that the domain name is one of the names allowed by
 	# the certificate.
@@ -530,8 +530,7 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 		# should work in normal cases).
 		wildcard_domain = re.sub(r"^[^\.]+", "*", domain)
 		if domain not in certificate_names and wildcard_domain not in certificate_names:
-			return ("The certificate is for the wrong domain name. It is for %s."
-				% ", ".join(sorted(certificate_names)), None)
+			return ("The certificate is for the wrong domain name. It is for {}.".format(", ".join(sorted(certificate_names))), None)
 
 	# Second, check that the certificate matches the private key.
 	if ssl_private_key is not None:
@@ -544,10 +543,10 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 		if (not isinstance(priv_key, rsa.RSAPrivateKey)
 			and not isinstance(priv_key, dsa.DSAPrivateKey)
 			and not isinstance(priv_key, ec.EllipticCurvePrivateKey)):
-			return ("The private key file %s is not a private key file." % ssl_private_key, None)
+			return ("The private key file {} is not a private key file.".format(ssl_private_key), None)
 
 		if priv_key.public_key().public_numbers() != cert.public_key().public_numbers():
-			return ("The certificate does not correspond to the private key at %s." % ssl_private_key, None)
+			return ("The certificate does not correspond to the private key at {}.".format(ssl_private_key), None)
 
 		# We could also use the openssl command line tool to get the modulus
 		# listed in each file. The output of each command below looks like "Modulus=XXXXX".
@@ -593,7 +592,7 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 
 	elif retcode != 0:
 		if "unable to get local issuer certificate" in verifyoutput:
-			return ("The certificate is missing an intermediate chain or the intermediate chain is incorrect or incomplete. (%s)" % verifyoutput, None)
+			return ("The certificate is missing an intermediate chain or the intermediate chain is incorrect or incomplete. ({})".format(verifyoutput), None)
 
 		# There is some unknown problem. Return the `openssl verify` raw output.
 		return ("There is a problem with the certificate.", verifyoutput.strip())
@@ -610,7 +609,7 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 			expiry_info = "The certificate expires in %d days on %s." % (ndays, cert_expiration_date.date().isoformat())
 		else:
 			# We'll renew it with Lets Encrypt.
-			expiry_info = "The certificate expires on %s." % cert_expiration_date.date().isoformat()
+			expiry_info = "The certificate expires on {}.".format(cert_expiration_date.date().isoformat())
 
 		if warn_if_expiring_soon and ndays <= warn_if_expiring_soon:
 			# Warn on day 10 to give 4 days for us to automatically renew the

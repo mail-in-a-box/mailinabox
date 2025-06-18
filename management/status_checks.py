@@ -248,7 +248,7 @@ def check_free_disk_space(rounded_values, env, output):
 def check_free_memory(rounded_values, env, output):
 	# Check free memory.
 	percent_free = 100 - psutil.virtual_memory().percent
-	memory_msg = "System memory is %s%% free." % str(round(percent_free))
+	memory_msg = "System memory is {}% free.".format(str(round(percent_free)))
 	if percent_free >= 20:
 		if rounded_values: memory_msg = "System free memory is at least 20%."
 		output.print_ok(memory_msg)
@@ -478,7 +478,7 @@ def check_primary_hostname_dns(domain, env, output, dns_domains, dns_zonefiles):
 	tlsa25 = query_dns(tlsa_qname, "TLSA", nxdomain=None)
 	tlsa25_expected = build_tlsa_record(env)
 	if tlsa25 == tlsa25_expected:
-		output.print_ok("""The DANE TLSA record for incoming mail is correct (%s).""" % tlsa_qname,)
+		output.print_ok("""The DANE TLSA record for incoming mail is correct ({}).""".format(tlsa_qname),)
 	elif tlsa25 is None:
 		if has_dnssec:
 			# Omit a warning about it not being set if DNSSEC isn't enabled,
@@ -497,9 +497,9 @@ def check_alias_exists(alias_name, alias, env, output):
 		if mail_aliases[alias]:
 			output.print_ok(f"{alias_name} exists as a mail alias. [{alias} ↦ {mail_aliases[alias]}]")
 		else:
-			output.print_error("""You must set the destination of the mail alias for %s to direct email to you or another administrator.""" % alias)
+			output.print_error("""You must set the destination of the mail alias for {} to direct email to you or another administrator.""".format(alias))
 	else:
-		output.print_error("""You must add a mail alias for %s which directs email to you or another administrator.""" % alias)
+		output.print_error("""You must add a mail alias for {} which directs email to you or another administrator.""".format(alias))
 
 def check_dns_zone(domain, env, output, dns_zonefiles):
 	# If a DS record is set at the registrar, check DNSSEC first because it will affect the NS query.
@@ -527,7 +527,7 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 	probably_external_dns = False
 
 	if existing_ns.lower() == correct_ns.lower():
-		output.print_ok("Nameservers are set correctly at registrar. [%s]" % correct_ns)
+		output.print_ok("Nameservers are set correctly at registrar. [{}]".format(correct_ns))
 	elif ip == correct_ip:
 		# The domain resolves correctly, so maybe the user is using External DNS.
 		output.print_warning(f"""The nameservers set on this domain at your domain name registrar should be {correct_ns}. They are currently {existing_ns}.
@@ -546,7 +546,7 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 			# We must first resolve the nameserver to an IP address so we can query it.
 			ns_ips = query_dns(ns, "A")
 			if not ns_ips or ns_ips in {'[Not Set]', '[timeout]'}:
-				output.print_error("Secondary nameserver %s is not valid (it doesn't resolve to an IP address)." % ns)
+				output.print_error("Secondary nameserver {} is not valid (it doesn't resolve to an IP address).".format(ns))
 				continue
 			# Choose the first IP if nameserver returns multiple
 			ns_ip = ns_ips.split('; ')[0]
@@ -587,7 +587,7 @@ def check_dns_zone_suggestions(domain, env, output, dns_zonefiles, domains_with_
 	if domain in domains_with_a_records:
 		output.print_warning("""Web has been disabled for this domain because you have set a custom DNS record.""")
 	if "www." + domain in domains_with_a_records:
-		output.print_warning("""A redirect from 'www.%s' has been disabled for this domain because you have set a custom DNS record on the www subdomain.""" % domain)
+		output.print_warning("""A redirect from 'www.{}' has been disabled for this domain because you have set a custom DNS record on the www subdomain.""".format(domain))
 
 	# Since DNSSEC is optional, if a DS record is NOT set at the registrar suggest it.
 	# (If it was set, we did the check earlier.)
@@ -616,7 +616,7 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 			# Some registrars may want the public key so they can compute the digest. The DS
 			# record that we suggest using is for the KSK (and that's how the DS records were generated).
 			# We'll also give the nice name for the key algorithm.
-			dnssec_keys = load_env_vars_from_file(os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/%s.conf' % alg_name_map[ds_alg]))
+			dnssec_keys = load_env_vars_from_file(os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/{}.conf'.format(alg_name_map[ds_alg])))
 			with open(os.path.join(env['STORAGE_ROOT'], 'dns/dnssec/' + dnssec_keys['KSK'] + '.key'), encoding="utf-8") as f:
 				dnsssec_pubkey = f.read().split("\t")[3].split(" ")[3]
 
@@ -662,7 +662,7 @@ def check_dnssec(domain, env, output, dns_zonefiles, is_checking_primary=False):
 				for this domain is valid.""")
 		else:
 			if is_checking_primary:
-				output.print_error("""The DNSSEC 'DS' record for %s is incorrect. See further details below.""" % domain)
+				output.print_error("""The DNSSEC 'DS' record for {} is incorrect. See further details below.""".format(domain))
 				return
 			output.print_error("""This domain's DNSSEC DS record is incorrect. The chain of trust is broken between the public DNS system
 				and this machine's DNS server. It may take several hours for public DNS to update after a change. If you did not recently
@@ -774,7 +774,7 @@ def check_mail_domain(domain, env, output):
 	elif dbl == "[Not Set]":
 		output.print_warning(f"Could not connect to dbl.spamhaus.org. Could not determine whether the domain {domain} is blacklisted. Please try again later.")
 	elif dbl == "127.255.255.252":
-		output.print_warning("Incorrect spamhaus query: %s. Could not determine whether the domain %s is blacklisted." % (domain+'.dbl.spamhaus.org', domain))
+		output.print_warning("Incorrect spamhaus query: {}. Could not determine whether the domain {} is blacklisted.".format(domain+'.dbl.spamhaus.org', domain))
 	elif dbl == "127.255.255.254":
 		output.print_warning("Mail-in-a-Box is configured to use a public DNS server. This is not supported by spamhaus. Could not determine whether the domain {} is blacklisted.".format(domain))
 	elif dbl == "127.255.255.255":
@@ -960,14 +960,14 @@ def check_miab_version(env, output):
 		this_ver = "Unknown"
 
 	if config.get("privacy", True):
-		output.print_warning("You are running version Mail-in-a-Box %s. Mail-in-a-Box version check disabled by privacy setting." % this_ver)
+		output.print_warning("You are running version Mail-in-a-Box {}. Mail-in-a-Box version check disabled by privacy setting.".format(this_ver))
 	else:
 		latest_ver = get_latest_miab_version()
 
 		if this_ver == latest_ver:
-			output.print_ok("Mail-in-a-Box is up to date. You are running version %s." % this_ver)
+			output.print_ok("Mail-in-a-Box is up to date. You are running version {}.".format(this_ver))
 		elif latest_ver is None:
-			output.print_error("Latest Mail-in-a-Box version could not be determined. You are running version %s." % this_ver)
+			output.print_error("Latest Mail-in-a-Box version could not be determined. You are running version {}.".format(this_ver))
 		else:
 			output.print_error(f"A new version of Mail-in-a-Box is available. You are running version {this_ver}. The latest version is {latest_ver}. For upgrade instructions, see https://mailinabox.email. ")
 

@@ -142,7 +142,7 @@ def http_test(url, expected_status, postdata=None, qsargs=None, auth=None):
 	# return response status code
 	if r.status_code != expected_status:
 		r.raise_for_status() # anything but 200
-		raise OSError("Got unexpected status code %s." % r.status_code)
+		raise OSError("Got unexpected status code {}.".format(r.status_code))
 
 # define how to run a test
 
