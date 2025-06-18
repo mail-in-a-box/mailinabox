@@ -63,9 +63,7 @@ def get_ssl_certificates(env):
 		if isinstance(pem, Certificate):
 			certificates.append({ "filename": fn, "cert": pem })
 		# It is a private key
-		elif (isinstance(pem, rsa.RSAPrivateKey)
-			or isinstance(pem, dsa.DSAPrivateKey)
-			or isinstance(pem, ec.EllipticCurvePrivateKey)):
+		elif (isinstance(pem, (rsa.RSAPrivateKey, dsa.DSAPrivateKey, ec.EllipticCurvePrivateKey))):
 			private_keys[pem.public_key().public_numbers()] = { "filename": fn, "key": pem }
 
 
