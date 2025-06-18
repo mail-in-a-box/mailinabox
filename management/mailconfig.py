@@ -148,7 +148,7 @@ def get_mail_users_ex(env, with_archived=False):
 		percent = ''
 		try:
 			dirsize_file = os.path.join(env['STORAGE_ROOT'], 'mail/mailboxes/{}/{}/maildirsize'.format(domain, user))
-			with open(dirsize_file, 'r') as f:
+			with open(dirsize_file, 'r', encoding="utf-8") as f:
 				box_quota = int(f.readline().split('S')[0])
 				for line in f.readlines():
 					(size, count) = line.split(' ')
