@@ -498,7 +498,7 @@ def list_target_files(config):
 		msg = f"Connection to rsync host failed: {reason}"
 		raise ValueError(msg)
 
-	elif target.scheme == "s3":
+	if target.scheme == "s3":
 		import boto3.s3
 		from botocore.exceptions import ClientError
 
