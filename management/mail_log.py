@@ -71,7 +71,7 @@ def scan_files(collector):
 
         if not os.path.exists(fn):
             continue
-        elif fn[-3:] == '.gz':
+        if fn[-3:] == '.gz':
             tmp_file = tempfile.NamedTemporaryFile()
             with gzip.open(fn, 'rb') as f:
                 shutil.copyfileobj(f, tmp_file)
