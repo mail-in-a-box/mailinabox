@@ -1114,7 +1114,7 @@ class ConsoleOutput(FileOutput):
 class BufferedOutput:
 	# Record all of the instance method calls so we can play them back later.
 	def __init__(self, with_lines=None):
-		self.buf = with_lines if with_lines else []
+		self.buf = with_lines or []
 	def __getattr__(self, attr):
 		if attr not in {"add_heading", "print_ok", "print_error", "print_warning", "print_block", "print_line"}:
 			raise AttributeError
