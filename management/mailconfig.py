@@ -150,7 +150,7 @@ def get_mail_users_ex(env, with_archived=False):
 			dirsize_file = os.path.join(env['STORAGE_ROOT'], 'mail/mailboxes/{}/{}/maildirsize'.format(domain, user))
 			with open(dirsize_file, encoding="utf-8") as f:
 				box_quota = int(f.readline().split('S')[0])
-				for line in f.readlines():
+				for line in f:
 					(size, count) = line.split(' ')
 					box_size += int(size)
 
