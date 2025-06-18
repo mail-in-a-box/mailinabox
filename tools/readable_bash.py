@@ -222,7 +222,7 @@ class EditConf(Grammar):
 		EOL
 		)
 	def value(self):
-		conffile = self[1]
+		# conffile = self[1]
 		options = []
 		eq = "="
 		if self[3] and "-s" in self[3].string: eq = " "
