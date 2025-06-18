@@ -151,7 +151,7 @@ def get_mail_users_ex(env, with_archived=False):
 			with open(dirsize_file, encoding="utf-8") as f:
 				box_quota = int(f.readline().split('S')[0])
 				for line in f:
-					(size, count) = line.split(' ')
+					(size, _count) = line.split(' ')
 					box_size += int(size)
 
 			try:
@@ -389,7 +389,7 @@ def hash_password(pw):
 
 
 def get_mail_quota(email, env):
-	conn, c = open_database(env, with_connection=True)
+	_conn, c = open_database(env, with_connection=True)
 	c.execute("SELECT quota FROM users WHERE email=?", (email,))
 	rows = c.fetchall()
 	if len(rows) != 1:
