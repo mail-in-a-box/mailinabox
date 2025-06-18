@@ -135,8 +135,7 @@ def shell(method, cmd_args, env=None, capture_stderr=False, return_bytes=False, 
     if not return_bytes and isinstance(ret, bytes): ret = ret.decode("utf8")
     if not trap:
         return ret
-    else:
-        return code, ret
+    return code, ret
 
 def create_syslog_handler():
     import logging.handlers

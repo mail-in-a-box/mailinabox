@@ -95,8 +95,7 @@ def open_database(env, with_connection=False):
 	conn = sqlite3.connect(env["STORAGE_ROOT"] + "/mail/users.sqlite")
 	if not with_connection:
 		return conn.cursor()
-	else:
-		return conn, conn.cursor()
+	return conn, conn.cursor()
 
 def get_mail_users(env):
 	# Returns a flat, sorted list of all user accounts.
@@ -110,8 +109,7 @@ def sizeof_fmt(num):
 		if abs(num) < 1024.0:
 			if abs(num) > 99:
 				return "{:3.0f}{}".format(num, unit)
-			else:
-				return "{:2.1f}{}".format(num, unit)
+			return "{:2.1f}{}".format(num, unit)
 
 		num /= 1024.0
 
@@ -317,11 +315,11 @@ def add_mail_user(email, pw, privs, quota, env):
 	# validate email
 	if email.strip() == "":
 		return ("No email address provided.", 400)
-	elif not validate_email(email):
+	if not validate_email(email):
 		return ("Invalid email address.", 400)
-	elif not validate_email(email, mode='user'):
+	if not validate_email(email, mode='user'):
 		return ("User account email addresses may only use the lowercase ASCII letters a-z, the digits 0-9, underscore (_), hyphen (-), and period (.).", 400)
-	elif is_dcv_address(email) and len(get_mail_users(env)) > 0:
+	if is_dcv_address(email) and len(get_mail_users(env)) > 0:
 		# Make domain control validation hijacking a little harder to mess up by preventing the usual
 		# addresses used for DCV from being user accounts. Except let it be the first account because
 		# during box setup the user won't know the rules.
@@ -591,9 +589,8 @@ def add_mail_alias(address, forwards_to, permitted_senders, env, update_if_exist
 	except sqlite3.IntegrityError:
 		if not update_if_exists:
 			return ("Alias already exists ({}).".format(address), 400)
-		else:
-			c.execute("UPDATE aliases SET destination = ?, permitted_senders = ? WHERE source = ?", (forwards_to, permitted_senders, address))
-			return_status = "alias updated"
+		c.execute("UPDATE aliases SET destination = ?, permitted_senders = ? WHERE source = ?", (forwards_to, permitted_senders, address))
+		return_status = "alias updated"
 
 	conn.commit()
 

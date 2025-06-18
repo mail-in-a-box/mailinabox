@@ -235,7 +235,7 @@ def get_duplicity_additional_args(env):
 			f"--ssh-options='-i /root/.ssh/id_rsa_miab -p {port}'",
 			f"--rsync-options='-e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p {port} -i /root/.ssh/id_rsa_miab\"'",
 		]
-	elif get_target_type(config) == 's3':
+	if get_target_type(config) == 's3':
 		# See note about hostname in get_duplicity_target_url.
 		# The region name, which is required by some non-AWS endpoints,
 		# is saved inside the username portion of the URL.
@@ -446,7 +446,7 @@ def list_target_files(config):
 	if target.scheme == "file":
 		return [(fn, os.path.getsize(os.path.join(target.path, fn))) for fn in os.listdir(target.path)]
 
-	elif target.scheme == "rsync":
+	if target.scheme == "rsync":
 		rsync_fn_size_re = re.compile(r'.*    ([^ ]*) [^ ]* [^ ]* (.*)')
 		rsync_target = '{host}:{path}'
 
@@ -484,21 +484,20 @@ def list_target_files(config):
 				if match:
 					ret.append( (match.groups()[1], int(match.groups()[0].replace(',',''))) )
 			return ret
+		if 'Permission denied (publickey).' in listing:
+			reason = "Invalid user or check you correctly copied the SSH key."
+		elif 'No such file or directory' in listing:
+			reason = f"Provided path {target_path} is invalid."
+		elif 'Network is unreachable' in listing:
+			reason = f"The IP address {target.hostname} is unreachable."
+		elif 'Could not resolve hostname' in listing:
+			reason = f"The hostname {target.hostname} cannot be resolved."
 		else:
-			if 'Permission denied (publickey).' in listing:
-				reason = "Invalid user or check you correctly copied the SSH key."
-			elif 'No such file or directory' in listing:
-				reason = f"Provided path {target_path} is invalid."
-			elif 'Network is unreachable' in listing:
-				reason = f"The IP address {target.hostname} is unreachable."
-			elif 'Could not resolve hostname' in listing:
-				reason = f"The hostname {target.hostname} cannot be resolved."
-			else:
-				reason = ("Unknown error."
-						"Please check running 'management/backup.py --verify'"
-						"from mailinabox sources to debug the issue.")
-			msg = f"Connection to rsync host failed: {reason}"
-			raise ValueError(msg)
+			reason = ("Unknown error."
+					"Please check running 'management/backup.py --verify'"
+					"from mailinabox sources to debug the issue.")
+		msg = f"Connection to rsync host failed: {reason}"
+		raise ValueError(msg)
 
 	elif target.scheme == "s3":
 		import boto3.s3

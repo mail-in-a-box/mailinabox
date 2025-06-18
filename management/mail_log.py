@@ -355,7 +355,7 @@ def scan_mail_log_line(line, collector):
     if date > END_DATE:
         # Don't process, and halt
         return False
-    elif date < START_DATE:
+    if date < START_DATE:
         # Don't process, but continue
         return True
 
@@ -634,8 +634,7 @@ def print_time_table(labels, data, do_print=True):
     if do_print:
         print("\n".join(lines))
         return None
-    else:
-        return lines
+    return lines
 
 
 def print_user_table(users, data=None, sub_data=None, activity=None, latest=None, earliest=None,
