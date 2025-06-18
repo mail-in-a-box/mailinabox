@@ -678,7 +678,7 @@ def print_user_table(users, data=None, sub_data=None, activity=None, latest=None
                 data_accum[col] += d[row]
 
         try:
-            if None not in [latest, earliest]: # noqa PLR6201
+            if None not in [latest, earliest]: # noqa: PLR6201
                 vert_pos = len(line)
                 e = earliest[row]
                 l = latest[row]
@@ -731,7 +731,7 @@ def print_user_table(users, data=None, sub_data=None, activity=None, latest=None
         else:
             header += l.rjust(max(5, len(l) + 1, col_widths[col]))
 
-    if None not in [latest, earliest]: # noqa PLR6201
+    if None not in [latest, earliest]: # noqa: PLR6201
         header += " │ timespan   "
 
     lines.insert(0, header.rstrip())
@@ -756,7 +756,7 @@ def print_user_table(users, data=None, sub_data=None, activity=None, latest=None
         footer += temp.format(data_accum[row])
 
     try:
-        if None not in [latest, earliest]: # noqa PLR6201
+        if None not in [latest, earliest]: # noqa: PLR6201
             max_l = max(latest)
             min_e = min(earliest)
             timespan = relativedelta(max_l, min_e)
