@@ -178,10 +178,8 @@ def should_force_full(config, env):
 				if dateutil.parser.parse(bak["date"]) + datetime.timedelta(days=config["min_age_in_days"]*10+1) < datetime.datetime.now(dateutil.tz.tzlocal()):
 					return True
 			return False
-	else:
-		# If we got here there are no (full) backups, so make one.
-		# (I love for/else blocks. Here it's just to show off.)
-		return True
+	# If we got here there are no (full) backups, so make one.
+	return True
 
 def get_passphrase(env):
 	# Get the encryption passphrase. secret_key.txt is 2048 random
