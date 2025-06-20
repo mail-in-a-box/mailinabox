@@ -119,9 +119,10 @@ hide_output add-apt-repository --y ppa:ondrej/php
 # Update system packages to make sure we have the latest upstream versions
 # of things from Ubuntu, as well as the directory of packages provide by the
 # PPAs so we can install those packages later.
+# --allow-releaseinfo-change is added because ppa:ondrej/php changed its Label.
 
 echo "Updating system packages..."
-hide_output apt-get update
+hide_output apt-get update --allow-releaseinfo-change
 apt_get_quiet upgrade
 
 # Old kernels pile up over time and take up a lot of disk space, and because of Mail-in-a-Box
