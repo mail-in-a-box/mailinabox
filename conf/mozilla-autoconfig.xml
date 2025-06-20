@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <clientConfig version="1.1">
     <emailProvider id="PRIMARY_HOSTNAME">
-      <domain>PRIMARY_HOSTNAME</domain>
+      <domain purpose="mx">PRIMARY_HOSTNAME</domain>
 
       <displayName>PRIMARY_HOSTNAME (Mail-in-a-Box)</displayName>
       <displayShortName>PRIMARY_HOSTNAME</displayShortName>
@@ -9,6 +9,14 @@
       <incomingServer type="imap">
          <hostname>PRIMARY_HOSTNAME</hostname>
          <port>993</port>
+         <socketType>SSL</socketType>
+         <username>%EMAILADDRESS%</username>
+         <authentication>password-cleartext</authentication>
+      </incomingServer>
+
+      <incomingServer type="pop3">
+         <hostname>PRIMARY_HOSTNAME</hostname>
+         <port>995</port>
          <socketType>SSL</socketType>
          <username>%EMAILADDRESS%</username>
          <authentication>password-cleartext</authentication>
@@ -28,6 +36,20 @@
          <descr lang="en">PRIMARY_HOSTNAME website.</descr>
       </documentation>
     </emailProvider>
+
+    <addressbook type="carddav">
+      <username>%EMAILADDRESS%</username>
+      <authentication system="http">basic</authentication>
+      <!-- Redirects to: https://PRIMARY_HOSTNAME/cloud/remote.php/carddav/ -->
+      <url>https://PRIMARY_HOSTNAME/.well-known/carddav</url>
+    </addressbook>
+
+    <calendar type="caldav">
+      <username>%EMAILADDRESS%</username>
+      <authentication system="http">basic</authentication>
+      <!-- Redirects to: https://PRIMARY_HOSTNAME/cloud/remote.php/caldav/ -->
+      <url>https://PRIMARY_HOSTNAME/.well-known/caldav</url>
+    </calendar>
 
     <webMail>
       <loginPage url="https://PRIMARY_HOSTNAME/mail/" />
