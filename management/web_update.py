@@ -167,7 +167,7 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 				proxy_redirect_off = False
 				frame_options_header_sameorigin = False
 				web_sockets = False
-				m = re.search("#(.*)$", url)
+				m = re.search(r"#(.*)$", url)
 				if m:
 					for flag in m.group(1).split(","):
 						if flag == "pass-http-host":
@@ -178,10 +178,10 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 							frame_options_header_sameorigin = True
 						elif flag == "web-sockets":
 							web_sockets = True
-					url = re.sub("#(.*)$", "", url)
+					url = re.sub(r"#(.*)$", "", url)
 
-				nginx_conf_extra += "\tlocation %s {" % path
-				nginx_conf_extra += "\n\t\tproxy_pass %s;" % url
+				nginx_conf_extra += f"\tlocation {path} {{"
+				nginx_conf_extra += f"\n\t\tproxy_pass {url};"
 				if proxy_redirect_off:
 					nginx_conf_extra += "\n\t\tproxy_redirect off;"
 				if pass_http_host_header:
@@ -198,8 +198,8 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 				nginx_conf_extra += "\n\t\tproxy_set_header X-Real-IP $remote_addr;"
 				nginx_conf_extra += "\n\t}\n"
 			for path, alias in yaml.get("aliases", {}).items():
-				nginx_conf_extra += "\tlocation %s {" % path
-				nginx_conf_extra += "\n\t\talias %s;" % alias
+				nginx_conf_extra += f"\tlocation {path} {{"
+				nginx_conf_extra += f"\n\t\talias {alias};"
 				nginx_conf_extra += "\n\t}\n"
 			for path, url in yaml.get("redirects", {}).items():
 				nginx_conf_extra += f"\trewrite {path} {url} permanent;\n"
@@ -216,7 +216,7 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 	# Add in any user customizations in the includes/ folder.
 	nginx_conf_custom_include = os.path.join(env["STORAGE_ROOT"], "www", safe_domain_name(domain) + ".conf")
 	if os.path.exists(nginx_conf_custom_include):
-		nginx_conf_extra += "\tinclude %s;\n" % (nginx_conf_custom_include)
+		nginx_conf_extra += f"\tinclude {nginx_conf_custom_include};\n"
 	# PUT IT ALL TOGETHER
 
 	# Combine the pieces. Iteratively place each template into the "# ADDITIONAL DIRECTIVES HERE" placeholder
@@ -256,10 +256,9 @@ def get_web_domains_info(env):
 		cert_status, cert_status_details = check_certificate(domain, tls_cert["certificate"], tls_cert["private-key"])
 		if cert_status == "OK":
 			return ("success", "Signed & valid. " + cert_status_details)
-		elif cert_status == "SELF-SIGNED":
+		if cert_status == "SELF-SIGNED":
 			return ("warning", "Self-signed. Get a signed certificate to stop warnings.")
-		else:
-			return ("danger", "Certificate has a problem: " + cert_status)
+		return ("danger", "Certificate has a problem: " + cert_status)
 
 	return [
 		{

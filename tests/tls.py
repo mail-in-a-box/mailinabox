@@ -96,7 +96,7 @@ def sslyze(opts, port, ok_ciphers):
 			# Failed. Just output the error.
 			out = re.sub("[\\w\\W]*CHECKING HOST\\(S\\) AVAILABILITY\n\\s*-+\n", "", out) # chop off header that shows the host we queried
 		out = re.sub("[\\w\\W]*SCAN RESULTS FOR.*\n\\s*-+\n", "", out) # chop off header that shows the host we queried
-		out = re.sub("SCAN COMPLETED IN .*", "", out)
+		out = re.sub(r"SCAN COMPLETED IN .*", "", out)
 		out = out.rstrip(" \n-") + "\n"
 
 		# Print.

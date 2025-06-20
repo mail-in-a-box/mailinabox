@@ -21,8 +21,7 @@ def load_env_vars_from_file(fn):
 
 def save_environment(env):
     with open("/etc/mailinabox.conf", "w", encoding="utf-8") as f:
-        for k, v in env.items():
-            f.write(f"{k}={v}\n")
+        f.writelines(f"{k}={v}\n" for k, v in env.items())
 
 # THE SETTINGS FILE AT STORAGE_ROOT/settings.yaml.
 
@@ -135,8 +134,7 @@ def shell(method, cmd_args, env=None, capture_stderr=False, return_bytes=False, 
     if not return_bytes and isinstance(ret, bytes): ret = ret.decode("utf8")
     if not trap:
         return ret
-    else:
-        return code, ret
+    return code, ret
 
 def create_syslog_handler():
     import logging.handlers

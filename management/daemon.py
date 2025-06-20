@@ -93,12 +93,11 @@ def authorized_personnel_only(viewfunc):
 		if request.headers.get('Accept') in {None, "", "*/*"}:
 			# Return plain text output.
 			return Response(error+"\n", status=status, mimetype='text/plain', headers=headers)
-		else:
-			# Return JSON output.
-			return Response(json.dumps({
-				"status": "error",
-				"reason": error,
-				})+"\n", status=status, mimetype='application/json', headers=headers)
+		# Return JSON output.
+		return Response(json.dumps({
+			"status": "error",
+			"reason": error,
+			})+"\n", status=status, mimetype='application/json', headers=headers)
 
 	return newview
 
@@ -148,13 +147,12 @@ def login():
 				"status": "missing-totp-token",
 				"reason": str(e),
 			})
-		else:
-			# Log the failed login
-			log_failed_login(request)
-			return json_response({
-				"status": "invalid",
-				"reason": str(e),
-			})
+		# Log the failed login
+		log_failed_login(request)
+		return json_response({
+			"status": "invalid",
+			"reason": str(e),
+		})
 
 	# Return a new session for the user.
 	resp = {
@@ -164,7 +162,7 @@ def login():
 		"api_key": auth_service.create_session_key(email, env, type='login'),
 	}
 
-	app.logger.info(f"New login session created for {email}")
+	app.logger.info("New login session created for %s", email)
 
 	# Return.
 	return json_response(resp)
@@ -173,7 +171,7 @@ def login():
 def logout():
 	try:
 		email, _ = auth_service.authenticate(request, env, logout=True)
-		app.logger.info(f"{email} logged out")
+		app.logger.info("%s logged out", email)
 	except ValueError:
 		pass
 	finally:
@@ -186,8 +184,7 @@ def logout():
 def mail_users():
 	if request.args.get("format", "") == "json":
 		return json_response(get_mail_users_ex(env, with_archived=True))
-	else:
-		return "".join(x+"\n" for x in get_mail_users(env))
+	return "".join(x+"\n" for x in get_mail_users(env))
 
 @app.route('/mail/users/add', methods=['POST'])
 @authorized_personnel_only
@@ -257,8 +254,7 @@ def mail_user_privs_remove():
 def mail_aliases():
 	if request.args.get("format", "") == "json":
 		return json_response(get_mail_aliases_ex(env))
-	else:
-		return "".join(address+"\t"+receivers+"\t"+(senders or "")+"\n" for address, receivers, senders, auto in get_mail_aliases(env))
+	return "".join(address+"\t"+receivers+"\t"+(senders or "")+"\n" for address, receivers, senders, auto in get_mail_aliases(env))
 
 @app.route('/mail/aliases/add', methods=['POST'])
 @authorized_personnel_only
@@ -378,7 +374,7 @@ def dns_set_record(qname, rtype="A"):
 			# Get the existing records matching the qname and rtype.
 			return dns_get_records(qname, rtype)
 
-		elif request.method in {"POST", "PUT"}:
+		if request.method in {"POST", "PUT"}:
 			# There is a default value for A/AAAA records.
 			if rtype in {"A", "AAAA"} and value == "":
 				value = request.environ.get("HTTP_X_FORWARDED_FOR") # normally REMOTE_ADDR but we're behind nginx as a reverse proxy
@@ -536,8 +532,8 @@ def totp_post_disable():
 		return (str(e), 400)
 	if result: # success
 		return "OK"
-	else: # error
-		return ("Invalid user or MFA id.", 400)
+	# error
+	return ("Invalid user or MFA id.", 400)
 
 # WEB
 
@@ -621,8 +617,7 @@ def needs_reboot():
 	from status_checks import is_reboot_needed_due_to_package_installation
 	if is_reboot_needed_due_to_package_installation():
 		return json_response(True)
-	else:
-		return json_response(False)
+	return json_response(False)
 
 @app.route('/system/reboot', methods=["POST"])
 @authorized_personnel_only
@@ -631,8 +626,7 @@ def do_reboot():
 	from status_checks import is_reboot_needed_due_to_package_installation
 	if is_reboot_needed_due_to_package_installation():
 		return utils.shell("check_output", ["/sbin/shutdown", "-r", "now"], capture_stderr=True)
-	else:
-		return "No reboot is required, so it is not allowed."
+	return "No reboot is required, so it is not allowed."
 
 
 @app.route('/system/backup/status')
@@ -694,8 +688,7 @@ def check_request_cookie_for_admin_access():
 	if not session: return False
 	privs = get_mail_user_privileges(session["email"], env)
 	if not isinstance(privs, list): return False
-	if "admin" not in privs: return False
-	return True
+	return "admin" in privs
 
 def authorized_personnel_only_via_cookie(f):
 	@wraps(f)
@@ -743,7 +736,7 @@ def munin_cgi(filename):
 
 	query_str = request.query_string.decode("utf-8", 'ignore')
 
-	env = {'PATH_INFO': '/%s/' % filename, 'REQUEST_METHOD': 'GET', 'QUERY_STRING': query_str}
+	env = {'PATH_INFO': f'/{filename}/', 'REQUEST_METHOD': 'GET', 'QUERY_STRING': query_str}
 	code, binout = utils.shell('check_output',
 							   COMMAND.split(" ", 5),
 							   # Using a maxsplit of 5 keeps the last arguments together
@@ -777,7 +770,7 @@ def log_failed_login(request):
 
 	# We need to add a timestamp to the log message, otherwise /dev/log will eat the "duplicate"
 	# message.
-	app.logger.warning( f"Mail-in-a-Box Management Daemon: Failed login attempt from ip {ip} - timestamp {time.time()}")
+	app.logger.warning("Mail-in-a-Box Management Daemon: Failed login attempt from ip %s - timestamp %s", ip, time.time())
 
 
 # APP

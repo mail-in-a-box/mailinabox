@@ -14,6 +14,7 @@ import rtyaml
 from exclusiveprocess import Lock
 
 from utils import load_environment, shell, wait_for_service
+import operator
 
 def backup_status(env):
 	# If backups are disabled, return no status.
@@ -91,7 +92,7 @@ def backup_status(env):
 
 	# Ensure the rows are sorted reverse chronologically.
 	# This is relied on by should_force_full() and the next step.
-	backups = sorted(backups.values(), key = lambda b : b["date"], reverse=True)
+	backups = sorted(backups.values(), key = operator.itemgetter("date"), reverse=True)
 
 	# Get the average size of incremental backups, the size of the
 	# most recent full backup, and the date of the most recent
@@ -177,10 +178,8 @@ def should_force_full(config, env):
 				if dateutil.parser.parse(bak["date"]) + datetime.timedelta(days=config["min_age_in_days"]*10+1) < datetime.datetime.now(dateutil.tz.tzlocal()):
 					return True
 			return False
-	else:
-		# If we got here there are no (full) backups, so make one.
-		# (I love for/else blocks. Here it's just to show off.)
-		return True
+	# If we got here there are no (full) backups, so make one.
+	return True
 
 def get_passphrase(env):
 	# Get the encryption passphrase. secret_key.txt is 2048 random
@@ -236,7 +235,7 @@ def get_duplicity_additional_args(env):
 			f"--ssh-options='-i /root/.ssh/id_rsa_miab -p {port}'",
 			f"--rsync-options='-e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oBatchMode=yes -p {port} -i /root/.ssh/id_rsa_miab\"'",
 		]
-	elif get_target_type(config) == 's3':
+	if get_target_type(config) == 's3':
 		# See note about hostname in get_duplicity_target_url.
 		# The region name, which is required by some non-AWS endpoints,
 		# is saved inside the username portion of the URL.
@@ -447,7 +446,7 @@ def list_target_files(config):
 	if target.scheme == "file":
 		return [(fn, os.path.getsize(os.path.join(target.path, fn))) for fn in os.listdir(target.path)]
 
-	elif target.scheme == "rsync":
+	if target.scheme == "rsync":
 		rsync_fn_size_re = re.compile(r'.*    ([^ ]*) [^ ]* [^ ]* (.*)')
 		rsync_target = '{host}:{path}'
 
@@ -463,9 +462,8 @@ def list_target_files(config):
 
 		target_path = target.path
 		if not target_path.endswith('/'):
-			target_path = target_path + '/'
-		if target_path.startswith('/'):
-			target_path = target_path[1:]
+			target_path += '/'
+		target_path = target_path.removeprefix('/')
 
 		rsync_command = [ 'rsync',
 					'-e',
@@ -485,23 +483,22 @@ def list_target_files(config):
 				if match:
 					ret.append( (match.groups()[1], int(match.groups()[0].replace(',',''))) )
 			return ret
+		if 'Permission denied (publickey).' in listing:
+			reason = "Invalid user or check you correctly copied the SSH key."
+		elif 'No such file or directory' in listing:
+			reason = f"Provided path {target_path} is invalid."
+		elif 'Network is unreachable' in listing:
+			reason = f"The IP address {target.hostname} is unreachable."
+		elif 'Could not resolve hostname' in listing:
+			reason = f"The hostname {target.hostname} cannot be resolved."
 		else:
-			if 'Permission denied (publickey).' in listing:
-				reason = "Invalid user or check you correctly copied the SSH key."
-			elif 'No such file or directory' in listing:
-				reason = f"Provided path {target_path} is invalid."
-			elif 'Network is unreachable' in listing:
-				reason = f"The IP address {target.hostname} is unreachable."
-			elif 'Could not resolve hostname' in listing:
-				reason = f"The hostname {target.hostname} cannot be resolved."
-			else:
-				reason = ("Unknown error."
-						"Please check running 'management/backup.py --verify'"
-						"from mailinabox sources to debug the issue.")
-			msg = f"Connection to rsync host failed: {reason}"
-			raise ValueError(msg)
+			reason = ("Unknown error."
+					"Please check running 'management/backup.py --verify'"
+					"from mailinabox sources to debug the issue.")
+		msg = f"Connection to rsync host failed: {reason}"
+		raise ValueError(msg)
 
-	elif target.scheme == "s3":
+	if target.scheme == "s3":
 		import boto3.s3
 		from botocore.exceptions import ClientError
 
@@ -531,7 +528,7 @@ def list_target_files(config):
 		except ClientError as e:
 			raise ValueError(e)
 		return backup_list
-	elif target.scheme == 'b2':
+	if target.scheme == 'b2':
 		from b2sdk.v1 import InMemoryAccountInfo, B2Api
 		from b2sdk.v1.exception import NonExistentBucket
 		info = InMemoryAccountInfo()
@@ -550,8 +547,7 @@ def list_target_files(config):
 			raise ValueError(msg)
 		return [(key.file_name, key.size) for key, _ in bucket.ls()]
 
-	else:
-		raise ValueError(config["target"])
+	raise ValueError(config["target"])
 
 
 def backup_set_custom(env, target, target_user, target_pass, min_age):
@@ -605,8 +601,7 @@ def get_backup_config(env, for_save=False, for_ui=False):
 	# authentication details. The user will have to re-enter it.
 	if for_ui:
 		for field in ("target_user", "target_pass"):
-			if field in config:
-				del config[field]
+			config.pop(field, None)
 
 	# helper fields for the admin
 	config["file_target_directory"] = os.path.join(backup_root, 'encrypted')
