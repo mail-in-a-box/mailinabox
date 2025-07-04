@@ -141,6 +141,35 @@ tools/editconf.py /etc/spamassassin/local.cf -s \
 mkdir -p "$STORAGE_ROOT/mail/spamassassin"
 chown -R spampd:spampd "$STORAGE_ROOT/mail/spamassassin"
 
+## Configure usage of Spamhaus DQS Key (see https://github.com/spamhaus/spamassassin-dqs?tab=readme-ov-file#instructions-for-spamassassin-341-to-346)
+
+if [ -z "${SPAMHAUS_DQS_KEY:-}" ]; then
+        # Using public spamhaus servers, cleanup possible dqs configuration
+        rm -f /etc/spamassassin/SH.pm
+        rm -f /etc/spamassassin/sh.cf
+        rm -f /etc/spamassassin/sh.pre
+        rm -f /etc/spamassassin/sh_scores.cf
+else
+	# Using Spamhaus DQS servers
+	
+        # Get the source files
+        wget_verify https://raw.githubusercontent.com/spamhaus/spamassassin-dqs/f1baa2597443bc99b2777050383717de50eca2ce/3.4.1%2B/SH.pm        8e58b56e8a34899b50ba1a7e3d047ad1bef2e69c /tmp/SH.pm
+        wget_verify https://raw.githubusercontent.com/spamhaus/spamassassin-dqs/f1baa2597443bc99b2777050383717de50eca2ce/3.4.1%2B/sh.cf        bdee2576b2400e3b284f5ab4b9c99faa39ad49c7 /tmp/sh.cf
+        wget_verify https://raw.githubusercontent.com/spamhaus/spamassassin-dqs/f1baa2597443bc99b2777050383717de50eca2ce/3.4.1%2B/sh.pre       c73b2d9b5dae37864acf5479966f248dc6be4ee9 /tmp/sh.pre
+        wget_verify https://raw.githubusercontent.com/spamhaus/spamassassin-dqs/f1baa2597443bc99b2777050383717de50eca2ce/3.4.1%2B/sh_scores.cf 0e7360514245760754ee92172c275545a77a5860 /tmp/sh_scores.cf
+
+        # Insert the DQS Key
+        sed -i -e 's/your_DQS_key/'$SPAMHAUS_DQS_KEY'/g' /tmp/sh.cf
+
+        # Modify the configuration directory
+        sed -i -e 's/<config_directory>/\/etc\/spamassassin/g' /tmp/sh.pre
+
+        mv -f /tmp/SH.pm /etc/spamassassin/
+        mv -f /tmp/sh.cf /etc/spamassassin/
+        mv -f /tmp/sh.pre /etc/spamassassin/
+        mv -f /tmp/sh_scores.cf /etc/spamassassin/
+fi
+
 # To mark mail as spam or ham, just drag it in or out of the Spam folder. We'll
 # use the Dovecot antispam plugin to detect the message move operation and execute
 # a shell script that invokes learning.
