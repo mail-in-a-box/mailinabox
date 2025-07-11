@@ -1,6 +1,35 @@
 CHANGELOG
 =========
 
+Version 73 (July 11, 2025)
+--------------------------
+
+Mail:
+
+* Quotas for mail storage can now be set per user in the control panel.
+* Autoconfig now includes POP3 and CardDAV/CalDAV.
+
+Backups:
+
+* Fix for S3-compatible backups (other than AWS S3 itself).
+
+Control Panel:
+
+* Backup status is added to the status checks.
+* S3 backup credentials can now be stored in environment variables.
+* Fix for when an AAAA record is set up the box's own IP address.
+* Fix for when logged out of the control panel.
+* Fix link to Z-Push client compatibility list.
+
+Setup:
+
+* The Ubuntu version check is updated.
+
+Other:
+
+* Code cleanup using the Ruff Python linter.
+* Other minor changes.
+
 Version 72 (June 3, 2025)
 -------------------------
 
