@@ -31,7 +31,7 @@ if grep -q "ExternalIgnoreList" /etc/opendkim.conf; then
 else
 	# Add various configuration options to the end of `opendkim.conf`.
 	cat >> /etc/opendkim.conf << EOF;
-Canonicalization		relaxed/simple
+Canonicalization		relaxed/relaxed
 MinimumKeyBits          1024
 ExternalIgnoreList      refile:/etc/opendkim/TrustedHosts
 InternalHosts           refile:/etc/opendkim/TrustedHosts
