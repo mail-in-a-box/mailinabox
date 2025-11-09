@@ -266,26 +266,30 @@ def check_free_memory(rounded_values, env, output):
 def check_backup(rounded_values, env, output):
 	# Check backups
 	backup_config = get_backup_config(env, for_ui=True)
-	
+
 	# Is the backup enabled?
 	if backup_config.get("target", "off") == "off":
 		output.print_warning("Backups are disabled. It is recommended to enable a backup for your box.")
 		return
 	else:
 		output.print_ok("Backups are enabled")
-	
+
 	# Get the age of the most recent backup
-	backup_stat = backup_status(env)
-	
+	try:
+		backup_stat = backup_status(env)
+	except Exception as e:
+		output.print_error(f"Failed to obtain backup status: {e}")
+		return
+
 	backups = backup_stat.get("backups", {})
 	if backups and len(backups) > 0:
 		most_recent = backups[0]["date"]
-		
+
 		# Calculate time between most recent backup and current time
 		now = datetime.datetime.now(dateutil.tz.tzlocal())
 		bk_date = dateutil.parser.parse(most_recent).astimezone(dateutil.tz.tzlocal())
 		bk_age = dateutil.relativedelta.relativedelta(now, bk_date)
-		
+
 		if bk_age.days > 7:
 			output.print_error("Backup is more than a week old")
 	else:
@@ -584,11 +588,11 @@ def check_dns_zone(domain, env, output, dns_zonefiles):
 				continue
 			# Choose the first IP if nameserver returns multiple
 			ns_ip = ns_ips.split('; ')[0]
-			
+
 			# No need to check if we could not obtain the SOA record
 			if SOARecord == '[timeout]':
 				checkSOA = False
-			else:			
+			else:
 				checkSOA = True
 
 			# Now query it to see what it says about this domain.
@@ -801,7 +805,7 @@ def check_mail_domain(domain, env, output):
 	# Stop if the domain is listed in the Spamhaus Domain Block List.
 	# The user might have chosen a domain that was previously in use by a spammer
 	# and will not be able to reliably send mail.
-	
+
 	# See https://www.spamhaus.org/news/article/807/using-our-public-mirrors-check-your-return-codes-now. for
 	# information on spamhaus return codes
 	dbl = query_dns(domain+'.dbl.spamhaus.org', "A", nxdomain=None)
