@@ -278,7 +278,7 @@ def check_backup(rounded_values, env, output):
 	try:
 		backup_stat = backup_status(env)
 	except Exception as e:
-		output.print_error(f"Failed to obtain backup status: {e}")
+		output.print_error(f"Failed to obtain backup status:\n{e}")
 		return
 
 	backups = backup_stat.get("backups", {})
