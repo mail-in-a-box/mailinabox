@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <clientConfig version="1.1">
     <emailProvider id="PRIMARY_HOSTNAME">
+      <domain>PRIMARY_HOSTNAME</domain>
       <domain purpose="mx">PRIMARY_HOSTNAME</domain>
 
       <displayName>PRIMARY_HOSTNAME (Mail-in-a-Box)</displayName>
