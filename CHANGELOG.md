@@ -1,6 +1,15 @@
 CHANGELOG
 =========
 
+Version 74 (January 4, 2026)
+----------------------------
+
+* Updated Roundcube to 1.6.12, fixing a security vulnerability.
+* Updated zpush to version 2.7.6.
+* Fixed fail2ban filter for Nextcloud.
+* Fixed Thunderbird auto configuration.
+* Updated links in the control panel.
+
 Version 73 (July 11, 2025)
 --------------------------
 
