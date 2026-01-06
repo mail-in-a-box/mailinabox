@@ -128,34 +128,34 @@ sed -i "s/PUBLIC_IP/$PUBLIC_IP/" /etc/postfix/outgoing_mail_header_filters
 # encryption. On ports 465 and 587 it is mandatory (see above). Shared and non-shared settings are
 # given here. Shared settings include:
 # * Require TLS before a user is allowed to authenticate.
-# * Set the path to the server TLS certificate and 2048-bit DH parameters for old DH ciphers.
+# * Set the path to the server TLS certificate and 4096-bit DH parameters for old DH ciphers.
 # For port 25 only:
 # * Disable extremely old versions of TLS and extremely unsafe ciphers, but some mail servers out in
 #   the world are very far behind and if we disable too much, they may not be able to use TLS and
-#   won't fall back to cleartext. So we don't disable too much. smtpd_tls_exclude_ciphers applies to
-#   both port 25 and port 587, but because we override the cipher list for both, it probably isn't used.
-#   Use Mozilla's "Old" recommendations at https://ssl-config.mozilla.org/#server=postfix&server-version=3.3.0&config=old&openssl-version=1.1.1
+#   won't fall back to cleartext. So we don't disable too much.
+#   Use Mozilla's "Old" recommendations at https://ssl-config.mozilla.org/#server=postfix&version=3.6.4&config=old&openssl=3.0.2&guideline=5.7
 tools/editconf.py /etc/postfix/main.cf \
 	smtpd_tls_security_level=may\
 	smtpd_tls_auth_only=yes \
 	smtpd_tls_cert_file="$STORAGE_ROOT/ssl/ssl_certificate.pem" \
 	smtpd_tls_key_file="$STORAGE_ROOT/ssl/ssl_private_key.pem" \
-	smtpd_tls_dh1024_param_file="$STORAGE_ROOT/ssl/dh2048.pem" \
-	smtpd_tls_protocols="!SSLv2,!SSLv3" \
+	smtpd_tls_dh1024_param_file="$STORAGE_ROOT/ssl/dh4096.pem" \
+	smtpd_tls_protocols=">=TLSv1" \
 	smtpd_tls_ciphers=medium \
-	tls_medium_cipherlist=ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES256-SHA256:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:DES-CBC3-SHA \
-	smtpd_tls_exclude_ciphers=aNULL,RC4 \
-	tls_preempt_cipherlist=no \
-	smtpd_tls_received_header=yes
+	tls_medium_cipherlist="@SECLEVEL=0:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES256-SHA256:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:DES-CBC3-SHA" \
+	smtpd_tls_exclude_ciphers="MD5, DES, ADH, RC4, PSD, SRP, 3DES, eNULL, aNULL" \
+	tls_preempt_cipherlist=yes \
+	smtpd_tls_received_header=yes \
+	smtpd_tls_loglevel=1
 
 # For ports 465/587 (via the 'mandatory' settings):
-# * Use Mozilla's "Intermediate" TLS recommendations from https://ssl-config.mozilla.org/#server=postfix&server-version=3.3.0&config=intermediate&openssl-version=1.1.1
+# * Use Mozilla's "Intermediate" TLS recommendations from https://ssl-config.mozilla.org/#server=postfix&version=3.6.4&config=intermediate&openssl=3.0.2&guideline=5.7
 #   using and overriding the "high" cipher list so we don't conflict with the more permissive settings for port 25.
 tools/editconf.py /etc/postfix/main.cf \
-	smtpd_tls_mandatory_protocols="!SSLv2,!SSLv3,!TLSv1,!TLSv1.1" \
+	smtpd_tls_mandatory_protocols=">=TLSv1.2" \
 	smtpd_tls_mandatory_ciphers=high \
 	tls_high_cipherlist=ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384 \
-	smtpd_tls_mandatory_exclude_ciphers=aNULL,DES,3DES,MD5,DES+MD5,RC4
+	smtpd_tls_mandatory_exclude_ciphers="kRSA"
 
 # Prevent non-authenticated users from sending mail that requires being
 # relayed elsewhere. We don't want to be an "open relay". On outbound
@@ -177,7 +177,7 @@ tools/editconf.py /etc/postfix/main.cf \
 # accept whatever SSL certificate the remote end provides. Opportunistic TLS
 # protects against passive easvesdropping (but not man-in-the-middle attacks).
 # Since we'd rather have poor encryption than none at all, we use Mozilla's
-# "Old" recommendations at https://ssl-config.mozilla.org/#server=postfix&server-version=3.3.0&config=old&openssl-version=1.1.1
+# "Old" recommendations at https://ssl-config.mozilla.org/#server=postfix&version=3.6.4&config=old&openssl=3.0.2&guideline=5.7
 # for opportunistic encryption but "Intermediate" recommendations when DANE
 # is used (see next and above). The cipher lists are set above.
 
@@ -193,15 +193,17 @@ tools/editconf.py /etc/postfix/main.cf \
 # even if we don't know if it's to the right party, than to not encrypt at all. Instead we'll
 # now see notices about trusted certs. The CA file is provided by the package `ca-certificates`.
 tools/editconf.py /etc/postfix/main.cf \
-	smtp_tls_protocols=\!SSLv2,\!SSLv3 \
+	smtp_tls_protocols=">=TLSv1" \
 	smtp_tls_ciphers=medium \
-	smtp_tls_exclude_ciphers=aNULL,RC4 \
+	smtp_tls_exclude_ciphers="MD5, DES, ADH, RC4, PSD, SRP, 3DES, eNULL, aNULL" \
 	smtp_tls_security_level=dane \
 	smtp_dns_support_level=dnssec \
-	smtp_tls_mandatory_protocols="!SSLv2,!SSLv3,!TLSv1,!TLSv1.1" \
+	smtp_tls_mandatory_protocols=">=TLSv1.2" \
 	smtp_tls_mandatory_ciphers=high \
+	smtp_tls_mandatory_exclude_ciphers="kRSA" \
 	smtp_tls_CAfile=/etc/ssl/certs/ca-certificates.crt \
-	smtp_tls_loglevel=2
+	smtp_tls_loglevel=1 \
+	smtp_tls_note_starttls_offer=yes
 
 # ### Incoming Mail
 
