@@ -505,12 +505,10 @@ def list_target_files(config):
 		from botocore.exceptions import ClientError
 
 		# separate bucket from path in target
-		bucket = target.path[1:].split('/')[0]
-		path = '/'.join(target.path[1:].split('/')[1:]) + '/'
-
-		# If no prefix is specified, set the path to '', otherwise boto won't list the files
-		if path == '/':
-			path = ''
+		bucket_path = target.path.lstrip('/')
+		bucket, _, path = bucket_path.partition('/')
+		if path and not path.endswith('/'):
+			path += '/'
 
 		if bucket == "":
 			msg = "Enter an S3 bucket name."
@@ -525,10 +523,11 @@ def list_target_files(config):
 					endpoint_url=f'https://{target.hostname}', \
 					aws_access_key_id=config['target_user'], \
 					aws_secret_access_key=config['target_pass'])
-			bucket_objects = s3.list_objects_v2(Bucket=bucket, Prefix=path)['Contents']
+			response = s3.list_objects_v2(Bucket=bucket, Prefix=path)
+			bucket_objects = response.get('Contents', [])
 			backup_list = [(key['Key'][len(path):], key['Size']) for key in bucket_objects]
 		except ClientError as e:
-			raise ValueError(e)
+			raise ValueError(msg)
 		return backup_list
 	if target.scheme == 'b2':
 		from b2sdk.v1 import InMemoryAccountInfo, B2Api
