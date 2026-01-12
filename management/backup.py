@@ -527,7 +527,7 @@ def list_target_files(config):
 			bucket_objects = response.get('Contents', [])
 			backup_list = [(key['Key'][len(path):], key['Size']) for key in bucket_objects]
 		except ClientError as e:
-			raise ValueError(msg)
+			raise ValueError(e)
 		return backup_list
 	if target.scheme == 'b2':
 		from b2sdk.v1 import InMemoryAccountInfo, B2Api
