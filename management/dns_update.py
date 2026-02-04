@@ -10,7 +10,7 @@ import rtyaml
 import dns.resolver
 
 from utils import shell, load_env_vars_from_file, safe_domain_name, sort_domains, get_ssh_port
-from ssl_certificates import get_ssl_certificates, check_certificate
+from ssl_certificates import get_ssl_certificates, check_certificate, get_domain_ssl_files
 
 # From https://stackoverflow.com/questions/3026957/how-to-validate-a-domain-name-using-regex-php/16491074#16491074
 # This regular expression matches domain names according to RFCs, it also accepts fqdn with an leading dot,
@@ -376,7 +376,14 @@ def build_zone(domain, domain_properties, additional_records, env, is_zone=True)
 	return records
 
 def is_domain_cert_signed_and_valid(domain, env):
-	cert = get_ssl_certificates(env).get(domain)
+	# Get all certificates known to the system.
+	all_certs = get_ssl_certificates(env)
+
+	# Use the SMART, wildcard-aware function to find the correct certificate for this domain.
+	# We set allow_missing_cert=True so it returns None instead of the default cert if no
+	# match is found.
+	cert = get_domain_ssl_files(domain, all_certs, env, allow_missing_cert=True, use_main_cert=False)
+
 	if not cert: return False # no certificate provisioned
 	cert_status = check_certificate(domain, cert['certificate'], cert['private-key'])
 	return cert_status[0] == 'OK'
