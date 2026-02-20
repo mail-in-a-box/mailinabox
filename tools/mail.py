@@ -1,3 +1,3 @@
 #!/bin/bash
 # This script has moved.
-management/cli.py "$@"
+../management/cli.py "$@"
