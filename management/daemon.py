@@ -594,6 +594,11 @@ def system_status():
 		pool.join()
 	return json_response(output.items)
 
+@app.route('/system/uptime')
+@authorized_personnel_only
+def show_uptime():
+	return utils.shell("check_output", ["/usr/bin/uptime", "--pretty"])
+
 @app.route('/system/updates')
 @authorized_personnel_only
 def show_updates():
