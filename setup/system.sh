@@ -351,6 +351,33 @@ if ! grep -q "max-recursion-queries " /etc/bind/named.conf.options; then
 	sed -i "s/^}/\n\tmax-recursion-queries 100;\n}/" /etc/bind/named.conf.options
 fi
 
+# If bind9 is configured with forwarders, Spamhaus queries will return false
+# positives (127.255.255.254) because Spamhaus blocks public/shared resolvers.
+# Add a zone exception so bind9 resolves spamhaus.org directly (recursive)
+# instead of forwarding to the configured forwarders.
+if grep -q "forwarders" /etc/bind/named.conf.options; then
+	SPAMHAUS_ZONE_CONF="/etc/bind/named.conf.local"
+	if ! grep -q "spamhaus.org" "$SPAMHAUS_ZONE_CONF" 2>/dev/null; then
+		cat >> "$SPAMHAUS_ZONE_CONF" << 'SPAMEOF'
+
+# Mail-in-a-Box: Resolve spamhaus.org directly (bypass forwarders) to avoid
+# false positives from shared/public DNS resolvers.
+zone "spamhaus.org" {
+    type forward;
+    forward only;
+    forwarders { };
+};
+
+zone "dbl.spamhaus.org" {
+    type forward;
+    forward only;
+    forwarders { };
+};
+SPAMEOF
+		echo "Added Spamhaus DNS exception zones (bypass forwarders)."
+	fi
+fi
+
 # First we'll disable systemd-resolved's management of resolv.conf and its stub server.
 # Breaking the symlink to /run/systemd/resolve/stub-resolv.conf means
 # systemd-resolved will read it for DNS servers to use. Put in 127.0.0.1,
