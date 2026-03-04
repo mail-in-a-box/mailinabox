@@ -12,6 +12,18 @@
 source /etc/mailinabox.conf # get global vars
 source setup/functions.sh # load our functions
 
+# Check which spam filter is configured. Default is spamassassin (backward compatible).
+# Read directly from settings.yaml to avoid venv/rtyaml dependency at this stage.
+SPAM_FILTER=$(cat "$STORAGE_ROOT/settings.yaml" 2>/dev/null | grep "^spam_filter:" | awk '{print $2}')
+SPAM_FILTER=${SPAM_FILTER:-spamassassin}
+
+if [ "$SPAM_FILTER" = "rspamd" ]; then
+	source setup/rspamd.sh
+	return 0 2>/dev/null || exit 0
+fi
+
+# === SpamAssassin setup (default) ===
+
 # Install packages and basic configuration
 # ----------------------------------------
 
@@ -190,6 +202,32 @@ chmod 770 "$STORAGE_ROOT/mail/spamassassin"
 # Initial training?
 # sa-learn --ham storage/mail/mailboxes/*/*/cur/
 # sa-learn --spam storage/mail/mailboxes/*/*/.Spam/cur/
+
+# Generate whitelist/blacklist rules from settings.yaml.
+# This allows admins to manage whitelists via the API (/admin/system/spam-whitelist).
+# Use MiaB venv python (has rtyaml for YAML parsing).
+MIAB_PYTHON="/usr/local/lib/mailinabox/env/bin/python3"
+if [ ! -x "$MIAB_PYTHON" ]; then
+	MIAB_PYTHON="python3"
+fi
+$MIAB_PYTHON << PYEOF
+import sys, os
+sys.path.insert(0, os.path.join('$PWD', 'management'))
+from utils import load_settings, load_environment
+env = load_environment()
+settings = load_settings(env)
+wl = settings.get('spam_whitelist', [])
+bl = settings.get('spam_blacklist', [])
+lines = []
+lines.append("# Auto-generated from settings.yaml by Mail-in-a-Box setup")
+lines.append("# Do not edit manually - use the admin API instead")
+for addr in wl:
+    lines.append("whitelist_from %s" % addr)
+for addr in bl:
+    lines.append("blacklist_from %s" % addr)
+with open('/etc/spamassassin/miab_whitelist.cf', 'w') as f:
+    f.write('\n'.join(lines) + '\n')
+PYEOF
 
 # Kick services.
 restart_service spampd

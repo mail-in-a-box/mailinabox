@@ -1,0 +1,133 @@
+<style>
+#spam-settings .form-group { margin-bottom: 15px; }
+#spam-settings textarea { font-family: monospace; font-size: 13px; }
+#spam-settings .saved-msg { display: none; color: #3c763d; margin-left: 10px; }
+</style>
+
+<h2>Spam Filter</h2>
+
+<p>Configure which spam filter is used and manage whitelist/blacklist rules.</p>
+
+<div id="spam-settings">
+
+<h3>Spam Filter Engine</h3>
+
+<form class="form-horizontal" role="form" onsubmit="set_spam_filter(); return false;">
+  <div class="form-group">
+    <label for="spam-filter-select" class="col-sm-2 control-label">Engine:</label>
+    <div class="col-sm-3">
+      <select id="spam-filter-select" class="form-control"></select>
+    </div>
+    <div class="col-sm-4">
+      <button type="submit" class="btn btn-primary">Save</button>
+      <span id="spam-filter-saved-msg" class="saved-msg"><span class="fa fa-check"></span> Saved. Run <code>sudo mailinabox</code> to apply.</span>
+    </div>
+  </div>
+</form>
+
+<div id="rspamd-ui-link" style="display: none;">
+  <p><a href="#" onclick="open_rspamd_ui(); return false;" class="btn btn-default"><span class="fa fa-bar-chart"></span> Open rspamd Web UI</a>
+  <span class="text-muted small" style="margin-left: 8px;">Opens in a new tab (like Munin).</span></p>
+</div>
+
+<h3>Whitelist / Blacklist</h3>
+
+<p class="small text-muted">Enter domains or email addresses, one per line. Whitelisted senders skip spam filtering. Blacklisted senders are always marked as spam.</p>
+
+<form class="form-horizontal" role="form" onsubmit="set_spam_lists(); return false;">
+  <div class="form-group">
+    <label for="spam-whitelist" class="col-sm-2 control-label">Whitelist:</label>
+    <div class="col-sm-6">
+      <textarea id="spam-whitelist" class="form-control" rows="5" placeholder="example.com&#10;trusted@sender.org"></textarea>
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="spam-blacklist" class="col-sm-2 control-label">Blacklist:</label>
+    <div class="col-sm-6">
+      <textarea id="spam-blacklist" class="form-control" rows="5" placeholder="spammer.com&#10;junk@example.net"></textarea>
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="col-sm-offset-2 col-sm-6">
+      <button type="submit" class="btn btn-primary">Save Lists</button>
+      <span id="spam-lists-saved-msg" class="saved-msg"><span class="fa fa-check"></span> Saved. Run <code>sudo mailinabox</code> to apply.</span>
+    </div>
+  </div>
+</form>
+
+</div>
+
+<script>
+function show_spam_filter() {
+  // Load current filter setting.
+  api(
+    "/system/spam-filter",
+    "GET",
+    { },
+    function(r) {
+      var $sel = $('#spam-filter-select');
+      $sel.empty();
+      for (var i = 0; i < r.options.length; i++) {
+        $sel.append($('<option/>').val(r.options[i]).text(r.options[i]));
+      }
+      $sel.val(r.filter);
+      // Show rspamd UI link only when rspamd is active.
+      if (r.filter === 'rspamd')
+        $('#rspamd-ui-link').show();
+      else
+        $('#rspamd-ui-link').hide();
+    });
+
+  // Load whitelist/blacklist.
+  api(
+    "/system/spam-whitelist",
+    "GET",
+    { },
+    function(r) {
+      $('#spam-whitelist').val((r.whitelist || []).join("\n"));
+      $('#spam-blacklist').val((r.blacklist || []).join("\n"));
+    });
+
+  // Hide saved messages.
+  $('.saved-msg').hide();
+}
+
+function set_spam_filter() {
+  api(
+    "/system/spam-filter",
+    "POST",
+    { filter: $('#spam-filter-select').val() },
+    function(r) {
+      $('#spam-filter-saved-msg').fadeIn();
+      // Update rspamd UI link visibility.
+      if (r.filter === 'rspamd')
+        $('#rspamd-ui-link').show();
+      else
+        $('#rspamd-ui-link').hide();
+    });
+}
+
+function set_spam_lists() {
+  api(
+    "/system/spam-whitelist",
+    "POST",
+    {
+      whitelist: $('#spam-whitelist').val(),
+      blacklist: $('#spam-blacklist').val()
+    },
+    function(r) {
+      $('#spam-lists-saved-msg').fadeIn();
+    });
+}
+
+function open_rspamd_ui() {
+  // Set cookie via API key auth, then open rspamd UI in new tab (cookie auth).
+  api(
+    "/rspamd-auth",
+    "GET",
+    { },
+    function(r) {
+      window.open("/admin/rspamd/", "_blank");
+    });
+}
+</script>

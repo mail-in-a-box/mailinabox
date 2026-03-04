@@ -669,6 +669,59 @@ def privacy_status_set():
 	utils.write_settings(config, env)
 	return "OK"
 
+# SPAM FILTER
+
+@app.route('/system/spam-filter', methods=["GET"])
+@authorized_personnel_only
+def spam_filter_get():
+	settings = utils.load_settings(env)
+	return json_response({
+		"filter": settings.get("spam_filter", "spamassassin"),
+		"options": ["spamassassin", "rspamd"],
+	})
+
+@app.route('/system/spam-filter', methods=["POST"])
+@authorized_personnel_only
+def spam_filter_set():
+	value = request.form.get('filter', 'spamassassin')
+	if value not in ('spamassassin', 'rspamd'):
+		return ("Invalid filter. Must be 'spamassassin' or 'rspamd'.", 400)
+	settings = utils.load_settings(env)
+	settings['spam_filter'] = value
+	utils.write_settings(settings, env)
+	return json_response({
+		"status": "ok",
+		"filter": value,
+		"note": "Run 'sudo mailinabox' to apply. This will restart mail services.",
+	})
+
+# SPAM WHITELIST/BLACKLIST
+
+@app.route('/system/spam-whitelist', methods=["GET"])
+@authorized_personnel_only
+def spam_whitelist_get():
+	settings = utils.load_settings(env)
+	return json_response({
+		"whitelist": settings.get("spam_whitelist", []),
+		"blacklist": settings.get("spam_blacklist", []),
+	})
+
+@app.route('/system/spam-whitelist', methods=["POST"])
+@authorized_personnel_only
+def spam_whitelist_set():
+	settings = utils.load_settings(env)
+	whitelist = [w.strip() for w in request.form.get('whitelist', '').split('\n') if w.strip()]
+	blacklist = [b.strip() for b in request.form.get('blacklist', '').split('\n') if b.strip()]
+	settings['spam_whitelist'] = whitelist
+	settings['spam_blacklist'] = blacklist
+	utils.write_settings(settings, env)
+	return json_response({
+		"status": "ok",
+		"whitelist": whitelist,
+		"blacklist": blacklist,
+		"note": "Run 'sudo mailinabox' to apply.",
+	})
+
 # MUNIN
 
 @app.route('/munin/')
@@ -759,6 +812,52 @@ def munin_cgi(filename):
 	if 'Status' in response.headers and '404' in response.headers['Status']:
 		app.logger.warning("munin_cgi: munin-cgi-graph returned 404 status code. PATH_INFO=%s", env['PATH_INFO'])
 	return response
+
+# RSPAMD WEB UI
+
+@app.route('/rspamd-auth')
+@authorized_personnel_only
+def rspamd_start():
+	# Called via api() with API key auth — sets a session cookie so the
+	# browser can then open the rspamd UI using cookie-based auth.
+	response = make_response("OK")
+	response.set_cookie("session", auth_service.create_session_key(request.user_email, env, type='cookie'),
+	    max_age=60*30, secure=True, httponly=True, samesite="Strict")
+	return response
+
+@app.route('/rspamd/')
+@app.route('/rspamd/<path:path>', methods=["GET", "POST"])
+@authorized_personnel_only_via_cookie
+def rspamd_proxy(path=""):
+	"""Reverse-proxy to rspamd controller on localhost:11334."""
+	import urllib.request, urllib.error
+
+	rspamd_url = f"http://127.0.0.1:11334/{path}"
+	if request.query_string:
+		rspamd_url += f"?{request.query_string.decode()}"
+
+	try:
+		req = urllib.request.Request(rspamd_url, method=request.method)
+		if request.method == "POST":
+			req.data = request.get_data()
+		# Forward relevant headers.
+		for header in ('Content-Type', 'Accept'):
+			if header in request.headers:
+				req.add_header(header, request.headers[header])
+		# Authenticate to rspamd controller using the stored password.
+		settings = utils.load_settings(env)
+		rspamd_password = settings.get("rspamd_password", "")
+		if rspamd_password:
+			req.add_header("Password", rspamd_password)
+
+		resp = urllib.request.urlopen(req, timeout=10)
+		response = make_response(resp.read())
+		response.headers['Content-Type'] = resp.headers.get('Content-Type', 'application/octet-stream')
+		return response
+	except urllib.error.HTTPError as e:
+		return make_response(e.read(), e.code)
+	except urllib.error.URLError:
+		return ("rspamd controller not available", 502)
 
 def log_failed_login(request):
 	# We need to figure out the ip to list in the message, all our calls are routed

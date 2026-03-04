@@ -21,14 +21,26 @@ from mailconfig import get_mail_domains, get_mail_aliases
 from utils import shell, sort_domains, load_env_vars_from_file, load_settings, get_ssh_port, get_ssh_config_value
 from backup import get_backup_config, backup_status
 
-def get_services():
+def get_spam_filter_type(env):
+	"""Get the configured spam filter type from settings.yaml."""
+	settings = load_settings(env)
+	return settings.get('spam_filter', 'spamassassin')
+
+def get_services(env=None):
+	# Determine which spam filter service to check
+	spam_filter = get_spam_filter_type(env) if env else "spamassassin"
+	if spam_filter == "rspamd":
+		spam_service = { "name": "rspamd (milter)", "port": 11332, "public": False, }
+	else:
+		spam_service = { "name": "Spamassassin", "port": 10025, "public": False, }
+
 	return [
 		{ "name": "Local DNS (bind9)", "port": 53, "public": False, },
 		#{ "name": "NSD Control", "port": 8952, "public": False, },
 		{ "name": "Local DNS Control (bind9/rndc)", "port": 953, "public": False, },
 		{ "name": "Dovecot LMTP LDA", "port": 10026, "public": False, },
 		{ "name": "Postgrey", "port": 10023, "public": False, },
-		{ "name": "Spamassassin", "port": 10025, "public": False, },
+		spam_service,
 		{ "name": "OpenDKIM", "port": 8891, "public": False, },
 		{ "name": "OpenDMARC", "port": 8893, "public": False, },
 		{ "name": "Mail-in-a-Box Management Daemon", "port": 10222, "public": False, },
@@ -71,12 +83,23 @@ def run_services_checks(env, output, pool):
 	# Check that system services are running.
 	all_running = True
 	fatal = False
-	ret = pool.starmap(check_service, ((i, service, env) for i, service in enumerate(get_services())), chunksize=1)
+	ret = pool.starmap(check_service, ((i, service, env) for i, service in enumerate(get_services(env))), chunksize=1)
 	for _i, running, fatal2, output2 in sorted(ret):
 		if output2 is None: continue # skip check (e.g. no port was set, e.g. no sshd)
 		all_running = all_running and running
 		fatal = fatal or fatal2
 		output2.playback(output)
+
+	# If rspamd is active, check controller API for stats.
+	if get_spam_filter_type(env) == "rspamd":
+		try:
+			import urllib.request, json as _json
+			r = urllib.request.urlopen("http://127.0.0.1:11334/stat", timeout=5)
+			data = _json.loads(r.read())
+			output.print_ok("rspamd active: %d scanned, %d learned" %
+				(data.get('scanned', 0), data.get('learned', 0)))
+		except Exception:
+			output.print_error("rspamd controller not responding on port 11334.")
 
 	# Check fail2ban.
 	code, ret = shell('check_output', ["fail2ban-client", "status"], capture_stderr=True, trap=True)
