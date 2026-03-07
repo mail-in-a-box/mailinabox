@@ -829,7 +829,6 @@ def rspamd_start():
 @app.route('/rspamd/<path:path>', methods=["GET", "POST"])
 @authorized_personnel_only_via_cookie
 def rspamd_proxy(path=""):
-	"""Reverse-proxy to rspamd controller on localhost:11334."""
 	import urllib.request, urllib.error
 
 	rspamd_url = f"http://127.0.0.1:11334/{path}"
@@ -840,11 +839,9 @@ def rspamd_proxy(path=""):
 		req = urllib.request.Request(rspamd_url, method=request.method)
 		if request.method == "POST":
 			req.data = request.get_data()
-		# Forward relevant headers.
 		for header in ('Content-Type', 'Accept'):
 			if header in request.headers:
 				req.add_header(header, request.headers[header])
-		# Authenticate to rspamd controller using the stored password.
 		settings = utils.load_settings(env)
 		rspamd_password = settings.get("rspamd_password", "")
 		if rspamd_password:

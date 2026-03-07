@@ -22,12 +22,10 @@ from utils import shell, sort_domains, load_env_vars_from_file, load_settings, g
 from backup import get_backup_config, backup_status
 
 def get_spam_filter_type(env):
-	"""Get the configured spam filter type from settings.yaml."""
 	settings = load_settings(env)
 	return settings.get('spam_filter', 'spamassassin')
 
 def get_services(env=None):
-	# Determine which spam filter service to check
 	spam_filter = get_spam_filter_type(env) if env else "spamassassin"
 	if spam_filter == "rspamd":
 		spam_service = { "name": "rspamd (milter)", "port": 11332, "public": False, }
@@ -90,7 +88,6 @@ def run_services_checks(env, output, pool):
 		fatal = fatal or fatal2
 		output2.playback(output)
 
-	# If rspamd is active, check controller API for stats.
 	if get_spam_filter_type(env) == "rspamd":
 		try:
 			import urllib.request, json as _json

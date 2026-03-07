@@ -206,23 +206,13 @@ tools/editconf.py /etc/postfix/main.cf \
 # ### Incoming Mail
 
 # Pass mail to the spam filter before delivery to Dovecot.
-#
-# With SpamAssassin (default): mail goes through spampd (LMTP proxy on port 10025)
-#   Postfix:25 → spampd:10025 → SA scan → Dovecot:10026
-#
-# With rspamd: mail goes directly to Dovecot, rspamd scans via milter protocol
-#   Postfix:25 → rspamd milter:11332 → scan → Postfix → Dovecot:10026
-#
 # In a basic setup we would pass mail directly to Dovecot by setting
 # virtual_transport to `lmtp:unix:private/dovecot-lmtp`.
 
-# Read spam filter setting directly from settings.yaml (avoids venv dependency).
 SPAM_FILTER=$(cat "$STORAGE_ROOT/settings.yaml" 2>/dev/null | grep "^spam_filter:" | awk '{print $2}')
 SPAM_FILTER=${SPAM_FILTER:-spamassassin}
 
 if [ "$SPAM_FILTER" = "rspamd" ]; then
-	# rspamd: mail goes directly to Dovecot, rspamd scans via milter
-	# OpenDKIM (8891) and OpenDMARC (8893) remain as separate milters
 	tools/editconf.py /etc/postfix/main.cf \
 		"virtual_transport=lmtp:[127.0.0.1]:10026" \
 		"smtpd_milters=inet:127.0.0.1:11332 inet:127.0.0.1:8891 inet:127.0.0.1:8893" \
@@ -230,12 +220,9 @@ if [ "$SPAM_FILTER" = "rspamd" ]; then
 		milter_default_action=accept \
 		milter_protocol=6
 
-	# Remove any content_filter=spamassassin from master.cf smtp service
-	# and remove the spamassassin pipe service (not needed with rspamd milter)
 	sed -i '/content_filter=spamassassin/d' /etc/postfix/master.cf
 	sed -i '/^spamassassin[[:space:]]*unix/,/^[a-z]/{/^spamassassin/d;/spamc/d}' /etc/postfix/master.cf
 else
-	# SpamAssassin: mail goes through spampd proxy
 	tools/editconf.py /etc/postfix/main.cf \
 		"virtual_transport=lmtp:[127.0.0.1]:10025"
 fi

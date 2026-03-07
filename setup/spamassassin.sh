@@ -12,8 +12,7 @@
 source /etc/mailinabox.conf # get global vars
 source setup/functions.sh # load our functions
 
-# Check which spam filter is configured. Default is spamassassin (backward compatible).
-# Read directly from settings.yaml to avoid venv/rtyaml dependency at this stage.
+# Check which spam filter is configured.
 SPAM_FILTER=$(cat "$STORAGE_ROOT/settings.yaml" 2>/dev/null | grep "^spam_filter:" | awk '{print $2}')
 SPAM_FILTER=${SPAM_FILTER:-spamassassin}
 
@@ -22,7 +21,26 @@ if [ "$SPAM_FILTER" = "rspamd" ]; then
 	return 0 2>/dev/null || exit 0
 fi
 
-# === SpamAssassin setup (default) ===
+# === CLEANUP RSPAMD (if switching back to SpamAssassin) ===
+
+if systemctl is-active rspamd > /dev/null 2>&1; then
+	echo "Switching from rspamd to SpamAssassin..."
+	systemctl stop rspamd 2>/dev/null
+	systemctl disable rspamd 2>/dev/null
+fi
+
+# Remove rspamd IMAPSieve config and sieve scripts (SA uses antispam plugin)
+rm -f /etc/dovecot/conf.d/90-imapsieve.conf
+rm -f /etc/dovecot/sieve/learn-spam.sieve /etc/dovecot/sieve/learn-spam.svbin
+rm -f /etc/dovecot/sieve/learn-ham.sieve /etc/dovecot/sieve/learn-ham.svbin
+rm -f /etc/dovecot/sieve/rspamd-learn.sh
+rm -f /etc/systemd/system/dovecot.service.d/sieve-write.conf
+rmdir /etc/systemd/system/dovecot.service.d 2>/dev/null
+systemctl daemon-reload
+
+# Remove rspamd milter from Postfix (dkim.sh resets milters, but clean up
+# milter_protocol set by rspamd setup)
+tools/editconf.py /etc/postfix/main.cf -e milter_protocol=
 
 # Install packages and basic configuration
 # ----------------------------------------
@@ -204,8 +222,6 @@ chmod 770 "$STORAGE_ROOT/mail/spamassassin"
 # sa-learn --spam storage/mail/mailboxes/*/*/.Spam/cur/
 
 # Generate whitelist/blacklist rules from settings.yaml.
-# This allows admins to manage whitelists via the API (/admin/system/spam-whitelist).
-# Use MiaB venv python (has rtyaml for YAML parsing).
 MIAB_PYTHON="/usr/local/lib/mailinabox/env/bin/python3"
 if [ ! -x "$MIAB_PYTHON" ]; then
 	MIAB_PYTHON="python3"
