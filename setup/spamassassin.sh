@@ -44,6 +44,7 @@ systemctl daemon-reload
 
 # Remove imap_sieve from Dovecot mail_plugins (SA uses antispam plugin)
 sed -i 's/ imap_sieve//' /etc/dovecot/conf.d/20-imap.conf 2>/dev/null
+sed -i 's/ imap_sieve//' /etc/dovecot/conf.d/20-pop3.conf 2>/dev/null
 
 # Reset Postfix to SpamAssassin config (milters back to OpenDKIM+OpenDMARC only)
 tools/editconf.py /etc/postfix/main.cf \
@@ -189,6 +190,13 @@ chown -R spampd:spampd "$STORAGE_ROOT/mail/spamassassin"
 # (Be careful if we use multiple plugins later.) #NODOC
 sed -i "s/#mail_plugins = .*/mail_plugins = \$mail_plugins antispam/" /etc/dovecot/conf.d/20-imap.conf
 sed -i "s/#mail_plugins = .*/mail_plugins = \$mail_plugins antispam/" /etc/dovecot/conf.d/20-pop3.conf
+# If the line was already uncommented (e.g. after rspamd), add antispam if missing
+if ! grep -q 'antispam' /etc/dovecot/conf.d/20-imap.conf 2>/dev/null; then
+	sed -i 's/\(mail_plugins = .*imap_quota\)/\1 antispam/' /etc/dovecot/conf.d/20-imap.conf
+fi
+if ! grep -q 'antispam' /etc/dovecot/conf.d/20-pop3.conf 2>/dev/null; then
+	sed -i 's/\(mail_plugins = .*\)/\1 antispam/' /etc/dovecot/conf.d/20-pop3.conf
+fi
 
 # Configure the antispam plugin to call sa-learn-pipe.sh.
 cat > /etc/dovecot/conf.d/99-local-spampd.conf << EOF;
