@@ -29,6 +29,10 @@ if systemctl is-active rspamd > /dev/null 2>&1; then
 	systemctl disable rspamd 2>/dev/null
 fi
 
+# Unmask spampd/spamassassin (rspamd setup may have masked them)
+systemctl unmask spampd 2>/dev/null
+systemctl unmask spamassassin 2>/dev/null
+
 # Remove rspamd IMAPSieve config and sieve scripts (SA uses antispam plugin)
 rm -f /etc/dovecot/conf.d/90-imapsieve.conf
 rm -f /etc/dovecot/sieve/learn-spam.sieve /etc/dovecot/sieve/learn-spam.svbin
@@ -38,8 +42,14 @@ rm -f /etc/systemd/system/dovecot.service.d/sieve-write.conf
 rmdir /etc/systemd/system/dovecot.service.d 2>/dev/null
 systemctl daemon-reload
 
-# Remove rspamd milter from Postfix (dkim.sh resets milters, but clean up
-# milter_protocol set by rspamd setup)
+# Remove imap_sieve from Dovecot mail_plugins (SA uses antispam plugin)
+sed -i 's/ imap_sieve//' /etc/dovecot/conf.d/20-imap.conf 2>/dev/null
+
+# Reset Postfix to SpamAssassin config (milters back to OpenDKIM+OpenDMARC only)
+tools/editconf.py /etc/postfix/main.cf \
+	"virtual_transport=lmtp:[127.0.0.1]:10025" \
+	"smtpd_milters=inet:127.0.0.1:8891 inet:127.0.0.1:8893" \
+	"non_smtpd_milters=inet:127.0.0.1:8891 inet:127.0.0.1:8893"
 tools/editconf.py /etc/postfix/main.cf -e milter_protocol=
 
 # Install packages and basic configuration

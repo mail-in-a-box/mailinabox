@@ -185,11 +185,14 @@ EOF
 
 # === DOVECOT IMAPSIEVE ===
 
-cat > /etc/dovecot/conf.d/90-imapsieve.conf << 'EOF'
-protocol imap {
-  mail_plugins = $mail_plugins imap_sieve
-}
+# Add imap_sieve to 20-imap.conf (idempotent — only if not already present).
+# Do NOT use a separate protocol imap {} block in 90-imapsieve.conf because
+# Dovecot's last protocol block wins and would override 20-imap.conf plugins.
+if ! grep -q 'imap_sieve' /etc/dovecot/conf.d/20-imap.conf 2>/dev/null; then
+	sed -i 's/\(mail_plugins = .*imap_quota\)/\1 imap_sieve/' /etc/dovecot/conf.d/20-imap.conf
+fi
 
+cat > /etc/dovecot/conf.d/90-imapsieve.conf << 'EOF'
 plugin {
   sieve_plugins = sieve_imapsieve sieve_extprograms
   sieve_global_extensions = +vnd.dovecot.pipe +vnd.dovecot.environment
@@ -206,6 +209,10 @@ plugin {
   sieve_pipe_bin_dir = /etc/dovecot/sieve
 }
 EOF
+
+# Set correct ownership on 90-imapsieve.conf (rspamd.sh runs after mail-dovecot.sh chown)
+chown mail:dovecot /etc/dovecot/conf.d/90-imapsieve.conf
+chmod 640 /etc/dovecot/conf.d/90-imapsieve.conf
 
 mkdir -p /etc/dovecot/sieve
 # Writable so Dovecot can compile .svbin at runtime.
