@@ -345,10 +345,9 @@ def evaluate_spamhaus_lookup(lookupaddress, lookuptype, lookupdomain, output, ze
 		output.print_warning(f"""Incorrect spamhaus query: {lookupdomain + '.zen.spamhaus.org'}. Could not determine whether
 		 	this box's {lookuptype} address is blacklisted.""")
 	elif zen == "127.255.255.254":
-		output.print_warning(f"""Mail-in-a-Box's local DNS resolver is using a public/shared DNS forwarder, which is
-			not supported by Spamhaus. Could not determine whether this box's {lookuptype} address is blacklisted.
-			If you have configured forwarders in /etc/bind/named.conf.options, add exception zones for spamhaus.org
-			and dbl.spamhaus.org in /etc/bind/named.conf.local to resolve them directly.""")
+		output.print_warning(f"""Spamhaus blocked the query because DNS is going through a public resolver or forwarder (code 127.255.255.254).
+			If bind9 uses forwarders, re-run Mail-in-a-Box setup to add Spamhaus exception zones, then restart bind9.
+			Could not determine whether this box's {lookuptype} address is blacklisted.""")
 	elif zen == "127.255.255.255":
 		output.print_warning(f"""Too many queries have been performed on the spamhaus server. Could not determine
 		 	whether this box's {lookuptype} address is blacklisted.""")
@@ -816,7 +815,7 @@ def check_mail_domain(domain, env, output):
 	elif dbl == "127.255.255.252":
 		output.print_warning("Incorrect spamhaus query: {}. Could not determine whether the domain {} is blacklisted.".format(domain+'.dbl.spamhaus.org', domain))
 	elif dbl == "127.255.255.254":
-		output.print_warning(f"Mail-in-a-Box's local DNS resolver is using a public/shared DNS forwarder, which is not supported by Spamhaus. Could not determine whether the domain {domain} is blacklisted. If you have configured forwarders in /etc/bind/named.conf.options, add exception zones for spamhaus.org and dbl.spamhaus.org in /etc/bind/named.conf.local to resolve them directly.")
+		output.print_warning(f"Spamhaus blocked the query because DNS is going through a public resolver or forwarder (code 127.255.255.254). Re-run setup to add exception zones. Could not determine whether the domain {domain} is blacklisted.")
 	elif dbl == "127.255.255.255":
 		output.print_warning(f"Too many queries have been performed on the spamhaus server. Could not determine whether the domain {domain} is blacklisted.")
 	else:
