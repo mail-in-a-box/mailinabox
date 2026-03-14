@@ -1,7 +1,11 @@
-Mail-in-a-Box
-=============
+Mail-in-a-Box — Geseidl Edition
+================================
 
 By [@JoshData](https://github.com/JoshData) and [contributors](https://github.com/mail-in-a-box/mailinabox/graphs/contributors).
+
+<a href="https://geseidl.ro/servicii-it"><img src="https://geseidl.ro/assets/icons/logo-green.png" alt="Geseidl Consulting Group" height="40"></a>
+
+**Geseidl Edition** — Production mail server fork by [Geseidl IT Solutions](https://geseidl.ro/servicii-it) with rspamd integration, NAT support, external DNS compatibility, and mail archive capabilities. Used in production at [Geseidl Consulting Group](https://geseidl.ro).
 
 Mail-in-a-Box helps individuals take back control of their email by defining a one-click, easy-to-deploy SMTP+everything else server: a mail server in a box.
 
@@ -98,3 +102,15 @@ The History
 * Mail-in-a-Box was a semifinalist in the 2014 [Knight News Challenge](https://www.newschallenge.org/challenge/2014/submissions/mail-in-a-box), but it was not selected as a winner.
 * Mail-in-a-Box hit the front page of Hacker News in [April](https://news.ycombinator.com/item?id=7634514) 2014, [September](https://news.ycombinator.com/item?id=8276171) 2014, [May](https://news.ycombinator.com/item?id=9624267) 2015, and [November](https://news.ycombinator.com/item?id=13050500) 2016.
 * FastCompany mentioned Mail-in-a-Box a [roundup of privacy projects](http://www.fastcompany.com/3047645/your-own-private-cloud) on June 26, 2015.
+
+---
+
+<p align="center">
+  <a href="https://make-it-count.ro">
+    <img src="https://geseidl.ro/assets/icons/makeitcount-amprenta-gold.png" alt="makeitcount" height="60">
+  </a>
+  <br>
+  <sub><em>Open source is how we make the world a little better, from our corner.</em></sub>
+  <br>
+  <sub><a href="https://make-it-count.ro">make-it-count.ro</a></sub>
+</p>
