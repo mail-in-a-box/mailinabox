@@ -64,12 +64,12 @@
   <a href="#" onclick="window.miab_custom_dns_data_sort_order='created'; show_current_custom_dns_update_after_sort(); return false;">created</a>
 </div>
 <table id="custom-dns-current" class="table" style="width: auto; display: none; margin-top: 0;">
-  <thead>
-    <th>Domain Name</th>
-    <th>Record Type</th>
-    <th>Value</th>
-    <th></th>
-  </thead>
+  <thead><tr>
+    <th scope="col"> Domain Name</th>
+    <th scope="col"> Record Type</th>
+    <th scope="col"> Value</th>
+    <th scope="col" aria-label="Actions"></th>
+  </tr></thead>
   <tbody>
     <tr><td colspan="4">Loading...</td></tr>
   </tbody>
@@ -119,7 +119,9 @@
 <h4>Verbs</h4>
 
 <table class="table">
-<thead><th>Verb</th> <th>Usage</th></thead>
+<thead><tr
+<th scope="col"> Verb</th> <th scope="col"> Usage</th>
+</tr></thead>
 <tr><td>GET</td> <td>Returns matching custom DNS records as a JSON array of objects. Each object has the keys <code>qname</code>, <code>rtype</code>, and <code>value</code>. The optional <code>qname</code> and <code>rtype</code> parameters in the request URL filter the records returned in the response. The request body (<code>-d "..."</code>) must be omitted.</td></tr>
 <tr><td>PUT</td> <td>Sets a custom DNS record replacing any existing records with the same <code>qname</code> and <code>rtype</code>. Use PUT (instead of POST) when you only have one value for a <code>qname</code> and <code>rtype</code>, such as typical <code>A</code> records (without round-robin).</td></tr>
 <tr><td>POST</td> <td>Adds a new custom DNS record. Use POST when you have multiple <code>TXT</code> records or round-robin <code>A</code> records. (PUT would delete previously added records.)</td></tr>
@@ -129,7 +131,9 @@
 <h4>Parameters</h4>
 
 <table class="table">
-<thead><th>Parameter</th> <th>Value</th></thead>
+<thead><tr>
+<th scope="col"> Parameter</th> <th scope="col"> Value</th>
+</tr></thead>
 <tr><td>email</td> <td>The email address of any administrative user here.</td></tr>
 <tr><td>password</td> <td>That user&rsquo;s password.</td></tr>
 <tr><td>qname</td> <td>The fully qualified domain name for the record you are trying to set. It must be one of the domain names or a subdomain of one of the domain names hosted on this box. (Add mail users or aliases to add new domains.)</td></tr>
@@ -214,7 +218,7 @@ function show_current_custom_dns_update_after_sort() {
       var last_zone = null;
       for (var i = 0; i < data.length; i++) {
         if (sort_key == "qname" && data[i].zone != last_zone) {
-          var r = $("<tr><th colspan=4 style='background-color: #EEE'></th></tr>");
+          var r = $("<tr><th role='heading' aria-level='4' colspan=4 style='background-color: #EEE'></th></tr>");
           r.find("th").text(data[i].zone);
           tbody.append(r);
           last_zone = data[i].zone;

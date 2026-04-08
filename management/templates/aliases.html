@@ -77,10 +77,10 @@
 <table id="alias_table" class="table" style="width: auto">
   <thead>
     <tr>
-      <th></th>
-      <th>Alias<br></th>
-      <th>Forwards To</th>
-      <th>Permitted Senders</th>
+      <th scope="col" aria-label="Actions"></th> 
+      <th scope="col"> Alias<br></th>
+      <th scope="col"> Forwards To</th>
+      <th scope="col"> Permitted Senders</th>
     </tr>
   </thead>
   <tbody>
@@ -122,7 +122,9 @@
 <h4 style="margin-bottom: 0">Verbs</h4>
 
 <table class="table" style="margin-top: .5em">
-<thead><th>Verb</th> <th>Action</th><th></th></thead>
+<thead><tr>
+<th scope="col"> Verb</th> <th scope="col"> Action</th><th scope="col"> </th>
+</tr></thead>
 <tr><td>GET</td><td><i>(none)</i></td> <td>Returns a list of existing mail aliases. Adding <code>?format=json</code> to the URL will give JSON-encoded results.</td></tr>
 <tr><td>POST</td><td>/add</td> <td>Adds a new mail alias. Required POST-body parameters are <code>address</code> and <code>forwards_to</code>.</td></tr>
 <tr><td>POST</td><td>/remove</td> <td>Removes a mail alias. Required POST-body parameter is <code>address</code>.</td></tr>
@@ -153,7 +155,7 @@ function show_aliases() {
     function(r) {
       $('#alias_table tbody').html("");
       for (var i = 0; i < r.length; i++) {
-        var hdr = $("<tr><th colspan='4' style='background-color: #EEE'></th></tr>");
+        var hdr = $("<tr><th role='heading' aria-level='4' colspan='4' style='background-color: #EEE'></th></tr>");
         hdr.find('th').text(r[i].domain);
         $('#alias_table tbody').append(hdr);
 

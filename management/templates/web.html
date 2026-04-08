@@ -23,9 +23,9 @@
 <table id="web_domains_existing" class="table" style="margin-bottom: 1em; width: auto;">
         <thead>
                 <tr>
-                        <th>Site</th>
-                        <th>Directory for Files</th>
-			<th/>
+                        <th scope="col">Site</th>
+                        <th scope="col">Directory for Files</th>
+			<th scope="col" aria-label="Actions"/>
                 </tr>
         </thead>
         <tbody>
@@ -48,7 +48,7 @@ function show_web() {
 	tb.text('');
 	for (var i = 0; i < domains.length; i++) {
 		if (!domains[i].static_enabled) continue;
-		var row = $("<tr><th class='domain'><a href=''></a></th><td class='directory'><tt/></td> <td class='change-root hidden'><button class='btn btn-default btn-xs' onclick='show_change_web_root(this)'>Change</button></td></tr>");
+		var row = $("<tr><th scope='colgroup' class='domain'><a href=''></a></th><td class='directory'><tt/></td> <td class='change-root hidden'><button class='btn btn-default btn-xs' onclick='show_change_web_root(this)'>Change</button></td></tr>");
 		tb.append(row);
 		row.attr('data-domain', domains[i].domain);
 		row.attr('data-custom-web-root', domains[i].custom_root);

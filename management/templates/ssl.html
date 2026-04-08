@@ -28,9 +28,9 @@
 <table id="ssl_domains" class="table" style="margin-bottom: 2em; width: auto; display: none">
   <thead>
     <tr>
-      <th>Domain</th>
-      <th>Certificate Status</th>
-      <th>Actions</th>
+      <th scope="col">Domain</th>
+      <th scope="col">Certificate Status</th>
+      <th scope="col">Actions</th>
     </tr>
   </thead>
   <tbody>
@@ -101,7 +101,7 @@ function show_tls(keep_provisioning_shown) {
       $('#ssldomain').html('<option value="">(select)</option>');
       $('#ssl_domains').show();
       for (var i = 0; i < domains.length; i++) {
-        var row = $("<tr><th class='domain'><a href=''></a></th><td class='status'></td> <td class='actions'><a href='#' onclick='return ssl_install(this);' class='btn btn-xs'>Install Certificate</a></td></tr>");
+        var row = $("<tr><th scope='row' class='domain'><a href=''></a></th><td class='status'></td> <td class='actions'><a href='#' onclick='return ssl_install(this);' class='btn btn-xs'>Install Certificate</a></td></tr>");
         tb.append(row);
         row.attr('data-domain', domains[i].domain);
         row.find('.domain a').text(domains[i].domain);

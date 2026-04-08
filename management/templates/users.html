@@ -46,11 +46,11 @@
 <table id="user_table" class="table" style="width: auto">
   <thead>
     <tr>
-      <th width="35%">Email Address</th>
-      <th class="row-center">Size</th>
-      <th class="row-center">Used</th>
-      <th class="row-center">Quota</th>
-      <th>Actions</th>
+      <th scope="col" width="35%">Email Address</th>
+      <th scope="col" class="row-center">Size</th>
+      <th scope="col" class="row-center">Used</th>
+      <th scope="col" class="row-center">Quota</th>
+      <th scope="col">Actions</th>
     </tr>
   </thead>
   <tbody>
@@ -115,7 +115,7 @@
 <h4 style="margin-bottom: 0">Verbs</h4>
 
 <table class="table" style="margin-top: .5em">
-<thead><th>Verb</th> <th>Action</th><th></th></thead>
+<thead><th scope="col"> Verb</th> <th scope="col"> Action</th><th scope="col"> </th></thead>
 <tr><td>GET</td><td><i>(none)</i></td> <td>Returns a list of existing mail users. Adding <code>?format=json</code> to the URL will give JSON-encoded results.</td></tr>
 <tr>
     <td>POST</td>
@@ -171,7 +171,7 @@ function show_users() {
     function(r) {
       $('#user_table tbody').html("");
       for (var i = 0; i < r.length; i++) {
-        var hdr = $("<tr><th colspan='6' style='background-color: #EEE'></th></tr>");
+        var hdr = $("<tr><th role='heading' aria-level='4' colspan='6' style='background-color: #EEE'></th></tr>");
         hdr.find('th').text(r[i].domain);
         $('#user_table tbody').append(hdr);
 
