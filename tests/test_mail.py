@@ -46,7 +46,7 @@ reverse_ip = dns.reversename.from_address(ipaddr) # e.g. "1.0.0.127.in-addr.arpa
 try:
 	reverse_dns = dns.resolver.resolve(reverse_ip, 'PTR')[0].target.to_text(omit_final_dot=True) # => hostname
 except dns.resolver.NXDOMAIN:
-	print("Reverse DNS lookup failed for %s. SMTP EHLO name check skipped." % ipaddr)
+	print(f"Reverse DNS lookup failed for {ipaddr}. SMTP EHLO name check skipped.")
 	reverse_dns = None
 if reverse_dns is not None:
 	server.ehlo_or_helo_if_needed() # must send EHLO before getting the server's EHLO name
@@ -54,7 +54,7 @@ if reverse_dns is not None:
 	if helo_name != reverse_dns:
 		print("The server's EHLO name does not match its reverse hostname. Check DNS settings.")
 	else:
-		print("SMTP EHLO name (%s) is OK." % helo_name)
+		print(f"SMTP EHLO name ({helo_name}) is OK.")
 
 # Login and send a test email.
 server.login(emailaddress, pw)

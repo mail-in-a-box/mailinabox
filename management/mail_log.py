@@ -71,7 +71,7 @@ def scan_files(collector):
 
         if not os.path.exists(fn):
             continue
-        elif fn[-3:] == '.gz':
+        if fn[-3:] == '.gz':
             tmp_file = tempfile.NamedTemporaryFile()
             with gzip.open(fn, 'rb') as f:
                 shutil.copyfileobj(f, tmp_file)
@@ -302,7 +302,7 @@ def scan_mail_log(env):
                 for date, sender, message in user_data["blocked"]:
                     if len(sender) > 64:
                         sender = sender[:32] + "…" + sender[-32:]
-                    user_rejects.extend((f'{date} - {sender} ', '  %s' % message))
+                    user_rejects.extend((f'{date} - {sender} ', f'  {message}'))
                 rejects.append(user_rejects)
 
         print_user_table(
@@ -355,7 +355,7 @@ def scan_mail_log_line(line, collector):
     if date > END_DATE:
         # Don't process, and halt
         return False
-    elif date < START_DATE:
+    if date < START_DATE:
         # Don't process, but continue
         return True
 
@@ -391,7 +391,7 @@ def scan_postgrey_line(date, log, collector):
     """ Scan a postgrey log line and extract interesting data """
 
     m = re.match(r"action=(greylist|pass), reason=(.*?), (?:delay=\d+, )?client_name=(.*), "
-                 "client_address=(.*), sender=(.*), recipient=(.*)",
+                 r"client_address=(.*), sender=(.*), recipient=(.*)",
                  log)
 
     if m:
@@ -423,7 +423,7 @@ def scan_postfix_smtpd_line(date, log, collector):
 
     # Check if the incoming mail was rejected
 
-    m = re.match("NOQUEUE: reject: RCPT from .*?: (.*?); from=<(.*?)> to=<(.*?)>", log)
+    m = re.match(r"NOQUEUE: reject: RCPT from .*?: (.*?); from=<(.*?)> to=<(.*?)>", log)
 
     if m:
         message, sender, user = m.groups()
@@ -467,7 +467,7 @@ def scan_postfix_smtpd_line(date, log, collector):
 def scan_dovecot_login_line(date, log, collector, protocol_name):
     """ Scan a dovecot login log line and extract interesting data """
 
-    m = re.match("Info: Login: user=<(.*?)>, method=PLAIN, rip=(.*?),", log)
+    m = re.match(r"Info: Login: user=<(.*?)>, method=PLAIN, rip=(.*?),", log)
 
     if m:
         # TODO: CHECK DIT
@@ -495,7 +495,7 @@ def add_login(user, date, protocol_name, host, collector):
             data["latest"] = date
 
             data["totals_by_protocol"][protocol_name] += 1
-            data["totals_by_protocol_and_host"][(protocol_name, host)] += 1
+            data["totals_by_protocol_and_host"][protocol_name, host] += 1
 
             if host not in {"127.0.0.1", "::1"} or True:
                 data["activity-by-hour"][protocol_name][date.hour] += 1
@@ -608,7 +608,8 @@ def valid_date(string):
     try:
         date = dateutil.parser.parse(string)
     except ValueError:
-        raise argparse.ArgumentTypeError("Unrecognized date and/or time '%s'" % string)
+        msg = f"Unrecognized date and/or time '{string}'"
+        raise argparse.ArgumentTypeError(msg)
     return date
 
 
@@ -634,8 +635,7 @@ def print_time_table(labels, data, do_print=True):
     if do_print:
         print("\n".join(lines))
         return None
-    else:
-        return lines
+    return lines
 
 
 def print_user_table(users, data=None, sub_data=None, activity=None, latest=None, earliest=None,
@@ -670,7 +670,7 @@ def print_user_table(users, data=None, sub_data=None, activity=None, latest=None
                 col_str = f"{d[row]!s:<20}"
                 col_left[col] = True
             else:
-                temp = "{:>%s}" % max(5, len(l) + 1, len(str(d[row])) + 1)
+                temp = f"{{:>{max(5, len(l) + 1, len(str(d[row])) + 1)}}}"
                 col_str = temp.format(str(d[row]))
             col_widths[col] = max(col_widths[col], len(col_str))
             line += col_str
@@ -679,7 +679,7 @@ def print_user_table(users, data=None, sub_data=None, activity=None, latest=None
                 data_accum[col] += d[row]
 
         try:
-            if None not in [latest, earliest]: # noqa PLR6201
+            if None not in [latest, earliest]: # noqa: PLR6201
                 vert_pos = len(line)
                 e = earliest[row]
                 l = latest[row]
@@ -707,10 +707,10 @@ def print_user_table(users, data=None, sub_data=None, activity=None, latest=None
                 if sub_data is not None:
                     for l, d in sub_data:
                         if d[row]:
-                            lines.extend(('┬', '│ %s' % l, '├─%s─' % (len(l) * '─'), '│'))
+                            lines.extend(('┬', f'│ {l}', '├─%s─' % (len(l) * '─'), '│'))
                             max_len = 0
                             for v in list(d[row]):
-                                lines.append("│ %s" % v)
+                                lines.append(f"│ {v}")
                                 max_len = max(max_len, len(v))
                             lines.append("└" + (max_len + 1) * "─")
 
@@ -732,7 +732,7 @@ def print_user_table(users, data=None, sub_data=None, activity=None, latest=None
         else:
             header += l.rjust(max(5, len(l) + 1, col_widths[col]))
 
-    if None not in [latest, earliest]: # noqa PLR6201
+    if None not in [latest, earliest]: # noqa: PLR6201
         header += " │ timespan   "
 
     lines.insert(0, header.rstrip())
@@ -757,7 +757,7 @@ def print_user_table(users, data=None, sub_data=None, activity=None, latest=None
         footer += temp.format(data_accum[row])
 
     try:
-        if None not in [latest, earliest]: # noqa PLR6201
+        if None not in [latest, earliest]: # noqa: PLR6201
             max_l = max(latest)
             min_e = min(earliest)
             timespan = relativedelta(max_l, min_e)

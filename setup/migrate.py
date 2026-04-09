@@ -23,7 +23,7 @@ def migration_1(env):
 	# Migrate the 'domains' directory.
 	for sslfn in glob.glob(os.path.join( env["STORAGE_ROOT"], 'ssl/domains/*' )):
 		fn = os.path.basename(sslfn)
-		m = re.match("(.*)_(certifiate.pem|cert_sign_req.csr|private_key.pem)$", fn)
+		m = re.match(r"(.*)_(certifiate.pem|cert_sign_req.csr|private_key.pem)$", fn)
 		if m:
 			# get the new name for the file
 			domain_name, file_type = m.groups()
@@ -164,7 +164,7 @@ def migration_12(env):
                     try:
                         table = table[0]
                         c = conn.cursor()
-                        dropcmd = "DROP TABLE %s" % table
+                        dropcmd = f"DROP TABLE {table}"
                         c.execute(dropcmd)
                     except:
                         print("Failed to drop table", table)
@@ -189,6 +189,12 @@ def migration_14(env):
 	# Add the "auto_aliases" table.
 	db = os.path.join(env["STORAGE_ROOT"], 'mail/users.sqlite')
 	shell("check_call", ["sqlite3", db, "CREATE TABLE auto_aliases (id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT NOT NULL UNIQUE, destination TEXT NOT NULL, permitted_senders TEXT);"])
+
+def migration_15(env):
+	# Add a column to the users table to store their quota limit.  Default to '0' for unlimited.
+	db = os.path.join(env["STORAGE_ROOT"], 'mail/users.sqlite')
+	shell("check_call", ["sqlite3", db, "ALTER TABLE users ADD COLUMN quota TEXT NOT NULL DEFAULT '0';"])
+
 
 ###########################################################
 

@@ -51,7 +51,7 @@ def test2(tests, server, description):
 			response = dns.resolver.resolve(qname, rtype)
 		except dns.resolver.NoNameservers:
 			# host did not have an answer for this query
-			print("Could not connect to %s for DNS query." % server)
+			print(f"Could not connect to {server} for DNS query.")
 			sys.exit(1)
 		except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
 			# host did not have an answer for this query; not sure what the
@@ -79,7 +79,7 @@ def test2(tests, server, description):
 # Test the response from the machine itself.
 if not test(ipaddr, "Mail-in-a-Box"):
 	print ()
-	print ("Please run the Mail-in-a-Box setup script on %s again." % hostname)
+	print (f"Please run the Mail-in-a-Box setup script on {hostname} again.")
 	sys.exit(1)
 else:
 	print ("The Mail-in-a-Box provided correct DNS answers.")
@@ -89,7 +89,7 @@ else:
 	# to see if the machine is hooked up to recursive DNS properly.
 	if not test("8.8.8.8", "Google Public DNS"):
 		print ()
-		print ("Check that the nameserver settings for %s are correct at your domain registrar. It may take a few hours for Google Public DNS to update after changes on your Mail-in-a-Box." % hostname)
+		print (f"Check that the nameserver settings for {hostname} are correct at your domain registrar. It may take a few hours for Google Public DNS to update after changes on your Mail-in-a-Box.")
 		sys.exit(1)
 	else:
 		print ("Your domain registrar or DNS host appears to be configured correctly as well. Public DNS provides the same answers.")
