@@ -10,19 +10,29 @@
 #   - A Postmark Server API Token
 #
 # Usage:
-#   Set POSTMARK_TOKEN before running bootstrap, either:
-#     a) Export it in /opt/piab/init.sh:  export POSTMARK_TOKEN=your-token-here
-#     b) Pass it inline:  POSTMARK_TOKEN=your-token-here bash setup/bootstrap.sh
+#   Set POSTMARK_TOKEN and POSTMARK_SENDER before running bootstrap, either:
+#     a) Export them in /opt/piab/init.sh:
+#          export POSTMARK_TOKEN=your-token-here
+#          export POSTMARK_SENDER=you@yourdomain.com
+#     b) Pass them inline:
+#          POSTMARK_TOKEN=your-token POSTMARK_SENDER=you@yourdomain.com bash setup/bootstrap.sh
 #
 # After setup, the token is stored (root-readable only) in:
 #   /etc/postfix/sasl_passwd  (plaintext)
 #   /etc/postfix/sasl_passwd.db  (hashed lookup table)
 
 POSTMARK_TOKEN="${POSTMARK_TOKEN:-}"
+POSTMARK_SENDER="${POSTMARK_SENDER:-}"
 
 if [ -z "$POSTMARK_TOKEN" ]; then
 	echo "POSTMARK_TOKEN not set; skipping Postmark relay configuration."
 	echo "To enable, re-run bootstrap with POSTMARK_TOKEN set."
+	exit 0
+fi
+
+if [ -z "$POSTMARK_SENDER" ]; then
+	echo "POSTMARK_SENDER not set; skipping Postmark relay configuration."
+	echo "Set this to the verified Sender Signature address in your Postmark account."
 	exit 0
 fi
 
@@ -51,9 +61,25 @@ printf '[smtp.postmarkapp.com]:587\t%s:%s\n' "$POSTMARK_TOKEN" "$POSTMARK_TOKEN"
 postmap hash:/etc/postfix/sasl_passwd
 chmod 600 /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db
 
+# Install libsasl2-modules if not present (required for SASL PLAIN/LOGIN auth).
+if ! dpkg -s libsasl2-modules > /dev/null 2>&1; then
+	echo "Installing libsasl2-modules for SASL authentication..."
+	apt-get -q -q install -y libsasl2-modules < /dev/null
+fi
+
+# Rewrite the envelope sender on outbound relay to match the verified
+# Postmark Sender Signature. Uses smtp_generic_maps so the rewrite only
+# applies to mail leaving via the smtp client (relay), not local delivery.
+SENDER_DOMAIN="${POSTMARK_SENDER#*@}"
+printf '/^.*@.*$/ %s\n' "$POSTMARK_SENDER" \
+	> /etc/postfix/smtp_generic
+tools/editconf.py /etc/postfix/main.cf \
+	smtp_generic_maps="regexp:/etc/postfix/smtp_generic"
+
 # Apply the new configuration.
 systemctl reload postfix
 
-echo "Postmark relay configured. Test with:"
+echo "Postmark relay configured with sender rewrite to $POSTMARK_SENDER."
+echo "Test with:"
 echo "  echo 'test body' | mail -s 'test subject' you@yourdomain.com"
-echo "  journalctl -u postfix -f  # watch for smtp.postmarkapp.com 250 OK"
+echo "  tail -f /var/log/mail.log  # watch for smtp.postmarkapp.com 250 OK"
