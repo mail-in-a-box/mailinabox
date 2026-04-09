@@ -226,6 +226,15 @@ def make_domain_config(domain, templates, ssl_certificates, env):
 		nginx_conf = re.sub("[ \t]*# ADDITIONAL DIRECTIVES HERE *\n", t, nginx_conf)
 
 	# Replace substitution strings in the template & return.
+	# Build admin IP restriction if ADMIN_IP is set (allow/deny based).
+	admin_ip = os.environ.get("ADMIN_IP", env.get("ADMIN_IP", ""))
+	if admin_ip:
+		restriction_lines = "\n".join(f"\t\tallow {ip.strip()};" for ip in admin_ip.split(","))
+		restriction_lines += "\n\t\tdeny all;"
+	else:
+		restriction_lines = ""
+	nginx_conf = nginx_conf.replace("$ADMIN_IP_RESTRICTION", restriction_lines)
+
 	nginx_conf = nginx_conf.replace("$STORAGE_ROOT", env['STORAGE_ROOT'])
 	nginx_conf = nginx_conf.replace("$HOSTNAME", domain)
 	nginx_conf = nginx_conf.replace("$ROOT", root)
