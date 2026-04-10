@@ -1,0 +1,2 @@
+#!/usr/bin/env /bin/bash
+/usr/bin/goaccess --process-and-exit

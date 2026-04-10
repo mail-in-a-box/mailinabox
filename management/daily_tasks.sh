@@ -15,6 +15,11 @@ if [ "$(date "+%u")" -eq 1 ]; then
     management/mail_log.py -t week | management/email_administrator.py "Mail-in-a-Box Usage Report"
 fi
 
+# On Mondays, i.e. once a week, send the administrator a web analytics report.
+if [ "$(date "+%u")" -eq 1 ]; then
+    goaccess -o html | management/email_administrator_attachment.py "MIAB Web Analytics Report" "Mail-in-a-Box Web analytics report is attached." "webstats.html"
+fi
+
 # Take a backup.
 management/backup.py 2>&1 | management/email_administrator.py "Backup Status"
 
