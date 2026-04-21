@@ -28,7 +28,7 @@ source /etc/mailinabox.conf # load global vars
 if  [ ! -f /usr/bin/openssl ] \
  || [ ! -f "$STORAGE_ROOT/ssl/ssl_private_key.pem" ] \
  || [ ! -f "$STORAGE_ROOT/ssl/ssl_certificate.pem" ] \
- || [ ! -f "$STORAGE_ROOT/ssl/dh2048.pem" ]; then
+ || [ ! -f "$STORAGE_ROOT/ssl/dh4096.pem" ]; then
 	echo "Creating initial SSL certificate and perfect forward secrecy Diffie-Hellman parameters..."
 fi
 
@@ -90,12 +90,10 @@ if [ ! -f "$STORAGE_ROOT/ssl/ssl_certificate.pem" ]; then
 	ln -s "$CERT" "$STORAGE_ROOT/ssl/ssl_certificate.pem"
 fi
 
-# Generate some Diffie-Hellman cipher bits.
-# openssl's default bit length for this is 1024 bits, but we'll create
-# 2048 bits of bits per the latest recommendations.
-if [ ! -f "$STORAGE_ROOT/ssl/dh2048.pem" ]; then
-	openssl dhparam -out "$STORAGE_ROOT/ssl/dh2048.pem" 2048
-fi
+# We no longer generate Diffie-Hellman cipher bits. Following rfc7919 we use
+# a predefined finite field group, in this case ffdhe4096 from
+# https://raw.githubusercontent.com/internetstandards/dhe_groups/master/ffdhe4096.pem
+cp -f conf/dh4096.pem $STORAGE_ROOT/ssl/
 
 # Cleanup expired SSL certificates from $STORAGE_ROOT/ssl daily
 cat > /etc/cron.daily/mailinabox-ssl-cleanup << EOF;
