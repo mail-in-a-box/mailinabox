@@ -1,5 +1,4 @@
-Mail-in-a-Box
-=============
+# Mail-in-a-Box
 
 By [@JoshData](https://github.com/JoshData) and [contributors](https://github.com/mail-in-a-box/mailinabox/graphs/contributors).
 
@@ -23,7 +22,7 @@ Additionally, this project has a [Code of Conduct](CODE_OF_CONDUCT.md), which su
 In The Box
 ----------
 
-Mail-in-a-Box turns a fresh Ubuntu 22.04 LTS 64-bit machine into a working mail server by installing and configuring various components.
+Mail-in-a-Box turns a fresh Ubuntu 26.04 LTS 64-bit machine into a working mail server by installing and configuring various components.
 
 It is a one-click email appliance. There are no user-configurable setup options. It "just works."
 
@@ -54,7 +53,7 @@ Installation
 
 See the [setup guide](https://mailinabox.email/guide.html) for detailed, user-friendly instructions.
 
-For experts, start with a completely fresh (really, I mean it) Ubuntu 22.04 LTS 64-bit machine. On the machine...
+For experts, start with a completely fresh (really, I mean it) Ubuntu 26.04 LTS 64-bit machine. On the machine...
 
 Clone this repository and checkout the tag corresponding to the most recent release (which you can find in the tags or releases lists on GitHub):
 

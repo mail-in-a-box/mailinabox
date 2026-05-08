@@ -5,7 +5,7 @@
 # -o pipefail: don't ignore errors in the non-last command in a pipeline
 set -euo pipefail
 
-PHP_VER=8.0
+PHP_VER=8.5
 
 function hide_output {
 	# This function hides the output of a command unless the command fails
@@ -191,13 +191,23 @@ function wget_verify {
 	HASH=$2
 	DEST=$3
 	CHECKSUM="$HASH  $DEST"
+	# Keep backward compatibility with historical SHA1 pins but support SHA256 too.
+	# Newer upstream artifacts (e.g. Nextcloud core ZIP releases) provide SHA256 sidecars
+	# while SHA1 sidecars are no longer consistently published:
+	# https://download.nextcloud.com/server/releases/nextcloud-33.0.2.zip.sha256
+	# https://download.nextcloud.com/server/releases/nextcloud-33.0.2.zip.sha1
+	if [ ${#HASH} -eq 64 ]; then
+		HASH_CMD=sha256sum
+	else
+		HASH_CMD=sha1sum
+	fi
 	rm -f "$DEST"
 	hide_output wget -O "$DEST" "$URL"
-	if ! echo "$CHECKSUM" | sha1sum --check --strict > /dev/null; then
+	if ! echo "$CHECKSUM" | "$HASH_CMD" --check --strict > /dev/null; then
 		echo "------------------------------------------------------------"
 		echo "Download of $URL did not match expected checksum."
 		echo "Found:"
-		sha1sum "$DEST"
+		"$HASH_CMD" "$DEST"
 		echo
 		echo "Expected:"
 		echo "$CHECKSUM"
