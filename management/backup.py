@@ -343,7 +343,7 @@ def perform_backup(full_backup):
 		# https://gitlab.com/duplicity/duplicity/-/merge_requests/365
 		# will print a warning regarding boto3 compatibility mitigations
 		# even when the workaround has been implemented
-		# (which Mail-in-a-Box does)
+		# (which Mail-in-a-Box does).
 		print(e)
 		raise e
 
