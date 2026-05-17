@@ -449,4 +449,12 @@ EOF
 # ```
 
 # Enable PHP modules and restart PHP.
+# Override systemd's ProtectSystem=full to allow PHP-FPM write access to the Nextcloud install dir.
+OVERRIDE_DIR="/etc/systemd/system/php${PHP_VER}-fpm.service.d"
+mkdir -p "$OVERRIDE_DIR"
+cat > "$OVERRIDE_DIR/override.conf" << EOF
+[Service]
+ReadWritePaths=/usr/local/lib/owncloud
+EOF
+hide_output systemctl daemon-reload
 restart_service php"$PHP_VER"-fpm
