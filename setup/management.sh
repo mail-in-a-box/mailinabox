@@ -14,7 +14,7 @@ echo "Installing Mail-in-a-Box system management daemon..."
 #
 # certbot installs EFF's certbot which we use to
 # provision free TLS certificates.
-apt_install duplicity python3-pip virtualenv certbot rsync
+apt_install duplicity python3-gnupg python3-pip virtualenv certbot rsync
 
 # b2sdk is used for backblaze backups.
 # boto3 is used for amazon aws backups.
