@@ -334,7 +334,19 @@ def perform_backup(full_backup):
 			env["STORAGE_ROOT"],
 			get_duplicity_target_url(config),
 			],
-			get_duplicity_env_vars(env))
+			get_duplicity_env_vars(env),
+			capture_stderr=True)
+	except Exception as e:
+		# This and capture_stderr=True above guarantee that
+		# Duplicity will only print its output in case of an error.
+		# The reason for this is that versions of Duplicity prior to
+		# https://gitlab.com/duplicity/duplicity/-/merge_requests/365
+		# will print a warning regarding boto3 compatibility mitigations
+		# even when the workaround has been implemented
+		# (which Mail-in-a-Box does).
+		print(e)
+		raise e
+
 	finally:
 		# Start services again.
 		service_command("postgrey", "start", quit=False)
