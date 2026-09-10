@@ -223,10 +223,12 @@ tools/editconf.py /etc/postfix/main.cf  -e lmtp_destination_recipient_limit=
 # * `reject_non_fqdn_sender`: Reject not-nice-looking return paths.
 # * `reject_unknown_sender_domain`: Reject return paths with invalid domains.
 # * `reject_authenticated_sender_login_mismatch`: Reject if mail FROM address does not match the client SASL login
-# * `reject_rhsbl_sender`: Reject return paths that use blacklisted domains.
 # * `permit_sasl_authenticated`: Authenticated users (i.e. on port 587) can skip further checks.
 # * `permit_mynetworks`: Mail that originates locally can skip further checks.
 # * `reject_rbl_client`: Reject connections from IP addresses blacklisted in zen.spamhaus.org
+# * `reject_rhsbl_sender`: Reject the request when the MAIL FROM domain is listed in spamhaus.org
+# * `reject_rhsbl_helo`: Reject the request when the HELO or EHLO hostname is listed in spamhaus.org
+# * `reject_rhsbl_reverse_client`: Reject the request when the unverified reverse client hostname is listed in spamhaus.org
 # * `reject_unlisted_recipient`: Although Postfix will reject mail to unknown recipients, it's nicer to reject such mail ahead of greylisting rather than after.
 # * `check_policy_service`: Apply greylisting using postgrey.
 #
@@ -236,9 +238,91 @@ tools/editconf.py /etc/postfix/main.cf  -e lmtp_destination_recipient_limit=
 # so these IPs get mail delivered quickly. But when an IP is not listed in the permit_dnswl_client list (i.e. it is not #NODOC
 # whitelisted) then postfix does a DEFER_IF_REJECT, which results in all "unknown user" sorts of messages turning into #NODOC
 # "450 4.7.1 Client host rejected: Service unavailable". This is a retry code, so the mail doesn't properly bounce. #NODOC
-tools/editconf.py /etc/postfix/main.cf \
-	smtpd_sender_restrictions="reject_non_fqdn_sender,reject_unknown_sender_domain,reject_authenticated_sender_login_mismatch,reject_rhsbl_sender dbl.spamhaus.org=127.0.1.[2..99]" \
-	smtpd_recipient_restrictions="permit_sasl_authenticated,permit_mynetworks,reject_rbl_client zen.spamhaus.org=127.0.0.[2..11],reject_unlisted_recipient,check_policy_service inet:127.0.0.1:10023,check_policy_service inet:127.0.0.1:12340"
+# In case the Spamhaus Data Query Service is used, slightly different configuration is needed. Source: https://portal.spamhaus.com/dqs/?ft=1#3.1.2
+# Zero Reputation Domain (ZRD) blocklist is limited to two hour old domains, not 24 like suggested by Spamhaus.
+
+# smtpd_recipient_restrictions is different whether Spamhaus DQS is used or not.
+# Start definition of the configuration here
+CONF_SMTPD_RECIPIENT_RESTRICTIONS=$(cat <<-END
+	permit_sasl_authenticated,
+        permit_mynetworks,
+        check_sender_access              hash:/etc/postfix/sender_access,
+        check_recipient_access           hash:/etc/postfix/recipient_access,
+END
+)
+
+if [ -z "${SPAMHAUS_DQS_KEY:-}" ]; then
+        # Public spamhaus blocklist servers queried
+        DBL_QUERY=dbl.spamhaus.org
+        ZEN_QUERY=zen.spamhaus.org
+
+CONF_SMTPD_RECIPIENT_RESTRICTIONS=$(cat <<-END
+	$CONF_SMTPD_RECIPIENT_RESTRICTIONS
+        reject_rbl_client                $ZEN_QUERY=127.0.0.[2..11],
+        reject_rhsbl_sender              $DBL_QUERY=127.0.1.[2..99],
+        reject_rhsbl_helo                $DBL_QUERY=127.0.1.[2..99],
+        reject_rhsbl_reverse_client      $DBL_QUERY=127.0.1.[2..99],
+        warn_if_reject reject_rbl_client $ZEN_QUERY=127.255.255.[1..255],        
+END
+)
+
+	# Cleanup dnsbl reply mapping, potentially set when DQS was enabled previously
+	tools/editconf.py /etc/postfix/main.cf -e rbl_reply_maps=
+	
+	rm -rf /etc/postfix/dnsbl-reply-map
+else
+        # Use Data Query Service for blocklist query URLs
+        DBL_QUERY=$SPAMHAUS_DQS_KEY.dbl.dq.spamhaus.net
+        ZEN_QUERY=$SPAMHAUS_DQS_KEY.zen.dq.spamhaus.net
+        ZRD_QUERY=$SPAMHAUS_DQS_KEY.zrd.dq.spamhaus.net
+
+CONF_SMTPD_RECIPIENT_RESTRICTIONS=$(cat <<-END
+	$CONF_SMTPD_RECIPIENT_RESTRICTIONS
+        reject_rhsbl_sender              $DBL_QUERY=127.0.1.[2..99],
+        reject_rhsbl_helo                $DBL_QUERY=127.0.1.[2..99],
+        reject_rhsbl_reverse_client      $DBL_QUERY=127.0.1.[2..99],
+        reject_rhsbl_sender              $ZRD_QUERY=127.0.2.2,
+        reject_rhsbl_helo                $ZRD_QUERY=127.0.2.2,
+        reject_rhsbl_reverse_client      $ZRD_QUERY=127.0.2.2,
+        reject_rbl_client                $ZEN_QUERY=127.0.0.[2..255],
+END
+)
+
+	# Setup dnsbl reply mapping, to avoid leaking your DQS key in reject messages
+	cat > /etc/postfix/dnsbl-reply-map <<- EOF;
+	$ZEN_QUERY=127.0.0.[2..255]     \$rbl_code Service unavailable; \$rbl_class [\$rbl_what] blocked using zen.spamhaus.org\${rbl_reason?; \$rbl_reason}
+	$DBL_QUERY=127.0.1.[2..99]      \$rbl_code Service unavailable; \$rbl_class [\$rbl_what] blocked using dbl.spamhaus.org\${rbl_reason?; \$rbl_reason}
+	$ZRD_QUERY=127.0.2.2            \$rbl_code Service unavailable; \$rbl_class [\$rbl_what] blocked using zrd.spamhaus.org\${rbl_reason?; \$rbl_reason}
+EOF
+
+	postmap hash:/etc/postfix/dnsbl-reply-map
+
+	tools/editconf.py /etc/postfix/main.cf \
+		rbl_reply_maps=hash:/etc/postfix/dnsbl-reply-map
+fi
+
+# Define configuration for smtpd_sender_restrictions
+CONF_SMTPD_SENDER_RESTRICTIONS=$(cat <<-END
+	reject_non_fqdn_sender,
+        reject_unknown_sender_domain,
+        reject_authenticated_sender_login_mismatch,
+        reject_rhsbl_sender $DBL_QUERY=127.0.1.[2..99]
+END
+)
+
+# Finalize configuration for smtpd_recipient_restrictions
+CONF_SMTPD_RECIPIENT_RESTRICTIONS=$(cat <<-END
+	$CONF_SMTPD_RECIPIENT_RESTRICTIONS
+        reject_unlisted_recipient,
+        check_policy_service             inet:127.0.0.1:10023,
+        check_policy_service             inet:127.0.0.1:12340
+END
+)
+
+# Apply configuration
+tools/editconf.py /etc/postfix/main.cf -w \
+        smtpd_sender_restrictions="$CONF_SMTPD_SENDER_RESTRICTIONS" \
+        smtpd_recipient_restrictions="$CONF_SMTPD_RECIPIENT_RESTRICTIONS"
 
 # Postfix connects to Postgrey on the 127.0.0.1 interface specifically. Ensure that
 # Postgrey listens on the same interface (and not IPv6, for instance).
