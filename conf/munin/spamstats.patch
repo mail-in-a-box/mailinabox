@@ -1,0 +1,11 @@
+see https://github.com/munin-monitoring/munin/commit/7d163251667016cd7e4d6b4d188553312b8190c9#diff-052b0a943b0e9e24ce557d557ce2f318
+--- spamstats
++++ spamstats
+@@ -55,6 +55,7 @@
+     print "graph_title SpamAssassin throughput\n";
+     print "graph_args --base 1000 -l 0\n";
+     print "graph_vlabel mails/\${graph_period}\n";
++    print "graph_category spamfilter\n";
+     print "graph_order ham spam\n";
+     print "ham.label ham\n";
+     print "ham.type DERIVE\n";
