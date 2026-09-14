@@ -144,7 +144,7 @@ InstallNextcloud() {
             #
             echo "Installing Legacy PHP version for Nextcloud upgrade..."
 
-            apt_install php"${PHP_LEGACY_VER}" php"${PHP_LEGACY_VER}"-fpm \
+            apt_install php"${PHP_LEGACY_VER}" \
 	            php"${PHP_LEGACY_VER}"-cli php"${PHP_LEGACY_VER}"-sqlite3 php"${PHP_LEGACY_VER}"-gd php"${PHP_LEGACY_VER}"-imap php"${PHP_LEGACY_VER}"-curl \
 	            php"${PHP_LEGACY_VER}"-dev php"${PHP_LEGACY_VER}"-gd php"${PHP_LEGACY_VER}"-xml php"${PHP_LEGACY_VER}"-mbstring php"${PHP_LEGACY_VER}"-zip php"${PHP_LEGACY_VER}"-apcu \
 	            php"${PHP_LEGACY_VER}"-intl php"${PHP_LEGACY_VER}"-imagick php"${PHP_LEGACY_VER}"-gmp php"${PHP_LEGACY_VER}"-bcmath
@@ -152,7 +152,7 @@ InstallNextcloud() {
             tools/editconf.py /etc/php/"$PHP_LEGACY_VER"/mods-available/apcu.ini -c ';' \
 	            apc.enabled=1 \
 	            apc.enable_cli=1
-            
+
             sudo -u www-data php"$PHP_LEGACY_VER" /usr/local/lib/owncloud/occ upgrade
     		E=$?
     		if [ $E -ne 0 ] && [ $E -ne 3 ]; then
@@ -163,14 +163,14 @@ InstallNextcloud() {
     			sudo -u www-data php"$PHP_LEGACY_VER" /usr/local/lib/owncloud/occ maintenance:mode --off
     			echo "...which seemed to work."
     		fi
-    
+
     		# Add missing indices. NextCloud didn't include this in the normal upgrade because it might take some time.
     		sudo -u www-data php"$PHP_LEGACY_VER" /usr/local/lib/owncloud/occ db:add-missing-indices
     		sudo -u www-data php"$PHP_LEGACY_VER" /usr/local/lib/owncloud/occ db:add-missing-primary-keys
-    
+
     		# Run conversion to BigInt identifiers, this process may take some time on large tables.
     		sudo -u www-data php"$PHP_LEGACY_VER" /usr/local/lib/owncloud/occ db:convert-filecache-bigint --no-interaction
-        
+
         else
             #
             # Upgrade using 8.5
@@ -185,11 +185,11 @@ InstallNextcloud() {
     			sudo -u www-data php"$PHP_VER" /usr/local/lib/owncloud/occ maintenance:mode --off
     			echo "...which seemed to work."
     		fi
-    
+
     		# Add missing indices. NextCloud didn't include this in the normal upgrade because it might take some time.
     		sudo -u www-data php"$PHP_VER" /usr/local/lib/owncloud/occ db:add-missing-indices
     		sudo -u www-data php"$PHP_VER" /usr/local/lib/owncloud/occ db:add-missing-primary-keys
-    
+
     		# Run conversion to BigInt identifiers, this process may take some time on large tables.
     		sudo -u www-data php"$PHP_VER" /usr/local/lib/owncloud/occ db:convert-filecache-bigint --no-interaction
         fi
@@ -316,11 +316,14 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 			InstallNextcloud 33.0.7 89a880ee00e95c661400528f18b06526fb494f3a 8.8.0 7abcc5d9fe1f38dc3a8ac68b0d479255e99ef82a 6.5.4 061f871029c2f735198443bef1bfbe4e8b2e7cba 4.0.0 214497dd8691f279ba3740797c565310f0793054
 			CURRENT_NEXTCLOUD_VER="33.0.7"
 		fi
-        if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^33 ]]; then
-            # this can use PHP 8.5
-			InstallNextcloud 34.0.3 58445c436f1b182c43963d7b200e893c92b6b16a 8.8.0 7abcc5d9fe1f38dc3a8ac68b0d479255e99ef82a 6.5.4 061f871029c2f735198443bef1bfbe4e8b2e7cba 4.0.0 214497dd8691f279ba3740797c565310f0793054
-			CURRENT_NEXTCLOUD_VER="34.0.3"
-		fi
+		##
+		# Placholder for Nextcloud 35
+        # if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^33 ]]; then
+        #    # this can use PHP 8.5
+		#	InstallNextcloud 34.0.3 58445c436f1b182c43963d7b200e893c92b6b16a 8.8.0 7abcc5d9fe1f38dc3a8ac68b0d479255e99ef82a 6.5.4 061f871029c2f735198443bef1bfbe4e8b2e7cba 4.0.0 214497dd8691f279ba3740797c565310f0793054
+		#	CURRENT_NEXTCLOUD_VER="34.0.3"
+		# fi
+		##
 	fi
 
 	InstallNextcloud $nextcloud_ver $nextcloud_hash $contacts_ver $contacts_hash $calendar_ver $calendar_hash $user_external_ver $user_external_hash
@@ -533,7 +536,7 @@ EOF
 
 # Cleanup Legacy PHP Version
 echo "Cleaning up legacy php version"
-hide_output apt-get purge "php8.2*"
+hide_output apt-get purge -y "php${PHP_LEGACY_VER}*"
 rm -rf /etc/php/"$PHP_LEGACY_VER"
 
 # Enable PHP modules and restart PHP.

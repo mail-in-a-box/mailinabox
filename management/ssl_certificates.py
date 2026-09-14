@@ -90,8 +90,8 @@ def get_ssl_certificates(env):
 			domains.setdefault(domain, []).append(cert)
 
 	# Sort the certificates to prefer good ones.
-	import datetime
-	now = datetime.datetime.utcnow()
+	from datetime import datetime, timezone
+	now = datetime.now(timezone.utc)
 	ret = { }
 	for domain, cert_list in domains.items():
 		#for c in cert_list: print(domain, c.not_valid_before, c.not_valid_after, "("+str(now)+")", c.issuer, c.subject, c._filename)
@@ -562,8 +562,8 @@ def check_certificate(domain, ssl_certificate, ssl_private_key, warn_if_expiring
 
 	# Check that the certificate hasn't expired. The datetimes returned by the
 	# certificate are 'naive' and in UTC. We need to get the current time in UTC.
-	import datetime
-	now = datetime.datetime.utcnow()
+	from datetime import datetime, timezone
+	now = datetime.now(timezone.utc)
 	if not(cert.not_valid_before <= now <= cert.not_valid_after):
 		return (f"The certificate has expired or is not yet valid. It is valid from {cert.not_valid_before} to {cert.not_valid_after}.", None)
 
