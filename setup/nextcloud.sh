@@ -144,9 +144,9 @@ InstallNextcloud() {
             #
             echo "Installing Legacy PHP version for Nextcloud upgrade..."
 
-            apt_install php"${PHP_LEGACY_VER}" \
-	            php"${PHP_LEGACY_VER}"-cli php"${PHP_LEGACY_VER}"-sqlite3 php"${PHP_LEGACY_VER}"-gd php"${PHP_LEGACY_VER}"-imap php"${PHP_LEGACY_VER}"-curl \
-	            php"${PHP_LEGACY_VER}"-dev php"${PHP_LEGACY_VER}"-gd php"${PHP_LEGACY_VER}"-xml php"${PHP_LEGACY_VER}"-mbstring php"${PHP_LEGACY_VER}"-zip php"${PHP_LEGACY_VER}"-apcu \
+            apt_install php"${PHP_LEGACY_VER}"-cli php"${PHP_LEGACY_VER}"-sqlite3 \
+	            php"${PHP_LEGACY_VER}"-gd php"${PHP_LEGACY_VER}"-imap php"${PHP_LEGACY_VER}"-curl php"${PHP_LEGACY_VER}"-dev php"${PHP_LEGACY_VER}"-gd \
+	            php"${PHP_LEGACY_VER}"-xml php"${PHP_LEGACY_VER}"-mbstring php"${PHP_LEGACY_VER}"-zip php"${PHP_LEGACY_VER}"-apcu \
 	            php"${PHP_LEGACY_VER}"-intl php"${PHP_LEGACY_VER}"-imagick php"${PHP_LEGACY_VER}"-gmp php"${PHP_LEGACY_VER}"-bcmath
 
             tools/editconf.py /etc/php/"$PHP_LEGACY_VER"/mods-available/apcu.ini -c ';' \
