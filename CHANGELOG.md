@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+Version 77 (September 26, 2026)
+-------------------------------
+
+* Roundcube updated to version 1.6.19, fixing numerous security issues.
+* Nextcloud updated to version 27.1.11, and install failure fixed.
+
 Version 76 (May 24, 2026)
 -------------------------
 
