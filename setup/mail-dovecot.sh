@@ -63,12 +63,15 @@ tools/editconf.py /etc/dovecot/conf.d/10-master.conf \
 # See http://www.dovecot.org/pipermail/dovecot/2013-March/088834.html.
 # A reboot is required for this to take effect (which we don't do as
 # as a part of setup). Test with `cat /proc/sys/fs/inotify/max_user_instances`.
-# We changed where this writes to
-tools/editconf.py /usr/lib/sysctl.d/50-default.conf \
-	fs.inotify.max_user_instances=1024
+# 26.04 no longer ships /etc/sysctl.conf, and /usr/lib/sysctl.d belongs to the
+# distribution's packages: that file is not always there and gets replaced on
+# upgrade. Drop our own file in /etc/sysctl.d instead, which is what it is for.
+cat > /etc/sysctl.d/60-mailinabox.conf <<EOF
+# Managed by Mail-in-a-Box.
+fs.inotify.max_user_instances=1024
+EOF
 
-# Restart sysctl, then apply the change to the system
-hide_output systemctl restart systemd-sysctl
+# Apply it now.
 hide_output sysctl --system
 
 
