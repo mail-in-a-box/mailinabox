@@ -454,7 +454,17 @@ def build_sshfp_records():
 	if not port:
 		return
 
-	keys = shell("check_output", ["ssh-keyscan", "-4", "-t", "rsa,ecdsa,ed25519", "-p", str(port), "localhost"])
+	code, keys = shell("check_output", ["ssh-keyscan", "-4", "-t", "rsa,ecdsa,ed25519", "-p", str(port), "localhost"], trap=True)
+
+	# ssh-keyscan exits non-zero when sshd is not reachable on localhost, which
+	# happens when ListenAddress binds it to another interface. SSHFP records
+	# are optional, so skip them rather than let the error propagate: it would
+	# otherwise break the whole DNS update, and with it the creation of the
+	# first user, which returns HTTP 500 after inserting the user but before
+	# granting it admin privileges.
+	if code != 0:
+		return
+
 	keys = sorted(keys.split("\n"))
 
 	for key in keys:
