@@ -21,8 +21,8 @@ echo "Installing Nextcloud (contacts/calendar)..."
 #   we automatically install intermediate versions as needed.
 # * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
 #   copying it from the error message when it doesn't match what is below.
-nextcloud_ver=27.1.11
-nextcloud_hash=9f30c01a021c2e5a9e7baff119955afb3c552ebc
+nextcloud_ver=34.0.3
+nextcloud_hash=58445c436f1b182c43963d7b200e893c92b6b16a
 
 # Nextcloud apps
 # --------------
@@ -36,16 +36,16 @@ nextcloud_hash=9f30c01a021c2e5a9e7baff119955afb3c552ebc
 # find by running: curl -sL <url> | sha1sum
 
 # Always ensure the versions are supported, see https://apps.nextcloud.com/apps/contacts
-contacts_ver=5.5.4
-contacts_hash=c4e3f2183a0088b829f8aa1b3af1f87c9a4c46a2
+contacts_ver=8.8.0
+contacts_hash=7abcc5d9fe1f38dc3a8ac68b0d479255e99ef82a
 
 # Always ensure the versions are supported, see https://apps.nextcloud.com/apps/calendar
-calendar_ver=4.7.20
-calendar_hash=12d876904e227156e39ca4335b18481b42a6d00f
+calendar_ver=6.5.4
+calendar_hash=061f871029c2f735198443bef1bfbe4e8b2e7cba
 
 # Always ensure the versions are supported, see https://apps.nextcloud.com/apps/user_external
-user_external_ver=3.4.0
-user_external_hash=7f9d8f4dd6adb85a0e3d7622d85eeb7bfe53f3b4
+user_external_ver=4.0.0
+user_external_hash=214497dd8691f279ba3740797c565310f0793054
 
 # Developer advice (test plan)
 # ----------------------------
@@ -138,23 +138,61 @@ InstallNextcloud() {
 	if [ -e "$STORAGE_ROOT/owncloud/owncloud.db" ]; then
 		# ownCloud 8.1.1 broke upgrades. It may fail on the first attempt, but
 		# that can be OK.
-		sudo -u www-data php"$PHP_VER" /usr/local/lib/owncloud/occ upgrade
-		E=$?
-		if [ $E -ne 0 ] && [ $E -ne 3 ]; then
-			echo "Trying ownCloud upgrade again to work around ownCloud upgrade bug..."
-			sudo -u www-data php"$PHP_VER" /usr/local/lib/owncloud/occ upgrade
-			E=$?
-			if [ $E -ne 0 ] && [ $E -ne 3 ]; then exit 1; fi
-			sudo -u www-data php"$PHP_VER" /usr/local/lib/owncloud/occ maintenance:mode --off
-			echo "...which seemed to work."
-		fi
+		if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^2[6789] || ${CURRENT_NEXTCLOUD_VER} =~ ^3[01] ]]; then
+            #
+            # Upgrade using 8.2 for version up to 32. The install for 33 technically has the Nextcloud verion as 32, hence why we are ommitting it, so it switches to php8.5
+            #
+            echo "Installing Legacy PHP version for Nextcloud upgrade..."
 
-		# Add missing indices. NextCloud didn't include this in the normal upgrade because it might take some time.
-		sudo -u www-data php"$PHP_VER" /usr/local/lib/owncloud/occ db:add-missing-indices
-		sudo -u www-data php"$PHP_VER" /usr/local/lib/owncloud/occ db:add-missing-primary-keys
+            apt_install php"${PHP_LEGACY_VER}"-cli php"${PHP_LEGACY_VER}"-sqlite3 \
+	            php"${PHP_LEGACY_VER}"-gd php"${PHP_LEGACY_VER}"-imap php"${PHP_LEGACY_VER}"-curl php"${PHP_LEGACY_VER}"-dev php"${PHP_LEGACY_VER}"-gd \
+	            php"${PHP_LEGACY_VER}"-xml php"${PHP_LEGACY_VER}"-mbstring php"${PHP_LEGACY_VER}"-zip php"${PHP_LEGACY_VER}"-apcu \
+	            php"${PHP_LEGACY_VER}"-intl php"${PHP_LEGACY_VER}"-imagick php"${PHP_LEGACY_VER}"-gmp php"${PHP_LEGACY_VER}"-bcmath
 
-		# Run conversion to BigInt identifiers, this process may take some time on large tables.
-		sudo -u www-data php"$PHP_VER" /usr/local/lib/owncloud/occ db:convert-filecache-bigint --no-interaction
+            tools/editconf.py /etc/php/"$PHP_LEGACY_VER"/mods-available/apcu.ini -c ';' \
+	            apc.enabled=1 \
+	            apc.enable_cli=1
+
+            sudo -u www-data php"$PHP_LEGACY_VER" /usr/local/lib/owncloud/occ upgrade
+    		E=$?
+    		if [ $E -ne 0 ] && [ $E -ne 3 ]; then
+    			echo "Trying ownCloud upgrade again to work around ownCloud upgrade bug..."
+    			sudo -u www-data php"$PHP_LEGACY_VER" /usr/local/lib/owncloud/occ upgrade
+    			E=$?
+    			if [ $E -ne 0 ] && [ $E -ne 3 ]; then exit 1; fi
+    			sudo -u www-data php"$PHP_LEGACY_VER" /usr/local/lib/owncloud/occ maintenance:mode --off
+    			echo "...which seemed to work."
+    		fi
+
+    		# Add missing indices. NextCloud didn't include this in the normal upgrade because it might take some time.
+    		sudo -u www-data php"$PHP_LEGACY_VER" /usr/local/lib/owncloud/occ db:add-missing-indices
+    		sudo -u www-data php"$PHP_LEGACY_VER" /usr/local/lib/owncloud/occ db:add-missing-primary-keys
+
+    		# Run conversion to BigInt identifiers, this process may take some time on large tables.
+    		sudo -u www-data php"$PHP_LEGACY_VER" /usr/local/lib/owncloud/occ db:convert-filecache-bigint --no-interaction
+
+        else
+            #
+            # Upgrade using 8.5
+            #
+            sudo -u www-data php"$PHP_VER" /usr/local/lib/owncloud/occ upgrade
+    		E=$?
+    		if [ $E -ne 0 ] && [ $E -ne 3 ]; then
+    			echo "Trying ownCloud upgrade again to work around ownCloud upgrade bug..."
+    			sudo -u www-data php"$PHP_VER" /usr/local/lib/owncloud/occ upgrade
+    			E=$?
+    			if [ $E -ne 0 ] && [ $E -ne 3 ]; then exit 1; fi
+    			sudo -u www-data php"$PHP_VER" /usr/local/lib/owncloud/occ maintenance:mode --off
+    			echo "...which seemed to work."
+    		fi
+
+    		# Add missing indices. NextCloud didn't include this in the normal upgrade because it might take some time.
+    		sudo -u www-data php"$PHP_VER" /usr/local/lib/owncloud/occ db:add-missing-indices
+    		sudo -u www-data php"$PHP_VER" /usr/local/lib/owncloud/occ db:add-missing-primary-keys
+
+    		# Run conversion to BigInt identifiers, this process may take some time on large tables.
+    		sudo -u www-data php"$PHP_VER" /usr/local/lib/owncloud/occ db:convert-filecache-bigint --no-interaction
+        fi
 	fi
 }
 
@@ -243,6 +281,49 @@ if [ ! -d /usr/local/lib/owncloud/ ] || [[ ! ${CURRENT_NEXTCLOUD_VER} =~ ^$nextc
 			InstallNextcloud 26.0.13 d5c10b650e5396d5045131c6d22c02a90572527c 5.5.3 b234ab410480a4106176a28f39c9b27f471d0473 4.7.6 cf8e68e7d945ee71933f5bb71a969faf152da55c 3.3.0 280d24eb2a6cb56b4590af8847f925c28d8d853e
 			CURRENT_NEXTCLOUD_VER="26.0.13"
 		fi
+        if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^26 ]]; then
+            # this can use PHP 8.2
+			InstallNextcloud 27.1.11 9f30c01a021c2e5a9e7baff119955afb3c552ebc 5.5.4 c4e3f2183a0088b829f8aa1b3af1f87c9a4c46a2 4.7.20 12d876904e227156e39ca4335b18481b42a6d00f 3.4.0 7f9d8f4dd6adb85a0e3d7622d85eeb7bfe53f3b4
+			CURRENT_NEXTCLOUD_VER="27.1.11"
+		fi
+        if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^27 ]]; then
+            # this can use PHP 8.2
+			InstallNextcloud 28.0.14 8a9edcfd26d318eb7d1cfa44d69796f2d1098a80 5.5.4 c4e3f2183a0088b829f8aa1b3af1f87c9a4c46a2 4.7.20 12d876904e227156e39ca4335b18481b42a6d00f 3.4.0 7f9d8f4dd6adb85a0e3d7622d85eeb7bfe53f3b4
+			CURRENT_NEXTCLOUD_VER="28.0.14"
+		fi
+        if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^28 ]]; then
+            # this can use PHP 8.2
+			InstallNextcloud 29.0.16 ceb3014aaddc70d3074d2c69bc6afc76eb1aeff0 6.0.7 babb779107b029c30ad20b81da33b4f95e1136ff 4.7.20 12d876904e227156e39ca4335b18481b42a6d00f 3.4.0 7f9d8f4dd6adb85a0e3d7622d85eeb7bfe53f3b4
+			CURRENT_NEXTCLOUD_VER="29.0.16"
+		fi
+        if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^29 ]]; then
+            # this can use PHP 8.2
+			InstallNextcloud 30.0.17 0494197f1984ce8a2f83084c0759a24d48474017 7.3.19 bd680b3b96f09d013ff3a12eccb352b83f3bcd51 5.5.23 9ecfdf35f5de387d3a4db6e1f41920434173c20f 3.4.0 7f9d8f4dd6adb85a0e3d7622d85eeb7bfe53f3b4
+			CURRENT_NEXTCLOUD_VER="30.0.17"
+		fi
+        if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^30 ]]; then
+            # this can use PHP 8.2
+			InstallNextcloud 31.0.14 a891fede2cd4cb3347a406da3fb4f99cd62c89ce 7.3.19 bd680b3b96f09d013ff3a12eccb352b83f3bcd51 5.5.23 9ecfdf35f5de387d3a4db6e1f41920434173c20f 4.0.0 214497dd8691f279ba3740797c565310f0793054
+			CURRENT_NEXTCLOUD_VER="31.0.14"
+		fi
+        if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^31 ]]; then
+            # this can use PHP 8.2
+			InstallNextcloud 32.0.10 7eec94a2310238858298ae9c0fee3e4cde4233e9 8.3.19 8ea88b7107d2d5855d918d34f60036ac92575a09 6.5.4 061f871029c2f735198443bef1bfbe4e8b2e7cba 4.0.0 214497dd8691f279ba3740797c565310f0793054
+			CURRENT_NEXTCLOUD_VER="32.0.10"
+		fi
+        if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^32 ]]; then
+            # this can use PHP 8.5
+			InstallNextcloud 33.0.7 89a880ee00e95c661400528f18b06526fb494f3a 8.8.0 7abcc5d9fe1f38dc3a8ac68b0d479255e99ef82a 6.5.4 061f871029c2f735198443bef1bfbe4e8b2e7cba 4.0.0 214497dd8691f279ba3740797c565310f0793054
+			CURRENT_NEXTCLOUD_VER="33.0.7"
+		fi
+		##
+		# Placholder for Nextcloud 35
+        # if [[ ${CURRENT_NEXTCLOUD_VER} =~ ^33 ]]; then
+        #    # this can use PHP 8.5
+		#	InstallNextcloud 34.0.3 58445c436f1b182c43963d7b200e893c92b6b16a 8.8.0 7abcc5d9fe1f38dc3a8ac68b0d479255e99ef82a 6.5.4 061f871029c2f735198443bef1bfbe4e8b2e7cba 4.0.0 214497dd8691f279ba3740797c565310f0793054
+		#	CURRENT_NEXTCLOUD_VER="34.0.3"
+		# fi
+		##
 	fi
 
 	InstallNextcloud $nextcloud_ver $nextcloud_hash $contacts_ver $contacts_hash $calendar_ver $calendar_hash $user_external_ver $user_external_hash
@@ -321,7 +402,7 @@ fi
 # * mail_domain' needs to be set every time we run the setup. Making sure we are setting
 #   the correct domain name if the domain is being change from the previous setup.
 # Use PHP to read the settings file, modify it, and write out the new settings array.
-TIMEZONE=$(cat /etc/timezone)
+TIMEZONE=$(timedatectl show -p Timezone --value)
 CONFIG_TEMP=$(/bin/mktemp)
 php"$PHP_VER" <<EOF > "$CONFIG_TEMP" && mv "$CONFIG_TEMP" "$STORAGE_ROOT/owncloud/config.php";
 <?php
@@ -396,7 +477,7 @@ tools/editconf.py /etc/php/"$PHP_VER"/fpm/php.ini -c ';' \
 	short_open_tag=On
 
 # Set Nextcloud recommended opcache settings
-tools/editconf.py /etc/php/"$PHP_VER"/cli/conf.d/10-opcache.ini -c ';' \
+tools/editconf.py /etc/php/"$PHP_VER"/cli/php.ini -c ';' \
 	opcache.enable=1 \
 	opcache.enable_cli=1 \
 	opcache.interned_strings_buffer=8 \
@@ -452,6 +533,11 @@ EOF
 #	 sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_group_user VALUES ('admin', '$user')"
 # done
 # ```
+
+# Cleanup Legacy PHP Version
+echo "Cleaning up legacy php version"
+hide_output apt-get purge -y "php${PHP_LEGACY_VER}*"
+rm -rf /etc/php/"$PHP_LEGACY_VER"
 
 # Enable PHP modules and restart PHP.
 restart_service php"$PHP_VER"-fpm
