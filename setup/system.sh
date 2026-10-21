@@ -111,15 +111,24 @@ hide_output add-apt-repository -y universe
 hide_output add-apt-repository -y ppa:duplicity-team/duplicity-release-git
 
 # Stock PHP is now 8.1, but we're transitioning through 8.0 because
-# of Nextcloud.
-hide_output add-apt-repository --y ppa:ondrej/php
+# of Nextcloud. PHP comes from Ondřej Surý's repository at packages.sury.org.
+# The Launchpad ppa:ondrej/php is being merged into packages.sury.org (see
+# deb.sury.org#73), and the CVE-2026-109618/109619 fix for PHP 8.0 was
+# published there first. Remove the old PPA from existing boxes along with its key.
+# The repository's signing key (DEB.SURY.ORG Automatic Signing Key, fingerprint
+# 1505 8500 A023 5D97 F5D1 0063 B188 E2B6 95BD 4743) is shipped in conf/ and
+# trusted only for this repository.
+rm -f /etc/apt/sources.list.d/ondrej-ubuntu-php-* /etc/apt/trusted.gpg.d/ondrej-ubuntu-php.gpg
+install -D -m 644 conf/deb.sury.org-php.asc /etc/apt/keyrings/deb.sury.org-php.asc
+echo "deb [signed-by=/etc/apt/keyrings/deb.sury.org-php.asc] https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list
 
 # ### Update Packages
 
 # Update system packages to make sure we have the latest upstream versions
 # of things from Ubuntu, as well as the directory of packages provide by the
 # PPAs so we can install those packages later.
-# --allow-releaseinfo-change is added because ppa:ondrej/php changed its Label.
+# --allow-releaseinfo-change is added because ppa:ondrej/php changed its Label,
+# which can still trip up boxes that had it configured.
 
 echo "Updating system packages..."
 hide_output apt-get update --allow-releaseinfo-change
