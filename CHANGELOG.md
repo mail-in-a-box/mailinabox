@@ -1,6 +1,17 @@
 CHANGELOG
 =========
 
+Version 78 (October 22, 2026)
+-----------------------------
+
+This is a security update. Although the main security issue this week
+is in upstream PHP and is fixed simply by `apt-get update && apt-get upgrade`,
+updating to the latest Mail-in-a-Box will do that for you. Roundcube
+separately released security fixes in the updated version in this release.
+
+* zpush updated to version 2.7.7.
+* Roundcube updated to 1.6.20.
+
 Version 77 (September 26, 2026)
 -------------------------------
 
