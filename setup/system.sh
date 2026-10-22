@@ -110,16 +110,22 @@ hide_output add-apt-repository -y universe
 # Install the duplicity PPA.
 hide_output add-apt-repository -y ppa:duplicity-team/duplicity-release-git
 
-# Stock PHP is now 8.1, but we're transitioning through 8.0 because
-# of Nextcloud.
-hide_output add-apt-repository --y ppa:ondrej/php
+# Removal of the old php ppa (same author has a newer ppa repository).
+hide_output add-apt-repository --remove ppa:ondrej/php -y
 
 # ### Update Packages
+hide_output apt-get update --allow-releaseinfo-change
+apt_install lsb-release ca-certificates curl
+
+# Add new ppa repository for php security fixes, and future php versions
+hide_output curl -sSLo /tmp/debsuryorg-archive-keyring.deb https://packages.sury.org/debsuryorg-archive-keyring.deb
+hide_output dpkg -i /tmp/debsuryorg-archive-keyring.deb
+hide_output sh -c 'echo "deb [signed-by=/usr/share/keyrings/debsuryorg-archive-keyring.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list'
 
 # Update system packages to make sure we have the latest upstream versions
 # of things from Ubuntu, as well as the directory of packages provide by the
 # PPAs so we can install those packages later.
-# --allow-releaseinfo-change is added because ppa:ondrej/php changed its Label.
+# --allow-releaseinfo-change is added for potential label changes.
 
 echo "Updating system packages..."
 hide_output apt-get update --allow-releaseinfo-change
