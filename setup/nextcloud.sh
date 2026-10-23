@@ -19,7 +19,8 @@ echo "Installing Nextcloud (contacts/calendar)..."
 #   for whether it supports the version of PHP available on this machine.
 # * Since Nextcloud only supports upgrades from consecutive major versions,
 #   we automatically install intermediate versions as needed.
-# * The hash is the SHA1 hash of the ZIP package, which you can find by just running this script and
+# * The hash is the SHA256 (or, for older pins, SHA1) hash of the ZIP package. Nextcloud publishes
+#   it next to the release as <zip URL>.sha256; you can also find it by just running this script and
 #   copying it from the error message when it doesn't match what is below.
 nextcloud_ver=34.0.3
 nextcloud_hash=58445c436f1b182c43963d7b200e893c92b6b16a
@@ -31,9 +32,9 @@ nextcloud_hash=58445c436f1b182c43963d7b200e893c92b6b16a
 #   https://github.com/nextcloud-releases/calendar/tags
 #   https://github.com/nextcloud/user_external/tags
 #
-# * For these three packages, contact, calendar and user_external, the hash is the SHA1 hash of
-# the release tarball (from the releases/download URL, not the source archive), which you can
-# find by running: curl -sL <url> | sha1sum
+# * For these three packages, contact, calendar and user_external, the hash is the SHA256 (or, for
+# older pins, SHA1) hash of the release tarball (from the releases/download URL, not the source
+# archive), which you can find by running: curl -sL <url> | sha256sum
 
 # Always ensure the versions are supported, see https://apps.nextcloud.com/apps/contacts
 contacts_ver=8.8.0
