@@ -76,6 +76,12 @@ Note that while we want everything to "just work," we can't control the rest of 
 This is a challenge faced by everyone who runs their own mail server, with or without Mail-in-a-Box. See our discussion forum for tips about that.
 
 
+One-Click Deploy
+----------------
+
+<a href="https://repocloud.io/details/Mail-in-a-Box/"><img src="https://d16t0pc4846x52.cloudfront.net/deploylobe.svg" alt="Deploy on RepoCloud" height="42"></a>
+
+
 Contributing and Development
 ----------------------------
 
