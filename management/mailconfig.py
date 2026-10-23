@@ -355,6 +355,7 @@ def add_mail_user(email, pw, privs, quota, env):
 		c.execute("INSERT INTO users (email, password, privileges, quota) VALUES (?, ?, ?, ?)",
 			(email, pw, "\n".join(privs), quota))
 	except sqlite3.IntegrityError:
+		conn.rollback()
 		return ("User already exists.", 400)
 
 	# write databasebefore next step
@@ -376,6 +377,7 @@ def set_mail_password(email, pw, env):
 	conn, c = open_database(env, with_connection=True)
 	c.execute("UPDATE users SET password=? WHERE email=?", (pw, email))
 	if c.rowcount != 1:
+		conn.rollback()
 		return (f"That's not a user ({email}).", 400)
 	conn.commit()
 	return "OK"
@@ -405,6 +407,7 @@ def set_mail_quota(email, quota, env):
 	conn, c = open_database(env, with_connection=True)
 	c.execute("UPDATE users SET quota=? WHERE email=?", (quota, email))
 	if c.rowcount != 1:
+		conn.rollback()
 		return (f"That's not a user ({email}).", 400)
 	conn.commit()
 
@@ -456,6 +459,7 @@ def remove_mail_user(email, env):
 	conn, c = open_database(env, with_connection=True)
 	c.execute("DELETE FROM users WHERE email=?", (email,))
 	if c.rowcount != 1:
+		conn.rollback()
 		return (f"That's not a user ({email}).", 400)
 	conn.commit()
 
@@ -502,6 +506,7 @@ def add_remove_mail_user_privilege(email, priv, action, env):
 	conn, c = open_database(env, with_connection=True)
 	c.execute("UPDATE users SET privileges=? WHERE email=?", ("\n".join(privs), email))
 	if c.rowcount != 1:
+		conn.rollback()
 		return ("Something went wrong.", 400)
 	conn.commit()
 
@@ -588,6 +593,7 @@ def add_mail_alias(address, forwards_to, permitted_senders, env, update_if_exist
 		return_status = "alias added"
 	except sqlite3.IntegrityError:
 		if not update_if_exists:
+			conn.rollback()
 			return (f"Alias already exists ({address}).", 400)
 		c.execute("UPDATE aliases SET destination = ?, permitted_senders = ? WHERE source = ?", (forwards_to, permitted_senders, address))
 		return_status = "alias updated"
@@ -607,6 +613,7 @@ def remove_mail_alias(address, env, do_kick=True):
 	conn, c = open_database(env, with_connection=True)
 	c.execute("DELETE FROM aliases WHERE source=?", (address,))
 	if c.rowcount != 1:
+		conn.rollback()
 		return (f"That's not an alias ({address}).", 400)
 	conn.commit()
 

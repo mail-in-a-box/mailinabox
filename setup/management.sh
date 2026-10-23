@@ -14,12 +14,12 @@ echo "Installing Mail-in-a-Box system management daemon..."
 #
 # certbot installs EFF's certbot which we use to
 # provision free TLS certificates.
-apt_install duplicity python3-pip virtualenv certbot rsync
+apt_install duplicity python3-gnupg python3-pip virtualenv python3-b2sdk python3-boto3 certbot rsync
 
 # b2sdk is used for backblaze backups.
 # boto3 is used for amazon aws backups.
 # Both are installed outside the pipenv, so they can be used by duplicity
-hide_output pip3 install --upgrade b2sdk boto3
+## TEST: hide_output pip3 install --upgrade b2sdk boto3
 
 # Create a virtualenv for the installation of Python 3 packages
 # used by the management daemon.
@@ -105,9 +105,9 @@ exec gunicorn -b 127.0.0.1:10222 -w 1 --timeout 630 wsgi:app
 EOF
 chmod +x $inst_dir/start
 cp --remove-destination conf/mailinabox.service /lib/systemd/system/mailinabox.service # target was previously a symlink so remove it first
-hide_output systemctl link -f /lib/systemd/system/mailinabox.service
+## hide_output systemctl link -f /lib/systemd/system/mailinabox.service
+hide_output systemctl enable /lib/systemd/system/mailinabox.service
 hide_output systemctl daemon-reload
-hide_output systemctl enable mailinabox.service
 
 # Perform nightly tasks at 3am in system time: take a backup, run
 # status checks and email the administrator any changes.
