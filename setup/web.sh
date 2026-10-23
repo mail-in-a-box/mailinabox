@@ -40,7 +40,7 @@ sed "s#STORAGE_ROOT#$STORAGE_ROOT#" \
 # we're going up to 128.
 #
 # Drop TLSv1.0, TLSv1.1, following the Mozilla "Intermediate" recommendations
-# at https://ssl-config.mozilla.org/#server=nginx&server-version=1.17.0&config=intermediate&openssl-version=1.1.1.
+# at https://ssl-config.mozilla.org/#server=nginx&version=1.18.0&config=intermediate&openssl=3.0.2&guideline=5.7.
 tools/editconf.py /etc/nginx/nginx.conf -s \
 	server_names_hash_bucket_size="128;" \
 	ssl_protocols="TLSv1.2 TLSv1.3;"
