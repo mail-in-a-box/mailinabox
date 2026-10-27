@@ -19,7 +19,7 @@ fi
 
 echo "Installing Nginx (web server)..."
 
-apt_install nginx php"${PHP_VER}"-cli php"${PHP_VER}"-fpm idn2
+apt_install nginx php"${PHP_VER}"-cli php"${PHP_VER}"-fpm idn2 goaccess
 
 rm -f /etc/nginx/sites-enabled/default
 
@@ -144,6 +144,46 @@ if [ ! -f "$STORAGE_ROOT/www/default/index.html" ]; then
 	cp conf/www_default.html "$STORAGE_ROOT/www/default/index.html"
 fi
 chown -R "$STORAGE_USER" "$STORAGE_ROOT/www"
+
+
+
+
+echo "Setting up goaccess web analytics..."
+
+# Set default configuration for goaccess web stats.
+mkdir -p "/var/lib/mailinabox/goaccess_db"
+tools/editconf.py /etc/goaccess/goaccess.conf -c '#' -s \
+		  persist=true \
+		  restore=true \
+		  keep-last=7 \
+		  db-path=/var/lib/mailinabox/goaccess_db \
+		  html-report-title=Mailinabox \
+		  log-file=/var/log/nginx/access.log \
+		  log-format=VCOMBINED
+
+
+# Create a pre-rotate action to preserve log info.
+PREROT="/etc/logrotate.d/httpd-prerotate"
+if [ -d "$PREROT" ] ; then
+	NOPREROT=1; # false, there is a prerotate
+else
+	NOPREROT=0; # true, there is no prerotate
+fi
+mkdir -p "$PREROT"
+
+# If the prerotate doesn't exist, configure.
+if [ "$NOPREROT" -eq 0 ]; then
+	echo "- Configuring log prerotate action."
+	chown root:root "$PREROT"
+	chmod 755 "$PREROT";
+else # There is a prerotate, no change.
+	echo "- No change to $PREROT";
+fi
+# Create action.
+cp conf/goaccess_persist "$PREROT"
+chown root:root "$PREROT/goaccess_persist"
+chmod a+x "$PREROT/goaccess_persist"
+
 
 # Start services.
 restart_service nginx
