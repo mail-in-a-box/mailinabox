@@ -17,6 +17,11 @@ from utils import load_environment, shell, wait_for_service
 import operator
 
 def backup_status(env):
+	"""
+	TODO: Document what the return value actually is.
+
+	Will raise an exception if the call to the duplicity binary fails.
+	"""
 	# If backups are disabled, return no status.
 	config = get_backup_config(env)
 	if config["target"] == "off":
@@ -65,7 +70,7 @@ def backup_status(env):
 		get_duplicity_target_url(config)
 		],
 		get_duplicity_env_vars(env),
-		trap=True)
+		trap=True, capture_stderr=True)
 	if code != 0:
 		# Command failed. This is likely due to an improperly configured remote
 		# destination for the backups or the last backup job terminated unexpectedly.
