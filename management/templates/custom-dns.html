@@ -75,14 +75,14 @@
   </tbody>
 </table>
 
-<h3>Using a secondary nameserver</h3>
+<h3>Using a secondary name server</h3>
 
-<p>If your TLD requires you to have two separate nameservers, you can either set up <a href="#external_dns">external DNS</a> and ignore the DNS server on this box entirely, or use the DNS server on this box but add a secondary (aka &ldquo;slave&rdquo;) nameserver.</p>
-<p>If you choose to use a secondary nameserver, you must find a secondary nameserver service provider. Your domain name registrar or virtual cloud provider may provide this service for you. Once you set up the secondary nameserver service, enter the hostname (not the IP address) of <em>their</em> secondary nameserver in the box below.</p>
+<p>If your TLD requires you to have two separate name servers, you can either set up <a href="#external_dns">external DNS</a> and ignore the DNS server on this box entirely, or use the DNS server on this box but add a secondary (aka &ldquo;slave&rdquo;) name server.</p>
+<p>If you choose to use a secondary name server, you must find a secondary name server service provider. Your domain name registrar or virtual cloud provider may provide this service for you. Once you set up the secondary name server service, enter the hostname (not the IP address) of <em>their</em> secondary name server in the box below.</p>
 
 <form class="form-horizontal" role="form" onsubmit="do_set_secondary_dns(); return false;">
   <div class="form-group">
-    <label for="secondarydnsHostname" class="col-sm-1 control-label">Hostname</label>
+    <label for="secondarydnsHostname" class="col-sm-1 control-label">Servers</label>
     <div class="col-sm-10">
       <input type="text" class="form-control" id="secondarydnsHostname" placeholder="ns1.cloudprovider.com">
     </div>
@@ -96,7 +96,7 @@
     <div class="col-sm-offset-1 col-sm-11">
       <p class="small">
         Multiple secondary servers can be separated with commas or spaces (i.e., <code>ns2.hostingcompany.com ns3.hostingcompany.com</code>).
-        To enable zone transfers to additional servers without listing them as secondary nameservers, prefix a hostname, IP address, or subnet with <code>xfr:</code>, e.g. <code>xfr:10.20.30.40</code> or <code>xfr:10.0.0.0/8</code>.
+        To allow providing zone transfers to additional name servers that request transfers without designating those servers as secondary name servers to be notified of zone updates, prefix the IP address of the server, or the subnet containing the IP address of the server, with <code>xfr:</code>, e.g. <code>xfr:10.20.30.40</code> or <code>xfr:10.0.0.0/8</code>.
       </p>
       <p id="secondarydns-clear-instructions" style="display: none" class="small">
         Clear the input field above and click Update to use this machine itself as secondary DNS, which is the default/normal setup.
