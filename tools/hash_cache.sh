@@ -68,6 +68,26 @@ function get_nextcloud_version_hashes {
     ## NEXTCLOUD_HASHES=$($hash_array)
 }
 
+## Roundcube
+#
+declare -a roundcube_version=("1.6.20" "1.7.5")
+
+declare -a roundcube_hash_sha1=("f5c7079c5b56ce1e301c6a27c0d975d608bb01c9" # 1.6.20
+    "f5c7079c5b56ce1e301c6a27c0d975d608bb01c9" # 1.7.5
+)
+
+declare -a roundcube_hash_sha256=("2be2c2eebe42b41fdbb53e82b1dffc82d3324baeff1ce5392de0fd804052404f" # 1.6.20
+    "2be2c2eebe42b41fdbb53e82b1dffc82d3324baeff1ce5392de0fd804052404f" # 1.7.5
+)
+
+## CardDAV plugin for Roundcube
+declare -a carddav_version=("4.4.3")
+
+declare -a carddav_hash_sha1=("f5c7079c5b56ce1e301c6a27c0d975d608bb01c9")
+
+declare -a carddav_hash_sha256=("2be2c2eebe42b41fdbb53e82b1dffc82d3324baeff1ce5392de0fd804052404f")
+
+
 ## Nextcloud Server
 #
 # If we want to refactor the upgrade process
