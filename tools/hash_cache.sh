@@ -72,21 +72,45 @@ function get_nextcloud_version_hashes {
 #
 declare -a roundcube_version=("1.6.20" "1.7.5")
 
-declare -a roundcube_hash_sha1=("f5c7079c5b56ce1e301c6a27c0d975d608bb01c9" # 1.6.20
-    "f5c7079c5b56ce1e301c6a27c0d975d608bb01c9" # 1.7.5
+declare -a roundcube_hash_sha1=("15c70410af3071219aae209ba89e2ff1dacb1ab5" # 1.6.20
+    "396b2fa0153bf6b4a8ab99f136b27e16d9f74e57" # 1.7.5
 )
 
-declare -a roundcube_hash_sha256=("2be2c2eebe42b41fdbb53e82b1dffc82d3324baeff1ce5392de0fd804052404f" # 1.6.20
-    "2be2c2eebe42b41fdbb53e82b1dffc82d3324baeff1ce5392de0fd804052404f" # 1.7.5
+declare -a roundcube_hash_sha256=("46919c70c85609b57038903c4ecc4e1d7fa4e14c535fe5b14192d778dcd4a1ee" # 1.6.20
+    "93a66c94e3efff7db93187c1c9d7f35546647a3e1e7b9327cc87911564edf9d1" # 1.7.5
 )
 
 ## CardDAV plugin for Roundcube
+#
 declare -a carddav_version=("4.4.3")
 
-declare -a carddav_hash_sha1=("f5c7079c5b56ce1e301c6a27c0d975d608bb01c9")
+declare -a carddav_hash_sha1=("74f8ba7aee33e78beb9de07f7f44b81f6071b644") # 4.4.3
 
-declare -a carddav_hash_sha256=("2be2c2eebe42b41fdbb53e82b1dffc82d3324baeff1ce5392de0fd804052404f")
+declare -a carddav_hash_sha256=("fd36e97f6dd88fa13cec16a6423ea02596a9ac4d11002f19b3eced52feaffdf2") # 4.4.3
 
+## jQuery
+#
+declare -a jquery_version=("2.2.4")
+
+declare -a jquery_hash_sha1=("69bb69e25ca7d5ef0935317584e6153f3fd9a88c") # 2.2.4
+
+declare -a jquery_hash_sha256=("05b85d96f41fff14d8f608dad03ab71e2c1017c2da0914d7c59291bad7a54f8e") # 2.2.4
+
+## Bootstrap
+#
+declare -a bootstrap_version=("3.4.1")
+
+declare -a bootstrap_hash_sha1=("0bb64c67c2552014d48ab4db81c2e8c01781f580") # 3.4.1
+
+declare -a bootstrap_hash_sha256=("d49793cf773cbd393ac2cf340c3b4ddab5365fa7c292098ac07e12eab3efd92e") # 3.4.1
+
+## ZPush
+#
+declare -a zpush_version=("2.7.7")
+
+declare -a zpush_hash_sha1=("b8ba5fdf5594a642c98f92c30683d19b5c6aae77") # 2.7.7
+
+declare -a zpush_hash_sha256=("7a8e0094adf216521ee491078f78e709cd68257d05a868b3992d5665c01d8790") # 2.7.7
 
 ## Nextcloud Server
 #
@@ -259,6 +283,41 @@ declare -a nextcloud_user_external_hash_sha256=("79d400c05737ea3512faf0ab77411dd
 #########
 # Testing blocks
 #########
+
+# Roundcube Webmail
+#for i in "${!roundcube_version[@]}"; do
+#    echo "Testing Roundcube Webmail SHAs for version" "${roundcube_version[$i]}"
+#    wget_verify_all "https://github.com/roundcube/roundcubemail/releases/download/${roundcube_version[$i]}/roundcubemail-${roundcube_version[$i]}-complete.tar.gz" "${roundcube_hash_sha1[$i]}" "${roundcube_hash_sha256[$i]}" /tmp/roundcube-${roundcube_version[$i]}.tgz "false" "false"
+#    rm -f /tmp/roundcube-${roundcube_version[$i]}.tgz
+#done
+
+# CardDav Plugin for Roundcube
+#for i in "${!carddav_version[@]}"; do
+#    echo "Testing CardDav Plugin SHAs for version" "${carddav_version[$i]}"
+#    wget_verify_all "https://github.com/mstilkerich/rcmcarddav/releases/download/v${carddav_version[$i]}/carddav-v${carddav_version[$i]}.tar.gz" "${carddav_hash_sha1[$i]}" "${carddav_hash_sha256[$i]}" /tmp/carddav-${carddav_version[$i]}.tar.gz "false" "false"
+#    rm -f /tmp/carddav-${carddav_version[$i]}.tar.gz
+#done
+
+# jQuery
+#for i in "${!jquery_version[@]}"; do
+#    echo "Testing jQuery SHAs for version" "${jquery_version[$i]}"
+#    wget_verify_all "https://code.jquery.com/jquery-${jquery_version[$i]}.min.js" "${jquery_hash_sha1[$i]}" "${jquery_hash_sha256[$i]}" /tmp/jquery-${jquery_version[$i]}.min.js "false" "false"
+#    rm -f /tmp/jquery-${jquery_version[$i]}.min.js
+#done
+
+# Bootstrap
+#for i in "${!bootstrap_version[@]}"; do
+#    echo "Testing Bootstrap SHAs for version" "${bootstrap_version[$i]}"
+#    wget_verify_all "https://github.com/twbs/bootstrap/releases/download/v${bootstrap_version[$i]}/bootstrap-${bootstrap_version[$i]}-dist.zip" "${bootstrap_hash_sha1[$i]}" "${bootstrap_hash_sha256[$i]}" /tmp/bootstrap-${bootstrap_version[$i]}.zip "false" "false"
+#    rm -f /tmp/bootstrap-${bootstrap_version[$i]}.zip
+#done
+
+# ZPush
+#for i in "${!zpush_version[@]}"; do
+#    echo "Testing ZPush SHAs for version" "${zpush_version[$i]}"
+#    wget_verify_all "https://github.com/Z-Hub/Z-Push/archive/refs/tags/${zpush_version[$i]}.zip" "${zpush_hash_sha1[$i]}" "${zpush_hash_sha256[$i]}" /tmp/z-push-${zpush_version[$i]}.zip "false" "false"
+#    rm -f /tmp/z-push-${zpush_version[$i]}.zip
+#done
 
 # Nextcloud Server
 #for i in "${!nextcloud_version[@]}"; do
