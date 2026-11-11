@@ -37,6 +37,8 @@ apt_install \
 # of active IMAP connections (at, say, 5 open connections per user that
 # would be 20 users). Set it to 250 times the number of cores this
 # machine has, so on a two-core machine that's 500 processes/100 users).
+# Set the client_limit to 5 times the process limit, dovecot uses the 
+# process_limit value for 5 processes to calculate the client_limit.
 # The `default_vsz_limit` is the maximum amount of virtual memory that
 # can be allocated. It should be set *reasonably high* to avoid allocation
 # issues with larger mailboxes. We're setting it to 1/3 of the total
@@ -46,8 +48,8 @@ apt_install \
 # - https://www.dovecot.org/list/dovecot/2011-December/132455.html
 tools/editconf.py /etc/dovecot/conf.d/10-master.conf \
 	default_process_limit="$(($(nproc) * 250))" \
-	default_vsz_limit="$(($(free -tm  | tail -1 | awk '{print $2}') / 3))M" \
-	log_path=/var/log/mail.log
+	default_client_limit="$(($(nproc) * 1250))" \
+	default_vsz_limit="$(($(free -tm  | tail -1 | awk '{print $2}') / 3))M"
 
 # The inotify `max_user_instances` default is 128, which constrains
 # the total number of watched (IMAP IDLE push) folders by open connections.
