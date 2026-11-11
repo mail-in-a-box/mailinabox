@@ -110,16 +110,19 @@ hide_output add-apt-repository -y universe
 # Install the duplicity PPA.
 hide_output add-apt-repository -y ppa:duplicity-team/duplicity-release-git
 
-# Stock PHP is now 8.1, but we're transitioning through 8.0 because
-# of Nextcloud.
-hide_output add-apt-repository --y ppa:ondrej/php
+# Stock PHP is now 8.5
+echo "Installing ppa prereqs..."
+hide_output apt-get update --allow-releaseinfo-change
+apt_install lsb-release ca-certificates curl
+hide_output curl -sSLo /tmp/debsuryorg-archive-keyring.deb https://packages.sury.org/debsuryorg-archive-keyring.deb
+hide_output dpkg -i /tmp/debsuryorg-archive-keyring.deb
+hide_output sh -c 'echo "deb [signed-by=/usr/share/keyrings/debsuryorg-archive-keyring.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list'
 
 # ### Update Packages
 
 # Update system packages to make sure we have the latest upstream versions
 # of things from Ubuntu, as well as the directory of packages provide by the
 # PPAs so we can install those packages later.
-# --allow-releaseinfo-change is added because ppa:ondrej/php changed its Label.
 
 echo "Updating system packages..."
 hide_output apt-get update --allow-releaseinfo-change
@@ -137,7 +140,6 @@ apt_get_quiet autoremove
 #
 # * unattended-upgrades: Apt tool to install security updates automatically.
 # * cron: Runs background processes periodically.
-# * ntp: keeps the system time correct
 # * fail2ban: scans log files for repeated failed login attempts and blocks the remote IP at the firewall
 # * netcat-openbsd: `nc` command line networking tool
 # * git: we install some things directly from github
@@ -148,9 +150,9 @@ apt_get_quiet autoremove
 
 echo "Installing system packages..."
 apt_install python3 python3-dev python3-pip python3-setuptools \
-	netcat-openbsd wget curl git sudo coreutils bc file \
+	netcat-openbsd wget git sudo coreutils bc file \
 	pollinate openssh-client unzip \
-	unattended-upgrades cron ntp fail2ban rsyslog
+	unattended-upgrades cron fail2ban rsyslog
 
 # ### Suppress Upgrade Prompts
 # When Ubuntu 20 comes out, we don't want users to be prompted to upgrade,
@@ -242,9 +244,9 @@ dd if=/dev/random of=/dev/urandom bs=1 count=32 2> /dev/null
 
 # This is supposedly sufficient. But because we're not sure if hardware entropy
 # is really any good on virtualized systems, we'll also seed from Ubuntu's
-# pollinate servers:
+# pollinate servers, using the pollinate user:
 
-pollinate  -q -r
+sudo -u pollinate /usr/bin/pollinate -q -r
 
 # Between these two, we really ought to be all set.
 
