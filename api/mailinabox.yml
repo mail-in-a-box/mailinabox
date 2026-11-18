@@ -53,6 +53,11 @@ tags:
     description: |
       System operations, which include system status checks, new version checks
       and reboot status.
+  - name: MCP
+    description: |
+      A [Model Context Protocol](https://modelcontextprotocol.io/) server, so that AI
+      assistants can read the status and configuration of the box. All of its tools
+      are read-only.
 paths:
   /login:
     post:
@@ -1812,6 +1817,68 @@ paths:
             text/html:
               schema:
                 type: string
+  /mcp:
+    post:
+      tags:
+        - MCP
+      summary: Send a Model Context Protocol message
+      description: |
+        Accepts one [JSON-RPC 2.0](https://www.jsonrpc.org/specification) message
+        using the stateless form of MCP's Streamable HTTP transport, and returns
+        the JSON-RPC response. Notifications return an empty `202` response.
+
+        Point an MCP client at `https://{host}/admin/mcp` and have it send the same
+        `Authorization` header as other API calls. For example, with Claude Code:
+
+        ```
+        claude mcp add --transport http mailinabox https://{host}/admin/mcp \
+          --header "Authorization: Basic $(printf '<email>:<password>' | base64)"
+        ```
+
+        The available tools are `get_status_checks`, `list_users`, `list_aliases`,
+        `get_dns_records` and `get_backup_status`. They return the same information
+        as the corresponding API endpoints and cannot change anything.
+      operationId: mcp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/McpMessage'
+            example:
+              jsonrpc: '2.0'
+              id: 1
+              method: tools/call
+              params:
+                name: get_status_checks
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST "https://{host}/admin/mcp" \
+              -u "<email>:<password>" \
+              -H "Content-Type: application/json" \
+              -d '{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}'
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/McpMessage'
+        202:
+          description: Notification accepted
+        403:
+          description: Forbidden
+          content:
+            text/html:
+              schema:
+                type: string
+        415:
+          description: Request was not sent as `application/json`
+          content:
+            text/html:
+              schema:
+                type: string
 components:
   securitySchemes:
     basicAuth:
@@ -2725,6 +2792,33 @@ components:
           nullable: true
     MfaDisableSuccessResponse:
       type: string
+    McpMessage:
+      type: object
+      description: A JSON-RPC 2.0 request or response.
+      required:
+        - jsonrpc
+      properties:
+        jsonrpc:
+          type: string
+          example: '2.0'
+        id:
+          oneOf:
+            - type: string
+            - type: integer
+        method:
+          type: string
+          example: tools/list
+        params:
+          type: object
+        result:
+          type: object
+        error:
+          type: object
+          properties:
+            code:
+              type: integer
+            message:
+              type: string
     LogoutResponse:
       type: object
       properties:
