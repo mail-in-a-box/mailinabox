@@ -18,6 +18,16 @@ With Vagrant set up, the following should boot up Mail-in-a-Box inside a virtual
 
 _If you're seeing an error message about your *IP address being listed in the Spamhaus Block List*, simply uncomment the `export SKIP_NETWORK_CHECKS=1` line in `Vagrantfile`. It's normal, you're probably using a dynamic IP address assigned by your Internet provider–they're almost all listed._
 
+### Using libvirt/QEMU instead of VirtualBox
+
+VirtualBox is the recommended provider, but the `Vagrantfile` also supports [libvirt](https://github.com/vagrant-libvirt/vagrant-libvirt)/QEMU. The `ubuntu/jammy64` box only ships a VirtualBox image, so the `Vagrantfile` automatically switches to the `generic/ubuntu2204` box for the libvirt provider — there is nothing to change on your side.
+
+Boot the machine with:
+
+    $ vagrant up --provider=libvirt --provision
+
+Your working copy is copied into the VM at `/vagrant` with Vagrant's `rsync` synced folder, so there is nothing extra to install (a live 9p/VirtFS share is not used: the setup scripts `chmod` files in `/vagrant`, which 9p rejects). The sync is one-way (host → guest): after editing files on the host, run `vagrant rsync` — or `vagrant rsync-auto` to keep watching — to push the changes into the VM before re-provisioning.
+
 ### Modifying your `hosts` file
 
 After a while, Mail-in-a-Box will be available at `192.168.56.4` (unless you changed that in your `Vagrantfile`). To be able to use the web-based bits, we recommend to add a hostname to your `hosts` file:
