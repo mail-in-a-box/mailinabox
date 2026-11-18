@@ -669,6 +669,30 @@ def privacy_status_set():
 	utils.write_settings(config, env)
 	return "OK"
 
+# MCP (Model Context Protocol) endpoint for AI assistants. See mcp_server.py.
+
+@app.route('/mcp', methods=["POST"])
+@authorized_personnel_only
+def mcp():
+	from mcp_server import handle_request
+
+	# Reject requests made by web pages in a browser, as required by the
+	# MCP spec to prevent DNS rebinding attacks. MCP clients that are not
+	# browsers do not send an Origin header.
+	if request.headers.get("Origin") not in {None, "https://" + env["PRIMARY_HOSTNAME"]}:
+		return ("Invalid Origin header.\n", 403)
+
+	# Requiring a JSON content type also means that browsers cannot send
+	# cross-site requests here without a CORS preflight, which we don't allow.
+	if not request.is_json:
+		return ("Content-Type must be application/json.\n", 415)
+
+	response = handle_request(request.get_json(silent=True), env)
+	if response is None:
+		# Notifications get an empty "202 Accepted".
+		return ("", 202)
+	return json_response(response)
+
 # MUNIN
 
 @app.route('/munin/')
