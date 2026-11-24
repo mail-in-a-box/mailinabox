@@ -1262,7 +1262,7 @@ paths:
                 $ref: '#/components/schemas/MailUserAddResponse'
               example: |
                 mail user added
-                updated DNS: OpenDKIM configuration
+                updated DNS: DKIM configuration
         400:
           description: Bad request
           content:
@@ -1863,7 +1863,7 @@ components:
       type: string
       example: |
         mail user added
-        updated DNS: OpenDKIM configuration
+        updated DNS: DKIM configuration
       description: |
         Mail user add response.
 
